@@ -205,7 +205,7 @@ unsigned long long int checkStatus(void)
 
     //check communicated data between FPGA and MCU
     char comm_data = *pstatus;
-    comm_data = comm_data >> 4;
+    comm_data = (comm_data >> 4) & 0x0F;
     if (comm_data != 0)
     {
         //return ERR_SAFETY_COMM_DATA_FAULTY;

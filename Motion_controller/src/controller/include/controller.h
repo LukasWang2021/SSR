@@ -26,6 +26,7 @@
 #include <string>
 // for test only
 #include "virtual_core1.h"
+#include <cstdint>
 
 
 namespace fst_ctrl
@@ -76,6 +77,9 @@ private:
     void recordLog(std::string log_str);
     void recordLog(ErrorCode error_code, std::string log_str);
     void recordLog(ErrorCode major_error_code, ErrorCode minor_error_code, std::string log_str);
+
+    // light a LED to hint the controller is ok
+    void  isOkLed();
 };
 
 }

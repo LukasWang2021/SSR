@@ -131,6 +131,12 @@ public:
     void ringPriorityTask(void);
     
 private:
+    ErrorCode offsetToolFrame(int tool_id, const basic_alg::PoseEuler &offset, basic_alg::PoseEuler &tool_frame);
+    ErrorCode getFrameOffsetMatrix(int frame_id, const basic_alg::PoseEuler &offset, const basic_alg::PoseEuler &current_frame, basic_alg::TransMatrix &matrix);
+    ErrorCode handlePoint(const TargetPoint &origin, const basic_alg::PoseEuler &user_frame, const basic_alg::PoseEuler &tool_frame, IntactPoint &point);
+    ErrorCode offsetPoint(const basic_alg::Joint &offset_joint, IntactPoint &point);
+    ErrorCode offsetPoint(const basic_alg::TransMatrix &trans_offset, IntactPoint &point);
+
     int  user_frame_id_;
     int  tool_frame_id_;
 
@@ -158,4 +164,6 @@ private:
 }
 
 #endif
+
+
 

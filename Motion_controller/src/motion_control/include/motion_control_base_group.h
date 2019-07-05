@@ -148,6 +148,9 @@ class BaseGroup
     virtual void doPriorityLoop(void);
     virtual void doRealtimeLoop(void);
 
+    virtual char* printDBLine(const int *data, char *buffer, size_t length) = 0;
+    virtual char* printDBLine(const double *data, char *buffer, size_t length) = 0;
+
   protected:
     void sendTrajectoryFlow(void);
     void updateServoStateAndJoint(void);
@@ -205,8 +208,7 @@ class BaseGroup
     inline TrajectoryCache* getLastTrajectoryCachePtr(void);
     inline TrajectoryCacheList* getLastTrajectoryCacheListPtr(void);
 
-    virtual char* printDBLine(const int *data, char *buffer, size_t length) = 0;
-    virtual char* printDBLine(const double *data, char *buffer, size_t length) = 0;
+    
 
     
     double  vel_ratio_, acc_ratio_;

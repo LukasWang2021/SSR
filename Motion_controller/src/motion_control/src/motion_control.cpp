@@ -531,7 +531,8 @@ ErrorCode MotionControl::manualStop(void)
 
 ErrorCode MotionControl::autoMove(int id, const MotionTarget &target)
 {
-    FST_INFO("MotionControl::autoMove called.");
+    FST_INFO("MotionControl::autoMove motion-type: %d, smooth-type: %d", target.type, target.smooth_type);
+    FST_INFO("vel: %.6f, acc: %.6f, cnt: %.6f, tool-frame: %d, user-frame: %d", target.vel, target.acc, target.cnt, target.tool_frame_id, target.user_frame_id);
 
     if (group_ptr_->getCalibratorPtr()->getCalibrateState() != MOTION_NORMAL)
     {
@@ -557,129 +558,293 @@ ErrorCode MotionControl::autoMove(int id, const MotionTarget &target)
         return INVALID_PARAMETER;
     }
 
+    ErrorCode err = SUCCESS;
     MotionInfo motion_info;
     motion_info.smooth_type = target.smooth_type;
     motion_info.type = target.type;
     motion_info.cnt = target.cnt;
     motion_info.vel = target.vel;
     motion_info.acc = target.acc;
-    motion_info.target.user_frame = group_ptr_->getUserFrame();
-    motion_info.target.tool_frame = group_ptr_->getToolFrame();
+    PoseEuler user_frame = group_ptr_->getUserFrame();
+    PoseEuler tool_frame = group_ptr_->getToolFrame();
 
-    if (target.user_frame_offset_id > 0)
+    if (target.tool_frame_offset.valid)
     {
-        CoordInfo uf_offset_info;
-        ErrorCode err = coordinate_manager_ptr_->getCoordInfoById(target.user_frame_offset_id, uf_offset_info);
+        FST_INFO("Use tool offset, type: %d, id: %d", target.tool_frame_offset.coord_type, target.tool_frame_offset.offset_frame_id);
+
+        if (target.tool_frame_offset.coord_type == COORDINATE_JOINT)
+        {
+            FST_ERROR("Cannot use an joint space offset onto tool frame");
+            return INVALID_PARAMETER;
+        }
+
+        err = offsetToolFrame(target.tool_frame_offset.offset_frame_id, target.tool_frame_offset.offset_pose, tool_frame);
 
         if (err != SUCCESS)
         {
-            FST_ERROR("Fail to get user frame offset from given id");
+            FST_ERROR("Fail to offset too frame, code = 0x%llx", err);
             return err;
         }
-
-        if (!uf_offset_info.is_valid)
-        {
-            FST_ERROR("User frame offset indicated by given id is invalid");
-            return INVALID_PARAMETER;
-        }
-        
-        TransMatrix trans_uf, trans_uf_offset;
-        motion_info.target.user_frame.convertToTransMatrix(trans_uf);
-        uf_offset_info.data.convertToTransMatrix(trans_uf_offset);
-        trans_uf.rightMultiply(trans_uf_offset).convertToPoseEuler(motion_info.target.user_frame);
     }
 
-    if (target.tool_frame_offset_id > 0)
+    TransMatrix trans_frame_offset;
+
+    if (target.user_frame_offset.valid)
     {
-        CoordInfo tf_offset_info;
-        ErrorCode err = coordinate_manager_ptr_->getCoordInfoById(target.tool_frame_offset_id, tf_offset_info);
+        FST_INFO("Use frame offset, type: %d, id: %d", target.user_frame_offset.coord_type, target.user_frame_offset.offset_frame_id);
+
+        if (target.user_frame_offset.coord_type == COORDINATE_JOINT)
+        {
+            char buffer[LOG_TEXT_SIZE];
+            FST_INFO("Offset joint: %s", group_ptr_->printDBLine(&target.user_frame_offset.offset_joint.j1_, buffer, LOG_TEXT_SIZE));
+        }
+        else
+        {
+            err = getFrameOffsetMatrix(target.user_frame_offset.offset_frame_id, target.user_frame_offset.offset_pose, user_frame, trans_frame_offset);
+
+            if (err != SUCCESS)
+            {
+                FST_ERROR("Fail to get offset in current frame, code = 0x%llx", err);
+                return err;
+            }
+        }
+    }
+
+    if (target.type == MOTION_CIRCLE)
+    {
+        FST_INFO("Handle via point of this motion");
+        err = handlePoint(target.via, user_frame, tool_frame, motion_info.via);
 
         if (err != SUCCESS)
         {
-            FST_ERROR("Fail to get tool frame offset from given id");
+            FST_ERROR("Fail to handle via point, code = 0x%llx", err);
             return err;
         }
 
-        if (!tf_offset_info.is_valid)
+        if (target.user_frame_offset.valid)
         {
-            FST_ERROR("Tool frame offset indicated by given id is invalid");
-            return INVALID_PARAMETER;
+            err = target.user_frame_offset.coord_type == COORDINATE_JOINT ? offsetPoint(target.user_frame_offset.offset_joint, motion_info.via) : offsetPoint(trans_frame_offset, motion_info.via);
+
+            if (err != SUCCESS)
+            {
+                FST_ERROR("Fail to offset target point, code = 0x%llx", err);
+                return err;
+            }
         }
-        
-        TransMatrix trans_tf, trans_tf_offset;
-        motion_info.target.tool_frame.convertToTransMatrix(trans_tf);
-        tf_offset_info.data.convertToTransMatrix(trans_tf_offset);
-        trans_tf.rightMultiply(trans_tf_offset).convertToPoseEuler(motion_info.target.tool_frame);
     }
 
-    if (target.target.type == COORDINATE_JOINT)
+    FST_INFO("Handle target point of this motion");
+    err = handlePoint(target.target, user_frame, tool_frame, motion_info.target);
+
+    if (err != SUCCESS)
+    {
+        FST_ERROR("Fail to handle target point, code = 0x%llx", err);
+        return err;
+    }
+
+    if (target.user_frame_offset.valid)
+    {
+        err = target.user_frame_offset.coord_type == COORDINATE_JOINT ? offsetPoint(target.user_frame_offset.offset_joint, motion_info.target) : offsetPoint(trans_frame_offset, motion_info.target);
+
+        if (err != SUCCESS)
+        {
+            FST_ERROR("Fail to offset target point, code = 0x%llx", err);
+            return err;
+        }
+    }
+
+    return group_ptr_->autoMove(id, motion_info);
+}
+
+ErrorCode MotionControl::offsetPoint(const Joint &offset_joint, IntactPoint &point)
+{
+    point.joint += offset_joint;
+    point.pose.posture = group_ptr_->getKinematicsPtr()->getPostureByJoint(point.joint);
+    PoseEuler fcp_in_base, tcp_in_base;
+    group_ptr_->getKinematicsPtr()->doFK(point.joint, fcp_in_base);
+    group_ptr_->getTransformationPtr()->convertFcpToTcp(fcp_in_base, point.tool_frame, tcp_in_base);
+    group_ptr_->getTransformationPtr()->convertPoseFromBaseToUser(tcp_in_base, point.user_frame, point.pose.pose);
+    return SUCCESS;
+}
+
+ErrorCode MotionControl::offsetPoint(const TransMatrix &trans_offset, IntactPoint &point)
+{
+    TransMatrix trans_point;
+    point.pose.pose.convertToTransMatrix(trans_point);
+    trans_point.rightMultiply(trans_offset).convertToPoseEuler(point.pose.pose);
+    PoseEuler fcp_in_base, tcp_in_base;
+    group_ptr_->getTransformationPtr()->convertPoseFromUserToBase(point.pose.pose, point.user_frame, tcp_in_base);
+    group_ptr_->getTransformationPtr()->convertTcpToFcp(tcp_in_base, point.tool_frame, fcp_in_base);
+    
+    if (!group_ptr_->getKinematicsPtr()->doIK(fcp_in_base, point.pose.posture, point.joint))
+    {
+        const Posture &posture = point.pose.posture;
+        const PoseEuler &pose = point.pose.pose;
+        const PoseEuler &tf = point.tool_frame;
+        const PoseEuler &uf = point.user_frame;
+        FST_ERROR("IK of point failed.");
+        FST_ERROR("Pose: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", pose.point_.x_, pose.point_.y_, pose.point_.z_, pose.euler_.a_, pose.euler_.b_, pose.euler_.c_);
+        FST_ERROR("Posture: %d, %d, %d, %d", posture.arm, posture.elbow, posture.wrist, posture.flip);
+        FST_ERROR("Tool frame: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", tf.point_.x_, tf.point_.y_, tf.point_.z_, tf.euler_.a_, tf.euler_.b_, tf.euler_.c_);
+        FST_ERROR("User frame: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", uf.point_.x_, uf.point_.y_, uf.point_.z_, uf.euler_.a_, uf.euler_.b_, uf.euler_.c_);
+        return MC_COMPUTE_IK_FAIL;
+    }
+
+    return SUCCESS;
+}
+
+ErrorCode MotionControl::handlePoint(const TargetPoint &origin, const PoseEuler &user_frame, const PoseEuler &tool_frame, IntactPoint &point)
+{
+    if (origin.type == COORDINATE_JOINT)
     {
         PoseEuler fcp_in_base, tcp_in_base;
-        motion_info.target.joint = target.target.joint;
-        motion_info.target.pose.posture = group_ptr_->getKinematicsPtr()->getPostureByJoint(target.target.joint);
-        group_ptr_->getKinematicsPtr()->doFK(target.target.joint, fcp_in_base);
-        group_ptr_->getTransformationPtr()->convertFcpToTcp(fcp_in_base, motion_info.target.tool_frame, tcp_in_base);
-        group_ptr_->getTransformationPtr()->convertPoseFromBaseToUser(tcp_in_base, motion_info.target.user_frame, motion_info.target.pose.pose);
-        FST_INFO("%.6f %.6f %.6f", motion_info.target.pose.pose.point_.x_, motion_info.target.pose.pose.point_.y_, motion_info.target.pose.pose.point_.z_);
+        point.joint = origin.joint;
+        point.user_frame = user_frame;
+        point.tool_frame = tool_frame;
+        point.pose.posture = group_ptr_->getKinematicsPtr()->getPostureByJoint(point.joint);
+        group_ptr_->getKinematicsPtr()->doFK(point.joint, fcp_in_base);
+        group_ptr_->getTransformationPtr()->convertFcpToTcp(fcp_in_base, tool_frame, tcp_in_base);
+        group_ptr_->getTransformationPtr()->convertPoseFromBaseToUser(tcp_in_base, user_frame, point.pose.pose);
     }
     else
     {
         PoseEuler fcp_in_base, tcp_in_base;
-        motion_info.target.pose = target.target.pose;
-        group_ptr_->getTransformationPtr()->convertPoseFromUserToBase(target.target.pose.pose, motion_info.target.user_frame, tcp_in_base);
-        group_ptr_->getTransformationPtr()->convertTcpToFcp(tcp_in_base, motion_info.target.tool_frame, fcp_in_base);
+        point.pose = origin.pose;
+        point.user_frame = user_frame;
+        point.tool_frame = tool_frame;
+        group_ptr_->getTransformationPtr()->convertPoseFromUserToBase(point.pose.pose, user_frame, tcp_in_base);
+        group_ptr_->getTransformationPtr()->convertTcpToFcp(tcp_in_base, tool_frame, fcp_in_base);
         
-        if (!group_ptr_->getKinematicsPtr()->doIK(fcp_in_base, target.target.pose.posture, motion_info.target.joint))
+        if (!group_ptr_->getKinematicsPtr()->doIK(fcp_in_base, point.pose.posture, point.joint))
         {
-            const PoseEuler &pose = target.target.pose.pose;
-            const PoseEuler &tf = motion_info.target.tool_frame;
-            const PoseEuler &uf = motion_info.target.user_frame;
-            FST_ERROR("IK of target pose failed.");
+            const Posture &posture = point.pose.posture;
+            const PoseEuler &pose = point.pose.pose;
+            const PoseEuler &tf = point.tool_frame;
+            const PoseEuler &uf = point.user_frame;
+            FST_ERROR("IK of point failed.");
             FST_ERROR("Pose: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", pose.point_.x_, pose.point_.y_, pose.point_.z_, pose.euler_.a_, pose.euler_.b_, pose.euler_.c_);
-            FST_ERROR("Posture: %d, %d, %d, %d", target.target.pose.posture.arm, target.target.pose.posture.elbow, target.target.pose.posture.wrist, target.target.pose.posture.flip);
+            FST_ERROR("Posture: %d, %d, %d, %d", posture.arm, posture.elbow, posture.wrist, posture.flip);
             FST_ERROR("Tool frame: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", tf.point_.x_, tf.point_.y_, tf.point_.z_, tf.euler_.a_, tf.euler_.b_, tf.euler_.c_);
             FST_ERROR("User frame: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", uf.point_.x_, uf.point_.y_, uf.point_.z_, uf.euler_.a_, uf.euler_.b_, uf.euler_.c_);
             return MC_COMPUTE_IK_FAIL;
         }
     }
 
-    if (target.type == MOTION_CIRCLE)
-    {
-        motion_info.via.user_frame = motion_info.target.user_frame;
-        motion_info.via.tool_frame = motion_info.target.tool_frame;
+    return SUCCESS;
+}
 
-        if (target.via.type == COORDINATE_JOINT)
+ErrorCode MotionControl::getFrameOffsetMatrix(int frame_id, const PoseEuler &offset, const PoseEuler &current_frame, TransMatrix &matrix)
+{
+    FST_INFO("Reference-frame-id: %d, offset-pose: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", frame_id, offset.point_.x_, offset.point_.y_, offset.point_.z_, offset.euler_.a_, offset.euler_.b_, offset.euler_.c_);
+    FST_INFO("Current-frame: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", current_frame.point_.x_, current_frame.point_.y_, current_frame.point_.z_, current_frame.euler_.a_, current_frame.euler_.b_, current_frame.euler_.c_);
+    
+    if (frame_id < 0)
+    {
+        // 基于当前user-frame进行偏移
+        offset.convertToTransMatrix(matrix);
+    }
+    else if (frame_id == 0)
+    {
+        // 基于base-frame进行偏移
+        TransMatrix trans_offset, trans_uf, trans_temp;
+        current_frame.convertToTransMatrix(trans_uf);
+        trans_temp.rotation_matrix_ = trans_uf.rotation_matrix_;
+        memset(&trans_temp.trans_vector_, 0, sizeof(trans_temp.trans_vector_));
+        trans_temp.inverse();
+        offset.convertToTransMatrix(trans_offset);
+        trans_temp.rightMultiply(trans_offset, matrix);
+    }
+    else
+    {
+        CoordInfo uf_info;
+        ErrorCode err = coordinate_manager_ptr_->getCoordInfoById(frame_id, uf_info);
+
+        if (err != SUCCESS)
         {
-            PoseEuler fcp_in_base, tcp_in_base;
-            motion_info.via.joint = target.via.joint;
-            motion_info.via.pose.posture = group_ptr_->getKinematicsPtr()->getPostureByJoint(target.via.joint);
-            group_ptr_->getKinematicsPtr()->doFK(target.via.joint, fcp_in_base);
-            group_ptr_->getTransformationPtr()->convertFcpToTcp(fcp_in_base, motion_info.via.tool_frame, tcp_in_base);
-            group_ptr_->getTransformationPtr()->convertPoseFromBaseToUser(tcp_in_base, motion_info.via.user_frame, motion_info.via.pose.pose);
+            FST_ERROR("Fail to get reference user frame from given id");
+            return err;
         }
-        else
+
+        if (!uf_info.is_valid)
         {
-            PoseEuler fcp_in_base, tcp_in_base;
-            motion_info.via.pose = target.via.pose;
-            group_ptr_->getTransformationPtr()->convertPoseFromUserToBase(target.via.pose.pose, motion_info.via.user_frame, tcp_in_base);
-            group_ptr_->getTransformationPtr()->convertTcpToFcp(tcp_in_base, motion_info.via.tool_frame, fcp_in_base);
-            
-            if (!group_ptr_->getKinematicsPtr()->doIK(fcp_in_base, target.via.pose.posture, motion_info.via.joint))
-            {
-                const PoseEuler &pose = target.via.pose.pose;
-                const PoseEuler &tf = motion_info.via.tool_frame;
-                const PoseEuler &uf = motion_info.via.user_frame;
-                FST_ERROR("IK of via pose failed.");
-                FST_ERROR("Pose: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", pose.point_.x_, pose.point_.y_, pose.point_.z_, pose.euler_.a_, pose.euler_.b_, pose.euler_.c_);
-                FST_ERROR("Posture: %d, %d, %d, %d", target.via.pose.posture.arm, target.via.pose.posture.elbow, target.via.pose.posture.wrist, target.via.pose.posture.flip);
-                FST_ERROR("Tool frame: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", tf.point_.x_, tf.point_.y_, tf.point_.z_, tf.euler_.a_, tf.euler_.b_, tf.euler_.c_);
-                FST_ERROR("User frame: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", uf.point_.x_, uf.point_.y_, uf.point_.z_, uf.euler_.a_, uf.euler_.b_, uf.euler_.c_);
-                return MC_COMPUTE_IK_FAIL;
-            }
+            FST_ERROR("Reference user frame indicated by given id is invalid");
+            return INVALID_PARAMETER;
         }
+
+        FST_INFO("Reference-frame: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f",   uf_info.data.point_.x_, uf_info.data.point_.y_, uf_info.data.point_.z_,
+                                                                           uf_info.data.euler_.a_, uf_info.data.euler_.b_, uf_info.data.euler_.c_);
+        
+        TransMatrix trans_offset, trans_uf, trans_temp, trans_reference_uf;
+        current_frame.convertToTransMatrix(trans_uf);
+        uf_info.data.convertToTransMatrix(trans_reference_uf);
+        trans_temp.rotation_matrix_ = trans_uf.rotation_matrix_;
+        trans_temp.trans_vector_ = trans_reference_uf.trans_vector_;
+        trans_temp.inverse();
+        offset.convertToTransMatrix(trans_offset);
+        trans_temp.rightMultiply(trans_reference_uf).rightMultiply(trans_offset, matrix);
+        PoseEuler offset_in_user;
+        matrix.convertToPoseEuler(offset_in_user);
+        FST_INFO("Offset in current frame: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", offset_in_user.point_.x_, offset_in_user.point_.y_, offset_in_user.point_.z_,
+                                                                                 offset_in_user.euler_.a_, offset_in_user.euler_.b_, offset_in_user.euler_.c_);
     }
 
-    return group_ptr_->autoMove(id, motion_info);
+    return SUCCESS;
+}
+
+ErrorCode MotionControl::offsetToolFrame(int tool_id, const PoseEuler &offset, PoseEuler &tool_frame)
+{
+    FST_INFO("Reference-tool-id: %d, offset-pose: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", tool_id, offset.point_.x_, offset.point_.y_, offset.point_.z_, offset.euler_.a_, offset.euler_.b_, offset.euler_.c_);
+    FST_INFO("Origin-tool-frame: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", tool_frame.point_.x_, tool_frame.point_.y_, tool_frame.point_.z_, tool_frame.euler_.a_, tool_frame.euler_.b_, tool_frame.euler_.c_);
+    
+    if (tool_id < 0)
+    {
+        // 基于当前tool-frame进行偏移
+        TransMatrix trans_offset, trans_tf;
+        tool_frame.convertToTransMatrix(trans_tf);
+        offset.convertToTransMatrix(trans_offset);
+        trans_tf.rightMultiply(trans_offset).convertToPoseEuler(tool_frame);
+    }
+    else if (tool_id == 0)
+    {
+        // 基于flange-frame进行偏移
+        TransMatrix trans_offset, trans_tf, trans_temp;
+        tool_frame.convertToTransMatrix(trans_tf);
+        trans_temp.rotation_matrix_ = trans_tf.rotation_matrix_;
+        memset(&trans_temp.trans_vector_, 0, sizeof(trans_temp.trans_vector_));
+        trans_temp.inverse();
+        offset.convertToTransMatrix(trans_offset);
+        trans_tf.rightMultiply(trans_temp).rightMultiply(trans_offset).convertToPoseEuler(tool_frame);
+    }
+    else
+    {
+        ToolInfo tf_info;
+        ErrorCode err = tool_manager_ptr_->getToolInfoById(tool_id, tf_info);
+
+        if (err != SUCCESS)
+        {
+            FST_ERROR("Fail to get reference tool frame from given id");
+            return err;
+        }
+
+        if (!tf_info.is_valid)
+        {
+            FST_ERROR("Reference tool frame indicated by given id is invalid");
+            return INVALID_PARAMETER;
+        }
+
+        TransMatrix trans_offset, trans_tf, trans_temp, trans_reference_tf;
+        tool_frame.convertToTransMatrix(trans_tf);
+        tf_info.data.convertToTransMatrix(trans_reference_tf);
+        trans_temp.rotation_matrix_ = trans_tf.rotation_matrix_;
+        trans_temp.trans_vector_ = trans_reference_tf.trans_vector_;
+        trans_temp.inverse();
+        offset.convertToTransMatrix(trans_offset);
+        trans_tf.rightMultiply(trans_temp).rightMultiply(trans_reference_tf).rightMultiply(trans_offset).convertToPoseEuler(tool_frame);
+        FST_INFO("Reference tool frame: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", tf_info.data.point_.x_, tf_info.data.point_.y_, tf_info.data.point_.z_, tf_info.data.euler_.a_, tf_info.data.euler_.b_, tf_info.data.euler_.c_);
+    }
+
+    FST_INFO("New-tool-frame: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", tool_frame.point_.x_, tool_frame.point_.y_, tool_frame.point_.z_, tool_frame.euler_.a_, tool_frame.euler_.b_, tool_frame.euler_.c_);
+    return SUCCESS;
 }
 
 ErrorCode MotionControl::abortMove(void)

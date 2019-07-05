@@ -931,13 +931,15 @@ int call_MoveJ(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 	// FST_INFO("call_MoveJ XPATH: %s", objThreadCntrolBlock->vector_XPath[iLineNum].c_str());
 
     get_exp(objThreadCntrolBlock, &value, &boolValue);
-	FST_INFO("call_MoveJ value.getType() = %d", value.getType());
-	if(value.getType() == TYPE_NONE)
-	{
-		find_eol(objThreadCntrolBlock);
-		return 0;
-	}
-	else if((value.getType() == TYPE_INT) || (value.getType() == TYPE_FLOAT))
+	FST_INFO("call_MoveJ value.getType() = %d", value.getIntType());
+//	if(value.hasType(TYPE_NONE) == TYPE_NONE)
+//	{
+//	    FST_INFO("value.getIntType() == TYPE_INT in MovJ");
+//		find_eol(objThreadCntrolBlock);
+//		return 0;
+//	}
+//	else 
+	if((value.hasType(TYPE_INT) == TYPE_INT) || (value.hasType(TYPE_FLOAT) == TYPE_FLOAT))
 	{
 		instr.target.target.type      = COORDINATE_JOINT ;
 #ifndef WIN32
@@ -986,8 +988,9 @@ int call_MoveJ(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 		instr.target.target.joint.j6 = value.getFloatValue();
 #endif
 		instr.target.user_frame_id = instr.target.tool_frame_id = -1 ;
+	    FST_INFO("value.getIntType() == TYPE_FLOAT in MovJ");
 	}
-	else if(value.getType() == TYPE_POSE)
+	else if(value.hasType(TYPE_POSE) == TYPE_POSE)
 	{
 		instr.target.target.type      = COORDINATE_CARTESIAN ;
 		instr.target.target.pose.pose = value.getPoseValue();
@@ -996,7 +999,7 @@ int call_MoveJ(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 		instr.target.target.pose.posture = value.getPosture();
 		
 		// instr.target.pose_target = value.getPoseValue();
-	    FST_INFO("value.getType() == TYPE_POSE in MovJ");
+	    FST_INFO("value.getIntType() == TYPE_POSE in MovJ");
 		
 #ifndef WIN32
 	    FST_INFO("Forward movej to POSE:(%f, %f, %f, %f, %f, %f) in MovL", 
@@ -1013,7 +1016,7 @@ int call_MoveJ(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 	//	find_eol(objThreadCntrolBlock);
     //	return 0;
 	}
-	else if(value.getType() == TYPE_JOINT)
+	else if(value.hasType(TYPE_JOINT) == TYPE_JOINT)
 	{
 		instr.target.target.type      = COORDINATE_JOINT ;
 		instr.target.target.joint = value.getJointValue();
@@ -1031,7 +1034,7 @@ int call_MoveJ(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 			instr.target.target.joint.j5, instr.target.target.joint.j6);
 #endif		
 	}
-	else if(value.getType() == TYPE_PR)
+	else if(value.hasType(TYPE_PR) == TYPE_PR)
 	{
 #ifdef WIN32
 		instr.target.target.joint.j1 = value.getPrRegDataValue().value.joint_pos[0];
@@ -1042,12 +1045,42 @@ int call_MoveJ(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 		instr.target.target.joint.j6 = value.getPrRegDataValue().value.joint_pos[5];
 #else
 		instr.target.target.type      = value.getPrRegDataValue().value.pos_type ;
-		instr.target.target.joint.j1_ = value.getPrRegDataValue().value.pos[0];
-		instr.target.target.joint.j2_ = value.getPrRegDataValue().value.pos[1];
-		instr.target.target.joint.j3_ = value.getPrRegDataValue().value.pos[2];
-		instr.target.target.joint.j4_ = value.getPrRegDataValue().value.pos[3];
-		instr.target.target.joint.j5_ = value.getPrRegDataValue().value.pos[4];
-		instr.target.target.joint.j6_ = value.getPrRegDataValue().value.pos[5];
+		if(instr.target.target.type == PR_REG_POS_TYPE_JOINT)
+		{
+			instr.target.target.joint.j1_ = value.getPrRegDataValue().value.pos[0];
+			instr.target.target.joint.j2_ = value.getPrRegDataValue().value.pos[1];
+			instr.target.target.joint.j3_ = value.getPrRegDataValue().value.pos[2];
+			instr.target.target.joint.j4_ = value.getPrRegDataValue().value.pos[3];
+			instr.target.target.joint.j5_ = value.getPrRegDataValue().value.pos[4];
+			instr.target.target.joint.j6_ = value.getPrRegDataValue().value.pos[5];
+			
+		    FST_INFO("TYPE_PR: Forward movej to TYPE_PR:JOINT:(%d)(%f, %f, %f, %f, %f, %f) in MovJ", 
+				value.getPrRegDataValue().value.pos_type, 
+				instr.target.target.joint.j1_, instr.target.target.joint.j2_, 
+				instr.target.target.joint.j3_, instr.target.target.joint.j4_, 
+				instr.target.target.joint.j5_, instr.target.target.joint.j6_);
+		}
+		else if(instr.target.target.type == PR_REG_POS_TYPE_CARTESIAN)
+		{
+			instr.target.target.pose.pose.point_.x_ = value.getPrRegDataValue().value.pos[0];
+			instr.target.target.pose.pose.point_.y_ = value.getPrRegDataValue().value.pos[1];
+			instr.target.target.pose.pose.point_.z_ = value.getPrRegDataValue().value.pos[2];
+			instr.target.target.pose.pose.euler_.a_ = value.getPrRegDataValue().value.pos[3];
+			instr.target.target.pose.pose.euler_.b_ = value.getPrRegDataValue().value.pos[4];
+			instr.target.target.pose.pose.euler_.c_ = value.getPrRegDataValue().value.pos[5];
+			
+		    FST_INFO("TYPE_PR: Forward movej to TYPE_PR:POSE:(%d)(%f, %f, %f, %f, %f, %f) in MovJ", 
+				value.getPrRegDataValue().value.pos_type, 
+				instr.target.target.pose.pose.point_.x_, instr.target.target.pose.pose.point_.y_, 
+				instr.target.target.pose.pose.point_.z_, instr.target.target.pose.pose.euler_.a_, 
+				instr.target.target.pose.pose.euler_.b_, instr.target.target.pose.pose.euler_.c_);
+		}
+		else 
+		{
+		    FST_INFO("TYPE_PR: Forward movej error to TYPE_PR:POSE:(%d) in MovJ", 
+				value.getPrRegDataValue().value.pos_type);
+		}
+			
 		
 		instr.target.user_frame_id = value.getUFIndex();
 		instr.target.tool_frame_id = value.getTFIndex();
@@ -1057,11 +1090,6 @@ int call_MoveJ(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 		instr.target.target.pose.posture.wrist = value.getPrRegDataValue().value.posture[2];
 		instr.target.target.pose.posture.flip  = value.getPrRegDataValue().value.posture[3];
 		
-	    FST_INFO("TYPE_PR: Forward movej to TYPE_PR:(%d)(%f, %f, %f, %f, %f, %f) in MovJ", 
-			value.getPrRegDataValue().value.pos_type, 
-			instr.target.target.joint.j1_, instr.target.target.joint.j2_, 
-			instr.target.target.joint.j3_, instr.target.target.joint.j4_, 
-			instr.target.target.joint.j5_, instr.target.target.joint.j6_);
 #endif		
 	}
 	// Use start point in revert mode  
@@ -1398,13 +1426,14 @@ int call_MoveL(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 	
     // result.size() == MOVJ_COMMAND_PARAM_MIN
     get_exp(objThreadCntrolBlock, &value, &boolValue);
-	FST_INFO("call_MoveL value.getType() = %d", value.getType());
-	if(value.getType() == TYPE_NONE)
-	{
-		find_eol(objThreadCntrolBlock);
-		return 0;
-	}
-	else if((value.getType() == TYPE_INT) || (value.getType() == TYPE_FLOAT))
+	FST_INFO("call_MoveL value.getIntType() = %d", value.getIntType());
+//	if(value.hasType(TYPE_NONE) == TYPE_NONE)
+//	{
+//		find_eol(objThreadCntrolBlock);
+//		return 0;
+//	}
+//	else 
+	if((value.hasType(TYPE_INT) == TYPE_INT) || (value.hasType(TYPE_FLOAT) == TYPE_FLOAT))
 	{
 		instr.target.target.type      = COORDINATE_CARTESIAN ;
 #ifndef WIN32
@@ -1455,7 +1484,7 @@ int call_MoveL(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 
 		instr.target.user_frame_id = instr.target.tool_frame_id = -1 ;
 	}
-	else if(value.getType() == TYPE_POSE)
+	else if(value.hasType(TYPE_POSE) == TYPE_POSE)
 	{
 		instr.target.target.type      = COORDINATE_CARTESIAN ;
 		instr.target.target.pose.pose = value.getPoseValue();
@@ -1475,31 +1504,61 @@ int call_MoveL(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 			instr.target.target.pose.pose.orientation.b, instr.target.target.pose.pose.orientation.c);
 #endif
 	}
-	else if(value.getType() == TYPE_JOINT)
+	else if(value.hasType(TYPE_JOINT) == TYPE_JOINT)
 	{
 		instr.target.target.type      = COORDINATE_JOINT ;
 		instr.target.target.joint     = value.getJointValue();
 		instr.target.user_frame_id = value.getUFIndex();
 		instr.target.tool_frame_id = value.getTFIndex();
 		// instr.target.joint_target = value.getJointValue();
-	    FST_INFO("value.getType() == TYPE_JOINT in MovL");
+	    FST_INFO("value.getIntType() == TYPE_JOINT in MovL");
 	//	serror(objThreadCntrolBlock, 15);
 	//	find_eol(objThreadCntrolBlock);
     //	return 0;
 	}
-	else if(value.getType() == TYPE_PR)
+	else if(value.hasType(TYPE_PR) == TYPE_PR)
 	{
 #ifdef WIN32
 		instr.target.target.pose.pose.position    = value.getPrRegDataValue().value.cartesian_pos.position ;
 		instr.target.target.pose.pose.orientation = value.getPrRegDataValue().value.cartesian_pos.orientation;
 #else
 		instr.target.target.type      = value.getPrRegDataValue().value.pos_type ;
-		instr.target.target.pose.pose.point_.x_    = value.getPrRegDataValue().value.pos[0];
-		instr.target.target.pose.pose.point_.y_    = value.getPrRegDataValue().value.pos[1];
-		instr.target.target.pose.pose.point_.z_    = value.getPrRegDataValue().value.pos[2];
-		instr.target.target.pose.pose.euler_.a_    = value.getPrRegDataValue().value.pos[3];
-		instr.target.target.pose.pose.euler_.b_    = value.getPrRegDataValue().value.pos[4];
-		instr.target.target.pose.pose.euler_.c_    = value.getPrRegDataValue().value.pos[5];
+
+		if(instr.target.target.type == PR_REG_POS_TYPE_JOINT)
+		{
+			instr.target.target.joint.j1_ = value.getPrRegDataValue().value.pos[0];
+			instr.target.target.joint.j2_ = value.getPrRegDataValue().value.pos[1];
+			instr.target.target.joint.j3_ = value.getPrRegDataValue().value.pos[2];
+			instr.target.target.joint.j4_ = value.getPrRegDataValue().value.pos[3];
+			instr.target.target.joint.j5_ = value.getPrRegDataValue().value.pos[4];
+			instr.target.target.joint.j6_ = value.getPrRegDataValue().value.pos[5];
+			
+		    FST_INFO("TYPE_PR: Forward movel to TYPE_PR:JOINT:(%d)(%f, %f, %f, %f, %f, %f) in MovL", 
+				value.getPrRegDataValue().value.pos_type, 
+				instr.target.target.joint.j1_, instr.target.target.joint.j2_, 
+				instr.target.target.joint.j3_, instr.target.target.joint.j4_, 
+				instr.target.target.joint.j5_, instr.target.target.joint.j6_);
+		}
+		else if(instr.target.target.type == PR_REG_POS_TYPE_CARTESIAN)
+		{
+			instr.target.target.pose.pose.point_.x_ = value.getPrRegDataValue().value.pos[0];
+			instr.target.target.pose.pose.point_.y_ = value.getPrRegDataValue().value.pos[1];
+			instr.target.target.pose.pose.point_.z_ = value.getPrRegDataValue().value.pos[2];
+			instr.target.target.pose.pose.euler_.a_ = value.getPrRegDataValue().value.pos[3];
+			instr.target.target.pose.pose.euler_.b_ = value.getPrRegDataValue().value.pos[4];
+			instr.target.target.pose.pose.euler_.c_ = value.getPrRegDataValue().value.pos[5];
+			
+		    FST_INFO("TYPE_PR: Forward movel to TYPE_PR:POSE:(%d)(%f, %f, %f, %f, %f, %f) in MovL", 
+				value.getPrRegDataValue().value.pos_type, 
+				instr.target.target.pose.pose.point_.x_, instr.target.target.pose.pose.point_.y_, 
+				instr.target.target.pose.pose.point_.z_, instr.target.target.pose.pose.euler_.a_, 
+				instr.target.target.pose.pose.euler_.b_, instr.target.target.pose.pose.euler_.c_);
+		}
+		else 
+		{
+		    FST_INFO("TYPE_PR: Forward movel error to TYPE_PR:POSE:(%d) in MovL", 
+				value.getPrRegDataValue().value.pos_type);
+		}
 		
 		instr.target.user_frame_id                 = value.getUFIndex();
 		instr.target.tool_frame_id                 = value.getTFIndex();
@@ -1508,11 +1567,6 @@ int call_MoveL(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 		instr.target.target.pose.posture.elbow     = value.getPrRegDataValue().value.posture[1];
 		instr.target.target.pose.posture.wrist     = value.getPrRegDataValue().value.posture[2];
 		instr.target.target.pose.posture.flip      = value.getPrRegDataValue().value.posture[3];
-	    FST_INFO("TYPE_PR: Forward movel to TYPE_PR:(%d)(%f, %f, %f, %f, %f, %f) in MovJ",
-			value.getPrRegDataValue().value.pos_type, 
-			instr.target.target.pose.pose.point_.x_, instr.target.target.pose.pose.point_.y_, 
-			instr.target.target.pose.pose.point_.z_, instr.target.target.pose.pose.euler_.a_, 
-			instr.target.target.pose.pose.euler_.b_, instr.target.target.pose.pose.euler_.c_);
 #endif	
 	}
 	
@@ -1846,12 +1900,13 @@ int call_MoveC(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
     // result.size() == MOVJ_COMMAND_PARAM_MIN
     get_exp(objThreadCntrolBlock, &value, &boolValue);
 	
-	if(value.getType() == TYPE_NONE)
-	{
-		find_eol(objThreadCntrolBlock);
-		return 0;
-	}
-	else if((value.getType() == TYPE_INT) || (value.getType() == TYPE_FLOAT))
+//	if(value.hasType(TYPE_NONE) == TYPE_NONE)
+//	{
+//		find_eol(objThreadCntrolBlock);
+//		return 0;
+//	}
+//	else 
+	if((value.hasType(TYPE_INT) == TYPE_INT) || (value.hasType(TYPE_FLOAT) == TYPE_FLOAT))
 	{
 		instr.target.via.type      = COORDINATE_CARTESIAN ;
 #ifndef WIN32
@@ -1901,14 +1956,14 @@ int call_MoveC(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 #endif	
 		instr.target.user_frame_id = instr.target.tool_frame_id = -1 ;
 	}
-	else if(value.getType() == TYPE_POSE)
+	else if(value.hasType(TYPE_POSE) == TYPE_POSE)
 	{
 		instr.target.via.type      = COORDINATE_CARTESIAN ;
 		instr.target.via.pose.pose = value.getPoseValue();
 		
 		instr.target.via.pose.posture = value.getPosture();
 	}
-	else if(value.getType() == TYPE_JOINT)
+	else if(value.hasType(TYPE_JOINT) == TYPE_JOINT)
 	{
 		instr.target.via.type      = COORDINATE_JOINT ;
 		instr.target.via.joint     = value.getJointValue();
@@ -1916,41 +1971,67 @@ int call_MoveC(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 	//	find_eol(objThreadCntrolBlock);
     //	return 0;
 	}
-	else if(value.getType() == TYPE_PR)
+	else if(value.hasType(TYPE_PR) == TYPE_PR)
 	{
 #ifdef WIN32
 		instr.target.via.pose.pose.position    = value.getPrRegDataValue().value.cartesian_pos.position ;
 		instr.target.via.pose.pose.orientation = value.getPrRegDataValue().value.cartesian_pos.orientation;
 #else
 		instr.target.via.type      = value.getPrRegDataValue().value.pos_type ;
-		instr.target.via.pose.pose.point_.x_    = value.getPrRegDataValue().value.pos[0];
-		instr.target.via.pose.pose.point_.y_    = value.getPrRegDataValue().value.pos[1];
-		instr.target.via.pose.pose.point_.z_    = value.getPrRegDataValue().value.pos[2];
-		instr.target.via.pose.pose.euler_.a_    = value.getPrRegDataValue().value.pos[3];
-		instr.target.via.pose.pose.euler_.b_    = value.getPrRegDataValue().value.pos[4];
-		instr.target.via.pose.pose.euler_.c_    = value.getPrRegDataValue().value.pos[5];
+
+		if(instr.target.target.type == PR_REG_POS_TYPE_JOINT)
+		{
+			instr.target.via.joint.j1_ = value.getPrRegDataValue().value.pos[0];
+			instr.target.via.joint.j2_ = value.getPrRegDataValue().value.pos[1];
+			instr.target.via.joint.j3_ = value.getPrRegDataValue().value.pos[2];
+			instr.target.via.joint.j4_ = value.getPrRegDataValue().value.pos[3];
+			instr.target.via.joint.j5_ = value.getPrRegDataValue().value.pos[4];
+			instr.target.via.joint.j6_ = value.getPrRegDataValue().value.pos[5];
+			
+		    FST_INFO("TYPE_PR: Forward movec via to TYPE_PR:JOINT:(%d)(%f, %f, %f, %f, %f, %f) in MovC", 
+				value.getPrRegDataValue().value.pos_type, 
+				instr.target.target.joint.j1_, instr.target.target.joint.j2_, 
+				instr.target.target.joint.j3_, instr.target.target.joint.j4_, 
+				instr.target.target.joint.j5_, instr.target.target.joint.j6_);
+		}
+		else if(instr.target.target.type == PR_REG_POS_TYPE_CARTESIAN)
+		{
+			instr.target.via.pose.pose.point_.x_ = value.getPrRegDataValue().value.pos[0];
+			instr.target.via.pose.pose.point_.y_ = value.getPrRegDataValue().value.pos[1];
+			instr.target.via.pose.pose.point_.z_ = value.getPrRegDataValue().value.pos[2];
+			instr.target.via.pose.pose.euler_.a_ = value.getPrRegDataValue().value.pos[3];
+			instr.target.via.pose.pose.euler_.b_ = value.getPrRegDataValue().value.pos[4];
+			instr.target.via.pose.pose.euler_.c_ = value.getPrRegDataValue().value.pos[5];
+			
+		    FST_INFO("TYPE_PR: Forward movec via to TYPE_PR:POSE:(%d)(%f, %f, %f, %f, %f, %f) in MovC", 
+				value.getPrRegDataValue().value.pos_type, 
+				instr.target.target.pose.pose.point_.x_, instr.target.target.pose.pose.point_.y_, 
+				instr.target.target.pose.pose.point_.z_, instr.target.target.pose.pose.euler_.a_, 
+				instr.target.target.pose.pose.euler_.b_, instr.target.target.pose.pose.euler_.c_);
+		}
+		else 
+		{
+		    FST_INFO("TYPE_PR: Forward movec via error to TYPE_PR:POSE:(%d) in MovC", 
+				value.getPrRegDataValue().value.pos_type);
+		}
 		
 		instr.target.via.pose.posture.arm       = value.getPrRegDataValue().value.posture[0];
 		instr.target.via.pose.posture.elbow     = value.getPrRegDataValue().value.posture[1];
 		instr.target.via.pose.posture.wrist     = value.getPrRegDataValue().value.posture[2];
 		instr.target.via.pose.posture.flip      = value.getPrRegDataValue().value.posture[3];
-	    FST_INFO("TYPE_PR: Forward movec via to TYPE_PR:(%d)(%f, %f, %f, %f, %f, %f) in MovJ",
-			value.getPrRegDataValue().value.pos_type, 
-			instr.target.via.pose.pose.point_.x_, instr.target.via.pose.pose.point_.y_, 
-			instr.target.via.pose.pose.point_.z_, instr.target.via.pose.pose.euler_.a_, 
-			instr.target.via.pose.pose.euler_.b_, instr.target.via.pose.pose.euler_.c_);
 #endif	
 	}
 	
 	get_token(objThreadCntrolBlock);
 
     get_exp(objThreadCntrolBlock, &value, &boolValue);
-	if(value.getType() == TYPE_NONE)
-	{
-		find_eol(objThreadCntrolBlock);
-    	return 0;
-	}
-	else if((value.getType() == TYPE_INT) || (value.getType() == TYPE_FLOAT))
+//	if(value.hasType(TYPE_NONE) == TYPE_NONE)
+//	{
+//		find_eol(objThreadCntrolBlock);
+//    	return 0;
+//	}
+//	else 
+	if((value.hasType(TYPE_INT) == TYPE_INT) || (value.hasType(TYPE_FLOAT) == TYPE_FLOAT))
 	{
 		instr.target.target.type      = COORDINATE_CARTESIAN ;
 #ifndef WIN32
@@ -1999,7 +2080,7 @@ int call_MoveC(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 		instr.target.target.pose.pose.orientation.c = value.getFloatValue();
 #endif	
 	}
-	else if(value.getType() == TYPE_POSE)
+	else if(value.hasType(TYPE_POSE) == TYPE_POSE)
 	{
 		instr.target.target.type      = COORDINATE_CARTESIAN ;
 		instr.target.target.pose.pose = value.getPoseValue();
@@ -2019,28 +2100,59 @@ int call_MoveC(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 			instr.target.target.pose.pose.orientation.b, instr.target.target.pose.pose.orientation.c);
 #endif	
 	}
-	else if(value.getType() == TYPE_JOINT)
+	else if(value.hasType(TYPE_JOINT) == TYPE_JOINT)
 	{
 		instr.target.target.type      = COORDINATE_JOINT ;
 		instr.target.target.joint     = value.getJointValue();
 		// instr.target.joint_target = value.getJointValue();
-	    FST_INFO("value.getType() == TYPE_JOINT in MovC");
+	    FST_INFO("value.getIntType() == TYPE_JOINT in MovC");
 	//	find_eol(objThreadCntrolBlock);
     //	return 0;
 	}
-	else if(value.getType() == TYPE_PR)
+	else if(value.hasType(TYPE_PR) == TYPE_PR)
 	{
 #ifdef WIN32
 		instr.target.target.pose.pose.position    = value.getPrRegDataValue().value.cartesian_pos.position ;
 		instr.target.target.pose.pose.orientation = value.getPrRegDataValue().value.cartesian_pos.orientation;
 #else
 		instr.target.target.type      = value.getPrRegDataValue().value.pos_type ;
-		instr.target.target.pose.pose.point_.x_    = value.getPrRegDataValue().value.pos[0];
-		instr.target.target.pose.pose.point_.y_    = value.getPrRegDataValue().value.pos[1];
-		instr.target.target.pose.pose.point_.z_    = value.getPrRegDataValue().value.pos[2];
-		instr.target.target.pose.pose.euler_.a_    = value.getPrRegDataValue().value.pos[3];
-		instr.target.target.pose.pose.euler_.b_    = value.getPrRegDataValue().value.pos[4];
-		instr.target.target.pose.pose.euler_.c_    = value.getPrRegDataValue().value.pos[5];
+
+		if(instr.target.target.type == PR_REG_POS_TYPE_JOINT)
+		{
+			instr.target.target.joint.j1_ = value.getPrRegDataValue().value.pos[0];
+			instr.target.target.joint.j2_ = value.getPrRegDataValue().value.pos[1];
+			instr.target.target.joint.j3_ = value.getPrRegDataValue().value.pos[2];
+			instr.target.target.joint.j4_ = value.getPrRegDataValue().value.pos[3];
+			instr.target.target.joint.j5_ = value.getPrRegDataValue().value.pos[4];
+			instr.target.target.joint.j6_ = value.getPrRegDataValue().value.pos[5];
+			
+		    FST_INFO("TYPE_PR: Forward movec target to TYPE_PR:JOINT:(%d)(%f, %f, %f, %f, %f, %f) in MovC", 
+				value.getPrRegDataValue().value.pos_type, 
+				instr.target.target.joint.j1_, instr.target.target.joint.j2_, 
+				instr.target.target.joint.j3_, instr.target.target.joint.j4_, 
+				instr.target.target.joint.j5_, instr.target.target.joint.j6_);
+		}
+		else if(instr.target.target.type == PR_REG_POS_TYPE_CARTESIAN)
+		{
+			instr.target.target.pose.pose.point_.x_ = value.getPrRegDataValue().value.pos[0];
+			instr.target.target.pose.pose.point_.y_ = value.getPrRegDataValue().value.pos[1];
+			instr.target.target.pose.pose.point_.z_ = value.getPrRegDataValue().value.pos[2];
+			instr.target.target.pose.pose.euler_.a_ = value.getPrRegDataValue().value.pos[3];
+			instr.target.target.pose.pose.euler_.b_ = value.getPrRegDataValue().value.pos[4];
+			instr.target.target.pose.pose.euler_.c_ = value.getPrRegDataValue().value.pos[5];
+			
+		    FST_INFO("TYPE_PR: Forward movec target to TYPE_PR:POSE:(%d)(%f, %f, %f, %f, %f, %f) in MovC", 
+				value.getPrRegDataValue().value.pos_type, 
+				instr.target.target.pose.pose.point_.x_, instr.target.target.pose.pose.point_.y_, 
+				instr.target.target.pose.pose.point_.z_, instr.target.target.pose.pose.euler_.a_, 
+				instr.target.target.pose.pose.euler_.b_, instr.target.target.pose.pose.euler_.c_);
+		}
+		else 
+		{
+		    FST_INFO("TYPE_PR: Forward movec target error to TYPE_PR:POSE:(%d) in MovC", 
+				value.getPrRegDataValue().value.pos_type);
+		}
+		
 		instr.target.user_frame_id                 = value.getUFIndex();
 		instr.target.tool_frame_id                 = value.getTFIndex();
 		
@@ -2048,11 +2160,6 @@ int call_MoveC(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 		instr.target.target.pose.posture.elbow     = value.getPrRegDataValue().value.posture[1];
 		instr.target.target.pose.posture.wrist     = value.getPrRegDataValue().value.posture[2];
 		instr.target.target.pose.posture.flip      = value.getPrRegDataValue().value.posture[3];
-	    FST_INFO("TYPE_PR: Forward movec target to TYPE_PR:(%d)(%f, %f, %f, %f, %f, %f) in MovJ",
-			value.getPrRegDataValue().value.pos_type, 
-			instr.target.target.pose.pose.point_.x_, instr.target.target.pose.pose.point_.y_, 
-			instr.target.target.pose.pose.point_.z_, instr.target.target.pose.pose.euler_.a_, 
-			instr.target.target.pose.pose.euler_.b_, instr.target.target.pose.pose.euler_.c_);
 #endif	
 	}
 	

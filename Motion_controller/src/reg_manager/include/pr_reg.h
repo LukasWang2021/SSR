@@ -17,6 +17,7 @@ typedef struct
 {
     int pos_type;
     double pos[9];        // support up to 9 axes per control group
+    int turn[9];
     int posture[4];
     int group_id;
 }PrValue;

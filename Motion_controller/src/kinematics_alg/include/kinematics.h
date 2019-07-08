@@ -20,6 +20,19 @@ typedef struct
     int flip;   // 0: not flip wrist, 1: flip wrist
 }Posture;
 
+typedef struct
+{
+    int   j1_;
+    int   j2_;
+    int   j3_;
+    int   j4_;
+    int   j5_;
+    int   j6_;
+    int   j7_;
+    int   j8_;
+    int   j9_;
+}Turn;
+
 class Kinematics
 {
 public:

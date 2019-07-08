@@ -41,7 +41,7 @@ struct PoseAndPosture
 {
     basic_alg::PoseEuler    pose;
     basic_alg::Posture      posture;
-    int                     turn[6];
+    basic_alg::Turn         turn;
 };
 
 struct TargetPoint

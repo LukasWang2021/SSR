@@ -40,6 +40,7 @@ typedef unsigned long long int ErrorCode;
 #define MC_RECORD_JOINT_TIMEOUT (unsigned long long int)0x0001000700A90006   /*record joint to nvram timeout*/
 #define MC_SWITCH_STATE_TIMEOUT (unsigned long long int)0x0001000700A90007   /*group switch from one state to other timeout*/
 #define MC_JOINT_TRACKING_ERROR (unsigned long long int)0x0001000700A90008   /*joint tracking error beyond threshold*/
+#define MC_SEND_TRAJECTORY_FAIL (unsigned long long int)0x0001000700A90009   /*fail to send trajectory to barecore*/
 #define MC_COMPUTE_IK_FAIL (unsigned long long int)0x0001000400A903E9   /*compute IK failed*/
 #define FAIL_LOADING_PARAMETER (unsigned long long int)0x0011000200A903EB   /*load parameter failed*/
 #define JOINT_OUT_OF_CONSTRAINT (unsigned long long int)0x0001000400A903F3   /*joint out of constraint*/

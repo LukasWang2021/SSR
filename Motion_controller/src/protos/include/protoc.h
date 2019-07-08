@@ -5,6 +5,7 @@
 #include "protocal/publish.pb.h"
 #include "protocal/request_header.pb.h"
 #include "protocal/response_header.pb.h"
+#include "request/request_payload_info.pb.h"
 
 #include "request/request_base.pb.h"
 #include "request/request_publish_topic.pb.h"
@@ -89,6 +90,7 @@
 #include "message_type/modbus_client_ctrl_status.pb.h"
 
 #include "message_type/param_info.pb.h"
+#include "message_type/payload_info.pb.h"
 
 #include "response/response_base.pb.h"
 #include "response/response_publish_table.pb.h"
@@ -134,4 +136,7 @@
 #include "response/response_uint64_modbus_client_summary_start_info_list.pb.h"
 
 #include "response/response_uint64_param_info_list.pb.h"
+
+#include "response/response_uint64_payload_info.pb.h"
+#include "response/response_uint64_payload_summary_list.pb.h"
 #endif

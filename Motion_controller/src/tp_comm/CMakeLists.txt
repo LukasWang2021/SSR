@@ -37,6 +37,7 @@ set(catkin_INCLUDE_DIRS
 catkin_package(
     INCLUDE_DIRS include
     LIBRARIES tp_comm
+    DEPENDS protos
 )
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -g -Wno-unused-but-set-variable -Wno-unused-local-typedefs -O0 -fpermissive -DPB_FIELD_32BIT -DSIMMULATION -DPRINT")

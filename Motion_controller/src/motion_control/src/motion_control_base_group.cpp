@@ -3640,7 +3640,6 @@ ErrorCode BaseGroup::sendAutoTrajectoryFlow(void)
         }
 
         bare_core_.fillPointCache(points, length, POINT_POS_VEL);
-        FST_LOG(">>>fill trajectory");
 
         if (points[length - 1].level == POINT_ENDING)
         {
@@ -3729,23 +3728,18 @@ void BaseGroup::sendTrajectoryFlow(void)
 {
     static size_t error_cnt = 0;
     ErrorCode err = SUCCESS;
-    bool flag = false;
-    static struct timeval error_time[50];
 
     if (group_state_ == AUTO && !auto_to_standby_request_ && !auto_to_pause_request_)
     {
         err = sendAutoTrajectoryFlow();
-        flag = true;
     }
     else if (group_state_ == PAUSING && !pausing_to_pause_request_)
     {
         err = sendAutoTrajectoryFlow();
-        flag = true;
     }
     else if (group_state_ == PAUSE_RETURN && !pause_return_to_standby_request_)
     {
         err = sendAutoTrajectoryFlow();
-        flag = true;
     }
     else if (group_state_ == MANUAL && !manual_to_standby_request_)
     {
@@ -3756,28 +3750,17 @@ void BaseGroup::sendTrajectoryFlow(void)
         if (!bare_core_.isPointCacheEmpty())
         {
             err = bare_core_.sendPoint() ? SUCCESS : MC_COMMUNICATION_WITH_BARECORE_FAIL;
-            flag = true;
         }
     }
 
     if (err == SUCCESS)
-    {
-        if (flag)
-        {
-            FST_LOG(">>>send trajectory, cycle=%d", error_cnt);
-            for (size_t i = 0; i < error_cnt; i++)
-            {
-                FST_LOG("cycle time[%d]=%ld.%6ld", i, error_time[i].tv_sec, error_time[i].tv_usec);
-            }
-        }
-            
+    {    
         error_cnt = 0;
     }
     else
     {
         if (err == MC_COMMUNICATION_WITH_BARECORE_FAIL)
         {
-            gettimeofday(&error_time[error_cnt % 50], NULL);
             error_cnt ++;
 
             if (error_cnt > trajectory_flow_timeout_)

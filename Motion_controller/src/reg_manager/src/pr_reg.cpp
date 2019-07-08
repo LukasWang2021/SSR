@@ -115,6 +115,17 @@ ErrorCode PrReg::addReg(void* data_ptr)
     data_list_[reg_data.id].posture[1] = reg_ptr->value.posture[1];
     data_list_[reg_data.id].posture[2] = reg_ptr->value.posture[2];
     data_list_[reg_data.id].posture[3] = reg_ptr->value.posture[3];
+
+    data_list_[reg_data.id].turn[0] = reg_ptr->value.turn[0];
+    data_list_[reg_data.id].turn[1] = reg_ptr->value.turn[1];
+    data_list_[reg_data.id].turn[2] = reg_ptr->value.turn[2];
+    data_list_[reg_data.id].turn[3] = reg_ptr->value.turn[3];
+    data_list_[reg_data.id].turn[4] = reg_ptr->value.turn[4];
+    data_list_[reg_data.id].turn[5] = reg_ptr->value.turn[5];
+    data_list_[reg_data.id].turn[6] = reg_ptr->value.turn[6];
+    data_list_[reg_data.id].turn[7] = reg_ptr->value.turn[7];
+    data_list_[reg_data.id].turn[8] = reg_ptr->value.turn[8];
+
     if(!writeRegDataToYaml(reg_data, data_list_[reg_data.id]))
     {
         return REG_MANAGER_REG_FILE_WRITE_FAILED;
@@ -162,6 +173,17 @@ ErrorCode PrReg::deleteReg(int id)
     data_list_[id].posture[1] = 0;
     data_list_[id].posture[2] = 0;
     data_list_[id].posture[3] = 0;
+	
+    data_list_[id].turn[0] = 0;
+    data_list_[id].turn[1] = 0;
+    data_list_[id].turn[2] = 0;
+    data_list_[id].turn[3] = 0;
+    data_list_[id].turn[4] = 0;
+    data_list_[id].turn[5] = 0;
+    data_list_[id].turn[6] = 0;
+    data_list_[id].turn[7] = 0;
+    data_list_[id].turn[8] = 0;
+	
     if(!writeRegDataToYaml(reg_data, data_list_[id]))
     {
         return REG_MANAGER_REG_FILE_WRITE_FAILED;
@@ -211,6 +233,17 @@ ErrorCode PrReg::getReg(int id, void* data_ptr)
     reg_ptr->value.posture[1] = data_list_[id].posture[1];
     reg_ptr->value.posture[2] = data_list_[id].posture[2];
     reg_ptr->value.posture[3] = data_list_[id].posture[3];
+
+    reg_ptr->value.turn[0] = data_list_[id].turn[0];
+    reg_ptr->value.turn[1] = data_list_[id].turn[1];
+    reg_ptr->value.turn[2] = data_list_[id].turn[2];
+    reg_ptr->value.turn[3] = data_list_[id].turn[3];
+    reg_ptr->value.turn[4] = data_list_[id].turn[4];
+    reg_ptr->value.turn[5] = data_list_[id].turn[5];
+    reg_ptr->value.turn[6] = data_list_[id].turn[6];
+    reg_ptr->value.turn[7] = data_list_[id].turn[7];
+    reg_ptr->value.turn[8] = data_list_[id].turn[8];
+	
     return SUCCESS;
 }
 
@@ -268,6 +301,17 @@ ErrorCode PrReg::updateReg(void* data_ptr)
     data_list_[reg_data.id].posture[1] = reg_ptr->value.posture[1];
     data_list_[reg_data.id].posture[2] = reg_ptr->value.posture[2];
     data_list_[reg_data.id].posture[3] = reg_ptr->value.posture[3];
+
+    data_list_[reg_data.id].turn[0] = reg_ptr->value.turn[0];
+    data_list_[reg_data.id].turn[1] = reg_ptr->value.turn[1];
+    data_list_[reg_data.id].turn[2] = reg_ptr->value.turn[2];
+    data_list_[reg_data.id].turn[3] = reg_ptr->value.turn[3];
+    data_list_[reg_data.id].turn[4] = reg_ptr->value.turn[4];
+    data_list_[reg_data.id].turn[5] = reg_ptr->value.turn[5];
+    data_list_[reg_data.id].turn[6] = reg_ptr->value.turn[6];
+    data_list_[reg_data.id].turn[7] = reg_ptr->value.turn[7];
+    data_list_[reg_data.id].turn[8] = reg_ptr->value.turn[8];
+
     if(!writeRegDataToYaml(reg_data, data_list_[reg_data.id]))
     {
         return REG_MANAGER_REG_FILE_WRITE_FAILED;
@@ -451,6 +495,16 @@ bool PrReg::readAllRegDataFromYaml()
         yaml_help_.getParam(reg_path + "/posture2", data_list_[i].posture[1]);
         yaml_help_.getParam(reg_path + "/posture3", data_list_[i].posture[2]);
         yaml_help_.getParam(reg_path + "/posture4", data_list_[i].posture[3]);
+		
+		yaml_help_.getParam(reg_path + "/turn1", data_list_[i].turn[0]);
+		yaml_help_.getParam(reg_path + "/turn2", data_list_[i].turn[1]);
+		yaml_help_.getParam(reg_path + "/turn3", data_list_[i].turn[2]);
+		yaml_help_.getParam(reg_path + "/turn4", data_list_[i].turn[3]);
+		yaml_help_.getParam(reg_path + "/turn5", data_list_[i].turn[4]);
+		yaml_help_.getParam(reg_path + "/turn6", data_list_[i].turn[5]);
+		yaml_help_.getParam(reg_path + "/turn7", data_list_[i].turn[6]);
+		yaml_help_.getParam(reg_path + "/turn8", data_list_[i].turn[7]);
+		yaml_help_.getParam(reg_path + "/turn9", data_list_[i].turn[8]);
     }
     return true;
 }
@@ -477,6 +531,16 @@ bool PrReg::writeRegDataToYaml(const BaseRegData& base_data, const PrValue& data
     yaml_help_.setParam(reg_path + "/posture2", data.posture[1]);
     yaml_help_.setParam(reg_path + "/posture3", data.posture[2]);
     yaml_help_.setParam(reg_path + "/posture4", data.posture[3]);
+	
+    yaml_help_.setParam(reg_path + "/turn1", data.turn[0]);
+    yaml_help_.setParam(reg_path + "/turn2", data.turn[1]);
+    yaml_help_.setParam(reg_path + "/turn3", data.turn[2]);
+    yaml_help_.setParam(reg_path + "/turn4", data.turn[3]);
+    yaml_help_.setParam(reg_path + "/turn5", data.turn[4]);
+    yaml_help_.setParam(reg_path + "/turn6", data.turn[5]);
+    yaml_help_.setParam(reg_path + "/turn7", data.turn[6]);
+    yaml_help_.setParam(reg_path + "/turn8", data.turn[7]);
+    yaml_help_.setParam(reg_path + "/turn9", data.turn[8]);
     return yaml_help_.dumpParamFile(file_path_.c_str());
 }
 

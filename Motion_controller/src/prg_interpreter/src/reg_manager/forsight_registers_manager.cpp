@@ -124,7 +124,7 @@ int forgesight_registers_manager_get_register(
 	PrRegData objPrRegData ;
 	
 	Posture posture ;
-
+    Turn    turn;
 //    int       iID ;
 //    char      cComment[MAX_REG_COMMENT_LENGTH];
     std::string    strComment;
@@ -185,7 +185,7 @@ int forgesight_registers_manager_get_register(
 			}
 			else
 			{
-				value->setPrRegDataValue(&objPrRegData);
+			//	value->setPrRegDataValue(&objPrRegData);
 				if(objPrRegData.value.pos_type == PR_REG_POS_TYPE_CARTESIAN)
 				{
 					objPoseEuler.point_.x_  = objPrRegData.value.pos[0];
@@ -197,12 +197,6 @@ int forgesight_registers_manager_get_register(
 					
 					value->setPoseValue(&objPoseEuler);
 	       			FST_INFO("setPoseValue PR[%d].pos_type = %d ", iRegIdx, value->getIntType());
-	
-					posture.arm   = objPrRegData.value.posture[0];	
-					posture.elbow = objPrRegData.value.posture[1];	
-					posture.wrist = objPrRegData.value.posture[2];	
-					posture.flip  = objPrRegData.value.posture[3];
-					value->setPosture(posture);
 				}
 				else if(objPrRegData.value.pos_type == PR_REG_POS_TYPE_JOINT)
 				{
@@ -214,16 +208,27 @@ int forgesight_registers_manager_get_register(
                     objJoint.j6_ = objPrRegData.value.pos[5];
 					value->setJointValue(&objJoint);
 	       			FST_INFO("setJointValue PR[%d].pos_type = %d ", iRegIdx, value->getIntType());
-
-					posture.arm   = objPrRegData.value.posture[0];	
-					posture.elbow = objPrRegData.value.posture[1];	
-					posture.wrist = objPrRegData.value.posture[2];	
-					posture.flip  = objPrRegData.value.posture[3];
-					value->setPosture(posture);
 				}
+				
+				posture.arm   = objPrRegData.value.posture[0];	
+				posture.elbow = objPrRegData.value.posture[1];	
+				posture.wrist = objPrRegData.value.posture[2];	
+				posture.flip  = objPrRegData.value.posture[3];
+				value->setPosture(posture);
+							
+				turn.j1   = objPrRegData.value.turn[0];
+				turn.j2   = objPrRegData.value.turn[1];
+				turn.j3   = objPrRegData.value.turn[2];
+				turn.j4   = objPrRegData.value.turn[3];
+				turn.j5   = objPrRegData.value.turn[4];
+				turn.j6   = objPrRegData.value.turn[5];
+				turn.j7   = objPrRegData.value.turn[6];
+				turn.j8   = objPrRegData.value.turn[7];
+				turn.j9   = objPrRegData.value.turn[8];
+				value->setTurn(turn);
 			}
 #else
-			value->setPrRegDataValue(&objPrRegData);
+			// value->setPrRegDataValue(&objPrRegData);
 			if(objPrRegData.value.pos_type == PR_REG_POS_TYPE_JOINT)
 			{
 				objJoint.j1 = objPrRegData.value.joint_pos[0];
@@ -240,6 +245,23 @@ int forgesight_registers_manager_get_register(
                 objPoseEuler.orientation = objPrRegData.value.cartesian_pos.orientation;
 				value->setPoseValue(&objPoseEuler);
 			}
+				
+			posture.arm   = objPrRegData.value.posture[0];	
+			posture.elbow = objPrRegData.value.posture[1];	
+			posture.wrist = objPrRegData.value.posture[2];	
+			posture.flip  = objPrRegData.value.posture[3];
+			value->setPosture(posture);
+						
+			turn.j1   = objPrRegData.value.turn[0];
+			turn.j2   = objPrRegData.value.turn[1];
+			turn.j3   = objPrRegData.value.turn[2];
+			turn.j4   = objPrRegData.value.turn[3];
+			turn.j5   = objPrRegData.value.turn[4];
+			turn.j6   = objPrRegData.value.turn[5];
+			turn.j7   = objPrRegData.value.turn[6];
+			turn.j8   = objPrRegData.value.turn[7];
+			turn.j9   = objPrRegData.value.turn[8];
+			value->setTurn(turn);
 #endif
 		}
 		// Implement for intergretion
@@ -659,11 +681,7 @@ int forgesight_registers_manager_set_register(
 	{
 		if(strlen(reg_member) == 0)
 		{
-			if (valueStart->hasType(TYPE_PR) == TYPE_PR)
-			{
-				reg_manager_interface_setPr(&(valueStart->getPrRegDataValue()), iRegIdx);
-			}
-			else if (valueStart->hasType(TYPE_POSE) == TYPE_POSE)
+			if (valueStart->hasType(TYPE_POSE) == TYPE_POSE)
 			{
 				pose    = valueStart->getPoseValue();
 				posture = valueStart->getPosture();

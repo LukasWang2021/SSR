@@ -197,28 +197,26 @@ ErrorCode RReg::updateReg(void* data_ptr)
 		usleep(30000);
 		printf("\nRReg::updateReg: %f .\n", objNVRamRRegData.value);
 	}
-	else
-	{
-	    if(!isUpdateInputValid(reg_ptr->id)
-	        || reg_ptr->value > param_ptr_->r_value_limit_
-	        || reg_ptr->value < -param_ptr_->r_value_limit_)
-	    {
-	        return REG_MANAGER_INVALID_ARG;
-	    }
-	        
-	    BaseRegData reg_data;
-	    packSetRegData(reg_data, reg_ptr->id, reg_ptr->name, reg_ptr->comment);
-	    if(!setRegList(reg_data))
-	    {
-	        return REG_MANAGER_INVALID_ARG;
-	    }
-	    data_list_[reg_data.id] = reg_ptr->value;
-		
-	    if(!writeRegDataToYaml(reg_data, data_list_[reg_data.id]))
-	    {
-	        return REG_MANAGER_REG_FILE_WRITE_FAILED;
-	    }
-	}
+	// Save to Yaml
+    if(!isUpdateInputValid(reg_ptr->id)
+        || reg_ptr->value > param_ptr_->r_value_limit_
+        || reg_ptr->value < -param_ptr_->r_value_limit_)
+    {
+        return REG_MANAGER_INVALID_ARG;
+    }
+        
+    BaseRegData reg_data;
+    packSetRegData(reg_data, reg_ptr->id, reg_ptr->name, reg_ptr->comment);
+    if(!setRegList(reg_data))
+    {
+        return REG_MANAGER_INVALID_ARG;
+    }
+    data_list_[reg_data.id] = reg_ptr->value;
+	
+    if(!writeRegDataToYaml(reg_data, data_list_[reg_data.id]))
+    {
+        return REG_MANAGER_REG_FILE_WRITE_FAILED;
+    }
     return SUCCESS;
 }
 

@@ -38,6 +38,11 @@ ErrorCode MrReg::init()
         }
     }*/
     
+    if(!readAllRegDataFromYaml())
+    {
+        return REG_MANAGER_LOAD_MR_FAILED;
+    }
+	
 	if(use_nvram_ == REG_USE_NVRAM)
 	{
 		ErrCode error = nvram_obj_.openNvram();
@@ -67,13 +72,6 @@ ErrorCode MrReg::init()
 				}
 			}
 		}
-	}
-	else 
-	{
-	    if(!readAllRegDataFromYaml())
-	    {
-	        return REG_MANAGER_LOAD_MR_FAILED;
-	    }
 	}
     return SUCCESS;
 }
@@ -197,27 +195,24 @@ ErrorCode MrReg::updateReg(void* data_ptr)
 		usleep(30000);
 		// printf("\nMrReg::updateReg: %d .\n", objNVRamMrRegData.value);
     }
-	else
+	// Save to Yaml
+	if(!isUpdateInputValid(reg_ptr->id)
+		|| reg_ptr->value > param_ptr_->mr_value_limit_
+		|| reg_ptr->value < -param_ptr_->mr_value_limit_)
 	{
-		if(!isUpdateInputValid(reg_ptr->id)
-			|| reg_ptr->value > param_ptr_->mr_value_limit_
-			|| reg_ptr->value < -param_ptr_->mr_value_limit_)
-		{
-			return REG_MANAGER_INVALID_ARG;
-		}
-			
-		BaseRegData reg_data;
-		packSetRegData(reg_data, reg_ptr->id, reg_ptr->name, reg_ptr->comment);
-		if(!setRegList(reg_data))
-		{
-			return REG_MANAGER_INVALID_ARG;
-		}	 
-		data_list_[reg_data.id] = reg_ptr->value;
-		if(!writeRegDataToYaml(reg_data, data_list_[reg_data.id]))
-		{
-			return REG_MANAGER_REG_FILE_WRITE_FAILED;
-		}
-
+		return REG_MANAGER_INVALID_ARG;
+	}
+		
+	BaseRegData reg_data;
+	packSetRegData(reg_data, reg_ptr->id, reg_ptr->name, reg_ptr->comment);
+	if(!setRegList(reg_data))
+	{
+		return REG_MANAGER_INVALID_ARG;
+	}	 
+	data_list_[reg_data.id] = reg_ptr->value;
+	if(!writeRegDataToYaml(reg_data, data_list_[reg_data.id]))
+	{
+		return REG_MANAGER_REG_FILE_WRITE_FAILED;
 	}
     return SUCCESS;
 }

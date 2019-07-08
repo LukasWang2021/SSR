@@ -624,7 +624,7 @@ void DynamicAlgRTM::getPayload(int &id)
     id = current_payload_id_;
 }
 
-ErrorCode DynamicAlgRTM::addPayload(PayloadInfo& info)
+ErrorCode DynamicAlgRTM::addPayload(const PayloadInfo& info)
 {
     return payload_ptr_->addPayload(info);
 }
@@ -634,7 +634,7 @@ ErrorCode DynamicAlgRTM::deletePayload(int id)
     return payload_ptr_->deletePayload(id);
 }
 
-ErrorCode DynamicAlgRTM::updatePayload(PayloadInfo& info)
+ErrorCode DynamicAlgRTM::updatePayload(const PayloadInfo& info)
 {
     return payload_ptr_->updatePayload(info);
 }
@@ -652,6 +652,11 @@ ErrorCode DynamicAlgRTM::getPayloadInfoById(int id, PayloadInfo& info)
 std::vector<PayloadSummaryInfo> DynamicAlgRTM::getAllValidPayloadSummaryInfo(void)
 {
     return payload_ptr_->getAllValidPayloadSummaryInfo();
+}
+
+void DynamicAlgRTM::getAllValidPayloadSummaryInfo(std::vector<PayloadSummaryInfo>& info_list)
+{
+    payload_ptr_->getAllValidPayloadSummaryInfo(info_list);
 }
 //end payload related
 

@@ -3,6 +3,7 @@
 
 #include "error_code.h"
 #include "basic_alg_datatype.h"
+#include "dynamic_alg_payload.h"
 
 namespace basic_alg
 {
@@ -64,6 +65,17 @@ public:
     virtual bool getAccMax(const Joint& joint, const JointVelocity& vel, JointAcceleration &acc_pos, JointAcceleration &acc_neg) = 0;
     virtual bool getAccDirectDynamics(const Joint& joint, const JointVelocity& vel, const JointTorque& torque,
                                             JointAcceleration &acc) = 0;
+
+    virtual ErrorCode setPayload(int id) = 0;
+    virtual void getPayload(int &id) = 0;
+
+    virtual ErrorCode addPayload(const PayloadInfo& info) = 0;
+    virtual ErrorCode deletePayload(int id) = 0;
+    virtual ErrorCode updatePayload(const PayloadInfo& info) = 0;
+    virtual ErrorCode movePayload(int expect_id, int original_id) = 0;
+    virtual ErrorCode getPayloadInfoById(int id, PayloadInfo& info) = 0;
+    virtual std::vector<PayloadSummaryInfo> getAllValidPayloadSummaryInfo(void) = 0;
+    virtual void getAllValidPayloadSummaryInfo(std::vector<PayloadSummaryInfo>& info_list) = 0;  
 
 };
 

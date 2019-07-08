@@ -37,12 +37,13 @@ public:
 
     bool init();
 
-    ErrorCode addPayload(PayloadInfo& info);
+    ErrorCode addPayload(const PayloadInfo& info);
     ErrorCode deletePayload(int id);
-    ErrorCode updatePayload(PayloadInfo& info);
+    ErrorCode updatePayload(const PayloadInfo& info);
     ErrorCode movePayload(int expect_id, int original_id);
     ErrorCode getPayloadInfoById(int id, PayloadInfo& info);
     std::vector<PayloadSummaryInfo> getAllValidPayloadSummaryInfo(void);   
+    void getAllValidPayloadSummaryInfo(std::vector<PayloadSummaryInfo>& info_list);
 
 private:
     fst_log::Logger* log_ptr_;

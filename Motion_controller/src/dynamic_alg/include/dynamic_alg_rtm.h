@@ -7,7 +7,6 @@
 #include "common_log.h"
 #include "parameter_manager/parameter_manager_param_group.h"
 #include "kinematics_rtm.h"
-#include "dynamic_alg_payload.h"
 
 
 namespace basic_alg
@@ -32,15 +31,16 @@ public:
     virtual bool getAccDirectDynamics(const Joint& joint, const JointVelocity& vel, const JointTorque& torque, 
                                            JointAcceleration &acc);
 
-    ErrorCode setPayload(int id);
-    void getPayload(int &id);
+    virtual ErrorCode setPayload(int id);
+    virtual void getPayload(int &id);
 
-    ErrorCode addPayload(PayloadInfo& info);
-    ErrorCode deletePayload(int id);
-    ErrorCode updatePayload(PayloadInfo& info);
-    ErrorCode movePayload(int expect_id, int original_id);
-    ErrorCode getPayloadInfoById(int id, PayloadInfo& info);
-    std::vector<PayloadSummaryInfo> getAllValidPayloadSummaryInfo(void);  
+    virtual ErrorCode addPayload(const PayloadInfo& info);
+    virtual ErrorCode deletePayload(int id);
+    virtual ErrorCode updatePayload(const PayloadInfo& info);
+    virtual ErrorCode movePayload(int expect_id, int original_id);
+    virtual ErrorCode getPayloadInfoById(int id, PayloadInfo& info);
+    virtual std::vector<PayloadSummaryInfo> getAllValidPayloadSummaryInfo(void);
+    virtual void getAllValidPayloadSummaryInfo(std::vector<PayloadSummaryInfo>& info_list);  
     
     static const double DYN_DOUBLE_ACCURACY = 1e-6;
     static const double G = -9.81;

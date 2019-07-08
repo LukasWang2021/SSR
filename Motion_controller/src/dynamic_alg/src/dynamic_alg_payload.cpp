@@ -28,7 +28,7 @@ bool DynamicAlgPayload::init()
     return true;
 }
 
-ErrorCode DynamicAlgPayload::addPayload(PayloadInfo& info)
+ErrorCode DynamicAlgPayload::addPayload(const PayloadInfo& info)
 {
     if(info.id >= payload_set_.size()
         || info.id == 0
@@ -86,7 +86,7 @@ ErrorCode DynamicAlgPayload::deletePayload(int id)
     return SUCCESS;
 }
 
-ErrorCode DynamicAlgPayload::updatePayload(PayloadInfo& info)
+ErrorCode DynamicAlgPayload::updatePayload(const PayloadInfo& info)
 {
     if(info.id >= payload_set_.size()
         || info.id == 0
@@ -186,6 +186,22 @@ std::vector<PayloadSummaryInfo> DynamicAlgPayload::getAllValidPayloadSummaryInfo
         }
     }
     return summary_list;
+}
+
+void DynamicAlgPayload::getAllValidPayloadSummaryInfo(std::vector<PayloadSummaryInfo>& info_list)
+{
+    info_list.resize(0);
+    PayloadSummaryInfo summary_info;
+
+    for(unsigned int i = 1; i < payload_set_.size(); ++i)
+    {
+        if(payload_set_[i].is_valid)
+        {
+            summary_info.id = i;
+            summary_info.comment = payload_set_[i].comment;
+            info_list.push_back(summary_info);
+        }
+    }
 }
 
 void DynamicAlgPayload::packDummyPayloadInfo(PayloadInfo& info)

@@ -123,6 +123,17 @@ public:
     ErrorCode setToolFrame(int id);
     ErrorCode setUserFrame(int id);
 
+    // payload
+    ErrorCode setPayload(int id);
+    void getPayload(int &id);
+    ErrorCode addPayload(const basic_alg::PayloadInfo& info);
+    ErrorCode deletePayload(int id);
+    ErrorCode updatePayload(const basic_alg::PayloadInfo& info);
+    ErrorCode movePayload(int expect_id, int original_id);
+    ErrorCode getPayloadInfoById(int id, basic_alg::PayloadInfo& info);
+    std::vector<basic_alg::PayloadSummaryInfo> getAllValidPayloadSummaryInfo(void);
+    void getAllValidPayloadSummaryInfo(std::vector<basic_alg::PayloadSummaryInfo>& info_list);
+
     // parameter access
     // ...
 

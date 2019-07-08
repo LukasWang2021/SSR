@@ -279,6 +279,52 @@ const PoseEuler& BaseGroup::getWorldFrame(void)
     return world_frame_;
 }
 
+// payload
+void BaseGroup::getPayload(int &id)
+{
+    dynamics_ptr_->getPayload(id);
+}
+
+ErrorCode BaseGroup::setPayload(int id)
+{
+    return dynamics_ptr_->setPayload(id);
+}
+
+ErrorCode BaseGroup::addPayload(const PayloadInfo& info)
+{
+    return dynamics_ptr_->addPayload(info);
+}
+
+ErrorCode BaseGroup::deletePayload(int id)
+{
+    return dynamics_ptr_->deletePayload(id);
+}
+
+ErrorCode BaseGroup::updatePayload(const PayloadInfo& info)
+{
+    return dynamics_ptr_->updatePayload(info);
+}
+
+ErrorCode BaseGroup::movePayload(int expect_id, int original_id)
+{
+    return dynamics_ptr_->movePayload(expect_id, original_id);
+}
+
+ErrorCode BaseGroup::getPayloadInfoById(int id, PayloadInfo& info)
+{
+    return dynamics_ptr_->getPayloadInfoById(id, info);
+}
+
+vector<PayloadSummaryInfo> BaseGroup::getAllValidPayloadSummaryInfo(void)
+{
+    return dynamics_ptr_->getAllValidPayloadSummaryInfo();
+}
+
+void BaseGroup::getAllValidPayloadSummaryInfo(vector<PayloadSummaryInfo>& info_list)
+{
+    dynamics_ptr_->getAllValidPayloadSummaryInfo(info_list);
+}
+
 ErrorCode BaseGroup::convertCartToJoint(const PoseAndPosture &pose, const PoseEuler &uf, const PoseEuler &tf, Joint &joint)
 {
     PoseEuler tcp_in_base, fcp_in_base;
@@ -3659,7 +3705,7 @@ ErrorCode BaseGroup::sendAutoTrajectoryFlow(void)
         }
     }
 
-    return bare_core_.sendPoint() ? SUCCESS : MC_COMMUNICATION_WITH_BARECORE_FAIL;
+    return bare_core_.sendPoint() ? SUCCESS : MC_SEND_TRAJECTORY_FAIL;
 }
 
 ErrorCode BaseGroup::pickPointsFromTrajectoryFifo(TrajectoryPoint *points, size_t &length)
@@ -3721,7 +3767,7 @@ ErrorCode BaseGroup::sendManualTrajectoryFlow(void)
         bare_core_.fillPointCache(points, length, POINT_POS);
     }
 
-    return bare_core_.sendPoint() ? SUCCESS : MC_COMMUNICATION_WITH_BARECORE_FAIL;
+    return bare_core_.sendPoint() ? SUCCESS : MC_SEND_TRAJECTORY_FAIL;
 }
 
 void BaseGroup::sendTrajectoryFlow(void)
@@ -3749,7 +3795,7 @@ void BaseGroup::sendTrajectoryFlow(void)
     {
         if (!bare_core_.isPointCacheEmpty())
         {
-            err = bare_core_.sendPoint() ? SUCCESS : MC_COMMUNICATION_WITH_BARECORE_FAIL;
+            err = bare_core_.sendPoint() ? SUCCESS : MC_SEND_TRAJECTORY_FAIL;
         }
     }
 
@@ -3759,7 +3805,7 @@ void BaseGroup::sendTrajectoryFlow(void)
     }
     else
     {
-        if (err == MC_COMMUNICATION_WITH_BARECORE_FAIL)
+        if (err == MC_SEND_TRAJECTORY_FAIL)
         {
             error_cnt ++;
 
@@ -3767,7 +3813,7 @@ void BaseGroup::sendTrajectoryFlow(void)
             {
                 error_cnt = 0;
                 error_request_ = true;
-                reportError(MC_COMMUNICATION_WITH_BARECORE_FAIL);
+                reportError(MC_SEND_TRAJECTORY_FAIL);
                 FST_ERROR("sendTrajectoryFlow: bare core time-out.");
             }
         }

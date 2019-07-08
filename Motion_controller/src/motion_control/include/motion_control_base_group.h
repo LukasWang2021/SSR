@@ -21,6 +21,7 @@
 #include <kinematics_toll.h>
 #include <motion_control_cache_pool.h>
 #include <dynamic_alg.h>
+#include <dynamic_alg_rtm.h>
 #include <transformation.h>
 #include <coordinate_manager.h>
 #include <tool_manager.h>
@@ -131,6 +132,17 @@ class BaseGroup
     const basic_alg::PoseEuler& getUserFrame(void);
     const basic_alg::PoseEuler& getToolFrame(void);
     const basic_alg::PoseEuler& getWorldFrame(void);
+
+    // payload
+    ErrorCode setPayload(int id);
+    void getPayload(int &id);
+    ErrorCode addPayload(const basic_alg::PayloadInfo& info);
+    ErrorCode deletePayload(int id);
+    ErrorCode updatePayload(const basic_alg::PayloadInfo& info);
+    ErrorCode movePayload(int expect_id, int original_id);
+    ErrorCode getPayloadInfoById(int id, basic_alg::PayloadInfo& info);
+    std::vector<basic_alg::PayloadSummaryInfo> getAllValidPayloadSummaryInfo(void);
+    void getAllValidPayloadSummaryInfo(std::vector<basic_alg::PayloadSummaryInfo>& info_list);
 
     ErrorCode convertCartToJoint(const PoseAndPosture &pose, const basic_alg::PoseEuler &uf, const basic_alg::PoseEuler &tf, basic_alg::Joint &joint);
     ErrorCode convertCartToJoint(const basic_alg::PoseEuler &pose, const basic_alg::PoseEuler &uf, const basic_alg::PoseEuler &tf, basic_alg::Joint &joint);

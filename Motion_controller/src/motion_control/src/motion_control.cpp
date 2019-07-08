@@ -1413,5 +1413,49 @@ ErrorCode MotionControl::setUserFrame(int id)
     }
 }
 
+// payload
+ErrorCode MotionControl::setPayload(int id)
+{
+    return group_ptr_->setPayload(id);
+}
 
+void MotionControl::getPayload(int &id)
+{
+    group_ptr_->getPayload(id);
+}
+
+ErrorCode MotionControl::addPayload(const PayloadInfo& info)
+{
+    return group_ptr_->addPayload(info);
+}
+
+ErrorCode MotionControl::deletePayload(int id)
+{
+    return group_ptr_->deletePayload(id);
+}
+
+ErrorCode MotionControl::updatePayload(const basic_alg::PayloadInfo& info)
+{
+    return group_ptr_->updatePayload(info);
+}
+
+ErrorCode MotionControl::movePayload(int expect_id, int original_id)
+{
+    return group_ptr_->movePayload(expect_id, original_id);
+}
+
+ErrorCode MotionControl::getPayloadInfoById(int id, PayloadInfo& info)
+{
+    return group_ptr_->getPayloadInfoById(id, info);
+}
+
+std::vector<basic_alg::PayloadSummaryInfo> MotionControl::getAllValidPayloadSummaryInfo(void)
+{
+    return group_ptr_->getAllValidPayloadSummaryInfo();
+}
+
+void MotionControl::getAllValidPayloadSummaryInfo(vector<PayloadSummaryInfo>& info_list)
+{
+    group_ptr_->getAllValidPayloadSummaryInfo(info_list);
+}
 

@@ -392,6 +392,47 @@ add_executable(manual_joint_step_set ${SRC_LIST} src/test_motion_control/axis_gr
 target_link_libraries(manual_joint_step_set ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
 install(TARGETS manual_joint_step_set RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/motion_control/axis_group)
 
+
+######### for test motion control #########
+add_executable(payload_add ${SRC_LIST} src/test_motion_control/axis_group/payload/payload_add.cpp)
+target_link_libraries(payload_add ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
+install(TARGETS payload_add RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/motion_control/axis_group/payload)
+######### for test motion control #########
+add_executable(payload_delete ${SRC_LIST} src/test_motion_control/axis_group/payload/payload_delete.cpp)
+target_link_libraries(payload_delete ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
+install(TARGETS payload_delete RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/motion_control/axis_group/payload)
+
+######### for test motion control #########
+add_executable(payload_get_by_id ${SRC_LIST} src/test_motion_control/axis_group/payload/payload_get_by_id.cpp)
+target_link_libraries(payload_get_by_id ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
+install(TARGETS payload_get_by_id RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/motion_control/axis_group/payload)
+######### for test motion control #########
+add_executable(payload_current_get ${SRC_LIST} src/test_motion_control/axis_group/payload/payload_current_get.cpp)
+target_link_libraries(payload_current_get ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
+install(TARGETS payload_current_get RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/motion_control/axis_group/payload)
+
+######### for test motion control #########
+add_executable(payload_current_set ${SRC_LIST} src/test_motion_control/axis_group/payload/payload_current_set.cpp)
+target_link_libraries(payload_current_set ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
+install(TARGETS payload_current_set RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/motion_control/axis_group/payload)
+
+######### for test motion control #########
+add_executable(payload_move ${SRC_LIST} src/test_motion_control/axis_group/payload/payload_move.cpp)
+target_link_libraries(payload_move ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
+install(TARGETS payload_move RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/motion_control/axis_group/payload)
+
+######### for test motion control #########
+add_executable(payload_summaryinfo_list_get ${SRC_LIST} src/test_motion_control/axis_group/payload/payload_summaryinfo_list_get.cpp)
+target_link_libraries(payload_summaryinfo_list_get ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
+install(TARGETS payload_summaryinfo_list_get RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/motion_control/axis_group/payload)
+
+######### for test motion control #########
+add_executable(payload_update ${SRC_LIST} src/test_motion_control/axis_group/payload/payload_update.cpp)
+target_link_libraries(payload_update ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
+install(TARGETS payload_update RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/motion_control/axis_group/payload)
+
+
+
 ######### for test motion control #########
 add_executable(global_vel_ratio_get ${SRC_LIST} src/test_motion_control/global_vel_ratio_get.cpp)
 target_link_libraries(global_vel_ratio_get ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)

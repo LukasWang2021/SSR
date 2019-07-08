@@ -581,6 +581,24 @@ private:
     /********rpc/system_manager/restoreFininsh, RequestMessageType_Void**********/
     void handleRequest0x00011CE8(int recv_bytes);
 
+    /********rpc/motion_control/axis_group/getPayload, RequestMessageType_Int32**********/
+    void handleRequest0x000180B4(int recv_bytes);
+    /********rpc/motion_control/axis_group/setPayload, RequestMessageType_Int32List(count = 2) **********/
+    void handleRequest0x00014094(int recv_bytes);
+    /********rpc/motion_control/axis_group/addPayload, RequestMessageType_PayloadInfo**********/
+    void handleRequest0x000178A4(int recv_bytes);
+    /********rpc/motion_control/axis_group/deletePayload, RequestMessageType_Int32**********/
+    void handleRequest0x00014F84(int recv_bytes);
+    /********rpc/motion_control/axis_group/updatePayload, RequestMessageType_PayloadInfo**********/
+    void handleRequest0x00017074(int recv_bytes);
+    /********rpc/motion_control/axis_group/movePayload, RequestMessageType_Int32List(count = 2) **********/
+    void handleRequest0x00006CE4(int recv_bytes);
+    /********rpc/motion_control/axis_group/getPayloadInfoById, RequestMessageType_Int32**********/
+    void handleRequest0x00010C34(int recv_bytes);
+    /********rpc/motion_control/axis_group/getAllValidPayloadSummaryInfo, RequestMessageType_Void**********/
+    void handleRequest0x00010C8F(int recv_bytes);
+
+
 /* request end */
 
     /********GetUserOpMode, ResponseMessageType_Int32**********/	
@@ -1088,6 +1106,24 @@ private:
     void handleResponse0x0000DCBC(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
     /********rpc/system_manager/restoreFininsh, ResponseMessageType_Uint64_Int32**********/\
     void handleResponse0x00011CE8(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+
+    /********rpc/motion_control/axis_group/getPayload, ResponseMessageType_Uint64_Int32**********/
+    void handleResponse0x000180B4(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/motion_control/axis_group/setPayload, ResponseMessageType_Uint64**********/
+    void handleResponse0x00014094(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/motion_control/axis_group/addPayload, ResponseMessageType_Uint64**********/
+    void handleResponse0x000178A4(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/motion_control/axis_group/deletePayload, ResponseMessageType_Uint64**********/
+    void handleResponse0x00014F84(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/motion_control/axis_group/updatePayload, ResponseMessageType_Uint64**********/
+    void handleResponse0x00017074(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/motion_control/axis_group/movePayload, ResponseMessageType_Uint64**********/
+    void handleResponse0x00006CE4(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/motion_control/axis_group/getPayloadInfoById, ResponseMessageType_Uint64_PayloadInfo**********/
+    void handleResponse0x00010C34(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/motion_control/axis_group/getAllValidPayloadSummaryInfo, ResponseMessageType_Uint64_PayloadSummaryList**********/
+    void handleResponse0x00010C8F(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+
 
     /* response end */
     fst_ip::LocalIP local_ip_;

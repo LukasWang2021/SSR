@@ -1498,7 +1498,6 @@ void ControllerRpc::handleRpc0x00017074(void* request_data_ptr, void* response_d
         FST_INFO("/rpc/motion_control/axis_group/updatePayload can't run when backup/restore, ret = %llx\n", rs_data_ptr->data.data);
         return;
     }
-
     if (rq_data_ptr->data.mass_center.data_count == 3 && rq_data_ptr->data.inertia_moment.data_count == 3)
     {
         PayloadInfo info;
@@ -1512,16 +1511,17 @@ void ControllerRpc::handleRpc0x00017074(void* request_data_ptr, void* response_d
         info.Ixx_load = rq_data_ptr->data.inertia_moment.data[0];
         info.Iyy_load = rq_data_ptr->data.inertia_moment.data[1];
         info.Izz_load = rq_data_ptr->data.inertia_moment.data[2];
+    
         rs_data_ptr->data.data = motion_control_ptr_->updatePayload(info);
 
         //set to activate the param.
         int current_id = 0;
         motion_control_ptr_->getPayload(current_id);
+    
         if (current_id == rq_data_ptr->data.id && rs_data_ptr->data.data == SUCCESS)
         {
             rs_data_ptr->data.data = motion_control_ptr_->setPayload(current_id);
         }
-
     }
     else
     {
@@ -1570,7 +1570,7 @@ void ControllerRpc::handleRpc0x00010C34(void* request_data_ptr, void* response_d
         rs_data_ptr->data.inertia_moment.data_count = 3;
         rs_data_ptr->data.inertia_moment.data[0] = info.Ixx_load;
         rs_data_ptr->data.inertia_moment.data[1] = info.Iyy_load;
-        rs_data_ptr->data.inertia_moment.data[2] = info.Iyy_load;
+        rs_data_ptr->data.inertia_moment.data[2] = info.Izz_load;
     }
     
     recordLog(MOTION_CONTROL_LOG, rs_data_ptr->error_code.data, std::string("/rpc/motion_control/axis_group/getPayloadInfoById"));

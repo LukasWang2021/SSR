@@ -45,7 +45,7 @@ ErrorCode DynamicAlgPayload::addPayload(const PayloadInfo& info)
     }
     else
     {
-        payload_set_[info.id].comment = info.comment;
+        payload_set_[info.id].comment = std::string(info.comment);
     }
     payload_set_[info.id].m_load = info.m_load;
     payload_set_[info.id].lcx_load = info.lcx_load;
@@ -103,7 +103,7 @@ ErrorCode DynamicAlgPayload::updatePayload(const PayloadInfo& info)
     }
     else
     {
-        payload_set_[info.id].comment = info.comment;
+        payload_set_[info.id].comment = std::string(info.comment);
     }
     payload_set_[info.id].m_load = info.m_load;
     payload_set_[info.id].lcx_load = info.lcx_load;
@@ -272,7 +272,6 @@ bool DynamicAlgPayload::writePayloadInfoToYaml(PayloadInfo& info)
     std::string payload_info_path = getPayloadInfoPath(info.id);
     yaml_help_.setParam(payload_info_path + "/id", info.id);
     yaml_help_.setParam(payload_info_path + "/is_valid", info.is_valid);
-    yaml_help_.setParam(payload_info_path + "/comment", info.comment);
     yaml_help_.setParam(payload_info_path + "/m_load", info.m_load);
     yaml_help_.setParam(payload_info_path + "/lcx_load", info.lcx_load);
     yaml_help_.setParam(payload_info_path + "/lcy_load", info.lcy_load);
@@ -280,6 +279,7 @@ bool DynamicAlgPayload::writePayloadInfoToYaml(PayloadInfo& info)
     yaml_help_.setParam(payload_info_path + "/Ixx_load", info.Ixx_load);
     yaml_help_.setParam(payload_info_path + "/Iyy_load", info.Iyy_load);
     yaml_help_.setParam(payload_info_path + "/Izz_load", info.Izz_load);
+    yaml_help_.setParam(payload_info_path + "/comment", std::string(info.comment));
 
     return yaml_help_.dumpParamFile(file_path_.c_str());
 }

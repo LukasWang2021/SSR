@@ -22,7 +22,7 @@
 
 using namespace std;
 
-int main()
+int main(int argc, char* argv[])
 {
     TpCommTest test;
     if (!test.initRpcSocket())

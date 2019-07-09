@@ -22,8 +22,14 @@
 
 using namespace std;
 
-int main()
+int main(int argc, char* argv[])
 {
+    if (argc < 8)
+    {
+        cout << "more 8 parameters are needed" << endl;
+        return -1;
+    }
+
     TpCommTest test;
     if (!test.initRpcSocket())
     {
@@ -39,7 +45,18 @@ int main()
     RequestMessageType_PayloadInfo msg;
     msg.header.time_stamp = 122;
     msg.property.authority = Comm_Authority_TP;
-    msg.data.id = 1;
+    msg.data.id = atoi(argv[1]);
+    char comment[32] = "Hello payload";
+    memcpy(msg.data.comment, comment, sizeof(comment));
+    msg.data.weight = atoi(argv[2]);
+    msg.data.mass_center.data_count = 3;
+    msg.data.mass_center.data[0] = atoi(argv[3]);
+    msg.data.mass_center.data[1] = atoi(argv[4]);
+    msg.data.mass_center.data[2] = atoi(argv[5]);
+    msg.data.inertia_moment.data_count = 3;
+    msg.data.inertia_moment.data[0] = atoi(argv[6]);
+    msg.data.inertia_moment.data[1] = atoi(argv[7]);
+    msg.data.inertia_moment.data[2] = atoi(argv[8]);
 
     if (!test.generateRequestMessageType(hash_value, (void*)&msg, RequestMessageType_PayloadInfo_fields, buf, buf_size))
     {

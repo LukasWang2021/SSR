@@ -1408,41 +1408,39 @@ void ControllerRpc::handleRpc0x0000EC64(void* request_data_ptr, void* response_d
 }
 
 
-//"/rpc/motion_control/axis_group/getPayload"	
-void ControllerRpc::handleRpc0x000112A4(void* request_data_ptr, void* response_data_ptr)
+//"/rpc/motion_control/axis_group/getCurrentPayload"	
+void ControllerRpc::handleRpc0x000180B4(void* request_data_ptr, void* response_data_ptr)
 {
     RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
     ResponseMessageType_Uint64_Int32* rs_data_ptr = static_cast<ResponseMessageType_Uint64_Int32*>(response_data_ptr);
 
     rs_data_ptr->error_code.data = SUCCESS;
-    //motion_control_ptr_->getPayload(rs_data_ptr->data.data);
+    motion_control_ptr_->getPayload(rs_data_ptr->data.data);
 
-    recordLog(MOTION_CONTROL_LOG, rs_data_ptr->error_code.data, std::string("/rpc/motion_control/axis_group/getPayload"));
+    recordLog(MOTION_CONTROL_LOG, rs_data_ptr->error_code.data, std::string("/rpc/motion_control/axis_group/getCurrentPayload"));
 }
 
-//"/rpc/motion_control/axis_group/setPayload"	
-void ControllerRpc::handleRpc0x000052A4(void* request_data_ptr, void* response_data_ptr)
+//"/rpc/motion_control/axis_group/setCurrentPayload"	
+void ControllerRpc::handleRpc0x00014094(void* request_data_ptr, void* response_data_ptr)
 {
     RequestMessageType_Int32List* rq_data_ptr = static_cast<RequestMessageType_Int32List*>(request_data_ptr);
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
     if(rq_data_ptr->data.data_count == 2)
     {
-        //rs_data_ptr->data.data = motion_control_ptr_->setPayload(rq_data_ptr->data.data[1]);
-        rs_data_ptr->data.data = SUCCESS;//todo delete
+        rs_data_ptr->data.data = motion_control_ptr_->setPayload(rq_data_ptr->data.data[1]);
     }
     else
     {
         rs_data_ptr->data.data = INVALID_PARAMETER;
     }
 
-    recordLog(MOTION_CONTROL_LOG, rs_data_ptr->data.data, std::string("/rpc/motion_control/axis_group/setPayload"));
+    recordLog(MOTION_CONTROL_LOG, rs_data_ptr->data.data, std::string("/rpc/motion_control/axis_group/setCurrentPayload"));
 }
 
 //"/rpc/motion_control/axis_group/addPayload"	
 void ControllerRpc::handleRpc0x000178A4(void* request_data_ptr, void* response_data_ptr)
 {
-    /*
     RequestMessageType_PayloadInfo* rq_data_ptr = static_cast<RequestMessageType_PayloadInfo*>(request_data_ptr);
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
@@ -1453,19 +1451,19 @@ void ControllerRpc::handleRpc0x000178A4(void* request_data_ptr, void* response_d
         return;
     }
 
-    if (rq_data_ptr->data.data.data_count == 7)
+    if (rq_data_ptr->data.mass_center.data_count == 3 && rq_data_ptr->data.inertia_moment.data_count == 3)
     {
         PayloadInfo info;
         info.id = rq_data_ptr->data.id;
         info.comment = rq_data_ptr->data.comment;
         info.is_valid = false; 
-        info.data.m_load = rq_data_ptr->data.data.data[0];
-        info.data.lcx_load = rq_data_ptr->data.data.data[1];
-        info.data.lcy_load = rq_data_ptr->data.data.data[2];
-        info.data.lcz_load = rq_data_ptr->data.data.data[3];
-        info.data.Ixx_load = rq_data_ptr->data.data.data[4];
-        info.data.Iyy_load = rq_data_ptr->data.data.data[5];
-        info.data.Izz_load = rq_data_ptr->data.data.data[6];
+        info.m_load = rq_data_ptr->data.weight;
+        info.lcx_load = rq_data_ptr->data.mass_center.data[0];
+        info.lcy_load = rq_data_ptr->data.mass_center.data[1];
+        info.lcz_load = rq_data_ptr->data.mass_center.data[2];
+        info.Ixx_load = rq_data_ptr->data.inertia_moment.data[0];
+        info.Iyy_load = rq_data_ptr->data.inertia_moment.data[1];
+        info.Izz_load = rq_data_ptr->data.inertia_moment.data[2];
         rs_data_ptr->data.data = motion_control_ptr_->addPayload(info);
     }
     else
@@ -1474,7 +1472,7 @@ void ControllerRpc::handleRpc0x000178A4(void* request_data_ptr, void* response_d
     }
     
     recordLog(MOTION_CONTROL_LOG, rs_data_ptr->data.data, std::string("/rpc/motion_control/axis_group/addPayload"));
-    */
+    
 }
 
 //"/rpc/motion_control/axis_group/deletePayload"	
@@ -1483,15 +1481,14 @@ void ControllerRpc::handleRpc0x00014F84(void* request_data_ptr, void* response_d
     RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
-    //rs_data_ptr->data.data = motion_control_ptr_->deletePayload(rq_data_ptr->data.data);
-    rs_data_ptr->data.data = SUCCESS;//todo delete
+    rs_data_ptr->data.data = motion_control_ptr_->deletePayload(rq_data_ptr->data.data);
+
     recordLog(MOTION_CONTROL_LOG, rs_data_ptr->data.data, std::string("/rpc/motion_control/axis_group/deletePayload"));
 }
 
 //"/rpc/motion_control/axis_group/updatePayload"	
 void ControllerRpc::handleRpc0x00017074(void* request_data_ptr, void* response_data_ptr)
 {
-    /*
     RequestMessageType_PayloadInfo* rq_data_ptr = static_cast<RequestMessageType_PayloadInfo*>(request_data_ptr);
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
@@ -1502,19 +1499,19 @@ void ControllerRpc::handleRpc0x00017074(void* request_data_ptr, void* response_d
         return;
     }
 
-    if (rq_data_ptr->data.data.data_count == 7)
+    if (rq_data_ptr->data.mass_center.data_count == 3 && rq_data_ptr->data.inertia_moment.data_count == 3)
     {
         PayloadInfo info;
         info.id = rq_data_ptr->data.id;
         info.comment = rq_data_ptr->data.comment;
         info.is_valid = false;
-        info.data.m_load = rq_data_ptr->data.data.data[0];
-        info.data.lcx_load = rq_data_ptr->data.data.data[1];
-        info.data.lcy_load = rq_data_ptr->data.data.data[2];
-        info.data.lcz_load = rq_data_ptr->data.data.data[3];
-        info.data.Ixx_load = rq_data_ptr->data.data.data[4];
-        info.data.Iyy_load = rq_data_ptr->data.data.data[5];
-        info.data.Izz_load = rq_data_ptr->data.data.data[6];
+        info.m_load = rq_data_ptr->data.weight;
+        info.lcx_load = rq_data_ptr->data.mass_center.data[0];
+        info.lcy_load = rq_data_ptr->data.mass_center.data[1];
+        info.lcz_load = rq_data_ptr->data.mass_center.data[2];
+        info.Ixx_load = rq_data_ptr->data.inertia_moment.data[0];
+        info.Iyy_load = rq_data_ptr->data.inertia_moment.data[1];
+        info.Izz_load = rq_data_ptr->data.inertia_moment.data[2];
         rs_data_ptr->data.data = motion_control_ptr_->updatePayload(info);
 
         //set to activate the param.
@@ -1532,7 +1529,7 @@ void ControllerRpc::handleRpc0x00017074(void* request_data_ptr, void* response_d
     }
     
     recordLog(MOTION_CONTROL_LOG, rs_data_ptr->data.data, std::string("/rpc/motion_control/axis_group/updatePayload"));
-    */
+    
 }
 
 //"/rpc/motion_control/axis_group/movePayload"	
@@ -1543,8 +1540,7 @@ void ControllerRpc::handleRpc0x00006CE4(void* request_data_ptr, void* response_d
 
     if(rq_data_ptr->data.data_count == 2)
     {
-        //rs_data_ptr->data.data = motion_control_ptr_->movePayload(rq_data_ptr->data.data[0], rq_data_ptr->data.data[1]);
-        rs_data_ptr->data.data = SUCCESS;//todo delete
+        rs_data_ptr->data.data = motion_control_ptr_->movePayload(rq_data_ptr->data.data[0], rq_data_ptr->data.data[1]);
     }
     else
     {
@@ -1556,7 +1552,6 @@ void ControllerRpc::handleRpc0x00006CE4(void* request_data_ptr, void* response_d
 //"/rpc/motion_control/axis_group/getPayloadInfoById"	
 void ControllerRpc::handleRpc0x00010C34(void* request_data_ptr, void* response_data_ptr)
 {
-    /*
     RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
     ResponseMessageType_Uint64_PayloadInfo* rs_data_ptr = static_cast<ResponseMessageType_Uint64_PayloadInfo*>(response_data_ptr);
 
@@ -1567,40 +1562,40 @@ void ControllerRpc::handleRpc0x00010C34(void* request_data_ptr, void* response_d
         rs_data_ptr->data.id = info.id;
         strncpy(rs_data_ptr->data.comment, info.comment.c_str(), 255);
         rs_data_ptr->data.comment[255] = 0;
-        rs_data_ptr->data.data.data_count = 7;
-        rs_data_ptr->data.data.data[0] = info.data.m_load;
-        rs_data_ptr->data.data.data[1] = info.data.lcx_load;
-        rs_data_ptr->data.data.data[2] = info.data.lcy_load;
-        rs_data_ptr->data.data.data[3] = info.data.lcz_load;
-        rs_data_ptr->data.data.data[4] = info.data.Ixx_load;
-        rs_data_ptr->data.data.data[5] = info.data.Iyy_load;
-        rs_data_ptr->data.data.data[6] = info.data.Iyy_load;
+        rs_data_ptr->data.weight = info.m_load;
+        rs_data_ptr->data.mass_center.data_count = 3;
+        rs_data_ptr->data.mass_center.data[0] = info.lcx_load;
+        rs_data_ptr->data.mass_center.data[1] = info.lcy_load;
+        rs_data_ptr->data.mass_center.data[2] = info.lcz_load;
+        rs_data_ptr->data.inertia_moment.data_count = 3;
+        rs_data_ptr->data.inertia_moment.data[0] = info.Ixx_load;
+        rs_data_ptr->data.inertia_moment.data[1] = info.Iyy_load;
+        rs_data_ptr->data.inertia_moment.data[2] = info.Iyy_load;
     }
     
     recordLog(MOTION_CONTROL_LOG, rs_data_ptr->error_code.data, std::string("/rpc/motion_control/axis_group/getPayloadInfoById"));
-    */
+    
 }
 
 //"/rpc/motion_control/axis_group/getAllValidPayloadSummaryInfo"	
 void ControllerRpc::handleRpc0x00010C8F(void* request_data_ptr, void* response_data_ptr)
 {
-    /*
     ResponseMessageType_Uint64_PayloadSummaryList* rs_data_ptr = static_cast<ResponseMessageType_Uint64_PayloadSummaryList*>(response_data_ptr);
 
     std::vector<PayloadSummaryInfo> info_list;
-    info_list = motion_control_ptr_->getAllValidPayloadSummaryInfo();
+    motion_control_ptr_->getAllValidPayloadSummaryInfo(info_list);
     for(unsigned int i = 0; i < info_list.size(); ++i)
     {
-        rs_data_ptr->data.user_coord_summary[i].id = info_list[i].id;
-        strncpy(rs_data_ptr->data.user_coord_summary[i].comment, info_list[i].comment.c_str(), 255);
-        rs_data_ptr->data.user_coord_summary[i].comment[255] = 0;
+        rs_data_ptr->data.payload_summary_info[i].id = info_list[i].id;
+        strncpy(rs_data_ptr->data.payload_summary_info[i].comment, info_list[i].comment.c_str(), 255);
+        rs_data_ptr->data.payload_summary_info[i].comment[255] = 0;
     }
-    rs_data_ptr->data.payload_summary_count = info_list.size();    
+    rs_data_ptr->data.payload_summary_info_count = info_list.size();    
     rs_data_ptr->error_code.data = SUCCESS;
     
     if (rs_data_ptr->error_code.data != SUCCESS)
-        recordLog(COORDINATE_MANAGER_LOG, rs_data_ptr->error_code.data, std::string("/rpc/motion_control/axis_group/getAllValidPayloadSummaryInfo"));
-    */
+        recordLog(MOTION_CONTROL_LOG, rs_data_ptr->error_code.data, std::string("/rpc/motion_control/axis_group/getAllValidPayloadSummaryInfo"));
+    
 }
 
 

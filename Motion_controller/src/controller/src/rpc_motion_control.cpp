@@ -1491,7 +1491,7 @@ void ControllerRpc::handleRpc0x00017074(void* request_data_ptr, void* response_d
 {
     RequestMessageType_PayloadInfo* rq_data_ptr = static_cast<RequestMessageType_PayloadInfo*>(request_data_ptr);
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
-
+/*
     if (false == state_machine_ptr_->getState())
     {
         rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
@@ -1527,6 +1527,8 @@ void ControllerRpc::handleRpc0x00017074(void* request_data_ptr, void* response_d
     {
         rs_data_ptr->data.data = DYNAMIC_PAYLOAD_INVALID_ARG;
     }
+    */
+    rs_data_ptr->data.data = DYNAMIC_PAYLOAD_INVALID_ARG;
     
     recordLog(MOTION_CONTROL_LOG, rs_data_ptr->data.data, std::string("/rpc/motion_control/axis_group/updatePayload"));
     

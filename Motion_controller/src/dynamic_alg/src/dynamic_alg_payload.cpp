@@ -280,7 +280,7 @@ bool DynamicAlgPayload::writePayloadInfoToYaml(PayloadInfo& info)
     yaml_help_.setParam(payload_info_path + "/Iyy_load", info.Iyy_load);
     yaml_help_.setParam(payload_info_path + "/Izz_load", info.Izz_load);
     yaml_help_.setParam(payload_info_path + "/comment", std::string(info.comment));
-
+  
     return yaml_help_.dumpParamFile(file_path_.c_str());
 }
 

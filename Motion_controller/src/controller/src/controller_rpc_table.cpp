@@ -146,7 +146,15 @@ void ControllerRpc::initRpcTable()
     rpc_service =	{	"/rpc/motion_control/axis_group/getFcpBasePose",	0x000016B5,	&ControllerRpc::handleRpc0x000016B5	};	rpc_table_.push_back(rpc_service);
     rpc_service =	{	"/rpc/motion_control/axis_group/getTcpCurrentPose",	0x00003B45,	&ControllerRpc::handleRpc0x00003B45	};	rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/motion_control/getPostureByJoint",	0x0000EC64,	&ControllerRpc::handleRpc0x0000EC64	};	rpc_table_.push_back(rpc_service);
-    
+    rpc_service =	{	"/rpc/motion_control/axis_group/getCurrentPayload",	0x000180B4,	&ControllerRpc::handleRpc0x000180B4	};	rpc_table_.push_back(rpc_service);
+    rpc_service =	{	"/rpc/motion_control/axis_group/setCurrentPayload",	0x00014094,	&ControllerRpc::handleRpc0x00014094	};	rpc_table_.push_back(rpc_service);
+    rpc_service =	{	"/rpc/motion_control/axis_group/addPayload",	0x000178A4,	&ControllerRpc::handleRpc0x000178A4	};	rpc_table_.push_back(rpc_service);
+    rpc_service =	{	"/rpc/motion_control/axis_group/deletePayload",	0x00014F84,	&ControllerRpc::handleRpc0x00014F84	};	rpc_table_.push_back(rpc_service);
+    rpc_service =	{	"/rpc/motion_control/axis_group/updatePayload",	0x00017074,	&ControllerRpc::handleRpc0x00017074	};	rpc_table_.push_back(rpc_service);
+    rpc_service =	{	"/rpc/motion_control/axis_group/movePayload",	0x00006CE4,	&ControllerRpc::handleRpc0x00006CE4	};	rpc_table_.push_back(rpc_service);
+    rpc_service =	{	"/rpc/motion_control/axis_group/getPayloadInfoById",	0x00010C34,	&ControllerRpc::handleRpc0x00010C34	};	rpc_table_.push_back(rpc_service);
+    rpc_service =	{	"/rpc/motion_control/axis_group/getAllValidPayloadSummaryInfo",	0x00010C8F,	&ControllerRpc::handleRpc0x00010C8F	};	rpc_table_.push_back(rpc_service);
+
     rpc_service = {"/rpc/interpreter/start", 0x00006154, &ControllerRpc::handleRpc0x00006154}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/interpreter/launch", 0x000072D8, &ControllerRpc::handleRpc0x000072D8}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/interpreter/forward", 0x0000D974, &ControllerRpc::handleRpc0x0000D974}; rpc_table_.push_back(rpc_service);

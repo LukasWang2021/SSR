@@ -20,7 +20,7 @@
 
 #define C_STYLE_FILE_OPERATION
 #define MSG_BUFFER_SIZE         256
-#define CONFIG_FILE_SIZE_MAX    64 * 1024
+#define CONFIG_FILE_SIZE_MAX    128 * 1024
 
 using namespace std;
 

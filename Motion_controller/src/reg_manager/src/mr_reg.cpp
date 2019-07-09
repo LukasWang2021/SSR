@@ -58,17 +58,20 @@ ErrorCode MrReg::init()
 						NVRAM_MR_AREA + i * sizeof(NVRamMrRegData), sizeof(NVRamMrRegData));
 								
 					// printf("\n MrReg::init: %d .\n", objNVRamMrRegData.value);	
-					if(i > 0)
+					if(objNVRamMrRegData.id > 0)
 					{
 					    BaseRegData reg_data;
 	    				packAddRegData(reg_data, objNVRamMrRegData.id, "", "");
 					    if(!setRegList(reg_data))
 					    {
 							printf("\n setRegList: %d .\n", objNVRamMrRegData.id);	
-					        return REG_MANAGER_INVALID_ARG;
+					    //  return REG_MANAGER_INVALID_ARG;
 					    }
+						else 
+						{
+							data_list_[i] = objNVRamMrRegData.value ;
+						}
 				    }
-					data_list_[i] = objNVRamMrRegData.value ;
 				}
 			}
 		}

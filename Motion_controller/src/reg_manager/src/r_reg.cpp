@@ -66,10 +66,13 @@ ErrorCode RReg::init()
 					    if(!setRegList(reg_data))
 					    {
 						     printf("\nRReg::init: %d:%d .\n", objNVRamRRegData.id, i);
-					        return REG_MANAGER_INVALID_ARG;
+					    //   return REG_MANAGER_INVALID_ARG;
 					    }
-				    }	
-					data_list_[i] = objNVRamRRegData.value ;
+						else 
+						{
+							data_list_[i] = objNVRamRRegData.value ;
+						}
+				    }
 				}
 			}
 		}

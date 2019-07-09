@@ -359,10 +359,10 @@ private:
     //"/rpc/motion_control/getPostureByJoint"
     void handleRpc0x0000EC64(void* request_data_ptr, void* response_data_ptr);
 
-    //"/rpc/motion_control/axis_group/getPayload"	
-    void handleRpc0x000112A4(void* request_data_ptr, void* response_data_ptr);
-    //"/rpc/motion_control/axis_group/setPayload"	
-    void handleRpc0x000052A4(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/motion_control/axis_group/getCurrentPayload"	
+    void handleRpc0x000180B4(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/motion_control/axis_group/setCurrentPayload"	
+    void handleRpc0x00014094(void* request_data_ptr, void* response_data_ptr);
     //"/rpc/motion_control/axis_group/addPayload"	
     void handleRpc0x000178A4(void* request_data_ptr, void* response_data_ptr);
     //"/rpc/motion_control/axis_group/deletePayload"	

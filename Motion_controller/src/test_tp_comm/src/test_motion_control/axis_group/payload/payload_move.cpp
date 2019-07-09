@@ -22,8 +22,14 @@
 
 using namespace std;
 
-int main()
+int main(int argc, char* argv[])
 {
+    if (argc < 3)
+    {
+        cout << "more parameters are needed" << endl;
+        return -1;
+    }
+
     TpCommTest test;
     if (!test.initRpcSocket())
     {
@@ -40,8 +46,8 @@ int main()
     msg.header.time_stamp = 122;
     msg.property.authority = Comm_Authority_TP;
     msg.data.data_count = 2;
-    msg.data.data[0] = 1;
-    msg.data.data[1] = 2;
+    msg.data.data[0] = atoi(argv[1]);
+    msg.data.data[1] = atoi(argv[2]);
 
     if (!test.generateRequestMessageType(hash_value, (void*)&msg, RequestMessageType_Int32List_fields, buf, buf_size))
     {

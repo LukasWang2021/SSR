@@ -511,6 +511,12 @@ void ControllerSm::processSafety()
             last_unknown_user_op_mode_time_.tv_usec = current_time.tv_usec;
         }
         
+        //set vel=10% if change from manual to auto mode.
+        if (pre_user_op_mode_ != USER_OP_MODE_AUTO &&  user_op_mode_ == USER_OP_MODE_AUTO)
+        {
+            motion_control_ptr_->setGlobalVelRatio(param_ptr_->max_limited_global_vel_ratio_);
+        }
+
         //check safety_board status
         safety_device_ptr_->checkSafetyBoardAlarm();
         //check deadman normal and key switch under engage.

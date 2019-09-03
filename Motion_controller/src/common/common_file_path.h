@@ -15,6 +15,7 @@
 #define REG_DIR                     "/root/install/share/runtime/reg/"
 #define DEVICE_DIR                  "/root/install/share/runtime/device/"
 #define MODBUS_DIR                  "/root/install/share/runtime/modbus/"
+#define SERVO_DIR                   "/root/install/share/configuration/machine/"
 
 
 #endif

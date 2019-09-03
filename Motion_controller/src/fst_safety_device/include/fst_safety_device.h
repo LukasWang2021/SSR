@@ -7,78 +7,62 @@
 #include <thread>
 #include <mutex>
 
-
 #include <boost/thread/thread.hpp>
 #include <boost/thread/mutex.hpp>
 
 namespace fst_hal
 {
 	
-typedef unsigned int U32;
-typedef unsigned long long int U64;
-typedef struct _Core1Status
-{
-	char id:4;
-	char status:4;
-}Core1Status;
 //qianjin update with new register def
-typedef struct _InputByte5
+typedef struct _InputByte1
 {
-	char brake1:1;//brake base
-	char brake2:1;//brake aux1
-	char brake3:1;//brake aux2
+	char main_brake:1;//main brake
+	char brake1:1;//brake aux1
+	char brake2:1;//brake aux2
+	char contactor0:1;
+	char contactor1:1;
 	char D5:1;
 	char D6:1;
 	char D7:1;
-	char outage0:1;
-	char outage1:1;
-}InputByte5;
+}InputByte1;
 
-typedef struct _InputByte6
+typedef struct _InputByte2
 {
 	char core1_reset:1;
-	char user_reset:1;
 	char cabinet_reset:1;
+	char user_reset:1;
 	char decelerate:1;
 	char usermode_man:1;
 	char usermode_limit:1;
 	char usermode_auto:1;
-	//char manual:1;
-	//char slowdown:1;
-	//char lmt_manual:1;
-	//char D5:1;
-	//char automatic:1;
-	//char D6:1;
-	char D7:1;
-}InputByte6;
+	char comm_err:1; //communication between FPGA and MCU
+}InputByte2;
 
-typedef struct _InputByte7
+typedef struct _InputByte3
 {
 	char tp_estop:1;
-	char safetydoor_stop:1;
 	char lmt_stop:1;
 	char ext_estop:1;
+	char safetydoor_stop:1;
+    char cabinet_estop:1;
 	char deadman_normal:1;
 	char deadman_panic:1;
-	char mode_signal:1;
-	char contactor:1;
-}InputByte7;
+    char dual_faulty:1;
+}InputByte3;
 
-typedef struct _InputByte8
+typedef struct _InputByte4
 {
-	char core0_alarm:1;
-	char core1_alarm:1;
-	char D2:1;
-	char D3:1;
-	char D4:1;
-	char D5:1;
-	char D6:1;
-	char alarming:1;
-}InputByte8;
+	char mode_faulty:1;
+    char main_brake_relay_faulty:1;
+    char brake1_relay_faulty:1;
+    char brake2_relay_faulty:1;
+    char contactor0_relay_faulty:1;
+    char contactor1_relay_faulty:1;
+	char contactor_faulty:1;
+	char excitor_stop:1;
+}InputByte4;
 
-
-
-typedef struct _OutputByte5
+typedef struct _OutputByte1
 {
 	char core0_sw0:1;
 	char core0_sw1:1;
@@ -88,44 +72,49 @@ typedef struct _OutputByte5
 	char lmt_stop_config:1;
 	char D6:1;
 	char D7:1;
-}OutputByte5;
+}OutputByte1;
 
 
 typedef struct _SafetyBoardDIFrm1
 {
-	char		start_data;
-	Core1Status core1_status;
-	char		heart_beat;
-	char		crc_data;
+	InputByte1	byte1;
+	InputByte2	byte2;
+	InputByte3	byte3;
+	InputByte4	byte4;
 }SafetyBoardDIFrm1;
 
 typedef struct _SafetyBoardDIFrm2
 {
-	InputByte5	byte5;
-	InputByte6	byte6;
-	InputByte7	byte7;
-	InputByte8	byte8;
+	char reserve1;
+	char reserve2;
+	char reserve3;
+	char reserve4;
 }SafetyBoardDIFrm2;
 
 typedef struct _SafetyBoardDOFrm1
 {
-	char		start_data;
-	char		byte2;
-	char		heart_beat;
-	char		crc_data;
+	OutputByte1 byte1;
+	char		reserve2;
+	char		reserve3;
+	char		reserve4;
 }SafetyBoardDOFrm1;
 
 typedef struct _SafetyBoardDOFrm2
 {
-	OutputByte5 byte5;
-	char		byte6;
-	char		byte7;
-	char		byte8;
+	char reserve1;
+	char reserve2;
+	char reserve3;
+	char reserve4;
 }SafetyBoardDOFrm2;
-	
-#define RESET_SAFETY_DELAY      (200)   //delay for reset safety board  (ms)
-	
 
+typedef enum
+{
+    USER_OP_MODE_NONE             = 0,
+    USER_OP_MODE_AUTO             = 1,
+    USER_OP_MODE_SLOWLY_MANUAL    = 2,
+    USER_OP_MODE_MANUAL = 3,
+}UserOpMode;
+	
 
 class FstSafetyDevice : public BaseDevice
 {
@@ -135,328 +124,356 @@ public:
 
     virtual bool init();
 
-    //various API to control or monitor...
+    //  -----------------------------------------------------------------------
+    //  Function:		getDIFrm1
+    //  Description: get the DI status from the first 4 bytes.
+    //  -----------------------------------------------------------------------
+    uint32_t getDIFrm1(void);
 
-    
-    /**
-     * @brief: get input frame 2
-     *
-     * @return 
-     */
-    U32 getDIFrm2();
-    
-    /**
-     * @brief 
-     *
-     * @return 
-     */
-    bool isDIFrmChanged();
-    /**
-     * @brief: get output frame 2
-     *
-     * @return 
-     */
-    U32 getDOFrm2();
+    //  -----------------------------------------------------------------------
+	//  Function:		isDIFrmChanged
+	//  Description: check change of DI status.
+	//  -----------------------------------------------------------------------
+    bool isDIFrmChanged(void);
 
-    /**
-     * @brief: motor deceleration state(class 0 pause) 
-     *
-     * @return
-     */
-    char getDIDec();
+    //  -----------------------------------------------------------------------
+	//  Function:		getDOFrm1
+	//  Description: get the DO status from the first 4 bytes.
+	//  -----------------------------------------------------------------------
+    uint32_t getDOFrm1(void);
 
-    /**
-     * @brief:mother line contactor1  
-     *
-     * @return 
-     */
-    char getDIOutage1();
+    //  -----------------------------------------------------------------------
+	//  Function:		getDIMainBrake
+	//  Description: the brake on main axles 1-6
+	//  -----------------------------------------------------------------------
+    char getDIMainBrake(void);
 
-    /**
-     * @brief: mother line contactor0
-     * when contactor0 and contactor1 are both 1
-     * the feadback should be 1
-     *
-     * @return 
-     */
-    char getDIOutage0();
+    //  -----------------------------------------------------------------------
+	//  Function:		getDIBrake1
+	//  Description: the brake on aux axle 1
+	//  -----------------------------------------------------------------------
+    char getDIBrake1(void);
 
-    /**
-     * @brief:the eighth axis brake 
-     *
-     * @return 
-     */
-    char getDIBrake3();
+    //  -----------------------------------------------------------------------
+	//  Function:		getDIBrake2
+	//  Description: the brake on aux axle 2
+	//  -----------------------------------------------------------------------
+    char getDIBrake2(void);
 
-    /**
-     * @brief: the seventh axis brake 
-     *
-     * @return 
-     */
-    char getDIBrake2();
+    //  -----------------------------------------------------------------------
+	//  Function:		getDIContactor0
+	//  Description: the contactor0 status.
+	//  -----------------------------------------------------------------------
+    char getDIContactor0(void);
 
-    /**
-     * @brief: first six axises brake 
-     *
-     * @return 
-     */
-    char getDIBrake1();
+	//  -----------------------------------------------------------------------
+	//  Function:		getDIContactor1
+	//  Description: the contactor1 status.
+	//  -----------------------------------------------------------------------
+    char getDIContactor1(void);
 
-    /**
-     * @brief: deadman in deepest position 
-     *
-     * @return 
-     */
-    char getDIDeadmanPanic();
+	//  -----------------------------------------------------------------------
+	//  Function:		getDICore1Reset
+	//  Description: the action Core1 reset.
+	//  -----------------------------------------------------------------------
+    char getDICore1Reset(void);
 
-    /**
-     * @brief: deadman in normal position 
-     *
-     * @return 
-     */
-    char getDIDeadmanNormal();
+	//  -----------------------------------------------------------------------
+	//  Function:		getCabinetReset
+	//  Description: the reset from cabinet.
+	//  -----------------------------------------------------------------------
+    char getCabinetReset(void);
 
-    /**
-     * @brief: TP in manual state 
-     *
-     * @return 
-     */
-    char getDITPManual();
+	//  -----------------------------------------------------------------------
+	//  Function:		getUserReset
+	//  Description: the action from user of cabinet.
+	//  -----------------------------------------------------------------------
+    char getUserReset(void);
 
-    /**
-     * @brief: TP in speed limited state 
-     *
-     * @return 
-     */
-    char getDITPLimitedManual();
+    //  -----------------------------------------------------------------------
+	//  Function:		getDIDec
+	//  Description: the decelerating status.
+	//  -----------------------------------------------------------------------
+    char getDIDec(void);
 
-    /**
-     * @brief: TP in auto state 
-     *
-     * @return 
-     */
-    char getDITPAuto();
-    
-    /*
-     * qianjin:add for mode 
-     *
-     *
-     */
-    int getDITPUserMode();
-    /**
-     * @brief: TP estop
-     *
-     * @return 
-     */
-    char getDITPEStop();
+	//  -----------------------------------------------------------------------
+	//  Function:		getDITPManual
+	//  Description: the TP mode is manual.
+	//  -----------------------------------------------------------------------
+    char getDITPManual(void);
 
-    /**
-     * @brief: in hardware limit
-     *
-     * @return 
-     */
-    char getDILimitedStop();
+	//  -----------------------------------------------------------------------
+	//  Function:		getDITPLimitedManual
+	//  Description: the TP mode is slowly manual.
+	//  -----------------------------------------------------------------------
+    char getDITPLimitedManual(void);
 
-    /**
-     * @brief: external estop 
-     *
-     * @return 
-     */
-    char getDIExtEStop();
+	//  -----------------------------------------------------------------------
+	//  Function:		getDITPAuto
+	//  Description: the TP mode is auto.
+	//  -----------------------------------------------------------------------
+    char getDITPAuto(void);
 
-    /**
-     * @brief: safety board reset 
-     *
-     * @return 
-     */
-    char getDICore1Reset();
+     //qianjin:add for mode
+	//  -----------------------------------------------------------------------
+	//  Function:		getDITPUserMode
+	//  Description: the mode according the priority.
+	//  Return: 1  ->  auto mode.
+	//          3  ->  manual.
+	//          2  ->  limited manual
+	//  -----------------------------------------------------------------------
+    int getDITPUserMode(void);
 
-    /**
-     * @brief: Servo alarm 
-     *
-     * @return 
-     */
-    char getDICore1Alarm();
+	char getDICommError(void);
 
-    /**
-     * @brief: feadback of another outage1 and outage0  
-     *
-     * @return 
-     */
-    char getDIAlarm();
-     
-    /**
-     * @brief: safety door stop 
-     *
-     * @return 
-     */
-    char getDISafetyDoorStop();
+	//  -----------------------------------------------------------------------
+	//  Function:		getDITPEStop
+	//  Description: E-stop from TP.
+	//  -----------------------------------------------------------------------
+    char getDITPEStop(void);
 
-    /**
-     * @brief: type 0 stop from core0 
-     *
-     * @return 
-     */
-    char getDOType0Stop();
+	//  -----------------------------------------------------------------------
+	//  Function:		getDILimitedStop
+	//  Description: Stop from the limited position.
+	//  -----------------------------------------------------------------------
+    char getDILimitedStop(void);
 
-    /**
-     * @brief: estop 0 
-     *
-     * @param data
-     *
-     * @return 
-     */
-    U64 setDOType0Stop(char data);
+	//  -----------------------------------------------------------------------
+	//  Function:		getDIExtEStop
+	//  Description: Stop from external signal.
+	//  -----------------------------------------------------------------------
+    char getDIExtEStop(void);
 
-    /**
-     * @brief: type 0 stop from core0 
-     *
-     * @return 
-     */
-    char getDOType1Stop();
+	//  -----------------------------------------------------------------------
+	//  Function:		getDISafetyDoorStop
+	//  Description: Stop from the safety door.
+	//  -----------------------------------------------------------------------
+    char getDISafetyDoorStop(void);
 
-    /**
-     * @brief: estop 1 
-     *
-     * @param data
-     *
-     * @return 
-     */
-    U64 setDOType1Stop(char data);
+	char getDICabinetStop(void);
 
-    /**
-     * @brief: type 0 stop from core0 
-     *
-     * @return 
-     */
-    char getDOType2Stop();
+	//  -----------------------------------------------------------------------
+	//  Function:		getDIDeadmanNormal
+	//  Description: the deadman is in release status.
+	//  -----------------------------------------------------------------------
+    char getDIDeadmanNormal(void);
 
-    /**
-     * @brief 
-     *
-     * @param data
-     *
-     * @return 
-     */
-    U64 setDOType2Stop(char data);
-    
-    /**
-     * @brief: safety board stop config 
-     * 0: class 0 stop; 1:class 1 stop
-     *
-     * @return 
-     */
-    char getDOSafetyStopConf();
+	//  -----------------------------------------------------------------------
+	//  Function:		getDIDeadmanPanic
+	//  Description: the deadman is in pressed status.
+	//  -----------------------------------------------------------------------
+    char getDIDeadmanPanic(void);
 
-    /**
-     * @brief 
-     *
-     * @param data
-     *
-     * @return 
-     */
-    U64 setDOSafetyStopConf(char data);
+	//  -----------------------------------------------------------------------
+	//  Function:		getDualFaulty
+	//  Description: Differences in dual circuit.
+	//  -----------------------------------------------------------------------
+    char getDualFaulty(void);
 
-    /**
-     * @brief: ex_estop config 
-     * 0: class 0 stop; 1:class 1 stop
-     *
-     * @return 
-     */
-    char getDOExtEStopConf();
+	//  -----------------------------------------------------------------------
+	//  Function:		getModeFaulty
+	//  Description: the faulty status according auto/manual/limited manual.
+	//  -----------------------------------------------------------------------
+    char getModeFaulty(void);
 
-    /**
-     * @brief 
-     *
-     * @param data
-     *
-     * @return 
-     */
-    U64 setDOExtEStopConf(char data);
+	//  -----------------------------------------------------------------------
+	//  Function:		getMainBrakeRelayFaulty
+	//  Description: the faulty status from main brake relay.
+	//  -----------------------------------------------------------------------
+    char getMainBrakeRelayFaulty(void);
 
-    /**
-     * @brief: speed limited config
-     * 0: class 0 stop; 1:class 1 stop
-     * 
-     * @return 
-     */
-    char getDOLmtStopConf();
+	//  -----------------------------------------------------------------------
+	//  Function:		getBrake1RelayFaulty
+	//  Description: the faulty status from brake1 relay.
+	//  -----------------------------------------------------------------------
+    char getBrake1RelayFaulty(void);
 
-    /**
-     * @brief 
-     *
-     * @param data
-     *
-     * @return 
-     */
-    U64 setDOLmtStopConf(char data);
+	//  -----------------------------------------------------------------------
+	//  Function:		getBrake2RelayFaulty
+	//  Description: the faulty status from brake2 relay.
+	//  -----------------------------------------------------------------------
+    char getBrake2RelayFaulty(void);
 
-    /**
-     * @brief 
-     */
-    void reset();
+	//  -----------------------------------------------------------------------
+	//  Function:		getContactor0RelayFaulty
+	//  Description: the faulty status from Contactor0.
+	//  -----------------------------------------------------------------------
+    char getContactor0RelayFaulty(void);
 
-    /**
-     * @brief: heart_beat with safety board 
-     *
-     * @return 
-     */
-    U64 setSafetyHeartBeat();
+	//  -----------------------------------------------------------------------
+	//  Function:		getContactor1RelayFaulty
+	//  Description: the faulty status from Contactor1.
+	//  -----------------------------------------------------------------------
+    char getContactor1RelayFaulty(void);
 
-    /**
-     * @brief 
-     *
-     * @return 
-     */
-    bool isSafetyValid();
+	//  -----------------------------------------------------------------------
+	//  Function:		getDIContactorFaulty
+	//  Description: the contactor status.
+	//  -----------------------------------------------------------------------
+	char getDIContactorFaulty(void);
 
-    /**
-     * @brief 
-     *
-     * @return 
-     */
-    bool isSafetyAlarm();
-	
-    //------------------------------------------------------------
-    // Function:    startThread
-    // Summary: start a thread.
-    // In:      None.
-    // Out:     None.
-    // Return:  None.
-    //------------------------------------------------------------
-    void startThread(void);
-	
-    //------------------------------------------------------------
-    // Function:    runThread
-    // Summary: main function of io thread.
-    // In:      None.
-    // Out:     None.
-    // Return:  None.
-    //------------------------------------------------------------
-    void runThread(void);
+    //  -----------------------------------------------------------------------
+	//  Function:		getExcitorStop
+	//  Description: the request to stop excitor of motors.
+	//  -----------------------------------------------------------------------
+    char getExcitorStop(void);
+
+    //  -----------------------------------------------------------------------
+	//  Function:		getDOType0Stop
+	//  Description: get the value of type0 stop.
+	//  -----------------------------------------------------------------------
+    char getDOType0Stop(void);
+
+	//  -----------------------------------------------------------------------
+	//  Function:		setDOType0Stop
+	//  Description: set type0 stop.
+	//  -----------------------------------------------------------------------
+    ErrorCode setDOType0Stop(char data);
+
+	//  -----------------------------------------------------------------------
+	//  Function:		getDOType1Stop
+	//  Description: get the value of type1 stop.
+	//  -----------------------------------------------------------------------
+    char getDOType1Stop(void);
+
+    //  -----------------------------------------------------------------------
+	//  Function:		setDOType1Stop
+	//  Description: set type1 stop.
+	//  -----------------------------------------------------------------------
+    ErrorCode setDOType1Stop(char data);
+
+	//  -----------------------------------------------------------------------
+	//  Function:		getDOType2Stop
+	//  Description: get the value of type2 stop.
+	//  -----------------------------------------------------------------------
+    char getDOType2Stop(void);
+
+	//  -----------------------------------------------------------------------
+	//  Function:		setDOType2Stop
+	//  Description: set type2 stop.
+	//  ----------------------------------------------------------------------
+    ErrorCode setDOType2Stop(char data);
+
+	//  -----------------------------------------------------------------------
+	//  Function:		getDOSafetyDoorStopConf
+	//  Description: the configuration value of safety door stop.
+	//  ----------------------------------------------------------------------
+    char getDOSafetyDoorStopConf(void);
+
+	//  -----------------------------------------------------------------------
+	//  Function:		setDOSafetyDoorStopConf
+	//  Description: set the configuration of safety door stop.
+	//  ----------------------------------------------------------------------
+    ErrorCode setDOSafetyDoorStopConf(char data);
+
+	//  -----------------------------------------------------------------------
+	//  Function:		getDOExtEStopConf
+	//  Description: the configuration value of external stop.
+	//  ----------------------------------------------------------------------
+    char getDOExtEStopConf(void);
+
+	//  -----------------------------------------------------------------------
+	//  Function:		getDOExtEStopConf
+	//  Description: the configuration value of external stop.
+	//  ----------------------------------------------------------------------
+    ErrorCode setDOExtEStopConf(char data);
+
+	//  -----------------------------------------------------------------------
+	//  Function:		getDOLmtStopConf
+	//  Description: the configuration value of limited position stop.
+	//  ----------------------------------------------------------------------
+    char getDOLmtStopConf(void);
+
+	//  -----------------------------------------------------------------------
+	//  Function:		setDOLmtStopConf
+	//  Description: set the configuration of limited position stop.
+	//  ----------------------------------------------------------------------
+    ErrorCode setDOLmtStopConf(char data);
+
+	//  -----------------------------------------------------------------------
+	//  Function:		reset
+	//  Description: reset by clear stop commands.
+	//  ----------------------------------------------------------------------
+    void reset(void);
+
+	//  -----------------------------------------------------------------------
+	//  Function:	    isSafetyVirtual
+	//  Description: is safety board existed.
+	//  Return: false  -> safety board is existed.
+	//          true -> virtual board.
+	//  ----------------------------------------------------------------------
+    bool isSafetyVirtual(void);
+
+	//  -----------------------------------------------------------------------
+	//  Function:		isCabinetResetRequest
+	//  Description: is the request valid?
+	//  return:  true  -> the request is valid.
+	//           false -> invalid request
+	//  ----------------------------------------------------------------------
+	bool isCabinetResetRequest(void);
+
+    //  -----------------------------------------------------------------------
+	//  Function:		getSafetyBoardVersion
+	//  Description: get safety_board version
+	//  return:  None
+	//  ----------------------------------------------------------------------
+	void getSafetyBoardVersion(int &version);
+
+	//  -----------------------------------------------------------------------
+	//  Function:		get*ModeDo
+	//  Description: get the DO output according to the user mode.
+	//  return:  true -> DO is set.
+	//           bool -> DO is not set.
+	//  ----------------------------------------------------------------------
+	bool getAutoModeDo(uint32_t &port_offset, uint8_t &value);
+	bool getLimitedManualModeDo(uint32_t &port_offset, uint8_t &value);
+	bool getManualModeDo(uint32_t &port_offset, uint8_t &value);
+
+    //check safety_board
+	bool checkSafetyBoardAlarm(void);
+
+	//check deadman normal
+	ErrorCode checkDeadmanNormal(void);
+
+
 	
 private:
+    bool isRisingEdge(char value, ErrorCode code, char &pre_value);
+
     FstSafetyDeviceParam* param_ptr_;
     fst_log::Logger* log_ptr_;
-    int input[8];   //maybe 8 bytes?
-    int output[8];  //maybe 8 bytes?
 
-    std::thread update_thread_;
+    boost::thread update_thread_;
     std::mutex mutex_;  // data protection
+    void startThread(void);
+    void runThread(void); 
+    void updateThreadFunc(void);      // calling data exchange
+    ErrorCode updateSafetyData(void); // data exchange
 
     FstSafetyDevice();
-    void updateThreadFunc();    // data exchange 
-  private:
-    std::atomic<bool>               valid_flag_;
+	bool is_virtual_;
+    std::atomic<SafetyBoardDIFrm1>  din_frm1_;
+    std::atomic<SafetyBoardDOFrm1>  dout_frm1_;
 
-    std::atomic<SafetyBoardDIFrm2>  din_frm2_;
-    std::atomic<SafetyBoardDOFrm2>  dout_frm2_;
-	
-    // the thread cycle.
-    static const int LOOP_CYCLE = 1000;
-	
-    // the thread object.
-    boost::thread safety_thread;
+	//safety_alarm
+	char pre_dual_faulty_;
+	char pre_ext_estop_;
+	char pre_door_stop_;
+	char pre_limited_stop_;
+	char pre_deadman_normal_;
+	char pre_deadman_panic_;
+	char pre_tp_estop_;
+	char pre_mode_faulty_;
+	char pre_contactor_faulty_;
+	char pre_main_brake_relay_;
+	char pre_brake1_relay_;
+	char pre_brake2_relay_;
+	char pre_contactor0_relay_;
+	char pre_contactor1_relay_;
+	char pre_cabinet_stop_;
+
+	//comm error safety_alarm
+	char pre_comm_err_;
 };
 
 }

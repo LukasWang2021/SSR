@@ -10,19 +10,34 @@ void ControllerRpc::handleRpc0x00016764(void* request_data_ptr, void* response_d
     RequestMessageType_UserCoordInfo* rq_data_ptr = static_cast<RequestMessageType_UserCoordInfo*>(request_data_ptr);
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
-    CoordInfo info;
-    info.id = rq_data_ptr->data.id;
-    info.name = rq_data_ptr->data.name;
-    info.comment = rq_data_ptr->data.comment;
-    info.is_valid = false;  // not used, but initialized
-    info.group_id = rq_data_ptr->data.group_id;
-    info.data.position.x = rq_data_ptr->data.data.x;
-    info.data.position.y = rq_data_ptr->data.data.y;
-    info.data.position.z = rq_data_ptr->data.data.z;
-    info.data.orientation.a = rq_data_ptr->data.data.a;
-    info.data.orientation.b = rq_data_ptr->data.data.b;
-    info.data.orientation.c = rq_data_ptr->data.data.c;
-    rs_data_ptr->data.data = coordinate_manager_ptr_->addCoord(info);
+    if (false == state_machine_ptr_->getState())
+    {
+        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
+        FST_INFO("/rpc/coordinate_manager/addUserCoord can't run when backup/restore, ret = %llx\n", rs_data_ptr->data.data);
+        return;
+    }
+
+    if (rq_data_ptr->data.data.data_count == 6)
+    {
+        CoordInfo info;
+        info.id = rq_data_ptr->data.id;
+        info.name = rq_data_ptr->data.name;
+        info.comment = rq_data_ptr->data.comment;
+        info.is_valid = false;  // not used, but initialized
+        info.group_id = rq_data_ptr->data.group_id;
+        info.data.point_.x_ = rq_data_ptr->data.data.data[0];
+        info.data.point_.y_ = rq_data_ptr->data.data.data[1];
+        info.data.point_.z_ = rq_data_ptr->data.data.data[2];
+        info.data.euler_.a_ = rq_data_ptr->data.data.data[3];
+        info.data.euler_.b_ = rq_data_ptr->data.data.data[4];
+        info.data.euler_.c_ = rq_data_ptr->data.data.data[5];
+        rs_data_ptr->data.data = coordinate_manager_ptr_->addCoord(info);
+    }
+    else
+    {
+        rs_data_ptr->data.data = COORDINATE_MANAGER_INVALID_ARG;
+    }
+
     recordLog(COORDINATE_MANAGER_LOG, rs_data_ptr->data.data, std::string("/rpc/coordinate_manager/addUserCoord"));
 }
 
@@ -42,19 +57,42 @@ void ControllerRpc::handleRpc0x0000EC14(void* request_data_ptr, void* response_d
     RequestMessageType_UserCoordInfo* rq_data_ptr = static_cast<RequestMessageType_UserCoordInfo*>(request_data_ptr);
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
-    CoordInfo info;
-    info.id = rq_data_ptr->data.id;
-    info.name = rq_data_ptr->data.name;
-    info.comment = rq_data_ptr->data.comment;
-    info.is_valid = false;  // not used, but initialized
-    info.group_id = rq_data_ptr->data.group_id;
-    info.data.position.x = rq_data_ptr->data.data.x;
-    info.data.position.y = rq_data_ptr->data.data.y;
-    info.data.position.z = rq_data_ptr->data.data.z;
-    info.data.orientation.a = rq_data_ptr->data.data.a;
-    info.data.orientation.b = rq_data_ptr->data.data.b;
-    info.data.orientation.c = rq_data_ptr->data.data.c;
-    rs_data_ptr->data.data = coordinate_manager_ptr_->updateCoord(info);
+    if (false == state_machine_ptr_->getState())
+    {
+        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
+        FST_INFO("/rpc/coordinate_manager/updateUserCoord can't run when backup/restore, ret = %llx\n", rs_data_ptr->data.data);
+        return;
+    }
+
+    if (rq_data_ptr->data.data.data_count == 6)
+    {
+        CoordInfo info;
+        info.id = rq_data_ptr->data.id;
+        info.name = rq_data_ptr->data.name;
+        info.comment = rq_data_ptr->data.comment;
+        info.is_valid = false;  // not used, but initialized
+        info.group_id = rq_data_ptr->data.group_id;
+        info.data.point_.x_ = rq_data_ptr->data.data.data[0];
+        info.data.point_.y_ = rq_data_ptr->data.data.data[1];
+        info.data.point_.z_ = rq_data_ptr->data.data.data[2];
+        info.data.euler_.a_ = rq_data_ptr->data.data.data[3];
+        info.data.euler_.b_ = rq_data_ptr->data.data.data[4];
+        info.data.euler_.c_ = rq_data_ptr->data.data.data[5];
+        rs_data_ptr->data.data = coordinate_manager_ptr_->updateCoord(info);
+
+        int current_id = 0;
+        motion_control_ptr_->getUserFrame(current_id);
+        if (current_id == rq_data_ptr->data.id && rs_data_ptr->data.data == SUCCESS)
+        {
+            rs_data_ptr->data.data = motion_control_ptr_->setUserFrame(current_id);
+        }
+
+    }
+    else
+    {
+        rs_data_ptr->data.data = COORDINATE_MANAGER_INVALID_ARG;
+    }
+
     recordLog(COORDINATE_MANAGER_LOG, rs_data_ptr->data.data, std::string("/rpc/coordinate_manager/updateUserCoord"));
 }
 
@@ -91,12 +129,13 @@ void ControllerRpc::handleRpc0x00004324(void* request_data_ptr, void* response_d
         strncpy(rs_data_ptr->data.comment, info.comment.c_str(), 255);
         rs_data_ptr->data.comment[255] = 0;
         rs_data_ptr->data.group_id = info.group_id;
-        rs_data_ptr->data.data.x = info.data.position.x;
-        rs_data_ptr->data.data.y = info.data.position.y;
-        rs_data_ptr->data.data.z = info.data.position.z;
-        rs_data_ptr->data.data.a = info.data.orientation.a;
-        rs_data_ptr->data.data.b = info.data.orientation.b;
-        rs_data_ptr->data.data.c = info.data.orientation.c;
+        rs_data_ptr->data.data.data_count = 6;
+        rs_data_ptr->data.data.data[0] = info.data.point_.x_;
+        rs_data_ptr->data.data.data[1] = info.data.point_.y_;
+        rs_data_ptr->data.data.data[2] = info.data.point_.z_;
+        rs_data_ptr->data.data.data[3] = info.data.euler_.a_;
+        rs_data_ptr->data.data.data[4] = info.data.euler_.b_;
+        rs_data_ptr->data.data.data[5] = info.data.euler_.c_;
     }
     recordLog(COORDINATE_MANAGER_LOG, rs_data_ptr->error_code.data, std::string("/rpc/coordinate_manager/getUserCoordInfoById"));
 }
@@ -119,6 +158,8 @@ void ControllerRpc::handleRpc0x0001838F(void* request_data_ptr, void* response_d
     }
     rs_data_ptr->data.user_coord_summary_count = info_list.size();    
     rs_data_ptr->error_code.data = SUCCESS;
-    recordLog(COORDINATE_MANAGER_LOG, rs_data_ptr->error_code.data, std::string("/rpc/coordinate_manager/getAllValidUserCoordSummaryInfo"));
+    
+    if (rs_data_ptr->error_code.data != SUCCESS)
+        recordLog(COORDINATE_MANAGER_LOG, rs_data_ptr->error_code.data, std::string("/rpc/coordinate_manager/getAllValidUserCoordSummaryInfo"));
 }
 

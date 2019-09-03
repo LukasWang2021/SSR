@@ -12,10 +12,11 @@ find_package(catkin REQUIRED COMPONENTS
 #    tp_comm
 )
 
-set(VERSION_MAJOR 3)
+set(MAIN_VERSION 1) # 1 if release version (with version.h.in modify)
+set(VERSION_MAJOR 4)
 set(VERSION_MINOR 0)
 set(VERSION_PATCH 0)
-set(VERSION_COMMIT \"1133e096\") #from gitlab commit number.
+set(VERSION_COMMIT \"14ec3460\") #from gitlab commit number.
 string(TIMESTAMP BUILD_DATE \"%Y%m%d\")
 string(TIMESTAMP BUILD_TIME \"%H:%M:%S\")
 
@@ -64,6 +65,7 @@ set(catkin_INCLUDE_DIRS
     ${depend_PATH_INC}/log_service/include
     ${depend_PATH_INC}/basic_alg/include 
     ${depend_PATH_INC}/kinematics_alg/include 
+    ${depend_PATH_INC}/transformation/include 
     ${depend_PATH_INC}/process_comm/include 
     ${depend_PATH_INC}/preformance_monitor/include 
     ${depend_PATH_INC}/modbus_manager/include
@@ -74,6 +76,11 @@ set(catkin_INCLUDE_DIRS
     ${depend_PATH_INC}/virtual_io_device/include 
     ${depend_PATH_INC}/program_launching/include 
     ${depend_PATH_INC}/file_manager/include 
+    ${depend_PATH_INC}/system_manager/include 
+    ${depend_PATH_INC}/param_manager/include 
+    ${depend_PATH_INC}/nvram/include
+    ${depend_PATH_INC}/fst_spi/include
+    ${depend_PATH_INC}/dynamic_alg/include
 )
 
 catkin_package(
@@ -88,6 +95,12 @@ catkin_package(
     DEPENDS io_manager
     DEPENDS program_launching
     DEPENDS file_manager
+    DEPENDS system_manager
+    DEPENDS param_manager
+    DEPENDS transformation
+    DEPENDS nvram 
+    DEPENDS fst_spi 
+    DEPENDS dynamic_alg
 )
  
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wno-unused-but-set-variable -Wno-unused-local-typedefs -O0 -fpermissive -DPB_FIELD_32BIT -DSIMMULATION")
@@ -134,6 +147,10 @@ target_link_libraries(controller
     io_manager
     program_launching
     file_manager
+    system_manager
+    param_manager
+    transformation
+    dynamic_alg
 )
 
 #############
@@ -156,7 +173,7 @@ install(DIRECTORY launch
 )
 
 install(FILES ${PROJECT_BINARY_DIR}/${PROJECT_NAME}_version 
-  DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/version
+  DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/..
 )
 
 #############

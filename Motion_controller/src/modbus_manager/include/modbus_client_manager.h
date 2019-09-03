@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <time.h>
+#include <sys/time.h>
 #include <list>
 
 #include "parameter_manager/parameter_manager_param_group.h"
@@ -32,9 +33,15 @@ public:
      ~ModbusClientManager();
 
     ErrorCode initParam();
+    ErrorCode initCLientListByParams();
 
     ErrorCode addClient(ModbusClientStartInfo &start_info);
     ErrorCode deleteClient(int client_id);
+    vector<int> getClientIdList();
+
+    /* replace the old client with a new client:
+        replaced_id: represents the old client;
+        start_info: the new client information */
     ErrorCode replaceClient(int &replaced_id, ModbusClientStartInfo &start_info);
 
     ErrorCode setEnableStatus(int client_id, bool &status);
@@ -44,18 +51,18 @@ public:
     ErrorCode getEnableStatus(int client_id, bool &status);
     ErrorCode getStartInfo(int client_id, ModbusClientStartInfo &start_info);
     ErrorCode getRegInfo(int client_id, ModbusClientRegInfo &reg_info);
-    vector<int> getClientIdList();
 
     ErrorCode connectClient(int client_id);
     ErrorCode closeClient(int client_id);
     ErrorCode isConnected(int client_id, bool &is_connected);
     vector<int> getConnectedClientIdList();//CONNECTED and OPERATIONAL
-    ErrorCode scanDataArea(int client_id);
 
     vector<int> getScanRateList();
     vector<ModbusClientConfigParams> getConfigParamsList();
-    ErrorCode getConfigParamsList(int client_id, ModbusClientConfigParams &params);
+    ErrorCode getConfigParams(int client_id, ModbusClientConfigParams &params);
     bool isAllClientClosed();
+    ErrorCode scanDataArea();
+    ErrorCode scanAllClientDataArea();
 
     ErrorCode getClientScanRate(int client_id, int &scan_rate);
     ErrorCode getCtrlState(int client_id, int &ctrl_state);
@@ -99,6 +106,7 @@ private:
 
     bool updateClientEnableStatus(int client_id, bool status);
     bool updateClientRegInfo(int client_id, ModbusClientRegInfo &reg_info);
+
     ModbusClientManager();
 };
 }

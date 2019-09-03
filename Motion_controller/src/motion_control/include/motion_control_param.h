@@ -19,10 +19,11 @@ public:
     // param to load & save
     bool    enable_ros_publish_;
     int     cycle_per_publish_;
-    int     non_rt_cycle_time_;
-    int     rt_cycle_time_;
-
+    int     common_cycle_time_;
+    int     priority_cycle_time_;
+    int     realtime_cycle_time_;
     int     log_level_;
+    std::string model_name_;
 
 private:
     fst_parameter::ParamGroup yaml_help_;

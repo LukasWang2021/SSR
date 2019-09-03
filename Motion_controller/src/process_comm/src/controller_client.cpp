@@ -82,13 +82,14 @@ bool ControllerClient::start(std::string data)
     return *((bool*)(recv_buffer_ptr_ + PROCESS_COMM_CMD_ID_SIZE));
 }
 
-bool ControllerClient::debug(std::string data)
+bool ControllerClient::launch(std::string data)
 {
+    FST_INFO("ControllerClient::launch %s ...", data.c_str());
     if(!controller_server_ptr_->isInterpreterServerReady()
         || data.size() >= 256
-        || !sendRequest(INTERPRETER_SERVER_CMD_DEBUG, data.c_str(), 256)
+        || !sendRequest(INTERPRETER_SERVER_CMD_LAUNCH, data.c_str(), 256)
         || !recvResponse(sizeof(bool))
-        || *((unsigned int*)recv_buffer_ptr_) != INTERPRETER_SERVER_CMD_DEBUG)
+        || *((unsigned int*)recv_buffer_ptr_) != INTERPRETER_SERVER_CMD_LAUNCH)
     {
         return false;
     }
@@ -188,25 +189,12 @@ bool ControllerClient::getNextInstruction(Instruction* instruction_ptr)
     return *((bool*)(recv_buffer_ptr_ + PROCESS_COMM_CMD_ID_SIZE));
 }
 
-bool ControllerClient::setAutoStartMode(int start_mode)
+bool ControllerClient::codeStart(int program_code)
 {
     if(!controller_server_ptr_->isInterpreterServerReady()
-        || !sendRequest(INTERPRETER_SERVER_CMD_SET_AUTO_START_MODE, &start_mode, sizeof(int))
+        || !sendRequest(INTERPRETER_SERVER_CMD_CODE_START, &program_code, sizeof(int))
         || !recvResponse(sizeof(bool))
-        || *((unsigned int*)recv_buffer_ptr_) != INTERPRETER_SERVER_CMD_SET_AUTO_START_MODE)
-    {
-        return false;
-    }
-    
-    return *((bool*)(recv_buffer_ptr_ + PROCESS_COMM_CMD_ID_SIZE));
-}
-
-bool ControllerClient::switchStep(int data)
-{
-    if(!controller_server_ptr_->isInterpreterServerReady()
-        || !sendRequest(INTERPRETER_SERVER_CMD_SWITCH_STEP, &data, sizeof(int))
-        || !recvResponse(sizeof(bool))
-        || *((unsigned int*)recv_buffer_ptr_) != INTERPRETER_SERVER_CMD_SWITCH_STEP)
+        || *((unsigned int*)recv_buffer_ptr_) != INTERPRETER_SERVER_CMD_CODE_START)
     {
         return false;
     }
@@ -290,7 +278,7 @@ bool ControllerClient::sendRequest(unsigned int cmd_id, void* data_ptr, int send
     int send_bytes = nn_send(req_resp_socket_, send_buffer_ptr_, send_size + PROCESS_COMM_CMD_ID_SIZE, 0); // block send
     if(send_bytes == -1 || send_bytes != (send_size + PROCESS_COMM_CMD_ID_SIZE))
     {
-        FST_ERROR("handleResponseList: send response failed, nn_error = %d", nn_errno());
+        FST_ERROR("handleResponseList: send response failed, %s", nn_strerror(errno));
         return false;
     }
     return true;

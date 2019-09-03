@@ -198,7 +198,7 @@ ErrorCode ModbusManager::getClientConfigParams(int client_id, ModbusClientConfig
     if (start_mode_ != MODBUS_CLIENT)
         return MODBUS_START_MODE_ERROR;
 
-    return client_manager_ptr_->getConfigParamsList(client_id, client_config_params);
+    return client_manager_ptr_->getConfigParams(client_id, client_config_params);
 }
 
 ErrorCode ModbusManager::getClientScanRate(int client_id, int &scan_rate)
@@ -217,10 +217,18 @@ ErrorCode ModbusManager::replaceClient(int &replaced_id, ModbusClientStartInfo &
     return client_manager_ptr_->replaceClient(replaced_id, start_info);
 }
 
-ErrorCode ModbusManager::scanClientDataArea(int &client_id)
+ErrorCode ModbusManager::scanAllClientDataArea()
 {
     if (start_mode_ != MODBUS_CLIENT)
-        return MODBUS_START_MODE_ERROR;
+        return SUCCESS;
 
-    return client_manager_ptr_->scanDataArea(client_id);
+    return client_manager_ptr_->scanDataArea();
+}
+
+ErrorCode  ModbusManager::initClientListByParams()
+{
+    if (start_mode_ != MODBUS_CLIENT)
+        return SUCCESS;
+
+    return client_manager_ptr_->initCLientListByParams();
 }

@@ -11,17 +11,12 @@
 using namespace std;
 using namespace fst_core_interface;
 using namespace fst_comm_interface;
+using namespace basic_alg;
 
 namespace fst_mc
 {
 
 const static size_t MAX_ATTEMPTS = 100;
-const static unsigned char WRITE_BY_ID  = 0x2D;
-const static unsigned char GET_ENCODER  = 0x70;
-const static unsigned char GET_CONTROL_POS  = 0x80;
-const static unsigned char READ_BY_ADDR     = 0x14;
-const static unsigned char READ_BY_ID       = 0x1D;
-const static unsigned char WRITE_BY_ADDR    = 0x24;
 
 
 BareCoreInterface::BareCoreInterface(void)
@@ -69,10 +64,10 @@ bool BareCoreInterface::fillPointCache(TrajectoryPoint *points, size_t length, P
     {
         for (size_t i = 0; i < length; i++)
         {
-            memcpy(point_cache_.cache.points[i].angle, &points[i].angle, JOINT_NUM * sizeof(double));
-            memcpy(point_cache_.cache.points[i].omega, &points[i].omega, JOINT_NUM * sizeof(double));
-            memcpy(point_cache_.cache.points[i].alpha, &points[i].alpha, JOINT_NUM * sizeof(double));
-            memcpy(point_cache_.cache.points[i].inertia, &points[i].ma_cv_g, JOINT_NUM * sizeof(double));
+            memcpy(point_cache_.cache.points[i].angle, &points[i].pos, JOINT_NUM * sizeof(double));
+            memcpy(point_cache_.cache.points[i].omega, &points[i].vel, JOINT_NUM * sizeof(double));
+            memcpy(point_cache_.cache.points[i].alpha, &points[i].acc, JOINT_NUM * sizeof(double));
+            memcpy(point_cache_.cache.points[i].inertia, &points[i].torque, JOINT_NUM * sizeof(double));
             point_cache_.cache.points[i].point_position = points[i].level;
         }
 
@@ -120,6 +115,7 @@ bool BareCoreInterface::getLatestJoint(Joint &joint, ServoState &state)
         {
             state = ServoState(fbjs.state);
             memcpy(&joint, fbjs.position, JOINT_NUM * sizeof(double));
+            memset((char*)&joint + JOINT_NUM * sizeof(double), 0, sizeof(Joint) - JOINT_NUM * sizeof(double));
             return true;
         }
         else
@@ -153,19 +149,29 @@ bool BareCoreInterface::stopBareCore(void)
 bool BareCoreInterface::setConfigData(int id, const vector<double> &data)
 {
     ServiceRequest req;
-    req.req_id = WRITE_BY_ID;
+    req.req_id = WRTIE_DATA_BY_ID;
     int len = data.size();
     memcpy(&req.req_buff[0], (char*)&id, sizeof(id));
     memcpy(&req.req_buff[4], (char*)&len, sizeof(len));
     memcpy(&req.req_buff[8], (char*)&data[0], len * sizeof(double));
-    //return sendRequest(jtac_param_interface_ , req);
+    return sendRequest(command_interface_ , req);
+}
+
+bool BareCoreInterface::setConfigData(int id, const vector<int> &data)
+{
+    ServiceRequest req;
+    req.req_id = WRTIE_DATA_BY_ID;
+    int len = data.size();
+    memcpy(&req.req_buff[0], (char*)&id, sizeof(id));
+    memcpy(&req.req_buff[4], (char*)&len, sizeof(len));
+    memcpy(&req.req_buff[8], (char*)&data[0], len * sizeof(int));
     return sendRequest(command_interface_ , req);
 }
 
 bool BareCoreInterface::getConfigData(int id, vector<double> &data)
 {
     ServiceRequest req;
-    req.req_id = READ_BY_ID;
+    req.req_id = READ_DATA_BY_ID;
     int len = data.size();
     memcpy(&req.req_buff[0], (char*)&id, sizeof(id));
     memcpy(&req.req_buff[4], (char*)&len, sizeof(len));
@@ -191,9 +197,9 @@ bool BareCoreInterface::getConfigData(int id, vector<double> &data)
 bool BareCoreInterface::getEncoder(vector<int> &data)
 {
     ServiceRequest req;
-    req.req_id = GET_ENCODER;
+    req.req_id = GET_ENCODER_SID;
     int len = data.size();
-    memcpy(&req.req_buff[0], (char*)&len, sizeof(len));
+    memcpy(&req.req_buff[0], (void*)&len, sizeof(len));
 
     //if (sendRequest(jtac_param_interface_, req))
     if (sendRequest(command_interface_, req))
@@ -214,13 +220,59 @@ bool BareCoreInterface::getEncoder(vector<int> &data)
     return false;
 }
 
+bool BareCoreInterface::getEncoderError(vector<int> &data)
+{
+    ServiceRequest req;
+    req.req_id = GET_ENCODER_ERR_SID;
+    int len = data.size();
+    memcpy(&req.req_buff[0], (void*)&len, sizeof(len));
+
+    //if (sendRequest(jtac_param_interface_, req))
+    if (sendRequest(command_interface_, req))
+    {
+        ServiceResponse res;
+
+        //if (recvResponse(jtac_param_interface_, res))
+        if (recvResponse(command_interface_, res))
+        {
+            if (*((int*)(&res.res_buff[0])) == len)
+            {
+                memcpy(&data[0], &res.res_buff[4], len * sizeof(int));
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+bool BareCoreInterface::resetEncoderError(void)
+{
+    ServiceRequest req;
+    req.req_id = RESET_ENCODER_ERR_SID;
+
+    //if (sendRequest(jtac_param_interface_, req))
+    if (sendRequest(command_interface_, req))
+    {
+        ServiceResponse res;
+
+        //if (recvResponse(jtac_param_interface_, res))
+        if (recvResponse(command_interface_, res))
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 bool BareCoreInterface::getControlPosition(double *data, size_t size)
 {
     if (size > NUM_OF_JOINT) return false;
 
     int len = size;
     ServiceRequest req;
-    req.req_id = GET_CONTROL_POS;
+    req.req_id = GET_CONTROL_POS_SID;
     memcpy(&req.req_buff[0], (char*)&len, sizeof(len));
 
     //if (sendRequest(jtac_param_interface_, req))
@@ -236,6 +288,27 @@ bool BareCoreInterface::getControlPosition(double *data, size_t size)
                 memcpy(data, &res.res_buff[4], len * sizeof(double));
                 return true;
             }
+        }
+    }
+
+    return false;
+}
+
+bool BareCoreInterface::readVersion(char *buffer, size_t size)
+{
+    ServiceRequest req;
+    req.req_id = READ_VERSION_SID;
+    if (sendRequest(command_interface_, req))
+    {
+        ServiceResponse res;
+
+        if (recvResponse(command_interface_, res))
+        {
+            size_t len = strlen(res.res_buff);
+            len = len < size ? len : size - 1;
+            memcpy(buffer, res.res_buff, len);
+            buffer[len] = '\0';
+            return true;
         }
     }
 

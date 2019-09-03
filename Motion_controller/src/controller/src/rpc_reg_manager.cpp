@@ -10,6 +10,12 @@ void ControllerRpc::handleRpc0x00004FF7(void* request_data_ptr, void* response_d
     RequestMessageType_RRegData* rq_data_ptr = static_cast<RequestMessageType_RRegData*>(request_data_ptr);
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
+    if (false == state_machine_ptr_->getState())
+    {
+        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
+        FST_INFO("/rpc/reg_manager/r/addReg can't run when backup/restore, ret = %llx\n", rs_data_ptr->data.data);
+    }
+
     RRegData reg;
     reg.id = rq_data_ptr->data.id;
     reg.name = rq_data_ptr->data.name;
@@ -25,6 +31,12 @@ void ControllerRpc::handleRpc0x000012F7(void* request_data_ptr, void* response_d
     RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
+    if (false == state_machine_ptr_->getState())
+    {
+        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
+        FST_INFO("/rpc/reg_manager/r/deleteReg can't run when backup/restore, ret = %llx\n", rs_data_ptr->data.data);
+    }
+
     rs_data_ptr->data.data = reg_manager_ptr_->deleteRReg(rq_data_ptr->data.data);
     recordLog(REG_MANAGER_LOG, rs_data_ptr->data.data, std::string("/rpc/reg_manager/r/deleteReg"));
 }
@@ -34,6 +46,12 @@ void ControllerRpc::handleRpc0x00005757(void* request_data_ptr, void* response_d
 {
     RequestMessageType_RRegData* rq_data_ptr = static_cast<RequestMessageType_RRegData*>(request_data_ptr);
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
+
+    if (false == state_machine_ptr_->getState())
+    {
+        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
+        FST_INFO("/rpc/reg_manager/r/updateReg can't run when backup/restore, ret = %llx\n", rs_data_ptr->data.data);
+    }
 
     RRegData reg;
     reg.id = rq_data_ptr->data.id;
@@ -74,6 +92,12 @@ void ControllerRpc::handleRpc0x0000C877(void* request_data_ptr, void* response_d
     RequestMessageType_Int32List* rq_data_ptr = static_cast<RequestMessageType_Int32List*>(request_data_ptr);
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
+    if (false == state_machine_ptr_->getState())
+    {
+        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
+        FST_INFO("/rpc/reg_manager/r/moveReg can't run when backup/restore, ret = %llx\n", rs_data_ptr->data.data);
+    }
+
     if(rq_data_ptr->data.data_count == 2)
     {
         rs_data_ptr->data.data = reg_manager_ptr_->moveRReg(rq_data_ptr->data.data[0], rq_data_ptr->data.data[1]);
@@ -101,7 +125,7 @@ void ControllerRpc::handleRpc0x0000A904(void* request_data_ptr, void* response_d
             strncpy(rs_data_ptr->data.summary[i].name, summary_list[i].name.c_str(), 31);
             rs_data_ptr->data.summary[i].name[31] = 0;
             strncpy(rs_data_ptr->data.summary[i].comment, summary_list[i].comment.c_str(), 255);
-            rs_data_ptr->data.summary[i].comment[31] = 0;
+            rs_data_ptr->data.summary[i].comment[255] = 0;
         }
         rs_data_ptr->data.summary_count = summary_list.size();
         rs_data_ptr->error_code.data = SUCCESS;
@@ -130,7 +154,7 @@ void ControllerRpc::handleRpc0x00008CE4(void* request_data_ptr, void* response_d
             strncpy(rs_data_ptr->data.summary[i].name, summary_list[i].name.c_str(), 31);
             rs_data_ptr->data.summary[i].name[31] = 0;
             strncpy(rs_data_ptr->data.summary[i].comment, summary_list[i].comment.c_str(), 255);
-            rs_data_ptr->data.summary[i].comment[31] = 0;
+            rs_data_ptr->data.summary[i].comment[255] = 0;
         }
         rs_data_ptr->data.summary_count = summary_list.size();
         rs_data_ptr->error_code.data = SUCCESS;
@@ -148,6 +172,12 @@ void ControllerRpc::handleRpc0x000097E7(void* request_data_ptr, void* response_d
 {
     RequestMessageType_MrRegData* rq_data_ptr = static_cast<RequestMessageType_MrRegData*>(request_data_ptr);
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
+    
+    if (false == state_machine_ptr_->getState())
+    {
+        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
+        FST_INFO("/rpc/reg_manager/mr/addReg can't run when backup/restore, ret = %llx\n", rs_data_ptr->data.data);
+    }
 
     MrRegData reg;
     reg.id = rq_data_ptr->data.id;
@@ -164,6 +194,12 @@ void ControllerRpc::handleRpc0x0000E5D7(void* request_data_ptr, void* response_d
     RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
+    if (false == state_machine_ptr_->getState())
+    {
+        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
+        FST_INFO("/rpc/reg_manager/mr/deleteReg can't run when backup/restore, ret = %llx\n", rs_data_ptr->data.data);
+    }
+
     rs_data_ptr->data.data = reg_manager_ptr_->deleteMrReg(rq_data_ptr->data.data);
     recordLog(REG_MANAGER_LOG, rs_data_ptr->data.data, std::string("/rpc/reg_manager/mr/deleteReg"));
 }
@@ -173,6 +209,12 @@ void ControllerRpc::handleRpc0x0000E9B7(void* request_data_ptr, void* response_d
 {
     RequestMessageType_MrRegData* rq_data_ptr = static_cast<RequestMessageType_MrRegData*>(request_data_ptr);
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
+
+    if (false == state_machine_ptr_->getState())
+    {
+        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
+        FST_INFO("/rpc/reg_manager/mr/updateReg can't run when backup/restore, ret = %llx\n", rs_data_ptr->data.data);
+    }
 
     MrRegData reg;
     reg.id = rq_data_ptr->data.id;
@@ -213,6 +255,12 @@ void ControllerRpc::handleRpc0x00015BA7(void* request_data_ptr, void* response_d
     RequestMessageType_Int32List* rq_data_ptr = static_cast<RequestMessageType_Int32List*>(request_data_ptr);
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
+    if (false == state_machine_ptr_->getState())
+    {
+        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
+        FST_INFO("/rpc/reg_manager/mr/moveReg can't run when backup/restore, ret = %llx\n", rs_data_ptr->data.data);
+    }
+
     if(rq_data_ptr->data.data_count == 2)
     {
         rs_data_ptr->data.data = reg_manager_ptr_->moveMrReg(rq_data_ptr->data.data[0], rq_data_ptr->data.data[1]);
@@ -240,7 +288,7 @@ void ControllerRpc::handleRpc0x00001774(void* request_data_ptr, void* response_d
             strncpy(rs_data_ptr->data.summary[i].name, summary_list[i].name.c_str(), 31);
             rs_data_ptr->data.summary[i].name[31] = 0;
             strncpy(rs_data_ptr->data.summary[i].comment, summary_list[i].comment.c_str(), 255);
-            rs_data_ptr->data.summary[i].comment[31] = 0;
+            rs_data_ptr->data.summary[i].comment[255] = 0;
         }
         rs_data_ptr->data.summary_count = summary_list.size();
         rs_data_ptr->error_code.data = SUCCESS;
@@ -269,7 +317,7 @@ void ControllerRpc::handleRpc0x00015CF4(void* request_data_ptr, void* response_d
             strncpy(rs_data_ptr->data.summary[i].name, summary_list[i].name.c_str(), 31);
             rs_data_ptr->data.summary[i].name[31] = 0;
             strncpy(rs_data_ptr->data.summary[i].comment, summary_list[i].comment.c_str(), 255);
-            rs_data_ptr->data.summary[i].comment[31] = 0;
+            rs_data_ptr->data.summary[i].comment[255] = 0;
         }
         rs_data_ptr->data.summary_count = summary_list.size();
         rs_data_ptr->error_code.data = SUCCESS;
@@ -287,6 +335,12 @@ void ControllerRpc::handleRpc0x000161E7(void* request_data_ptr, void* response_d
 {
     RequestMessageType_SrRegData* rq_data_ptr = static_cast<RequestMessageType_SrRegData*>(request_data_ptr);
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
+    
+    if (false == state_machine_ptr_->getState())
+    {
+        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
+        FST_INFO("/rpc/reg_manager/sr/addReg can't run when backup/restore, ret = %llx\n", rs_data_ptr->data.data);
+    }
 
     SrRegData reg;
     reg.id = rq_data_ptr->data.id;
@@ -303,6 +357,12 @@ void ControllerRpc::handleRpc0x0000B817(void* request_data_ptr, void* response_d
     RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
+    if (false == state_machine_ptr_->getState())
+    {
+        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
+        FST_INFO("/rpc/reg_manager/sr/deleteReg can't run when backup/restore, ret = %llx\n", rs_data_ptr->data.data);
+    }
+
     rs_data_ptr->data.data = reg_manager_ptr_->deleteSrReg(rq_data_ptr->data.data);
     recordLog(REG_MANAGER_LOG, rs_data_ptr->data.data, std::string("/rpc/reg_manager/sr/deleteReg"));
 }
@@ -312,6 +372,12 @@ void ControllerRpc::handleRpc0x000119F7(void* request_data_ptr, void* response_d
 {
     RequestMessageType_SrRegData* rq_data_ptr = static_cast<RequestMessageType_SrRegData*>(request_data_ptr);
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
+
+    if (false == state_machine_ptr_->getState())
+    {
+        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
+        FST_INFO("/rpc/reg_manager/sr/updateReg can't run when backup/restore, ret = %llx\n", rs_data_ptr->data.data);
+    }
 
     SrRegData reg;
     reg.id = rq_data_ptr->data.id;
@@ -353,6 +419,12 @@ void ControllerRpc::handleRpc0x00002127(void* request_data_ptr, void* response_d
     RequestMessageType_Int32List* rq_data_ptr = static_cast<RequestMessageType_Int32List*>(request_data_ptr);
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
+    if (false == state_machine_ptr_->getState())
+    {
+        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
+        FST_INFO("/rpc/reg_manager/sr/moveReg can't run when backup/restore, ret = %llx\n", rs_data_ptr->data.data);
+    }
+
     if(rq_data_ptr->data.data_count == 2)
     {
         rs_data_ptr->data.data = reg_manager_ptr_->moveSrReg(rq_data_ptr->data.data[0], rq_data_ptr->data.data[1]);
@@ -380,7 +452,7 @@ void ControllerRpc::handleRpc0x00004834(void* request_data_ptr, void* response_d
             strncpy(rs_data_ptr->data.summary[i].name, summary_list[i].name.c_str(), 31);
             rs_data_ptr->data.summary[i].name[31] = 0;
             strncpy(rs_data_ptr->data.summary[i].comment, summary_list[i].comment.c_str(), 255);
-            rs_data_ptr->data.summary[i].comment[31] = 0;
+            rs_data_ptr->data.summary[i].comment[255] = 0;
         }
         rs_data_ptr->data.summary_count = summary_list.size();
         rs_data_ptr->error_code.data = SUCCESS;
@@ -409,7 +481,7 @@ void ControllerRpc::handleRpc0x00009854(void* request_data_ptr, void* response_d
             strncpy(rs_data_ptr->data.summary[i].name, summary_list[i].name.c_str(), 31);
             rs_data_ptr->data.summary[i].name[31] = 0;
             strncpy(rs_data_ptr->data.summary[i].comment, summary_list[i].comment.c_str(), 255);
-            rs_data_ptr->data.summary[i].comment[31] = 0;
+            rs_data_ptr->data.summary[i].comment[255] = 0;
         }
         rs_data_ptr->data.summary_count = summary_list.size();
         rs_data_ptr->error_code.data = SUCCESS;
@@ -428,6 +500,12 @@ void ControllerRpc::handleRpc0x000154E7(void* request_data_ptr, void* response_d
     RequestMessageType_PrRegData* rq_data_ptr = static_cast<RequestMessageType_PrRegData*>(request_data_ptr);
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
+    if (false == state_machine_ptr_->getState())
+    {
+        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
+        FST_INFO("/rpc/reg_manager/pr/addReg can't run when backup/restore, ret = %llx\n", rs_data_ptr->data.data);
+    }
+
     PrRegData reg;
     reg.id = rq_data_ptr->data.id;
     reg.name = rq_data_ptr->data.name;
@@ -435,7 +513,7 @@ void ControllerRpc::handleRpc0x000154E7(void* request_data_ptr, void* response_d
     reg.value.pos_type = rq_data_ptr->data.pos_type;
     reg.value.group_id = rq_data_ptr->data.group_id;
     memcpy(reg.value.pos, rq_data_ptr->data.pos.data, 9*sizeof(double));
-    memcpy(reg.value.posture, rq_data_ptr->data.posture.data, 4*sizeof(bool));
+    memcpy(reg.value.posture, rq_data_ptr->data.posture.data, 4*sizeof(int));
     rs_data_ptr->data.data = reg_manager_ptr_->addPrReg(&reg);
     recordLog(REG_MANAGER_LOG, rs_data_ptr->data.data, std::string("/rpc/reg_manager/pr/addReg"));
 }
@@ -445,6 +523,12 @@ void ControllerRpc::handleRpc0x00001097(void* request_data_ptr, void* response_d
 {
     RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
+
+    if (false == state_machine_ptr_->getState())
+    {
+        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
+        FST_INFO("/rpc/reg_manager/pr/deleteReg can't run when backup/restore, ret = %llx\n", rs_data_ptr->data.data);
+    }
 
     rs_data_ptr->data.data = reg_manager_ptr_->deletePrReg(rq_data_ptr->data.data);
     recordLog(REG_MANAGER_LOG, rs_data_ptr->data.data, std::string("/rpc/reg_manager/pr/deleteReg"));
@@ -456,6 +540,12 @@ void ControllerRpc::handleRpc0x00009EF7(void* request_data_ptr, void* response_d
     RequestMessageType_PrRegData* rq_data_ptr = static_cast<RequestMessageType_PrRegData*>(request_data_ptr);
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
+    if (false == state_machine_ptr_->getState())
+    {
+        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
+        FST_INFO("/rpc/reg_manager/pr/updateReg can't run when backup/restore, ret = %llx\n", rs_data_ptr->data.data);
+    }
+
     PrRegData reg;
     reg.id = rq_data_ptr->data.id;
     reg.name = rq_data_ptr->data.name;
@@ -463,7 +553,7 @@ void ControllerRpc::handleRpc0x00009EF7(void* request_data_ptr, void* response_d
     reg.value.pos_type = rq_data_ptr->data.pos_type;
     reg.value.group_id = rq_data_ptr->data.group_id;
     memcpy(reg.value.pos, rq_data_ptr->data.pos.data, 9*sizeof(double));
-    memcpy(reg.value.posture, rq_data_ptr->data.posture.data, 4*sizeof(bool));
+    memcpy(reg.value.posture, rq_data_ptr->data.posture.data, 4*sizeof(int));
     rs_data_ptr->data.data = reg_manager_ptr_->updatePrReg(&reg);
     recordLog(REG_MANAGER_LOG, rs_data_ptr->data.data, std::string("/rpc/reg_manager/pr/updateReg"));
 }
@@ -488,7 +578,7 @@ void ControllerRpc::handleRpc0x00017207(void* request_data_ptr, void* response_d
         rs_data_ptr->data.pos.data_count = 9;
         memcpy(rs_data_ptr->data.pos.data, reg.value.pos, 9*sizeof(double));
         rs_data_ptr->data.posture.data_count = 4;
-        memcpy(rs_data_ptr->data.posture.data, reg.value.posture, 4*sizeof(bool));
+        memcpy(rs_data_ptr->data.posture.data, reg.value.posture, 4*sizeof(int));
     }
     else
     {
@@ -502,6 +592,12 @@ void ControllerRpc::handleRpc0x0000D7C7(void* request_data_ptr, void* response_d
 {
     RequestMessageType_Int32List* rq_data_ptr = static_cast<RequestMessageType_Int32List*>(request_data_ptr);
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
+
+    if (false == state_machine_ptr_->getState())
+    {
+        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
+        FST_INFO("/rpc/reg_manager/pr/moveReg can't run when backup/restore, ret = %llx\n", rs_data_ptr->data.data);
+    }
 
     if(rq_data_ptr->data.data_count == 2)
     {
@@ -530,7 +626,7 @@ void ControllerRpc::handleRpc0x0000B454(void* request_data_ptr, void* response_d
             strncpy(rs_data_ptr->data.summary[i].name, summary_list[i].name.c_str(), 31);
             rs_data_ptr->data.summary[i].name[31] = 0;
             strncpy(rs_data_ptr->data.summary[i].comment, summary_list[i].comment.c_str(), 255);
-            rs_data_ptr->data.summary[i].comment[31] = 0;
+            rs_data_ptr->data.summary[i].comment[255] = 0;
         }
         rs_data_ptr->data.summary_count = summary_list.size();
         rs_data_ptr->error_code.data = SUCCESS;
@@ -559,7 +655,7 @@ void ControllerRpc::handleRpc0x00009354(void* request_data_ptr, void* response_d
             strncpy(rs_data_ptr->data.summary[i].name, summary_list[i].name.c_str(), 31);
             rs_data_ptr->data.summary[i].name[31] = 0;
             strncpy(rs_data_ptr->data.summary[i].comment, summary_list[i].comment.c_str(), 255);
-            rs_data_ptr->data.summary[i].comment[31] = 0;
+            rs_data_ptr->data.summary[i].comment[255] = 0;
         }
         rs_data_ptr->data.summary_count = summary_list.size();
         rs_data_ptr->error_code.data = SUCCESS;
@@ -578,6 +674,12 @@ void ControllerRpc::handleRpc0x00016CE7(void* request_data_ptr, void* response_d
     RequestMessageType_HrRegData* rq_data_ptr = static_cast<RequestMessageType_HrRegData*>(request_data_ptr);
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
+    if (false == state_machine_ptr_->getState())
+    {
+        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
+        FST_INFO("/rpc/reg_manager/hr/addReg can't run when backup/restore, ret = %llx\n", rs_data_ptr->data.data);
+    }
+
     HrRegData reg;
     reg.id = rq_data_ptr->data.id;
     reg.name = rq_data_ptr->data.name;
@@ -595,6 +697,12 @@ void ControllerRpc::handleRpc0x00003D17(void* request_data_ptr, void* response_d
     RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
+    if (false == state_machine_ptr_->getState())
+    {
+        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
+        FST_INFO("/rpc/reg_manager/hr/deleteReg can't run when backup/restore, ret = %llx\n", rs_data_ptr->data.data);
+    }
+
     rs_data_ptr->data.data = reg_manager_ptr_->deleteHrReg(rq_data_ptr->data.data);
     recordLog(REG_MANAGER_LOG, rs_data_ptr->data.data, std::string("/rpc/reg_manager/hr/deleteReg"));
 }
@@ -604,6 +712,12 @@ void ControllerRpc::handleRpc0x0000CB77(void* request_data_ptr, void* response_d
 {
     RequestMessageType_HrRegData* rq_data_ptr = static_cast<RequestMessageType_HrRegData*>(request_data_ptr);
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
+
+    if (false == state_machine_ptr_->getState())
+    {
+        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
+        FST_INFO("/rpc/reg_manager/hr/updateReg can't run when backup/restore, ret = %llx\n", rs_data_ptr->data.data);
+    }
 
     HrRegData reg;
     reg.id = rq_data_ptr->data.id;
@@ -650,6 +764,12 @@ void ControllerRpc::handleRpc0x00014A87(void* request_data_ptr, void* response_d
     RequestMessageType_Int32List* rq_data_ptr = static_cast<RequestMessageType_Int32List*>(request_data_ptr);
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
+    if (false == state_machine_ptr_->getState())
+    {
+        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
+        FST_INFO("/rpc/reg_manager/hr/moveReg can't run when backup/restore, ret = %llx\n", rs_data_ptr->data.data);
+    }
+
     if(rq_data_ptr->data.data_count == 2)
     {
         rs_data_ptr->data.data = reg_manager_ptr_->moveHrReg(rq_data_ptr->data.data[0], rq_data_ptr->data.data[1]);
@@ -677,7 +797,7 @@ void ControllerRpc::handleRpc0x00012974(void* request_data_ptr, void* response_d
             strncpy(rs_data_ptr->data.summary[i].name, summary_list[i].name.c_str(), 31);
             rs_data_ptr->data.summary[i].name[31] = 0;
             strncpy(rs_data_ptr->data.summary[i].comment, summary_list[i].comment.c_str(), 255);
-            rs_data_ptr->data.summary[i].comment[31] = 0;
+            rs_data_ptr->data.summary[i].comment[255] = 0;
         }
         rs_data_ptr->data.summary_count = summary_list.size();
         rs_data_ptr->error_code.data = SUCCESS;
@@ -706,7 +826,7 @@ void ControllerRpc::handleRpc0x00006B54(void* request_data_ptr, void* response_d
             strncpy(rs_data_ptr->data.summary[i].name, summary_list[i].name.c_str(), 31);
             rs_data_ptr->data.summary[i].name[31] = 0;
             strncpy(rs_data_ptr->data.summary[i].comment, summary_list[i].comment.c_str(), 255);
-            rs_data_ptr->data.summary[i].comment[31] = 0;
+            rs_data_ptr->data.summary[i].comment[255] = 0;
         }
         rs_data_ptr->data.summary_count = summary_list.size();
         rs_data_ptr->error_code.data = SUCCESS;

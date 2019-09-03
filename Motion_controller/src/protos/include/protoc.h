@@ -5,6 +5,7 @@
 #include "protocal/publish.pb.h"
 #include "protocal/request_header.pb.h"
 #include "protocal/response_header.pb.h"
+#include "request/request_payload_info.pb.h"
 
 #include "request/request_base.pb.h"
 #include "request/request_publish_topic.pb.h"
@@ -37,11 +38,12 @@
 #include "request/request_int32_modbus_all_function_addr_info.pb.h"
 #include "request/request_int32_modbus_client_start_info.pb.h"
 
+#include "request/request_int32_param_info.pb.h"
+
 #include "message_type/base.pb.h"
 #include "message_type/publish_table.pb.h"
 #include "message_type/publish_topic.pb.h"
 #include "message_type/rpc_table.pb.h"
-#include "message_type/pose_euler.pb.h"
 #include "message_type/joint_list.pb.h"
 #include "message_type/tool_frame.pb.h"
 #include "message_type/coord_user.pb.h"
@@ -72,6 +74,7 @@
 #include "message_type/io_type.pb.h"
 #include "message_type/io_device_info.pb.h"
 #include "message_type/io_board_status_list.pb.h"
+#include "message_type/device_version.pb.h"
 
 #include "message_type/timeval.pb.h"
 
@@ -83,6 +86,11 @@
 #include "message_type/modbus_status_info.pb.h"
 #include "message_type/modbus_client_config_params.pb.h"
 #include "message_type/modbus_client_start_info.pb.h"
+#include "message_type/modbus_client_summary_start_info_list.pb.h"
+#include "message_type/modbus_client_ctrl_status.pb.h"
+
+#include "message_type/param_info.pb.h"
+#include "message_type/payload_info.pb.h"
 
 #include "response/response_base.pb.h"
 #include "response/response_publish_table.pb.h"
@@ -115,6 +123,7 @@
 #include "response/response_uint64_string.pb.h"
 #include "response/response_uint64_uint64list.pb.h"
 #include "response/response_file.pb.h"
+#include "response/response_uint64_device_version.pb.h"
 
 #include "response/response_modbus_start_mode.pb.h"
 #include "response/response_uint64_modbus_all_funtion_addr_info.pb.h"
@@ -124,4 +133,10 @@
 #include "response/response_uint64_modbus_reg_info.pb.h"
 #include "response/response_uint64_modbus_client_config_params.pb.h"
 #include "response/response_uint64_modbus_client_start_info.pb.h"
+#include "response/response_uint64_modbus_client_summary_start_info_list.pb.h"
+
+#include "response/response_uint64_param_info_list.pb.h"
+
+#include "response/response_uint64_payload_info.pb.h"
+#include "response/response_uint64_payload_summary_list.pb.h"
 #endif

@@ -34,9 +34,18 @@ void signalInterrupt(int signo)
 #endif
 
 
+/************************************************* 
+	Function:		main
+	Description:	main function.
+	Input:			name  - io name
+	Input:			NULL
+	Output: 		NULL
+	Return: 		Never
+*************************************************/ 
 int main(int  argc, char *argv[])
 {
 	InterpreterControl intprt_ctrl; 
+	memset(&intprt_ctrl, 0x00, sizeof(intprt_ctrl));
 #ifndef WIN32
 	signal(SIGINT, signalInterrupt);
 	if(log_ptr_ == NULL)
@@ -44,55 +53,64 @@ int main(int  argc, char *argv[])
 		log_ptr_ = new fst_log::Logger();
     	FST_LOG_INIT("Interpreter");
 	}
-#endif
-	initShm();
-	memset(&intprt_ctrl, 0x00, sizeof(intprt_ctrl));
-#ifndef WIN32
-	intprt_ctrl.cmd = fst_base::INTERPRETER_SERVER_CMD_START ;
 #else
-	intprt_ctrl.cmd = fst_base::INTERPRETER_SERVER_CMD_DEBUG ;
-	append_io_mapping();
-	forgesight_load_io_config();
+	//	append_io_mapping();
+	intprt_ctrl.cmd = fst_base::INTERPRETER_SERVER_CMD_LAUNCH ;
 #endif
-	load_register_data();
-	while(1)
+	initInterpreter();
+
+	bool bRet = load_register_data();
+	if(bRet)
 	{
+		while(1)
+		{
 #ifndef WIN32
-		std::vector<fst_base::ProcessCommRequestResponse>::iterator it;
-		std::vector<fst_base::ProcessCommRequestResponse> request_list
-			= g_objInterpreterServer->popTaskFromRequestList();
-		if(request_list.size() != 0)
-		{
-			for(it = request_list.begin(); it != request_list.end(); ++it)
+			std::vector<fst_base::ProcessCommRequestResponse>::iterator it;
+			std::vector<fst_base::ProcessCommRequestResponse> request_list
+				= g_objInterpreterServer->popTaskFromRequestList();
+			if(request_list.size() != 0)
 			{
-				memset(&intprt_ctrl, 0x00, sizeof(intprt_ctrl));
-				intprt_ctrl.cmd = it->cmd_id ;
-	            FST_INFO("parseCtrlComand at %d ", intprt_ctrl.cmd);
-				parseCtrlComand(intprt_ctrl, it->request_data_ptr);
-				bool * bRsp = it->response_data_ptr;
-				*bRsp = true;
-				g_objInterpreterServer->pushTaskToResponseList(*it);
+				for(it = request_list.begin(); it != request_list.end(); ++it)
+				{
+					memset(&intprt_ctrl, 0x00, sizeof(intprt_ctrl));
+					intprt_ctrl.cmd = it->cmd_id ;
+		            FST_INFO("parseCtrlComand at %d ", intprt_ctrl.cmd);
+					parseCtrlComand(intprt_ctrl, it->request_data_ptr);
+					bool * bRsp = it->response_data_ptr;
+					*bRsp = true;
+					g_objInterpreterServer->pushTaskToResponseList(*it);
+				}
+				usleep(1000);
+			    static int count = 0;
+			    if (++count >= IO_ERROR_INTERVAL_COUNT)
+			    {
+					updateIOError();
+			        count = 0;
+			    }
 			}
-			usleep(1000);
-		    static int count = 0;
-		    if (++count >= IO_ERROR_INTERVAL_COUNT)
-		    {
-				updateIOError();
-		        count = 0;
-		    }
-		}
-		else
-		{
-			intprt_ctrl.cmd = fst_base::INTERPRETER_SERVER_CMD_LOAD ;
-			usleep(1000);
-		}
+			else
+			{
+				intprt_ctrl.cmd = fst_base::INTERPRETER_SERVER_CMD_LOAD ;
+				usleep(1000);
+			}
 #else
-		parseCtrlComand(intprt_ctrl, "lineno_test_2");
-		intprt_ctrl.cmd = fst_base::INTERPRETER_SERVER_CMD_LOAD ;
-		Sleep(100);
+			if (intprt_ctrl.cmd != fst_base::INTERPRETER_SERVER_CMD_LOAD)
+			{
+				parseCtrlComand(intprt_ctrl, "Test_MOVFKG");
+				Sleep(1);
+				intprt_ctrl.cmd = fst_base::INTERPRETER_SERVER_CMD_RESUME ;
+				parseCtrlComand(intprt_ctrl, "");
+				intprt_ctrl.cmd = fst_base::INTERPRETER_SERVER_CMD_LOAD ;
+			}
+			Sleep(100);
 #endif
+		}
 	}
-	
+	else
+	{
+        FST_ERROR("fst_base::ProcessComm Failed");
+	}
+	uninitInterpreter();
 #ifndef WIN32
 	if(log_ptr_ != NULL)
 	{

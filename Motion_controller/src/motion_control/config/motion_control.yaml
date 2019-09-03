@@ -1,6 +1,10 @@
+#model_name: "SCARA"
+model_name: "PUMA"
 realtime_task:
     cycle_time: 2       # ms
-non_realtime_task:
+priority_task:
+    cycle_time: 2       # ms
+common_task:
     cycle_time: 2      # ms
 simulator:
     enable: false

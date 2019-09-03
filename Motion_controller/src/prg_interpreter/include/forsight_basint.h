@@ -35,7 +35,7 @@
 using namespace std;
 
 #ifdef WIN32
-#define DATA_PATH        "\\root\\files_manager_python27\\data"
+#define DATA_PATH        "\\data"
 #else
 #define DATA_PATH        "\/root\/files_manager_python27\/data"
 #endif
@@ -45,7 +45,7 @@ using namespace std;
 
 #define PROGRAM_START_LINE_NUM     2
 
-#define LAB_LEN 128
+#define LAB_LEN 256
 #define SELECT_AND_CYCLE_NEST 64
 #define SUB_NEST 16
 #define PROG_SIZE 40960   // 4096
@@ -66,6 +66,8 @@ using namespace std;
 #define MONITOR_THREAD     0
 #define MAIN_THREAD        1
 
+#define FORSIGHT_TIMER          "timer"
+
 enum double_ops {
 	LT=1,    // value < partial_value
 	LE,      // value <= partial_value
@@ -75,6 +77,7 @@ enum double_ops {
 	NE,      // value <> partial_value
 	AND,     // value AND partial_value
 	OR ,     // value OR  partial_value
+	XOR,     // value XOR  partial_value
 };
 
 typedef enum _LineNumState
@@ -97,13 +100,6 @@ typedef enum _ExecuteDirection
     EXECUTE_BACKWARD
 }ExecuteDirection;
 
-typedef enum _ProgMode
-{
-    FULL_MODE = 0,
-    STEP_MODE,
-    ERROR_MODE,
-}ProgMode;
-
 struct sub_label {
 	SubLabelType  type ;
 	char name[LAB_LEN];
@@ -111,7 +107,7 @@ struct sub_label {
 };
 
 struct var_type {
-    char var_name[80]; // name
+    char var_name[LAB_LEN]; // name
     // var_inner_type v_type; // data type
 	eval_value value ;
 };
@@ -139,7 +135,7 @@ typedef struct select_and_cycle_stack {
 
 struct thread_control_block {
 	int iThreadIdx ;              // Thread Idx
-	char project_name[128];       // project_name
+	char project_name[LAB_LEN];       // project_name
 	// This vector holds info for global variables.
 	vector<var_type> global_vars;
 	
@@ -148,7 +144,7 @@ struct thread_control_block {
 	vector<var_type> local_var_stack;
 	
 	// Stack for managing function scope.
-	stack<int> func_call_stack;
+	std::stack<int> func_call_stack;
 	
 	int g_variable_error ; // = 0 ;
 	char *p_buf;		// program buffer
@@ -186,6 +182,10 @@ struct thread_control_block {
     map<int, MoveCommandDestination>  start_mov_position ;  // iLineNum :: movCmdDst
     
 	vector<string> vector_XPath ;
+	// Home Pose
+	char home_pose_exp[LAB_LEN];
+	Joint currentJoint ;
+	PoseEuler currentCart ;
 } ;
 #ifndef WIN32
 extern fst_log::Logger* log_ptr_;
@@ -213,6 +213,7 @@ int exec_call(struct thread_control_block * objThreadCntrolBlock, bool isMacro =
 
 void assign_var(struct thread_control_block * objThreadCntrolBlock, char *vname, eval_value value);
 eval_value find_var(struct thread_control_block * objThreadCntrolBlock, char *s, int raise_unkown_error = 0);
+int erase_var(struct thread_control_block * objThreadCntrolBlock, char *vname);
 
 void find_eol(struct thread_control_block * objThreadCntrolBlock);
 int  jump_prog_from_line(struct thread_control_block * objThreadCntrolBlock, int iNum);
@@ -220,6 +221,8 @@ int  calc_line_from_prog(struct thread_control_block * objThreadCntrolBlock);
 void serror(struct thread_control_block * objThreadCntrolBlock, int error);
 
 void assignment(struct thread_control_block * objThreadCntrolBlock) ;
+
+void assign_global_var(struct thread_control_block * objThreadCntrolBlock, char *vname, eval_value value);
 
 #endif
 

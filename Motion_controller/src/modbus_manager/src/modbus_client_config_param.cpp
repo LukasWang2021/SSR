@@ -49,7 +49,8 @@ bool ModbusClientConfigParam::loadParam()
             || !yaml_help_.getParam(client_path + "/reg_info/input_register/max_nb", it->reg_info.input_reg.max_nb)
             || !yaml_help_.getParam(client_path + "/reg_info/holding_register/addr", it->reg_info.holding_reg.addr)
             || !yaml_help_.getParam(client_path + "/reg_info/holding_register/max_nb", it->reg_info.holding_reg.max_nb)
-            || !yaml_help_.getParam(client_path + "/is_enable", it->is_enable))
+            || !yaml_help_.getParam(client_path + "/is_enable", it->is_enable)
+            || !yaml_help_.getParam(client_path + "/is_added", it->is_added))
         {
             cout << "Failed to load client_config.yaml" << endl;
             client_config_list_mutex_.unlock();
@@ -133,6 +134,7 @@ bool ModbusClientConfigParam::saveStartInfo(ModbusClientStartInfo &start_info)
                 || !yaml_help_.setParam(client_path + "/response_timeout", start_info.response_timeout)
                 || !yaml_help_.dumpParamFile(file_path_.c_str()))
             {
+                //reload param
                 client_config_list_mutex_.unlock();
                 cout << " Failed save modbus client_config.yaml " << endl;
                 return false;
@@ -144,6 +146,42 @@ bool ModbusClientConfigParam::saveStartInfo(ModbusClientStartInfo &start_info)
             it->start_info.scan_rate = start_info.scan_rate;
             it->start_info.response_timeout = start_info.response_timeout;
 
+            client_config_list_mutex_.unlock();
+            return true;
+        }
+    }
+
+    cout << " Failed save to client_config.yaml:Can not find id" << endl;
+
+    client_config_list_mutex_.unlock();
+    return false;
+}
+
+bool ModbusClientConfigParam::saveIsAdded(int client_id, bool &is_added)
+{
+    client_config_list_mutex_.lock();
+    vector<ModbusClientConfigParams>::iterator it = client_config_list_.begin();
+
+    for(;it != client_config_list_.end(); ++it)
+    {
+        if (it->start_info.id == client_id)
+        {
+            std::string id_str;
+            std::stringstream stream;
+            stream << client_id;
+            stream >> id_str;
+            string client_path = std::string("ModbusClient") + id_str;
+
+            if (!yaml_help_.setParam(client_path + "/is_added", is_added)
+                || !yaml_help_.dumpParamFile(file_path_.c_str()))
+            {
+                //reload param
+                client_config_list_mutex_.unlock();
+                cout << " Failed save modbus client_config.yaml " << endl;
+                return false;
+            }
+
+            it->is_added = is_added;
             client_config_list_mutex_.unlock();
             return true;
         }
@@ -301,3 +339,22 @@ bool ModbusClientConfigParam::getEnableStatus(int client_id, bool &status)
     client_config_list_mutex_.unlock();
     return false;
 }
+
+bool ModbusClientConfigParam::getIsAdded(int client_id, bool &is_added)
+{
+    client_config_list_mutex_.lock();
+    vector<ModbusClientConfigParams>::iterator it = client_config_list_.begin();
+
+    for(;it != client_config_list_.end(); ++it)
+    {
+        if (it->start_info.id == client_id)
+        {
+            client_config_list_mutex_.unlock();
+            is_added = it->is_added;
+            return true;
+        }
+    }
+    client_config_list_mutex_.unlock();
+    return false;
+}
+

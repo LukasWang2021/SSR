@@ -8,7 +8,7 @@
 #include <string>
 #include "interpreter_common.h"
 #include "controller_server.h"
-#include "base_datatype.h"
+#include "basic_alg_datatype.h"
 
 namespace fst_base
 {
@@ -21,7 +21,7 @@ public:
     ErrorCode init(ControllerServer* controller_server_ptr);
 
     bool start(std::string file_name);
-    bool debug(std::string file_name);
+    bool launch(std::string file_name);
     bool forward();
     bool backward();
     bool jump(std::string xml_path);
@@ -29,8 +29,7 @@ public:
     bool resume();
     bool abort();
     bool getNextInstruction(Instruction* instruction_ptr); 
-    bool setAutoStartMode(int start_mode);
-    bool switchStep(int data);
+    bool codeStart(int program_code);
 
     void handleSubscribe();
     void handleEvent();

@@ -1,10 +1,11 @@
 cycle_time: 0.001                           # s
-cycle_distance: 1.0                         # mm
-cycle_radian: 0.01                           # rad
 path_cache_size: 16
 trajectory_cache_size: 16
 trajectory_fifo_size: 30
 duration_of_segment_in_trajectory_fifo: 0.01
+joint_record:
+    update_cycle: 250
+    update_timeout: 1000
 stable_with_fine:
     cycle: 5            # 判断位置稳定时，位置误差连续小于门限值的次数
     threshold: 0.1      # mm
@@ -14,16 +15,13 @@ time_out_cycle:
     standby_to_auto: 150
     auto_to_standby: 250
     manual_to_standby: 250
+    auto_to_pause: 250
     trajectory_flow: 50
     servo_update: 50
 
 cartesian_vel_limit:
     min: 0.1
     max: 4000.0
-
-simulator:
-    enable: false
-    cycle_per_publish: 25
 
 cartesian:
     velocity:
@@ -37,35 +35,9 @@ cartesian:
         default: 7000.0                     # mm/s^2
         reference: 4000.0                   # mm/s^2
     orientation:
-        omega_reference: 1.0                # rad/s
-        alpha_reference: 4.0                # rad/s^2
+        omega_reference: 0.2                # rad/s
+        alpha_reference: 1.0                # rad/s^2
         linear_polation_threshold: 0.1      # rad
-
-joint:
-    omega:
-        default: 1.0                        # 0% - 100%
-        limit:
-            - 5.8119
-            - 4.6600
-            - 5.8119
-            - 7.8540
-            - 7.0686
-            - 10.5592
-            - 0.0
-            - 0.0
-            - 0.0
-    alpha:
-        default: 1.0                        # 0% - 100%
-        limit:
-            - 11.6238
-            - 9.3200
-            - 16.6054
-            - 22.4400
-            - 28.2744
-            - 42.2368
-            - 0.0
-            - 0.0
-            - 0.0
 
 manual:
     step_length:
@@ -73,9 +45,11 @@ manual:
         position: 1.0                       # mm
         orientation: 0.01                   # rad
 
+joint_tracking_accuracy: [0.01, 0.01, 0.01, 0.01, 0.01, 0.01]
+
 calibrator:
-    normal_offset_threshold: [10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0]
-    lost_offset_threshold: [10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0]
+    normal_offset_threshold: [0.05, 0.05, 0.05, 0.05, 0.05, 0.05]
+    lost_offset_threshold: [0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
 
 
 #END

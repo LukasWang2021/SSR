@@ -9,8 +9,10 @@
 #define _MOTION_PLAN_TRAJ_FIFO_H
 
 #include <error_code.h>
+#include <common_log.h>
 #include <lock_free_fifo.h>
 #include <motion_control_datatype.h>
+#include <dynamic_alg.h>
 
 #define LOCK_FREE_FIFO_SIZE_MIN    2
 #define LOCK_FREE_FIFO_SIZE_MAX    1024
@@ -24,7 +26,7 @@ class TrajectoryFifo
     TrajectoryFifo(void);
     ~TrajectoryFifo(void);
 
-    ErrorCode initTrajectoryFifo(size_t capacity, size_t joint_num);
+    ErrorCode initTrajectoryFifo(size_t capacity, size_t joint_num, fst_log::Logger *plog, basic_alg::DynamicAlg *pdynamics);
     ErrorCode pushTrajectorySegment(const TrajectorySegment &segment);
     ErrorCode pickTrajectoryPoint(MotionTime time, TrajectoryPoint &point);
 
@@ -39,7 +41,9 @@ class TrajectoryFifo
     void sampleEndingPointFromSegment(TrajectoryPoint &point);
 
     size_t  joint_num_;
-    TrajectorySegment   trajectory_segment_;
+    fst_log::Logger       *log_ptr_;
+    basic_alg::DynamicAlg *dynamics_ptr_;
+    TrajectorySegment     trajectory_segment_;
     LockFreeFIFO<TrajectorySegment>   trajectory_fifo_;
 };
 

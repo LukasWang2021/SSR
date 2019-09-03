@@ -23,7 +23,9 @@ ControllerRpc::ControllerRpc():
     io_mapping_ptr_(NULL),
     program_launching_(NULL),
     modbus_manager_ptr_(NULL),
-    file_manager_ptr_(NULL)
+    file_manager_ptr_(NULL),
+    system_manager_ptr_(NULL),
+    param_manager_ptr_(NULL)
 {
 
 }
@@ -38,7 +40,7 @@ void ControllerRpc::init(fst_log::Logger* log_ptr, ControllerParam* param_ptr, C
                     CoordinateManager* coordinate_manager_ptr, RegManager* reg_manager_ptr, fst_hal::DeviceManager* device_manager_ptr, 
                     fst_mc::MotionControl* motion_control_ptr, fst_base::ControllerClient* controller_client_ptr,
                     IoMapping* io_mapping_ptr,fst_hal::IoManager* io_manager_ptr, ProgramLaunching* program_launching, 
-                    fst_base::FileManager* file_manager)
+                    fst_base::FileManager* file_manager, fst_ctrl::SystemManager* system_manager, fst_mc::ParamManager* param_manager)
 {
     log_ptr_ = log_ptr;
     param_ptr_ = param_ptr;
@@ -56,6 +58,8 @@ void ControllerRpc::init(fst_log::Logger* log_ptr, ControllerParam* param_ptr, C
     io_manager_ptr_ = io_manager_ptr;//for info list
     program_launching_ = program_launching;
     file_manager_ptr_ = file_manager;
+    system_manager_ptr_ = system_manager;
+    param_manager_ptr_ = param_manager;
 
     // get the modbus_manager_ptr from device_manager.
     std::vector<fst_hal::DeviceInfo> device_list = device_manager_ptr_->getDeviceList();
@@ -64,8 +68,24 @@ void ControllerRpc::init(fst_log::Logger* log_ptr, ControllerParam* param_ptr, C
         if (device_list[i].type == DEVICE_TYPE_MODBUS)
         {
             BaseDevice* device_ptr = device_manager_ptr_->getDevicePtrByDeviceIndex(device_list[i].index);
+            if(device_ptr == NULL || modbus_manager_ptr_ != NULL) break;
             modbus_manager_ptr_ = static_cast<ModbusManager*>(device_ptr);
+        } 
+        else if(device_list[i].type == DEVICE_TYPE_FST_SAFETY)// get the safety device ptr.
+        {
+            BaseDevice* device_ptr = device_manager_ptr_->getDevicePtrByDeviceIndex(device_list[i].index);
+            if(device_ptr == NULL || safety_device_ptr_ != NULL) break;
+            safety_device_ptr_ = static_cast<FstSafetyDevice*>(device_ptr);
         }
+    }
+
+    device_version_.init(log_ptr_, motion_control_ptr_, io_manager_ptr_, safety_device_ptr_);
+
+    if (modbus_manager_ptr_ != NULL)
+    {
+        ErrorCode error_code = modbus_manager_ptr_->initDevices();
+        if (error_code != SUCCESS)
+            ErrorMonitor::instance()->add(error_code);
     }
 
     initRpcTable();
@@ -115,16 +135,24 @@ ControllerRpc::HandleRpcFuncPtr ControllerRpc::getRpcHandlerByHash(unsigned int 
 
 void ControllerRpc::recordLog(ErrorCode log_code, ErrorCode error_code, std::string rpc_path)
 {
+    std::stringstream stream;
     std::string log_str("run ");
     log_str += rpc_path;
     if(error_code == SUCCESS)
     {
         log_str += " success";
+        stream<<"Log_Code: 0x"<<std::hex<<log_code<<" : "<<log_str;
+        FST_INFO(stream.str().c_str());
+
         ServerAlarmApi::GetInstance()->sendOneAlarm(log_code, log_str);
     }
     else
     {
         log_str += " failed";
+        stream<<"Log_Code: 0x"<<std::hex<<error_code<<" : "<<log_str;
+        FST_ERROR(stream.str().c_str());
+        state_machine_ptr_->setSafetyStop(error_code);
+
         ServerAlarmApi::GetInstance()->sendOneAlarm(error_code, log_str);
     }    
 }

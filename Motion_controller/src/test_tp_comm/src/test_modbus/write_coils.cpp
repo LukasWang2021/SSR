@@ -24,6 +24,13 @@ using namespace std;
 
 int main(int argc, char** argv)
 {
+    int needed_data_count = 4;
+    if (argc < needed_data_count + 1)
+    {
+        cout << "more parameters are needed" << endl;
+        return -1;
+    }
+
     TpCommTest test;
     if (!test.initRpcSocket())
     {
@@ -40,26 +47,19 @@ int main(int argc, char** argv)
     msg.header.time_stamp = 122;
     msg.property.authority = Comm_Authority_TP;
 
-    int client_id = atoi(argv[1]);
-    int address = atoi(argv[2]);
-    int number = atoi(argv[3]);
-    int value_count = atoi(argv[4]);
-    bool value_0 = atoi(argv[5]);
-    bool value_1 = atoi(argv[6]);
-    bool value_2 = atoi(argv[7]);
-    msg.data1.data = client_id;
-    msg.data2.address = address;
-    msg.data2.number = number;
-    msg.data2.value_count = value_count;
-    msg.data2.value[0] = value_0;
-    msg.data2.value[1] = value_1;
-    msg.data2.value[2] = value_2;
+    msg.data1.data = atoi(argv[1]);
+    msg.data2.address = atoi(argv[2]);
+    msg.data2.number = atoi(argv[3]);
+    msg.data2.value_count = msg.data2.number;
+
+    for (int i = 0; i != msg.data2.value_count; ++i)
+    {
+        msg.data2.value[i] = atoi(argv[4]);
+        printf("value[%d] = %d\n", i, msg.data2.value[i]);
+    }
 
     printf("client_id = %d; value_1 = %d; number = %d; value_count = %d; value = %d\n",
         msg.data1.data, msg.data2.address, msg.data2.number, msg.data2.value_count);
-
-    printf("value_0 = %d; address = %d; value_2 = %d\n",
-        value_0, value_1, value_2);
 
     if (!test.generateRequestMessageType(hash_value, (void*)&msg, RequestMessageType_Int32_ModbusStatusInfo_fields, buf, buf_size))
     {

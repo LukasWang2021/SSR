@@ -98,3 +98,7 @@ void* ControllerPublish::getIoBoardStatusPtr()
     return (void*)&io_board_status_;
 }
 
+void* ControllerPublish::getModbusClientCtrlStatusPtr()
+{
+    return (void*)&modbus_client_ctrl_status_;
+}

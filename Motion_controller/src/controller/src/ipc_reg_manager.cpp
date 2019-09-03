@@ -48,6 +48,39 @@ void ControllerIpc::handleIpcSetRRegValue(void* request_data_ptr, void* response
     *rs_data_ptr = reg_manager_ptr_->updateRRegValue(rq_data_ptr);   
 }
 
+void ControllerIpc::handleIpcSetMiValue(void* request_data_ptr, void* response_data_ptr)
+{
+    fst_base::MiDataIpc* rq_data_ptr = static_cast<fst_base::MiDataIpc*>(request_data_ptr);
+    bool* rs_data_ptr = static_cast<bool*>(response_data_ptr);
+
+    int addr = 100 + (rq_data_ptr->id) * 2 - 1;
+    uint16_t reg[2];
+    reg[0] = (rq_data_ptr->value) & 0x0000FFFF;
+    reg[1] = (rq_data_ptr->value >>16) & 0x0000FFFF;
+
+    if (modbus_manager_ptr_->writeInputRegs(0, addr, 2, &reg[0]) != SUCCESS)
+    {
+        *rs_data_ptr = false;
+    }   
+}
+
+void ControllerIpc::handleIpcSetMhValue(void* request_data_ptr, void* response_data_ptr)
+{
+    fst_base::MhDataIpc* rq_data_ptr = static_cast<fst_base::MhDataIpc*>(request_data_ptr);
+    bool* rs_data_ptr = static_cast<bool*>(response_data_ptr);
+    
+    int addr = 100 + (rq_data_ptr->id) * 2 - 1;
+    uint16_t reg[2];
+    reg[0] = (rq_data_ptr->value) & 0x0000FFFF;
+    reg[1] = (rq_data_ptr->value >>16) & 0x0000FFFF;
+
+    if (modbus_manager_ptr_->writeHoldingRegs(0, addr, 2, &reg[0]) != SUCCESS)
+    {
+        *rs_data_ptr = false;
+    }   
+}
+
+
 void ControllerIpc::handleIpcGetPrRegPos(void* request_data_ptr, void* response_data_ptr)
 {
     int* rq_data_ptr = static_cast<int*>(request_data_ptr);
@@ -102,5 +135,48 @@ void ControllerIpc::handleIpcGetRRegValue(void* request_data_ptr, void* response
         rs_data_ptr->id = 0;
     }
 }
+
+void ControllerIpc::handleIpcGetMiValue(void* request_data_ptr, void* response_data_ptr)
+{
+    int* rq_data_ptr = static_cast<int*>(request_data_ptr);
+    fst_base::MiDataIpc* rs_data_ptr = static_cast<fst_base::MiDataIpc*>(response_data_ptr);
+
+    uint16_t reg[2] = {0, 0}; 
+    *rq_data_ptr = 100 + (*rq_data_ptr) * 2 - 1;
+
+    if (modbus_manager_ptr_->readInputRegs(0, *rq_data_ptr, 2, &reg[0]) == SUCCESS)
+    {
+        int32_t h_reg = reg[1]<<16;
+        rs_data_ptr->value = reg[0] + h_reg;
+        rs_data_ptr->id = *rq_data_ptr;
+		FST_INFO("handleIpcGetMiValue::mi_reg=%d", rs_data_ptr->value);
+    }
+    else
+    {
+        rs_data_ptr->id = 0;
+    } 
+}
+
+void ControllerIpc::handleIpcGetMhValue(void* request_data_ptr, void* response_data_ptr)
+{
+    int* rq_data_ptr = static_cast<int*>(request_data_ptr);
+    fst_base::MiDataIpc* rs_data_ptr = static_cast<fst_base::MiDataIpc*>(response_data_ptr);
+
+    uint16_t reg[2] = {0, 0}; 
+    *rq_data_ptr = 100 + (*rq_data_ptr) * 2 - 1;
+
+    if (modbus_manager_ptr_->readHoldingRegs(0, *rq_data_ptr, 2, &reg[0]) == SUCCESS)
+    {
+        int32_t h_reg = reg[1]<<16;
+        rs_data_ptr->value = reg[0] + h_reg;
+        rs_data_ptr->id = *rq_data_ptr;
+        FST_INFO("handleIpcGetMhValue::mh_reg=%d", rs_data_ptr->value);
+    }
+    else
+    {
+        rs_data_ptr->id = 0;
+    } 
+}
+
 
 

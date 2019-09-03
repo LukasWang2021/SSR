@@ -11,7 +11,6 @@
 #define _MOTION_CONTROL_CONSTRAINT_H
 
 #include <motion_control_datatype.h>
-#include "motion_control_datatype.h"
 
 namespace fst_mc
 {
@@ -28,7 +27,7 @@ class Constraint
     Constraint(void);
     ~Constraint(void);
 
-    bool initConstraint(const Joint &lower, const Joint &upper, size_t joint_num);
+    bool initConstraint(const basic_alg::Joint &lower, const basic_alg::Joint &upper, size_t joint_num);
     bool initConstraint(const JointConstraint &constraint, size_t joint_num);
 
     size_t getNumberOfJoint(void) const;
@@ -37,18 +36,18 @@ class Constraint
     bool resetMask(size_t *index, size_t length);
     bool isJointMasked(size_t index);
 
-    void getConstraint(Joint &lower, Joint &upper) const;
-    void setConstraint(const Joint &lower, const Joint &upper);
+    void getConstraint(basic_alg::Joint &lower, basic_alg::Joint &upper) const;
+    void setConstraint(const basic_alg::Joint &lower, const basic_alg::Joint &upper);
 
     void getConstraint(JointConstraint &constraint) const;
     void setConstraint(const JointConstraint &constraint);
 
-    Joint& upper(void);
-    Joint& lower(void);
-    const Joint& upper(void) const;
-    const Joint& lower(void) const;
+    basic_alg::Joint& upper(void);
+    basic_alg::Joint& lower(void);
+    const basic_alg::Joint& upper(void) const;
+    const basic_alg::Joint& lower(void) const;
 
-    bool isJointInConstraint(const Joint &joint) const;
+    bool isJointInConstraint(const basic_alg::Joint &joint) const;
     bool isCoverConstaint(const Constraint &constraint) const;
     bool isCoverConstaint(const JointConstraint &constraint) const;
     bool isCoveredByConstaint(const Constraint &constraint) const;

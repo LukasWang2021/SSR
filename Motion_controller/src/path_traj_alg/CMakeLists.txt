@@ -4,6 +4,9 @@ project(path_traj_alg)
 find_package(catkin REQUIRED COMPONENTS
     basic_alg
     log_manager
+    coordinate_manager
+    #tool_manager
+    transformation
     kinematics_alg
 )
 
@@ -25,13 +28,22 @@ set(catkin_INCLUDE_DIRS
     ${depend_PATH_INC}/log_manager/include
     ${depend_PATH_INC}/basic_alg/include 
     ${depend_PATH_INC}/motion_control/include
+    ${depend_PATH_INC}/coordinate_manager/include
+    ${depend_PATH_INC}/tool_manager/include
+    ${depend_PATH_INC}/transformation/include
     ${depend_PATH_INC}/kinematics_alg/include
+    ${depend_PATH_INC}/parameter_manager/include 
+    ${depend_PATH_INC}/dynamic_alg/include
 )
 
 catkin_package(
     INCLUDE_DIRS include
     LIBRARIES path_traj_alg
+    DEPENDS coordinate_manager
+    DEPENDS tool_manager
+    DEPENDS transformation
     DEPENDS kinematics_alg
+    DEPENDS dynamic_alg
 )
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -g -Wno-unused-but-set-variable -Wno-unused-local-typedefs -fpermissive -DPB_FIELD_32BIT -DSIMMULATION -DPRINT")
@@ -51,7 +63,11 @@ add_library(path_traj_alg
 target_link_libraries(path_traj_alg
     ${catkin_LIBRARIES}
     logger
+    coordinate_manager
+    tool_manager
+    transformation
     kinematics_alg
+    dynamic_alg
 )
 
 
@@ -59,12 +75,34 @@ add_executable(alg_test
     src/segment_alg_test
 )
 
+add_executable(alg_puma_test
+    src/segment_alg_puma_test
+)
+
 target_link_libraries(alg_test
     ${catkin_LIBRARIES}
     path_traj_alg
+    coordinate_manager
+    tool_manager
+    transformation
     kinematics_alg
-    basic_alg 
+    basic_alg
+    parameter_manager
+    dynamic_alg
 )
+
+target_link_libraries(alg_puma_test
+    ${catkin_LIBRARIES}
+    path_traj_alg
+    coordinate_manager
+    tool_manager
+    transformation
+    kinematics_alg
+    basic_alg
+    parameter_manager
+    dynamic_alg
+)
+
 
 install(TARGETS path_traj_alg
     LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
@@ -73,5 +111,7 @@ install(TARGETS path_traj_alg
 install(TARGETS alg_test
     RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
-
+install(TARGETS alg_puma_test
+    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
 

@@ -12,7 +12,7 @@ void ControllerRpc::handleRpc0x000050E3(void* request_data_ptr, void* response_d
 
     if(tp_comm_ptr_->isTopicExisted(rq_data_ptr->data.topic_hash))
     {
-        rs_data_ptr->data.data = CONTROLLER_PUBLISH_FAILED;
+        rs_data_ptr->data.data = CONTROLLER_PUBLISH_EXIST;
         recordLog(CONTROLLER_LOG, rs_data_ptr->data.data, std::string("/rpc/controller/addTopic"));
         return;        
     }
@@ -46,7 +46,7 @@ void ControllerRpc::handleRpc0x000050E3(void* request_data_ptr, void* response_d
     }
     else
     {
-        rs_data_ptr->data.data = CONTROLLER_PUBLISH_FAILED;
+        rs_data_ptr->data.data = CONTROLLER_PUBLISH_NONE;
     }
     recordLog(CONTROLLER_LOG, rs_data_ptr->data.data, std::string("/rpc/controller/addTopic"));
 }
@@ -60,7 +60,7 @@ void ControllerRpc::handleRpc0x000163A3(void* request_data_ptr, void* response_d
     // check if topic have been exist
     if(tp_comm_ptr_->isRegTopicExisted(rq_data_ptr->data.topic_hash))
     {
-        rs_data_ptr->data.data = CONTROLLER_PUBLISH_FAILED;
+        rs_data_ptr->data.data = CONTROLLER_PUBLISH_EXIST;
         recordLog(CONTROLLER_LOG, rs_data_ptr->data.data, std::string("/rpc/controller/addRegTopic"));
         return;        
     }
@@ -73,7 +73,7 @@ void ControllerRpc::handleRpc0x000163A3(void* request_data_ptr, void* response_d
         reg_index = (rq_data_ptr->data.element_hash_list[i] & 0x0000FFFF);
         if(!reg_manager_ptr_->isRegValid(reg_type, reg_index))
         {
-            rs_data_ptr->data.data = CONTROLLER_PUBLISH_FAILED;
+            rs_data_ptr->data.data = CONTROLLER_PUBLISH_NONE;
             recordLog(CONTROLLER_LOG, rs_data_ptr->data.data, std::string("/rpc/controller/addRegTopic"));
             return; 
         }
@@ -101,7 +101,7 @@ void ControllerRpc::handleRpc0x000163A3(void* request_data_ptr, void* response_d
     }
     else
     {
-        rs_data_ptr->data.data = CONTROLLER_PUBLISH_FAILED;
+        rs_data_ptr->data.data = CONTROLLER_PUBLISH_NONE;
     }
     recordLog(CONTROLLER_LOG, rs_data_ptr->data.data, std::string("/rpc/controller/addRegTopic"));
 }
@@ -114,7 +114,7 @@ void ControllerRpc::handleRpc0x000058F3(void* request_data_ptr, void* response_d
 
     if(tp_comm_ptr_->isIoTopicExisted(rq_data_ptr->data.topic_hash))
     {
-        rs_data_ptr->data.data = CONTROLLER_PUBLISH_FAILED;
+        rs_data_ptr->data.data = CONTROLLER_PUBLISH_EXIST;
         recordLog(CONTROLLER_LOG, rs_data_ptr->data.data, std::string("/rpc/controller/addIoTopic"));
         return;        
     }
@@ -144,7 +144,7 @@ void ControllerRpc::handleRpc0x000058F3(void* request_data_ptr, void* response_d
     }
     else
     {
-        rs_data_ptr->data.data = CONTROLLER_PUBLISH_FAILED;
+        rs_data_ptr->data.data = CONTROLLER_PUBLISH_NONE;
     }
     recordLog(CONTROLLER_LOG, rs_data_ptr->data.data, std::string("/rpc/controller/addIoTopic"));
 }

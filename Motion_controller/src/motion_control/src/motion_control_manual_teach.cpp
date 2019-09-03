@@ -18,6 +18,7 @@
 
 
 using namespace std;
+using namespace basic_alg;
 using namespace fst_parameter;
 
 namespace fst_mc
@@ -28,7 +29,6 @@ ManualTeach::ManualTeach(void)
     joint_num_ = 0;
     vel_ratio_ = 0;
     acc_ratio_ = 0;
-    step_joint_ = 0;
     step_position_ = 0;
     step_orientation_ = 0;
     position_vel_reference_ = 0;
@@ -36,6 +36,7 @@ ManualTeach::ManualTeach(void)
     orientation_omega_reference_ = 0;
     orientation_alpha_reference_ = 0;
 
+    memset(step_axis_, 0, sizeof(step_axis_));
     memset(axis_vel_, 0, sizeof(axis_vel_));
     memset(axis_acc_, 0, sizeof(axis_acc_));
 
@@ -46,20 +47,22 @@ ManualTeach::ManualTeach(void)
 ManualTeach::~ManualTeach(void)
 {}
 
-ErrorCode ManualTeach::init(BaseKinematics *pkinematics, Constraint *pcons, fst_log::Logger *plog, const string &config_file)
+ErrorCode ManualTeach::init(Kinematics *kinematics_ptr, Constraint *pcons, fst_log::Logger *plog, const string &config_file)
 {
-    if (pkinematics && pcons && plog)
+    if (kinematics_ptr && pcons && plog)
     {
         log_ptr_ = plog;
-        kinematics_ptr_ = pkinematics;
+        kinematics_ptr_ = kinematics_ptr;
         joint_constraint_ptr_ = pcons;
     }
     else
     {
-        return MOTION_INTERNAL_FAULT;
+        return MC_INTERNAL_FAULT;
     }
 
-    int joint_num;
+    int  joint_num;
+    char buffer[LOG_TEXT_SIZE];
+    double data[NUM_OF_JOINT];
     ParamGroup config;
     manual_config_file_ = config_file;
 
@@ -78,25 +81,33 @@ ErrorCode ManualTeach::init(BaseKinematics *pkinematics, Constraint *pcons, fst_
         }
         else
         {
-            FST_ERROR("Invalid number of joint in config file, num-of-joint = %d", joint_num);
+            FST_ERROR("Invalid number of axis in config file, num-of-joint = %d", joint_num);
             return INVALID_PARAMETER;
         }
     }
     else
     {
-        FST_ERROR("Fail to load manual configuration.");
+        FST_ERROR("Fail to load number of manual axis, code = 0x%llx", config.getLastError());
         return config.getLastError();
     }
 
-    if (config.getParam("step/axis", step_joint_) &&
-        config.getParam("step/position", step_position_) &&
+    if (!config.getParam("step/axis", data, joint_num_))
+    {
+        FST_ERROR("Fail to load manual step, code = 0x%llx", config.getLastError());
+        return config.getLastError();
+    }
+
+    memcpy(step_axis_, data, joint_num_ * sizeof(double));
+    FST_INFO("Axis step: %s", printDBLine(step_axis_, buffer, LOG_TEXT_SIZE));
+
+    if (config.getParam("step/position", step_position_) &&
         config.getParam("step/orientation", step_orientation_) &&
         config.getParam("reference/position/velocity", position_vel_reference_) &&
         config.getParam("reference/position/acceleration", position_acc_reference_) &&
         config.getParam("reference/orientation/omega", orientation_omega_reference_) &&
         config.getParam("reference/orientation/alpha", orientation_alpha_reference_))
     {
-        FST_INFO("Step: axis=%.4f, position=%.4f, orientation=%.4f", step_joint_, step_position_, step_orientation_);
+        FST_INFO("Step: position=%.4f, orientation=%.4f", step_position_, step_orientation_);
         FST_INFO("Reference: position-vel=%.4f, position-acc=%.4f, orientation-omega=%.4f, orientation-alpha=%.4f",
                  position_vel_reference_, position_acc_reference_, orientation_omega_reference_, orientation_alpha_reference_);
     }
@@ -106,17 +117,32 @@ ErrorCode ManualTeach::init(BaseKinematics *pkinematics, Constraint *pcons, fst_
         return config.getLastError();
     }
 
-    vector<double> vel; vel.resize(joint_num_);
-    vector<double> acc; acc.resize(joint_num_);
-
-    if (config.getParam("reference/axis/velocity", vel) && config.getParam("reference/axis/acceleration", acc))
+    if (!config.getParam("reference/axis/move_to_point_velocity", data, joint_num_))
     {
-        char buffer[LOG_TEXT_SIZE];
-        memcpy(axis_vel_, &vel[0], joint_num_ * sizeof(double));
-        memcpy(axis_acc_, &acc[0], joint_num_ * sizeof(double));
-        FST_INFO("Axis vel : %s", printDBLine(axis_vel_, buffer, LOG_TEXT_SIZE));
-        FST_INFO("Axis acc : %s", printDBLine(axis_acc_, buffer, LOG_TEXT_SIZE));
+        FST_ERROR("Fail to load reference velocity in move-to-point of each axis, code = 0x%llx", config.getLastError());
+        return config.getLastError();
     }
+
+    memcpy(move_to_point_vel_, data, joint_num_ * sizeof(double));
+    FST_INFO("Axis vel in move-to-point: %s", printDBLine(move_to_point_vel_, buffer, LOG_TEXT_SIZE));
+
+    if (!config.getParam("reference/axis/velocity", data, joint_num_))
+    {
+        FST_ERROR("Fail to load reference velocity of each axis, code = 0x%llx", config.getLastError());
+        return config.getLastError();
+    }
+
+    memcpy(axis_vel_, data, joint_num_ * sizeof(double));
+    FST_INFO("Axis vel: %s", printDBLine(axis_vel_, buffer, LOG_TEXT_SIZE));
+    
+    if(!config.getParam("reference/axis/acceleration", data, joint_num_))
+    {
+        FST_ERROR("Fail to load reference acceleration of each axis, code = 0x%llx", config.getLastError());
+        return config.getLastError();
+    }
+
+    memcpy(axis_acc_, data, joint_num_ * sizeof(double));
+    FST_INFO("Axis acc : %s", printDBLine(axis_acc_, buffer, LOG_TEXT_SIZE));
 
     return SUCCESS;
 }
@@ -132,9 +158,12 @@ double ManualTeach::getGlobalAccRatio(void)
     return acc_ratio_;
 }
 
-double ManualTeach::getManualStepAxis(void)
+void ManualTeach::getManualStepAxis(double *steps)
 {
-    return step_joint_;
+    for (size_t i = 0; i < joint_num_; i++)
+    {
+        steps[i] = step_axis_[i];
+    }
 }
 
 double ManualTeach::getManualStepPosition(void)
@@ -159,25 +188,25 @@ ErrorCode ManualTeach::setGlobalAccRatio(double ratio)
     return SUCCESS;
 }
 
-ErrorCode ManualTeach::setManualStepAxis(double step)
+ErrorCode ManualTeach::setManualStepAxis(const double *steps)
 {
-    if (step > MINIMUM_E6 && step < 1)
-    {
-        ParamGroup param;
+    vector<double> data;
 
-        if (param.loadParamFile(manual_config_file_) && param.setParam("step/axis", step) && param.dumpParamFile())
-        {
-            step_joint_ = step;
-            return SUCCESS;
-        }
-        else
-        {
-            return param.getLastError();
-        }
+    for (size_t i = 0; i < joint_num_; i++)
+    {
+        data.push_back(steps[i]);
+    }
+
+    ParamGroup param;
+
+    if (param.loadParamFile(manual_config_file_) && param.setParam("step/axis", data) && param.dumpParamFile())
+    {
+        memcpy(step_axis_, steps, joint_num_ * sizeof(double));
+        return SUCCESS;
     }
     else
     {
-        return INVALID_PARAMETER;
+        return param.getLastError();
     }
 }
 
@@ -243,14 +272,12 @@ ErrorCode ManualTeach::manualStepByDirect(const ManualDirection *directions, Mot
         case BASE:
         case USER:
         case WORLD:
+        case TOOL:
             err = manualCartesianStep(directions, time, traj);
             break;
 
-        case TOOL:
-            //
-            //break;
         default:
-            err = MOTION_INTERNAL_FAULT;
+            err = MC_FAIL_MANUAL_STEP;
             FST_ERROR("Unsupported manual frame: %d", traj.frame);
             break;
     }
@@ -272,15 +299,16 @@ ErrorCode ManualTeach::manualJointStep(const ManualDirection *dir, MotionTime ti
     char buffer[LOG_TEXT_SIZE];
 
     FST_INFO("manual-Joint-Step: directions = %s, planning trajectory ...", printDBLine((int*)dir, buffer, LOG_TEXT_SIZE));
-    FST_INFO("  step-angle = %.4frad, vel-ratio = %.0f%%, acc-ratio = %.0f%%", step_joint_, vel_ratio_ * 100, acc_ratio_ * 100);
+    FST_INFO("  step-axis = %s", printDBLine(step_axis_, buffer, LOG_TEXT_SIZE));
+    FST_INFO("  vel-ratio = %.0f%%, acc-ratio = %.0f%%", vel_ratio_ * 100, acc_ratio_ * 100);
     FST_INFO("  start-joint = %s", printDBLine(&traj.joint_start[0], buffer, LOG_TEXT_SIZE));
 
     Joint target  = traj.joint_start;
 
     for (size_t i = 0; i < joint_num_; i++)
     {
-        if      (dir[i] == INCREASE) target[i] += step_joint_;
-        else if (dir[i] == DECREASE) target[i] -= step_joint_;
+        if      (dir[i] == INCREASE) target[i] += step_axis_[i];
+        else if (dir[i] == DECREASE) target[i] -= step_axis_[i];
     }
 
     FST_INFO("  target-joint = %s", printDBLine(&target[0], buffer, LOG_TEXT_SIZE));
@@ -297,7 +325,7 @@ ErrorCode ManualTeach::manualJointStep(const ManualDirection *dir, MotionTime ti
 
     for (size_t i = 0; i < joint_num_; i++)
     {
-        trips[i] = dir[i] == STANDING ? 0 : step_joint_;
+        trips[i] = dir[i] == STANDING ? 0 : step_axis_[i];
         omega[i] = axis_vel_[i] * vel_ratio_;
         alpha[i] = axis_acc_[i] * acc_ratio_;
 
@@ -370,34 +398,33 @@ ErrorCode ManualTeach::manualCartesianStep(const ManualDirection *dir, MotionTim
     FST_INFO("  vel-ratio = %.0f%%, acc-ratio = %.0f%%", vel_ratio_ * 100, acc_ratio_ * 100);
     FST_INFO("  start-joint = %s", printDBLine(&traj.joint_start[0], buffer, LOG_TEXT_SIZE));
 
-    target.position[0] = dir[0] == STANDING ? start.position[0] : (dir[0] == INCREASE ? start.position[0] + step_position_ : start.position[0] - step_position_);
-    target.position[1] = dir[1] == STANDING ? start.position[1] : (dir[1] == INCREASE ? start.position[1] + step_position_ : start.position[1] - step_position_);
-    target.position[2] = dir[2] == STANDING ? start.position[2] : (dir[2] == INCREASE ? start.position[2] + step_position_ : start.position[2] - step_position_);
-    target.orientation[0] = dir[3] == STANDING ? start.orientation[0] : (dir[3] == INCREASE ? start.orientation[0] + step_orientation_ : start.orientation[0] - step_orientation_);
-    target.orientation[1] = dir[4] == STANDING ? start.orientation[1] : (dir[4] == INCREASE ? start.orientation[1] + step_orientation_ : start.orientation[1] - step_orientation_);
-    target.orientation[2] = dir[5] == STANDING ? start.orientation[2] : (dir[5] == INCREASE ? start.orientation[2] + step_orientation_ : start.orientation[2] - step_orientation_);
+    target.point_.x_ = dir[0] == STANDING ? start.point_.x_ : (dir[0] == INCREASE ? start.point_.x_ + step_position_ : start.point_.x_ - step_position_);
+    target.point_.y_ = dir[1] == STANDING ? start.point_.y_ : (dir[1] == INCREASE ? start.point_.y_ + step_position_ : start.point_.y_ - step_position_);
+    target.point_.z_ = dir[2] == STANDING ? start.point_.z_ : (dir[2] == INCREASE ? start.point_.z_ + step_position_ : start.point_.z_ - step_position_);
+    target.euler_.a_ = dir[3] == STANDING ? start.euler_.a_ : (dir[3] == INCREASE ? start.euler_.a_ + step_orientation_ : start.euler_.a_ - step_orientation_);
+    target.euler_.b_ = dir[4] == STANDING ? start.euler_.b_ : (dir[4] == INCREASE ? start.euler_.b_ + step_orientation_ : start.euler_.b_ - step_orientation_);
+    target.euler_.c_ = dir[5] == STANDING ? start.euler_.c_ : (dir[5] == INCREASE ? start.euler_.c_ + step_orientation_ : start.euler_.c_ - step_orientation_);
 
-    FST_INFO("  start-pose  = %.4f %.4f %.4f - %.4f %.4f %.4f",
-             start.position.x, start.position.y, start.position.z, start.orientation.a, start.orientation.b, start.orientation.c);
-    FST_INFO("  target-pose = %.4f %.4f %.4f - %.4f %.4f %.4f",
-             target.position.x, target.position.y, target.position.z, target.orientation.a, target.orientation.b, target.orientation.c);
+    FST_INFO("  start-pose = %.4f %.4f %.4f - %.4f %.4f %.4f", start.point_.x_, start.point_.y_, start.point_.z_, start.euler_.a_, start.euler_.b_, start.euler_.c_);
+    FST_INFO("  target-pose = %.4f %.4f %.4f - %.4f %.4f %.4f", target.point_.x_, target.point_.y_, target.point_.z_, target.euler_.a_, target.euler_.b_, target.euler_.c_);
 
+    /*
     ErrorCode err;
     Joint target_joint;
-
+    
     switch (traj.frame)
     {
         case BASE:
-            err = kinematics_ptr_->inverseKinematicsInBase(target, traj.joint_start, target_joint);
+            err = kinematics_ptr_->doIK(target, traj.joint_start, target_joint) ? SUCCESS : MC_COMPUTE_IK_FAIL;
             break;
         case USER:
-            err = kinematics_ptr_->inverseKinematicsInUser(target, traj.joint_start, target_joint);
+            err = kinematics_ptr_->doIK(target, traj.joint_start, target_joint) ? SUCCESS : MC_COMPUTE_IK_FAIL;    // transfrom from user to base
             break;
         case WORLD:
-            err = kinematics_ptr_->inverseKinematicsInWorld(target, traj.joint_start, target_joint);
+            err = kinematics_ptr_->doIK(target, traj.joint_start, target_joint) ? SUCCESS : MC_COMPUTE_IK_FAIL;    // transfrom from world to base
             break;
         default:
-            err = MOTION_INTERNAL_FAULT;
+            err = MC_FAIL_MANUAL_STEP;
             break;
     }
 
@@ -409,7 +436,7 @@ ErrorCode ManualTeach::manualCartesianStep(const ManualDirection *dir, MotionTim
 
     FST_INFO("  target joint = %s", printDBLine(&target_joint[0], buffer, LOG_TEXT_SIZE));
 
-    if (joint_constraint_ptr_->isJointInConstraint(traj.joint_ending))
+    if (joint_constraint_ptr_->isJointInConstraint(target_joint))
     {
         traj.joint_ending = target_joint;
     }
@@ -419,6 +446,7 @@ ErrorCode ManualTeach::manualCartesianStep(const ManualDirection *dir, MotionTim
         FST_ERROR("Target joint out of constraint, err=0x%llx", err);
         return err;
     }
+    */
 
     double dis = (dir[0] != STANDING || dir[1] != STANDING || dir[2] != STANDING) ? step_position_ : 0;
     double spd = position_vel_reference_ * vel_ratio_;
@@ -541,13 +569,14 @@ ErrorCode ManualTeach::manualContinuousByDirect(const ManualDirection *direction
         case BASE:
         case USER:
         case WORLD:
+        case TOOL:
             err = manualCartesianContinuous(directions, time, traj);
             break;
-        case TOOL:
-            //err = manualCartesianContinuousInToolFrame(directions, time, traj);
-            break;
+        //case TOOL:
+        //    err = manualCartesianContinuousInToolFrame(directions, time, traj);
+        //    break;
         default:
-            err = MOTION_INTERNAL_FAULT;
+            err = MC_FAIL_MANUAL_CONTINUOUS;
             FST_ERROR("Unsupported manual frame: %d", traj.frame);
             break;
     }
@@ -603,7 +632,7 @@ ErrorCode ManualTeach::manualJointContinuous(const ManualDirection *dir, MotionT
                 traj.coeff[i].start_alpha = 0;
                 traj.coeff[i].brake_alpha = 0;
                 traj.direction[i] = STANDING;
-                *(&traj.joint_ending.j1 + i) = *(&traj.joint_start.j1 + i);
+                *(&traj.joint_ending.j1_ + i) = *(&traj.joint_start.j1_ + i);
             }
             else if (time < traj.coeff[i].stable_time)
             {
@@ -612,7 +641,7 @@ ErrorCode ManualTeach::manualJointContinuous(const ManualDirection *dir, MotionT
                 traj.coeff[i].stop_time = time + traj.coeff[i].stable_time - traj.coeff[i].start_time;
                 traj.direction[i] = STANDING;
                 double tm = time - traj.coeff[i].start_time;
-                *(&traj.joint_ending.j1 + i) = *(&traj.joint_start.j1 + i) + traj.coeff[i].start_alpha * tm * tm;
+                *(&traj.joint_ending.j1_ + i) = *(&traj.joint_start.j1_ + i) + traj.coeff[i].start_alpha * tm * tm;
             }
             else if (time < traj.coeff[i].brake_time)
             {
@@ -621,9 +650,9 @@ ErrorCode ManualTeach::manualJointContinuous(const ManualDirection *dir, MotionT
                 traj.direction[i] = STANDING;
                 double tim = traj.coeff[i].stable_time - traj.coeff[i].start_time;
                 double omg = tim * traj.coeff[i].start_alpha;
-                *(&traj.joint_ending.j1 + i) = *(&traj.joint_start.j1 + i) + omg * tim;
+                *(&traj.joint_ending.j1_ + i) = *(&traj.joint_start.j1_ + i) + omg * tim;
                 tim = time - traj.coeff[i].stable_time;
-                *(&traj.joint_ending.j1 + i) += omg * tim;
+                *(&traj.joint_ending.j1_ + i) += omg * tim;
             }
             else
             {
@@ -712,7 +741,7 @@ ErrorCode ManualTeach::manualJointContinuous(const ManualDirection *dir, MotionT
                 traj.coeff[i].stop_time = time;
                 traj.coeff[i].start_alpha = 0;
                 traj.coeff[i].brake_alpha = 0;
-                *(&traj.joint_ending.j1 + i) = *(&traj.joint_start.j1 + i);
+                *(&traj.joint_ending.j1_ + i) = *(&traj.joint_start.j1_ + i);
             }
             else if (time < traj.coeff[i].stable_time)
             {
@@ -720,7 +749,7 @@ ErrorCode ManualTeach::manualJointContinuous(const ManualDirection *dir, MotionT
                 traj.coeff[i].brake_time = time;
                 traj.coeff[i].stop_time = time + traj.coeff[i].stable_time - traj.coeff[i].start_time;
                 double tm = time - traj.coeff[i].start_time;
-                *(&traj.joint_ending.j1 + i) = *(&traj.joint_start.j1 + i) + traj.coeff[i].start_alpha * tm * tm;
+                *(&traj.joint_ending.j1_ + i) = *(&traj.joint_start.j1_ + i) + traj.coeff[i].start_alpha * tm * tm;
             }
             else if (time < traj.coeff[i].brake_time)
             {
@@ -728,9 +757,9 @@ ErrorCode ManualTeach::manualJointContinuous(const ManualDirection *dir, MotionT
                 traj.coeff[i].stop_time = time + traj.coeff[i].stable_time - traj.coeff[i].start_time;
                 double tim = traj.coeff[i].stable_time - traj.coeff[i].start_time;
                 double omg = tim * traj.coeff[i].start_alpha;
-                *(&traj.joint_ending.j1 + i) = *(&traj.joint_start.j1 + i) + omg * tim;
+                *(&traj.joint_ending.j1_ + i) = *(&traj.joint_start.j1_ + i) + omg * tim;
                 tim = time - traj.coeff[i].stable_time;
-                *(&traj.joint_ending.j1 + i) += omg * tim;
+                *(&traj.joint_ending.j1_ + i) += omg * tim;
             }
             else
             {
@@ -764,31 +793,30 @@ ErrorCode ManualTeach::manualJointContinuous(const ManualDirection *dir, MotionT
 ErrorCode ManualTeach::manualCartesianContinuous(const ManualDirection *dir, MotionTime time, ManualTrajectory &traj)
 {
     char buffer[LOG_TEXT_SIZE];
-
+    PoseEuler &start = traj.cart_start;
+    PoseEuler &target = traj.cart_ending;
     FST_INFO("manual-Cartesian-Continuous: directions = %s, planning trajectory ...", printDBLine((int*)dir, buffer, LOG_TEXT_SIZE));
     FST_INFO("  manual-time = %.4f, vel-ratio = %.0f%%, acc-ratio = %.0f%%", time, vel_ratio_ * 100, acc_ratio_ * 100);
     FST_INFO("  start-joint = %s", printDBLine(&traj.joint_start[0], buffer, LOG_TEXT_SIZE));
-
-    PoseEuler &start = traj.cart_start;
-    PoseEuler target = traj.cart_start;
-
-    FST_INFO("  start-pose  = %.2f %.2f %.2f - %.4f %.4f %.4f",
-             start.position.x, start.position.y, start.position.z, start.orientation.a, start.orientation.b, start.orientation.c);
+    FST_INFO("  start-pose  = %.2f %.2f %.2f - %.4f %.4f %.4f", start.point_.x_, start.point_.y_, start.point_.z_, start.euler_.a_, start.euler_.b_, start.euler_.c_);
 
     double spd, acc;
-
-    for (size_t i = 0; i < 3; i++)
+    
+    for (size_t i = 0; i < 6; i++)
     {
+        spd = (i < 3 ? position_vel_reference_ : orientation_omega_reference_) * vel_ratio_;
+        acc = (i < 3 ? position_acc_reference_ : orientation_alpha_reference_) * acc_ratio_;
+
         if (traj.direction[i] == dir[i])
         {
             // keep standby or motion direction
             // do nothing
-            if (traj.direction[i] == STANDING)
-            {
-                traj.cart_ending.position[i] = traj.cart_start.position[i];
-            }
+            //if (traj.direction[i] == STANDING)
+            //{
+            //    *(&traj.cart_ending.point_.x_ + i) = *(&traj.cart_start.point_.x_ + i);
+            //}
 
-            FST_INFO("  Position[%d]: given direction same as current motion, running along the current trajectory", i);
+            FST_INFO("  PoseEuler[%d]: given direction same as current motion, running along the current trajectory", i);
             continue;
         }
         else if (dir[i] == STANDING && traj.direction[i] != STANDING)
@@ -803,7 +831,7 @@ ErrorCode ManualTeach::manualCartesianContinuous(const ManualDirection *dir, Mot
                 traj.coeff[i].start_alpha = 0;
                 traj.coeff[i].brake_alpha = 0;
                 traj.direction[i] = STANDING;
-                traj.cart_ending.position[i] = traj.cart_start.position[i];
+                *(&target.point_.x_ + i) = *(&start.point_.x_ + i);
             }
             else if (time < traj.coeff[i].stable_time)
             {
@@ -812,7 +840,7 @@ ErrorCode ManualTeach::manualCartesianContinuous(const ManualDirection *dir, Mot
                 traj.coeff[i].brake_time = time;
                 traj.coeff[i].stop_time = time + tm;
                 traj.direction[i] = STANDING;
-                traj.cart_ending.position[i] = traj.cart_start.position[i] + traj.coeff[i].start_alpha * tm * tm;
+                *(&target.point_.x_ + i) = *(&start.point_.x_ + i) + traj.coeff[i].start_alpha * tm * tm;
             }
             else if (time < traj.coeff[i].brake_time)
             {
@@ -821,14 +849,14 @@ ErrorCode ManualTeach::manualCartesianContinuous(const ManualDirection *dir, Mot
                 traj.coeff[i].brake_time = time;
                 traj.coeff[i].stop_time = time + tim;
                 traj.direction[i] = STANDING;
-                traj.cart_ending.position[i] = traj.cart_start.position[i] + omg * tim;
+                *(&target.point_.x_ + i) = *(&start.point_.x_ + i) + omg * tim;
                 tim = time - traj.coeff[i].stable_time;
-                traj.cart_ending.position[i] += omg * tim;
+                *(&target.point_.x_ + i) += omg * tim;
             }
             else
             {
                 // already in axis-slow-down trajectory, do nothing
-                FST_WARN("  Position[%d]: Standby or in slow-down trajectory, will stop soon", i);
+                FST_WARN("  PoseEuler[%d]: Standby or in slow-down trajectory, will stop soon", i);
                 continue;
             }
         }
@@ -836,26 +864,20 @@ ErrorCode ManualTeach::manualCartesianContinuous(const ManualDirection *dir, Mot
         {
             if (time >= traj.coeff[i].stop_time)
             {
-                // start motion in this direction
-                //spd = i < 3 ? position_vel_reference_ * vel_ratio_ : orientation_omega_reference_ * vel_ratio_;
-                //acc = i < 3 ? position_acc_reference_ * acc_ratio_ : orientation_alpha_reference_ * acc_ratio_;
-                spd = position_vel_reference_ * vel_ratio_;
-                acc = position_acc_reference_ * acc_ratio_;
-
                 traj.coeff[i].start_time = time;
                 traj.coeff[i].stable_time = time + spd / acc;
                 traj.coeff[i].brake_time = 32 - spd / acc;
                 traj.coeff[i].stop_time = 32;
-                traj.coeff[i].start_alpha = dir[i] == INCREASE ? acc : -acc;
-                traj.coeff[i].brake_alpha = -traj.coeff[i].start_alpha;
                 traj.direction[i] = dir[i];
                 double trip = spd * spd / acc + (32 - spd / acc * 2) * spd;
-                traj.cart_ending.position[i] = traj.cart_start.position[i] + (dir[i] == INCREASE ? trip : -trip);
+                traj.coeff[i].start_alpha = dir[i] == INCREASE ? acc : -acc;
+                traj.coeff[i].brake_alpha = -traj.coeff[i].start_alpha;
+                *(&target.point_.x_ + i) = *(&start.point_.x_ + i) + (dir[i] == INCREASE ? trip : -trip);
             }
             else
             {
                 // axis-slow-down trajectory havn't finished
-                FST_WARN("  Position[%d]: in slow-down trajectory, cannot startup until standby", i);
+                FST_WARN("  PoseEuler[%d]: in slow-down trajectory, cannot startup until standby", i);
                 continue;
             }
         }
@@ -874,7 +896,7 @@ ErrorCode ManualTeach::manualCartesianContinuous(const ManualDirection *dir, Mot
                 traj.coeff[i].stop_time = time;
                 traj.coeff[i].start_alpha = 0;
                 traj.coeff[i].brake_alpha = 0;
-                traj.cart_ending.position[i] = traj.cart_start.position[i];
+                *(&target.point_.x_ + i) = *(&start.point_.x_ + i);
             }
             else if (time < traj.coeff[i].stable_time)
             {
@@ -882,7 +904,7 @@ ErrorCode ManualTeach::manualCartesianContinuous(const ManualDirection *dir, Mot
                 traj.coeff[i].stable_time = time;
                 traj.coeff[i].brake_time = time;
                 traj.coeff[i].stop_time = time + tm;
-                traj.cart_ending.position[i] = traj.cart_start.position[i] + traj.coeff[i].start_alpha * tm * tm;
+                *(&target.point_.x_ + i) = *(&start.point_.x_ + i) + traj.coeff[i].start_alpha * tm * tm;
             }
             else if (time < traj.coeff[i].brake_time)
             {
@@ -890,150 +912,19 @@ ErrorCode ManualTeach::manualCartesianContinuous(const ManualDirection *dir, Mot
                 double omg = tim * traj.coeff[i].start_alpha;
                 traj.coeff[i].brake_time = time;
                 traj.coeff[i].stop_time = time + tim;
-                traj.cart_ending.position[i] = traj.cart_start.position[i] + omg * tim;
+                *(&target.point_.x_ + i) = *(&start.point_.x_ + i) + omg * tim;
                 tim = time - traj.coeff[i].stable_time;
-                traj.cart_ending.position[i] += omg * tim;
+                *(&target.point_.x_ + i) += omg * tim;
             }
             else
             {
                 // already in axis-slow-down trajectory, do nothing
-                FST_WARN("  Position[%d]: Standby or in slow-down trajectory, will stop soon", i);
+                FST_WARN("  PoseEuler[%d]: Standby or in slow-down trajectory, will stop soon", i);
                 continue;
             }
         }
 
-        FST_INFO("  Position[%d]: t1=%.4f,t2=%.4f,t3=%.4f,t4=%.4f,alpha1-2=%.4f,alpha3-4=%.4f",
-                 i, traj.coeff[i].start_time, traj.coeff[i].stable_time, traj.coeff[i].brake_time, traj.coeff[i].stop_time,
-                 traj.coeff[i].start_alpha, traj.coeff[i].brake_alpha);
-    }
-
-    for (size_t i = 0; i < 3; i++)
-    {
-        size_t j = i + 3;
-        if (traj.direction[j] == dir[j])
-        {
-            // keep standby or motion direction
-            // do nothing
-            if (traj.direction[j] == STANDING)
-            {
-                traj.cart_ending.orientation[i] = traj.cart_start.orientation[i];
-            }
-
-            FST_INFO("  Orientation[%d]: given direction same as current motion, running along the current trajectory", i);
-            continue;
-        }
-        else if (dir[j] == STANDING && traj.direction[j] != STANDING)
-        {
-            // stop motion in this direction
-            if (time < traj.coeff[j].start_time)
-            {
-                traj.coeff[j].start_time = time;
-                traj.coeff[j].stable_time = time;
-                traj.coeff[j].brake_time = time;
-                traj.coeff[j].stop_time = time;
-                traj.coeff[j].start_alpha = 0;
-                traj.coeff[j].brake_alpha = 0;
-                traj.direction[j] = STANDING;
-                traj.cart_ending.orientation[i] = traj.cart_start.orientation[i];
-            }
-            else if (time < traj.coeff[j].stable_time)
-            {
-                double tm = time - traj.coeff[j].start_time;
-                traj.coeff[j].stable_time = time;
-                traj.coeff[j].brake_time = time;
-                traj.coeff[j].stop_time = time + tm;
-                traj.direction[j] = STANDING;
-                traj.cart_ending.orientation[i] = traj.cart_start.orientation[i] + traj.coeff[j].start_alpha * tm * tm;
-            }
-            else if (time < traj.coeff[j].brake_time)
-            {
-                double tim = traj.coeff[j].stable_time - traj.coeff[j].start_time;
-                double omg = tim * traj.coeff[j].start_alpha;
-                traj.coeff[j].brake_time = time;
-                traj.coeff[j].stop_time = time + tim;
-                traj.direction[j] = STANDING;
-                traj.cart_ending.orientation[i] = traj.cart_start.orientation[i] + omg * tim;
-                tim = time - traj.coeff[j].stable_time;
-                traj.cart_ending.orientation[i] += omg * tim;
-            }
-            else
-            {
-                // already in axis-slow-down trajectory, do nothing
-                FST_WARN("  Orientation[%d]: Standby or in slow-down trajectory, will stop soon", i);
-                continue;
-            }
-        }
-        else if (dir[j] != STANDING && traj.direction[j] == STANDING)
-        {
-            if (time >= traj.coeff[j].stop_time)
-            {
-                // start motion in this direction
-                //spd = i < 3 ? position_vel_reference_ * vel_ratio_ : orientation_omega_reference_ * vel_ratio_;
-                //acc = i < 3 ? position_acc_reference_ * acc_ratio_ : orientation_alpha_reference_ * acc_ratio_;
-                spd = orientation_omega_reference_ * vel_ratio_;
-                acc = orientation_alpha_reference_ * acc_ratio_;
-
-                traj.coeff[j].start_time = time;
-                traj.coeff[j].stable_time = time + spd / acc;
-                traj.coeff[j].brake_time = 32 - spd / acc;
-                traj.coeff[j].stop_time = 32;
-                traj.coeff[j].start_alpha = dir[j] == INCREASE ? acc : -acc;
-                traj.coeff[j].brake_alpha = -traj.coeff[j].start_alpha;
-                traj.direction[j] = dir[j];
-                double trip = spd * spd / acc + (32 - spd / acc * 2) * spd;
-                traj.cart_ending.orientation[i] = traj.cart_start.orientation[i] + (dir[j] == INCREASE ? trip : -trip);
-            }
-            else
-            {
-                // axis-slow-down trajectory havn't finished
-                FST_WARN("  Orientation[%d]: in slow-down trajectory, cannot startup until standby", i);
-                continue;
-            }
-        }
-        else
-        {
-            // prev-direction = INCREASE && input-direction = DECREASE or
-            // prev-direction = DECREASE && input-direction = INCREASE,
-            // stop motion in this direction
-            traj.direction[j] = STANDING;
-
-            if (time < traj.coeff[j].start_time)
-            {
-                traj.coeff[j].start_time = time;
-                traj.coeff[j].stable_time = time;
-                traj.coeff[j].brake_time = time;
-                traj.coeff[j].stop_time = time;
-                traj.coeff[j].start_alpha = 0;
-                traj.coeff[j].brake_alpha = 0;
-                traj.cart_ending.orientation[i] = traj.cart_start.orientation[i];
-            }
-            else if (time < traj.coeff[j].stable_time)
-            {
-                double tm = time - traj.coeff[j].start_time;
-                traj.coeff[j].stable_time = time;
-                traj.coeff[j].brake_time = time;
-                traj.coeff[j].stop_time = time + tm;
-                traj.cart_ending.orientation[i] = traj.cart_start.orientation[i] + traj.coeff[j].start_alpha * tm * tm;
-            }
-            else if (time < traj.coeff[j].brake_time)
-            {
-                double tim = traj.coeff[j].stable_time - traj.coeff[j].start_time;
-                double omg = tim * traj.coeff[j].start_alpha;
-                traj.coeff[j].brake_time = time;
-                traj.coeff[j].stop_time = time + tim;
-                traj.cart_ending.orientation[i] = traj.cart_start.orientation[i] + omg * tim;
-                tim = time - traj.coeff[j].stable_time;
-                traj.cart_ending.orientation[i] += omg * tim;
-            }
-            else
-            {
-                // already in axis-slow-down trajectory, do nothing
-                FST_WARN("  Orientation[%d]: Standby or in slow-down trajectory, will stop soon", i);
-                continue;
-            }
-        }
-
-        FST_INFO("  Orientation[%d]: t1=%.4f,t2=%.4f,t3=%.4f,t4=%.4f,alpha1-2=%.4f,alpha3-4=%.4f",
+        FST_INFO("  PoseEuler[%d]: t1=%.4f,t2=%.4f,t3=%.4f,t4=%.4f,alpha1-2=%.4f,alpha3-4=%.4f",
                  i, traj.coeff[i].start_time, traj.coeff[i].stable_time, traj.coeff[i].brake_time, traj.coeff[i].stop_time,
                  traj.coeff[i].start_alpha, traj.coeff[i].brake_alpha);
     }
@@ -1062,15 +953,12 @@ ErrorCode ManualTeach::manualByTarget(const Joint &target, MotionTime time, Manu
 
 ErrorCode ManualTeach::manualJointAPoint(const Joint &target, MotionTime time, ManualTrajectory &traj)
 {
-    // FIXME
-    double omega_limit[NUM_OF_JOINT] = {5.81, 4.66, 5.81, 7.85, 7.07, 10.56, 0, 0, 0};
-    double alpha_limit[NUM_OF_JOINT] = {11.62, 9.32, 16.6, 22.44, 28.27, 42.24, 0, 0, 0};
-
     char buffer[LOG_TEXT_SIZE];
 
     FST_INFO("manual-Joint-APOINT: planning trajectory ...");
     FST_INFO("  vel-ratio = %.0f%%, acc-ratio = %.0f%%", vel_ratio_ * 100, acc_ratio_ * 100);
-    FST_INFO("  start  joint = %s", printDBLine(&traj.joint_start[0], buffer, LOG_TEXT_SIZE));
+    FST_INFO("  axis-vel = %s", printDBLine(&move_to_point_vel_[0], buffer, LOG_TEXT_SIZE));
+    FST_INFO("  start joint = %s", printDBLine(&traj.joint_start[0], buffer, LOG_TEXT_SIZE));
     FST_INFO("  target joint = %s", printDBLine(&target[0], buffer, LOG_TEXT_SIZE));
 
     double trips[NUM_OF_JOINT], alpha[NUM_OF_JOINT], omega[NUM_OF_JOINT], t_min[NUM_OF_JOINT], delta[NUM_OF_JOINT];
@@ -1079,8 +967,10 @@ ErrorCode ManualTeach::manualJointAPoint(const Joint &target, MotionTime time, M
     for (size_t i = 0; i < joint_num_; i++)
     {
         trips[i] = fabs(target[i] - traj.joint_start[i]);
-        alpha[i] = alpha_limit[i] * acc_ratio_;
-        omega[i] = omega_limit[i] * vel_ratio_;
+        alpha[i] = axis_acc_[i] * acc_ratio_;
+        //omega[i] = axis_vel_[i] * vel_ratio_;
+        //omega[i] = move_to_point_vel_[i] * vel_ratio_;
+        omega[i] = move_to_point_vel_[i];
         delta[i] = trips[i] - omega[i] * omega[i] / alpha[i];
         t_min[i] = delta[i] > 0 ? (omega[i] / alpha[i] + trips[i] / omega[i]) : (sqrt(trips[i] / alpha[i]) * 2);
         //FST_INFO("  J%d: trip=%.8f omega=%f, alpha=%f, delta=%f, tmin=%f", i + 1, trips[i], omega[i], alpha[i], delta[i], t_min[i]);
@@ -1140,8 +1030,8 @@ ErrorCode ManualTeach::manualJointAPoint(const Joint &target, MotionTime time, M
 
 ErrorCode ManualTeach::manualStop(MotionTime time, ManualTrajectory &traj)
 {
-    /*
     FST_INFO("stopTeach: curr-time=%.4f, total-time=%.4f", time, traj.duration);
+    
     if (traj.mode == CONTINUOUS)
     {
         FST_WARN("manual-mode is continuous, stop motion by change direction input");
@@ -1165,9 +1055,9 @@ ErrorCode ManualTeach::manualStop(MotionTime time, ManualTrajectory &traj)
             traj.coeff[i].brake_alpha = 0;
             traj.direction[i] = STANDING;
             if (traj.frame == JOINT)
-                *(&traj.joint_ending.j1 + i) = *(&traj.joint_start.j1 + i);
+                traj.joint_ending[i] = traj.joint_start[i];
             else
-                *(&traj.cart_ending.position.x + i) = *(&traj.cart_start.position.x + i);
+                *(&traj.cart_ending.point_.x_ + i) = *(&traj.cart_start.point_.x_ + i);
         }
         else if (time < traj.coeff[i].stable_time)
         {
@@ -1177,9 +1067,9 @@ ErrorCode ManualTeach::manualStop(MotionTime time, ManualTrajectory &traj)
             traj.direction[i] = STANDING;
             double tm = time - traj.coeff[i].start_time;
             if (traj.frame == JOINT)
-                *(&traj.joint_ending.j1 + i) = *(&traj.joint_start.j1 + i) + traj.coeff[i].start_alpha * tm * tm;
+                traj.joint_ending[i] = traj.joint_start[i] + traj.coeff[i].start_alpha * tm * tm;
             else
-                *(&traj.cart_ending.position.x + i) = *(&traj.cart_start.position.x + i) + traj.coeff[i].start_alpha * tm * tm;
+                *(&traj.cart_ending.point_.x_ + i) = *(&traj.cart_start.point_.x_ + i) + traj.coeff[i].start_alpha * tm * tm;
         }
         else if (time < traj.coeff[i].brake_time)
         {
@@ -1190,15 +1080,15 @@ ErrorCode ManualTeach::manualStop(MotionTime time, ManualTrajectory &traj)
             double omg = tim * traj.coeff[i].start_alpha;
             if (traj.frame == JOINT)
             {
-                *(&traj.joint_ending.j1 + i) = *(&traj.joint_start.j1 + i) + omg * tim;
+                traj.joint_ending[i] = traj.joint_start[i] + omg * tim;
                 tim = time - traj.coeff[i].stable_time;
-                *(&traj.joint_ending.j1 + i) += omg * tim;
+                traj.joint_ending[i] += omg * tim;
             }
             else
             {
-                *(&traj.cart_ending.position.x + i) = *(&traj.cart_start.position.x + i) + omg * tim;
+                *(&traj.cart_ending.point_.x_ + i) = *(&traj.cart_start.point_.x_ + i) + omg * tim;
                 tim = time - traj.coeff[i].stable_time;
-                *(&traj.cart_ending.position.x + i) += omg * tim;
+                *(&traj.cart_ending.point_.x_ + i) += omg * tim;
             }
         }
         else
@@ -1225,7 +1115,6 @@ ErrorCode ManualTeach::manualStop(MotionTime time, ManualTrajectory &traj)
     traj.duration = duration;
     FST_INFO("  total duration=%.4f", traj.duration);
     FST_INFO("Success !");
-    */
     return SUCCESS;
 }
 

@@ -6,10 +6,10 @@
 #include <nanomsg/nn.h>
 #include <vector>
 #include "reg_manager.h"
-#include "base_datatype.h"
+#include "process_comm_datatype.h"
 #include "interpreter_common.h"
-
 #include "fst_io_device.h"
+#include "basic_alg_datatype.h" 
 
 namespace fst_base
 {
@@ -26,11 +26,15 @@ public:
     bool setMrReg(fst_ctrl::MrRegDataIpc* data);
     bool setSrReg(fst_ctrl::SrRegDataIpc* data);
     bool setRReg(fst_ctrl::RRegDataIpc* data);
+    bool setMi(MiDataIpc* data);
+    bool setMh(MhDataIpc* data);
     bool getPrReg(int id, fst_ctrl::PrRegDataIpc* data);
     bool getHrReg(int id, fst_ctrl::HrRegDataIpc* data);
     bool getMrReg(int id, fst_ctrl::MrRegDataIpc* data);
     bool getSrReg(int id, fst_ctrl::SrRegDataIpc* data);
     bool getRReg(int id, fst_ctrl::RRegDataIpc* data); 
+    bool getMi(int id, MiDataIpc* data); 
+    bool getMh(int id, MhDataIpc* data); 
     bool setInstruction(Instruction* data);
     bool isNextInstructionNeeded();
     
@@ -43,6 +47,16 @@ public:
     ErrorCode setRi(uint32_t port_offset, uint32_t value);
     ErrorCode getRo(uint32_t port_offset, uint32_t &value);
     ErrorCode setRo(uint32_t port_offset, uint32_t value);
+    ErrorCode getUi(uint32_t port_offset, uint32_t &value);
+    ErrorCode setUi(uint32_t port_offset, uint32_t value);//not use
+    ErrorCode getUo(uint32_t port_offset, uint32_t &value);
+    ErrorCode getJoint(int id, basic_alg::Joint &joint);
+    ErrorCode getCart(int id, basic_alg::PoseEuler &pos);
+    ErrorCode cartToJoint(basic_alg::PoseEuler pos, basic_alg::Joint &joint);
+    ErrorCode jointToCart(basic_alg::Joint joint, basic_alg::PoseEuler &pos);
+    ErrorCode getUserOpMode(int &mode);
+    ErrorCode setDoPulse(uint32_t port_offset, double time);
+    ErrorCode setRoPulse(uint32_t port_offset, double time);
     
 private:
     fst_log::Logger* log_ptr_;

@@ -12,7 +12,6 @@
 #include <mutex>
 #include <vector>
 #include "error_code.h"
-#include "base_datatype.h"
 
 #ifndef SERVO_SERVICE_H
 #define SERVO_SERVICE_H
@@ -20,17 +19,6 @@
 
 namespace fst_controller {
 // Brief class for controller. This class include many default settings and functions to make life easier.
-
-enum ServiceID
-{ 
-  READ_SERVO_DATA_BY_ADDR            =0x14,  
-  WRITE_SERVO_DATA_BY_ADDR         = 0x24,
-  READ_SERVO_DTC_SID                = 0x31,
-  LOG_CONTROL_SID                   =0x40,
-  LOG_GETLIST_SID                   =0x41,
-  SERVO_CMD_SID                     =0x60
-};
-
 
 class ServoService {
   // -----------------------------public functions---------------------------------------------
@@ -111,7 +99,7 @@ class ServoService {
     // Out:      res,numofres
     // Return:  ERROR Code
     //------------------------------------------------------------   
-    ErrorCode readErrCode(int size_of_codelist,int* res,int* numofres);
+    ErrorCode readErrCode(int max_list_size, unsigned long long int *data, int *list_size);
 
     //------------------------------------------------------------
     // Function:    servoCmd

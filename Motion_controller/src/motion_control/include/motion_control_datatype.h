@@ -8,60 +8,132 @@
 #ifndef _MOTION_CONTROL_DATATYPE_H
 #define _MOTION_CONTROL_DATATYPE_H
 
-#include <base_datatype.h>
+#include <assert.h>
+#include <basic_alg_datatype.h>
+#include <basic_constants.h>
+#include <common_enum.h>
+#include <kinematics.h>
 
 namespace fst_mc
 {
 
+typedef unsigned int Tick;
+typedef double  MotionTime;
+
 #define PATH_CACHE_SIZE         1024
 #define TRAJECTORY_CACHE_SIZE   128
 
+
+struct JointState
+{
+	basic_alg::Joint angle;
+	basic_alg::Joint omega;
+	basic_alg::Joint alpha;
+};
+
 struct JointConstraint  // 关节限位
 {
-    Joint upper;    // 上限
-    Joint lower;    // 下限
+    basic_alg::Joint upper;    // 上限
+    basic_alg::Joint lower;    // 下限
 };
 
-struct CircleTarget     // moveC的目标点，由2个点位姿点构成
+struct PoseAndPosture
 {
-    PoseEuler pose1;
-    PoseEuler pose2;
+    basic_alg::PoseEuler    pose;
+    basic_alg::Posture      posture;
+    basic_alg::Turn         turn;
 };
 
-struct MotionTarget     // 用于move指令的数据结构
+struct TargetPoint
+{
+    CoordinateType  type;
+    
+    union
+    {
+        basic_alg::Joint    joint;
+        PoseAndPosture      pose;
+    };
+};
+
+struct IntactPoint
+{
+    basic_alg::Joint joint;
+    PoseAndPosture   pose;
+    basic_alg::PoseEuler user_frame;
+    basic_alg::PoseEuler tool_frame;
+};
+
+struct FrameOffset
+{
+    bool valid;                     // false -> 不需要坐标偏移， true -> 需要坐标偏移
+    int offset_frame_id;            // 在offset_frame_id指定的基准坐标系内进行偏移,
+                                    // 0 -> 基于极坐标系进行偏移，　-1 -> 基于当前坐标系进行偏移
+    CoordinateType coord_type;      // 在关节空间或者笛卡尔空间进行偏移
+
+    union
+    {
+        basic_alg::Joint offset_joint;      // 关节空间偏移量
+        basic_alg::PoseEuler offset_pose;   // 笛卡尔空间偏移量
+    };
+};
+
+struct MotionInfo
 {
     MotionType  type;   // 指令的运动类型
-    double      cnt;    // 平滑语句的CNT范围 ： 0.0 - 1.0， FINE语句的CNT    : < 0
-    double      vel;    // 指令速度： 如果是moveJ，指令速度是百分比, 范围: 0.0 - 1.0
-                        //           如果是moveL或moveC，指令速度是mm/s, 范围： 0.0 - MAX_VEL
-    
-    int user_frame_id;  // 如果是moveL或者moveC，需要指定目标点所处的用户坐标系标号和所用工具的标号，反解时需要
-    int tool_frame_id;  // 如果用户坐标系标号和工具标号与当前的在用标号不符时直接报错
+    SmoothType  smooth_type;    // 指令的平滑类型
 
-    union               // 根据type指定的运动类型，使用相应的目标数据
-    {
-        Joint           joint_target;   // 关节目标点，moveJ时使用
-        PoseEuler       pose_target;    // 位姿目标点，moveL时使用
-        CircleTarget    circle_target;  // 2个位姿目标点，moveC时使用
-    };
+    double  cnt;    // 平滑语句的CNT范围 ： 速度平滑[0.0, 1.0]，距离平滑[0.0, +∞]， FINE语句的CNT < 0
+    double  vel;    // 指令速度： 如果是moveJ，指令速度是百分比, 范围: 0.0 - 1.0
+                    //            如果是moveL或moveC，指令速度是mm/s, 范围： 0.0 - MAX_VEL
+    double  acc;    // 指令加速度： 附加指令中的加速度是百分比，范围: 0.0 - 1.0
+
+    IntactPoint target;
+    IntactPoint via;
+};
+
+#define     PR_POS_LEN           64
+struct MotionTarget     // 用于move指令的数据结构
+{
+    MotionType  type;           // 指令的运动类型
+    SmoothType  smooth_type;    // 指令的平滑类型
+
+    double  cnt;    // 平滑参数的范围 ： 速度平滑[0.0, 1.0]，距离平滑[0.0, +∞]， 如果是FINE语句CNT应为-1
+    double  vel;    // 指令速度： 如果是moveJ，指令速度是百分比, 范围: 0.0 - 1.0
+                    //          如果是moveL或moveC，指令速度是mm/s, 范围： 0.0 - MAX_VEL
+    double  acc;    // 指令加速度： 附加指令中的加速度是百分比，范围: 0.0 - 1.0
+    
+    int user_frame_id;  // 需要指定目标点所处的用户坐标系标号和所用工具的标号，反解时需要
+    int tool_frame_id;  // 如果用户坐标系标号和工具标号与当前的在用标号不符时直接报错，如果是-1则使用当前激活的uf和tf
+
+    FrameOffset user_frame_offset;
+    FrameOffset tool_frame_offset;
+
+    // -------------------- to be deleted ---------------------------------------------------------------------------
+    int user_frame_offset_id;  // 如果是moveL或者moveC，需要指定目标点所处的用户坐标系标号和所用工具的标号，反解时需要
+    int tool_frame_offset_id;  // 如果用户坐标系标号和工具标号与当前的在用标号不符时直接报错，如果是-1则使用当前激活的uf和tf
+    // --------------------------------------------------------------------------------------------------------------
+
+    int prPos[PR_POS_LEN];
+    TargetPoint target;   // moveJ和moveL时使用
+    TargetPoint via;      // moveC时用作中间一个辅助点
 };
 
 struct PathBlock    // 路径点的数据结构
 {
-    PointType   point_type;     // 路径点所属的区段, 路径点或者过渡点
-    MotionType  motion_type;    // 路径点的类型，关节类型或者笛卡尔类型
+    PointType       point_type;     // 路径点所属的区段, 路径点或者过渡点
+    CoordinateType  coord_type;     // 路径点的类型，关节类型或者笛卡尔类型
 
-    Pose    pose;   // 路径点的笛卡尔空间位姿表示
-    Joint   joint;  // 路径点的关节空间表示
+    basic_alg::PoseQuaternion   pose;   // 路径点的笛卡尔空间位姿表示
+    basic_alg::Joint            joint;  // 路径点的关节空间表示
 };
 
 struct PathCache    // 路径缓存
 {
-    MotionTarget    target;                 // 运动指令的目标
-    int             smooth_in_index;        // 如果上一条指令带平滑，index指示了过度路径切入本条路径的位置，否则index应为-1，在过渡段的最后一个点
-    int             smooth_out_index;       // 如果本条指令带平滑，index指示了由本条路径切出到过度路径的位置，否则index应为-1，在路径上的最后一个点
-    size_t          cache_length;           // 路径缓存中的有效路径点数
-    PathBlock       cache[PATH_CACHE_SIZE]; // 由一系列连续有序的路径点构成的路径
+    MotionInfo  target;                 // 运动指令的目标
+    int         smooth_in_index;        // 如果上一条指令带平滑，index指示了过度路径切入本条路径的位置，否则index应为-1，在过渡段的最后一个点
+    int         smooth_out_index;       // 如果本条指令带平滑，index指示了由本条路径切出到过度路径的位置，否则index应为-1，在路径上的最后一个点
+    size_t      cache_length;           // 路径缓存中的有效路径点数
+    PathBlock   cache[PATH_CACHE_SIZE]; // 由一系列连续有序的路径点构成的路径
 };
 
 struct PathCacheList    // 路径缓存链表
@@ -112,10 +184,10 @@ struct TrajectorySegment
 
 struct TrajectoryPoint  // 差值得到的轨迹点
 {
-    Joint   angle;      // 轨迹点的位置
-    Joint   omega;      // 轨迹点的速度
-    Joint   alpha;      // 轨迹点的加速度
-    Joint   ma_cv_g;    // 轨迹点的力矩
+    basic_alg::Joint pos;               // 轨迹点的位置
+    basic_alg::JointVelocity vel;       // 轨迹点的速度
+    basic_alg::JointAcceleration acc;   // 轨迹点的加速度
+    basic_alg::JointTorque torque;      // 轨迹点的力矩
     PointLevel  level;  // 轨迹点位置，起始点、中间点或者结束点
 };
 
@@ -155,12 +227,12 @@ struct ManualTrajectory     // 手动示教模式下的运动轨迹
     ManualFrame     frame;          // 手动示教的坐标系，关节空间、基座坐标系、用户坐标系、世界坐标系、工具坐标系
     ManualDirection direction[NUM_OF_JOINT];   // 手动示教的各轴方向
 
-    Joint       joint_start;        // 示教运动的开始关节位置
-    Joint       joint_ending;       // 示教运动的结束关节位置
+    basic_alg::Joint    joint_start;        // 示教运动的开始关节位置
+    basic_alg::Joint    joint_ending;       // 示教运动的结束关节位置
 
-    PoseEuler   cart_start;         // 示教运动的开始笛卡尔位姿
-    PoseEuler   cart_ending;        // 示教运动结束始笛卡尔位姿
-    PoseEuler   tool_coordinate;    // 工具坐标系到基座坐标系的变换，用于工具坐标系下的示教
+    basic_alg::PoseEuler    cart_start;         // 示教运动的开始笛卡尔位姿
+    basic_alg::PoseEuler    cart_ending;        // 示教运动结束始笛卡尔位姿
+    basic_alg::PoseEuler    tool_coordinate;    // 工具坐标系到基座坐标系的变换，用于工具坐标系下的示教
 
     MotionTime      duration;       // 示教运动的耗时
     ManualCoef      coeff[NUM_OF_JOINT];        // 各轴系数

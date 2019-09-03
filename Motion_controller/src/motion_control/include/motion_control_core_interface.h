@@ -41,15 +41,19 @@ class BareCoreInterface
     bool clearPointCache(void);
     bool fillPointCache(TrajectoryPoint *points, size_t length, PointProperty proerty);
 
-    bool getLatestJoint(Joint &joint, ServoState &state);
+    bool getLatestJoint(basic_alg::Joint &joint, ServoState &state);
 
     bool resetBareCore(void);
     bool stopBareCore(void);
 
+    bool setConfigData(int id, const std::vector<int> &data);
     bool setConfigData(int id, const std::vector<double> &data);
     bool getConfigData(int id, std::vector<double> &data);
     bool getEncoder(std::vector<int> &data);
+    bool getEncoderError(std::vector<int> &data);
+    bool resetEncoderError(void);
     bool getControlPosition(double *data, size_t len);
+    bool readVersion(char *buffer, size_t size);
 
   private:
     bool sendRequest(fst_comm_interface::CommInterface &comm, const ServiceRequest &req);

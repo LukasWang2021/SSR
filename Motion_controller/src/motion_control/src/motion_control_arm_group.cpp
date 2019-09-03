@@ -15,36 +15,42 @@
 #include <error_monitor.h>
 #include <common_file_path.h>
 #include <segment_alg.h>
+#include <dynamic_alg_rtm.h>
 
 
 using namespace std;
+using namespace fst_ctrl;
 using namespace fst_base;
 using namespace basic_alg;
 using namespace fst_parameter;
-using namespace fst_algorithm;
+//using namespace fst_algorithm;should delete
 
 extern ComplexAxisGroupModel model;
 
 namespace fst_mc
 {
 
-ErrorCode ArmGroup::initGroup(ErrorMonitor *error_monitor_ptr)
+ErrorCode ArmGroup::initGroup(ErrorMonitor *error_monitor_ptr, CoordinateManager *coordinate_manager_ptr, ToolManager *tool_manager_ptr)
 {
-    vel_ratio_ = 0.0625;
-    acc_ratio_ = 0.0625;
+    vel_ratio_ = 0.1;
+    acc_ratio_ = 1.0;
+    //acc_ratio_ = 0.0625;
     cycle_time_ = 0.001;
     memset(&manual_traj_, 0, sizeof(ManualTrajectory));
 
     FST_INFO("Error monitor addr: 0x%x", error_monitor_ptr);
-    if (error_monitor_ptr == NULL)
+    if (error_monitor_ptr == NULL || coordinate_manager_ptr == NULL || tool_manager_ptr == NULL)
     {
-        FST_ERROR("Invalid pointer of error-monitor.");
-        return MOTION_INTERNAL_FAULT;
+        FST_ERROR("Invalid pointer of error-monitor or coordinate-manager or tool-manager.");
+        return MC_INTERNAL_FAULT;
     }
     else
     {
         error_monitor_ptr_ = error_monitor_ptr;
     }
+
+    coordinate_manager_ptr_ = coordinate_manager_ptr;
+    tool_manager_ptr_ = tool_manager_ptr;
 
     FST_INFO("Initializing mutex ...");
     if (pthread_mutex_init(&cache_list_mutex_, NULL) != 0 ||
@@ -52,7 +58,7 @@ ErrorCode ArmGroup::initGroup(ErrorMonitor *error_monitor_ptr)
         pthread_mutex_init(&servo_mutex_, NULL) != 0)
     {
         FST_ERROR("Fail to initialize mutex.");
-        return MOTION_INTERNAL_FAULT;
+        return MC_INTERNAL_FAULT;
     }
 
     ParamGroup param;
@@ -144,6 +150,32 @@ ErrorCode ArmGroup::initGroup(ErrorMonitor *error_monitor_ptr)
     FST_INFO("  firm-upper: %s", printDBLine(&firm_constraint_.upper()[0], buffer, LOG_TEXT_SIZE));
     FST_INFO("  hard-upper: %s", printDBLine(&hard_constraint_.upper()[0], buffer, LOG_TEXT_SIZE));
 
+    // 初始化运动学模块
+    FST_INFO("Initializing kinematics of ArmGroup ...");
+    kinematics_ptr_ = new KinematicsRTM(path);
+
+    if (kinematics_ptr_ == NULL || !kinematics_ptr_->isValid())
+    {
+        FST_ERROR("Fail to create kinematics for this Group.");
+        return MC_INTERNAL_FAULT;
+    }
+
+    // 初始化动力学模块
+    FST_INFO("Initializing dynamics of ArmGroup ...");
+    dynamics_ptr_ = new DynamicAlgRTM();
+
+    if (dynamics_ptr_ == NULL)
+    {
+        FST_ERROR("Fail to create dynamics for ArmGroup.");
+        return MC_INTERNAL_FAULT;
+    }
+
+    if (!dynamics_ptr_->initDynamicAlg(path))
+    {
+        FST_ERROR("Fail to init dynamics for ArmGroup.");
+        return MC_FAIL_IN_INIT;
+    }
+
     // 加载motion_control参数设置
     param.reset();
 
@@ -159,14 +191,14 @@ ErrorCode ArmGroup::initGroup(ErrorMonitor *error_monitor_ptr)
     {
         FST_INFO("Initializing trajectory fifo ... capacity = %d", traj_fifo_size);
 
-        if (traj_fifo_.initTrajectoryFifo(traj_fifo_size, JOINT_OF_ARM) == SUCCESS)
+        if (traj_fifo_.initTrajectoryFifo(traj_fifo_size, JOINT_OF_ARM, log_ptr_, dynamics_ptr_) == SUCCESS)
         {
             FST_INFO("Success.");
         }
         else
         {
             FST_ERROR("Fail to initialize trajectory fifo.");
-            return MOTION_INTERNAL_FAULT;
+            return MC_INTERNAL_FAULT;
         }
     }
     else
@@ -206,7 +238,7 @@ ErrorCode ArmGroup::initGroup(ErrorMonitor *error_monitor_ptr)
         else
         {
             FST_ERROR("Fail to initialize path cache.");
-            return MOTION_INTERNAL_FAULT;
+            return MC_INTERNAL_FAULT;
         }
 
         FST_INFO("Initializing trajectory cache ... capacity = %d", traj_cache_size);
@@ -218,7 +250,7 @@ ErrorCode ArmGroup::initGroup(ErrorMonitor *error_monitor_ptr)
         else
         {
             FST_ERROR("Fail to initialize trajectory cache.");
-            return MOTION_INTERNAL_FAULT;
+            return MC_INTERNAL_FAULT;
         }
     }
     else
@@ -313,6 +345,16 @@ ErrorCode ArmGroup::initGroup(ErrorMonitor *error_monitor_ptr)
         return param.getLastError() != SUCCESS ? param.getLastError() : INVALID_PARAMETER;
     }
 
+    if (param.getParam("time_out_cycle/auto_to_pause", time_out) && time_out > 0)
+    {
+        auto_to_pause_timeout_ = time_out;
+    }
+    else
+    {
+        FST_ERROR("Fail loading auto->pause timeout from config file");
+        return param.getLastError() != SUCCESS ? param.getLastError() : INVALID_PARAMETER;
+    }
+
     if (param.getParam("time_out_cycle/trajectory_flow", time_out) && time_out > 0)
     {
         trajectory_flow_timeout_ = time_out;
@@ -333,13 +375,46 @@ ErrorCode ArmGroup::initGroup(ErrorMonitor *error_monitor_ptr)
         return param.getLastError() != SUCCESS ? param.getLastError() : INVALID_PARAMETER;
     }
 
+    int cycles;
+
+    if (param.getParam("joint_record/update_cycle", cycles) && cycles > 0)
+    {
+        joint_record_update_cycle_ = cycles;
+    }
+    else
+    {
+        FST_ERROR("Fail loading record cycle from config file");
+        return param.getLastError() != SUCCESS ? param.getLastError() : INVALID_PARAMETER;
+    }
+
+    if (param.getParam("joint_record/update_timeout", cycles) && cycles > 0)
+    {
+        joint_record_update_timeout_ = cycles;
+    }
+    else
+    {
+        FST_ERROR("Fail loading record timeout from config file");
+        return param.getLastError() != SUCCESS ? param.getLastError() : INVALID_PARAMETER;
+    }
+
+    // 从配置文件中加载关节位置跟随误差门限
+    double tracking_accuracy[JOINT_OF_ARM];
+
+    if (!param.getParam("joint_tracking_accuracy", tracking_accuracy, JOINT_OF_ARM))
+    {
+        FST_ERROR("Fail to load joint tracking error threshold for each axis, code = 0x%llx", param.getLastError());
+        return param.getLastError();
+    }
+
+    memcpy(&joint_tracking_accuracy_.j1_, tracking_accuracy, sizeof(tracking_accuracy));
+
     // 初始化裸核通信句柄
     FST_INFO("Initializing interface to bare core ...");
 
     if (!bare_core_.initInterface())
     {
         FST_ERROR("Fail to create communication with bare core.");
-        return BARE_CORE_TIMEOUT;
+        return MC_FAIL_IN_INIT;
     }
 
     // 初始化零位校验模块
@@ -368,59 +443,11 @@ ErrorCode ArmGroup::initGroup(ErrorMonitor *error_monitor_ptr)
 
     soft_constraint_.setMask(index, length);
 
-    // 初始化运动学模块
-    FST_INFO("Initializing kinematics of ArmGroup ...");
-    double dh_matrix[NUM_OF_JOINT][4];
-    kinematics_ptr_ = new ArmKinematics();
-
-    if (kinematics_ptr_)
+    // 初始化坐标变换模块
+    if (!transformation_.init(kinematics_ptr_))
     {
-        param.reset();
-
-        if (param.loadParamFile(path + "arm_dh.yaml"))
-        {
-            if (param.getParam("dh_parameter/axis-0", dh_matrix[0], 4) &&
-                param.getParam("dh_parameter/axis-1", dh_matrix[1], 4) &&
-                param.getParam("dh_parameter/axis-2", dh_matrix[2], 4) &&
-                param.getParam("dh_parameter/axis-3", dh_matrix[3], 4) &&
-                param.getParam("dh_parameter/axis-4", dh_matrix[4], 4) &&
-                param.getParam("dh_parameter/axis-5", dh_matrix[5], 4))
-            {
-                kinematics_ptr_->initKinematics(dh_matrix);
-                FST_INFO("DH-matrix:");
-                FST_INFO("  %.6f, %.6f, %.6f, %.6f", dh_matrix[0][0], dh_matrix[0][1], dh_matrix[0][2], dh_matrix[0][3]);
-                FST_INFO("  %.6f, %.6f, %.6f, %.6f", dh_matrix[1][0], dh_matrix[1][1], dh_matrix[1][2], dh_matrix[1][3]);
-                FST_INFO("  %.6f, %.6f, %.6f, %.6f", dh_matrix[2][0], dh_matrix[2][1], dh_matrix[2][2], dh_matrix[2][3]);
-                FST_INFO("  %.6f, %.6f, %.6f, %.6f", dh_matrix[3][0], dh_matrix[3][1], dh_matrix[3][2], dh_matrix[3][3]);
-                FST_INFO("  %.6f, %.6f, %.6f, %.6f", dh_matrix[4][0], dh_matrix[4][1], dh_matrix[4][2], dh_matrix[4][3]);
-                FST_INFO("  %.6f, %.6f, %.6f, %.6f", dh_matrix[5][0], dh_matrix[5][1], dh_matrix[5][2], dh_matrix[5][3]);
-            }
-            else
-            {
-                FST_ERROR("Fail to load dh config, code = 0x%llx", param.getLastError());
-                return param.getLastError();
-            }
-        }
-        else
-        {
-            FST_ERROR("Fail to load dh config, code = 0x%llx", param.getLastError());
-            return param.getLastError();
-        }
-    }
-    else
-    {
-        FST_ERROR("Fail to create kinematics for ArmGroup.");
-        return MOTION_INTERNAL_FAULT;
-    }
-
-    // 初始化动力学模块
-    FST_INFO("Initializing dynamics of ArmGroup ...");
-    dynamics_ptr_ = new DynamicsInterface();
-
-    if (dynamics_ptr_ == NULL)
-    {
-        FST_ERROR("Fail to create dynamics for ArmGroup.");
-        return MOTION_INTERNAL_FAULT;
+        FST_ERROR("Fail to init transformation for ArmGroup.");
+        return MC_INTERNAL_FAULT;
     }
 
     // 初始化手动示教模块
@@ -436,12 +463,46 @@ ErrorCode ArmGroup::initGroup(ErrorMonitor *error_monitor_ptr)
     manual_teach_.setGlobalVelRatio(vel_ratio_);
     manual_teach_.setGlobalAccRatio(acc_ratio_);
 
+    double omega[JOINT_OF_ARM] = {0};
+    param.reset();
+
+    if (!param.loadParamFile(path + "arm_group.yaml"))
+    {
+        FST_ERROR("Fail to load config file of arm group, code = 0x%llx", param.getLastError());
+        return param.getLastError();
+    }
+
+    if (!param.getParam("joint/omega", omega, JOINT_OF_ARM))
+    {
+        FST_ERROR("Fail to load max velocity of each axis, code = 0x%llx", param.getLastError());
+        return param.getLastError();
+    }
+    
+    FST_INFO("Max velocity of each axis: %s", printDBLine(omega, buffer, LOG_TEXT_SIZE));
+
+    int types[JOINT_OF_ARM] = {0};
+
+    if (!param.getParam("type_of_axis", types, JOINT_OF_ARM))
+    {
+        FST_ERROR("Fail to load types of each axis, code = 0x%llx", param.getLastError());
+        return param.getLastError();
+    }
+
+    for (size_t i = 0; i < JOINT_OF_ARM; i++)
+    {
+        type_of_axis_[i] = AxisType(types[i]);
+    }
+
+    FST_INFO("Types of each axis: %s", printDBLine(types, buffer, LOG_TEXT_SIZE));
+
     // 初始化路径和轨迹规划
     param.reset();
     path = COMPONENT_PARAM_FILE_DIR;
     SegmentAlgParam seg_param;
     seg_param.kinematics_ptr = kinematics_ptr_;
     seg_param.dynamics_ptr = dynamics_ptr_;
+    seg_param.coordinate_manager_ptr = coordinate_manager_ptr_;
+    seg_param.tool_manager_ptr = tool_manager_ptr_;
 
     if (param.loadParamFile(path + "segment_alg.yaml"))
     {
@@ -456,8 +517,11 @@ ErrorCode ArmGroup::initGroup(ErrorMonitor *error_monitor_ptr)
             param.getParam("time_factor_first", seg_param.time_factor_first) &&
             param.getParam("time_factor_last", seg_param.time_factor_last) &&
             param.getParam("is_fake_dynamics", seg_param.is_fake_dynamics) &&
-            param.getParam("max_cartesian_acc", seg_param.max_cartesian_acc))
-        {}
+            param.getParam("max_cartesian_acc", seg_param.max_cartesian_acc) &&
+            param.getParam("time_rescale_flag", seg_param.time_rescale_flag))
+        {
+            initSegmentAlgParam(&seg_param, JOINT_OF_ARM, type_of_axis_, omega);
+        }
         else
         {
             FST_ERROR("Fail to load segment algorithm config, code = 0x%llx", param.getLastError());
@@ -470,9 +534,7 @@ ErrorCode ArmGroup::initGroup(ErrorMonitor *error_monitor_ptr)
         return param.getLastError();
     }
 
-    initComplexAxisGroupModel();
-    initSegmentAlgParam(&seg_param);
-
+    FST_WARN("ArmGroup init success.");
     return SUCCESS;
 }
 
@@ -499,84 +561,20 @@ size_t ArmGroup::getFIFOLength(void)
     }
 }
 
-
-ErrorCode ArmGroup::computeCompensate(const DynamicsProduct &product, const Joint &omega, const Joint &alpha, Joint &ma_cv_g)
-{
-    /*
-    ma_cv_g[0] = product.m[0][0] * alpha[0] + product.m[0][1] * alpha[1] + product.m[0][2] * alpha[2] +
-                 product.m[0][3] * alpha[3] + product.m[0][4] * alpha[4] + product.m[0][5] * alpha[5] +
-                 product.c[0][0] * omega[0] + product.c[0][1] * omega[1] + product.c[0][2] * omega[2] +
-                 product.c[0][3] * omega[3] + product.c[0][4] * omega[4] + product.c[0][5] * omega[5] +
-                 product.g[0];
-
-    ma_cv_g[1] = product.m[1][0] * alpha[0] + product.m[1][1] * alpha[1] + product.m[1][2] * alpha[2] +
-                 product.m[1][3] * alpha[3] + product.m[1][4] * alpha[4] + product.m[1][5] * alpha[5] +
-                 product.c[1][0] * omega[0] + product.c[1][1] * omega[1] + product.c[1][2] * omega[2] +
-                 product.c[1][3] * omega[3] + product.c[1][4] * omega[4] + product.c[1][5] * omega[5] +
-                 product.g[1];
-
-    ma_cv_g[2] = product.m[2][0] * alpha[0] + product.m[2][1] * alpha[1] + product.m[2][2] * alpha[2] +
-                 product.m[2][3] * alpha[3] + product.m[2][4] * alpha[4] + product.m[2][5] * alpha[5] +
-                 product.c[2][0] * omega[0] + product.c[2][1] * omega[1] + product.c[2][2] * omega[2] +
-                 product.c[2][3] * omega[3] + product.c[2][4] * omega[4] + product.c[2][5] * omega[5] +
-                 product.g[2];
-
-    ma_cv_g[3] = product.m[3][0] * alpha[0] + product.m[3][1] * alpha[1] + product.m[3][2] * alpha[2] +
-                 product.m[3][3] * alpha[3] + product.m[3][4] * alpha[4] + product.m[3][5] * alpha[5] +
-                 product.c[3][0] * omega[0] + product.c[3][1] * omega[1] + product.c[3][2] * omega[2] +
-                 product.c[3][3] * omega[3] + product.c[3][4] * omega[4] + product.c[3][5] * omega[5] +
-                 product.g[3];
-
-    ma_cv_g[4] = product.m[4][0] * alpha[0] + product.m[4][1] * alpha[1] + product.m[4][2] * alpha[2] +
-                 product.m[4][3] * alpha[3] + product.m[4][4] * alpha[4] + product.m[4][5] * alpha[5] +
-                 product.c[4][0] * omega[0] + product.c[4][1] * omega[1] + product.c[4][2] * omega[2] +
-                 product.c[4][3] * omega[3] + product.c[4][4] * omega[4] + product.c[4][5] * omega[5] +
-                 product.g[4];
-
-    ma_cv_g[5] = product.m[5][0] * alpha[0] + product.m[5][1] * alpha[1] + product.m[5][2] * alpha[2] +
-                 product.m[5][3] * alpha[3] + product.m[5][4] * alpha[4] + product.m[5][5] * alpha[5] +
-                 product.c[5][0] * omega[0] + product.c[5][1] * omega[1] + product.c[5][2] * omega[2] +
-                 product.c[5][3] * omega[3] + product.c[5][4] * omega[4] + product.c[5][5] * omega[5] +
-                 product.g[5];
-    */
-    ma_cv_g[0] = product.m[0][0] * alpha[0] + product.m[0][1] * alpha[1] + product.m[0][2] * alpha[2] +
-                 product.m[0][3] * alpha[3] + product.m[0][4] * alpha[4] + product.m[0][5] * alpha[5];
-
-    ma_cv_g[1] = product.m[1][0] * alpha[0] + product.m[1][1] * alpha[1] + product.m[1][2] * alpha[2] +
-                 product.m[1][3] * alpha[3] + product.m[1][4] * alpha[4] + product.m[1][5] * alpha[5];
-
-    ma_cv_g[2] = product.m[2][0] * alpha[0] + product.m[2][1] * alpha[1] + product.m[2][2] * alpha[2] +
-                 product.m[2][3] * alpha[3] + product.m[2][4] * alpha[4] + product.m[2][5] * alpha[5];
-
-    ma_cv_g[3] = product.m[3][0] * alpha[0] + product.m[3][1] * alpha[1] + product.m[3][2] * alpha[2] +
-                 product.m[3][3] * alpha[3] + product.m[3][4] * alpha[4] + product.m[3][5] * alpha[5];
-
-    ma_cv_g[4] = product.m[4][0] * alpha[0] + product.m[4][1] * alpha[1] + product.m[4][2] * alpha[2] +
-                 product.m[4][3] * alpha[3] + product.m[4][4] * alpha[4] + product.m[4][5] * alpha[5];
-
-    ma_cv_g[5] = product.m[5][0] * alpha[0] + product.m[5][1] * alpha[1] + product.m[5][2] * alpha[2] +
-                 product.m[5][3] * alpha[3] + product.m[5][4] * alpha[4] + product.m[5][5] * alpha[5];
-
-    return SUCCESS;
-}
-
-
 char* ArmGroup::printDBLine(const int *data, char *buffer, size_t length)
 {
     int len = 0;
 
     for (size_t i = 0; i < JOINT_OF_ARM; i++)
     {
-        len += snprintf(buffer + len, length - len, "%d, ", data[i]);
+        len += snprintf(buffer + len, length - len, "%d ", data[i]);
+
+        if (len >= length)
+        {
+            break;
+        }
     }
 
-    if (len > 1)
-    {
-        len --;
-        len --;
-    }
-
-    buffer[len] = '\0';
     return buffer;
 }
 
@@ -587,17 +585,15 @@ char* ArmGroup::printDBLine(const double *data, char *buffer, size_t length)
     for (size_t i = 0; i < JOINT_OF_ARM; i++)
     {
         len += snprintf(buffer + len, length - len, "%.6f ", data[i]);
-        //len += snprintf(buffer + len, length - len, "%.9f, ", data[i]);
-        //len += snprintf(buffer + len, length - len, "%.12f, ", data[i]);
+        //len += snprintf(buffer + len, length - len, "%.9f ", data[i]);
+        //len += snprintf(buffer + len, length - len, "%.12f ", data[i]);
+
+        if (len >= length)
+        {
+            break;
+        }
     }
 
-    if (len > 1)
-    {
-        len --;
-        len --;
-    }
-
-    buffer[len] = '\0';
     return buffer;
 }
 

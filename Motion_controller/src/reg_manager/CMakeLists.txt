@@ -21,6 +21,9 @@ set(catkin_INCLUDE_DIRS
     ${depend_PATH_INC}/common
     ${depend_PATH_INC}/parameter_manager/include
     ${depend_PATH_INC}/log_manager/include
+    ${depend_PATH_INC}/basic_alg/include
+    ${depend_PATH_INC}/nvram/include
+    ${depend_PATH_INC}/fst_spi/include
 )
 
 catkin_package(
@@ -28,6 +31,8 @@ catkin_package(
     LIBRARIES reg_manager
     DEPENDS parameter_manager
     DEPENDS log_manager
+    DEPENDS nvram 
+    DEPENDS fst_spi 
 )
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -g -Wno-unused-but-set-variable -Wno-unused-local-typedefs -O0 -fpermissive -DPB_FIELD_32BIT -DSIMMULATION -DPRINT")
@@ -46,6 +51,7 @@ add_library(reg_manager
 
 target_link_libraries(reg_manager
     ${catkin_LIBRARIES}
+    nvram 
 )
 
 install(TARGETS reg_manager

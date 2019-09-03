@@ -10,7 +10,11 @@ ControllerIpc::ControllerIpc():
     controller_server_ptr_(NULL),
     controller_client_ptr_(NULL),
     reg_manager_ptr_(NULL),
-    state_machine_ptr_(NULL)
+    state_machine_ptr_(NULL),
+    device_manager_ptr_(NULL),
+    modbus_manager_ptr_(NULL),
+    io_mapping_ptr_(NULL),
+    motion_control_ptr_(NULL)
 {
 
 }
@@ -22,7 +26,8 @@ ControllerIpc::~ControllerIpc()
 
 void ControllerIpc::init(fst_log::Logger* log_ptr, ControllerParam* param_ptr,
                             ControllerServer* controller_server_ptr, ControllerClient* controller_client_ptr,
-                            RegManager* reg_manager_ptr, ControllerSm* state_machine_ptr, IoMapping* io_mapping_ptr)
+                            RegManager* reg_manager_ptr, ControllerSm* state_machine_ptr, fst_hal::DeviceManager* device_manager_ptr,
+                            IoMapping* io_mapping_ptr, fst_mc::MotionControl* motion_control_ptr)
 {
     log_ptr_ = log_ptr;
     param_ptr_ = param_ptr;
@@ -30,7 +35,22 @@ void ControllerIpc::init(fst_log::Logger* log_ptr, ControllerParam* param_ptr,
     controller_client_ptr_ = controller_client_ptr;
     reg_manager_ptr_ = reg_manager_ptr;
     state_machine_ptr_ = state_machine_ptr;
+    device_manager_ptr_ = device_manager_ptr;
     io_mapping_ptr_ = io_mapping_ptr;
+    motion_control_ptr_ = motion_control_ptr;
+
+    // get the modbus_manager_ptr from device_manager.
+    std::vector<fst_hal::DeviceInfo> device_list = device_manager_ptr_->getDeviceList();
+    for(unsigned int i = 0; i < device_list.size(); ++i)
+    {
+        if (device_list[i].type == DEVICE_TYPE_MODBUS)
+        {
+            BaseDevice* device_ptr = device_manager_ptr_->getDevicePtrByDeviceIndex(device_list[i].index);
+            if(device_ptr == NULL || modbus_manager_ptr_ != NULL) break;
+            modbus_manager_ptr_ = static_cast<ModbusManager*>(device_ptr);
+        } 
+    }
+
     initIpcTable();
 }
 

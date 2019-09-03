@@ -11,8 +11,12 @@
 #include <motion_control_offset_calibrator.h>
 #include <common_file_path.h>
 
+#define OFFSET_STATE_ADDR       (ZERO_BLK + 0x00)
+#define OFFSET_MASK_ADDR        (ZERO_BLK + 0x10)
+#define OFFSET_JOINT_ADDR       (ZERO_BLK + 0x20)
 
 using namespace std;
+using namespace basic_alg;
 using namespace fst_parameter;
 
 namespace fst_mc
@@ -22,6 +26,7 @@ Calibrator::Calibrator(void)
 {
     log_ptr_ = NULL;
     joint_num_ = 0;
+    nvram_ptr_ = NULL;
     bare_core_ptr_ = NULL;
     current_state_ = MOTION_FORBIDDEN;
     memset(offset_need_save_, 0, NUM_OF_JOINT * sizeof(int));
@@ -41,7 +46,7 @@ Calibrator::~Calibrator(void)
 //        都是不可预知的，所以确保在标定模块开始工作之前调用此方法进行初始化配置；
 //        主要包括加载配置文件和记录文件，并向裸核发送零位配置；
 //------------------------------------------------------------------------------
-ErrorCode Calibrator::initCalibrator(size_t joint_num, BareCoreInterface *pcore, fst_log::Logger *plog, const string &path)
+ErrorCode Calibrator::initCalibrator(size_t joint_num, BareCoreInterface *pcore, fst_log::Logger *plog)
 {
     // 输入参数检查
     if (joint_num > 0 && joint_num <= NUM_OF_JOINT && plog && pcore)
@@ -52,7 +57,8 @@ ErrorCode Calibrator::initCalibrator(size_t joint_num, BareCoreInterface *pcore,
     }
     else
     {
-        return MOTION_INTERNAL_FAULT;
+        FST_INFO("initCalibrator: invalid parameter, joint-number = %d, bare-core-ptr = %p, log-ptr = %p", joint_num, pcore, plog);
+        return MC_FAIL_IN_INIT;
     }
 
     int id;
@@ -61,269 +67,244 @@ ErrorCode Calibrator::initCalibrator(size_t joint_num, BareCoreInterface *pcore,
     vector<double> data;
     char buffer[LOG_TEXT_SIZE];
     FST_INFO("Initializing offset calibrator, number-of-joint = %d.", joint_num_);
+    nvram_ptr_ = new Nvram(0x100);
 
-    // 检查path指定的目录是否存在，不存在则创建之
-    boost::filesystem::path pa(path);
-
-    if (!boost::filesystem::is_directory(pa))
+    if (nvram_ptr_ == NULL)
     {
-        FST_WARN("Directory: %s not found", path.c_str());
-        if (boost::filesystem::create_directory(pa))
-        {
-            FST_INFO("Directory: %s created", path.c_str());
-        }
-        else
-        {
-            FST_ERROR("Failed to create directory: %s", path.c_str());
-            return MOTION_INTERNAL_FAULT;
-        }
+        FST_INFO("Fail to create nvram.");
+        return MC_INTERNAL_FAULT;
     }
 
-    // 检查零位记录文件是否存在，不存在则从模板创建一个记录文件，模板在'share/motion_controller/config'
-    string record_file =  path + "robot_recorder.yaml";
-    boost::filesystem::path fi(record_file);
+    ErrorCode err = nvram_ptr_->openNvram();
 
-    if (!boost::filesystem::exists(fi))
+    if (err != SUCCESS)
     {
-        FST_WARN("Record file: %s not found", record_file.c_str());
-        if (buildRecordFile(record_file) == SUCCESS)
-        {
-            FST_INFO("Build record file from template");
-        }
-        else
-        {
-            FST_ERROR("Fail to build record file");
-            return MOTION_INTERNAL_FAULT;
-        }
+        FST_ERROR("Fail to open NvRam, code = 0x%llx.", err);
+        return err;
     }
 
-    // 加载记录文件并检查数据是否合法
-    if (!robot_recorder_.loadParamFile(record_file.c_str()))
+    err = nvram_ptr_->isNvramReady();
+
+    if (err != SUCCESS)
     {
-        result = robot_recorder_.getLastError();
-        FST_ERROR("Fail to load record file, err=0x%llx", result);
-        return result;
+        FST_ERROR("NvRam is not ready, code = 0x%llx.", err);
+        return err;
     }
 
-    stat.clear();
-    if (!robot_recorder_.getParam("mask", stat))
-    {
-        result = robot_recorder_.getLastError();
-        FST_ERROR("Fail to read joint-mask from record file, err=0x%llx", result);
-        return result;
-    }
-    if (stat.size() != NUM_OF_JOINT)
-    {
-        FST_ERROR("Invalid array size of joint-mask, except %d but get %d", NUM_OF_JOINT, stat.size());
-        return INVALID_PARAMETER;
-    }
-    FST_INFO("Recorded-Masks: %s", printDBLine(&stat[0], buffer, LOG_TEXT_SIZE));
+    err = readOffsetState(offset_stat_);
 
-    for (size_t i = 0; i < joint_num_; i++)
-        offset_mask_[i] = OffsetMask(stat[i]);
-
-    stat.clear();
-    if (!robot_recorder_.getParam("state", stat))
+    if (err != SUCCESS)
     {
-        result = robot_recorder_.getLastError();
-        FST_ERROR("Fail to read joint-flag from record file, err=0x%llx", result);
-        return result;
+        FST_ERROR("Fail to read offset state, code = 0x%llx", err);
+        return err;
     }
-    if (stat.size() != NUM_OF_JOINT)
-    {
-        FST_ERROR("Invalid array size of joint-flag, except %d but get %d", NUM_OF_JOINT, stat.size());
-        return INVALID_PARAMETER;
-    }
-    FST_INFO("Recorded-Flags: %s", printDBLine(&stat[0], buffer, LOG_TEXT_SIZE));
 
-    for (size_t i = 0; i < joint_num_; i++)
-        offset_stat_[i] = OffsetState(stat[i]);
+    FST_INFO("Offset state: %s", printDBLine((int*)offset_stat_, buffer, LOG_TEXT_SIZE));
+
+    err = readOffsetMask(offset_mask_);
+
+    if (err != SUCCESS)
+    {
+        FST_ERROR("Fail to read offset mask, code = 0x%llx", err);
+        return err;
+    }
+
+    FST_INFO("Offset mask: %s", printDBLine((int*)offset_mask_, buffer, LOG_TEXT_SIZE));
+
+    Joint offset_joint;
+    err = readOffsetJoint(offset_joint);
+
+    if (err != SUCCESS)
+    {
+        FST_ERROR("Fail to read offset joint, code = 0x%llx", err);
+        return err;
+    }
+
+    FST_INFO("Offset joint: %s", printDBLine(&offset_joint[0], buffer, LOG_TEXT_SIZE));
 
     // 加载零位偏移门限值和零位丢失门限值，并检查数据是否合法
     string config_file = AXIS_GROUP_DIR;
     ParamGroup params(config_file + "base_group.yaml");
 
-    if (params.getLastError() == SUCCESS)
-    {
-        data.clear();
-        params.getParam("calibrator/normal_offset_threshold", data);
-        if (params.getLastError() != SUCCESS)
-        {
-            result = params.getLastError();
-            FST_ERROR("Fail to read threshold from config file, err=0x%llx", result);
-            return result;
-        }
-        if (data.size() != NUM_OF_JOINT)
-        {
-            FST_ERROR("Invalid array size of normal threshold, except %d but get %d", NUM_OF_JOINT, data.size());
-            return INVALID_PARAMETER;
-        }
-        FST_INFO("Threshold-normal: %s", printDBLine(&data[0], buffer, LOG_TEXT_SIZE));
-
-        for (size_t i = 0; i < joint_num_; i++)
-            normal_threshold_[i] = data[i];
-
-        data.clear();
-        params.getParam("calibrator/lost_offset_threshold", data);
-        if (data.size() != NUM_OF_JOINT)
-        {
-            FST_ERROR("Invalid array size of lost threshold, except %d but get %d", NUM_OF_JOINT, data.size());
-            return INVALID_PARAMETER;
-        }
-        FST_INFO("Threshold-lost: %s", printDBLine(&data[0], buffer, LOG_TEXT_SIZE));
-
-        for (size_t i = 0; i < joint_num_; i++)
-            lost_threshold_[i] = data[i];
-    }
-    else
+    if (params.getLastError() != SUCCESS)
     {
         result = params.getLastError();
         FST_ERROR("Fail to load thresholds config file, err=0x%llx", result);
         return result;
     }
 
+    data.clear();
+    params.getParam("calibrator/normal_offset_threshold", data);
+
+    if (params.getLastError() != SUCCESS)
+    {
+        result = params.getLastError();
+        FST_ERROR("Fail to read threshold from config file, err=0x%llx", result);
+        return result;
+    }
+
+    if (data.size() != joint_num_)
+    {
+        FST_ERROR("Invalid array size of normal threshold, except %d but get %d", joint_num_, data.size());
+        return INVALID_PARAMETER;
+    }
+    
+    FST_INFO("Threshold-normal: %s", printDBLine(&data[0], buffer, LOG_TEXT_SIZE));
+
+    for (size_t i = 0; i < joint_num_; i++)
+        normal_threshold_[i] = data[i];
+
+    data.clear();
+    params.getParam("calibrator/lost_offset_threshold", data);
+
+    if (data.size() != joint_num_)
+    {
+        FST_ERROR("Invalid array size of lost threshold, except %d but get %d", joint_num_, data.size());
+        return INVALID_PARAMETER;
+    }
+
+    FST_INFO("Threshold-lost: %s", printDBLine(&data[0], buffer, LOG_TEXT_SIZE));
+
+    for (size_t i = 0; i < joint_num_; i++)
+        lost_threshold_[i] = data[i];
+    
+    // 下发关节数量到裸核
+    FST_INFO("ID of activated-motor-number: 0x%x", 0x0140);
+    FST_INFO("Send activated-motor-number: %d", joint_num_);
+    vector<int> data_of_joint_num;
+    data_of_joint_num.push_back(joint_num_);
+    result = sendConfigData(0x0140, data_of_joint_num);
+
+    if (result != SUCCESS)
+    {
+        FST_ERROR("Fail to send gear-ratio to barecore, code = 0x%llx", result);
+        return result;
+    }
+    
+    FST_INFO("Success.");
+    usleep(50 * 1000);
+    
     // 加载传动比配置文件，并检查数据
     // 检查无误后将数据下发到裸核
     data.clear();
-    gear_ratio_param_.loadParamFile(config_file + "arm_group_gear_ratio.yaml");
+    gear_ratio_param_.loadParamFile(config_file + "group_gear_ratio.yaml");
     result = gear_ratio_param_.getLastError();
 
-    if (result == SUCCESS)
+    if (result != SUCCESS)
     {
-        if (gear_ratio_param_.getParam("gear_ratio/id", id) && gear_ratio_param_.getParam("gear_ratio/data", data))
-        {
-            if (data.size() == NUM_OF_JOINT)
-            {
-                FST_INFO("ID of gear ratio: 0x%x", id);
-                FST_INFO("Send gear ratio: %s", printDBLine(&data[0], buffer, LOG_TEXT_SIZE));
-                result = sendConfigData(id, data);
+        FST_ERROR("Loading offset param file failed, err=0x%llx", result);
+        return result;
+    }
 
-                if (result == SUCCESS)
-                {
-                    FST_INFO("Success.");
-                }
-                else
-                {
-                    FST_ERROR("Fail to send gear-ratio to barecore, code = 0x%llx", result);
-                    return result;
-                }
-            }
-            else
-            {
-                FST_ERROR("Invalid array size of gear ratio, except %d but get %d", NUM_OF_JOINT, data.size());
-                return INVALID_PARAMETER;
-            }
+    if (gear_ratio_param_.getParam("gear_ratio/id", id) && gear_ratio_param_.getParam("gear_ratio/data", data))
+    {
+        FST_INFO("ID of gear ratio: 0x%x", id);
+        FST_INFO("Send gear ratio: %s", printDBLine(&data[0], buffer, LOG_TEXT_SIZE));
+        result = sendConfigData(id, data);
+
+        if (result == SUCCESS)
+        {
+            FST_INFO("Success.");
+            usleep(50 * 1000);
         }
         else
         {
-            result = gear_ratio_param_.getLastError();
-            FST_ERROR("Fail to read gear ratio config file, err=0x%llx", result);
+            FST_ERROR("Fail to send gear-ratio to barecore, code = 0x%llx", result);
             return result;
         }
     }
     else
     {
-        FST_ERROR("Loading offset param file failed, err=0x%llx", result);
+        result = gear_ratio_param_.getLastError();
+        FST_ERROR("Fail to read gear ratio config file, err=0x%llx", result);
         return result;
     }
 
     // 加载耦合系数配置文件，并检查数据
     // 检查无误后将数据下发到裸核
     data.clear();
-    coupling_param_.loadParamFile(config_file + "arm_group_coupling_coeff.yaml");
+    coupling_param_.loadParamFile(config_file + "group_coupling_coeff.yaml");
     result = coupling_param_.getLastError();
 
-    if (result == SUCCESS)
+    if (result != SUCCESS)
     {
-        if (coupling_param_.getParam("coupling_coeff/id", id) && coupling_param_.getParam("coupling_coeff/data", data))
-        {
-            if (data.size() == 15)
-            {
-                FST_INFO("ID of coupling coefficient: 0x%x", id);
-                FST_INFO("Send coupling coefficient: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f, %.6f, %.6f, %.6f, %.6f, %.6f, %.6f, %.6f, %.6f, %.6f",
-                         data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7], data[8], data[9], data[10], data[11], data[12], data[13], data[14]);
-                result = sendConfigData(id, data);
+        FST_ERROR("Loading coupling coefficient param file failed, err=0x%llx", result);
+        return result;
+    }
 
-                if (result == SUCCESS)
-                {
-                    FST_INFO("Success.");
-                }
-                else
-                {
-                    FST_ERROR("Fail to send coupling coefficient to barecore, code = 0x%llx", result);
-                    return result;
-                }
-            }
-            else
-            {
-                FST_ERROR("Invalid array size of coupling coefficient, except %d but get %d", 15, data.size());
-                return INVALID_PARAMETER;
-            }
+    if (coupling_param_.getParam("coupling_coeff/id", id) && coupling_param_.getParam("coupling_coeff/data", data))
+    {
+        FST_INFO("ID of coupling coefficient: 0x%x", id);
+        FST_INFO("Send coupling coefficient:");
+
+        for (size_t i = 0; i < joint_num; i++)
+        {
+            FST_INFO("  axis-%d: %s", i, printDBLine(&data[0] + 8 * i, buffer, LOG_TEXT_SIZE));
+        }
+        
+        result = sendConfigData(id, data);
+
+        if (result == SUCCESS)
+        {
+            FST_INFO("Success.");
+            usleep(50 * 1000);
         }
         else
         {
-            result = coupling_param_.getLastError();
-            FST_ERROR("Fail to read coupling coefficient config file, err=0x%llx", result);
+            FST_ERROR("Fail to send coupling coefficient to barecore, code = 0x%llx", result);
             return result;
         }
     }
     else
     {
-        FST_ERROR("Loading coupling coefficient param file failed, err=0x%llx", result);
+        result = coupling_param_.getLastError();
+        FST_ERROR("Fail to read coupling coefficient config file, err=0x%llx", result);
         return result;
     }
 
     // 加载零位配置文件，并检查数据
     // 检查无误后将数据下发到裸核，注意只有裸核处于DISABLE状态零位才能生效
     data.clear();
-    offset_param_.loadParamFile(config_file + "arm_group_offset.yaml");
+    offset_param_.loadParamFile(config_file + "group_offset.yaml");
     result = offset_param_.getLastError();
 
-    if (result == SUCCESS)
+    if (result != SUCCESS)
     {
-        if (offset_param_.getParam("zero_offset/id", id) && offset_param_.getParam("zero_offset/data", data))
-        {
-            if (data.size() == NUM_OF_JOINT)
-            {
-                FST_INFO("ID of offset: 0x%x", id);
-                FST_INFO("Send offset: %s", printDBLine(&data[0], buffer, LOG_TEXT_SIZE));
-                result = sendConfigData(id, data);
+        FST_ERROR("Loading offset param file failed, err=0x%llx", result);
+        return result;
+    }
 
-                if (result == SUCCESS)
-                {
-                    Joint cur_jnt;
-                    ServoState servo_state;
-                    char buffer[LOG_TEXT_SIZE];
-                    usleep(256 * 1000);
-                    bare_core_ptr_->getLatestJoint(cur_jnt, servo_state);
-                    memcpy(zero_offset_, &data[0], joint_num_ * sizeof(data[0]));
-                    FST_INFO("Current joint: %s", printDBLine(&cur_jnt[0], buffer, LOG_TEXT_SIZE));
-                    FST_INFO("Success.");
-                }
-                else
-                {
-                    FST_ERROR("Fail to send offset to barecore, code = 0x%llx", result);
-                    return result;
-                }
-            }
-            else
-            {
-                FST_ERROR("Invalid array size of zero offset, except %d but get %d", NUM_OF_JOINT, data.size());
-                return INVALID_PARAMETER;
-            }
+    if (offset_param_.getParam("zero_offset/id", id) && offset_param_.getParam("zero_offset/data", data))
+    {
+        FST_INFO("ID of offset: 0x%x", id);
+        FST_INFO("Send offset: %s", printDBLine(&data[0], buffer, LOG_TEXT_SIZE));
+        result = sendConfigData(id, data);
+
+        if (result == SUCCESS)
+        {
+            Joint cur_jnt;
+            ServoState servo_state;
+            char buffer[LOG_TEXT_SIZE];
+            usleep(256 * 1000);
+            bare_core_ptr_->getLatestJoint(cur_jnt, servo_state);
+            memcpy(zero_offset_, &data[0], joint_num_ * sizeof(data[0]));
+            FST_INFO("Current joint: %s", printDBLine(&cur_jnt[0], buffer, LOG_TEXT_SIZE));
+            FST_INFO("Success.");
+            usleep(50 * 1000);
         }
         else
         {
-            result = offset_param_.getLastError();
-            FST_ERROR("Fail to read zero offset config file, err=0x%llx", result);
+            FST_ERROR("Fail to send offset to barecore, code = 0x%llx", result);
             return result;
         }
     }
     else
     {
-        FST_ERROR("Loading offset param file failed, err=0x%llx", result);
+        result = offset_param_.getLastError();
+        FST_ERROR("Fail to read zero offset config file, err=0x%llx", result);
         return result;
     }
+    
 
     // 进行一次零位检测
     /*
@@ -336,34 +317,6 @@ ErrorCode Calibrator::initCalibrator(size_t joint_num, BareCoreInterface *pcore,
 }
 
 //------------------------------------------------------------------------------
-// 方法：  buildRecordFile
-// 摘要：  如果零位记录文件不存在，从模板生成一个零位记录文件放到初始化时指定的目录之中，正常情况下
-//        仅在MC程序第一次在控制器上运行时需要生成零位记录文件；
-//------------------------------------------------------------------------------
-ErrorCode Calibrator::buildRecordFile(const string &file)
-{
-    char buf[256] = {0};
-    readlink("/proc/self/exe", buf, sizeof(buf));
-    boost::filesystem::path executable(buf);
-    string temp = executable.parent_path().parent_path().parent_path().string() + "/share/motion_controller/config/robot_recorder.yaml";
-    FST_INFO("Rebuild %s from %s", file.c_str(), temp.c_str());
-    std::ifstream  in(temp.c_str());
-    std::ofstream out(file.c_str());
-
-    if (in.is_open() && out.is_open())
-    {
-        out << in.rdbuf();
-        in.close();
-        out.close();
-        return SUCCESS;
-    }
-    else
-    {
-        return FAIL_OPENNING_FILE;
-    }
-}
-
-//------------------------------------------------------------------------------
 // 方法：  checkOffset
 // 摘要：  调用checkOffset进行一次零位校验，给出各轴的零位校验结果和机器人是否允许运动的标志；
 //        注意只有在机器人处于完全静止的状态下才能进行零位校验，否则校验结果不具有任何意义；
@@ -371,137 +324,133 @@ ErrorCode Calibrator::buildRecordFile(const string &file)
 ErrorCode Calibrator::checkOffset(CalibrateState &cali_stat, OffsetState (&offset_stat)[NUM_OF_JOINT])
 {
     ServoState servo_state;
-    vector<double> joint;
     Joint cur_jnt, old_jnt;
+    vector<int> encoder_err;
+    encoder_err.resize(joint_num_);
     char buffer[LOG_TEXT_SIZE];
-
     FST_INFO("Check zero offset.");
 
-    // 获取当前各关节的位置
-    if (bare_core_ptr_->getLatestJoint(cur_jnt, servo_state))
+    // 获取编码器错误标志
+    if (!bare_core_ptr_->getEncoderError(encoder_err))
     {
-        FST_INFO("Curr-joint: %s", printDBLine(&cur_jnt[0], buffer, LOG_TEXT_SIZE));
-
-        // 获取记录文件中各关节的位置
-        if (robot_recorder_.getParam("joint", joint))
-        {
-            if (joint.size() == NUM_OF_JOINT)
-            {
-                FST_INFO("Last-joint: %s", printDBLine(&joint[0], buffer, LOG_TEXT_SIZE));
-                FST_INFO("Mask-flags: %s", printDBLine((int*)offset_mask_, buffer, LOG_TEXT_SIZE));
-                FST_INFO("Last-state: %s", printDBLine((int*)offset_stat_, buffer, LOG_TEXT_SIZE));
-
-                // 当前各关节位置和记录文件中各关节位置进行比对
-                OffsetState state[NUM_OF_JOINT];
-                memcpy(&old_jnt, &joint[0], sizeof(Joint));
-                checkOffset(cur_jnt, old_jnt, state);
-
-                FST_INFO("Curr-state: %s", printDBLine((int*)state, buffer, LOG_TEXT_SIZE));
-
-                bool recorder_need_update = false;
-
-                // 比对结果比记录文件中的状态标志更严重，则更新记录文件中的标志
-                for (size_t i = 0; i < joint_num_; i++)
-                {
-                    if (offset_mask_[i] == OFFSET_UNMASK && state[i] > offset_stat_[i])
-                    {
-                        recorder_need_update = true;
-                    }
-                    else
-                    {
-                        state[i] = offset_stat_[i];
-                    }
-                }
-
-                for (size_t i = joint_num_; i < NUM_OF_JOINT; i++)
-                {
-                    state[i] = OFFSET_LOST;
-                }
-
-                FST_INFO("Offset-state: %s", printDBLine((int*)state, buffer, LOG_TEXT_SIZE));
-
-                if (recorder_need_update)
-                {
-                    // 更新记录文件中的零位标志
-                    FST_INFO("Update offset state into recorder.");
-
-                    vector<int> stat; stat.resize(NUM_OF_JOINT);
-
-                    for (size_t i = 0; i < NUM_OF_JOINT; i++)
-                    {
-                        stat[i] = int(state[i]);
-                    }
-
-                    if (robot_recorder_.setParam("state", stat) && robot_recorder_.dumpParamFile())
-                    {
-                        for (size_t i = 0; i < joint_num_; i++)
-                        {
-                            offset_stat_[i] = state[i];
-                        }
-                        FST_INFO("Success.");
-                    }
-                    else
-                    {
-                        FST_ERROR("Failed, err=0x%llx", robot_recorder_.getLastError());
-                        current_state_ = MOTION_FORBIDDEN;
-                        cali_stat = current_state_;
-                        memcpy(offset_stat, offset_stat_, sizeof(offset_stat));
-                        return robot_recorder_.getLastError();
-                    }
-                }
-
-                bool limited = false;
-                bool forbidden = false;
-
-                // 综合各轴校验结果和零位错误屏蔽标志，给出允许运行标志
-                        // 函数？？？
-                for (size_t i = 0; i < joint_num_; i++)
-                {
-                    if (offset_mask_[i] == OFFSET_UNMASK)
-                    {
-                        if (state[i] != OFFSET_NORMAL)
-                        {
-                            forbidden = true;
-                        }
-                    }
-                    else
-                    {
-                        limited = true;
-                    }
-                }
-
-                current_state_ = forbidden ? MOTION_FORBIDDEN : (limited ? MOTION_LIMITED : MOTION_NORMAL);
-                cali_stat = current_state_;
-                memcpy(offset_stat, offset_stat_, sizeof(offset_stat));
-                FST_INFO("Done, calibrate motion-state is %d", current_state_);
-                return SUCCESS;
-            }
-            else
-            {
-                FST_ERROR("Invalid array size of joint in recorder, expect %d but get %d", joint_num_, joint.size());
-                current_state_ = MOTION_FORBIDDEN;
-                cali_stat = current_state_;
-                memcpy(offset_stat, offset_stat_, sizeof(offset_stat));
-                return INVALID_PARAMETER;
-            }
-        }
-        else
-        {
-            FST_ERROR("Fail to get joint from recorder.");
-            current_state_ = MOTION_FORBIDDEN;
-            cali_stat = current_state_;
-            memcpy(offset_stat, offset_stat_, sizeof(offset_stat));
-            return robot_recorder_.getLastError();
-        }
+        current_state_ = MOTION_LIMITED;
+        cali_stat = current_state_;
+        memcpy(offset_stat, offset_stat_, sizeof(offset_stat));
+        FST_ERROR("Fail to get encoder error from bare core, code = 0x%llx", MC_COMMUNICATION_WITH_BARECORE_FAIL);
+        return MC_COMMUNICATION_WITH_BARECORE_FAIL;
     }
-    else
+
+    // 获取NvRam中各关节的位置
+    ErrorCode err = readOffsetJoint(old_jnt);
+
+    if (err != SUCCESS)
+    {
+        FST_ERROR("Fail to get offset joint from NvRam, code = 0x%llx.", err);
+        current_state_ = MOTION_FORBIDDEN;
+        cali_stat = current_state_;
+        memcpy(offset_stat, offset_stat_, sizeof(offset_stat));
+        return err;
+    }
+
+    // 获取当前各关节的位置
+    if (!bare_core_ptr_->getLatestJoint(cur_jnt, servo_state))
     {
         FST_ERROR("Fail to get current joint from share mem.");
         current_state_ = MOTION_FORBIDDEN;
         cali_stat = current_state_;
         memcpy(offset_stat, offset_stat_, sizeof(offset_stat));
-        return BARE_CORE_TIMEOUT;
+        return MC_COMMUNICATION_WITH_BARECORE_FAIL;
     }
+
+    FST_INFO("Curr-joint: %s", printDBLine(&cur_jnt[0], buffer, LOG_TEXT_SIZE));
+    FST_INFO("Last-joint: %s", printDBLine(&old_jnt[0], buffer, LOG_TEXT_SIZE));
+    FST_INFO("Mask-flags: %s", printDBLine((int*)offset_mask_, buffer, LOG_TEXT_SIZE));
+    FST_INFO("Last-state: %s", printDBLine((int*)offset_stat_, buffer, LOG_TEXT_SIZE));
+
+    // 当前各关节位置和记录文件中各关节位置进行比对
+    OffsetState state[NUM_OF_JOINT];
+    checkOffset(cur_jnt, old_jnt, state);
+    FST_INFO("Curr-state: %s", printDBLine((int*)state, buffer, LOG_TEXT_SIZE));
+
+    for (size_t i = 0; i < joint_num_; i++)
+    {
+        OffsetState tmp_state = (encoder_err[i] == -1 || encoder_err[i] == -3) ? OFFSET_LOST : OFFSET_NORMAL;
+        state[i] = (state[i] >= tmp_state) ? state[i] : tmp_state;
+    }
+
+    FST_INFO("Encoder-err: %s", printDBLine(&encoder_err[0], buffer, LOG_TEXT_SIZE));
+    FST_INFO("New-state: %s", printDBLine((int*)state, buffer, LOG_TEXT_SIZE));
+
+    bool recorder_need_update = false;
+
+    // 比对结果比记录文件中的状态标志更严重，则更新记录文件中的标志
+    for (size_t i = 0; i < joint_num_; i++)
+    {
+        if (offset_mask_[i] == OFFSET_UNMASK && state[i] > offset_stat_[i])
+        {
+            recorder_need_update = true;
+        }
+        else
+        {
+            state[i] = offset_stat_[i];
+        }
+    }
+
+    for (size_t i = joint_num_; i < NUM_OF_JOINT; i++)
+    {
+        state[i] = OFFSET_LOST;
+    }
+
+    FST_INFO("Offset-state: %s", printDBLine((int*)state, buffer, LOG_TEXT_SIZE));
+
+    if (recorder_need_update)
+    {
+        // 更新记录文件中的零位标志
+        FST_INFO("Update offset state into recorder.");
+        err = writeOffsetState(state);
+
+        if (err != SUCCESS)
+        {
+            FST_ERROR("Failed, code = 0x%llx", err);
+            current_state_ = MOTION_FORBIDDEN;
+            cali_stat = current_state_;
+            memcpy(offset_stat, offset_stat_, sizeof(offset_stat));
+            return err;
+        }
+
+        for (size_t i = 0; i < joint_num_; i++)
+        {
+            offset_stat_[i] = state[i];
+        }
+    }
+
+    bool limited = false;
+    bool forbidden = false;
+
+    // 综合各轴校验结果和零位错误屏蔽标志，给出允许运行标志
+            // 函数？？？
+    for (size_t i = 0; i < joint_num_; i++)
+    {
+        if (offset_mask_[i] == OFFSET_UNMASK)
+        {
+            if (state[i] != OFFSET_NORMAL)
+            {
+                forbidden = true;
+            }
+        }
+        else
+        {
+            limited = true;
+        }
+    }
+
+    current_state_ = forbidden ? MOTION_FORBIDDEN : (limited ? MOTION_LIMITED : MOTION_NORMAL);
+    cali_stat = current_state_;
+    memcpy(offset_stat, offset_stat_, sizeof(offset_stat));
+    FST_INFO("Done, calibrate motion-state is %d", current_state_);
+    return SUCCESS;
+
+
 }
 
 //------------------------------------------------------------------------------
@@ -547,34 +496,7 @@ ErrorCode Calibrator::calibrateOffset(void)
 ErrorCode Calibrator::calibrateOffset(size_t index)
 {
     FST_INFO("Calibrate offset of joint index=%d", index);
-
     return calibrateOffset(&index, 1);
-    /*
-    if (index < joint_num_)
-    {
-        Joint cur_jnt;
-        ServoState servo_state;
-        vector<double> old_offset_data;
-
-        if (bare_core_ptr_->getLatestJoint(cur_jnt, servo_state) && getOffsetFromBareCore(old_offset_data) == SUCCESS)
-        {
-            zero_offset_[index] = calculateOffset(old_offset_data[index], cur_jnt[index], 0);
-            offset_need_save_[index] = NEED_SAVE;
-            FST_INFO("Done.");
-            return SUCCESS;
-        }
-        else
-        {
-            FST_ERROR("Fail to get current offset or current joint from Core1");
-            return BARE_CORE_TIMEOUT;
-        }
-    }
-    else
-    {
-        FST_ERROR("Index out of range.");
-        return INVALID_PARAMETER;
-    }
-    */
 }
 
 //------------------------------------------------------------------------------
@@ -589,7 +511,7 @@ ErrorCode Calibrator::calibrateOffset(const size_t *pindex, size_t length)
     // 检查需要标定的轴标号
     for (size_t i = 0; i < length; i++)
     {
-        if (pindex[i] < NUM_OF_JOINT)
+        if (pindex[i] < joint_num_)
         {
             FST_INFO("  joint index=%d", pindex[i]);
         }
@@ -607,7 +529,6 @@ ErrorCode Calibrator::calibrateOffset(const size_t *pindex, size_t length)
 
     if (bare_core_ptr_->getLatestJoint(cur_joint, servo_state) && getOffsetFromBareCore(cur_offset) == SUCCESS)
     {
-
         FST_INFO("Current-offset: %s", printDBLine(&cur_joint[0], buffer, LOG_TEXT_SIZE));
         FST_INFO("Current-joint:  %s", printDBLine(&cur_offset[0], buffer, LOG_TEXT_SIZE));
 
@@ -627,7 +548,7 @@ ErrorCode Calibrator::calibrateOffset(const size_t *pindex, size_t length)
     else
     {
         FST_ERROR("Fail to get current offset or current joint from Core1");
-        return BARE_CORE_TIMEOUT;
+        return MC_COMMUNICATION_WITH_BARECORE_FAIL;
     }
 }
 
@@ -639,8 +560,7 @@ ErrorCode Calibrator::calibrateOffset(const size_t *pindex, size_t length)
 double Calibrator::calculateOffset(double current_offset, double current_joint, double target_joint)
 {
     double new_offset = current_joint + current_offset - target_joint;
-    FST_INFO("Current-offset=%.6f, current-joint=%.6f, target-joint=%.6f, new-offset=%.6f",
-             current_offset, current_joint, target_joint, new_offset);
+    FST_INFO("Current-offset=%.6f, current-joint=%.6f, target-joint=%.6f, new-offset=%.6f", current_offset, current_joint, target_joint, new_offset);
     return new_offset;
 }
 
@@ -663,141 +583,125 @@ ErrorCode Calibrator::saveOffset(void)
         }
     }
 
-    // 至少有一个轴的零位尚未生效和保存
-    if (need_save)
-    {
-        // 更新配置文件
-        vector<double> data; data.resize(NUM_OF_JOINT);
-
-        if (!offset_param_.getParam("zero_offset/data", data))
-        {
-            FST_ERROR("Fail to get offset from config file;");
-            return offset_param_.getLastError();
-        }
-
-        if (data.size() != NUM_OF_JOINT)
-        {
-            FST_ERROR("Wrong array size of offset in config file.");
-            return  INVALID_PARAMETER;
-        }
-
-        char buffer[LOG_TEXT_SIZE];
-        FST_INFO("Old offset: %s", printDBLine(&data[0], buffer, LOG_TEXT_SIZE));
-        FST_INFO("New offset: %s", printDBLine(&zero_offset_[0], buffer, LOG_TEXT_SIZE));
-        FST_INFO("Need save: %s", printDBLine(offset_need_save_, buffer, LOG_TEXT_SIZE));
-
-        for (size_t i = 0; i < joint_num_; i++)
-        {
-            if (offset_need_save_[i] == NEED_SAVE)
-                data[i] = zero_offset_[i];
-        }
-
-        if (offset_param_.setParam("zero_offset/data", data) && offset_param_.dumpParamFile())
-        {
-            // 更新裸核零位
-            FST_INFO("Offset saved, update offset in core1 ...");
-            ErrorCode err = sendOffsetToBareCore();
-
-            if (err != SUCCESS)
-            {
-                FST_ERROR("Cannot update offset in core1, code = 0x%llx", err);
-                return err;
-            }
-
-            // 此处usleep为了等待裸核的零位生效，考虑是否有更好的实现方式
-            usleep(200 * 1000);
-            FST_INFO("Core1 offset updated, update recorder ...");
-
-            Joint joint;
-            ServoState state;
-            vector<double> jnt;
-
-            // 更新记录文件，清除零位丢失标志和错误屏蔽标志
-            if (!bare_core_ptr_->getLatestJoint(joint, state))
-            {
-                FST_ERROR("Fail to get current joint from core1.");
-                return BARE_CORE_TIMEOUT;
-            }
-
-            FST_INFO("Current joint: %s", printDBLine(&joint[0], buffer, LOG_TEXT_SIZE));
-
-            if (!robot_recorder_.getParam("joint", jnt))
-            {
-                FST_ERROR("Fail to get last joint from recorder.");
-                return robot_recorder_.getLastError();
-            }
-
-            if (jnt.size() != NUM_OF_JOINT)
-            {
-                FST_ERROR("Wrong array size of last joint in recorder.");
-                return INVALID_PARAMETER;
-            }
-
-            vector<int> flag;   flag.resize(NUM_OF_JOINT);
-            vector<int> mask;   mask.resize(NUM_OF_JOINT);
-
-            for (size_t i = 0; i < joint_num_; i++)
-            {
-                mask[i] = offset_mask_[i];
-                flag[i] = offset_stat_[i];
-
-                // 对于更新了零位的轴，同时更新其记录关节读数、零位状态标志和错误屏蔽标志
-                if (offset_need_save_[i] == NEED_SAVE)
-                {
-                    jnt[i] = joint[i];
-                    flag[i] = OFFSET_NORMAL;
-                    mask[i] = OFFSET_UNMASK;
-                }
-            }
-
-            time_t time_now = time(NULL);
-            tm *local = localtime(&time_now);
-            char buf[128];
-            memset(buf, 0, sizeof(buf));
-            strftime(buf, 64, "%Y-%m-%d %H:%M:%S", local);
-            string temp(buf);
-
-            FST_INFO("  time = %s", buf);
-            FST_INFO("  flag = %s", printDBLine(&flag[0], buffer, LOG_TEXT_SIZE));
-            FST_INFO("  mask = %s", printDBLine(&mask[0], buffer, LOG_TEXT_SIZE));
-            FST_INFO("  joint = %s", printDBLine(&jnt[0], buffer, LOG_TEXT_SIZE));
-
-            if (robot_recorder_.setParam("time", temp) &&
-                robot_recorder_.setParam("joint", jnt) &&
-                robot_recorder_.setParam("state", flag) &&
-                robot_recorder_.setParam("mask", mask) &&
-                robot_recorder_.dumpParamFile())
-            {
-                for (size_t i = 0; i < joint_num_; i++)
-                {
-                    if (offset_need_save_[i] == NEED_SAVE)
-                    {
-                        offset_need_save_[i] = UNNEED_SAVE;
-                        offset_mask_[i] = OffsetMask (mask[i]);
-                        offset_stat_[i] = OffsetState(flag[i]);
-                    }
-                }
-
-                FST_INFO("Success!");
-                return SUCCESS;
-            }
-            else
-            {
-                FST_ERROR("Fail to update recorder.");
-                return robot_recorder_.getLastError();
-            }
-        }
-        else
-        {
-            FST_ERROR("Fail to save offset, err=0x%llx", offset_param_.getLastError());
-            return offset_param_.getLastError();
-        }
-    }
-    else
+    // 至少有一个轴的零位尚未生效和保存才需要更新零位文件，否则直接返回
+    if (!need_save)
     {
         FST_WARN("None offset need to save.");
         return SUCCESS;
     }
+
+    // 更新配置文件
+    vector<double> data;
+
+    if (!offset_param_.getParam("zero_offset/data", data))
+    {
+        FST_ERROR("Fail to get offset from config file;");
+        return offset_param_.getLastError();
+    }
+
+    char buffer[LOG_TEXT_SIZE];
+    FST_INFO("Old offset: %s", printDBLine(&data[0], buffer, LOG_TEXT_SIZE));
+    FST_INFO("New offset: %s", printDBLine(&zero_offset_[0], buffer, LOG_TEXT_SIZE));
+    FST_INFO("Need save: %s", printDBLine(offset_need_save_, buffer, LOG_TEXT_SIZE));
+
+    for (size_t i = 0; i < joint_num_; i++)
+    {
+        if (offset_need_save_[i] == NEED_SAVE)
+            data[i] = zero_offset_[i];
+    }
+
+    if (!offset_param_.setParam("zero_offset/data", data) || !offset_param_.dumpParamFile())
+    {
+        FST_ERROR("Fail to save offset, err=0x%llx", offset_param_.getLastError());
+        return offset_param_.getLastError();
+    }
+
+    // 更新裸核零位
+    FST_INFO("Offset saved, update offset in core1 ...");
+    ErrorCode err = sendOffsetToBareCore();
+
+    if (err != SUCCESS)
+    {
+        FST_ERROR("Cannot update offset in core1, code = 0x%llx", err);
+        return err;
+    }
+
+    // 此处usleep为了等待裸核的零位生效，考虑是否有更好的实现方式
+    usleep(200 * 1000);
+    FST_INFO("Core1 offset updated, update recorder ...");
+
+    Joint cur_joint, old_joint;
+    ServoState  state;
+    OffsetMask  offset_mask[NUM_OF_JOINT];
+    OffsetState offset_stat[NUM_OF_JOINT];
+
+    // 更新记录文件，清除零位丢失标志和错误屏蔽标志
+    if (!bare_core_ptr_->getLatestJoint(cur_joint, state))
+    {
+        FST_ERROR("Fail to get current joint from core1.");
+        return MC_COMMUNICATION_WITH_BARECORE_FAIL;
+    }
+
+    FST_INFO("Current joint: %s", printDBLine(&cur_joint[0], buffer, LOG_TEXT_SIZE));
+
+    err = readOffsetJoint(old_joint);
+    
+    if (err != SUCCESS)
+    {
+        FST_ERROR("Fail to get last joint from nvram.");
+        return err;
+    }
+
+    for (size_t i = 0; i < joint_num_; i++)
+    {
+        offset_mask[i] = offset_mask_[i];
+        offset_stat[i] = offset_stat_[i];
+
+        // 对于更新了零位的轴，同时更新其记录关节读数、零位状态标志和错误屏蔽标志
+        if (offset_need_save_[i] == NEED_SAVE)
+        {
+            old_joint[i] = cur_joint[i];
+            offset_stat[i] = OFFSET_NORMAL;
+            offset_mask[i] = OFFSET_UNMASK;
+        }
+    }
+
+    for (size_t i = joint_num_; i < NUM_OF_JOINT; i++)
+    {
+        offset_mask[i] = OFFSET_UNMASK;
+        offset_stat[i] = OFFSET_LOST;
+    }
+
+    FST_INFO("  flag = %s", printDBLine((int*)offset_stat, buffer, LOG_TEXT_SIZE));
+    FST_INFO("  mask = %s", printDBLine((int*)offset_mask, buffer, LOG_TEXT_SIZE));
+    FST_INFO("  joint = %s", printDBLine(&old_joint[0], buffer, LOG_TEXT_SIZE));
+
+    if (writeOffsetJoint(old_joint) != SUCCESS || writeOffsetState(offset_stat) != SUCCESS || writeOffsetMask(offset_mask) != SUCCESS)
+    {
+        FST_ERROR("Fail to update recorder.");
+        return FST_NVRAM_R_TIMEOUT_F;
+    }
+
+    FST_INFO("Reset encoder error flags ...");
+
+    if (!bare_core_ptr_->resetEncoderError())
+    {
+        FST_ERROR("Fail to reset encoder errors.");
+        return MC_COMMUNICATION_WITH_BARECORE_FAIL;
+    }
+
+    for (size_t i = 0; i < joint_num_; i++)
+    {
+        if (offset_need_save_[i] == NEED_SAVE)
+        {
+            offset_need_save_[i] = UNNEED_SAVE;
+            offset_mask_[i] = offset_mask[i];
+            offset_stat_[i] = offset_stat[i];
+        }
+    }
+
+    FST_INFO("Success!");
+    return SUCCESS;
 }
 
 //------------------------------------------------------------------------------
@@ -809,50 +713,24 @@ ErrorCode Calibrator::saveJoint(void)
     Joint cur_jnt;
     ServoState state;
     memset(&cur_jnt, 0, sizeof(Joint));
-    FST_INFO("Save current joint into record file.");
 
-    if (bare_core_ptr_->getLatestJoint(cur_jnt, state))
-    {
-        ErrorCode  err = saveGivenJoint(cur_jnt);
-
-        if (err != SUCCESS)
-        {
-            FST_ERROR("Fail to record joint, code = 0x%llx", err);
-            return err;
-        }
-
-        FST_INFO("Success.");
-        return SUCCESS;
-    }
-    else
+    if (!bare_core_ptr_->getLatestJoint(cur_jnt, state))
     {
         FST_ERROR("Fail to get current joint from share memory");
-        return BARE_CORE_TIMEOUT;
+        return MC_COMMUNICATION_WITH_BARECORE_FAIL;
     }
-}
 
-//------------------------------------------------------------------------------
-// 方法：  saveJoint
-// 摘要：  将给定的关节读数写入记录文件；
-//------------------------------------------------------------------------------
-ErrorCode Calibrator::saveGivenJoint(const Joint &joint)
-{
-    vector<double> data(&joint[0], &joint[0] + NUM_OF_JOINT);
-    time_t time_now = time(NULL);
-    tm *local = localtime(&time_now);
-    char buffer[LOG_TEXT_SIZE];
-    memset(buffer, 0, LOG_TEXT_SIZE);
-    strftime(buffer, 64, "%Y-%m-%d %H:%M:%S", local);
-    string temp(buffer);
+    ErrorCode err = writeOffsetJoint(cur_jnt);
 
-    FST_INFO("Save joint: %s", printDBLine(&joint[0], buffer, LOG_TEXT_SIZE));
-
-    if (!robot_recorder_.setParam("time", temp) || !robot_recorder_.setParam("joint", data) || !robot_recorder_.dumpParamFile())
+    if (err != SUCCESS)
     {
-        FST_ERROR("Fail to record time and joint into file, code = 0x%llx.", robot_recorder_.getLastError());
-        return robot_recorder_.getLastError();
+        FST_ERROR("Fail to record joint, code = 0x%llx", err);
+        return err;
     }
 
+    //char buffer[LOG_TEXT_SIZE];
+    //FST_INFO("Save current joint into record file: %s", printDBLine(&cur_jnt.j1_, buffer, LOG_TEXT_SIZE));
+    //FST_INFO("Success.");
     return SUCCESS;
 }
 
@@ -864,7 +742,7 @@ ErrorCode Calibrator::saveGivenJoint(const Joint &joint)
 ErrorCode Calibrator::maskOffsetLostError(void)
 {
     char buffer[LOG_TEXT_SIZE];
-    vector<int> mask;   mask.resize(NUM_OF_JOINT);
+    OffsetMask  mask[NUM_OF_JOINT];
 
     FST_INFO("Mask all lost-offset errors.");
     FST_INFO("  mask flag: %s", printDBLine((int*)offset_mask_, buffer, LOG_TEXT_SIZE));
@@ -884,39 +762,38 @@ ErrorCode Calibrator::maskOffsetLostError(void)
         }
     }
 
-    if (need_save)
+    for (size_t i = joint_num_; i < NUM_OF_JOINT; i++)
     {
-        FST_INFO("Saving mask flags ...");
-
-        for (size_t i = joint_num_; i < NUM_OF_JOINT; i++)
-        {
-            mask[i] = OFFSET_UNMASK;
-        }
-
-        if (robot_recorder_.setParam("mask", mask) && robot_recorder_.dumpParamFile())
-        {
-            for (size_t i = 0; i < joint_num_; i++)
-            {
-                if (offset_stat_[i] == OFFSET_LOST)
-                {
-                    offset_mask_[i] = OffsetMask(mask[i]);
-                }
-            }
-
-            FST_INFO("All lost-offset errors masked.");
-            return SUCCESS;
-        }
-        else
-        {
-            FST_ERROR("Fail to save mask flags into recorder, err=0x%llx", robot_recorder_.getLastError());
-            return robot_recorder_.getLastError();
-        }
+        mask[i] = OFFSET_UNMASK;
     }
-    else
+
+    // 至少有一个轴需要屏蔽零位校验错误,否则直接返回
+    if (!need_save)
     {
         FST_INFO("No lost-offset error need mask");
         return SUCCESS;
     }
+
+
+    FST_INFO("Saving mask flags ...");
+    ErrorCode err = writeOffsetMask(mask);
+
+    if (err != SUCCESS)
+    {
+        FST_ERROR("Fail to save mask flags into recorder, code = 0x%llx", err);
+        return err;
+    }
+
+    for (size_t i = 0; i < joint_num_; i++)
+    {
+        if (offset_stat_[i] == OFFSET_LOST)
+        {
+            offset_mask_[i] = mask[i];
+        }
+    }
+
+    FST_INFO("All lost-offset errors masked.");
+    return SUCCESS;
 }
 
 //------------------------------------------------------------------------------
@@ -928,64 +805,55 @@ ErrorCode Calibrator::setOffsetState(size_t index, OffsetState stat)
     char buffer[LOG_TEXT_SIZE];
     FST_INFO("Set offset state, index = %d, state = %d", index, stat);
 
-    if (index < joint_num_)
-    {
-        bool update_joint = false;
-        vector<int>     flag;   flag.resize(NUM_OF_JOINT);
-        vector<double>  joint;  joint.resize(NUM_OF_JOINT);
-
-        for (int i = 0; i < NUM_OF_JOINT; i++)
-        {
-            flag[i] = int(offset_stat_[i]);
-        }
-
-        FST_INFO("Offset state: %s", printDBLine(&flag[0], buffer, LOG_TEXT_SIZE));
-        flag[index] = int(stat);
-        FST_INFO("  changed to: %s", printDBLine(&flag[0], buffer, LOG_TEXT_SIZE));
-
-        if (stat == OFFSET_NORMAL && offset_stat_[index] != OFFSET_NORMAL)
-        {
-            update_joint = true;
-        }
-
-        Joint cur_jnt;
-        ServoState servo_state;
-
-        if (!robot_recorder_.getParam("joint", joint))
-        {
-            FST_ERROR("Fail to get last joint from recorder, err=0x%llx", robot_recorder_.getLastError());
-            return robot_recorder_.getLastError();
-        }
-
-        if (!bare_core_ptr_->getLatestJoint(cur_jnt, servo_state))
-        {
-            FST_ERROR("Fail to get current joint from bare core.");
-            return BARE_CORE_TIMEOUT;
-        }
-
-        if (update_joint)
-        {
-            joint[index] = cur_jnt[index];
-        }
-
-        if (robot_recorder_.setParam("state", flag) && robot_recorder_.setParam("joint", joint) && robot_recorder_.dumpParamFile())
-        {
-            offset_stat_[index] = OffsetState(flag[index]);
-
-            FST_INFO("Success.");
-            return SUCCESS;
-        }
-        else
-        {
-            FST_ERROR("Fail to set offset flag into recorder, err=0x%llx", robot_recorder_.getLastError());
-            return robot_recorder_.getLastError();
-        }
-    }
-    else
+    if (index >= joint_num_)
     {
         FST_ERROR("Invalid index.");
         return INVALID_PARAMETER;
     }
+
+    Joint old_joint;
+    bool update_joint = false;
+    OffsetState stats[NUM_OF_JOINT];
+    memcpy(stats, offset_stat_, sizeof(stats));
+    FST_INFO("Offset state: %s", printDBLine((int*)stats, buffer, LOG_TEXT_SIZE));
+    stats[index] = stat;
+    FST_INFO("  changed to: %s", printDBLine((int*)stats, buffer, LOG_TEXT_SIZE));
+
+    if (stat == OFFSET_NORMAL && offset_stat_[index] != OFFSET_NORMAL)
+    {
+        update_joint = true;
+    }
+
+    Joint cur_joint;
+    ServoState servo_state;
+    ErrorCode err = readOffsetJoint(old_joint);
+
+    if (err != SUCCESS)
+    {
+        FST_ERROR("Fail to get last joint from recorder, code = 0x%llx", err);
+        return err;
+    }
+
+    if (!bare_core_ptr_->getLatestJoint(cur_joint, servo_state))
+    {
+        FST_ERROR("Fail to get current joint from bare core.");
+        return MC_COMMUNICATION_WITH_BARECORE_FAIL;
+    }
+
+    if (update_joint)
+    {
+        old_joint[index] = cur_joint[index];
+    }
+
+    if (writeOffsetState(stats) != SUCCESS || writeOffsetJoint(old_joint) != SUCCESS)
+    {
+        FST_ERROR("Fail to set offset flag into recorder");
+        return FST_NVRAM_R_TIMEOUT_F;
+    }
+
+    offset_stat_[index] = stats[index];
+    FST_INFO("Success.");
+    return SUCCESS;
 }
 
 //------------------------------------------------------------------------------
@@ -995,12 +863,17 @@ ErrorCode Calibrator::setOffsetState(size_t index, OffsetState stat)
 void Calibrator::setOffset(size_t index, double offset)
 {
     FST_INFO("Set offset, index = %d, offset = %.6f", index, offset);
-    
-    if (index < joint_num_)
+
+    if (index >= joint_num_)
     {
-        zero_offset_[index] = offset;
-        offset_need_save_[index] = NEED_SAVE;
+        FST_ERROR("Given index out of range, joint-number is %d", joint_num_);
+        return;
     }
+    
+    FST_INFO("Old-offset: %.6f, new-offset: %.6f", zero_offset_[index], offset);
+    zero_offset_[index] = offset;
+    offset_need_save_[index] = NEED_SAVE;
+    FST_INFO("Done.");
 }
 
 //------------------------------------------------------------------------------
@@ -1011,7 +884,7 @@ void Calibrator::setOffset(size_t index, double offset)
 void Calibrator::setOffset(const double *offset)
 {
     char buf[LOG_TEXT_SIZE];
-    FST_INFO("Set offset: = %s", printDBLine(offset, buf, LOG_TEXT_SIZE));
+    FST_INFO("Set offset, new-offset: %s", printDBLine(offset, buf, LOG_TEXT_SIZE));
     
     for (size_t i = 0; i < joint_num_; i++)
     {
@@ -1040,6 +913,18 @@ void Calibrator::getOffset(double *offset)
     if (need_save)
     {
         FST_WARN("One or more offset have not been saved.");
+    }
+}
+
+//------------------------------------------------------------------------------
+// 方法：  getOffsetMask
+// 摘要：  获取所有轴的错误屏蔽标志，注意确保数组长度不小于实际轴数；
+//------------------------------------------------------------------------------
+void Calibrator::getOffsetState(OffsetState *state)
+{
+    for (size_t i = 0; i < joint_num_; i++)
+    {
+        state[i] = offset_stat_[i];
     }
 }
 
@@ -1173,10 +1058,10 @@ ErrorCode Calibrator::saveReference(void)
     if (!bare_core_ptr_->getLatestJoint(joint, state))
     {
         FST_ERROR("Fail to get current joint from bare core");
-        return BARE_CORE_TIMEOUT;
+        return MC_COMMUNICATION_WITH_BARECORE_FAIL;
     }
 
-    vector<double> ref_joint(&joint[0], &joint[0] + NUM_OF_JOINT);
+    vector<double> ref_joint(&joint[0], &joint[0] + joint_num_);
     FST_INFO("  joint:  %s", printDBLine(&ref_joint[0], buffer, LOG_TEXT_SIZE));
 
     vector<double> ref_offset;
@@ -1196,7 +1081,7 @@ ErrorCode Calibrator::saveReference(void)
     if(!bare_core_ptr_->getEncoder(ref_encoder))
     {
         FST_ERROR("Fail to get current encoder from bare core");
-        return BARE_CORE_TIMEOUT;
+        return MC_COMMUNICATION_WITH_BARECORE_FAIL;
     }
 
     FST_INFO("  encoder: %s", printDBLine(&ref_encoder[0], buffer, LOG_TEXT_SIZE));
@@ -1232,89 +1117,6 @@ ErrorCode Calibrator::fastCalibrate(size_t index)
 {
     FST_INFO("Fsst calibrate index = %d", index);
     return fastCalibrate(&index, 1);
-
-    /*
-    if (index < joint_num_)
-    {
-        vector<int>     ref_encoder;
-        vector<double>  ref_offset;
-        vector<double>  gear_ratio;
-
-        ParamGroup params(AXIS_GROUP_DIR"arm_group_offset_reference.yaml");
-        ParamGroup jtac("share/configuration/machine/jtac.yaml");
-
-        if (params.getLastError() == SUCCESS && jtac.getLastError() == SUCCESS)
-        {
-            if (params.getParam("reference_offset", ref_offset) &&
-                params.getParam("reference_encoder", ref_encoder) &&
-                jtac.getParam("gear_ratio/data", gear_ratio))
-            {
-                if (ref_offset.size() == NUM_OF_JOINT && ref_encoder.size() == NUM_OF_JOINT && gear_ratio.size() == NUM_OF_JOINT)
-                {
-                    FST_INFO("Reference-offset=%.6f, reference-encoder=0x%x, gear-ratio=%.6f",
-                             ref_offset[index], ref_encoder[index], gear_ratio[index]);
-
-                    vector<int> cur_encoder; cur_encoder.resize(joint_num_);
-
-                    if (bare_core_ptr_->getEncoder(cur_encoder))
-                    {
-                        FST_INFO("Current-encoder=0x%x", cur_encoder[index]);
-                        zero_offset_[index] = calculateOffsetEasy(gear_ratio[index], ref_offset[index], ref_encoder[index], cur_encoder[index]);
-                        offset_need_save_[index] = NEED_SAVE;
-                        FST_INFO("New-offset=%.6f", zero_offset_[index]);
-                        return SUCCESS;
-                    }
-                    else
-                    {
-                        FST_ERROR("Fail to get current encoders from bare core.");
-                        return BARE_CORE_TIMEOUT;
-                    }
-                }
-                else
-                {
-                    if (ref_offset.size() != NUM_OF_JOINT)
-                        FST_ERROR("Invalid array size of reference offset, size is %d but %d wanted.", ref_offset.size(), NUM_OF_JOINT);
-                    else if (ref_encoder.size() != NUM_OF_JOINT)
-                        FST_ERROR("Invalid array size of reference encoder, size is %d but %d wanted.", ref_encoder.size(), NUM_OF_JOINT);
-                    else
-                        FST_ERROR("Invalid array size of gear ratio, size is %d but %d wanted.", gear_ratio.size(), NUM_OF_JOINT);
-
-                    return INVALID_PARAMETER;
-                }
-            }
-            else
-            {
-                if (params.getLastError() != SUCCESS)
-                {
-                    FST_ERROR("Fail to get reference point from config file");
-                    return params.getLastError();
-                }
-                else
-                {
-                    FST_ERROR("Fail to get gear ratio from config file");
-                    return jtac.getLastError();
-                }
-            }
-        }
-        else
-        {
-            if (params.getLastError() != SUCCESS)
-            {
-                FST_ERROR("Fail to open reference file");
-                return params.getLastError();
-            }
-            else {
-                FST_ERROR("Fail to open jtac config file");
-                return jtac.getLastError();
-            }
-        }
-    }
-    else
-    {
-        FST_ERROR("Invalid index=%d, index should less than %d", index, joint_num_);
-        return INVALID_PARAMETER;
-    }
-     */
 }
 
 //------------------------------------------------------------------------------
@@ -1351,7 +1153,7 @@ ErrorCode Calibrator::fastCalibrate(const size_t *pindex, size_t length)
             params.getParam("reference_encoder", ref_encoder) &&
             jtac.getParam("gear_ratio/data", gear_ratio))
         {
-            if (ref_offset.size() == NUM_OF_JOINT && ref_encoder.size() == NUM_OF_JOINT && gear_ratio.size() == NUM_OF_JOINT)
+            if (ref_offset.size() == joint_num_ && ref_encoder.size() == joint_num_ && gear_ratio.size() == joint_num_)
             {
                 char buffer[LOG_TEXT_SIZE];
                 vector<int> cur_encoder; cur_encoder.resize(joint_num_);
@@ -1378,17 +1180,17 @@ ErrorCode Calibrator::fastCalibrate(const size_t *pindex, size_t length)
                 else
                 {
                     FST_ERROR("Fail to get current encoders.");
-                    return BARE_CORE_TIMEOUT;
+                    return MC_COMMUNICATION_WITH_BARECORE_FAIL;
                 }
             }
             else
             {
-                if (ref_offset.size() != NUM_OF_JOINT)
-                    FST_ERROR("Invalid array size of reference offset, size is %d but %d wanted.", ref_offset.size(), NUM_OF_JOINT);
-                else if (ref_encoder.size() != NUM_OF_JOINT)
-                    FST_ERROR("Invalid array size of reference encoder, size is %d but %d wanted.", ref_encoder.size(), NUM_OF_JOINT);
+                if (ref_offset.size() != joint_num_)
+                    FST_ERROR("Invalid array size of reference offset, size is %d but %d wanted.", ref_offset.size(), joint_num_);
+                else if (ref_encoder.size() != joint_num_)
+                    FST_ERROR("Invalid array size of reference encoder, size is %d but %d wanted.", ref_encoder.size(), joint_num_);
                 else
-                    FST_ERROR("Invalid array size of gear ratio, size is %d but %d wanted.", gear_ratio.size(), NUM_OF_JOINT);
+                    FST_ERROR("Invalid array size of gear ratio, size is %d but %d wanted.", gear_ratio.size(), joint_num_);
 
                 return INVALID_PARAMETER;
             }
@@ -1458,7 +1260,16 @@ double Calibrator::calculateOffsetEasy(double gear_ratio, double ref_offset,
 //------------------------------------------------------------------------------
 ErrorCode Calibrator::sendConfigData(int id, const vector<double> &data)
 {
-    return bare_core_ptr_->setConfigData(id, data) ? SUCCESS : BARE_CORE_TIMEOUT;
+    return bare_core_ptr_->setConfigData(id, data) ? SUCCESS : MC_COMMUNICATION_WITH_BARECORE_FAIL;
+}
+
+//------------------------------------------------------------------------------
+// 方法：  sendConfigData
+// 摘要：  使用service形式向裸核发送参数id和数据；
+//------------------------------------------------------------------------------
+ErrorCode Calibrator::sendConfigData(int id, const vector<int> &data)
+{
+    return bare_core_ptr_->setConfigData(id, data) ? SUCCESS : MC_COMMUNICATION_WITH_BARECORE_FAIL;
 }
 
 //------------------------------------------------------------------------------
@@ -1487,17 +1298,221 @@ ErrorCode Calibrator::sendOffsetToBareCore(void)
 ErrorCode Calibrator::getOffsetFromBareCore(vector<double> &data)
 {
     int id;
-    data.resize(NUM_OF_JOINT);
 
-    if (offset_param_.getParam("zero_offset/id", id))
+    if (offset_param_.getParam("zero_offset/id", id) && offset_param_.getParam("zero_offset/data", data))
     {
-        return bare_core_ptr_->getConfigData(id, data) ? SUCCESS : BARE_CORE_TIMEOUT;
+        return bare_core_ptr_->getConfigData(id, data) ? SUCCESS : MC_COMMUNICATION_WITH_BARECORE_FAIL;
     }
     else
     {
         data.clear();
         return offset_param_.getLastError();
     }
+}
+
+
+ErrorCode Calibrator::readNvRam(void *array, uint32_t addr, uint32_t length)
+{
+    uint8_t nvram_data1[ZERO_BLK_LEN];
+    uint8_t nvram_data2[ZERO_BLK_LEN];
+
+    ErrorCode err = nvram_ptr_->read(nvram_data1, NVRAM_BLK_1_BASE + addr, length + 1);
+
+    if (err != SUCCESS)
+    {
+        FST_ERROR("Fail to read BLK1 in NvRam, code = 0x%llx.", err);
+        return err;
+    }
+
+    err = nvram_ptr_->read(nvram_data2, NVRAM_BLK_2_BASE + addr, length + 1);
+
+    if (err != SUCCESS)
+    {
+        FST_ERROR("Fail to read BLK2 in NvRam, code = 0x%llx.", err);
+        return err;
+    }
+
+    uint8_t checksum1 = nvram_ptr_->checkSumOfData(nvram_data1, length + 1);
+    uint8_t checksum2 = nvram_ptr_->checkSumOfData(nvram_data2, length + 1);
+
+    if (checksum1 != 0 && checksum2 != 0)
+    {
+        FST_ERROR("Data in NvRam is lost.");
+        return MC_NVRAM_DATA_INVALID;
+    }
+
+    if (checksum1 != 0)
+    {
+        FST_WARN("Data in blank-1 is lost, rebuild from blank-2.");
+        nvram_ptr_->write(nvram_data2, NVRAM_BLK_1_BASE + addr, length + 1);
+        memcpy(nvram_data1, nvram_data2, length + 1);
+        usleep(200 * 1000);
+    }
+    else if (checksum2 != 0)
+    {
+        FST_WARN("Data in blank-2 is lost, rebuild from blank-1.");
+        nvram_ptr_->write(nvram_data1, NVRAM_BLK_2_BASE + addr, length + 1);
+        memcpy(nvram_data2, nvram_data1, length + 1);
+        usleep(200 * 1000);
+    }
+
+    bool data_is_same = true;
+
+    for (size_t i = 0; i < length; i++)
+    {
+        if (nvram_data1[i] != nvram_data2[i])
+        {
+            data_is_same = false;
+            break;
+        }
+    }
+
+    if (!data_is_same)
+    {
+        FST_WARN("Data in blank-1 different with data in blank-2, rebuild bland-2");
+        nvram_ptr_->write(nvram_data1, NVRAM_BLK_2_BASE + addr, length + 1);
+        memcpy(nvram_data2, nvram_data1, length + 1);
+        usleep(200 * 1000);
+    }
+
+    memcpy(array, nvram_data1, length);
+    return SUCCESS;
+}
+
+ErrorCode Calibrator::readOffsetState(OffsetState (&state)[NUM_OF_JOINT])
+{
+    uint8_t data[NUM_OF_JOINT];
+    ErrorCode err = readNvRam(data, OFFSET_STATE_ADDR, NUM_OF_JOINT);
+
+    if (err == SUCCESS)
+    {
+        for (size_t i = 0; i < NUM_OF_JOINT; i++)
+        {
+            state[i] = OffsetState(data[i]);
+        }
+    }
+    else if (err == MC_NVRAM_DATA_INVALID)
+    {
+        FST_WARN("Offset state in NvRam is lost, reset state in NvRam.");
+        memset(data, OFFSET_LOST, NUM_OF_JOINT);
+        writeNvRam(data, OFFSET_STATE_ADDR, NUM_OF_JOINT);
+
+        for (size_t i = 0; i < NUM_OF_JOINT; i++)
+        {
+            state[i] = OFFSET_LOST;
+        }
+    }
+    else
+    {
+
+        return err;
+    }
+
+    return SUCCESS;
+}
+
+ErrorCode Calibrator::readOffsetMask(OffsetMask (&mask)[NUM_OF_JOINT])
+{
+    uint8_t data[NUM_OF_JOINT];
+    ErrorCode err = readNvRam(data, OFFSET_MASK_ADDR, NUM_OF_JOINT);
+
+    if (err == SUCCESS)
+    {
+        for (size_t i = 0; i < NUM_OF_JOINT; i++)
+        {
+            mask[i] = OffsetMask(data[i]);
+        }
+    }
+    else if (err == MC_NVRAM_DATA_INVALID)
+    {
+        FST_WARN("Offset mask in NvRam is lost, reset mask in NvRam.");
+        memset(data, OFFSET_UNMASK, NUM_OF_JOINT);
+        writeNvRam(data, OFFSET_MASK_ADDR, NUM_OF_JOINT);
+
+        for (size_t i = 0; i < NUM_OF_JOINT; i++)
+        {
+            mask[i] = OFFSET_UNMASK;
+        }
+    }
+    else
+    {
+        return err;
+    }
+
+    return SUCCESS;
+}
+
+ErrorCode Calibrator::readOffsetJoint(Joint &joint)
+{
+    uint8_t data[sizeof(joint)];
+    ErrorCode err = readNvRam(data, OFFSET_JOINT_ADDR, sizeof(data));
+
+    if (err == SUCCESS)
+    {
+        memcpy(&joint, data, sizeof(joint));
+    }
+    else if (err == MC_NVRAM_DATA_INVALID)
+    {
+        FST_WARN("Offset joint in NvRam is lost, reset joint in NvRam.");
+        memset(data, 0, sizeof(data));
+        memset(&joint, 0, sizeof(joint));
+        writeNvRam(data, OFFSET_JOINT_ADDR, sizeof(data));
+    }
+    else
+    {
+        return err;
+    }
+
+    return SUCCESS;
+}
+
+ErrorCode Calibrator::writeNvRam(const void *array, uint32_t addr, uint32_t length)
+{
+    uint8_t data[ZERO_BLK_LEN];
+    memcpy(data, array, length);
+    data[length] = nvram_ptr_->checkSumOfData(data, length);
+    //FST_INFO("writeNvRam: data = %d, %d, %d, %d, %d, %d, %d, %d, %d, %d", data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7], data[8], data[9]);
+    nvram_ptr_->write(data, addr, length + 1);
+    usleep(30 * 1000);
+    //FST_INFO("write 0x%x, length=%d", NVRAM_BLK_1_BASE + addr, length + 1);
+
+    //memset(data, 0, sizeof(data));
+    //nvram_ptr_->read(data, NVRAM_BLK_1_BASE + addr, length + 1);
+    //FST_INFO("readNvRam: data = %d, %d, %d, %d, %d, %d, %d, %d, %d, %d", data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7], data[8], data[9]);
+    //memset(data, 0, sizeof(data));
+    //nvram_ptr_->read(data, NVRAM_BLK_2_BASE + addr, length + 1);
+    //FST_INFO("readNvRam: data = %d, %d, %d, %d, %d, %d, %d, %d, %d, %d", data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7], data[8], data[9]);
+
+    return SUCCESS;
+}
+
+ErrorCode Calibrator::writeOffsetState(const OffsetState (&state)[NUM_OF_JOINT])
+{
+    uint8_t data[NUM_OF_JOINT];
+
+    for (size_t i = 0; i < NUM_OF_JOINT; i++)
+    {
+        data[i] = state[i];
+    }
+
+    return writeNvRam(data, OFFSET_STATE_ADDR, NUM_OF_JOINT);
+}
+
+ErrorCode Calibrator::writeOffsetMask(const OffsetMask (&mask)[NUM_OF_JOINT])
+{
+    uint8_t data[NUM_OF_JOINT];
+
+    for (size_t i = 0; i < NUM_OF_JOINT; i++)
+    {
+        data[i] = mask[i];
+    }
+
+    return writeNvRam(data, OFFSET_MASK_ADDR, NUM_OF_JOINT);
+}
+
+ErrorCode Calibrator::writeOffsetJoint(const Joint &joint)
+{
+    return writeNvRam(&joint, OFFSET_JOINT_ADDR, sizeof(Joint));
 }
 
 //------------------------------------------------------------------------------

@@ -10,6 +10,9 @@
 #include <algorithm>
 using namespace std;
 
+#include<libxml/parser.h>
+#include<libxml/tree.h>
+
 #include "forsight_program_property.h"
 #include "forsight_cJSON.h"
 #include "forsight_basint.h"
@@ -19,6 +22,103 @@ using namespace std;
 #define POSE_CART      1
 #define POSE_JOINT     2
 
+// -------------------------------- libxml --------------------------------
+int parseHomePoseElement(xmlNodePtr nodeHead, char * home_pose_exp)
+{
+    xmlNodePtr nodeElement;
+    xmlChar *type, *value;
+	
+    for(nodeElement = nodeHead->children; 
+			nodeElement; nodeElement = nodeElement->next){
+		if(xmlStrcasecmp(nodeElement->name,BAD_CAST"element")==0){ 
+			type = xmlGetProp(nodeElement, BAD_CAST"type");
+			if(xmlStrcasecmp(type, BAD_CAST"num")==0){
+				value = xmlNodeGetContent(nodeElement);
+			//	sprintf(home_pose_exp, "%s HP[%s]", 
+				sprintf(home_pose_exp, "%s %s", 
+							home_pose_exp, (char *)value);
+			}
+        }
+    }
+	return 1 ;
+}
+
+int parseHomePose(xmlNodePtr nodeRoot, char * home_pose_exp)
+{
+    xmlNodePtr nodeHead ;
+    xmlChar *type, *value;
+    for(nodeHead = nodeRoot->children; 
+				nodeHead; nodeHead = nodeHead->next){
+		if(xmlStrcasecmp(nodeHead->name, BAD_CAST"element")==0)
+		{
+			type = xmlGetProp(nodeHead, BAD_CAST"type");
+			if(xmlStrcasecmp(type, BAD_CAST"home_pose")==0)
+			{
+				parseHomePoseElement(nodeHead, home_pose_exp);
+			}
+			else if(xmlStrcasecmp(type, BAD_CAST"boolean_operation")==0)
+			{
+				value = xmlNodeGetContent(nodeHead);
+				if(xmlStrcasecmp(value, BAD_CAST"AND")==0)
+				{
+					sprintf(home_pose_exp, "%s AND", home_pose_exp);
+				}
+				else if(xmlStrcasecmp(value, BAD_CAST"OR")==0)
+				{
+					sprintf(home_pose_exp, "%s OR", home_pose_exp);
+				}
+				else if(xmlStrcasecmp(value, BAD_CAST"XOR")==0)
+				{
+					sprintf(home_pose_exp, "%s XOR", home_pose_exp);
+				}
+			}
+			else if(xmlStrcasecmp(type, BAD_CAST"bracket")==0)
+			{
+				sprintf(home_pose_exp, "%s (", home_pose_exp);
+				parseHomePose(nodeHead, home_pose_exp);
+				sprintf(home_pose_exp, "%s )", home_pose_exp);
+			}
+			else if(xmlStrcasecmp(type, BAD_CAST"num")==0)
+			{
+				value = xmlNodeGetContent(nodeHead);
+				if(xmlStrcasecmp(value, BAD_CAST"-1")==0)
+				{
+					return 1;
+				}
+			}
+		}
+	}
+	return 1 ;
+}
+
+int parse_home_pose_exp(char *valuestring, char * home_pose_exp)
+{	
+    xmlDocPtr doc;
+    xmlNodePtr rootProg ;
+	
+	string strValue = string(valuestring); 
+
+    doc = xmlRecoverDoc((const unsigned char *)strValue.c_str());
+    rootProg = xmlDocGetRootElement(doc);
+	
+	parseHomePose(rootProg, home_pose_exp);
+	
+	xmlFreeDoc(doc);
+//	xmlCleanupParser();
+	return 1 ;
+}
+
+// -------------------------------- cJSON --------------------------------
+
+/************************************************* 
+	Function:		parseCart
+	Description:	Analyze the PoseEuler info in the properity json file .
+	Input:			thread_control_block  - interpreter info
+	Input:			jsonCart        - cJSON object
+	Input:			cart            - PoseEuler object
+	Output: 		NULL
+	Return: 		1 - success
+*************************************************/
 int parseCart(struct thread_control_block * objThreadCntrolBlock, 
 			   cJSON *jsonCart, PoseEuler & cart)
 {
@@ -33,17 +133,41 @@ int parseCart(struct thread_control_block * objThreadCntrolBlock,
 		case cJSON_Number:	
 			// FST_INFO("cJSON_Number %f", child->valuedouble); 
 			if(strcmp(child->string, "a") == 0)
+#ifndef WIN32
+				cart.euler_.a_ = child->valuedouble;
+#else
 				cart.orientation.a = child->valuedouble;
+#endif
 			else if(strcmp(child->string, "b") == 0)
+#ifndef WIN32
+				cart.euler_.b_ = child->valuedouble;
+#else
 				cart.orientation.b = child->valuedouble;
+#endif
 			else if(strcmp(child->string, "c") == 0)
+#ifndef WIN32
+				cart.euler_.c_ = child->valuedouble;
+#else
 				cart.orientation.c = child->valuedouble;
+#endif
 			else if(strcmp(child->string, "x") == 0)
+#ifndef WIN32
+				cart.point_.x_ = child->valuedouble;
+#else
 				cart.position.x = child->valuedouble;
+#endif
 			else if(strcmp(child->string, "y") == 0)
+#ifndef WIN32
+				cart.point_.y_ = child->valuedouble;
+#else
 				cart.position.y = child->valuedouble;
+#endif
 			else if(strcmp(child->string, "z") == 0)
+#ifndef WIN32
+				cart.point_.z_ = child->valuedouble;
+#else
 				cart.position.z = child->valuedouble;
+#endif
 			break;
 		case cJSON_String:	
 			FST_INFO("cJSON_String %s", child->valuestring); break;
@@ -56,6 +180,15 @@ int parseCart(struct thread_control_block * objThreadCntrolBlock,
 	return 1;
 }
 
+/************************************************* 
+	Function:		parseJoint
+	Description:	Analyze the Joint info in the properity json file .
+	Input:			thread_control_block  - interpreter info
+	Input:			jsonJoint       - cJSON object
+	Input:			joint           - joint object
+	Output: 		NULL
+	Return: 		1 - success
+*************************************************/ 
 int parseJoint(struct thread_control_block * objThreadCntrolBlock, 
 			  cJSON *jsonJoint, Joint & joint)
 {
@@ -70,17 +203,41 @@ int parseJoint(struct thread_control_block * objThreadCntrolBlock,
 		case cJSON_Number:	
 			// FST_INFO("cJSON_Number %f", child->valuedouble); 
 			if(strcmp(child->string, "j1") == 0)
+#ifndef WIN32
+				joint.j1_ = child->valuedouble;
+#else
 				joint.j1 = child->valuedouble;
+#endif
 			else if(strcmp(child->string, "j2") == 0)
+#ifndef WIN32
+				joint.j2_ = child->valuedouble;
+#else
 				joint.j2 = child->valuedouble;
+#endif
 			else if(strcmp(child->string, "j3") == 0)
+#ifndef WIN32
+				joint.j3_ = child->valuedouble;
+#else
 				joint.j3 = child->valuedouble;
+#endif
 			else if(strcmp(child->string, "j4") == 0)
+#ifndef WIN32
+				joint.j4_ = child->valuedouble;
+#else
 				joint.j4 = child->valuedouble;
+#endif
 			else if(strcmp(child->string, "j5") == 0)
+#ifndef WIN32
+				joint.j5_ = child->valuedouble;
+#else
 				joint.j5 = child->valuedouble;
+#endif
 			else if(strcmp(child->string, "j6") == 0)
+#ifndef WIN32
+				joint.j6_ = child->valuedouble;
+#else
 				joint.j6 = child->valuedouble;
+#endif
 			break;
 		case cJSON_String:	
 			FST_INFO("cJSON_String %s", child->valuestring); break;
@@ -93,6 +250,15 @@ int parseJoint(struct thread_control_block * objThreadCntrolBlock,
 	return 1;
 }
 
+/************************************************* 
+	Function:		parseAdditionalE
+	Description:	Analyze the Additional info in the properity json file .
+	Input:			thread_control_block  - interpreter info
+	Input:			jsonAdditionalE       - cJSON object
+	Input:			additionalE           - AdditionalE object
+	Output: 		NULL
+	Return: 		1 - success
+*************************************************/ 
 int parseAdditionalE(struct thread_control_block * objThreadCntrolBlock, 
 			   cJSON *jsonAdditionalE, AdditionalE & additionalE)
 {
@@ -124,16 +290,157 @@ int parseAdditionalE(struct thread_control_block * objThreadCntrolBlock,
 	return 1;
 }
 
+/************************************************* 
+	Function:		parsePosture
+	Description:	Analyze the Additional info in the properity json file .
+	Input:			thread_control_block  - interpreter info
+	Input:			jsonPosture           - cJSON object
+	Input:			posture               - Posture object
+	Output: 		NULL
+	Return: 		1 - success
+*************************************************/ 
+int parsePosture(struct thread_control_block * objThreadCntrolBlock, 
+			   cJSON *jsonPosture, Posture & posture)
+{
+	// int numentries=0,i=0,fail=0;
+	cJSON *child=jsonPosture->child;
+	int iIdx = 1 ;
+	while (child) //  && !fail)
+	{
+	//	FST_INFO("parsePosesContent: cJSON_Array %s", child->string);
+		switch ((child->type)&255)
+		{
+		case cJSON_Number:	
+			// FST_INFO("cJSON_Number %f", child->valuedouble); 
+			if(iIdx == 1)
+				posture.arm = child->valuedouble;
+			else if(iIdx == 2)
+				posture.elbow = child->valuedouble;
+			else if(iIdx == 3)
+				posture.wrist = child->valuedouble;
+			else if(iIdx == 4)
+				posture.flip = child->valuedouble;
+			iIdx++ ;
+			break;
+		case cJSON_String:	
+			FST_INFO("cJSON_String %s", child->valuestring); break;
+		case cJSON_Object:	
+			// FST_INFO("cJSON_Object"); 
+			break;
+		}
+		child=child->next;
+	}
+	return 1;
+}
+
+/************************************************* 
+	Function:		parsePosture
+	Description:	Analyze the Additional info in the properity json file .
+	Input:			thread_control_block  - interpreter info
+	Input:			jsonPosture           - cJSON object
+	Input:			posture               - Posture object
+	Output: 		NULL
+	Return: 		1 - success
+*************************************************/ 
+int parseTurn(struct thread_control_block * objThreadCntrolBlock, 
+			   cJSON *jsonPosture, Turn& turn)
+{
+	int numArray[9 * 2];
+	// int numentries=0,i=0,fail=0;
+	cJSON *child=jsonPosture->child;
+	int iIdx = 0 ;
+	while (child) //  && !fail)
+	{
+	//	FST_INFO("parsePosesContent: cJSON_Array %s", child->string);
+		switch ((child->type)&255)
+		{
+		case cJSON_Number:	
+			// FST_INFO("cJSON_Number %f", child->valuedouble); 
+			numArray[iIdx] = (int)child->valuedouble;
+			iIdx++ ;
+			break;
+		case cJSON_String:	
+			FST_INFO("cJSON_String %s", child->valuestring); break;
+		case cJSON_Object:	
+			// FST_INFO("cJSON_Object"); 
+			break;
+		}
+		child=child->next;
+	}
+	turn.j1 = numArray[0];
+	turn.j2 = numArray[1];
+	turn.j3 = numArray[2];
+	turn.j4 = numArray[3];
+	turn.j5 = numArray[4];
+	turn.j6 = numArray[5];
+	turn.j7 = numArray[6];
+	turn.j8 = numArray[7];
+	turn.j9 = numArray[8];
+
+	return 1;
+}
+
+/************************************************* 
+	Function:		parsePosture
+	Description:	Analyze the Additional info in the properity json file .
+	Input:			thread_control_block  - interpreter info
+	Input:			jsonPosture           - cJSON object
+	Input:			posture               - Posture object
+	Output: 		NULL
+	Return: 		1 - success
+*************************************************/ 
+int parsePos(struct thread_control_block * objThreadCntrolBlock, 
+			   cJSON *jsonPosture, double* pos)
+{
+	// int numentries=0,i=0,fail=0;
+	cJSON *child=jsonPosture->child;
+	int iIdx = 0 ;
+	while (child) //  && !fail)
+	{
+	//	FST_INFO("parsePosesContent: cJSON_Array %s", child->string);
+		switch ((child->type)&255)
+		{
+		case cJSON_Number:	
+			// FST_INFO("cJSON_Number %f", child->valuedouble); 
+			pos[iIdx] = child->valuedouble;
+			iIdx++ ;
+			break;
+		case cJSON_String:	
+			FST_INFO("cJSON_String %s", child->valuestring); break;
+		case cJSON_Object:	
+			// FST_INFO("cJSON_Object"); 
+			break;
+		}
+		child=child->next;
+	}
+	return 1;
+}
+
+/************************************************* 
+	Function:		parsePoses
+	Description:	Analyze the P[*] in the properity json file .
+	Input:			thread_control_block  - interpreter info
+	Input:			jsonPose              - cJSON object
+	Output: 		NULL
+	Return: 		1 - success
+*************************************************/ 
 int parsePosesContent(struct thread_control_block * objThreadCntrolBlock, 
 			   cJSON *jsonPoseContent)
 {
+    bool bIsUsePosArray = false ;
 	int id = -1 , uf = -1 , tf = -1 ;
 	int iPoseType = POSE_NONE ;
 	Joint joint ;
 	PoseEuler cart ;
+	Posture posture ;
+	double  pos[9 * 2] ;
+	Turn    turn ;
+	
 	AdditionalE additionalE ;
 	char var[128];
 	eval_value value ;
+
+	memset(pos, 0x00, sizeof(double) * 9 * 2);
 
 	int numentries=0; // ,i=0,fail=0;
 	cJSON *child=jsonPoseContent->child;
@@ -179,6 +486,21 @@ int parsePosesContent(struct thread_control_block * objThreadCntrolBlock,
 			else if(strcmp(child->string, "additionalE") == 0)
 				parseAdditionalE(objThreadCntrolBlock, child, additionalE);
 			break;
+		case cJSON_Array:
+			if(strcmp(child->string, "posture") == 0)
+			{
+				parsePosture(objThreadCntrolBlock, child, posture);	
+			}
+			else if(strcmp(child->string, "pos") == 0)  // xyzabc
+			{
+				parsePos(objThreadCntrolBlock, child, pos);	
+				bIsUsePosArray = true ;
+			}
+			else if(strcmp(child->string, "turnCircle") == 0) 
+			{
+				parseTurn(objThreadCntrolBlock, child, turn);
+			}
+			break;
 		}
 		child=child->next;
 	}
@@ -191,21 +513,70 @@ int parsePosesContent(struct thread_control_block * objThreadCntrolBlock,
 
 	if(iPoseType == POSE_CART)
 	{
+		if(bIsUsePosArray)
+		{
+#ifndef WIN32
+			cart.point_.x_ = pos[0], cart.point_.y_ = pos[1], cart.point_.z_ = pos[2];
+			cart.euler_.a_ = pos[3], cart.euler_.b_ = pos[4], cart.euler_.c_ = pos[5];
+#else
+			cart.position.x = pos[0];
+			cart.position.y = pos[1];
+			cart.position.z = pos[2];
+			cart.orientation.a = pos[3];
+			cart.orientation.b = pos[4];
+			cart.orientation.c = pos[5];
+#endif
+		}
 		value.setPoseValue(&cart);
 	}
 	else if(iPoseType == POSE_JOINT)
 	{
+		if(bIsUsePosArray)
+		{
+#ifndef WIN32
+			joint.j1_ = pos[0], joint.j2_ = pos[1], joint.j3_ = pos[2];
+			joint.j4_ = pos[3], joint.j5_ = pos[4], joint.j6_ = pos[5];
+			joint.j7_ = pos[6], joint.j8_ = pos[7], joint.j9_ = pos[8];
+#else
+			joint.j1  = pos[0], joint.j2  = pos[1], joint.j3  = pos[2];
+			joint.j4  = pos[3], joint.j5  = pos[4], joint.j6  = pos[5];
+			joint.j7  = pos[6], joint.j8  = pos[7], joint.j9  = pos[8];
+#endif
+		}
 		value.setJointValue(&joint);
 	}
 	else
 		return 0;
 	
-	value.setUFIndex(uf);   value.setTFIndex(tf);  
+	value.setUFIndex(uf);   value.setTFIndex(tf);
+	if(bIsUsePosArray)
+	{
+		additionalE.e1 = pos[6];
+		additionalE.e2 = pos[7];
+		additionalE.e3 = pos[8];
+	}
 	value.updateAdditionalE(additionalE);
-	assign_var(objThreadCntrolBlock, var, value);
+
+	value.setPosture(posture);
+	value.setTurn(turn);
+	
+	
+	// assign_var(objThreadCntrolBlock, var, value);
+    var_type vt;
+    memset(vt.var_name, 0x00, LAB_LEN);
+    strcpy(vt.var_name, var),  vt.value = value;
+    objThreadCntrolBlock->local_var_stack.push_back(vt);
 	return 1;
 }
 
+/************************************************* 
+	Function:		parsePoses
+	Description:	Analyze the P[*] in the properity json file .
+	Input:			thread_control_block  - interpreter info
+	Input:			jsonPose              - cJSON object
+	Output: 		NULL
+	Return: 		1 - success
+*************************************************/ 
 int parsePoses(struct thread_control_block * objThreadCntrolBlock, 
 			 cJSON *jsonPose)
 {
@@ -238,7 +609,15 @@ int parsePoses(struct thread_control_block * objThreadCntrolBlock,
 	return 1;
 }
 
-int parseProgramProp(struct thread_control_block * objThreadCntrolBlock, char * data)
+/************************************************* 
+	Function:		parseProgramProp
+	Description:	Analyze the properity json file of program.
+	Input:			thread_control_block  - interpreter info
+	Input:			data                  - file content
+	Output: 		NULL
+	Return: 		1 - success
+*************************************************/ 
+int parseProgramProp(struct thread_control_block * objThreadCntrolBlock, char * data, bool isMainThread)
 {
 	cJSON *json;
 	json=cJSON_Parse(data);
@@ -252,7 +631,8 @@ int parseProgramProp(struct thread_control_block * objThreadCntrolBlock, char * 
 		{
 		case cJSON_True:	
 			FST_INFO("cJSON_True"); break;
-		case cJSON_Number:		
+		case cJSON_Number:
+			if(isMainThread)
 			{
 				if(strcmp(child->string, "launchCode") == 0)
 				{
@@ -262,8 +642,9 @@ int parseProgramProp(struct thread_control_block * objThreadCntrolBlock, char * 
 			}
 			break;
 		case cJSON_String:	
+			if(strcmp(child->string, "programType") == 0)
 			{
-				if(strcmp(child->string, "programType") == 0)
+				if(isMainThread)
 				{
 					if(strcmp(child->valuestring, "Monitor") == 0)
 					{
@@ -274,14 +655,26 @@ int parseProgramProp(struct thread_control_block * objThreadCntrolBlock, char * 
 					}
 				}
 			}
-			break;
-		case cJSON_Array:	
+			else if(strcmp(child->string, "homePose") == 0)
 			{
-				FST_INFO("parseDIOMap: cJSON_Array %s", child->string);
-				if(strcmp(child->string, "poses") == 0)
-					parsePoses(objThreadCntrolBlock, child);
-				break;
+				memset(objThreadCntrolBlock->home_pose_exp, 0x00, LAB_LEN);
+
+				if(strlen(child->valuestring) < STR_VALUE_SIZE)
+				{
+					parse_home_pose_exp(child->valuestring, 
+						objThreadCntrolBlock->home_pose_exp) ;
+				//	FST_INFO("home_pose_exp = %s", objThreadCntrolBlock->home_pose_exp);
+				}
+				else {
+					strcpy(objThreadCntrolBlock->home_pose_exp, "ERROR") ;
+				}
 			}
+			break;
+		case cJSON_Array:
+			FST_INFO("parseDIOMap: cJSON_Array %s", child->string);
+			if(strcmp(child->string, "poses") == 0)
+				parsePoses(objThreadCntrolBlock, child);
+			break;
 		case cJSON_Object:	
 			// FST_INFO("cJSON_Object"); 
 			break;
@@ -292,16 +685,32 @@ int parseProgramProp(struct thread_control_block * objThreadCntrolBlock, char * 
 	return 1;
 }
 
+/************************************************* 
+	Function:		print_program_prop_poses
+	Description:	print all of P[*] in the program properity info.
+	Input:			thread_control_block  - interpreter info
+	Output: 		NULL
+	Return: 		1 - success
+*************************************************/ 
 int print_program_prop_poses(struct thread_control_block * objThreadCntrolBlock)
 {
-    for(unsigned i=0; i < objThreadCntrolBlock->global_vars.size(); i++)
+    for(unsigned i=0; i < objThreadCntrolBlock->local_var_stack.size(); i++)
     {
-		FST_INFO("%d : %s ", i, objThreadCntrolBlock->global_vars[i].var_name);
+		FST_INFO("%d : %s ", i, objThreadCntrolBlock->local_var_stack[i].var_name);
 	}
 	return 1;
 }
 
-int append_program_prop_mapper(struct thread_control_block * objThreadCntrolBlock, char *filename)
+/************************************************* 
+	Function:		append_program_prop_mapper
+	Description:	Analyze the properity json file of program.
+	Input:			thread_control_block  - interpreter info
+	Input:			filename - program filename
+	Output: 		NULL
+	Return: 		1 - success
+*************************************************/ 
+int append_program_prop_mapper(struct thread_control_block * objThreadCntrolBlock, 
+				char *filename, bool isMainThread)
 {
 	char fname[128];
 	FILE *f;long len;char *data;
@@ -318,7 +727,7 @@ int append_program_prop_mapper(struct thread_control_block * objThreadCntrolBloc
 	    fseek(f,0,SEEK_END); len=ftell(f); fseek(f,0,SEEK_SET);
 	    data=(char*)malloc(len+1); fread(data,1,len,f); 
 		fclose(f);
-		parseProgramProp(objThreadCntrolBlock, data);
+		parseProgramProp(objThreadCntrolBlock, data, isMainThread);
 		free(data);
 	}
 	

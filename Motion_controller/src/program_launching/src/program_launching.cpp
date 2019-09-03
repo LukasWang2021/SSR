@@ -2,9 +2,9 @@
 Copyright © 2016 Foresight-Robotics Ltd. All rights reserved.
 File:       program_launching.cpp
 Author:     Feng.Wu
-Create:     21-Nov-2018
-Modify:     21-Nov-2018
-Summary:    dealing with IO macro
+Create:     29-Jan-2019
+Modify:     29-Jan-2019
+Summary:    dealing with UIUO
 **********************************************/
 
 #include "program_launching.h"
@@ -14,8 +14,6 @@ Summary:    dealing with IO macro
 #include <string.h>
 #include <iostream>
 #include <sstream>
-#include <unistd.h>
-#include <boost/date_time/posix_time/posix_time.hpp>
 #include "error_monitor.h"
 
 using namespace std;
@@ -115,7 +113,7 @@ ErrorCode ProgramLaunching::updateFileMacroConfig()
     macro_num_ = macro_vector_.size();
     launch_info_ = new EnableLaunchInfo[macro_num_];
     initLaunchInfo();
-    
+   
     return SUCCESS;
 }
 
@@ -131,29 +129,42 @@ void ProgramLaunching::setLaunchMode(int value)
     launch_mode_setting_ = value;
 }
 
-void ProgramLaunching::processMacro(bool enable)
+bool ProgramLaunching::processMacro(void)
 {
     if (launch_mode_setting_ != PROGRAM_MACRO_TRIGGER)
-        return;
-    if (enable == false)
-        return;
+        return false;
     
     ErrorCode err = SUCCESS;
     for (int i = 0; i < macro_num_; ++i)
     {
-        if (strcasecmp(macro_vector_[i].ioType, "di") == 0)
+        if (strcasecmp(macro_vector_[i].ioType, "ui") == 0)
         {
             err = io_mapping_ptr_->getDIByBit(macro_vector_[i].ioPort, launch_info_[i].port_value);
             if (isRisingEdge(i))
+            {
                 sendInterpreterStart(i);
+                return true;
+            }         
+        } else if (strcasecmp(macro_vector_[i].ioType, "di") == 0)
+        {
+            err = io_mapping_ptr_->getDIByBit(macro_vector_[i].ioPort, launch_info_[i].port_value);
+            if (isRisingEdge(i))
+            {
+                sendInterpreterStart(i);
+                return true;
+            }
             
         } else if (strcasecmp(macro_vector_[i].ioType, "ri") == 0)
         {
             err = io_mapping_ptr_->getRIByBit(macro_vector_[i].ioPort, launch_info_[i].port_value);
             if (isRisingEdge(i))
+            {
                 sendInterpreterStart(i);
+                return true;
+            }
         }
     }
+    return false;
 }
 
 // check if there is rising edge.

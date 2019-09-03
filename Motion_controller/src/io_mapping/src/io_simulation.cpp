@@ -106,7 +106,8 @@ bool IoSimulation::setSimValue(const char * userString, bool value)
         //printf("key = %s, set SimValue value= %d\n", key.c_str(), value);
         return true;
     }
-    return false;
+    io_sim_.insert(map<string, bool>::value_type(key, value));
+    return true;
 }
 
 
@@ -117,7 +118,7 @@ void IoSimulation::loadProgramsPath()
     if(getenv("ROBOT_DATA_PREFIX") != NULL)
         files_manager_data_path_ = string(getenv("ROBOT_DATA_PREFIX")); //ROBOT_DATA_PREFIX=/root
     else
-        files_manager_data_path_ = "/home/fst/fortest"; // for self test only.
+        files_manager_data_path_ = "/root"; // for self test only.
 
     files_manager_data_path_ += "/robot_data/io/io_status";
     FST_INFO("io_status_load_programs_path: %s", files_manager_data_path_.c_str());

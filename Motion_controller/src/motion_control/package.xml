@@ -55,7 +55,10 @@
   <build_depend>dynamic_alg</build_depend>
   <build_depend>xml_help</build_depend>
   <build_depend>kinematics_alg</build_depend>
+  <build_depend>transformation</build_depend>
   <build_depend>path_traj_alg</build_depend>
+  <build_depend>nvram</build_depend>
+  <build_depend>fst_spi</build_depend>
 
   <run_depend>roscpp</run_depend>
   <run_depend>log_manager</run_depend>
@@ -72,7 +75,10 @@
   <run_depend>dynamic_alg</run_depend>
   <run_depend>xml_help</run_depend>
   <run_depend>kinematics_alg</run_depend>
+  <run_depend>transformation</run_depend>
   <run_depend>path_traj_alg</run_depend>
+  <run_depend>nvram</run_depend>
+  <run_depend>fst_spi</run_depend>
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>

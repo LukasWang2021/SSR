@@ -22,8 +22,16 @@
 
 using namespace std;
 
-int main()
+int main(int argc, char* argv[])
 {
+    /*int needed_data_count = 1;
+    if (argc < needed_data_count + 1)
+    {
+        cout << "more parameters are needed" << endl;
+        return -1;
+    }
+    */
+
     TpCommTest test;
     if (!test.initRpcSocket())
     {
@@ -40,9 +48,10 @@ int main()
     msg.header.time_stamp = 122;
     msg.property.authority = Comm_Authority_TP;
     msg.data.topic_hash = 0x12345678;
+    //msg.data.topic_hash = atoi(argv[1]);
     msg.data.time_min = 100;
     msg.data.time_max = 1000;
-    msg.data.element_hash_list_count = 9;
+    msg.data.element_hash_list_count = 10;
     msg.data.element_hash_list[0] = 0x00015255;
     msg.data.element_hash_list[1] = 0x00001F33;
     msg.data.element_hash_list[2] = 0x00003203;
@@ -52,6 +61,7 @@ int main()
     msg.data.element_hash_list[6] = 0x0000D0AD;
     msg.data.element_hash_list[7] = 0x000123C3;
     msg.data.element_hash_list[8] = 0x00006D93;
+    msg.data.element_hash_list[9] = 0x00009D8E;
 
     if (!test.generateRequestMessageType(hash_value, (void*)&msg, RequestMessageType_Topic_fields, buf, buf_size))
     {

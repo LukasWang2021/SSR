@@ -13,11 +13,15 @@ void ControllerIpc::initIpcTable()
     ipc_service = {CONTROLLER_SERVER_CMD_SET_MR_REG, &ControllerIpc::handleIpcSetMrRegValue}; ipc_table_.push_back(ipc_service);
     ipc_service = {CONTROLLER_SERVER_CMD_SET_SR_REG, &ControllerIpc::handleIpcSetSrRegValue}; ipc_table_.push_back(ipc_service);
     ipc_service = {CONTROLLER_SERVER_CMD_SET_R_REG, &ControllerIpc::handleIpcSetRRegValue}; ipc_table_.push_back(ipc_service);
+    ipc_service = {CONTROLLER_SERVER_CMD_SET_MI, &ControllerIpc::handleIpcSetMiValue}; ipc_table_.push_back(ipc_service);
+    ipc_service = {CONTROLLER_SERVER_CMD_SET_MH, &ControllerIpc::handleIpcSetMhValue}; ipc_table_.push_back(ipc_service);
     ipc_service = {CONTROLLER_SERVER_CMD_GET_PR_REG, &ControllerIpc::handleIpcGetPrRegPos}; ipc_table_.push_back(ipc_service);
     ipc_service = {CONTROLLER_SERVER_CMD_GET_HR_REG, &ControllerIpc::handleIpcGetHrRegJointPos}; ipc_table_.push_back(ipc_service);
     ipc_service = {CONTROLLER_SERVER_CMD_GET_MR_REG, &ControllerIpc::handleIpcGetMrRegValue}; ipc_table_.push_back(ipc_service);
     ipc_service = {CONTROLLER_SERVER_CMD_GET_SR_REG, &ControllerIpc::handleIpcGetSrRegValue}; ipc_table_.push_back(ipc_service);
     ipc_service = {CONTROLLER_SERVER_CMD_GET_R_REG, &ControllerIpc::handleIpcGetRRegValue}; ipc_table_.push_back(ipc_service);
+    ipc_service = {CONTROLLER_SERVER_CMD_GET_MI, &ControllerIpc::handleIpcGetMiValue}; ipc_table_.push_back(ipc_service);
+    ipc_service = {CONTROLLER_SERVER_CMD_GET_MH, &ControllerIpc::handleIpcGetMhValue}; ipc_table_.push_back(ipc_service);
     ipc_service = {CONTROLLER_SERVER_CMD_SET_INSTRUCTION, &ControllerIpc::handleIpcSetInstruction}; ipc_table_.push_back(ipc_service);
 	ipc_service = {CONTROLLER_SERVER_CMD_IS_NEXT_INSTRUCTION_NEEDED, &ControllerIpc::handleIpcIsNextInstructionNeeded}; ipc_table_.push_back(ipc_service);
     ipc_service = {CONTROLLER_SERVER_CMD_SET_INTERPRETER_SERVER_STATUS, &ControllerIpc::handleIpcSetInterpreterServerStatus}; ipc_table_.push_back(ipc_service);
@@ -29,5 +33,15 @@ void ControllerIpc::initIpcTable()
     ipc_service = {CONTROLLER_SERVER_CMD_SET_RI, &ControllerIpc::handleIpcSetRi}; ipc_table_.push_back(ipc_service);
     ipc_service = {CONTROLLER_SERVER_CMD_GET_RO, &ControllerIpc::handleIpcGetRo}; ipc_table_.push_back(ipc_service);
     ipc_service = {CONTROLLER_SERVER_CMD_SET_RO, &ControllerIpc::handleIpcSetRo}; ipc_table_.push_back(ipc_service);
+    ipc_service = {CONTROLLER_SERVER_CMD_GET_UI, &ControllerIpc::handleIpcGetUi}; ipc_table_.push_back(ipc_service);
+    ipc_service = {CONTROLLER_SERVER_CMD_SET_UI, &ControllerIpc::handleIpcSetUi}; ipc_table_.push_back(ipc_service);
+    ipc_service = {CONTROLLER_SERVER_CMD_GET_UO, &ControllerIpc::handleIpcGetUo}; ipc_table_.push_back(ipc_service);
+    ipc_service = {CONTROLLER_SERVER_CMD_GET_JOINT, &ControllerIpc::handleIpcGetJoint}; ipc_table_.push_back(ipc_service);
+    ipc_service = {CONTROLLER_SERVER_CMD_GET_CART, &ControllerIpc::handleIpcGetCart}; ipc_table_.push_back(ipc_service);
+    ipc_service = {CONTROLLER_SERVER_CMD_CART_TO_JOINT, &ControllerIpc::handleIpcCartToJoint}; ipc_table_.push_back(ipc_service);
+    ipc_service = {CONTROLLER_SERVER_CMD_JOINT_TO_CART, &ControllerIpc::handleIpcJointToCart}; ipc_table_.push_back(ipc_service);
+    ipc_service = {CONTROLLER_SERVER_CMD_OP_MODE, &ControllerIpc::handleIpcUserOpMode}; ipc_table_.push_back(ipc_service);
+    ipc_service = {CONTROLLER_SERVER_CMD_SET_DO_PULSE, &ControllerIpc::handleIpcSetDoPulse}; ipc_table_.push_back(ipc_service);
+    ipc_service = {CONTROLLER_SERVER_CMD_SET_RO_PULSE, &ControllerIpc::handleIpcSetRoPulse}; ipc_table_.push_back(ipc_service);
 }
 

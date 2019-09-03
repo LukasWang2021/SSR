@@ -24,8 +24,8 @@ void InterpreterServer::handleRequestStart()
     pushTaskToRequestList(INTERPRETER_SERVER_CMD_START, (void*)request_data_ptr, (void*)response_data_ptr);        
 }
 
-// Debug
-void InterpreterServer::handleRequestDebug()
+// Launch
+void InterpreterServer::handleRequestLaunch()
 {
     char* request_data_ptr = new char[256]();
     if(request_data_ptr == NULL)
@@ -41,7 +41,7 @@ void InterpreterServer::handleRequestDebug()
         return;
     }
     copyRecvBufferToRequestData(request_data_ptr, 256);
-    pushTaskToRequestList(INTERPRETER_SERVER_CMD_DEBUG, (void*)request_data_ptr, (void*)response_data_ptr);   
+    pushTaskToRequestList(INTERPRETER_SERVER_CMD_LAUNCH, (void*)request_data_ptr, (void*)response_data_ptr);   
 }
 
 // Forward
@@ -136,10 +136,10 @@ void InterpreterServer::handleRequestGetNextInstruction()
     pushTaskToRequestList(INTERPRETER_SERVER_CMD_GET_NEXT_INSTRUCTION, NULL, (void*)response_data_ptr); 
 }
 
-// SetAutoStartMode
-void InterpreterServer::handleRequestSetAutoStartMode()
+// CodeStart
+void InterpreterServer::handleRequestCodeStart()
 {
-    int* request_data_ptr = new int;
+    char* request_data_ptr = new char[256]();
     if(request_data_ptr == NULL)
     {
         FST_ERROR("handleRequest: can't allocate memory for request_data");
@@ -149,29 +149,9 @@ void InterpreterServer::handleRequestSetAutoStartMode()
     if(response_data_ptr == NULL)
     {
         FST_ERROR("handleRequest: can't allocate memory for response_data");
-        delete request_data_ptr;
+        delete[] request_data_ptr;
         return;
     }
-    copyRecvBufferToRequestData(request_data_ptr, sizeof(int));
-    pushTaskToRequestList(INTERPRETER_SERVER_CMD_SET_AUTO_START_MODE, (void*)request_data_ptr, (void*)response_data_ptr);  
-}
-
-// SwitchStep
-void InterpreterServer::handleRequestSwitchStep()
-{
-    int* request_data_ptr = new int;
-    if(request_data_ptr == NULL)
-    {
-        FST_ERROR("handleRequest: can't allocate memory for request_data");
-        return;
-    }
-    bool* response_data_ptr = new bool;
-    if(response_data_ptr == NULL)
-    {
-        FST_ERROR("handleRequest: can't allocate memory for response_data");
-        delete request_data_ptr;
-        return;
-    }
-    copyRecvBufferToRequestData(request_data_ptr, sizeof(int));
-    pushTaskToRequestList(INTERPRETER_SERVER_CMD_SWITCH_STEP, (void*)request_data_ptr, (void*)response_data_ptr);  
+    copyRecvBufferToRequestData(request_data_ptr, 256);
+    pushTaskToRequestList(INTERPRETER_SERVER_CMD_CODE_START, (void*)request_data_ptr, (void*)response_data_ptr); 
 }

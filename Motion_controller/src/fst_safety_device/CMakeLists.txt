@@ -3,6 +3,7 @@ project(fst_safety_device)
 
 find_package(catkin REQUIRED COMPONENTS
     base_device
+    error_monitor
 )
 
 if(catkin_CROSS)
@@ -24,6 +25,7 @@ set(catkin_INCLUDE_DIRS
     ${depend_PATH_INC}/parameter_manager/include
     ${depend_PATH_INC}/log_manager/include
     ${depend_PATH_INC}/error_monitor/include 
+    ${depend_PATH_INC}/basic_alg/include
 )
 
 catkin_package(
@@ -50,7 +52,7 @@ add_library(fst_safety_device
 )
 
 add_executable(safety_node
-    src/safety.c
+    src/fst_safety_mem.c
     test/safety_node.cpp
 )
 
@@ -65,7 +67,7 @@ install(TARGETS fst_safety_device
 )
 
 install(TARGETS safety_node
-    RUNTIME DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
 install(FILES config/fst_safety_device.yaml

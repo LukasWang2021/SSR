@@ -38,9 +38,9 @@ int main(int argc, char** argv)
     msg.header.time_stamp = 122;
     msg.property.authority = Comm_Authority_TP;
     msg.data.has_ip = false;
-    memcpy(msg.data.name, argv[1], sizeof(argv[1]));
-    //msg.data.name = &argv[1][0];
-    msg.data.response_delay = atoi(argv[2]);
+    string name = "modbus server";
+    strcpy(msg.data.name, name.c_str());
+    msg.data.response_delay = 1000;
     
     printf ("name = %s, response_delay = %d\n", msg.data.name, msg.data.response_delay);
 

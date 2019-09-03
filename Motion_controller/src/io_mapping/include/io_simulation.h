@@ -17,7 +17,6 @@ Summary:    to store the simulation values.
 #include "io_mapping_cJSON.h"
 #include "io_mapping_param.h"
 #include "common_log.h"
-#include "base_datatype.h"
 #include "base_device.h"
 #include "error_code.h"
 

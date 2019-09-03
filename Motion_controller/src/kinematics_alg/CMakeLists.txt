@@ -22,11 +22,14 @@ set(catkin_INCLUDE_DIRS
     ${depend_PATH_INC}/common
     ${depend_PATH_INC}/log_manager/include
     ${depend_PATH_INC}/basic_alg/include
+    ${depend_PATH_INC}/parameter_manager/include 
 )
 
 catkin_package(
     INCLUDE_DIRS include
     LIBRARIES kinematics_alg
+    DEPENDS basic_alg
+    DEPENDS parameter_manager 
 )
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -g -Wno-unused-but-set-variable -Wno-unused-local-typedefs -O0 -fpermissive -DPB_FIELD_32BIT -DSIMMULATION -DPRINT")
@@ -45,8 +48,31 @@ add_library(kinematics_alg
 
 target_link_libraries(kinematics_alg
     ${catkin_LIBRARIES}
+    parameter_manager 
+)
+
+add_executable(toll_test
+    test/kinematics_toll_test.cpp
+)
+
+target_link_libraries(toll_test
+    ${catkin_LIBRARIES}
+    basic_alg
+    kinematics_alg
+)
+
+install(TARGETS	toll_test
+    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
 install(TARGETS kinematics_alg
     LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+)
+
+install(FILES config/arm_dh.yaml
+    DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/runtime/axis_group
+)
+
+install(FILES config/toll_dh.yaml
+    DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/runtime/axis_group
 )

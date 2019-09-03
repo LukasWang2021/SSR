@@ -10,7 +10,6 @@
 #include <servo_service.h>
 #include "comm_interface/comm_interface.h"
 #include <data_monitor.h>
-#include "base_datatype.h"
 #include "error_code.h"
 
 #ifndef SERVO_DIAG_H

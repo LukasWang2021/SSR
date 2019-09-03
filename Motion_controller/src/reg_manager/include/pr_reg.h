@@ -17,9 +17,17 @@ typedef struct
 {
     int pos_type;
     double pos[9];        // support up to 9 axes per control group
-    bool posture[4];
+    int turn[9];
+    int posture[4];
     int group_id;
 }PrValue;
+
+typedef struct
+{
+	int id;
+	PrValue value;
+	char cs[2];
+}NVRamPrRegData;
 
 typedef struct
 {
@@ -32,7 +40,7 @@ typedef struct
 typedef struct
 {
     int id;
-    double pos[9];
+    PrValue value;
 }PrRegDataIpc;
 
 class PrReg:public BaseReg
@@ -56,6 +64,9 @@ private:
     std::string file_path_;
     fst_parameter::ParamGroup yaml_help_;
     std::vector<PrValue> data_list_;
+
+//	Nvram nvram_obj_ ;
+//    int use_nvram_;
 
     PrReg();
     bool createYaml();

@@ -37,7 +37,8 @@ bool RegManagerParam::loadParam()
         || !yaml_help_.getParam("hr_value_limit", hr_value_limit_)
         || !yaml_help_.getParam("mr_value_limit", mr_value_limit_)
         || !yaml_help_.getParam("sr_value_limit", sr_value_limit_)
-        || !yaml_help_.getParam("r_value_limit", r_value_limit_))
+        || !yaml_help_.getParam("r_value_limit", r_value_limit_)
+        || !yaml_help_.getParam("use_nvram", use_nvram_))
     {
         return false;
     }

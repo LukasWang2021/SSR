@@ -9,14 +9,10 @@
 #include <sstream>
 
 #include <parameter_manager/parameter_manager_param_builder.h>
-#include "error_code.h"
 
 
 
-using std::string;
-using std::vector;
-using std::cout;
-using std::endl;
+using namespace std;
 
 namespace fst_parameter {
 
@@ -29,14 +25,17 @@ namespace fst_parameter {
 		cleanYamlString(raw);
 		splitYamlString(raw, lines);
 
-		for (it = lines.begin(); it != lines.end();) {
+		for (it = lines.begin(); it != lines.end(); )
+		{
 			deleteWhiteSpaceAtEndOfString(it->content);
 			it->indent = deleteWhiteSpaceInfrontOfString(it->content);
 
-			if (isDummyLine(*it)) {
+			if (isDummyLine(*it))
+			{
 				it = lines.erase(it);
 			}
-			else {
+			else
+			{
 				++it;
 			}
 		}
@@ -59,16 +58,20 @@ namespace fst_parameter {
 
 		size_t indent = 0;
 
-		if (param_value.isStruct()) {
+		if (param_value.isStruct())
+		{
 			yaml_str = dumpStructToString(param_value, indent);
 		}
-		else if (param_value.isArray()) {
+		else if (param_value.isArray())
+		{
 			yaml_str = dumpArrayToString(param_value, indent);
 		}
-		else if (param_value.isScalar()) {
+		else if (param_value.isScalar())
+		{
 			yaml_str = dumpScalarToString(param_value, indent);
 		}
-		else {
+		else
+		{
 			string error_string = "Dump error, type of param is invalid. Type = " + param_value.getType();
 			throw ParamException(error_string, PARAM_TYPE_ERROR);
 		}
@@ -79,7 +82,8 @@ namespace fst_parameter {
 		string str;
 		ParamValue::iterator it;
 
-		for (it = value.begin(); it != value.end(); ++it) {
+		for (it = value.begin(); it != value.end(); ++it)
+		{
 			if (it->second.isStruct()) {
 				str = str + string(indent, ' ') + it->first + ":\n" + dumpStructToString(it->second, indent + INDENT_STEP);
 			}

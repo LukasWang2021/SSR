@@ -8,12 +8,47 @@
 namespace fst_mc
 {
 
+enum ServiceID
+{
+    JTAC_CMD_SID = 0x01,
+    READ_VERSION_SID = 0x10,
+    HEARTBEAT_INFO_SID = 0x11,
+    READ_SERVO_DATA_BY_ADDR = 0x14,
+    READ_DATA_BY_ID = 0x1D,
+    WRITE_SERVO_DATA_BY_ADDR = 0x24,
+    WRTIE_DATA_BY_ID = 0x2D,
+    READ_DTC_SID = 0x30,
+    READ_SERVO_DTC_SID = 0x31,
+    LOG_CONTROL_SID = 0x40,
+    LOG_GETLIST_SID = 0x41,
+    SERVO_CMD_SID = 0x60,
+    GET_ENCODER_SID  = 0x70,
+    GET_ENCODER_ERR_SID = 0x71,
+	RESET_ENCODER_ERR_SID = 0x72,
+    GET_CONTROL_POS_SID = 0x80,
+    MONITOR_HEARTBEAT_SID = 0xA1,
+};
+
 enum MotionType
 {
     MOTION_NONE   = 0,
     MOTION_JOINT  = 1,
     MOTION_LINE   = 2,
     MOTION_CIRCLE = 3,
+    MOTION_XPOS   = 4,
+};
+
+enum SmoothType
+{
+    SMOOTH_NONE = 0,
+    SMOOTH_DISTANCE = 1,
+    SMOOTH_VELOCITY = 2,
+};
+
+enum CoordinateType
+{
+    COORDINATE_JOINT = 0,
+    COORDINATE_CARTESIAN = 1,
 };
 
 enum PointType
@@ -70,14 +105,23 @@ enum ManualDirection
     DECREASE = 2,
 };
 
+enum AxisType
+{
+    ROTARY_AXIS = 0,
+    LINEAR_AXIS = 1,
+};
+
 enum GroupState
 {
-    UNKNOW = 0x0,
+    UNKNOW  = 0x0,
     DISABLE = 0x1,
     STANDBY = 0x2,
-    MANUAL = 0x3,
-    AUTO = 0x4,
-    PAUSE = 0x5,
+    MANUAL  = 0x3,
+    AUTO    = 0x4,
+    PAUSE   = 0x5,
+    PAUSE_RETURN = 0x6,
+    PAUSE_MANUAL = 0x7,
+    PAUSING = 0x8,
 
     DISABLE_TO_STANDBY = 0x12,
     STANDBY_TO_DISABLE = 0x21,
@@ -86,7 +130,10 @@ enum GroupState
     AUTO_TO_STANDBY = 0x42,
     STANDBY_TO_AUTO = 0x24,
     AUTO_TO_PAUSE = 0x45,
-    PAUSE_TO_AUTO = 0x54,
+    PAUSE_RETURN_TO_STANDBY = 0x62,
+    PAUSE_TO_PAUSE_RETURN = 0x56,
+    PAUSE_TO_PAUSE_MANUAL = 0x57,
+    PAUSE_MANUAL_TO_PAUSE = 0x75,
 };
 
 }

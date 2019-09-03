@@ -46,7 +46,7 @@ void ServoDiag::servoDiagThread(Servconf *servconf,
 
         
     ServoCommand_Pkg_t pkg;
-    ServoService::initComm("test");
+    ServoService::initComm("servo_diag");
     while(comm_.recv(&pkg, sizeof(pkg), COMM_WAIT)!=RECV_MSG_FAIL)
     {
         switch(pkg.id)
@@ -93,7 +93,7 @@ void ServoDiag::servoDiagThread(Servconf *servconf,
             }
             case PC_READSERVODTC:
             {
-                ErrorCode err = service->readErrCode((int)(SERVO_CMD_SEG_LENGTH-sizeof(int))/4,(int*)&pkg.data[4],(int*)&pkg.data[0]);
+                ErrorCode err = service->readErrCode((int)(SERVO_CMD_SEG_LENGTH - sizeof(int)) / sizeof(unsigned long long int), (unsigned long long int*)&pkg.data[4],(int*)&pkg.data[0]);
                 if(SUCCESS!=err)  
                 {
                     std::cout<<"Read Err Code failed!"<<std::endl;
@@ -168,7 +168,7 @@ int main(int argc, char** argv)
     DataMonitor* pmonitor = new DataMonitor(ip,ServoDiag::DATAMONITOR_PORT);
     pmonitor->initDataMonitor();
     ServoService* pservice = new ServoService();
-    pservice->initComm("test");
+    pservice->initComm("servo_diag");
     
     if (1 == argc)
     {

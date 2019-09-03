@@ -3,12 +3,12 @@
 #include <nanomsg/reqrep.h>
 #include <cstring>
 #include <iostream>
-#include "process_comm_datatype.h"
 #include "error_code.h"
 
 
 using namespace fst_base;
 using namespace fst_ctrl;
+using namespace basic_alg;
 
 InterpreterClient::InterpreterClient(fst_log::Logger* log_ptr, ProcessCommParam* param_ptr):
     log_ptr_(log_ptr), param_ptr_(param_ptr),
@@ -106,6 +106,31 @@ bool InterpreterClient::setRReg(RRegDataIpc* data)
     return *((bool*)(recv_buffer_ptr_ + PROCESS_COMM_CMD_ID_SIZE));
 }
 
+bool InterpreterClient::setMi(MiDataIpc* data)
+{
+    if(data == NULL
+        || !sendRequest(CONTROLLER_SERVER_CMD_SET_MI, data, sizeof(MiDataIpc))
+        || !recvResponse(sizeof(bool))
+        || *((unsigned int*)recv_buffer_ptr_) != CONTROLLER_SERVER_CMD_SET_MI)
+    {
+        return false;
+    }
+    return *((bool*)(recv_buffer_ptr_ + PROCESS_COMM_CMD_ID_SIZE));
+}
+
+bool InterpreterClient::setMh(MhDataIpc* data)
+{
+    if(data == NULL
+        || !sendRequest(CONTROLLER_SERVER_CMD_SET_MH, data, sizeof(MhDataIpc))
+        || !recvResponse(sizeof(bool))
+        || *((unsigned int*)recv_buffer_ptr_) != CONTROLLER_SERVER_CMD_SET_MH)
+    {
+        return false;
+    }
+    return *((bool*)(recv_buffer_ptr_ + PROCESS_COMM_CMD_ID_SIZE));
+}
+
+
 bool InterpreterClient::getPrReg(int id, PrRegDataIpc* data)
 {
     if(data == NULL
@@ -201,6 +226,49 @@ bool InterpreterClient::getRReg(int id, RRegDataIpc* data)
     }
 
     memcpy(data, recv_buffer_ptr_ + PROCESS_COMM_CMD_ID_SIZE, sizeof(RRegDataIpc));
+    if(data->id == 0)
+    {
+        return false;
+    }
+    else
+    {
+        return true;
+    }
+}
+
+
+bool InterpreterClient::getMi(int id, MiDataIpc* data)
+{
+    if(data == NULL
+        || !sendRequest(CONTROLLER_SERVER_CMD_GET_MI, &id, sizeof(int))
+        || !recvResponse(sizeof(MiDataIpc))
+        || *((unsigned int*)recv_buffer_ptr_) != CONTROLLER_SERVER_CMD_GET_MI)
+    {
+        return false;
+    }
+
+    memcpy(data, recv_buffer_ptr_ + PROCESS_COMM_CMD_ID_SIZE, sizeof(MiDataIpc));
+    if(data->id == 0)
+    {
+        return false;
+    }
+    else
+    {
+        return true;
+    }
+}
+
+bool InterpreterClient::getMh(int id, MhDataIpc* data)
+{
+    if(data == NULL
+        || !sendRequest(CONTROLLER_SERVER_CMD_GET_MH, &id, sizeof(int))
+        || !recvResponse(sizeof(MhDataIpc))
+        || *((unsigned int*)recv_buffer_ptr_) != CONTROLLER_SERVER_CMD_GET_MH)
+    {
+        return false;
+    }
+
+    memcpy(data, recv_buffer_ptr_ + PROCESS_COMM_CMD_ID_SIZE, sizeof(MhDataIpc));
     if(data->id == 0)
     {
         return false;
@@ -376,6 +444,149 @@ ErrorCode InterpreterClient::setRo(uint32_t port_offset, uint32_t value)
 }
 
 
+//getUi
+ErrorCode InterpreterClient::getUi(uint32_t port_offset, uint32_t &value)
+{
+    RequestGetUi request_get_ui;
+    request_get_ui.port_offset = port_offset;
+    if(!sendRequest(CONTROLLER_SERVER_CMD_GET_UI, (void*)&request_get_ui, sizeof(RequestGetUi))
+       || !recvResponse(sizeof(ResponseGetUi))
+       || *((unsigned int*)recv_buffer_ptr_) != CONTROLLER_SERVER_CMD_GET_UI)
+    {
+        return PROCESS_COMM_OPERATION_FAILED;
+    }
+    ResponseGetUi response_get_ui;
+    memcpy(&response_get_ui, recv_buffer_ptr_ + PROCESS_COMM_CMD_ID_SIZE, sizeof(ResponseGetUi));
+    value = response_get_ui.value;
+    return response_get_ui.error_code;
+}
+
+//setUi
+ErrorCode InterpreterClient::setUi(uint32_t port_offset, uint32_t value)
+{
+    RequestSetUi request_set_ui;
+    request_set_ui.port_offset = port_offset;
+    request_set_ui.value = value;
+    if(!sendRequest(CONTROLLER_SERVER_CMD_SET_UI, (void*)&request_set_ui, sizeof(RequestSetUi))
+       || !recvResponse(sizeof(unsigned long long))
+       || *((unsigned int*)recv_buffer_ptr_) != CONTROLLER_SERVER_CMD_SET_UI)
+    {
+        return PROCESS_COMM_OPERATION_FAILED;
+    }
+    return *((unsigned long long*)(recv_buffer_ptr_ + PROCESS_COMM_CMD_ID_SIZE));
+}
+
+//getUo
+ErrorCode InterpreterClient::getUo(uint32_t port_offset, uint32_t &value)
+{
+    RequestGetUo request_get_uo;
+    request_get_uo.port_offset = port_offset;
+    if(!sendRequest(CONTROLLER_SERVER_CMD_GET_UO, (void*)&request_get_uo, sizeof(RequestGetUo))
+       || !recvResponse(sizeof(ResponseGetUo))
+       || *((unsigned int*)recv_buffer_ptr_) != CONTROLLER_SERVER_CMD_GET_UO)
+    {
+        return PROCESS_COMM_OPERATION_FAILED;
+    }
+    ResponseGetUo response_get_uo;
+    memcpy(&response_get_uo, recv_buffer_ptr_ + PROCESS_COMM_CMD_ID_SIZE, sizeof(ResponseGetUo));
+    value = response_get_uo.value;
+    return response_get_uo.error_code;
+}
+
+//getJoint
+ErrorCode InterpreterClient::getJoint(int id, basic_alg::Joint &joint)
+{
+    if(!sendRequest(CONTROLLER_SERVER_CMD_GET_JOINT, (void*)&id, sizeof(int))
+       || !recvResponse(sizeof(Joint))
+       || *((unsigned int*)recv_buffer_ptr_) != CONTROLLER_SERVER_CMD_GET_JOINT)
+    {
+        return PROCESS_COMM_OPERATION_FAILED;
+    }
+    memcpy(&joint, recv_buffer_ptr_ + PROCESS_COMM_CMD_ID_SIZE, sizeof(Joint));
+    return SUCCESS;
+}
+
+//getCart
+ErrorCode InterpreterClient::getCart(int id, basic_alg::PoseEuler &pos)
+{
+    if(!sendRequest(CONTROLLER_SERVER_CMD_GET_CART, (void*)&id, sizeof(int))
+       || !recvResponse(sizeof(PoseEuler))
+       || *((unsigned int*)recv_buffer_ptr_) != CONTROLLER_SERVER_CMD_GET_CART)
+    {
+        return PROCESS_COMM_OPERATION_FAILED;
+    }
+    memcpy(&pos, recv_buffer_ptr_ + PROCESS_COMM_CMD_ID_SIZE, sizeof(PoseEuler));
+    return SUCCESS;
+}
+
+//cartToJoint
+ErrorCode InterpreterClient::cartToJoint(basic_alg::PoseEuler pos, basic_alg::Joint &joint)
+{
+    if(!sendRequest(CONTROLLER_SERVER_CMD_CART_TO_JOINT, (void*)&pos, sizeof(PoseEuler))
+       || !recvResponse(sizeof(Joint))
+       || *((unsigned int*)recv_buffer_ptr_) != CONTROLLER_SERVER_CMD_CART_TO_JOINT)
+    {
+        return PROCESS_COMM_OPERATION_FAILED;
+    }
+    memcpy(&joint, recv_buffer_ptr_ + PROCESS_COMM_CMD_ID_SIZE, sizeof(Joint));
+    return SUCCESS;
+}
+
+//jointToCart
+ErrorCode InterpreterClient::jointToCart(basic_alg::Joint joint, basic_alg::PoseEuler &pos)
+{
+    if(!sendRequest(CONTROLLER_SERVER_CMD_CART_TO_JOINT, (void*)&joint, sizeof(Joint))
+       || !recvResponse(sizeof(PoseEuler))
+       || *((unsigned int*)recv_buffer_ptr_) != CONTROLLER_SERVER_CMD_CART_TO_JOINT)
+    {
+        return PROCESS_COMM_OPERATION_FAILED;
+    }
+    memcpy(&pos, recv_buffer_ptr_ + PROCESS_COMM_CMD_ID_SIZE, sizeof(PoseEuler));
+    return SUCCESS;
+}
+
+//userOpMode
+ErrorCode InterpreterClient::getUserOpMode(int &mode)
+{
+    if(!sendRequest(CONTROLLER_SERVER_CMD_OP_MODE, NULL, 0)
+       || !recvResponse(sizeof(int))
+       || *((unsigned int*)recv_buffer_ptr_) != CONTROLLER_SERVER_CMD_OP_MODE)
+    {
+        return PROCESS_COMM_OPERATION_FAILED;
+    }
+    memcpy(&mode, recv_buffer_ptr_ + PROCESS_COMM_CMD_ID_SIZE, sizeof(int));
+    return SUCCESS;
+}
+
+ErrorCode InterpreterClient::setDoPulse(uint32_t port_offset, double time)
+{
+    RequestSetPulse request_set_pulse;
+    request_set_pulse.port_offset = port_offset;
+    request_set_pulse.time = time;
+    if(!sendRequest(CONTROLLER_SERVER_CMD_SET_DO_PULSE, (void*)&request_set_pulse, sizeof(RequestSetPulse))
+       || !recvResponse(sizeof(unsigned long long))
+       || *((unsigned int*)recv_buffer_ptr_) != CONTROLLER_SERVER_CMD_SET_DO_PULSE)
+    {
+        return PROCESS_COMM_OPERATION_FAILED;
+    }
+    return *((unsigned long long*)(recv_buffer_ptr_ + PROCESS_COMM_CMD_ID_SIZE));
+}
+
+ErrorCode InterpreterClient::setRoPulse(uint32_t port_offset, double time)
+{
+    RequestSetPulse request_set_pulse;
+    request_set_pulse.port_offset = port_offset;
+    request_set_pulse.time = time;
+    if(!sendRequest(CONTROLLER_SERVER_CMD_SET_RO_PULSE, (void*)&request_set_pulse, sizeof(RequestSetPulse))
+       || !recvResponse(sizeof(unsigned long long))
+       || *((unsigned int*)recv_buffer_ptr_) != CONTROLLER_SERVER_CMD_SET_RO_PULSE)
+    {
+        return PROCESS_COMM_OPERATION_FAILED;
+    }
+    return *((unsigned long long*)(recv_buffer_ptr_ + PROCESS_COMM_CMD_ID_SIZE));
+}
+
+
 bool InterpreterClient::sendRequest(unsigned int cmd_id, void* data_ptr, int send_size)
 {
     *((unsigned int*)send_buffer_ptr_) = cmd_id;
@@ -386,7 +597,7 @@ bool InterpreterClient::sendRequest(unsigned int cmd_id, void* data_ptr, int sen
     int send_bytes = nn_send(req_resp_socket_, send_buffer_ptr_, send_size + PROCESS_COMM_CMD_ID_SIZE, 0); // block send
     if(send_bytes == -1 || send_bytes != (send_size + PROCESS_COMM_CMD_ID_SIZE))
     {
-        FST_ERROR("handleResponseList: send response failed, nn_error = %d", nn_errno());
+        FST_ERROR("handleResponseList: send response failed, %s", nn_strerror(errno));
         return false;
     }
     return true;

@@ -51,12 +51,13 @@ int main(int argc, char* argv[])
     memcpy(msg.data.name, name, sizeof(name));
     memcpy(msg.data.comment, name, sizeof(name));
     msg.data.group_id = atoi(argv[2]);
-    msg.data.data.x = 1.1;
-    msg.data.data.y = 1.2;
-    msg.data.data.z = 1.3;
-    msg.data.data.a = 1.4;
-    msg.data.data.b = 1.5;
-    msg.data.data.c = 1.6;
+    msg.data.data.data_count = 6;
+    msg.data.data.data[0] = 500.1;
+    msg.data.data.data[1] = 0.0;
+    msg.data.data.data[2] = 500.1;
+    msg.data.data.data[3] = 0.0;
+    msg.data.data.data[4] = 0.0;
+    msg.data.data.data[5] = 3.14;
 
     if (!test.generateRequestMessageType(hash_value, (void*)&msg, RequestMessageType_ToolInfo_fields, buf, buf_size))
     {

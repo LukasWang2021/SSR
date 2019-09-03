@@ -88,6 +88,11 @@ add_executable(test_add_io_topic  ${SRC_LIST}  src/test_common/test_add_io_topic
 target_link_libraries(test_add_io_topic ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
 install(TARGETS test_add_io_topic RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 
+######### for test client #########
+add_executable(test_add_modbus_client_topic  ${SRC_LIST}  src/test_common/test_add_modbus_client_topic.cpp)
+target_link_libraries(test_add_modbus_client_topic ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
+install(TARGETS test_add_modbus_client_topic RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
+
 
 ######### for test client #########
 add_executable(test_subscribe  ${SRC_LIST}  src/test_common/test_subscribe.cpp)
@@ -98,6 +103,13 @@ install(TARGETS test_subscribe RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINAT
 add_executable(test_subscribe_reg  ${SRC_LIST}  src/test_common/test_subscribe_reg.cpp)
 target_link_libraries(test_subscribe_reg ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
 install(TARGETS test_subscribe_reg RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
+
+
+######### for test client #########
+add_executable(test_subscribe_modbus_client  ${SRC_LIST}  src/test_common/test_subscribe_modbus_client.cpp)
+target_link_libraries(test_subscribe_modbus_client ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
+install(TARGETS test_subscribe_modbus_client RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
+
 
 ######### for test client #########
 add_executable(test_get_rpc_table  ${SRC_LIST}  src/test_common/test_get_rpc_table.cpp)
@@ -138,6 +150,38 @@ install(TARGETS test_get_version RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTIN
 add_executable(test_get_errorcode_list  ${SRC_LIST}  src/test_controller/test_get_errorcode_list.cpp)
 target_link_libraries(test_get_errorcode_list ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
 install(TARGETS test_get_errorcode_list RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/controller)
+
+
+######### for test client #########
+add_executable(test_controller_get_system_time  ${SRC_LIST}  src/test_controller/test_controller_get_system_time.cpp)
+target_link_libraries(test_controller_get_system_time ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
+install(TARGETS test_controller_get_system_time RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/controller)
+
+
+######### for test client #########
+add_executable(test_controller_set_system_time  ${SRC_LIST}  src/test_controller/test_controller_set_system_time.cpp)
+target_link_libraries(test_controller_set_system_time ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
+install(TARGETS test_controller_set_system_time RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/controller)
+
+######### for test client #########
+add_executable(backup_done  ${SRC_LIST}  src/test_controller/test_controller_backup_done.cpp)
+target_link_libraries(backup_done ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
+install(TARGETS backup_done RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/controller)
+
+######### for test client #########
+add_executable(backup_is_available  ${SRC_LIST}  src/test_controller/test_controller_backup_is_available.cpp)
+target_link_libraries(backup_is_available ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
+install(TARGETS backup_is_available RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/controller)
+
+######### for test client #########
+add_executable(restore_done  ${SRC_LIST}  src/test_controller/test_controller_restore_done.cpp)
+target_link_libraries(restore_done ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
+install(TARGETS restore_done RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/controller)
+
+######### for test client #########
+add_executable(restore_is_available  ${SRC_LIST}  src/test_controller/test_controller_restore_is_available.cpp)
+target_link_libraries(restore_is_available ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
+install(TARGETS restore_is_available RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/controller)
 
 
 ######### for test client #########
@@ -339,6 +383,57 @@ target_link_libraries(manual_stop_do ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} t
 install(TARGETS manual_stop_do RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/motion_control/axis_group)
 
 ######### for test motion control #########
+add_executable(manual_joint_step_get ${SRC_LIST} src/test_motion_control/axis_group/manual_joint_step_get.cpp)
+target_link_libraries(manual_joint_step_get ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
+install(TARGETS manual_joint_step_get RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/motion_control/axis_group)
+
+######### for test motion control #########
+add_executable(manual_joint_step_set ${SRC_LIST} src/test_motion_control/axis_group/manual_joint_step_set.cpp)
+target_link_libraries(manual_joint_step_set ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
+install(TARGETS manual_joint_step_set RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/motion_control/axis_group)
+
+
+######### for test motion control #########
+add_executable(payload_add ${SRC_LIST} src/test_motion_control/axis_group/payload/payload_add.cpp)
+target_link_libraries(payload_add ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
+install(TARGETS payload_add RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/motion_control/axis_group/payload)
+######### for test motion control #########
+add_executable(payload_delete ${SRC_LIST} src/test_motion_control/axis_group/payload/payload_delete.cpp)
+target_link_libraries(payload_delete ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
+install(TARGETS payload_delete RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/motion_control/axis_group/payload)
+
+######### for test motion control #########
+add_executable(payload_get_by_id ${SRC_LIST} src/test_motion_control/axis_group/payload/payload_get_by_id.cpp)
+target_link_libraries(payload_get_by_id ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
+install(TARGETS payload_get_by_id RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/motion_control/axis_group/payload)
+######### for test motion control #########
+add_executable(payload_current_get ${SRC_LIST} src/test_motion_control/axis_group/payload/payload_current_get.cpp)
+target_link_libraries(payload_current_get ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
+install(TARGETS payload_current_get RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/motion_control/axis_group/payload)
+
+######### for test motion control #########
+add_executable(payload_current_set ${SRC_LIST} src/test_motion_control/axis_group/payload/payload_current_set.cpp)
+target_link_libraries(payload_current_set ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
+install(TARGETS payload_current_set RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/motion_control/axis_group/payload)
+
+######### for test motion control #########
+add_executable(payload_move ${SRC_LIST} src/test_motion_control/axis_group/payload/payload_move.cpp)
+target_link_libraries(payload_move ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
+install(TARGETS payload_move RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/motion_control/axis_group/payload)
+
+######### for test motion control #########
+add_executable(payload_summaryinfo_list_get ${SRC_LIST} src/test_motion_control/axis_group/payload/payload_summaryinfo_list_get.cpp)
+target_link_libraries(payload_summaryinfo_list_get ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
+install(TARGETS payload_summaryinfo_list_get RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/motion_control/axis_group/payload)
+
+######### for test motion control #########
+add_executable(payload_update ${SRC_LIST} src/test_motion_control/axis_group/payload/payload_update.cpp)
+target_link_libraries(payload_update ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
+install(TARGETS payload_update RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/motion_control/axis_group/payload)
+
+
+
+######### for test motion control #########
 add_executable(global_vel_ratio_get ${SRC_LIST} src/test_motion_control/global_vel_ratio_get.cpp)
 target_link_libraries(global_vel_ratio_get ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
 install(TARGETS global_vel_ratio_get RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/motion_control)
@@ -357,6 +452,11 @@ install(TARGETS global_acc_ratio_get RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DE
 add_executable(global_acc_ratio_set ${SRC_LIST} src/test_motion_control/global_acc_ratio_set.cpp)
 target_link_libraries(global_acc_ratio_set ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
 install(TARGETS global_acc_ratio_set RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/motion_control)
+
+######### for test motion control #########
+add_executable(get_postrue_by_joint ${SRC_LIST} src/test_motion_control/get_postrue_by_joint.cpp)
+target_link_libraries(get_postrue_by_joint ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
+install(TARGETS get_postrue_by_joint RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/motion_control)
 
 ######### for test motion control #########
 add_executable(hard_limit_set ${SRC_LIST} src/test_motion_control/axis_group/hard_limit_set.cpp)
@@ -543,6 +643,16 @@ install(TARGETS get_axis_group_info_list RUNTIME DESTINATION ${CATKIN_PACKAGE_BI
 add_executable(zero_point_single_offset_set ${SRC_LIST} src/test_motion_control/axis_group/zero_point_single_offset_set.cpp)
 target_link_libraries(zero_point_single_offset_set ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
 install(TARGETS zero_point_single_offset_set RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/motion_control/axis_group)
+######### for test motion control #########
+
+add_executable(fcp_pose_from_base ${SRC_LIST} src/test_motion_control/axis_group/fcp_pose_from_base.cpp)
+target_link_libraries(fcp_pose_from_base ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
+install(TARGETS fcp_pose_from_base RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/motion_control/axis_group)
+#///////////////////////////////////////
+
+add_executable(tcp_current_pose_get ${SRC_LIST} src/test_motion_control/axis_group/tcp_current_pose_get.cpp)
+target_link_libraries(tcp_current_pose_get ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
+install(TARGETS tcp_current_pose_get RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/motion_control/axis_group)
 #///////////////////////////////////////
 
 
@@ -600,6 +710,24 @@ install(TARGETS sync_file_io_mapping RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DE
 add_executable(sync_file_io_status ${SRC_LIST} src/test_io_mapping/sync_file_io_status.cpp)
 target_link_libraries(sync_file_io_status ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
 install(TARGETS sync_file_io_status RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/io_mapping)
+
+######### for test io mapping  #########
+add_executable(get_ui ${SRC_LIST} src/test_io_mapping/get_ui.cpp)
+target_link_libraries(get_ui ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
+install(TARGETS get_ui RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/io_mapping)
+
+
+######### for test io mapping  #########
+add_executable(get_uo ${SRC_LIST} src/test_io_mapping/get_uo.cpp)
+target_link_libraries(get_uo ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
+install(TARGETS get_uo RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/io_mapping)
+
+
+######### for test io mapping  #########
+add_executable(set_ui ${SRC_LIST} src/test_io_mapping/set_ui.cpp)
+target_link_libraries(set_ui ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
+install(TARGETS set_ui RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/io_mapping)
+
 
 ######### for test controller #########
 add_executable(test_controller_shutdown  ${SRC_LIST}  src/test_controller/test_controller_shutdown.cpp)
@@ -667,9 +795,9 @@ target_link_libraries(test_interpreter_backward ${catkin_LIBRARIES} ${PROTOBUF_L
 install(TARGETS test_interpreter_backward RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/interpreter)
 
 ######### for test interpreter #########
-add_executable(test_interpreter_debug ${SRC_LIST} src/test_interpreter/test_interpreter_debug.cpp)
-target_link_libraries(test_interpreter_debug ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
-install(TARGETS test_interpreter_debug RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/interpreter)
+add_executable(test_interpreter_launch ${SRC_LIST} src/test_interpreter/test_interpreter_launch.cpp)
+target_link_libraries(test_interpreter_launch ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
+install(TARGETS test_interpreter_launch RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/interpreter)
 
 ######### for test interpreter #########
 add_executable(test_interpreter_foward ${SRC_LIST} src/test_interpreter/test_interpreter_foward.cpp)
@@ -695,11 +823,6 @@ install(TARGETS test_interpreter_resume RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN
 add_executable(test_interpreter_start ${SRC_LIST} src/test_interpreter/test_interpreter_start.cpp)
 target_link_libraries(test_interpreter_start ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
 install(TARGETS test_interpreter_start RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/interpreter)
-
-######### for test interpreter #########
-add_executable(test_interpreter_switch_step ${SRC_LIST} src/test_interpreter/test_interpreter_switch_step.cpp)
-target_link_libraries(test_interpreter_switch_step ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
-install(TARGETS test_interpreter_switch_step RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/interpreter)
 
 
 ######### for test interpreter #########
@@ -737,6 +860,11 @@ add_executable(get_io_device_info_list ${SRC_LIST} src/test_device_manager/get_i
 target_link_libraries(get_io_device_info_list ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
 install(TARGETS get_io_device_info_list RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/device_manager)
 
+######### for test device manager  #########
+add_executable(get_device_version_list ${SRC_LIST} src/test_device_manager/get_device_version_list.cpp)
+target_link_libraries(get_device_version_list ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
+install(TARGETS get_device_version_list RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/device_manager)
+
 ####### for test modbus  #########
 add_executable(server_close ${SRC_LIST} src/test_modbus/server/server_close.cpp)
 target_link_libraries(server_close ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
@@ -746,7 +874,6 @@ install(TARGETS server_close RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATIO
 add_executable(get_server_config_params ${SRC_LIST} src/test_modbus/server/get_server_config_params.cpp)
 target_link_libraries(get_server_config_params ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
 install(TARGETS get_server_config_params RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/modbus/server)
-
 
 ####### for test modbus server #########
 add_executable(function_info_get ${SRC_LIST} src/test_modbus/server/function_info_get.cpp)
@@ -773,12 +900,10 @@ add_executable(enable_status_set ${SRC_LIST} src/test_modbus/server/enable_statu
 target_link_libraries(enable_status_set ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
 install(TARGETS enable_status_set RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/modbus/server)
 
-
 ####### for test modbus  #########
 add_executable(start_info_get ${SRC_LIST} src/test_modbus/server/start_info_get.cpp)
 target_link_libraries(start_info_get ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
 install(TARGETS start_info_get RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/modbus/server)
-
 
 ####### for test modbus  #########
 add_executable(start_info_set ${SRC_LIST} src/test_modbus/server/start_info_set.cpp)
@@ -909,3 +1034,58 @@ install(TARGETS replace_client RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINAT
 add_executable(get_connected_id_list ${SRC_LIST} src/test_modbus/client/get_connected_id_list.cpp)
 target_link_libraries(get_connected_id_list ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
 install(TARGETS get_connected_id_list RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/modbus/client)
+
+####### for test modbus  #########
+add_executable(get_summary_start_info_list ${SRC_LIST} src/test_modbus/client/get_summary_start_info_list.cpp)
+target_link_libraries(get_summary_start_info_list ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
+install(TARGETS get_summary_start_info_list RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/modbus/client)
+
+####### for test modbus  #########
+add_executable(get_param_info_list ${SRC_LIST} src/test_param_manager/get_param_info_list.cpp)
+target_link_libraries(get_param_info_list ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
+install(TARGETS get_param_info_list RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/test_param_manager)
+
+####### for test modbus  #########
+add_executable(set_param_info ${SRC_LIST} src/test_param_manager/set_param_info.cpp)
+target_link_libraries(set_param_info ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
+install(TARGETS set_param_info RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/test_param_manager)
+
+####### for test modbus  #########
+add_executable(get_di_by_bit ${SRC_LIST} src/test_io_manager/get_di.cpp)
+target_link_libraries(get_di_by_bit ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
+install(TARGETS get_di_by_bit RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/io_manager)
+
+####### for test modbus  #########
+add_executable(get_do_by_bit ${SRC_LIST} src/test_io_manager/get_do.cpp)
+target_link_libraries(get_do_by_bit ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
+install(TARGETS get_do_by_bit RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/io_manager)
+
+####### for test modbus  #########
+add_executable(set_di_by_bit ${SRC_LIST} src/test_io_manager/set_di.cpp)
+target_link_libraries(set_di_by_bit ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
+install(TARGETS set_di_by_bit RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/io_manager)
+
+####### for test modbus  #########
+add_executable(set_do_by_bit ${SRC_LIST} src/test_io_manager/set_do.cpp)
+target_link_libraries(set_do_by_bit ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
+install(TARGETS set_do_by_bit RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/io_manager)
+
+####### for test modbus  #########
+add_executable(move_finish ${SRC_LIST} src/test_system_manager/move_finish.cpp)
+target_link_libraries(move_finish ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
+install(TARGETS move_finish RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/system_manager)
+
+####### for test modbus  #########
+add_executable(move_install ${SRC_LIST} src/test_system_manager/move_install.cpp)
+target_link_libraries(move_install ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
+install(TARGETS move_install RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/system_manager)
+
+####### for test modbus  #########
+add_executable(restore_finish ${SRC_LIST} src/test_system_manager/restore_finish.cpp)
+target_link_libraries(restore_finish ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
+install(TARGETS restore_finish RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/system_manager)
+
+####### for test modbus  #########
+add_executable(restore_install ${SRC_LIST} src/test_system_manager/restore_install.cpp)
+target_link_libraries(restore_install ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
+install(TARGETS restore_install RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/system_manager)

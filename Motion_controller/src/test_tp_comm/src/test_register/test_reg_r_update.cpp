@@ -47,7 +47,9 @@ int main(int argc, char* argv[])
     msg.header.time_stamp = 122;
     msg.property.authority = Comm_Authority_TP;
     msg.data.id = atoi(argv[1]);
-    char name[32] = "Hello Reg";
+    //char name[32] = "Hello Reg";
+    char name[32] = "";
+    memcpy(name, argv[3], sizeof(name));
     memcpy(msg.data.name, name, sizeof(name));
     memcpy(msg.data.comment, name, sizeof(name));
     msg.data.value = atof(argv[2]);

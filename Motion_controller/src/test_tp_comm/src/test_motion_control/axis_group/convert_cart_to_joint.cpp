@@ -22,8 +22,14 @@
 
 using namespace std;
 
-int main()
+int main(int argc, char* argv[])
 {
+    if (argc <= 1)
+    {
+        printf("One more parameter is needed\n");
+        return -1;
+    }
+
     TpCommTest test;
     if (!test.initRpcSocket())
     {
@@ -39,19 +45,26 @@ int main()
     RequestMessageType_Int32List_DoubleList msg;
     msg.header.time_stamp = 122;
     msg.property.authority = Comm_Authority_TP;
-    msg.data1.data_count = 4;
+    msg.data1.data_count = 3;
     msg.data2.data_count = 6;
 
     for (int i = 0; i != msg.data1.data_count; ++i)
     {
-        msg.data1.data[i] = i;
+        msg.data1.data[i] = 0;
     }
-
+    printf("test1\n");
+    msg.data2.data[0] = atof(argv[1]);
+    msg.data2.data[1] = atof(argv[2]);
+    msg.data2.data[2] = atof(argv[3]);
+    msg.data2.data[3] = atof(argv[4]);
+    msg.data2.data[4] = atof(argv[5]);
+    msg.data2.data[5] = atof(argv[6]);
+/*
     for (int i = 0; i != msg.data2.data_count; ++i)
     {
         msg.data2.data[i] = 0.2 + i;
     }
-
+*/
     if (!test.generateRequestMessageType(hash_value, (void*)&msg, RequestMessageType_Int32List_DoubleList_fields, buf, buf_size))
     {
         cout << "Request : encode buf failed" << endl;

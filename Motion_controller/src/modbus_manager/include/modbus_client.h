@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <time.h>
+#include <sys/time.h>
 
 #include "common_log.h"
 #include "thread_help.h"
@@ -51,10 +52,11 @@ public:
 
     ModbusClientConfigParams getConfigParams();
 
-    int getScanRate();
     int getId();
     int getCtrlState();
-    bool scanDataArea();
+
+    int getScanRate();
+    ErrorCode scanDataArea();
     bool isSocketValid();
 
     ErrorCode writeCoils(int addr, int nb, uint8_t *dest);
@@ -79,11 +81,16 @@ private:
 
     modbus_t* ctx_;
     int socket_;
+    bool is_added_;
 
     ModbusClientConfigParams config_param_;
 
     fst_log::Logger* log_ptr_;
     fst_base::ThreadHelp thread_help_;
+
+    struct timeval modbus_last_scan_time_;
+    int computeTimeElapse(struct timeval &current_time, struct timeval &last_time); /* return time: ms */
+    ErrorCode readAllRegs();
 
     bool checkConfigParamValid();
     ModbusClient();

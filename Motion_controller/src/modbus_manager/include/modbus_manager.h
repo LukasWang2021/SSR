@@ -31,6 +31,7 @@ public:
 
     ErrorCode setStartMode(int start_mode); // enum ModbusStartMode
     int getStartMode();
+    ErrorCode initDevices();
 
     ErrorCode writeCoils(int id, int addr, int nb, uint8_t *dest);
     ErrorCode readCoils(int id, int addr, int nb, uint8_t *dest);
@@ -38,7 +39,7 @@ public:
     ErrorCode writeHoldingRegs(int id, int addr, int nb, uint16_t *dest);
     ErrorCode readHoldingRegs(int id, int addr, int nb, uint16_t *dest);
     ErrorCode readInputRegs(int id, int addr, int nb, uint16_t *dest);
-
+    ErrorCode writeInputRegs(int id, int addr, int nb, uint16_t *dest);
     // for server
     ErrorCode openServer();
     ErrorCode closeServer();
@@ -68,6 +69,7 @@ public:
     ErrorCode closeClient(int client_id);
     ErrorCode isConnected(int client_id, bool &is_connected);
     ErrorCode scanClientDataArea(int &client_id);
+    ErrorCode scanAllClientDataArea();
     ErrorCode getConnectedClientIdList(vector<int> &id_list);
 
     ErrorCode setClientEnableStatus(int client_id, bool &status);
@@ -81,7 +83,7 @@ public:
     ErrorCode getClientConfigParamsList(vector<ModbusClientConfigParams> &client_config_params_list);
 
     ErrorCode getClientScanRate(int client_id, int &scan_rate);
-
+    ErrorCode initClientListByParams();
 private:
     ModbusManagerParam* param_ptr_;
     fst_log::Logger* log_ptr_;
@@ -98,6 +100,7 @@ private:
     ErrorCode writeHoldingRegsToServer(int addr, int nb, uint16_t *dest);
     ErrorCode readHoldingRegsFromServer(int addr, int nb, uint16_t *dest);
     ErrorCode readInputRegsFromServer(int addr, int nb, uint16_t *dest);
+    ErrorCode writeInputRegsToServer(int addr, int nb, uint16_t *dest);
 
     ErrorCode writeCoilsByClient(int client_id, int addr, int nb, uint8_t *dest);
     ErrorCode readCoilsByClient(int client_id, int addr, int nb, uint8_t *dest);

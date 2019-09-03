@@ -19,11 +19,15 @@ public:
 
     IODeviceInfo getDeviceInfo(void);
 
-    ErrorCode getDiValue(uint8_t port_offset, uint8_t &value);
-    ErrorCode getDoValue(uint8_t port_offset, uint8_t &value);
+    ErrorCode getDiValue(uint32_t port_offset, uint8_t &value);
+    ErrorCode getDoValue(uint32_t port_offset, uint8_t &value);
+    ErrorCode getUiValue(uint32_t port_offset, uint8_t &value);
+    ErrorCode getUoValue(uint32_t port_offset, uint8_t &value);
 
-    ErrorCode setDiValue(uint8_t port_offset, uint8_t value);
-    ErrorCode setDoValue(uint8_t port_offset, uint8_t value);
+    ErrorCode setDiValue(uint32_t port_offset, uint8_t value);
+    ErrorCode setDoValue(uint32_t port_offset, uint8_t value);
+    ErrorCode setUiValue(uint32_t port_offset, uint8_t value);
+    ErrorCode setUoValue(uint32_t port_offset, uint8_t value);
 
 private:
     VirtualIoDeviceParam* param_ptr_;

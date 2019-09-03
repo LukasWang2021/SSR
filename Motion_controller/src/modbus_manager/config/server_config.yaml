@@ -1,7 +1,7 @@
 ip: local_host 
 
 name: ModbusServer
-is_enable: false
+is_enable: true
 response_delay: 0
 
 reg_info:

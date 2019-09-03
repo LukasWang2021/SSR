@@ -12,7 +12,6 @@ Summary:    dealing with files
 
 #include <stdint.h>
 #include "error_code.h"
-#include "base_datatype.h"
 
 
 namespace fst_base

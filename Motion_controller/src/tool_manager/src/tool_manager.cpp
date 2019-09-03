@@ -6,7 +6,7 @@
 
 
 using namespace fst_ctrl;
-
+using namespace basic_alg;
 
 ToolManager::ToolManager():
     log_ptr_(NULL),
@@ -99,7 +99,7 @@ ErrorCode ToolManager::deleteTool(int id)
     tool_set_[id].name = std::string("default");
     tool_set_[id].comment = std::string("default");
     tool_set_[id].group_id = -1;
-    memset(&tool_set_[id].data, 0, sizeof(fst_mc::PoseEuler));
+    memset(&tool_set_[id].data, 0, sizeof(PoseEuler));
     if(!writeToolInfoToYaml(tool_set_[id]))
     {
         return TOOL_MANAGER_TOOLINFO_FILE_WRITE_FAILED;
@@ -165,7 +165,7 @@ ErrorCode ToolManager::moveTool(int expect_id, int original_id)
     tool_set_[original_id].name = std::string("default");
     tool_set_[original_id].comment = std::string("default");
     tool_set_[original_id].group_id = -1;
-    memset(&tool_set_[original_id].data, 0, sizeof(fst_mc::PoseEuler));
+    memset(&tool_set_[original_id].data, 0, sizeof(PoseEuler));
 
     if(!writeToolInfoToYaml(tool_set_[original_id]) 
         || !writeToolInfoToYaml(tool_set_[expect_id]))
@@ -188,12 +188,7 @@ ErrorCode ToolManager::getToolInfoById(int id, ToolInfo& info)
     info.name = tool_set_[id].name;
     info.comment = tool_set_[id].comment;
     info.group_id = tool_set_[id].group_id;
-    info.data.position.x = tool_set_[id].data.position.x;
-    info.data.position.y = tool_set_[id].data.position.y;
-    info.data.position.z = tool_set_[id].data.position.z;
-    info.data.orientation.a = tool_set_[id].data.orientation.a;
-    info.data.orientation.b = tool_set_[id].data.orientation.b;
-    info.data.orientation.c = tool_set_[id].data.orientation.c;
+    info.data = tool_set_[id].data;
     return SUCCESS;
 }
 
@@ -222,7 +217,7 @@ void ToolManager::packDummyToolInfo(ToolInfo& info)
     info.name = std::string("no tool");
     info.comment = std::string("no tool");
     info.group_id = -1;
-    memset(&info.data, 0, sizeof(fst_mc::PoseEuler));
+    memset(&info.data, 0, sizeof(PoseEuler));
 }
 
 std::string ToolManager::getToolInfoPath(int tool_id)
@@ -258,13 +253,13 @@ bool ToolManager::readAllToolInfoFromYaml(int number_of_tools)
             tool_info_yaml_help_.getParam(tool_info_path + "/comment", info.comment);
             tool_info_yaml_help_.getParam(tool_info_path + "/group_id", info.group_id);
             std::string point_path = tool_info_path + std::string("/point");
-            tool_info_yaml_help_.getParam(point_path + "/x", info.data.position.x);
-            tool_info_yaml_help_.getParam(point_path + "/y", info.data.position.y);
-            tool_info_yaml_help_.getParam(point_path + "/z", info.data.position.z);
+            tool_info_yaml_help_.getParam(point_path + "/x", info.data.point_.x_);
+            tool_info_yaml_help_.getParam(point_path + "/y", info.data.point_.y_);
+            tool_info_yaml_help_.getParam(point_path + "/z", info.data.point_.z_);
             std::string euler_path = tool_info_path + std::string("/euler");
-            tool_info_yaml_help_.getParam(euler_path + "/a", info.data.orientation.a);
-            tool_info_yaml_help_.getParam(euler_path + "/b", info.data.orientation.b);
-            tool_info_yaml_help_.getParam(euler_path + "/c", info.data.orientation.c);
+            tool_info_yaml_help_.getParam(euler_path + "/a", info.data.euler_.a_);
+            tool_info_yaml_help_.getParam(euler_path + "/b", info.data.euler_.b_);
+            tool_info_yaml_help_.getParam(euler_path + "/c", info.data.euler_.c_);
             tool_set_.push_back(info);
         }
 	    return true;
@@ -285,13 +280,13 @@ bool ToolManager::writeToolInfoToYaml(ToolInfo& info)
     tool_info_yaml_help_.setParam(tool_info_path + "/comment", info.comment);
     tool_info_yaml_help_.setParam(tool_info_path + "/group_id", info.group_id);
     std::string point_path = tool_info_path + std::string("/point");
-    tool_info_yaml_help_.setParam(point_path + "/x", info.data.position.x);
-    tool_info_yaml_help_.setParam(point_path + "/y", info.data.position.y);
-    tool_info_yaml_help_.setParam(point_path + "/z", info.data.position.z);
+    tool_info_yaml_help_.setParam(point_path + "/x", info.data.point_.x_);
+    tool_info_yaml_help_.setParam(point_path + "/y", info.data.point_.y_);
+    tool_info_yaml_help_.setParam(point_path + "/z", info.data.point_.z_);
     std::string euler_path = tool_info_path + std::string("/euler");
-    tool_info_yaml_help_.setParam(euler_path + "/a", info.data.orientation.a);
-    tool_info_yaml_help_.setParam(euler_path + "/b", info.data.orientation.b);
-    tool_info_yaml_help_.setParam(euler_path + "/c", info.data.orientation.c);
+    tool_info_yaml_help_.setParam(euler_path + "/a", info.data.euler_.a_);
+    tool_info_yaml_help_.setParam(euler_path + "/b", info.data.euler_.b_);
+    tool_info_yaml_help_.setParam(euler_path + "/c", info.data.euler_.c_);
     return tool_info_yaml_help_.dumpParamFile(tool_info_file_path_.c_str());
 }
 

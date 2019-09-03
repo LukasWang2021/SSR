@@ -19,11 +19,18 @@ endif()
 set(catkin_INCLUDE_DIRS
     ${catkin_INCLUDE_DIRS}
     ${depend_PATH_INC}/common
+    ${depend_PATH_INC}/basic_alg/include
+    ${depend_PATH_INC}/parameter_manager/include
+    ${depend_PATH_INC}/log_manager/include
+    ${depend_PATH_INC}/kinematics_alg/include
 )
 
 catkin_package(
     INCLUDE_DIRS include
     LIBRARIES dynamic_alg
+    DEPENDS basic_alg
+    DEPENDS parameter_manager
+    DEPENDS log_manager
 )
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -g -Wno-unused-but-set-variable -Wno-unused-local-typedefs -O0 -fpermissive -DPB_FIELD_32BIT -DSIMMULATION -DPRINT")
@@ -42,10 +49,76 @@ add_library(dynamic_alg
 
 target_link_libraries(dynamic_alg
     ${catkin_LIBRARIES}
+    basic_alg
+    parameter_manager
+    logger
 )
 
 install(TARGETS dynamic_alg
     LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 )
 
+add_executable(test_inverse
+    test/test_inverse.cpp
+)
+
+target_link_libraries(test_inverse
+    ${catkin_LIBRARIES}
+    dynamic_alg
+)
+
+install(TARGETS	test_inverse
+    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
+add_executable(test_inverse_time
+    test/test_inverse_time.cpp
+)
+
+target_link_libraries(test_inverse_time
+    ${catkin_LIBRARIES}
+    dynamic_alg
+)
+
+install(TARGETS	test_inverse_time
+    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
+add_executable(test_direct_time
+    test/test_direct_time.cpp
+)
+
+target_link_libraries(test_direct_time
+    ${catkin_LIBRARIES}
+    dynamic_alg
+)
+
+install(TARGETS	test_direct_time
+    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
+add_executable(test_scale_compare
+    test/test_scale_compare.cpp
+)
+
+target_link_libraries(test_scale_compare
+    ${catkin_LIBRARIES}
+    dynamic_alg
+)
+
+install(TARGETS	test_scale_compare
+    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
+install(FILES config/dynamic_alg_rtm.yaml
+    DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/runtime/component_param/
+)
+
+install(FILES config/dynamic_payload_info.yaml
+    DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/runtime/component_param/
+)
+
+install(DIRECTORY config
+    DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+)
 

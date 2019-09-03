@@ -170,3 +170,54 @@ void TpComm::handleResponse0x0000C2A7(std::vector<TpRequestResponse>::iterator& 
         delete (ResponseMessageType_Uint64*)task->response_data_ptr;
     }
 }
+
+//"/rpc/io_mapping/getUIByBit"
+void TpComm::handleResponse0x0000A9A4(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size)
+{
+    if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_Int32_fields, task->response_data_ptr, send_buffer_size))
+    {
+        FST_ERROR("handleResponse: failed to encode response package");// send
+    }
+    if(task->request_data_ptr != NULL)
+    {
+        delete (RequestMessageType_Int32*)task->request_data_ptr;
+    }
+    if(task->response_data_ptr != NULL)
+    {
+        delete (ResponseMessageType_Uint64_Int32*)task->response_data_ptr;
+    }
+}
+
+//"/rpc/io_mapping/setUIByBit"
+void TpComm::handleResponse0x00017044(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size)
+{
+    if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_fields, task->response_data_ptr, send_buffer_size))
+    {
+        FST_ERROR("handleResponse: failed to encode response package");// send
+    }
+    if(task->request_data_ptr != NULL)
+    {
+        delete (RequestMessageType_Int32List*)task->request_data_ptr;
+    }
+    if(task->response_data_ptr != NULL)
+    {
+        delete (ResponseMessageType_Uint64*)task->response_data_ptr;
+    }
+}
+
+//"/rpc/io_mapping/getUOByBit"
+void TpComm::handleResponse0x000002C4(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size)
+{
+    if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_Int32_fields, task->response_data_ptr, send_buffer_size))
+    {
+        FST_ERROR("handleResponse: failed to encode response package");// send
+    }
+    if(task->request_data_ptr != NULL)
+    {
+        delete (RequestMessageType_Int32*)task->request_data_ptr;
+    }
+    if(task->response_data_ptr != NULL)
+    {
+        delete (ResponseMessageType_Uint64_Int32*)task->response_data_ptr;
+    }
+}

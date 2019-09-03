@@ -9,6 +9,7 @@ find_package(catkin REQUIRED COMPONENTS
     parameter_manager
 #    mem_share
     motion_control
+    kinematics_alg
 )
 set(VERSION_MAJOR ?)
 set(VERSION_MINOR ?)
@@ -57,6 +58,10 @@ set(catkin_INCLUDE_DIRS
     ${depend_PATH_INC}/modbus_manager/include
     ${depend_PATH_INC}/motion_control/include 
     ${depend_PATH_INC}/io_mapping/include 
+    ${depend_PATH_INC}/basic_alg/include 
+    ${depend_PATH_INC}/nvram/include
+    ${depend_PATH_INC}/fst_spi/include
+    ${depend_PATH_INC}/kinematics_alg/include
 )
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wwrite-strings -fpermissive -O0")
@@ -65,6 +70,10 @@ catkin_package(
 #    DEPENDS motion_plan 
     DEPENDS fst_io_device 
     DEPENDS motion_control 
+    DEPENDS basic_alg 
+    DEPENDS nvram 
+    DEPENDS fst_spi 
+    DEPENDS kinematics_alg
 )
  
 
@@ -89,6 +98,9 @@ add_executable(prg_interpreter
     src/forsight_io_controller.cpp
     src/forsight_program_property.cpp
     src/forsight_cJSON.cpp
+    src/launch_code_mgr.cpp
+    src/forsight_home_pose.cpp
+    src/forsight_external_resource.cpp
 #   src/io_interface.cpp
 )
 
@@ -103,6 +115,8 @@ target_link_libraries(prg_interpreter
     pthread
     modbus_manager
     logger
+    basic_alg
+    kinematics_alg
 )
 
 #############
@@ -120,31 +134,15 @@ install(FILES ${PROJECT_BINARY_DIR}/${PROJECT_NAME}_version
     DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/version
 )
 
-install(FILES config/mr_reg.yaml
-    DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/configuration/machine
-)
-
-install(FILES config/pr_reg.yaml
-    DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/configuration/machine
-)
-
-install(FILES config/hr_reg.yaml
-    DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/configuration/machine
-)
-
 install(FILES config/programs_path.yaml
-    DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/configuration/machine
+    DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/runtime/component_param
 )
 
-install(FILES config/r_reg.yaml
-    DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/configuration/machine
+install(FILES config/user_defined_variable.xml
+    DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/runtime/interpreter
 )
 
-install(FILES config/sr_reg.yaml
-    DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/configuration/machine
-)
-
-install(FILES config/io_emulator.json
-    DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/configuration/configurable
+install(FILES config/prg_interpreter_config.yaml
+    DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/runtime/component_param
 )
 

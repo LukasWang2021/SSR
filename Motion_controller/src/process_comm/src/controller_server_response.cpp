@@ -75,6 +75,35 @@ void ControllerServer::handleResponseSetRReg(std::vector<ProcessCommRequestRespo
     }
 }
 
+// SetMi
+void ControllerServer::handleResponseSetMi(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size)        
+{
+    copyResponseDataToSendBuffer(CONTROLLER_SERVER_CMD_SET_MI, task->response_data_ptr, sizeof(bool), send_buffer_size);
+    if(task->request_data_ptr != NULL)
+    {
+        delete (MiDataIpc*)task->request_data_ptr;
+    }
+    if(task->response_data_ptr != NULL)
+    {
+        delete (bool*)task->response_data_ptr;
+    }
+}
+
+// SetMh
+void ControllerServer::handleResponseSetMh(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size)        
+{
+    copyResponseDataToSendBuffer(CONTROLLER_SERVER_CMD_SET_MH, task->response_data_ptr, sizeof(bool), send_buffer_size);
+    if(task->request_data_ptr != NULL)
+    {
+        delete (MhDataIpc*)task->request_data_ptr;
+    }
+    if(task->response_data_ptr != NULL)
+    {
+        delete (bool*)task->response_data_ptr;
+    }
+}
+
+
 // GetPrReg
 void ControllerServer::handleResponseGetPrReg(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size)        
 {
@@ -142,6 +171,34 @@ void ControllerServer::handleResponseGetRReg(std::vector<ProcessCommRequestRespo
     if(task->response_data_ptr != NULL)
     {
         delete (RRegDataIpc*)task->response_data_ptr;
+    }
+}
+
+// GetMi
+void ControllerServer::handleResponseGetMi(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size)        
+{
+    copyResponseDataToSendBuffer(CONTROLLER_SERVER_CMD_GET_MI, task->response_data_ptr, sizeof(MiDataIpc), send_buffer_size);
+    if(task->request_data_ptr != NULL)
+    {
+        delete (int*)task->request_data_ptr;
+    }
+    if(task->response_data_ptr != NULL)
+    {
+        delete (MiDataIpc*)task->response_data_ptr;
+    }
+}
+
+// GetMh
+void ControllerServer::handleResponseGetMh(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size)        
+{
+    copyResponseDataToSendBuffer(CONTROLLER_SERVER_CMD_GET_MH, task->response_data_ptr, sizeof(MhDataIpc), send_buffer_size);
+    if(task->request_data_ptr != NULL)
+    {
+        delete (int*)task->request_data_ptr;
+    }
+    if(task->response_data_ptr != NULL)
+    {
+        delete (MhDataIpc*)task->response_data_ptr;
     }
 }
 
@@ -289,6 +346,144 @@ void ControllerServer::handleResponseSetRo(std::vector<ProcessCommRequestRespons
     if(task->request_data_ptr != NULL)
     {
         delete (RequestSetRo*)task->request_data_ptr;
+    }
+    if(task->response_data_ptr != NULL)
+    {
+        delete (unsigned long long*)task->response_data_ptr;
+    }
+
+}
+
+
+//GetUi
+void ControllerServer::handleResponseGetUi(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size)
+{
+    copyResponseDataToSendBuffer(CONTROLLER_SERVER_CMD_GET_UI, task->response_data_ptr, sizeof(ResponseGetUi), send_buffer_size);
+    if(task->request_data_ptr != NULL)
+    {
+        delete (RequestGetUi*)task->request_data_ptr;
+    }
+    if(task->response_data_ptr != NULL)
+    {
+        delete (ResponseGetUi*)task->response_data_ptr;
+    }
+}
+
+//SetUi
+void ControllerServer::handleResponseSetUi(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size)
+{
+    copyResponseDataToSendBuffer(CONTROLLER_SERVER_CMD_SET_UI, task->response_data_ptr, sizeof(unsigned long long), send_buffer_size);
+    if(task->request_data_ptr != NULL)
+    {
+        delete (RequestSetUi*)task->request_data_ptr;
+    }
+    if(task->response_data_ptr != NULL)
+    {
+        delete (unsigned long long*)task->response_data_ptr;
+    }
+}
+
+//GetUo
+void ControllerServer::handleResponseGetUo(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size)
+{
+    copyResponseDataToSendBuffer(CONTROLLER_SERVER_CMD_GET_UO, task->response_data_ptr, sizeof(ResponseGetUo), send_buffer_size);
+    if(task->request_data_ptr != NULL)
+    {
+        delete (RequestGetUo*)task->request_data_ptr;
+    }
+    if(task->response_data_ptr != NULL)
+    {
+        delete (ResponseGetUo*)task->response_data_ptr;
+    }
+}
+
+//GetJoint
+void ControllerServer::handleResponseGetJoint(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size)
+{
+    copyResponseDataToSendBuffer(CONTROLLER_SERVER_CMD_GET_JOINT, task->response_data_ptr, sizeof(Joint), send_buffer_size);
+    if(task->request_data_ptr != NULL)
+    {
+        delete (int*)task->request_data_ptr;
+    }
+    if(task->response_data_ptr != NULL)
+    {
+        delete (Joint*)task->response_data_ptr;
+    }
+}
+
+//GetCart
+void ControllerServer::handleResponseGetCart(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size)
+{
+    copyResponseDataToSendBuffer(CONTROLLER_SERVER_CMD_GET_CART, task->response_data_ptr, sizeof(PoseEuler), send_buffer_size);
+    if(task->request_data_ptr != NULL)
+    {
+        delete (int*)task->request_data_ptr;
+    }
+    if(task->response_data_ptr != NULL)
+    {
+        delete (PoseEuler*)task->response_data_ptr;
+    }
+}
+
+//CartToJoint
+void ControllerServer::handleResponseCartToJoint(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size)
+{
+    copyResponseDataToSendBuffer(CONTROLLER_SERVER_CMD_CART_TO_JOINT, task->response_data_ptr, sizeof(Joint), send_buffer_size);
+    if(task->request_data_ptr != NULL)
+    {
+        delete (PoseEuler*)task->request_data_ptr;
+    }
+    if(task->response_data_ptr != NULL)
+    {
+        delete (Joint*)task->response_data_ptr;
+    }
+}
+
+//JointToCart
+void ControllerServer::handleResponseJointToCart(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size)
+{
+    copyResponseDataToSendBuffer(CONTROLLER_SERVER_CMD_JOINT_TO_CART, task->response_data_ptr, sizeof(PoseEuler), send_buffer_size);
+    if(task->request_data_ptr != NULL)
+    {
+        delete (Joint*)task->request_data_ptr;
+    }
+    if(task->response_data_ptr != NULL)
+    {
+        delete (PoseEuler*)task->response_data_ptr;
+    }
+}
+
+//UserOpMode
+void ControllerServer::handleResponseUserOpMode(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size)
+{
+    copyResponseDataToSendBuffer(CONTROLLER_SERVER_CMD_OP_MODE, task->response_data_ptr, sizeof(int), send_buffer_size);
+    if(task->response_data_ptr != NULL)
+    {
+        delete (int*)task->response_data_ptr;
+    }
+}
+
+//SetDoPulse
+void ControllerServer::handleResponseSetDoPulse(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size)
+{
+    copyResponseDataToSendBuffer(CONTROLLER_SERVER_CMD_SET_DO_PULSE, task->response_data_ptr, sizeof(unsigned long long), send_buffer_size);
+    if(task->request_data_ptr != NULL)
+    {
+        delete (RequestSetPulse*)task->request_data_ptr;
+    }
+    if(task->response_data_ptr != NULL)
+    {
+        delete (unsigned long long*)task->response_data_ptr;
+    }
+}
+
+//SetRoPulse
+void ControllerServer::handleResponseSetRoPulse(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size)
+{
+    copyResponseDataToSendBuffer(CONTROLLER_SERVER_CMD_SET_RO_PULSE, task->response_data_ptr, sizeof(unsigned long long), send_buffer_size);
+    if(task->request_data_ptr != NULL)
+    {
+        delete (RequestSetPulse*)task->request_data_ptr;
     }
     if(task->response_data_ptr != NULL)
     {

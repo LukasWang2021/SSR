@@ -12,7 +12,7 @@ using namespace fst_ctrl ;
 
 #endif
 
-#define REGSITER_NAMES   "pr;sr;r;mr;uf;tf;pl"
+#define REGSITER_NAMES   "pr;uf;tf;pl"
 
 int forgesight_registers_manager_get_register(
 							struct thread_control_block* objThreadCntrolBlock, 
@@ -28,5 +28,26 @@ std::vector<BaseRegData> forgesight_read_valid_sr_lst(int start_id, int size);
 std::vector<BaseRegData> forgesight_read_valid_r_lst(int start_id, int size);
 std::vector<BaseRegData> forgesight_read_valid_mr_lst(int start_id, int size);
 std::vector<BaseRegData> forgesight_read_valid_hr_lst(int start_id, int size);
+
+int forgesight_registers_manager_get_joint(Joint &joint);
+int forgesight_registers_manager_get_cart(PoseEuler &pos);
+int forgesight_registers_manager_cartToJoint(PoseEuler pos, Joint &joint);
+int forgesight_registers_manager_jointToCart(Joint joint, PoseEuler &pos);
+int forgesight_registers_manager_get_user_opmode(int& mode);
+
+int forgesight_registers_manager_get_resource(
+							struct thread_control_block* objThreadCntrolBlock, 
+							char *name, key_variable keyVar, eval_value * value);
+
+int forgesight_registers_manager_set_resource(
+							struct thread_control_block* objThreadCntrolBlock, 
+							char *name, key_variable keyVar, eval_value * value);
+
+int forgesight_registers_manager_get_point(
+							struct thread_control_block* objThreadCntrolBlock, 
+							char *name, eval_value * value);
+int forgesight_registers_manager_set_point(
+							struct thread_control_block* objThreadCntrolBlock, 
+							char *name, eval_value * value);
 
 #endif

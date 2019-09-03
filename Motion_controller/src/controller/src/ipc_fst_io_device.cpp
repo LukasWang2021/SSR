@@ -142,3 +142,82 @@ void ControllerIpc::handleIpcSetRo(void* request_data_ptr, void* response_data_p
 
 }
 
+
+//GetUi
+void ControllerIpc::handleIpcGetUi(void* request_data_ptr, void* response_data_ptr)
+{
+    RequestGetUi* rq_data_ptr = static_cast<RequestGetUi*>(request_data_ptr);
+    ResponseGetUi* rs_data_ptr = static_cast<ResponseGetUi*>(response_data_ptr);
+
+    uint8_t value = 0;
+    rs_data_ptr->error_code = io_mapping_ptr_->getUIByBit(rq_data_ptr->port_offset, value);
+    FST_INFO("handleIpcGetUi: user_port=%d, value=%d, err=%llx", rq_data_ptr->port_offset, value, rs_data_ptr->error_code);
+
+    if(rs_data_ptr->error_code == SUCCESS)
+    {
+        rs_data_ptr->value = value;
+    }
+    else
+    {
+        FST_INFO("NULL::handleIpcGetUi with <port_offset = %d>",rq_data_ptr->port_offset);
+    }
+}
+
+//SetUi
+void ControllerIpc::handleIpcSetUi(void* request_data_ptr, void* response_data_ptr)
+{
+	RequestSetUi* rq_data_ptr = static_cast<RequestSetUi*>(request_data_ptr);
+    unsigned long long* rs_data_ptr = static_cast<unsigned long long*>(response_data_ptr);
+
+	*rs_data_ptr = io_mapping_ptr_->setUIByBit(rq_data_ptr->port_offset, rq_data_ptr->value);
+    FST_INFO("handleIpcSetUi: user_port=%d, value=%d, ret =%x", rq_data_ptr->port_offset, rq_data_ptr->value, *rs_data_ptr);
+
+    if (*rs_data_ptr != SUCCESS)
+	    FST_INFO("NULL::handleIpcSetUi with <port_offset = %d, value=%d>",rq_data_ptr->port_offset, rq_data_ptr->value);
+}
+
+//GetUo
+void ControllerIpc::handleIpcGetUo(void* request_data_ptr, void* response_data_ptr)
+{
+	RequestGetUo* rq_data_ptr = static_cast<RequestGetUo*>(request_data_ptr);
+    ResponseGetUo* rs_data_ptr = static_cast<ResponseGetUo*>(response_data_ptr);
+
+    uint8_t value = 0;
+    rs_data_ptr->error_code = io_mapping_ptr_->getUOByBit(rq_data_ptr->port_offset, value);
+    FST_INFO("handleIpcGetUo: user_port=%d, value=%d, err=%llx", rq_data_ptr->port_offset, value, rs_data_ptr->error_code);
+
+    if(rs_data_ptr->error_code == SUCCESS)
+    {
+        rs_data_ptr->value = value;
+    }
+    else
+    {
+        FST_INFO("NULL::handleIpcGetUo with <port_offset = %d>",rq_data_ptr->port_offset);
+    }
+}
+
+//SetDoPulse
+void ControllerIpc::handleIpcSetDoPulse(void* request_data_ptr, void* response_data_ptr)
+{
+	RequestSetPulse* rq_data_ptr = static_cast<RequestSetPulse*>(request_data_ptr);
+    unsigned long long* rs_data_ptr = static_cast<unsigned long long*>(response_data_ptr);
+
+	*rs_data_ptr = io_mapping_ptr_->setDOPulse(rq_data_ptr->port_offset, rq_data_ptr->time);
+    FST_INFO("handleIpcSetDoPulse: user_port=%d, time=%lf s, ret =%x", rq_data_ptr->port_offset, rq_data_ptr->time, *rs_data_ptr);
+
+    if (*rs_data_ptr != SUCCESS)
+	    FST_INFO("NULL::handleIpcSetDoPulse with <port_offset = %d, time=%lf>",rq_data_ptr->port_offset, rq_data_ptr->time);
+}
+
+//SetRoPulse
+void ControllerIpc::handleIpcSetRoPulse(void* request_data_ptr, void* response_data_ptr)
+{
+	RequestSetPulse* rq_data_ptr = static_cast<RequestSetPulse*>(request_data_ptr);
+    unsigned long long* rs_data_ptr = static_cast<unsigned long long*>(response_data_ptr);
+
+	*rs_data_ptr = io_mapping_ptr_->setROPulse(rq_data_ptr->port_offset, rq_data_ptr->time);
+    FST_INFO("handleIpcSetRoPulse: user_port=%d, time=%lf s, ret =%x", rq_data_ptr->port_offset, rq_data_ptr->time, *rs_data_ptr);
+
+    if (*rs_data_ptr != SUCCESS)
+	    FST_INFO("NULL::handleIpcSetRoPulse with <port_offset = %d, time=%lf>",rq_data_ptr->port_offset, rq_data_ptr->time);
+}

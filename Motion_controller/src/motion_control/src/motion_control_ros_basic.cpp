@@ -8,29 +8,32 @@
 #include <vector>
 #include <motion_control_ros_basic.h>
 
+using namespace basic_alg;
+
 namespace fst_mc
 {
 
 void RosBasic::initRosBasic(void)
 {
+    printf(">>>>>>>>>>>>>>>> initRosBasic <<<<<<<<<<<<<<<<<<<\n");
     int argc = 1;
     char buf[16] = {"MotionControl"};
     char *bufs[] = {buf};
     ros::init(argc, bufs, "fst_mc");
     ros_node_ptr_ = new ros::NodeHandle;
     //build this topic to publish current joint state, "/fst_feedback_joint_states" topic will subscribe this topic
-    joint_state_pub_ = ros_node_ptr_->advertise<sensor_msgs::JointState>("fst_feedback_joint_states", 1);
-    //ros::Rate loop_rate(50);
+    //joint_state_pub_ = ros_node_ptr_->advertise<sensor_msgs::JointState>("fst_feedback_joint_states", 1);
+    joint_state_pub_ = ros_node_ptr_->advertise<sensor_msgs::JointState>("joint_states", 1);
 
     std::vector<std::string> joint_name;
+    
     joint_name.resize(6);
-    joint_name[0] = "j1";
-    joint_name[1] = "j2";
-    joint_name[2] = "j3";
-    joint_name[3] = "j4";
-    joint_name[4] = "j5";
-    joint_name[5] = "j6";
-
+    joint_name[0] = "joint1";
+    joint_name[1] = "joint2";
+    joint_name[2] = "joint3";
+    joint_name[3] = "joint4";
+    joint_name[4] = "joint5";
+    joint_name[5] = "joint6";
 
     js_.name = joint_name;
     js_.header.seq = 0;
@@ -40,12 +43,12 @@ void RosBasic::initRosBasic(void)
 
 void RosBasic::pubJointState(const Joint &joint)
 {
-    js_.position[0] = joint.j1;
-    js_.position[1] = joint.j2;
-    js_.position[2] = joint.j3;
-    js_.position[3] = joint.j4;
-    js_.position[4] = joint.j5;
-    js_.position[5] = joint.j6;
+    js_.position[0] = joint.j1_;
+    js_.position[1] = joint.j2_;
+    js_.position[2] = joint.j3_;
+    js_.position[3] = joint.j4_;
+    js_.position[4] = joint.j5_;
+    js_.position[5] = joint.j6_;
 
     js_.header.stamp = ros::Time::now();
 

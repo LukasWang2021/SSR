@@ -10,7 +10,7 @@
 
 #include <sensor_msgs/JointState.h>
 #include <ros/ros.h>
-#include <base_datatype.h>
+#include <motion_control_datatype.h>
 
 namespace fst_mc
 {
@@ -19,7 +19,7 @@ namespace fst_mc
     {
     public:
         void initRosBasic(void);
-        void pubJointState(const Joint &joint);
+        void pubJointState(const basic_alg::Joint &joint);
         void setStartTimeStamp();
 
     private:

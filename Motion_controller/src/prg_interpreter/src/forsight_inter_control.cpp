@@ -1,9 +1,10 @@
 #ifdef WIN32
 #pragma warning(disable : 4786)
 #endif
+#include<libxml/parser.h>
+
 #include "forsight_inter_control.h"
 #include "forsight_innercmd.h"
-#include "forsight_program_property.h"
 #include "forsight_io_controller.h"
 #ifndef WIN32
 // #include "io_interface.h"
@@ -24,16 +25,14 @@ using namespace fst_ctrl ;
 #include "reg-shmi/forsight_registers.h"
 #include "reg-shmi/forsight_op_regs_shmi.h"
 #endif
+#include "launch_code_mgr.h"
 
 #define VELOCITY    (500)
 using namespace std;
 
-// bool is_backward= false;
-// InterpreterState prgm_state = INTERPRETER_IDLE;
-// static IntprtStatus intprt_status;
-// static Instruction instruction;
-// static CtrlStatus ctrl_status;
+#define MAX_WAIT_SECOND     30
 
+// bool is_backward= false;
 
 // extern jmp_buf e_buf; /* hold environment for longjmp() */
 extern struct thread_control_block g_thread_control_block[NUM_THREAD + 1];
@@ -46,9 +45,15 @@ extern pthread_t g_basic_interpreter_handle[NUM_THREAD + 1];
 int  g_iCurrentThreadSeq = -1 ;  // minus one add one equals to zero
 
 std::string g_files_manager_data_path = "";
+int         g_wait_time_out_config    = -1;
+
+vector<key_variable> g_vecKeyVariables ;
 
 static InterpreterState g_privateInterpreterState;
 InterpreterPublish  g_interpreter_publish; 
+
+LaunchCodeMgr *    g_launch_code_mgr_ptr; 
+HomePoseMgr *      g_home_pose_mgr_ptr; 
 
 /************************************************* 
 	Function:		split
@@ -78,17 +83,6 @@ vector<string> split(string str,string pattern)
 }
 
 /************************************************* 
-	Function:		setMoveCommandDestination
-	Description:	save start position of MOV* (Used in the BACKWARD)
-	Input:			movCmdDst        - start position of MOV*
-	Return: 		NULL
-*************************************************/ 
-void setMoveCommandDestination(MoveCommandDestination movCmdDst)
-{ 
-//    writeShm(SHM_INTPRT_DST, 0, (void*)&movCmdDst, sizeof(movCmdDst));
-}
-
-/************************************************* 
 	Function:		getMoveCommandDestination
 	Description:	get start position of MOV* (Used in the BACKWARD)
 	Input:			movCmdDst        - start position of MOV*
@@ -96,19 +90,22 @@ void setMoveCommandDestination(MoveCommandDestination movCmdDst)
 *************************************************/ 
 void getMoveCommandDestination(MoveCommandDestination& movCmdDst)
 {
+#ifndef WIN32
+	  movCmdDst.posture = {1, 1, -1, 0};
+#endif 
+	  forgesight_registers_manager_get_joint(movCmdDst.joint_target);
+	  forgesight_registers_manager_get_cart(movCmdDst.pose_target);
+#ifndef WIN32
+	  FST_INFO("getMoveCommandDestination: Forward movej to TYPE_PR:(%f, %f, %f, %f, %f, %f) ", 
+		  movCmdDst.joint_target.j1_, movCmdDst.joint_target.j2_, 
+		  movCmdDst.joint_target.j3_, movCmdDst.joint_target.j4_, 
+		  movCmdDst.joint_target.j5_, movCmdDst.joint_target.j6_);
+	  FST_INFO("getMoveCommandDestination: Forward movel to POSE:(%f, %f, %f, %f, %f, %f) in MovL", 
+		  movCmdDst.pose_target.point_.x_, movCmdDst.pose_target.point_.y_, 
+		  movCmdDst.pose_target.point_.z_, movCmdDst.pose_target.euler_.a_, 
+			movCmdDst.pose_target.euler_.b_, movCmdDst.pose_target.euler_.c_);
+#endif 
 //    readShm(SHM_INTPRT_DST, 0, (void*)&movCmdDst, sizeof(movCmdDst));
-}
-
-/************************************************* 
-	Function:		copyMoveCommandDestination
-	Description:	copy start position of MOV* (Used in the BACKWARD)
-	Input:			movCmdDst        - start position of MOV*
-	Return: 		NULL
-*************************************************/ 
-void copyMoveCommandDestination(MoveCommandDestination& movCmdDst)
-{
-    getMoveCommandDestination(movCmdDst);
-    setMoveCommandDestination(movCmdDst);
 }
 
 /************************************************* 
@@ -159,12 +156,13 @@ void setProgramName(struct thread_control_block * objThdCtrlBlockPtr, char * pro
 	Input:			NULL
 	Return: 		a free thread_control_block object 
 *************************************************/ 
-struct thread_control_block *  getThreadControlBlock()
+struct thread_control_block *  getThreadControlBlock(bool isUploadError)
 {
 	if(getCurrentThreadSeq() < 0)
     {
         FST_ERROR("getThreadControlBlock failed from %d", getCurrentThreadSeq());
-		setWarning(INFO_INTERPRETER_THREAD_NOT_EXIST);
+		if(isUploadError)
+			setWarning(INFO_INTERPRETER_THREAD_NOT_EXIST);
 		return NULL;
 	}
 	else
@@ -180,10 +178,13 @@ struct thread_control_block *  getThreadControlBlock()
 	Input:			NULL
 	Return: 		a free thread_control_block object index
 *************************************************/ 
-int getCurrentThreadSeq()
+int getCurrentThreadSeq(bool isUploadError)
 {
 	if(g_iCurrentThreadSeq < 0)
-		setWarning(INFO_INTERPRETER_THREAD_NOT_EXIST);
+	{
+		if(isUploadError)
+			setWarning(INFO_INTERPRETER_THREAD_NOT_EXIST);
+	}
 	return g_iCurrentThreadSeq ;
 }
 
@@ -199,19 +200,6 @@ void incCurrentThreadSeq()
 		g_iCurrentThreadSeq++ ;
 	else
 		g_iCurrentThreadSeq = 0 ;
-}
-
-/************************************************* 
-	Function:		decCurrentThreadSeq
-	Description:	decrement current running thread_control_block index
-	Input:			NULL
-	Return: 		NULL
-*************************************************/ 
-void decCurrentThreadSeq()
-{
-	if(g_iCurrentThreadSeq == 0)
-    	FST_ERROR("g_iCurrentThreadSeq == 0");
-	g_iCurrentThreadSeq-- ;
 }
 
 /************************************************* 
@@ -247,6 +235,31 @@ void setPrgmState(struct thread_control_block * objThdCtrlBlockPtr, InterpreterS
 }
 
 /************************************************* 
+	Function:		getProgMode
+	Description:	get current Program Mode
+	Input:			NULL
+	Return: 		current Program Mode
+*************************************************/ 
+ProgMode getProgMode(struct thread_control_block * objThdCtrlBlockPtr)
+{
+	return objThdCtrlBlockPtr->prog_mode ;
+}
+
+/************************************************* 
+	Function:		setPrgmState
+	Description:	set current Program State
+	Input:			thread_control_block   - interpreter info
+	Input:			state                  - Program State
+	Return: 		NULL
+*************************************************/ 
+void setProgMode(struct thread_control_block * objThdCtrlBlockPtr, ProgMode progMode)
+{
+    FST_INFO("setProgMode to %d at %d", (int)progMode, objThdCtrlBlockPtr->is_main_thread);
+ 	objThdCtrlBlockPtr->prog_mode   = progMode ;
+}
+
+
+/************************************************* 
 	Function:		setCurLine
 	Description:	set current Line info
 	Input:			thread_control_block   - interpreter info
@@ -256,21 +269,17 @@ void setPrgmState(struct thread_control_block * objThdCtrlBlockPtr, InterpreterS
 *************************************************/ 
 void setCurLine(struct thread_control_block * objThdCtrlBlockPtr, char * line, int lineNum)
 {
-// #ifdef WIN32
-//  	Instruction temp,  * tempPtr = &temp;
-//      int offset = (int)&(tempPtr->line) - (int)tempPtr ;
-// #else
-//   // int offset = (int)&intprt_status.line - (int)&intprt_status;
-//      int offset = (int)&((Instruction*)0)->line;   
-// #endif  
-//     FST_INFO("setCurLine %s(%d) at %d", line, strlen(line), offset);
-//  //    writeShm(SHM_INTPRT_STATUS, offset, (void*)&line, sizeof(line));
-//  	writeShm(SHM_INTPRT_STATUS, offset, (void*)line, strlen(line) + 1); 
-
 	if(objThdCtrlBlockPtr->is_main_thread == MAIN_THREAD)
 	{
-		strcpy(g_interpreter_publish.current_line_path, line); 
-		g_interpreter_publish.current_line_num = lineNum; 
+		if(objThdCtrlBlockPtr->is_in_macro == false)
+		{
+			strcpy(g_interpreter_publish.current_line_path, line); 
+			g_interpreter_publish.current_line_num = lineNum; 
+		}
+		else
+		{
+			FST_INFO("setCurLine Failed to %d in the macro", (int)lineNum);
+		}
 	}
 	else
 	{
@@ -290,11 +299,7 @@ void setWarning(__int64 warn)
 void setWarning(long long int warn)
 #endif  
 {
-#ifdef WIN32
-	IntprtStatus temp,  * tempPtr = &temp;
-    int offset = (int)&(tempPtr->warn) - (int)tempPtr ;
-    writeShm(SHM_INTPRT_STATUS, offset, (void*)&warn, sizeof(warn));
-#else
+#ifndef WIN32
 	g_objInterpreterServer->sendEvent(INTERPRETER_EVENT_TYPE_ERROR, &warn);
 #endif  
 }
@@ -307,32 +312,10 @@ void setWarning(long long int warn)
 *************************************************/ 
 void setMessage(int warn)
 {
-#ifdef WIN32
-	IntprtStatus temp,  * tempPtr = &temp;
-    int offset = (int)&(tempPtr->warn) - (int)tempPtr ;
-    writeShm(SHM_INTPRT_STATUS, offset, (void*)&warn, sizeof(warn));
-#else
+#ifndef WIN32
 	g_objInterpreterServer->sendEvent(INTERPRETER_EVENT_TYPE_MESSAGE, &warn);
 #endif  
 }
-
-/************************************************* 
-	Function:		getUserOpMode (Legacy)
-	Description:	get User Opration Mode
-	Input:			NULL
-	Return: 		User Opration Mode
-*************************************************/ 
-// 	UserOpMode getUserOpMode()
-// 	{
-// 	#ifdef WIN32
-// 		CtrlStatus temp,  * tempPtr = &temp;
-// 		int offset = (int)&(tempPtr->user_op_mode) - (int)tempPtr ;
-// 		readShm(SHM_CTRL_STATUS, offset, (void*)&ctrl_status.user_op_mode, sizeof(ctrl_status.user_op_mode));
-// 	#else
-// 		int offset = (int)&((CtrlStatus*)0)->user_op_mode;
-// 	#endif  
-// 
-// 		return ctrl_status.user_op_mode;
 
 /************************************************* 
 	Function:		setInstruction
@@ -350,43 +333,22 @@ bool setInstruction(struct thread_control_block * objThdCtrlBlockPtr, Instructio
     {
         return false;
     }
-	// Speed up at 0930
-//    ret = g_objRegManagerInterface->isNextInstructionNeeded();
-//    if (ret == false)
- //   {
- //       FST_INFO("not permitted");
- //       return false;
- //   }
-//	// setSendPermission(false);
-	
-//    int count = 0;
-    //FST_INFO("cur state:%d", prgm_state);
-//    if (objThdCtrlBlockPtr->prog_mode == STEP_MODE) 
-//	//	&& (prgm_state == INTERPRETER_EXECUTE_TO_PAUSE))
-//    {
-//		// FST_INFO("cur state:%d in STEP_MODE ", prgm_state);
-//        return false;
-//    }
 
+#ifndef WIN32
     do
     {
 		if (instruction->is_additional == false)
 		{
 	     	FST_INFO("setInstruction:: instr.target.cnt = %f .", instruction->target.cnt);
-#ifndef WIN32
 			ret = g_objRegManagerInterface->setInstruction(instruction);
-#endif
 		}
 		else
 		{
 	     	FST_INFO("setInstruction:: instr.target.cnt = %f .", instruction->target.cnt);
-#ifndef WIN32
 			ret = g_objRegManagerInterface->setInstruction(instruction);
-#endif
 		}
-#ifndef WIN32
+		
 	    if (ret)
-#endif
 	    {
 //	        if (is_backward)
 //	        {
@@ -409,53 +371,57 @@ bool setInstruction(struct thread_control_block * objThdCtrlBlockPtr, Instructio
 	            // setPrgmState(objThreadCntrolBlock, INTERPRETER_EXECUTE_TO_PAUSE);   //wait until this Instruction end
             }
 	    }
-
-#ifdef WIN32
-		Sleep(1);
-		break ;
-#else
         usleep(1000);
-#endif
      //   if (count++ > 500)
      //       return false;
     }while(!ret);
-
-    // Wait until finish 
-#ifndef WIN32
+	
     ret = g_objRegManagerInterface->isNextInstructionNeeded();
-#else
-    ret = true;
-#endif
     FST_INFO("wait ctrl_status.is_permitted == false");
     while (ret == false)
     {
-#ifdef WIN32
-		Sleep(1);
-		break ;
-#else
         usleep(1000);
-#endif
-#ifndef WIN32
     	ret = g_objRegManagerInterface->isNextInstructionNeeded();
-#endif
     }
     FST_INFO("ctrl_status.is_permitted == true");
+#endif
 
     return true;
 }
-
-/*
-bool getIntprtCtrl(InterpreterControl& intprt_ctrl)
+	
+void dealCodeStart(int program_code)
 {
-    bool iRet = tryRead(SHM_CTRL_CMD, 0, (void*)&intprt_ctrl, sizeof(intprt_ctrl));
-	if(g_lastcmd != intprt_ctrl.cmd)
-    {
-       FST_INFO("getIntprtCtrl = %d", intprt_ctrl.cmd);
-	   g_lastcmd = (fst_base::InterpreterServerCmd)intprt_ctrl.cmd ;
+	struct thread_control_block * objThdCtrlBlockPtr ;
+	g_launch_code_mgr_ptr->updateAll();
+	std::string program_name = g_launch_code_mgr_ptr->getProgramByCode(program_code);
+	if(program_name != "")
+	{
+        FST_INFO("start run %s ...", program_name.c_str());
+		if(strcmp(getProgramName(), program_name.c_str()) == 0)
+        {
+        	FST_INFO("Duplicate to trigger and omit it while %s is executing ...", program_name.c_str());
+        	return;
+		}
+		incCurrentThreadSeq();
+	    // objThdCtrlBlockPtr = &g_thread_control_block[getCurrentThreadSeq()];
+	    objThdCtrlBlockPtr = getThreadControlBlock();
+		if(objThdCtrlBlockPtr == NULL) return ;
+		// Clear last lineNum
+		setCurLine(objThdCtrlBlockPtr, (char *)"", 0);
+		
+//      objThdCtrlBlockPtr->prog_mode   = FULL_MODE;
+//  	g_interpreter_publish.progMode  = FULL_MODE;
+  		setProgMode(objThdCtrlBlockPtr, FULL_MODE);
+		objThdCtrlBlockPtr->execute_direction = EXECUTE_FORWARD ;
+		startFile(objThdCtrlBlockPtr, 
+			(char *)program_name.c_str(), getCurrentThreadSeq());
+        setPrgmState(objThdCtrlBlockPtr, INTERPRETER_EXECUTE);
 	}
-	return iRet ;
+	else 
+	{
+  		setWarning(FAIL_INTERPRETER_FILE_NOT_FOUND); 
+	}
 }
-*/
 
 /************************************************* 
 	Function:		startFile
@@ -468,63 +434,27 @@ bool getIntprtCtrl(InterpreterControl& intprt_ctrl)
 void startFile(struct thread_control_block * objThdCtrlBlockPtr, 
 	char * proj_name, int idx)
 {
-	strcpy(objThdCtrlBlockPtr->project_name, proj_name); // "prog_demo_dec"); // "BAS-EX1.BAS") ; // 
+	if(strlen(proj_name) < LAB_LEN)
+	{
+		strcpy(objThdCtrlBlockPtr->project_name, proj_name); // "prog_demo_dec"); // "BAS-EX1.BAS") ; // 
+	}
+	else
+	{
+		serror(objThdCtrlBlockPtr, 23);
+		return;
+	}
 	// Just set to default value and it will change in the append_program_prop_mapper
 	objThdCtrlBlockPtr->is_main_thread = MAIN_THREAD ;
 	objThdCtrlBlockPtr->is_in_macro    = false ;
 	objThdCtrlBlockPtr->iThreadIdx = idx ;
-	append_program_prop_mapper(objThdCtrlBlockPtr, proj_name);
 	// Refresh InterpreterPublish project_name
 	
 	setProgramName(objThdCtrlBlockPtr, proj_name); 
+	setCurLine(objThdCtrlBlockPtr, "", 0);
 	// Start thread
 	basic_thread_create(idx, objThdCtrlBlockPtr);
 	// intprt_ctrl.cmd = LOAD ;
 }
-
-/*
-void waitInterpreterStateleftWaiting(
-	struct thread_control_block * objThdCtrlBlockPtr)
-{
-	InterpreterState interpreterState  = getPrgmState();
-	while(interpreterState == WAITING_R)
-	{
-#ifdef WIN32
-		Sleep(100);
-		interpreterState = EXECUTE_R ;
-#else
-		sleep(1);
-		interpreterState = getPrgmState();
-		if(objThdCtrlBlockPtr->is_abort == true)
-		{
-			// setPrgmState(objThreadCntrolBlock, INTERPRETER_PAUSE_TO_IDLE) ;
-			break;
-		}
-#endif
-	}
-}
-
-void waitInterpreterStateToWaiting(
-	struct thread_control_block * objThdCtrlBlockPtr)
-{
-	InterpreterState interpreterState  = getPrgmState();
-	while(interpreterState != WAITING_R)
-	{
-#ifdef WIN32
-		Sleep(100);
-		// interpreterState = EXECUTE_R ;
-#else
-		sleep(1);
-		interpreterState = getPrgmState();
-		if(objThdCtrlBlockPtr->is_abort == true)
-		{
-			// setPrgmState(objThreadCntrolBlock, INTERPRETER_PAUSE_TO_IDLE) ;
-			break;
-		}
-#endif
-	}
-}	
-*/
 
 /************************************************* 
 	Function:		waitInterpreterStateleftPaused
@@ -605,12 +535,13 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
 	static fst_base::InterpreterServerCmd lastCmd ;
 #endif
 //	UserOpMode userOpMode ;
-	AutoMode   autoMode ;
+	int        program_code ;
     thread_control_block * objThdCtrlBlockPtr = NULL;
 
+	g_launch_code_mgr_ptr->updateAll();
 #ifndef WIN32
 //	RegMap reg ;
-	IOPathInfo  dioPathInfo ;
+//	IOPathInfo  dioPathInfo ;
 	// if(intprt_ctrl.cmd != UPDATE_IO_DEV_ERROR)
 	if(intprt_ctrl.cmd != fst_base::INTERPRETER_SERVER_CMD_LOAD)
         FST_INFO("parseCtrlComand: %d", intprt_ctrl.cmd);
@@ -620,14 +551,25 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
         case fst_base::INTERPRETER_SERVER_CMD_LOAD:
             // FST_INFO("load file_name");
             break;
-        case fst_base::INTERPRETER_SERVER_CMD_DEBUG:
+        case fst_base::INTERPRETER_SERVER_CMD_LAUNCH:
 			memcpy(intprt_ctrl.start_ctrl, requestDataPtr, 256);
             FST_INFO("start debug %s ...", intprt_ctrl.start_ctrl);
 			if(strcmp(getProgramName(), intprt_ctrl.start_ctrl) == 0)
             {
-            	FST_INFO("Duplicate to execute %s ...", intprt_ctrl.start_ctrl);
-				setWarning(FAIL_INTERPRETER_DUPLICATE_EXEC_MACRO) ; 
-            	break;
+            	FST_INFO("Duplicate to LAUNCH %s ...", intprt_ctrl.start_ctrl);
+				if(getPrgmState() == INTERPRETER_IDLE)
+				{
+            		FST_INFO("Duplicate to LAUNCH %s at INTERPRETER_IDLE ...", 
+						intprt_ctrl.start_ctrl);
+					strcpy(g_interpreter_publish.program_name, ""); 
+				}
+				else
+				{
+            		FST_INFO("Duplicate to LAUNCH %s at %d ...", 
+						intprt_ctrl.start_ctrl, (int)getPrgmState());
+				    setWarning(FAIL_INTERPRETER_DUPLICATE_LAUNCH) ; 
+            		break;
+				}
 			}
 			incCurrentThreadSeq();
 		    // objThdCtrlBlockPtr = &g_thread_control_block[getCurrentThreadSeq()];
@@ -636,7 +578,7 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
 			// Clear last lineNum
 			setCurLine(objThdCtrlBlockPtr, (char *)"", 0);
 			
-            objThdCtrlBlockPtr->prog_mode = STEP_MODE;
+  			setProgMode(objThdCtrlBlockPtr, STEP_MODE);
 			objThdCtrlBlockPtr->execute_direction = EXECUTE_FORWARD ;
 			if(strlen(intprt_ctrl.start_ctrl) == 0)
 			{
@@ -652,9 +594,22 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
             FST_INFO("start run %s ...", intprt_ctrl.start_ctrl);
 			if(strcmp(getProgramName(), intprt_ctrl.start_ctrl) == 0)
             {
-            	FST_INFO("Duplicate to execute %s ...", intprt_ctrl.start_ctrl);
-				setWarning(FAIL_INTERPRETER_DUPLICATE_EXEC_MACRO) ;
-            	break;
+            	FST_INFO("Duplicate to START %s ...", intprt_ctrl.start_ctrl);
+				
+            	FST_INFO("Duplicate to LAUNCH %s ...", intprt_ctrl.start_ctrl);
+				if(getPrgmState() == INTERPRETER_IDLE)
+				{
+            		FST_INFO("Duplicate to LAUNCH %s at INTERPRETER_IDLE ...", 
+						intprt_ctrl.start_ctrl);
+					strcpy(g_interpreter_publish.program_name, ""); 
+				}
+				else
+				{
+            		FST_INFO("Duplicate to LAUNCH %s at %d ...", 
+						intprt_ctrl.start_ctrl, (int)getPrgmState());
+				    setWarning(FAIL_INTERPRETER_DUPLICATE_START) ; 
+            		break;
+				}
 			}
 			incCurrentThreadSeq();
 		    // objThdCtrlBlockPtr = &g_thread_control_block[getCurrentThreadSeq()];
@@ -663,7 +618,9 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
 			// Clear last lineNum
 			setCurLine(objThdCtrlBlockPtr, (char *)"", 0);
 			
-            objThdCtrlBlockPtr->prog_mode = FULL_MODE;
+       //     objThdCtrlBlockPtr->prog_mode   = FULL_MODE;
+  	   //	  g_interpreter_publish.progMode  = FULL_MODE;
+  			setProgMode(objThdCtrlBlockPtr, FULL_MODE);
 			objThdCtrlBlockPtr->execute_direction = EXECUTE_FORWARD ;
 			if(strlen(intprt_ctrl.start_ctrl) == 0)
 			{
@@ -713,24 +670,9 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
 			else
             {
             	FST_ERROR("Failed to jump to line:%d", iLineNum);
+				setWarning(FAIL_INTERPRETER_ILLEGAL_LINE_NUMBER);
 			}
 			break;
-        case fst_base::INTERPRETER_SERVER_CMD_SWITCH_STEP:
-			memcpy(&intprt_ctrl.step_mode, requestDataPtr, sizeof(int));
-            FST_INFO("switch Step at %d with %d", 
-				getCurrentThreadSeq(), intprt_ctrl.step_mode);
-			if(getCurrentThreadSeq() < 0) break ;
-			if(g_basic_interpreter_handle[getCurrentThreadSeq()] == 0)
-			{
-            	FST_ERROR("Thread exits at %d ", getPrgmState());
-				break;
-			}
-			// objThdCtrlBlockPtr = &g_thread_control_block[getCurrentThreadSeq()];
-		    objThdCtrlBlockPtr = getThreadControlBlock();
-			if(objThdCtrlBlockPtr == NULL) break ;
-            FST_INFO("SWITCH_STEP with %d", intprt_ctrl.step_mode);
-            objThdCtrlBlockPtr->prog_mode = (ProgMode)intprt_ctrl.step_mode;
-            break;
         case fst_base::INTERPRETER_SERVER_CMD_FORWARD:
             FST_INFO("step forward at %d ", getCurrentThreadSeq());
 			if(getCurrentThreadSeq() < 0) break ;
@@ -757,8 +699,14 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
             	FST_ERROR("Can not FORWARD in EXECUTE_R ");
            		break;
 			}
+	        // Checking prog_mode on 190125 
+			if(objThdCtrlBlockPtr->prog_mode != STEP_MODE)
+			{
+            	FST_ERROR("Can not FORWARD in other mode ");
+           		break;
+			}
 			
-            objThdCtrlBlockPtr->prog_mode = STEP_MODE ;
+            // objThdCtrlBlockPtr->prog_mode = STEP_MODE ;
 			objThdCtrlBlockPtr->execute_direction = EXECUTE_FORWARD ;
 
 			iLineNum = calc_line_from_prog(objThdCtrlBlockPtr);
@@ -796,21 +744,33 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
 			}
 			if(getPrgmState() == INTERPRETER_EXECUTE)
 			{
-            	FST_ERROR("Can not FORWARD in EXECUTE_R ");
+            	FST_ERROR("Can not BACKWARD in EXECUTE_R ");
            		break;
 			}
-
-			if(lastCmd == fst_base::INTERPRETER_SERVER_CMD_FORWARD)
+	        // Checking prog_mode on 190125 
+			if(objThdCtrlBlockPtr->prog_mode != STEP_MODE)
+			{
+            	FST_ERROR("Can not BACKWARD in other mode ");
+           		break;
+			}
+			// Revert checking condition on 190125
+			// if(lastCmd == fst_base::INTERPRETER_SERVER_CMD_FORWARD)
+			if(lastCmd != fst_base::INTERPRETER_SERVER_CMD_BACKWARD)
 			{
 			    // In this circumstance, 
 			    // we need not call calc_line_from_prog to get the next FORWARD line.
 				// Just execute last statemant
 			    iLineNum = getLinenum(objThdCtrlBlockPtr);
+				// SWitch prog_mode and execute_direction on 190125
+                // objThdCtrlBlockPtr->prog_mode = STEP_MODE ;
+			    objThdCtrlBlockPtr->execute_direction = EXECUTE_BACKWARD ;
+			
 				if((objThdCtrlBlockPtr->prog_jmp_line[iLineNum - 1].type == LOGIC_TOK)
 				 ||(objThdCtrlBlockPtr->prog_jmp_line[iLineNum - 1].type == END_TOK))
 				{
             		FST_ERROR("Can not BACKWARD to %d(%d).",
 						iLineNum, objThdCtrlBlockPtr->prog_jmp_line[iLineNum].type);
+				    setWarning(INFO_INTERPRETER_BACK_TO_LOGIC) ;
 					break ;
 				}
 				// In fact, It does nothing
@@ -834,7 +794,7 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
             // if (objThdCtrlBlockPtr->prog_jmp_line[iLineNum].type == MOTION)
 //            is_backward = true;
             // else {  perror("can't back");  break;      }
-            objThdCtrlBlockPtr->prog_mode = STEP_MODE ;
+            // objThdCtrlBlockPtr->prog_mode = STEP_MODE ;
 			objThdCtrlBlockPtr->execute_direction = EXECUTE_BACKWARD ;
             FST_INFO("step BACKWARD to %d ", iLineNum);
 			// set_prog_from_line(objThdCtrlBlockPtr, iLineNum);
@@ -866,6 +826,7 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
 				// Not Change program mode  
 				// objThdCtrlBlockPtr->prog_mode = FULL_MODE;
 	            setPrgmState(objThdCtrlBlockPtr, INTERPRETER_EXECUTE);
+  			    setProgMode(objThdCtrlBlockPtr, FULL_MODE);
 			}
 			else
 			    setWarning(FAIL_INTERPRETER_NOT_IN_PAUSE);
@@ -873,7 +834,7 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
         case fst_base::INTERPRETER_SERVER_CMD_PAUSE:
 			if(getCurrentThreadSeq() < 0) break ;
 			// objThdCtrlBlockPtr = &g_thread_control_block[getCurrentThreadSeq()];
-		    objThdCtrlBlockPtr = getThreadControlBlock();
+		    objThdCtrlBlockPtr = getThreadControlBlock(false);
 			if(objThdCtrlBlockPtr == NULL) break ;
 			if(objThdCtrlBlockPtr->is_in_macro == true)
 			{
@@ -893,39 +854,43 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
 //                objThdCtrlBlockPtr->prog_mode = STEP_MODE ;
 //            }
             setPrgmState(objThdCtrlBlockPtr, INTERPRETER_PAUSED); 
+  			setProgMode(objThdCtrlBlockPtr, STEP_MODE);
             break;
         case fst_base::INTERPRETER_SERVER_CMD_ABORT:
-            FST_INFO("abort motion");
-			if(getCurrentThreadSeq() < 0) break ;
+            FST_ERROR("abort motion");
+			if(getCurrentThreadSeq(false) < 0) break ;
 		    // objThdCtrlBlockPtr = &g_thread_control_block[getCurrentThreadSeq()];
-		    objThdCtrlBlockPtr = getThreadControlBlock();
+		    objThdCtrlBlockPtr = getThreadControlBlock(false);
 			if(objThdCtrlBlockPtr == NULL) break ;
 			
   			FST_INFO("set abort motion flag.");
 	        objThdCtrlBlockPtr->is_abort = true;
             // Restore program pointer
-  			FST_INFO("reset prog position.");
-            objThdCtrlBlockPtr->prog = objThdCtrlBlockPtr->p_buf ;
-			
-		    setPrgmState(objThdCtrlBlockPtr, INTERPRETER_PAUSE_TO_IDLE);
+  			// FST_INFO("reset prog position.");
+            // objThdCtrlBlockPtr->prog = objThdCtrlBlockPtr->p_buf ;
+
+ 		    setPrgmState(objThdCtrlBlockPtr, INTERPRETER_PAUSE_TO_IDLE);
 #ifdef WIN32
-			Sleep(1);
+ 			Sleep(1);
 #else
 	        usleep(1000);
 #endif
-  			FST_INFO("setPrgmState(IDLE_R).");
+ 			FST_INFO("setPrgmState(IDLE_R).");
 		    setPrgmState(objThdCtrlBlockPtr, INTERPRETER_IDLE);
+
 		    // clear line path and ProgramName
   			FST_INFO("reset ProgramName And LineNum.");
-			
-			resetProgramNameAndLineNum(objThdCtrlBlockPtr);
+			// Keep LineNum and Line xPath
+			// resetProgramNameAndLineNum(objThdCtrlBlockPtr);
+			// Clear here will get a bug .
+			// setProgramName(objThdCtrlBlockPtr, (char *)""); 
             break;
-        case fst_base::INTERPRETER_SERVER_CMD_SET_AUTO_START_MODE:
-			memcpy(&intprt_ctrl.autoMode, requestDataPtr, sizeof(AutoMode));
+        case fst_base::INTERPRETER_SERVER_CMD_CODE_START:
+			memcpy(&intprt_ctrl.program_code, requestDataPtr, sizeof(AutoMode));
 			// intprt_ctrl.RegMap.
-			autoMode = intprt_ctrl.autoMode ;
+			program_code = intprt_ctrl.program_code ;
 			// Move to Controller
-			// deal_auto_mode(autoMode);
+			dealCodeStart(program_code);
             break;
         default:
             break;
@@ -946,7 +911,9 @@ void forgesight_load_programs_path()
 	std::string data_path = "";
 	g_files_manager_data_path = "";
 #ifdef WIN32
-    g_files_manager_data_path = std::string(DATA_PATH);
+	TCHAR pBuf[MAX_PATH];
+	GetCurrentDirectory(MAX_PATH, pBuf);
+    g_files_manager_data_path = std::string(pBuf) + std::string(DATA_PATH);
 #else
 	if(getenv("ROBOT_DATA_PREFIX") != NULL)
 		g_files_manager_data_path = string(getenv("ROBOT_DATA_PREFIX"));
@@ -954,13 +921,13 @@ void forgesight_load_programs_path()
 	if(g_files_manager_data_path.length() == 0)
 	{
 	    fst_parameter::ParamGroup param_;
-	    param_.loadParamFile("/root/install/share/configuration/machine/programs_path.yaml");
+	    param_.loadParamFile("/root/install/share/runtime/component_param/programs_path.yaml");
 	    param_.getParam("file_manager/programs_path", g_files_manager_data_path);
 	}
 	else
 	{
 	    fst_parameter::ParamGroup param_;
-	    param_.loadParamFile("/root/install/share/configuration/machine/programs_path.yaml");
+	    param_.loadParamFile("/root/install/share/runtime/component_param/programs_path.yaml");
 	    param_.getParam("file_manager/data_path", data_path);
 		g_files_manager_data_path.append(data_path);
 	}
@@ -981,44 +948,160 @@ char * forgesight_get_programs_path()
 }
 
 /************************************************* 
-	Function:		initShm
+	Function:		forgesight_load_wait_time_out_config
+	Description:	load programs path
+	Input:			NULL
+	Return: 		NULL
+*************************************************/ 
+void forgesight_load_wait_time_out_config()
+{
+#ifdef WIN32
+    g_wait_time_out_config = 10;
+#else
+    fst_parameter::ParamGroup param_;
+    param_.loadParamFile("/root/install/share/runtime/component_param/prg_interpreter_config.yaml");
+    param_.getParam("wait_time/time_out", g_wait_time_out_config);
+	FST_INFO("forgesight_load_wait_time_out_config: %d .", g_wait_time_out_config);
+	
+	if(g_wait_time_out_config <= 0)
+	    g_wait_time_out_config = MAX_WAIT_SECOND ;
+#endif
+	
+}
+
+/************************************************* 
+	Function:		forgesight_get_programs_path
+	Description:	get programs path
+	Input:			NULL
+	Return: 		programs path
+*************************************************/ 
+int forgesight_get_wait_time_out_config()
+{
+	return g_wait_time_out_config;
+}
+
+/************************************************* 
+	Function:		initInterpreter
 	Description:	init interpretor
 	Input:			NULL
 	Return: 		programs path
 *************************************************/ 
-void initShm()
+void initInterpreter()
 {
-//    openShm(SHM_INTPRT_CMD, 1024);
-//    openShm(SHM_INTPRT_STATUS, 1024);
-	
-	// Lujiaming add at 0323
-//    openShm(SHM_REG_IO_INFO, 1024);
-	// Lujiaming add at 0323 end
-	
-	// Lujiaming add at 0514
-//    openShm(SHM_CHG_REG_LIST_INFO, 1024);
-	// Lujiaming add at 0514 end
-	
-//    openShm(SHM_CTRL_CMD, 1024);
-//    openShm(SHM_CTRL_STATUS, 1024);
-//    openShm(SHM_INTPRT_DST, 1024);
-    // intprt_ctrl.cmd = LOAD;
-    // intprt_ctrl.cmd = START;
+	xmlInitParser();
 	g_privateInterpreterState = INTERPRETER_IDLE ;
 	
-//	setPrgmState(objThdCtrlBlockPtr, INTERPRETER_IDLE);
-#ifdef WIN32
-//	generateFakeData();
-#else
-	
-#ifndef USE_FORSIGHT_REGISTERS_MANAGER
-	initRegShmi();
-#endif
-//	initShmi(1024);
-#endif
 	forgesight_load_programs_path();
+	forgesight_load_wait_time_out_config();
+	g_launch_code_mgr_ptr = new LaunchCodeMgr(g_files_manager_data_path);
+	g_home_pose_mgr_ptr   = new HomePoseMgr(g_files_manager_data_path);
+#ifdef WIN32
+	import_external_resource("config\\user_defined_variable.xml", g_vecKeyVariables);
+#else
+	import_external_resource(
+		"/root/install/share/runtime/interpreter/user_defined_variable.xml", 
+		g_vecKeyVariables);
+#endif
+	for(int iIdx = 0; iIdx < NUM_THREAD + 1; iIdx++)
+	{
+		g_basic_interpreter_handle[iIdx] = NULL;
+	}
 }
 
+/************************************************* 
+	Function:		forgesight_get_programs_path
+	Description:	get programs path
+	Input:			NULL
+	Return: 		programs path
+*************************************************/ 
+bool forgesight_find_external_resource(char *vname, key_variable& keyVar)
+{
+	// Otherwise, try global vars.
+	for(unsigned i=0; i < g_vecKeyVariables.size(); i++)
+	{
+	//	FST_INFO("forgesight_find_external_resource: %s .", g_vecKeyVariables[i].key_name);
+		if(!strcmp(g_vecKeyVariables[i].key_name, vname)) {
+			keyVar = g_vecKeyVariables[i] ;
+			return true;
+		}
+	}
+	return false;
+}
+
+
+/************************************************* 
+	Function:		forgesight_get_programs_path
+	Description:	get programs path
+	Input:			NULL
+	Return: 		programs path
+*************************************************/ 
+bool forgesight_find_external_resource_by_xmlname(
+					char *xml_name, key_variable& keyVar)
+{
+	// Otherwise, try global vars.
+	for(unsigned i=0; i < g_vecKeyVariables.size(); i++)
+	{
+	//	FST_INFO("forgesight_find_external_resource: %s .", g_vecKeyVariables[i].key_name);
+		if(!strcmp(g_vecKeyVariables[i].xml_name, xml_name)) {
+			keyVar = g_vecKeyVariables[i] ;
+			return true;
+		}
+	}
+	return false;
+}
+
+void updateHomePoseMgr()
+{
+	g_home_pose_mgr_ptr->updateAll();
+}
+
+checkHomePoseResult checkSingleHomePoseByCurrentJoint(int idx, Joint currentJoint)
+{
+	Joint joint      = g_home_pose_mgr_ptr->homePoseList[idx].joint ;
+	Joint jointFloat = g_home_pose_mgr_ptr->homePoseList[idx].jointFloat ;
+	
+#ifndef WIN32
+		printf("Get JOINT: %d :: (%f, %f, %f, %f, %f, %f, %f, %f, %f) \n", idx, 
+			joint.j1_, joint.j2_, joint.j3_, 
+			joint.j4_, joint.j5_, joint.j6_,  
+			joint.j7_, joint.j8_, joint.j9_);
+		printf("with jointFloat:(%f, %f, %f, %f, %f, %f, %f, %f, %f) \n", 
+			jointFloat.j1_, jointFloat.j2_, jointFloat.j3_, 
+			jointFloat.j4_, jointFloat.j5_, jointFloat.j6_, 
+			jointFloat.j7_, jointFloat.j8_, jointFloat.j9_);
+		printf("Get currentJoint: (%f, %f, %f, %f, %f, %f, %f, %f, %f) \n", 
+			currentJoint.j1_, currentJoint.j2_, currentJoint.j3_, 
+			currentJoint.j4_, currentJoint.j5_, currentJoint.j6_,  
+			currentJoint.j7_, currentJoint.j8_, currentJoint.j9_);
+#else
+		printf("Get JOINT: %d :: (%f, %f, %f, %f, %f, %f, %f, %f, %f) \n", idx, 
+			joint.j1, joint.j2, joint.j3, 
+			joint.j4, joint.j5, joint.j6,  
+			joint.j7, joint.j8, joint.j9);
+		printf("with jointFloat:(%f, %f, %f, %f, %f, %f, %f, %f, %f) \n", 
+			jointFloat.j1, jointFloat.j2, jointFloat.j3, 
+			jointFloat.j4, jointFloat.j5, jointFloat.j6, 
+			jointFloat.j7, jointFloat.j8, jointFloat.j9);
+		printf("Get currentJoint: (%f, %f, %f, %f, %f, %f, %f, %f, %f) \n", 
+			currentJoint.j1, currentJoint.j2, currentJoint.j3, 
+			currentJoint.j4, currentJoint.j5, currentJoint.j6,  
+			currentJoint.j7, currentJoint.j8, currentJoint.j9);
+#endif
+	return g_home_pose_mgr_ptr->checkSingleHomePoseByJoint(idx, currentJoint);
+}
+
+/************************************************* 
+	Function:		uninitInterpreter
+	Description:	uninit interpretor
+	Input:			NULL
+	Return: 		programs path
+*************************************************/ 
+void uninitInterpreter()
+{
+	delete g_launch_code_mgr_ptr;
+	delete g_home_pose_mgr_ptr;
+	xmlCleanupParser();
+}
 
 /************************************************* 
 	Function:		updateIOError (Legacy)

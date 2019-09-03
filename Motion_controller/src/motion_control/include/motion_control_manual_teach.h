@@ -13,7 +13,7 @@
 #include <motion_control_datatype.h>
 #include <motion_control_constraint.h>
 #include <log_manager/log_manager_logger.h>
-#include <base_kinematics.h>
+#include <kinematics_rtm.h>
 
 namespace fst_mc
 {
@@ -26,28 +26,27 @@ public:
     ManualTeach(void);
     ~ManualTeach(void);
 
-    ErrorCode init(BaseKinematics *pkinematics, Constraint *pcons, fst_log::Logger *plog, const std::string &config_file);
-
+    ErrorCode init(basic_alg::Kinematics *kinematics_ptr, Constraint *pcons, fst_log::Logger *plog, const std::string &config_file);
     double getGlobalVelRatio(void);
     double getGlobalAccRatio(void);
-    double getManualStepAxis(void);
+    void getManualStepAxis(double *steps);
     double getManualStepPosition(void);
     double getManualStepOrientation(void);
     ErrorCode setGlobalVelRatio(double ratio);
     ErrorCode setGlobalAccRatio(double ratio);
-    ErrorCode setManualStepAxis(double step);
+    ErrorCode setManualStepAxis(const double *steps);
     ErrorCode setManualStepPosition(double step);
     ErrorCode setManualStepOrientation(double step);
 
     ErrorCode manualStepByDirect(const ManualDirection *directions, MotionTime time, ManualTrajectory &traj);
     ErrorCode manualContinuousByDirect(const ManualDirection *directions, MotionTime time, ManualTrajectory &traj);
-    ErrorCode manualByTarget(const Joint &target, MotionTime time, ManualTrajectory &traj);
+    ErrorCode manualByTarget(const basic_alg::Joint &target, MotionTime time, ManualTrajectory &traj);
     ErrorCode manualStop(MotionTime time, ManualTrajectory &traj);
 
 private:
     ErrorCode   manualJointStep(const ManualDirection *dir, MotionTime time, ManualTrajectory &traj);
     ErrorCode   manualJointContinuous(const ManualDirection *dir, MotionTime time, ManualTrajectory &traj);
-    ErrorCode   manualJointAPoint(const Joint &target, MotionTime time, ManualTrajectory &traj);
+    ErrorCode   manualJointAPoint(const basic_alg::Joint &target, MotionTime time, ManualTrajectory &traj);
 
     ErrorCode   manualCartesianStep(const ManualDirection *dir, MotionTime time, ManualTrajectory &traj);
     ErrorCode   manualCartesianContinuous(const ManualDirection *dir, MotionTime time, ManualTrajectory &traj);
@@ -56,12 +55,13 @@ private:
     inline char* printDBLine(const double *data, char *buffer, size_t length);
 
     size_t joint_num_;
-    double step_joint_;
+    double step_axis_[NUM_OF_JOINT];
     double step_position_;
     double step_orientation_;
     double vel_ratio_;
     double acc_ratio_;
 
+    double move_to_point_vel_[NUM_OF_JOINT];
     double axis_vel_[NUM_OF_JOINT];
     double axis_acc_[NUM_OF_JOINT];
     double position_vel_reference_;
@@ -70,7 +70,7 @@ private:
     double orientation_alpha_reference_;
 
     Constraint *joint_constraint_ptr_;
-    BaseKinematics *kinematics_ptr_;
+    basic_alg::Kinematics *kinematics_ptr_;
     fst_log::Logger *log_ptr_;
     std::string manual_config_file_;
 };

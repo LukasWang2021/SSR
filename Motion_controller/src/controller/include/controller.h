@@ -16,15 +16,17 @@
 #include "controller_ipc.h"
 #include "device_manager.h"
 #include "motion_control.h"
-#include "base_datatype.h"
 #include "serverAlarmApi.h"
 #include "preformance_monitor.h"
-#include "io_mapping.h" //feng add for iomapping.
+#include "io_mapping.h" 
 #include "program_launching.h"
 #include "file_manager.h"
+#include "system_manager.h"
+#include "param_manager.h"
 #include <string>
 // for test only
 #include "virtual_core1.h"
+#include <cstdint>
 
 
 namespace fst_ctrl
@@ -64,6 +66,8 @@ private:
     IoMapping io_mapping_;   
     ProgramLaunching program_launching_;
     fst_base::FileManager file_manager_;
+    fst_ctrl::SystemManager system_manager_;
+    fst_mc::ParamManager param_manager_;
 
     // thread related
     bool is_exit_;
@@ -73,6 +77,9 @@ private:
     void recordLog(std::string log_str);
     void recordLog(ErrorCode error_code, std::string log_str);
     void recordLog(ErrorCode major_error_code, ErrorCode minor_error_code, std::string log_str);
+
+    // light a LED to hint the controller is ok
+    void  isOkLed();
 };
 
 }

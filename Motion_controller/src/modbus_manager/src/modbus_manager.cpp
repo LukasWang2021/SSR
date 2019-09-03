@@ -55,6 +55,11 @@ bool ModbusManager::init()
     if (client_manager_ptr_->initParam() != SUCCESS)
         return false;
 
+    // if (start_mode_ == MODBUS_CLIENT)
+    // {
+        // if (client_manager_ptr_->initCLientListByParams() != SUCCESS) return false;
+    // }
+
     return true;
 }
 
@@ -83,6 +88,31 @@ ModbusManager::~ModbusManager()
         delete param_ptr_;
         param_ptr_ = NULL;
     }
+}
+
+ErrorCode ModbusManager::initDevices()
+{
+    if (start_mode_ == MODBUS_CLIENT)
+    {
+        return client_manager_ptr_->initCLientListByParams();
+    }
+
+    if (start_mode_ == MODBUS_SERVER)
+    {
+        if (server_ != NULL && server_->isRunning())
+        {
+            return SUCCESS;
+        }
+
+        ErrorCode error_code = server_->openServer();
+        if (error_code != SUCCESS)
+        {
+            server_->closeServer();
+            return error_code;
+        }
+    }
+
+    return SUCCESS;
 }
 
 ErrorCode ModbusManager::setStartMode(int start_mode)
@@ -201,6 +231,16 @@ ErrorCode ModbusManager::readHoldingRegs(int id, int addr, int nb, uint16_t *des
     return MODBUS_START_MODE_ERROR;
 }
 
+ErrorCode ModbusManager::writeInputRegs(int id, int addr, int nb, uint16_t *dest)
+{
+    if (start_mode_ == MODBUS_SERVER)
+    {
+        return writeInputRegsToServer(addr, nb, dest);
+    }
+
+    return MODBUS_START_MODE_ERROR;
+}
+
 ErrorCode ModbusManager::readInputRegs(int id, int addr, int nb, uint16_t *dest)
 {
     if (start_mode_ == MODBUS_SERVER)
@@ -233,3 +273,5 @@ bool ModbusManager::isModbusValid()
     setValid(false);
     return false;
 }
+
+

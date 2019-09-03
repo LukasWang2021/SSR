@@ -19,7 +19,7 @@ void ProgramLaunching::loadProgramsPath()
 	if(getenv("ROBOT_DATA_PREFIX") != NULL)
 		files_manager_data_path_ = string(getenv("ROBOT_DATA_PREFIX")); //ROBOT_DATA_PREFIX=/root
 	else
-		files_manager_data_path_ = "/home/fst/fortest"; // for self test only.
+		files_manager_data_path_ = "/root"; // for self test only.
 
 	files_manager_data_path_ += "/robot_data/launch_setting";
 }
@@ -58,6 +58,8 @@ bool ProgramLaunching::parseMacroConfigObject(cJSON *object)
 		else if(strcmp(child->string, "ioPort") == 0)
 		{
 			objInfo.ioPort = child->valueint;
+			if(objInfo.ioPort == 0)
+			    return false;
 		}
 		child=child->next;
 	}

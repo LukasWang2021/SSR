@@ -19,6 +19,7 @@ ModbusClient1:
             addr: 1
             max_nb: 1024
     is_enable: false
+    is_added: false
 ModbusClient2:
     id: 2
     name: ModbusClient2
@@ -40,6 +41,7 @@ ModbusClient2:
             addr: 1
             max_nb: 1024
     is_enable: false
+    is_added: false
 ModbusClient3:
     id: 3
     name: ModbusClient3
@@ -61,6 +63,7 @@ ModbusClient3:
             addr: 1
             max_nb: 1024
     is_enable: false
+    is_added: false
 ModbusClient4:
     id: 4
     name: ModbusClient4
@@ -82,6 +85,7 @@ ModbusClient4:
             addr: 1
             max_nb: 1024
     is_enable: false
+    is_added: false
 ModbusClient5:
     id: 5
     name: ModbusClient5
@@ -103,6 +107,7 @@ ModbusClient5:
             addr: 1
             max_nb: 1024
     is_enable: false
+    is_added: false
 ModbusClient6:
     id: 6
     name: ModbusClient6
@@ -124,6 +129,7 @@ ModbusClient6:
             addr: 1
             max_nb: 1024
     is_enable: false
+    is_added: false
 ModbusClient7:
     id: 7
     name: ModbusClient7
@@ -145,6 +151,7 @@ ModbusClient7:
             addr: 1
             max_nb: 1024
     is_enable: false
+    is_added: false
 ModbusClient8:
     id: 8
     name: ModbusClient8
@@ -166,6 +173,7 @@ ModbusClient8:
             addr: 1
             max_nb: 1024
     is_enable: false
+    is_added: false
 ModbusClient9:
     id: 9
     name: ModbusClient9
@@ -187,6 +195,7 @@ ModbusClient9:
             addr: 1
             max_nb: 1024
     is_enable: false
+    is_added: false
 ModbusClient10:
     id: 10
     name: ModbusClient10
@@ -208,4 +217,5 @@ ModbusClient10:
             addr: 1
             max_nb: 1024
     is_enable: false
+    is_added: false
 #END

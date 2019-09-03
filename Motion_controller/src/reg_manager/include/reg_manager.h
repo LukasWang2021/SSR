@@ -3,7 +3,7 @@
 
 
 #include "reg_manager_param.h"
-#include "base_datatype.h"
+#include "basic_alg_datatype.h"
 #include "common_log.h"
 #include "base_reg.h"
 #include "pr_reg.h"
@@ -12,6 +12,7 @@
 #include "sr_reg.h"
 #include "r_reg.h"
 #include <string>
+#include <memory.h>
 
 namespace fst_ctrl
 {
@@ -22,6 +23,8 @@ public:
     ~RegManager();
 
     ErrorCode init();
+
+    void initNVRam();
 
     bool isRegValid(RegType reg_type, int reg_index);
 
@@ -88,6 +91,9 @@ private:
     RegManagerParam* param_ptr_;
     fst_log::Logger* log_ptr_;
     BaseReg* reg_ptr_[REG_TYPE_MAX];
+	
+	Nvram nvram_obj_ ;
+    int use_nvram_;
 };
 
 }

@@ -16,8 +16,10 @@ using namespace fst_parameter;
 PrReg::PrReg(RegManagerParam* param_ptr):
     BaseReg(REG_TYPE_PR, param_ptr->pr_reg_number_), 
         param_ptr_(param_ptr), file_path_(param_ptr->reg_info_dir_)
+     //   ,nvram_obj_(NVRAM_AREA_LENGTH)
 {
     file_path_ += param_ptr_->pr_reg_file_name_;
+//    use_nvram_ += param_ptr_->use_nvram_;
 }
 
 PrReg::~PrReg()
@@ -27,6 +29,7 @@ PrReg::~PrReg()
 
 ErrorCode PrReg::init()
 {
+	NVRamPrRegData objNVRamPrRegData ;
     data_list_.resize(getListSize());    // id=0 is not used, id start from 1
 
     /*if(access(file_path_.c_str(), 0) != 0)
@@ -41,12 +44,28 @@ ErrorCode PrReg::init()
     {
         return REG_MANAGER_LOAD_PR_FAILED;
     }
-    
+/*    
+	if(use_nvram_ == REG_USE_NVRAM)
+	{
+		ErrCode error = nvram_obj_.openNvram();
+		if(error == FST_NVRAM_OK)
+		{
+			for(unsigned int i=0; i < data_list_.size(); i++)
+			{
+				memset(&objNVRamPrRegData, 0x00, sizeof(NVRamPrRegData));
+				nvram_obj_.read((uint8_t*)&objNVRamPrRegData, 
+					NVRAM_PR_AREA + i * sizeof(NVRamPrRegData), sizeof(NVRamPrRegData));
+				data_list_[i] = objNVRamPrRegData.value ;
+			}
+		}
+	}
+ */
     return SUCCESS;
 }
 
 ErrorCode PrReg::addReg(void* data_ptr)
 {
+	NVRamPrRegData objNVRamPrRegData ;
     if(data_ptr == NULL)
     {
         return REG_MANAGER_INVALID_ARG;
@@ -96,15 +115,38 @@ ErrorCode PrReg::addReg(void* data_ptr)
     data_list_[reg_data.id].posture[1] = reg_ptr->value.posture[1];
     data_list_[reg_data.id].posture[2] = reg_ptr->value.posture[2];
     data_list_[reg_data.id].posture[3] = reg_ptr->value.posture[3];
+
+    data_list_[reg_data.id].turn[0] = reg_ptr->value.turn[0];
+    data_list_[reg_data.id].turn[1] = reg_ptr->value.turn[1];
+    data_list_[reg_data.id].turn[2] = reg_ptr->value.turn[2];
+    data_list_[reg_data.id].turn[3] = reg_ptr->value.turn[3];
+    data_list_[reg_data.id].turn[4] = reg_ptr->value.turn[4];
+    data_list_[reg_data.id].turn[5] = reg_ptr->value.turn[5];
+    data_list_[reg_data.id].turn[6] = reg_ptr->value.turn[6];
+    data_list_[reg_data.id].turn[7] = reg_ptr->value.turn[7];
+    data_list_[reg_data.id].turn[8] = reg_ptr->value.turn[8];
+
     if(!writeRegDataToYaml(reg_data, data_list_[reg_data.id]))
     {
         return REG_MANAGER_REG_FILE_WRITE_FAILED;
     }
+/*    
+	if(use_nvram_ == REG_USE_NVRAM)
+	{
+		memset(&objNVRamPrRegData, 0x00, sizeof(NVRamPrRegData));
+		objNVRamPrRegData.id    = reg_data.id;
+		objNVRamPrRegData.value = data_list_[reg_data.id];
+		nvram_obj_.write((uint8_t*)&objNVRamPrRegData, 
+			NVRAM_PR_AREA + reg_data.id * sizeof(NVRamPrRegData), sizeof(NVRamPrRegData));
+		usleep(30000);
+	}
+ */
     return SUCCESS;
 }
 
 ErrorCode PrReg::deleteReg(int id)
 {
+	NVRamPrRegData objNVRamPrRegData ;
     if(!isDeleteInputValid(id))
     {
         return REG_MANAGER_INVALID_ARG;
@@ -127,14 +169,36 @@ ErrorCode PrReg::deleteReg(int id)
     data_list_[id].pos[6] = 0;
     data_list_[id].pos[7] = 0;
     data_list_[id].pos[8] = 0;
-    data_list_[id].posture[0] = false;
-    data_list_[id].posture[1] = false;
-    data_list_[id].posture[2] = false;
-    data_list_[id].posture[3] = false;
+    data_list_[id].posture[0] = 0;
+    data_list_[id].posture[1] = 0;
+    data_list_[id].posture[2] = 0;
+    data_list_[id].posture[3] = 0;
+	
+    data_list_[id].turn[0] = 0;
+    data_list_[id].turn[1] = 0;
+    data_list_[id].turn[2] = 0;
+    data_list_[id].turn[3] = 0;
+    data_list_[id].turn[4] = 0;
+    data_list_[id].turn[5] = 0;
+    data_list_[id].turn[6] = 0;
+    data_list_[id].turn[7] = 0;
+    data_list_[id].turn[8] = 0;
+	
     if(!writeRegDataToYaml(reg_data, data_list_[id]))
     {
         return REG_MANAGER_REG_FILE_WRITE_FAILED;
     }
+/*    
+	if(use_nvram_ == REG_USE_NVRAM)
+	{
+		memset(&objNVRamPrRegData, 0x00, sizeof(NVRamPrRegData));
+		objNVRamPrRegData.id    = reg_data.id;
+		objNVRamPrRegData.value = data_list_[id];
+		nvram_obj_.write((uint8_t*)&objNVRamPrRegData, 
+			NVRAM_PR_AREA + reg_data.id * sizeof(NVRamPrRegData), sizeof(NVRamPrRegData));
+		usleep(30000);
+	}
+ */
     return SUCCESS;
 }
 
@@ -169,11 +233,23 @@ ErrorCode PrReg::getReg(int id, void* data_ptr)
     reg_ptr->value.posture[1] = data_list_[id].posture[1];
     reg_ptr->value.posture[2] = data_list_[id].posture[2];
     reg_ptr->value.posture[3] = data_list_[id].posture[3];
+
+    reg_ptr->value.turn[0] = data_list_[id].turn[0];
+    reg_ptr->value.turn[1] = data_list_[id].turn[1];
+    reg_ptr->value.turn[2] = data_list_[id].turn[2];
+    reg_ptr->value.turn[3] = data_list_[id].turn[3];
+    reg_ptr->value.turn[4] = data_list_[id].turn[4];
+    reg_ptr->value.turn[5] = data_list_[id].turn[5];
+    reg_ptr->value.turn[6] = data_list_[id].turn[6];
+    reg_ptr->value.turn[7] = data_list_[id].turn[7];
+    reg_ptr->value.turn[8] = data_list_[id].turn[8];
+	
     return SUCCESS;
 }
 
 ErrorCode PrReg::updateReg(void* data_ptr)
 {
+	NVRamPrRegData objNVRamPrRegData ;
     if(data_ptr == NULL)
     {
         return REG_MANAGER_INVALID_ARG;
@@ -225,10 +301,32 @@ ErrorCode PrReg::updateReg(void* data_ptr)
     data_list_[reg_data.id].posture[1] = reg_ptr->value.posture[1];
     data_list_[reg_data.id].posture[2] = reg_ptr->value.posture[2];
     data_list_[reg_data.id].posture[3] = reg_ptr->value.posture[3];
+
+    data_list_[reg_data.id].turn[0] = reg_ptr->value.turn[0];
+    data_list_[reg_data.id].turn[1] = reg_ptr->value.turn[1];
+    data_list_[reg_data.id].turn[2] = reg_ptr->value.turn[2];
+    data_list_[reg_data.id].turn[3] = reg_ptr->value.turn[3];
+    data_list_[reg_data.id].turn[4] = reg_ptr->value.turn[4];
+    data_list_[reg_data.id].turn[5] = reg_ptr->value.turn[5];
+    data_list_[reg_data.id].turn[6] = reg_ptr->value.turn[6];
+    data_list_[reg_data.id].turn[7] = reg_ptr->value.turn[7];
+    data_list_[reg_data.id].turn[8] = reg_ptr->value.turn[8];
+
     if(!writeRegDataToYaml(reg_data, data_list_[reg_data.id]))
     {
         return REG_MANAGER_REG_FILE_WRITE_FAILED;
     }
+/*    
+	if(use_nvram_ == REG_USE_NVRAM)
+	{
+		memset(&objNVRamPrRegData, 0x00, sizeof(NVRamPrRegData));
+		objNVRamPrRegData.id    = reg_data.id;
+		objNVRamPrRegData.value = data_list_[reg_data.id];
+		nvram_obj_.write((uint8_t*)&objNVRamPrRegData, 
+			NVRAM_PR_AREA + reg_data.id * sizeof(NVRamPrRegData), sizeof(NVRamPrRegData));
+		usleep(30000);
+	}
+ */
     return SUCCESS;
 }
 
@@ -267,21 +365,22 @@ void* PrReg::getRegValueById(int id)
 
 bool PrReg::updateRegPos(PrRegDataIpc* data_ptr)
 {
+	NVRamPrRegData objNVRamPrRegData ;
     if(data_ptr == NULL)
     {
         return false;
     }
 
     if(!isUpdateInputValid(data_ptr->id)
-        || data_ptr->pos[0] > param_ptr_->pr_value_limit_ || data_ptr->pos[0] < -param_ptr_->pr_value_limit_
-        || data_ptr->pos[1] > param_ptr_->pr_value_limit_ || data_ptr->pos[1] < -param_ptr_->pr_value_limit_
-        || data_ptr->pos[2] > param_ptr_->pr_value_limit_ || data_ptr->pos[2] < -param_ptr_->pr_value_limit_
-        || data_ptr->pos[3] > param_ptr_->pr_value_limit_ || data_ptr->pos[3] < -param_ptr_->pr_value_limit_
-        || data_ptr->pos[4] > param_ptr_->pr_value_limit_ || data_ptr->pos[4] < -param_ptr_->pr_value_limit_
-        || data_ptr->pos[5] > param_ptr_->pr_value_limit_ || data_ptr->pos[5] < -param_ptr_->pr_value_limit_
-        || data_ptr->pos[6] > param_ptr_->pr_value_limit_ || data_ptr->pos[6] < -param_ptr_->pr_value_limit_
-        || data_ptr->pos[7] > param_ptr_->pr_value_limit_ || data_ptr->pos[7] < -param_ptr_->pr_value_limit_
-        || data_ptr->pos[8] > param_ptr_->pr_value_limit_ || data_ptr->pos[8] < -param_ptr_->pr_value_limit_)
+        || data_ptr->value.pos[0] > param_ptr_->pr_value_limit_ || data_ptr->value.pos[0] < -param_ptr_->pr_value_limit_
+        || data_ptr->value.pos[1] > param_ptr_->pr_value_limit_ || data_ptr->value.pos[1] < -param_ptr_->pr_value_limit_
+        || data_ptr->value.pos[2] > param_ptr_->pr_value_limit_ || data_ptr->value.pos[2] < -param_ptr_->pr_value_limit_
+        || data_ptr->value.pos[3] > param_ptr_->pr_value_limit_ || data_ptr->value.pos[3] < -param_ptr_->pr_value_limit_
+        || data_ptr->value.pos[4] > param_ptr_->pr_value_limit_ || data_ptr->value.pos[4] < -param_ptr_->pr_value_limit_
+        || data_ptr->value.pos[5] > param_ptr_->pr_value_limit_ || data_ptr->value.pos[5] < -param_ptr_->pr_value_limit_
+        || data_ptr->value.pos[6] > param_ptr_->pr_value_limit_ || data_ptr->value.pos[6] < -param_ptr_->pr_value_limit_
+        || data_ptr->value.pos[7] > param_ptr_->pr_value_limit_ || data_ptr->value.pos[7] < -param_ptr_->pr_value_limit_
+        || data_ptr->value.pos[8] > param_ptr_->pr_value_limit_ || data_ptr->value.pos[8] < -param_ptr_->pr_value_limit_)
     {
         return false;
     }
@@ -291,7 +390,18 @@ bool PrReg::updateRegPos(PrRegDataIpc* data_ptr)
     {
         return false;
     }
-    memcpy(&data_list_[data_ptr->id].pos[0], &data_ptr->pos[0], 9*sizeof(double));
+    memcpy(&data_list_[data_ptr->id].pos[0], &data_ptr->value.pos[0], 9*sizeof(double));
+/*
+	if(use_nvram_ == REG_USE_NVRAM)
+	{
+		memset(&objNVRamPrRegData, 0x00, sizeof(NVRamPrRegData));
+		objNVRamPrRegData.id    = data_ptr->id;
+		objNVRamPrRegData.value = data_list_[data_ptr->id];
+		nvram_obj_.write((uint8_t*)&objNVRamPrRegData, 
+			NVRAM_PR_AREA + data_ptr->id * sizeof(objNVRamPrRegData), sizeof(objNVRamPrRegData));
+		usleep(30000);
+    }
+ */	
     return writeRegDataToYaml(*reg_data_ptr, data_list_[data_ptr->id]);
 }
 
@@ -303,13 +413,15 @@ bool PrReg::getRegPos(int id, PrRegDataIpc* data_ptr)
     }
 
     data_ptr->id = id;
-    memcpy(&data_ptr->pos[0], &data_list_[data_ptr->id].pos[0], 9*sizeof(double));
+//    memcpy(&data_ptr->value.pos[0], &data_list_[data_ptr->id].pos[0], 9*sizeof(double));
+	data_ptr->value = data_list_[data_ptr->id];
     return true;
 }
 
 
 PrReg::PrReg():
     BaseReg(REG_TYPE_INVALID, 0)
+ //   ,nvram_obj_(NVRAM_AREA_LENGTH)
 {
 
 }
@@ -343,10 +455,10 @@ bool PrReg::createYaml()
         yaml_help_.setParam(reg_path + "/pos7", 0);
         yaml_help_.setParam(reg_path + "/pos8", 0);
         yaml_help_.setParam(reg_path + "/pos9", 0);
-        yaml_help_.setParam(reg_path + "/posture1", false);
-        yaml_help_.setParam(reg_path + "/posture2", false);
-        yaml_help_.setParam(reg_path + "/posture3", false);
-        yaml_help_.setParam(reg_path + "/posture4", false);
+        yaml_help_.setParam(reg_path + "/posture1", 0);
+        yaml_help_.setParam(reg_path + "/posture2", 0);
+        yaml_help_.setParam(reg_path + "/posture3", 0);
+        yaml_help_.setParam(reg_path + "/posture4", 0);
     }
     return yaml_help_.dumpParamFile(file_path_.c_str());
 }
@@ -383,6 +495,16 @@ bool PrReg::readAllRegDataFromYaml()
         yaml_help_.getParam(reg_path + "/posture2", data_list_[i].posture[1]);
         yaml_help_.getParam(reg_path + "/posture3", data_list_[i].posture[2]);
         yaml_help_.getParam(reg_path + "/posture4", data_list_[i].posture[3]);
+		
+		yaml_help_.getParam(reg_path + "/turn1", data_list_[i].turn[0]);
+		yaml_help_.getParam(reg_path + "/turn2", data_list_[i].turn[1]);
+		yaml_help_.getParam(reg_path + "/turn3", data_list_[i].turn[2]);
+		yaml_help_.getParam(reg_path + "/turn4", data_list_[i].turn[3]);
+		yaml_help_.getParam(reg_path + "/turn5", data_list_[i].turn[4]);
+		yaml_help_.getParam(reg_path + "/turn6", data_list_[i].turn[5]);
+		yaml_help_.getParam(reg_path + "/turn7", data_list_[i].turn[6]);
+		yaml_help_.getParam(reg_path + "/turn8", data_list_[i].turn[7]);
+		yaml_help_.getParam(reg_path + "/turn9", data_list_[i].turn[8]);
     }
     return true;
 }
@@ -409,6 +531,16 @@ bool PrReg::writeRegDataToYaml(const BaseRegData& base_data, const PrValue& data
     yaml_help_.setParam(reg_path + "/posture2", data.posture[1]);
     yaml_help_.setParam(reg_path + "/posture3", data.posture[2]);
     yaml_help_.setParam(reg_path + "/posture4", data.posture[3]);
+	
+    yaml_help_.setParam(reg_path + "/turn1", data.turn[0]);
+    yaml_help_.setParam(reg_path + "/turn2", data.turn[1]);
+    yaml_help_.setParam(reg_path + "/turn3", data.turn[2]);
+    yaml_help_.setParam(reg_path + "/turn4", data.turn[3]);
+    yaml_help_.setParam(reg_path + "/turn5", data.turn[4]);
+    yaml_help_.setParam(reg_path + "/turn6", data.turn[5]);
+    yaml_help_.setParam(reg_path + "/turn7", data.turn[6]);
+    yaml_help_.setParam(reg_path + "/turn8", data.turn[7]);
+    yaml_help_.setParam(reg_path + "/turn9", data.turn[8]);
     return yaml_help_.dumpParamFile(file_path_.c_str());
 }
 

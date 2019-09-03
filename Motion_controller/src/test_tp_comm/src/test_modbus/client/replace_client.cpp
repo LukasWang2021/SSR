@@ -24,21 +24,27 @@ using namespace std;
 
 int main(int argc, char* argv[])
 {
+    int needed_data_count = 4;
+    if (argc < needed_data_count + 1)
+    {
+        cout << "more parameters are needed" << endl;
+        return -1;
+    }
+
     unsigned int hash_value = 0x0000C2F4;
 
     RequestMessageType_Int32_ModbusClientStartInfo msg;
     msg.header.time_stamp = 122;
     msg.property.authority = Comm_Authority_TP;
-    msg.data2.id = atoi(argv[1]);
-    //msg.data.name = atoi(argv[1]);
-    memcpy(msg.data2.name, argv[2], sizeof(argv[2]));
-    //memcpy(msg.data.ip, argv[3], sizeof(argv[3]));
+    msg.data1.data = atoi(argv[1]);
+    msg.data2.id = atoi(argv[2]);
+    string name = "modbus client";
+    strcpy(msg.data2.name, name.c_str());
     strcpy(msg.data2.ip, argv[3]);
     printf("argv[3] = %s\n", argv[3]);
     msg.data2.port = atoi(argv[4]);
-    msg.data2.scan_rate = atoi(argv[5]);
-    msg.data2.response_timeout = atoi(argv[6]);
-    msg.data1.data = atoi(argv[7]);
+    msg.data2.scan_rate = 1000;
+    msg.data2.response_timeout = 1000;
 
     printf("new client id = %d\n", msg.data2.id);
     printf("new client name = %s\n", msg.data2.name);

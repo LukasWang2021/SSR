@@ -84,3 +84,20 @@ void ErrorMonitor::addErrorList(unsigned long long error_code)
     
     err_list_.push_back(error_code);
 }
+
+bool ErrorMonitor::isCore0Error(unsigned long long code)
+{
+    int type = (code  & 0x00000000FFFF0000)>>16;
+    //errors in core0 are defined between 101-200. Especially 200 is for external component(safety_board).
+    if (type < 200 && type >= 101)
+    {
+        return true;
+    }
+    return false;
+}
+
+int ErrorMonitor::getErrorLevel(unsigned long long code)
+{
+    int level = (code & 0x0000FFFF00000000) >> 32;
+    return level;
+}

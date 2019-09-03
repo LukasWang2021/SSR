@@ -99,7 +99,7 @@ ErrorCode CoordinateManager::deleteCoord(int id)
     coord_set_[id].name = std::string("default");
     coord_set_[id].comment = std::string("default");
     coord_set_[id].group_id = -1;
-    memset(&coord_set_[id].data, 0, sizeof(fst_mc::PoseEuler));
+    memset(&coord_set_[id].data, 0, sizeof(basic_alg::PoseEuler));
     if(!writeCoordInfoToYaml(coord_set_[id]))
     {
         return COORDINATE_MANAGER_COORDINFO_FILE_WRITE_FAILED;
@@ -165,7 +165,7 @@ ErrorCode CoordinateManager::moveCoord(int expect_id, int original_id)
     coord_set_[original_id].name = std::string("default");
     coord_set_[original_id].comment = std::string("default");
     coord_set_[original_id].group_id = -1;
-    memset(&coord_set_[original_id].data, 0, sizeof(fst_mc::PoseEuler));
+    memset(&coord_set_[original_id].data, 0, sizeof(basic_alg::PoseEuler));
 
     if(!writeCoordInfoToYaml(coord_set_[original_id]) 
         || !writeCoordInfoToYaml(coord_set_[expect_id]))
@@ -212,7 +212,7 @@ void CoordinateManager::packDummyCoordInfo(CoordInfo& info)
     info.name = std::string("no coordinate");
     info.comment = std::string("no coordinate");
     info.group_id = -1;
-    memset(&info.data, 0, sizeof(fst_mc::PoseEuler));
+    memset(&info.data, 0, sizeof(basic_alg::PoseEuler));
 }
 
 std::string CoordinateManager::getCoordInfoPath(int coord_id)
@@ -248,13 +248,13 @@ bool CoordinateManager::readAllCoordInfoFromYaml(int number_of_coords)
             coord_info_yaml_help_.getParam(coord_info_path + "/comment", info.comment);
             coord_info_yaml_help_.getParam(coord_info_path + "/group_id", info.group_id);
             std::string point_path = coord_info_path + std::string("/point");
-            coord_info_yaml_help_.getParam(point_path + "/x", info.data.position.x);
-            coord_info_yaml_help_.getParam(point_path + "/y", info.data.position.y);
-            coord_info_yaml_help_.getParam(point_path + "/z", info.data.position.z);
+            coord_info_yaml_help_.getParam(point_path + "/x", info.data.point_.x_);
+            coord_info_yaml_help_.getParam(point_path + "/y", info.data.point_.y_);
+            coord_info_yaml_help_.getParam(point_path + "/z", info.data.point_.z_);
             std::string euler_path = coord_info_path + std::string("/euler");
-            coord_info_yaml_help_.getParam(euler_path + "/a", info.data.orientation.a);
-            coord_info_yaml_help_.getParam(euler_path + "/b", info.data.orientation.b);
-            coord_info_yaml_help_.getParam(euler_path + "/c", info.data.orientation.c);
+            coord_info_yaml_help_.getParam(euler_path + "/a", info.data.euler_.a_);
+            coord_info_yaml_help_.getParam(euler_path + "/b", info.data.euler_.b_);
+            coord_info_yaml_help_.getParam(euler_path + "/c", info.data.euler_.c_);
             coord_set_.push_back(info);
         }
 	    return true;
@@ -275,13 +275,13 @@ bool CoordinateManager::writeCoordInfoToYaml(CoordInfo& info)
     coord_info_yaml_help_.setParam(coord_info_path + "/comment", info.comment);
     coord_info_yaml_help_.setParam(coord_info_path + "/group_id", info.group_id);
     std::string point_path = coord_info_path + std::string("/point");
-    coord_info_yaml_help_.setParam(point_path + "/x", info.data.position.x);
-    coord_info_yaml_help_.setParam(point_path + "/y", info.data.position.y);
-    coord_info_yaml_help_.setParam(point_path + "/z", info.data.position.z);
+    coord_info_yaml_help_.setParam(point_path + "/x", info.data.point_.x_);
+    coord_info_yaml_help_.setParam(point_path + "/y", info.data.point_.y_);
+    coord_info_yaml_help_.setParam(point_path + "/z", info.data.point_.z_);
     std::string euler_path = coord_info_path + std::string("/euler");
-    coord_info_yaml_help_.setParam(euler_path + "/a", info.data.orientation.a);
-    coord_info_yaml_help_.setParam(euler_path + "/b", info.data.orientation.b);
-    coord_info_yaml_help_.setParam(euler_path + "/c", info.data.orientation.c);
+    coord_info_yaml_help_.setParam(euler_path + "/a", info.data.euler_.a_);
+    coord_info_yaml_help_.setParam(euler_path + "/b", info.data.euler_.b_);
+    coord_info_yaml_help_.setParam(euler_path + "/c", info.data.euler_.c_);
     return coord_info_yaml_help_.dumpParamFile(coord_info_file_path_.c_str());
 }
 

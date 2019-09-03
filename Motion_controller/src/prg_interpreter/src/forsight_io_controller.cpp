@@ -67,7 +67,15 @@ static int get_num_token(char * src, char * dst)
 	return src - tmp ;
 }
 
-eval_value forgesight_get_io_status(char *name)
+/************************************************* 
+	Function:		forgesight_get_io_status
+	Description:	get io status.
+	Input:			name  - io name
+	Output: 		NULL
+	Return: 		io value
+*************************************************/ 
+eval_value forgesight_get_io_status(
+			struct thread_control_block* objThreadCntrolBlock, char *name)
 {	
 	bool bRet = false ;
 	eval_value value;
@@ -115,19 +123,35 @@ eval_value forgesight_get_io_status(char *name)
 	}
 	else if(!strcmp(io_name, TXT_DI))
 	{
+#ifdef WIN32
+		bRet = SUCCESS;
+#else
 		bRet = g_objRegManagerInterface->getDi(iIOIdx, iValue);
+#endif
 	}
 	else if(!strcmp(io_name, TXT_DO))
 	{
+#ifdef WIN32
+		bRet = SUCCESS;
+#else
 		bRet = g_objRegManagerInterface->getDo(iIOIdx, iValue);
+#endif
 	}
 	else if(!strcmp(io_name, TXT_RI))
 	{
+#ifdef WIN32
+		bRet = SUCCESS;
+#else
 		bRet = g_objRegManagerInterface->getRi(iIOIdx, iValue);
+#endif
 	}
 	else if(!strcmp(io_name, TXT_RO))
 	{
+#ifdef WIN32
+		bRet = SUCCESS;
+#else
 		bRet = g_objRegManagerInterface->getRo(iIOIdx, iValue);
+#endif
 	}
 	else if(!strcmp(io_name, TXT_SI))
 	{
@@ -145,14 +169,29 @@ eval_value forgesight_get_io_status(char *name)
 	{
 	//	bRet = g_objRegManagerInterface->getUo(iIOIdx, iValue);
 	}
+	FST_INFO("get_io status: %s:%d (%s) = %d.", io_name, iIOIdx, name, iValue);
+	
+	if(bRet != SUCCESS)
+	{
+		serror(objThreadCntrolBlock, 4) ; 
+	}
 	value.setFloatValue(iValue);
 	return value;
 }
 
-int forgesight_set_io_status(char *name, eval_value& valueStart)
+/************************************************* 
+	Function:		forgesight_set_io_status
+	Description:	set io status.
+	Input:			name  - io name
+	Input:			valueStart  - io value
+	Output: 		NULL
+	Return: 		0 - success , -1 - failed
+*************************************************/ 
+int forgesight_set_io_status(
+			struct thread_control_block* objThreadCntrolBlock,char *name, eval_value& valueStart)
 {
 	bool bRet = false ;
-	int iValue;
+//	int iValue;
 	char io_name[16] ;
 	char io_idx[16] ;
 	// char io_key_buffer[16] ;
@@ -185,7 +224,7 @@ int forgesight_set_io_status(char *name, eval_value& valueStart)
 	}
 	namePtr++ ;
 	
-	FST_INFO("set_io status: %s:%d (%s).", io_name, iIOIdx, name);
+	FST_INFO("set_io status: %s:%d (%s) = %d.", io_name, iIOIdx, name, (int)valueStart.getFloatValue());
 	if(!strcmp(io_name, TXT_AI))
 	{
 	//	bRet = g_objRegManagerInterface->setAi(iIOIdx, (int)valueStart.getFloatValue());
@@ -196,19 +235,41 @@ int forgesight_set_io_status(char *name, eval_value& valueStart)
 	}
 	else if(!strcmp(io_name, TXT_DI))
 	{
+#ifdef WIN32
+		bRet = SUCCESS;
+#else
 		bRet = g_objRegManagerInterface->setDi(iIOIdx, (int)valueStart.getFloatValue());
+#endif
 	}
 	else if(!strcmp(io_name, TXT_DO))
 	{
-		bRet = g_objRegManagerInterface->setDo(iIOIdx, (int)valueStart.getFloatValue());
+#ifdef WIN32
+		bRet = SUCCESS;
+#else
+		if(valueStart.getPulse() == true)
+			bRet = g_objRegManagerInterface->setDoPulse(iIOIdx, valueStart.getFloatValue());
+		else
+			bRet = g_objRegManagerInterface->setDo(iIOIdx, (int)valueStart.getFloatValue());
+#endif
 	}
 	else if(!strcmp(io_name, TXT_RI))
 	{
+#ifdef WIN32
+		bRet = SUCCESS;
+#else
 		bRet = g_objRegManagerInterface->setRi(iIOIdx, (int)valueStart.getFloatValue());
+#endif
 	}
 	else if(!strcmp(io_name, TXT_RO))
 	{
-		bRet = g_objRegManagerInterface->setRo(iIOIdx, (int)valueStart.getFloatValue());
+#ifdef WIN32
+		bRet = SUCCESS;
+#else
+		if(valueStart.getPulse() == true)
+			bRet = g_objRegManagerInterface->setRoPulse(iIOIdx, valueStart.getFloatValue());
+		else
+			bRet = g_objRegManagerInterface->setRo(iIOIdx, (int)valueStart.getFloatValue());
+#endif
 	}
 	else if(!strcmp(io_name, TXT_SI))
 	{
@@ -225,6 +286,11 @@ int forgesight_set_io_status(char *name, eval_value& valueStart)
 	else if(!strcmp(io_name, TXT_UO))
 	{
 	//	bRet = g_objRegManagerInterface->setUo(iIOIdx, (int)valueStart.getFloatValue());
+	}
+	
+	if(bRet != SUCCESS)
+	{
+		serror(objThreadCntrolBlock, 4) ; 
 	}
 	return 0;
 

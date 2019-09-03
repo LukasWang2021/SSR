@@ -248,5 +248,76 @@ void TpComm::handleRequest0x0000C2A7(int recv_bytes)
         recv_bytes,RequestMessageType_StringList_fields, -1);
 }
 
+//"/rpc/io_mapping/getUIByBit"
+void TpComm::handleRequest0x0000A9A4(int recv_bytes)
+{
+    // create object for request and response package
+    RequestMessageType_Int32* request_data_ptr = new RequestMessageType_Int32;
+    if(request_data_ptr == NULL)
+    {
+        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
+        FST_ERROR("handleRequest: can't allocate memory for request_data");
+        return;
+    }
+    ResponseMessageType_Uint64_Int32* response_data_ptr = new ResponseMessageType_Uint64_Int32;
+    if(response_data_ptr == NULL)
+    {
+        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
+        FST_ERROR("handleRequest: can't allocate memory for response_data");
+        delete request_data_ptr;
+        return;
+    }
+    
+    handleRequestPackage(0x0000A9A4, (void*)request_data_ptr, (void*)response_data_ptr, 
+        recv_bytes, RequestMessageType_Int32_fields, -1);
+}
+
+//"/rpc/io_mapping/setUIByBit"
+void TpComm::handleRequest0x00017044(int recv_bytes)
+{
+    // create object for request and response package
+    RequestMessageType_Int32List* request_data_ptr = new RequestMessageType_Int32List;
+    if(request_data_ptr == NULL)
+    {
+        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
+        FST_ERROR("handleRequest: can't allocate memory for request_data");
+        return;
+    }
+    ResponseMessageType_Uint64* response_data_ptr = new ResponseMessageType_Uint64;
+    if(response_data_ptr == NULL)
+    {
+        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
+        FST_ERROR("handleRequest: can't allocate memory for response_data");
+        delete request_data_ptr;
+        return;
+    }
+
+    handleRequestPackage(0x00017044, (void*)request_data_ptr, (void*)response_data_ptr, 
+        recv_bytes, RequestMessageType_Int32List_fields, -1);
+}
+
+//"/rpc/io_mapping/getUOByBit"
+void TpComm::handleRequest0x000002C4(int recv_bytes)
+{
+    // create object for request and response package
+    RequestMessageType_Int32* request_data_ptr = new RequestMessageType_Int32;
+    if(request_data_ptr == NULL)
+    {
+        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
+        FST_ERROR("handleRequest: can't allocate memory for request_data");
+        return;
+    }
+    ResponseMessageType_Uint64_Int32* response_data_ptr = new ResponseMessageType_Uint64_Int32;
+    if(response_data_ptr == NULL)
+    {
+        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
+        FST_ERROR("handleRequest: can't allocate memory for response_data");
+        delete request_data_ptr;
+        return;
+    }
+    
+    handleRequestPackage(0x000002C4, (void*)request_data_ptr, (void*)response_data_ptr, 
+        recv_bytes, RequestMessageType_Int32_fields, -1);
+}
 
 

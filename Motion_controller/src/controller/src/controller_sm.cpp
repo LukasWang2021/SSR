@@ -6,12 +6,16 @@
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <string>
+#include <sstream>
+#include "basic_alg_datatype.h"
+#include "basic_constants.h"
 
 
 using namespace fst_ctrl;
 using namespace fst_base;
 using namespace fst_mc;
 using namespace fst_hal;
+using namespace basic_alg;
 
 ControllerSm::ControllerSm():
     log_ptr_(NULL),
@@ -21,7 +25,10 @@ ControllerSm::ControllerSm():
     device_manager_ptr_(NULL),
     safety_device_ptr_(NULL),
     modbus_manager_ptr_(NULL),
+    io_mapping_ptr_(NULL),
+    program_launching_ptr_(NULL),
     user_op_mode_(USER_OP_MODE_AUTO),
+    pre_user_op_mode_(USER_OP_MODE_AUTO),
     running_state_(RUNNING_STATUS_LIMITED),
     interpreter_state_(INTERPRETER_IDLE),
     robot_state_(ROBOT_IDLE),
@@ -30,18 +37,19 @@ ControllerSm::ControllerSm():
     safety_alarm_(0),
     ctrl_reset_count_(0),
     robot_state_timeout_count_(100000),
-    init_state_(false),
-    enable_macro_launching_(false),
+    valid_state_(false),
+    program_code_(0),
     interpreter_warning_code_(0),
     error_level_(0),
     is_error_exist_(false),
+    ui_servo_enable_(false),
+    uo_cmd_enable_(false),
     is_continuous_manual_move_timeout_(false),
     is_unknown_user_op_mode_exist_(false),
     is_instruction_available_(false)
 {
     memset(&last_continuous_manual_move_rpc_time_, 0, sizeof(struct timeval));
     memset(&last_unknown_user_op_mode_time_, 0, sizeof(struct timeval));
-    memset(&modbus_last_scan_time_, 0, sizeof(struct timeval));
     memset(&instruction_, 0, sizeof(Instruction));
 }
 
@@ -52,7 +60,8 @@ ControllerSm::~ControllerSm()
 
 void ControllerSm::init(fst_log::Logger* log_ptr, ControllerParam* param_ptr, fst_mc::MotionControl* motion_control_ptr, 
                             VirtualCore1* virtual_core1_ptr, ControllerClient* controller_client_ptr, 
-                            fst_hal::DeviceManager* device_manager_ptr)
+                            fst_hal::DeviceManager* device_manager_ptr, fst_ctrl::IoMapping* io_mapping_ptr,
+                            ProgramLaunching* program_launching_ptr)
 {
     log_ptr_ = log_ptr;
     param_ptr_ = param_ptr;
@@ -60,6 +69,8 @@ void ControllerSm::init(fst_log::Logger* log_ptr, ControllerParam* param_ptr, fs
     virtual_core1_ptr_ = virtual_core1_ptr;
     controller_client_ptr_ = controller_client_ptr;
     device_manager_ptr_ =device_manager_ptr;
+    io_mapping_ptr_ = io_mapping_ptr;
+    program_launching_ptr_ = program_launching_ptr;
 
     // get the safety device ptr.
     std::vector<fst_hal::DeviceInfo> device_list = device_manager_ptr_->getDeviceList();
@@ -85,6 +96,9 @@ void ControllerSm::init(fst_log::Logger* log_ptr, ControllerParam* param_ptr, fs
 
     // init the timeout param of robot_state_
     robot_state_timeout_count_ = param_ptr_->robot_state_timeout_ / param_ptr_->routine_cycle_time_;
+
+    //init UO
+    setUoAllOff();
 }
 
 ControllerParam* ControllerSm::getParam()
@@ -102,9 +116,10 @@ void ControllerSm::processStateMachine()
     transferRobotState();
     processMacroLaunching();
     processModbusClientList();
+    processUIUO();
 }
 
-fst_ctrl::UserOpMode ControllerSm::getUserOpMode()
+fst_hal::UserOpMode ControllerSm::getUserOpMode()
 {
     return user_op_mode_;
 }
@@ -139,16 +154,17 @@ int ControllerSm::getSafetyAlarm()
     return safety_alarm_;
 }
 
-bool ControllerSm::getEnableMacroLaunching()
+ErrorCode ControllerSm::setUserOpMode(fst_hal::UserOpMode mode)
 {
-    return enable_macro_launching_;
-}
+    // the function should be called when Safety_Board is not existed and for TP_simulation
+    if (safety_device_ptr_->isValid())
+    {
+        return CONTROLLER_INVALID_OPERATION;
+    }
 
-ErrorCode ControllerSm::setUserOpMode(fst_ctrl::UserOpMode mode)
-{
     if(mode == USER_OP_MODE_AUTO
         || mode == USER_OP_MODE_SLOWLY_MANUAL
-        || mode == USER_OP_MODE_UNLIMITED_MANUAL)
+        || mode == USER_OP_MODE_MANUAL)
     {
         user_op_mode_ = mode;
         return SUCCESS;
@@ -159,7 +175,7 @@ ErrorCode ControllerSm::setUserOpMode(fst_ctrl::UserOpMode mode)
     }
 }
 
-bool ControllerSm::checkOffsetState()
+ErrorCode ControllerSm::checkOffsetState()
 {
     CalibrateState calib_state;
     OffsetState offset_state[NUM_OF_JOINT];
@@ -167,22 +183,22 @@ bool ControllerSm::checkOffsetState()
     ErrorCode error_code = motion_control_ptr_->checkOffset(calib_state, offset_state);
     if (error_code != SUCCESS)
     {
-        return false;
+        return error_code;
     }
 
     if(calib_state != MOTION_NORMAL)
     {
-        for(int i=0; i<NUM_OF_JOINT; ++i)
+        for(int i=0; i < JOINT_OF_ARM; ++i)
         {
             if(offset_state[i] == OFFSET_LOST)
             {
-                std::string log_str("offset lost: joint ");
+                std::string log_str("");
                 log_str.append(std::to_string(i+1));
                 recordLog(ZERO_OFFSET_LOST, log_str);
             }
             else if(offset_state[i] == OFFSET_DEVIATE)
             {
-                std::string log_str("offset deviate: joint ");
+                std::string log_str("");
                 log_str.append(std::to_string(i+1));
                 recordLog(ZERO_OFFSET_DEVIATE, log_str);
             }
@@ -190,11 +206,11 @@ bool ControllerSm::checkOffsetState()
     
         if(calib_state == MOTION_FORBIDDEN)
         {
-            return false;
+            return CONTROLLER_OFFSET_NEED_CALIBRATE;
         }
     }
     
-    return true;
+    return SUCCESS;
 }
 
 ErrorCode ControllerSm::callEstop()
@@ -203,46 +219,85 @@ ErrorCode ControllerSm::callEstop()
         || ctrl_state_ == CTRL_ESTOP_TO_ENGAGED
         || ctrl_state_ == CTRL_INIT)
     {
-    
+        safety_device_ptr_->setDOType0Stop(1);
         controller_client_ptr_->abort();
         motion_control_ptr_->stopGroup();
         motion_control_ptr_->abortMove();
-        FST_INFO("---callEstop: ctrl_state-->CTRL_ANY_TO_ESTOP");
+        recordLog("Controller transfer to ANY_TO_ESTOP by rpc-callEstop");
         ctrl_state_ = CTRL_ANY_TO_ESTOP;
+        return SUCCESS;
     } 
-   
-    return SUCCESS;
+    return CONTROLLER_INVALID_OPERATION;
 }
 
 ErrorCode ControllerSm::callReset()
 {
-    if(init_state_ == false)
-        return SUCCESS;
+    recordLog(INFO_RESET_SUCCESS);
+    if(valid_state_ == false)
+        return CONTROLLER_INVALID_OPERATION_RESET;
+
+    if (ui_servo_enable_ == false)
+        return UI_SERVO_ENABLE_OFF;
 
     if(ctrl_state_ == CTRL_ESTOP
         || ctrl_state_ == CTRL_INIT)
     {
         is_unknown_user_op_mode_exist_ = false;
+        is_error_exist_ = false;
         ErrorMonitor::instance()->clear();
-        motion_control_ptr_->resetGroup();
         clearInstruction();
-        safety_device_ptr_->reset();
-        ctrl_reset_count_ =  param_ptr_->reset_max_time_ / param_ptr_->routine_cycle_time_;
-        if(checkOffsetState())
-        {
-            //FST_INFO("---callReset: ctrl_state-->CTRL_ESTOP_TO_ENGAGED");
-            ctrl_state_ = CTRL_ESTOP_TO_ENGAGED;
-        }
-        else
+        ErrorCode error_code = checkOffsetState();
+        if(error_code != SUCCESS)
         {
             controller_client_ptr_->abort();
             motion_control_ptr_->stopGroup();
             motion_control_ptr_->abortMove();
-            FST_ERROR("controller check offset failed");
+            recordLog("Controller transfer to ANY_TO_ESTOP for offset failure when reset");
             ctrl_state_ = CTRL_ANY_TO_ESTOP;
+            return error_code;
         }
+
+        //check safety_board status
+        safety_device_ptr_->reset();
+        if (safety_device_ptr_->checkSafetyBoardAlarm())
+        {
+            return CONTROLLER_SAFETY_NOT_READY;
+        }
+        error_code = safety_device_ptr_->checkDeadmanNormal();
+        if (error_code != SUCCESS)
+        {
+            return SAFETY_BOARD_DEADMAN_NORMAL_INFO;
+        }
+
+        //check io_board
+        std::vector<fst_hal::DeviceInfo> device_list = device_manager_ptr_->getDeviceList();
+        for(unsigned int i = 0; i < device_list.size(); ++i)
+        {
+            if (device_list[i].type == DEVICE_TYPE_FST_IO)
+            {
+                BaseDevice* device_ptr = device_manager_ptr_->getDevicePtrByDeviceIndex(device_list[i].index);
+                if (device_ptr == NULL) continue;
+                FstIoDevice* io_device_ptr = static_cast<FstIoDevice*>(device_ptr);
+                bool ret = io_device_ptr->isValid();
+                if (ret != true)
+                {
+                    ErrorMonitor::instance()->add(IO_DEVICE_UNFOUND);
+                    return IO_DEVICE_UNFOUND;
+                }                
+            }
+        }
+
+        recordLog("Controller transfer to ESTOP_TO_ENGAGED by rpc-callReset");
+        //ErrorMonitor::instance()->add(INFO_RESET_SUCCESS);//delete
+        ctrl_state_ = CTRL_ESTOP_TO_ENGAGED;  
+        usleep(10000);//reset safety_board bit before sending RESET to bare_core.
+        motion_control_ptr_->resetGroup();  
+        ctrl_reset_count_ =  param_ptr_->reset_max_time_ / param_ptr_->routine_cycle_time_;  
+
+        setUoFaultOff();//UO[3]=off
+        return SUCCESS;  
     }
-    return SUCCESS;
+    return CONTROLLER_INVALID_OPERATION_RESET;
 }
 
 ErrorCode ControllerSm::callShutdown()
@@ -258,10 +313,31 @@ ErrorCode ControllerSm::callShutdown()
     }
 }
 
+void ControllerSm::setSafetyStop(ErrorCode error_code)
+{
+    //STOP process: write bit to the safety_board.
+    if (ErrorMonitor::instance()->isCore0Error(error_code))
+    {
+        int level = ErrorMonitor::instance()->getErrorLevel(error_code);
+        // define error type to stop(0,1,2)
+        if (level == 7 || level == 10 || level == 11)
+        {
+            is_error_exist_ = true;
+            safety_device_ptr_->setDOType0Stop(1);
+        } 
+        else if (level >= 4)
+        {
+            is_error_exist_ = true;
+            safety_device_ptr_->setDOType1Stop(1);
+        }
+    }
+}
+
 void ControllerSm::transferRobotStateToTeaching()
 {
     if(robot_state_ == ROBOT_IDLE)
     {
+        recordLog("Robot transfer from IDLE to IDLE_TO_TEACHING");
         robot_state_ = ROBOT_IDLE_TO_TEACHING;
     }
 }
@@ -270,6 +346,7 @@ void ControllerSm::transferRobotStateToRunning()
 {
     if(robot_state_ == ROBOT_IDLE)
     {
+        recordLog("Robot transfer from IDLE to IDLE_TO_RUNNING");
         robot_state_ = ROBOT_IDLE_TO_RUNNING;
     }
 }
@@ -319,7 +396,7 @@ bool ControllerSm::isNextInstructionNeeded()
     }
 }
 
-fst_ctrl::UserOpMode* ControllerSm::getUserOpModePtr()
+fst_hal::UserOpMode* ControllerSm::getUserOpModePtr()
 {
     return &user_op_mode_;
 }
@@ -354,9 +431,15 @@ int* ControllerSm::getSafetyAlarmPtr()
     return &safety_alarm_;
 }
 
+
 void ControllerSm::processInterpreter()
 {
     interpreter_state_ = (fst_ctrl::InterpreterState)controller_client_ptr_->getInterpreterPublishPtr()->status;
+    std::string name = controller_client_ptr_->getInterpreterPublishPtr()->program_name;
+    if (strcasecmp(name.c_str(), "") != 0)
+    {
+        program_name_ = name;
+    }
 
     if(interpreter_state_ == INTERPRETER_EXECUTE)
     {
@@ -382,28 +465,12 @@ void ControllerSm::processInterpreter()
                 }
                 case SET_OVC:
                 {//FST_ERROR("---Instruction SetOvc");
-                    if(user_op_mode_ == USER_OP_MODE_SLOWLY_MANUAL
-                        && instruction_.current_ovc > param_ptr_->max_limited_global_vel_ratio_)
-                    {
-                        error_code = motion_control_ptr_->setGlobalVelRatio(param_ptr_->max_limited_global_vel_ratio_);
-                    }
-                    else
-                    {
-                        error_code = motion_control_ptr_->setGlobalVelRatio(instruction_.current_ovc);
-                    }
+                    error_code = motion_control_ptr_->setGlobalVelRatio(instruction_.current_ovc);
                     break;
                 }
                 case SET_OAC:
                 {//FST_ERROR("---Instruction SetOac");
-                    if(user_op_mode_ == USER_OP_MODE_SLOWLY_MANUAL
-                        && instruction_.current_oac > param_ptr_->max_limited_global_acc_ratio_)
-                    {
-                        error_code = motion_control_ptr_->setGlobalAccRatio(param_ptr_->max_limited_global_acc_ratio_);
-                    }
-                    else
-                    {
-                        error_code = motion_control_ptr_->setGlobalAccRatio(instruction_.current_oac);
-                    }
+                    error_code = motion_control_ptr_->setGlobalAccRatio(instruction_.current_oac);
                     break;
                 }
                 default:
@@ -422,7 +489,7 @@ void ControllerSm::processInterpreter()
 void ControllerSm::processSafety()
 {
     // safety signal process 
-    if(!param_ptr_->is_simmulation_)
+    if(safety_device_ptr_->isValid())
     {
         struct timeval current_time;
         gettimeofday(&current_time, NULL);
@@ -444,7 +511,60 @@ void ControllerSm::processSafety()
             last_unknown_user_op_mode_time_.tv_usec = current_time.tv_usec;
         }
         
-        safety_alarm_ = safety_device_ptr_->getDIAlarm();
+        //set vel=10% if change from manual to auto mode.
+        if (pre_user_op_mode_ != USER_OP_MODE_AUTO &&  user_op_mode_ == USER_OP_MODE_AUTO)
+        {
+            motion_control_ptr_->setGlobalVelRatio(param_ptr_->max_limited_global_vel_ratio_);
+        }
+
+        //check safety_board status
+        safety_device_ptr_->checkSafetyBoardAlarm();
+        //check deadman normal and key switch under engage.
+        if (ctrl_state_ == CTRL_ENGAGED)
+        {
+            if (pre_user_op_mode_ != user_op_mode_)
+            {
+                ErrorMonitor::instance()->add(SAFETY_BOARD_KEY_SWITCH_UNDER_ENGAGED); 
+            }
+            ErrorCode result = safety_device_ptr_->checkDeadmanNormal();
+            if (result != SUCCESS && pre_user_op_mode_ == user_op_mode_)
+            {
+                ErrorMonitor::instance()->add(result);
+            }
+        }
+        pre_user_op_mode_ = user_op_mode_;
+
+        //get the safety_board alarm for TP
+        safety_alarm_ = safety_device_ptr_->getExcitorStop();
+        //get the cabinet reset
+        if (safety_device_ptr_->isCabinetResetRequest())
+        {
+            if (callReset() == SUCCESS)
+            {
+                ErrorMonitor::instance()->add(INFO_RESET_SUCCESS);//info tp to clear its errors.
+            }
+            ErrorMonitor::instance()->add(SAFETY_BOARD_CABINET_RESET);
+        }
+
+        //DO output according to the user mode.
+        uint32_t port_offset = 0;
+        uint8_t value = 0;
+        bool ret = safety_device_ptr_->getAutoModeDo(port_offset, value);
+        if (ret == true)
+        {
+            io_mapping_ptr_->setDOByBit(port_offset, value);
+        }
+        ret = safety_device_ptr_->getLimitedManualModeDo(port_offset, value);
+        if (ret == true)
+        {
+            io_mapping_ptr_->setDOByBit(port_offset, value);
+        }
+        ret = safety_device_ptr_->getManualModeDo(port_offset, value);
+        if (ret == true)
+        {
+            io_mapping_ptr_->setDOByBit(port_offset, value);
+        }
+
     }
     else
     {
@@ -452,6 +572,7 @@ void ControllerSm::processSafety()
     }
 
     // business logic process
+    /*
     if(user_op_mode_ == USER_OP_MODE_SLOWLY_MANUAL)
     {
         ErrorCode error_code;
@@ -471,21 +592,16 @@ void ControllerSm::processSafety()
                 ErrorMonitor::instance()->add(error_code);
             }
         }            
-    }    
+    }  
+    */  
 }
 
 void ControllerSm::processError()
 {
-    
     error_level_ = ErrorMonitor::instance()->getWarningLevel();
-    if(error_level_ >= 4
-        || safety_alarm_ != 0)
+    if(error_level_ >= 4)
     {
         is_error_exist_ = true;
-    }
-    else
-    {
-        is_error_exist_ = false;
     }
 
     ErrorCode error_code;
@@ -498,6 +614,15 @@ void ControllerSm::processError()
 void ControllerSm::transferServoState()
 {
     servo_state_ = motion_control_ptr_->getServoState();
+    //UO[5]Servo_Status is off if servo_off
+    if(servo_state_ == SERVO_DISABLE)
+    {
+        setUoServoOff();
+    }
+    else if(servo_state_ == SERVO_IDLE)
+    {
+        setUoServoOn();
+    }
     //servo_state_ = (ServoState)virtual_core1_ptr_->getServoState();
     if(ctrl_state_ == CTRL_ENGAGED
         && servo_state_ != SERVO_IDLE
@@ -528,9 +653,11 @@ void ControllerSm::transferCtrlState()
             if(robot_state_ == ROBOT_IDLE
                 && servo_state_ != SERVO_RUNNING)
             {
-                motion_control_ptr_->saveJoint();
-                recordLog("Controller transfer to ESTOP");
+                //motion_control_ptr_->saveJoint();
+                recordLog("Controller transfer from ANY_TO_ESTOP to ESTOP");
                 ctrl_state_ = CTRL_ESTOP;
+                setUoPausedOff();//UO[2]=off
+                setUoProgramRunOff();//UO[4]=off
             }
             break;
         case CTRL_ESTOP_TO_ENGAGED:
@@ -538,20 +665,20 @@ void ControllerSm::transferCtrlState()
                 && servo_state_ == SERVO_IDLE
                 && !is_error_exist_)
             {
-                recordLog("Controller transfer to ENGAGED");
+                recordLog("Controller transfer from ESTOP_TO_ENGAGED to ENGAGED");
                 ctrl_state_ = CTRL_ENGAGED;
             }
             else if((--ctrl_reset_count_) < 0)
             {
-                recordLog("Controller transfer to ESTOP");
+                recordLog("Controller transfer from ESTOP_TO_ENGAGED to ESTOP for reset timeout");
                 ctrl_state_ = CTRL_ESTOP;
             }
             break;
         case CTRL_ESTOP_TO_TERMINATE:
             if(robot_state_ == ROBOT_IDLE)
             {
-                motion_control_ptr_->saveJoint();
-                recordLog("Controller transfer to TERMINATED");
+                //motion_control_ptr_->saveJoint();
+                recordLog("Controller transfer from ESTOP_TO_TERMINATE to TERMINATED");
                 ctrl_state_ = CTRL_TERMINATED;
                 shutdown();
             }
@@ -562,6 +689,7 @@ void ControllerSm::transferCtrlState()
                 controller_client_ptr_->abort();
                 motion_control_ptr_->stopGroup();
                 motion_control_ptr_->abortMove();
+                recordLog("Controller transfer from ENGAGED to CTRL_ANY_TO_ESTOP");
                 ctrl_state_ = CTRL_ANY_TO_ESTOP;
             }
             break;
@@ -580,22 +708,22 @@ void ControllerSm::transferRobotState()
         case ROBOT_IDLE_TO_RUNNING:
             if(is_error_exist_)
             {
-                recordLog("Robot transfer to RUNNING_TO_IDLE");
+                recordLog("Robot transfer from IDLE_TO_RUNNING to RUNNING_TO_IDLE for error");
                 robot_state_ = ROBOT_RUNNING_TO_IDLE;
             }
             else if(interpreter_state_ == INTERPRETER_EXECUTE)
             {
-                recordLog("Robot transfer to RUNNING");
+                recordLog("Robot transfer from IDLE_TO_RUNNING to RUNNING");
                 robot_state_ = ROBOT_RUNNING;
             }
             else if((--robot_state_timeout_count_) < 0)
             {
-                recordLog("Robot transfer to RUNNING_TO_IDLE");
+                recordLog("Robot transfer from IDLE_TO_RUNNING to RUNNING_TO_IDLE for timeout");
                 robot_state_ = ROBOT_RUNNING_TO_IDLE;
             }
             break;
         case ROBOT_IDLE_TO_TEACHING:
-            recordLog("Robot transfer to TEACHING");
+            FST_INFO("Robot transfer from IDLE_TO_TEACHING to TEACHING");//record_log will delay 
             robot_state_ = ROBOT_TEACHING;
             break;
         case ROBOT_RUNNING_TO_IDLE:
@@ -603,8 +731,9 @@ void ControllerSm::transferRobotState()
                 && servo_state_ != SERVO_RUNNING)
             {
                 robot_state_timeout_count_ = param_ptr_->robot_state_timeout_ / param_ptr_->routine_cycle_time_;
-                recordLog("Robot transfer to IDLE");
+                recordLog("Robot transfer from RUNNING_TO_IDLE to IDLE");
                 robot_state_ = ROBOT_IDLE;
+                setUoProgramRunOff();//UO[4]=off
             }
             break;
         case ROBOT_TEACHING_TO_IDLE:
@@ -613,13 +742,14 @@ void ControllerSm::transferRobotState()
                 is_continuous_manual_move_timeout_ = false;
                 memset(&last_continuous_manual_move_rpc_time_, 0, sizeof(struct timeval));
                 robot_state_timeout_count_ = param_ptr_->robot_state_timeout_ / param_ptr_->routine_cycle_time_;
-                recordLog("Robot transfer to IDLE");
+                recordLog("Robot transfer from TEACHING_TO_IDLE to IDLE");
                 robot_state_ = ROBOT_IDLE;
             }
             break;
         case ROBOT_RUNNING:
             if(interpreter_state_ != INTERPRETER_EXECUTE)
             {
+                recordLog("Robot transfer from RUNNING to RUNNING_TO_IDLE");
                 robot_state_ = ROBOT_RUNNING_TO_IDLE;
             }
             break;
@@ -630,7 +760,8 @@ void ControllerSm::transferRobotState()
                 if (group_state == fst_mc::STANDBY || group_state == fst_mc::DISABLE)
                 //if(virtual_core1_ptr_->getArmState() == 1)
                 {
-                     robot_state_ = ROBOT_TEACHING_TO_IDLE;
+                    recordLog("Robot transfer from TEACHING to TEACHING_TO_IDLE");
+                    robot_state_ = ROBOT_TEACHING_TO_IDLE;
                 }
                 break;
             }
@@ -663,9 +794,9 @@ void ControllerSm::shutdown()
 	}
 	else
 	{
-		int *pshutdown;
-		pshutdown = (int *)((uint8_t*)ptrshutdown + 0x0020);
-		*pshutdown = 1;
+		uint32_t *pshutdown;
+		pshutdown = (uint32_t *)((uint8_t*)ptrshutdown + 0x0020);
+		*pshutdown |= (1 << 1);
 	}
 
 	system("shutdown -h now");
@@ -673,17 +804,92 @@ void ControllerSm::shutdown()
 
 void ControllerSm::processMacroLaunching()
 {
-    if (interpreter_state_ == INTERPRETER_IDLE
+    int enable_macro_launching = false;
+    if (user_op_mode_ == USER_OP_MODE_AUTO
+        && interpreter_state_ == INTERPRETER_IDLE
         && ctrl_state_ == CTRL_ENGAGED
         && robot_state_ == ROBOT_IDLE)
     {
-        enable_macro_launching_ = true;
+        if(program_launching_ptr_->processMacro())
+        {
+            transferRobotStateToRunning();
+        }
     }
     else
     {
-        enable_macro_launching_ = false;
+        return;
     }
 }
+
+void ControllerSm::processModbusClientList()
+{
+    ErrorCode error_code = modbus_manager_ptr_->scanAllClientDataArea();
+    if (error_code != SUCCESS)
+    {
+        ErrorMonitor::instance()->add(error_code);
+    }
+}
+
+
+void ControllerSm::setUoEnableOn(void)
+{
+    io_mapping_ptr_->setUOByBit(static_cast<uint32_t>(UO_CMD_ENABLE), 1);
+    uo_cmd_enable_ = true;
+}
+
+void ControllerSm::setUoEnableOff(void)
+{
+    io_mapping_ptr_->setUOByBit(static_cast<uint32_t>(UO_CMD_ENABLE), 0);
+    uo_cmd_enable_ = false;
+}
+
+void ControllerSm::setUoPausedOn(void)
+{
+    io_mapping_ptr_->setUOByBit(static_cast<uint32_t>(UO_PAUSED), 1);
+}
+
+void ControllerSm::setUoPausedOff(void)
+{
+    io_mapping_ptr_->setUOByBit(static_cast<uint32_t>(UO_PAUSED), 0);
+}
+
+void ControllerSm::setUoFaultOn(void)
+{
+    io_mapping_ptr_->setUOByBit(static_cast<uint32_t>(UO_FAULT), 1);
+}
+
+void ControllerSm::setUoFaultOff(void)
+{
+    io_mapping_ptr_->setUOByBit(static_cast<uint32_t>(UO_FAULT), 0);
+}
+
+void ControllerSm::setUoProgramRunOn(void)
+{
+    io_mapping_ptr_->setUOByBit(static_cast<uint32_t>(UO_PROGRAM_RUNNING), 1);
+}
+void ControllerSm::setUoProgramRunOff(void)
+{
+    io_mapping_ptr_->setUOByBit(static_cast<uint32_t>(UO_PROGRAM_RUNNING), 0);
+}
+
+void ControllerSm::setUoServoOn(void)
+{
+    io_mapping_ptr_->setUOByBit(static_cast<uint32_t>(UO_SERVO_STATUS), 1);
+}
+void ControllerSm::setUoServoOff(void)
+{
+    io_mapping_ptr_->setUOByBit(static_cast<uint32_t>(UO_SERVO_STATUS), 0);
+}
+
+void ControllerSm::setUoAllOff(void)
+{
+    setUoEnableOff();
+    setUoPausedOff();
+    setUoFaultOff();
+    setUoProgramRunOff();
+    setUoServoOff();
+}
+
 
 long long ControllerSm::computeTimeElapse(struct timeval &current_time, struct timeval &last_time)
 {
@@ -733,54 +939,6 @@ void ControllerSm::handleContinuousManualRpcTimeout()
 }
 
 
-void ControllerSm::processModbusClientList()
-{
-    if (modbus_manager_ptr_->getStartMode() != MODBUS_CLIENT)
-    {
-        return;
-    }
-
-    if(modbus_last_scan_time_.tv_sec == 0
-        && modbus_last_scan_time_.tv_usec == 0)
-    {
-        gettimeofday(&modbus_last_scan_time_, NULL);
-    }
-
-    vector<int> id_list;
-    id_list.clear();
-    modbus_manager_ptr_->getConnectedClientIdList(id_list);
-    for (vector<int>::iterator it = id_list.begin(); it != id_list.end(); it++)
-    {
-        bool is_connected = false;
-        modbus_manager_ptr_->isConnected(*it, is_connected);
-        if (!is_connected) return;
-
-        int scan_rate = 0;
-        ErrorCode error_code = modbus_manager_ptr_->getClientScanRate(*it, scan_rate);
-        if (error_code != SUCCESS)
-        {
-            ErrorMonitor::instance()->add(error_code);
-            return;
-        }
-
-        struct timeval current_time;
-        gettimeofday(&current_time, NULL);
-        long long time_elapse = computeTimeElapse(current_time, modbus_last_scan_time_);
-        int scan_elapse = (int)(time_elapse/1000);
-
-        if (scan_rate < scan_elapse)
-        {
-            ErrorCode error_code = modbus_manager_ptr_->scanClientDataArea(*it);
-            if (error_code != SUCCESS)
-                ErrorMonitor::instance()->add(error_code);
-
-            modbus_last_scan_time_ = current_time;
-            gettimeofday(&current_time, NULL);
-            return;
-        }
-    }
-}
-
 void ControllerSm::clearInstruction()
 {
     is_instruction_available_ = false;
@@ -789,27 +947,58 @@ void ControllerSm::clearInstruction()
 
 void ControllerSm::recordLog(std::string log_str)
 {
+    std::stringstream stream;
+    stream<<"Log_Code: 0x"<<std::hex<<CONTROLLER_LOG<<" : "<<log_str;
+    FST_INFO(stream.str().c_str());
+
     ServerAlarmApi::GetInstance()->sendOneAlarm(CONTROLLER_LOG, log_str);
 }
 
 void ControllerSm::recordLog(ErrorCode error_code)
 {
+    std::stringstream stream;
+    stream<<"Log_Code: 0x"<<std::hex<<error_code;
+    int level = ErrorMonitor::instance()->getErrorLevel(error_code);
+    if (level >= 4)
+    {
+        FST_ERROR(stream.str().c_str());
+    }
+    else
+    {
+        FST_WARN(stream.str().c_str());
+    }
+
+    setSafetyStop(error_code);
+
     ServerAlarmApi::GetInstance()->sendOneAlarm(error_code);
 }
 
 void ControllerSm::recordLog(ErrorCode error_code, std::string log_str)
 {
+    std::stringstream stream;
+    stream<<"Log_Code: 0x"<<std::hex<<error_code<<" : "<<log_str;
+    int level = ErrorMonitor::instance()->getErrorLevel(error_code);
+    if (level >= 4)
+    {
+        FST_ERROR(stream.str().c_str());
+    }
+    else
+    {
+        FST_WARN(stream.str().c_str());
+    }
+    setSafetyStop(error_code);
+
     ServerAlarmApi::GetInstance()->sendOneAlarm(error_code, log_str);
 }
 
-void ControllerSm::setInitState(bool state)
+void ControllerSm::setState(bool state)
 {
-    init_state_ = state;
+    valid_state_ = state;
 }
 
-bool ControllerSm::getInitState()
+bool ControllerSm::getState()
 {
-    return init_state_;
+    return valid_state_;
 } 
 
 

@@ -24,6 +24,8 @@ set(catkin_INCLUDE_DIRS
     ${depend_PATH_INC}/parameter_manager/include
     ${depend_PATH_INC}/log_manager/include
     ${depend_PATH_INC}/fst_io_device/include
+    ${depend_PATH_INC}/basic_alg/include
+    ${depend_PATH_INC}/error_monitor/include
 )
 
 catkin_package(
@@ -32,6 +34,7 @@ catkin_package(
     DEPENDS base_device
     DEPENDS parameter_manager
     DEPENDS log_manager
+    DEPENDS error_monitor
 )
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -g -Wno-unused-but-set-variable -Wno-unused-local-typedefs -O0 -fpermissive -DPB_FIELD_32BIT -DSIMMULATION -DPRINT")
@@ -51,6 +54,7 @@ add_library(virtual_io_device
 target_link_libraries(virtual_io_device
     ${catkin_LIBRARIES}
     base_device
+    error_monitor
 )
 
 install(TARGETS virtual_io_device

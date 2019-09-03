@@ -19,9 +19,9 @@ void InterpreterServer::handleResponseStart(std::vector<ProcessCommRequestRespon
 }
 
 // Debug
-void InterpreterServer::handleResponseDebug(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size)
+void InterpreterServer::handleResponseLaunch(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size)
 {
-    copyResponseDataToSendBuffer(INTERPRETER_SERVER_CMD_DEBUG, task->response_data_ptr, sizeof(bool), send_buffer_size);
+    copyResponseDataToSendBuffer(INTERPRETER_SERVER_CMD_LAUNCH, task->response_data_ptr, sizeof(bool), send_buffer_size);
     if(task->request_data_ptr != NULL)
     {
         delete[] (char*)task->request_data_ptr;
@@ -130,33 +130,17 @@ void InterpreterServer::handleResponseGetNextInstruction(std::vector<ProcessComm
     }
 }
 
-// SetAutoStartMode
-void InterpreterServer::handleResponseSetAutoStartMode(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size)
+// CodeStart
+void InterpreterServer::handleResponseCodeStart(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size)
 {
-    copyResponseDataToSendBuffer(INTERPRETER_SERVER_CMD_SET_AUTO_START_MODE, task->response_data_ptr, sizeof(bool), send_buffer_size);
+    copyResponseDataToSendBuffer(INTERPRETER_SERVER_CMD_CODE_START, task->response_data_ptr, sizeof(bool), send_buffer_size);
     if(task->request_data_ptr != NULL)
     {
-        delete (int*)task->request_data_ptr;
+        delete[] (char*)task->request_data_ptr;
     }
     if(task->response_data_ptr != NULL)
     {
         delete (bool*)task->response_data_ptr;
     }
 }
-
-// SwitchStep
-void InterpreterServer::handleResponseSwitchStep(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size)
-{
-    copyResponseDataToSendBuffer(INTERPRETER_SERVER_CMD_SWITCH_STEP, task->response_data_ptr, sizeof(bool), send_buffer_size);
-    if(task->request_data_ptr != NULL)
-    {
-        delete (int*)task->request_data_ptr;
-    }
-    if(task->response_data_ptr != NULL)
-    {
-        delete (bool*)task->response_data_ptr;
-    }
-}
-
-
 

@@ -14,9 +14,12 @@
 #include "process_comm.h"
 #include "motion_control.h"
 #include "serverAlarmApi.h"
-#include "io_mapping.h"//feng add for mapping.
+#include "io_mapping.h"
 #include "program_launching.h"
 #include "file_manager.h"
+#include "system_manager.h"
+#include "param_manager.h"
+#include "device_version.h"
 #include <vector>
 
 namespace fst_ctrl
@@ -32,7 +35,7 @@ public:
                     CoordinateManager* coordinate_manager_ptr, RegManager* reg_manager_ptr, fst_hal::DeviceManager* device_manager_ptr, 
                     fst_mc::MotionControl* motion_control_ptr, fst_base::ControllerClient* controller_client_ptr,
                     IoMapping* io_mapping_ptr, fst_hal::IoManager* io_manager_ptr, ProgramLaunching* program_launching, 
-                    fst_base::FileManager* file_manager);
+                    fst_base::FileManager* file_manager, fst_ctrl::SystemManager* system_manager, fst_mc::ParamManager* param_manager);
 
     void processRpc();
 
@@ -52,8 +55,13 @@ private:
     IoMapping* io_mapping_ptr_; 
     IoManager* io_manager_ptr_;
     fst_hal::ModbusManager* modbus_manager_ptr_; 
+    fst_hal::FstSafetyDevice* safety_device_ptr_;
     ProgramLaunching* program_launching_;
     fst_base::FileManager* file_manager_ptr_;
+    fst_ctrl::SystemManager* system_manager_ptr_;
+    fst_mc::ParamManager* param_manager_ptr_;
+
+    DeviceVersion device_version_;
 
     enum {HASH_BYTE_SIZE = 4,};
     enum {QUICK_SEARCH_TABLE_SIZE = 128,};
@@ -119,6 +127,15 @@ private:
     void handleRpc0x000093EE(void* request_data_ptr, void* response_data_ptr);
     // "/rpc/controller/getErrorCodeList"
     void handleRpc0x00015F44(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/controller/isBackupAvailable"	
+    void handleRpc0x00003EB5(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/controller/backupDone"	
+    void handleRpc0x000143E5(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/controller/isRestoreAvailable"	
+    void handleRpc0x0000C7A5(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/controller/restoreDone"	
+    void handleRpc0x000079F5(void* request_data_ptr, void* response_data_ptr);
+
 
     /* tool manager rpc */
     // "/rpc/tool_manager/addTool"
@@ -323,6 +340,10 @@ private:
     void handleRpc0x0000B640(void* request_data_ptr, void* response_data_ptr);
     // "/rpc/motion_control/axis_group/getPrismaticManualStep"
     void handleRpc0x0000FCE0(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/motion_control/axis_group/setJointManualStep"	
+    void handleRpc0x00018470(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/motion_control/axis_group/getJointManualStep"	
+    void handleRpc0x00006D10(void* request_data_ptr, void* response_data_ptr);
     // "/rpc/motion_control/axis_group/setCartesianManualStep"
     void handleRpc0x0000A420(void* request_data_ptr, void* response_data_ptr);
     // "/rpc/motion_control/axis_group/getCartesianManualStep"
@@ -331,12 +352,36 @@ private:
     void handleRpc0x00002940(void* request_data_ptr, void* response_data_ptr);
     // "/rpc/motion_control/axis_group/getOrientationManualStep"
     void handleRpc0x00016D20(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/motion_control/axis_group/getFcpBasePose"	
+    void handleRpc0x000016B5(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/motion_control/axis_group/getTcpCurrentPose"	
+    void handleRpc0x00003B45(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/motion_control/getPostureByJoint"
+    void handleRpc0x0000EC64(void* request_data_ptr, void* response_data_ptr);
 
+    //"/rpc/motion_control/axis_group/getCurrentPayload"	
+    void handleRpc0x000180B4(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/motion_control/axis_group/setCurrentPayload"	
+    void handleRpc0x00014094(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/motion_control/axis_group/addPayload"	
+    void handleRpc0x000178A4(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/motion_control/axis_group/deletePayload"	
+    void handleRpc0x00014F84(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/motion_control/axis_group/updatePayload"	
+    void handleRpc0x00017074(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/motion_control/axis_group/movePayload"	
+    void handleRpc0x00006CE4(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/motion_control/axis_group/getPayloadInfoById"	
+    void handleRpc0x00010C34(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/motion_control/axis_group/getAllValidPayloadSummaryInfo"	
+    void handleRpc0x00010C8F(void* request_data_ptr, void* response_data_ptr);
+
+    
     /* interpreter rpc */
     // "/rpc/interpreter/start"
     void handleRpc0x00006154(void* request_data_ptr, void* response_data_ptr);
-    // "/rpc/interpreter/debug"
-    void handleRpc0x000102D7(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/interpreter/launch"
+    void handleRpc0x000072D8(void* request_data_ptr, void* response_data_ptr);	
     // "/rpc/interpreter/forward"
     void handleRpc0x0000D974(void* request_data_ptr, void* response_data_ptr);
     // "/rpc/interpreter/backward"
@@ -349,8 +394,6 @@ private:
     void handleRpc0x0000CF55(void* request_data_ptr, void* response_data_ptr);
     // "/rpc/interpreter/abort"
     void handleRpc0x000086F4(void* request_data_ptr, void* response_data_ptr);
-    // "/rpc/interpreter/switchStep"
-    void handleRpc0x000140F0(void* request_data_ptr, void* response_data_ptr);
 
     /* io mapping rpc */
     // "/rpc/io_mapping/getDIByBit"
@@ -369,6 +412,14 @@ private:
     void handleRpc0x00005BD4(void* request_data_ptr, void* response_data_ptr);
     // "/rpc/io_mapping/setROByBit"
     void handleRpc0x00012274(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/io_mapping/getUIByBit"
+    void handleRpc0x0000A9A4(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/io_mapping/setUIByBit"
+    void handleRpc0x00017044(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/io_mapping/getUOByBit"
+    void handleRpc0x000002C4(void* request_data_ptr, void* response_data_ptr);
+
+
     // "/rpc/io_mapping/syncFileIoStatus"
     void handleRpc0x0000BA73(void* request_data_ptr, void* response_data_ptr);
     // "/rpc/io_mapping/syncFileIoMapping"
@@ -383,6 +434,8 @@ private:
     void handleRpc0x0001421F(void* request_data_ptr, void* response_data_ptr);
     // "/rpc/device_manager/getIoDeviceInfoList"
     void handleRpc0x000024A4(void* request_data_ptr, void* response_data_ptr);
+    // "/rpc/device_manager/getDeviceVersionList"
+    void handleRpc0x0000F574(void* request_data_ptr, void* response_data_ptr);
 
 
     /* program launching rpc */
@@ -455,6 +508,8 @@ private:
     void handleRpc0x000170E3(void* request_data_ptr, void* response_data_ptr);
     //"/rpc/modbus/getConnectedClientList"
     void handleRpc0x00001DC4(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/modbus/getClientSummaryStartInfoList"
+    void handleRpc0x00005564(void* request_data_ptr, void* response_data_ptr);
 
 	//"/rpc/modbus/writeCoils"
     void handleRpc0x0000BD83(void* request_data_ptr, void* response_data_ptr);
@@ -468,6 +523,30 @@ private:
     void handleRpc0x00003583(void* request_data_ptr, void* response_data_ptr);
 	//"/rpc/modbus/readInputRegs"
     void handleRpc0x000072C3(void* request_data_ptr, void* response_data_ptr);
+
+    //"/rpc/param_manager/getParamInfoList"	
+    void handleRpc0x0000F0B4(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/param_manager/setParamInfo"	
+    void handleRpc0x0001393F(void* request_data_ptr, void* response_data_ptr);
+	
+    //"/rpc/io_manager/getDIByBit"	
+    void handleRpc0x0000BFE4(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/io_manager/setDIByBit"	
+    void handleRpc0x00018684(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/io_manager/getDOByBit"	
+    void handleRpc0x0000B4C4(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/io_manager/setDOByBit"	
+    void handleRpc0x00017B64(void* request_data_ptr, void* response_data_ptr);
+
+    //"/rpc/system_manager/moveInstall"	
+    void handleRpc0x00015D3C(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/system_manager/moveFinish"	
+    void handleRpc0x00016008(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/system_manager/restoreInstall"	
+    void handleRpc0x0000DCBC(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/system_manager/restoreFininsh"	
+    void handleRpc0x00011CE8(void* request_data_ptr, void* response_data_ptr);
+
 
 
 };

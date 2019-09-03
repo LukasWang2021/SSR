@@ -24,6 +24,13 @@ using namespace std;
 
 int main(int argc, char** argv)
 {
+    int needed_data_count = 4;
+    if (argc < needed_data_count + 1)
+    {
+        cout << "more parameters are needed" << endl;
+        return -1;
+    }
+
     TpCommTest test;
     if (!test.initRpcSocket())
     {
@@ -40,12 +47,12 @@ int main(int argc, char** argv)
     msg.header.time_stamp = 122;
     msg.property.authority = Comm_Authority_TP;
     msg.data.id = atoi(argv[1]);
-    //msg.data.name = atoi(argv[1]);
-    memcpy(msg.data.name, argv[2], sizeof(argv[2]));
+    string name = "modbus client";
+    strcpy(msg.data.name, name.c_str());
     strcpy(msg.data.ip, argv[3]);
     msg.data.port = atoi(argv[4]);
-    msg.data.scan_rate = atoi(argv[5]);
-    msg.data.response_timeout = atoi(argv[6]);
+    msg.data.scan_rate = 1000;
+    msg.data.response_timeout = 1000;
 
     printf("add client id = %d\n", msg.data.id);
     printf("add client name = %s\n", msg.data.name);

@@ -3,13 +3,15 @@ project(program_launching)
 
 find_package(catkin REQUIRED COMPONENTS
         base_device
-        io_manager
         parameter_manager
         log_manager
         error_monitor
         io_mapping
+        io_manager
         process_comm
         modbus_manager
+        kinematics_alg
+        dynamic_alg
         )
 
 if(catkin_CROSS)
@@ -27,13 +29,13 @@ endif()
 set(catkin_INCLUDE_DIRS
     ${catkin_INCLUDE_DIRS}
     ${depend_PATH_INC}/base_device/include
+    ${depend_PATH_INC}/io_mapping/include
     ${depend_PATH_INC}/io_manager/include
     ${depend_PATH_INC}/common
     ${depend_PATH_INC}/parameter_manager/include
     ${depend_PATH_INC}/log_manager/include
     ${depend_PATH_INC}/xml_help/include 
     ${depend_PATH_INC}/error_monitor/include
-    ${depend_PATH_INC}/io_mapping/include
     ${depend_PATH_INC}/process_comm/include
     ${depend_PATH_INC}/prg_interpreter/include
     ${depend_PATH_INC}/motion_control/include
@@ -44,21 +46,30 @@ set(catkin_INCLUDE_DIRS
     ${depend_PATH_INC}/virtual_io_device/include
     ${depend_PATH_INC}/device_manager/include
     ${depend_PATH_INC}/protos/include
+    ${depend_PATH_INC}/basic_alg/include
+    ${depend_PATH_INC}/nvram/include
+    ${depend_PATH_INC}/fst_spi/include
+    ${depend_PATH_INC}/kinematics_alg/include
+    ${depend_PATH_INC}/dynamic_alg/include
     )
 
 catkin_package(
     INCLUDE_DIRS include
     #LIBRARIES fst_io_device
     DEPENDS base_device
+    DEPENDS io_mapping
     DEPENDS io_manager
     DEPENDS parameter_manager
     DEPENDS log_manager
     DEPENDS thread_help 
     DEPENDS error_monitor
-    DEPENDS io_mapping
     DEPENDS process_comm
     DEPENDS modbus_manager
     DEPENDS fst_io_device
+    DEPENDS basic_alg
+    DEPENDS nvram 
+    DEPENDS fst_spi 
+    DEPENDS kinematics_alg 
 )
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -g -Wno-unused-but-set-variable -Wno-unused-local-typedefs -O0 -fpermissive -DPB_FIELD_32BIT -DSIMMULATION -DPRINT")
@@ -83,10 +94,12 @@ target_link_libraries(program_launching
         logger
         thread_help
         parameter_manager
-        io_mapping
         process_comm
         modbus_manager
+        io_mapping
         io_manager
+        basic_alg
+        kinematics_alg
         )
 
 add_executable(macro_test
@@ -97,9 +110,9 @@ target_link_libraries(macro_test
     ${catkin_LIBRARIES}
     program_launching
     io_mapping
+    io_manager
     process_comm
     base_device
-    io_manager
 )
 
 install(TARGETS program_launching

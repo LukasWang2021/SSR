@@ -18,6 +18,7 @@ ModbusClient::ModbusClient(int id, bool is_debug, int log_level):
     is_connected_ = false;
     ctrl_state_ = MODBUS_CLIENT_CTRL_DISABLED;
     is_config_param_valid_ = false;
+    is_added_ = false;
 
     config_param_.is_enable = false;
     config_param_.start_info.id = id;
@@ -34,6 +35,9 @@ ModbusClient::ModbusClient(int id, bool is_debug, int log_level):
     config_param_.reg_info.holding_reg.max_nb = 0;
     config_param_.reg_info.input_reg.addr = 0;
     config_param_.reg_info.input_reg.max_nb = 0;
+
+    modbus_last_scan_time_.tv_sec = 0;
+    modbus_last_scan_time_.tv_usec = 0;
 }
 
 ModbusClient::ModbusClient():
@@ -88,26 +92,49 @@ ErrorCode ModbusClient::setEnableStatus(bool &status)
         return MODBUS_CLIENT_CONNECTED;
     }
 
-    if (status == config_param_.is_enable)
-    {
-        return SUCCESS;
-    }
-
-    if (!status) //status = false; is_enable = true
+    if (config_param_.is_enable && !status)
     {
         config_param_.is_enable = status;
         ctrl_state_ = MODBUS_CLIENT_CTRL_DISABLED;
-        return SUCCESS;
     }
-
-    // status = true; is_enable = false
-    if (!checkConfigParamValid())
+    else if (config_param_.is_enable && status)
     {
-        return MODBUS_CLIENT_ENABLE_FAILED;
-    }
+        ErrorCode error_code = init();
+        if (error_code != SUCCESS) return error_code;
 
-    config_param_.is_enable = status;
-    ctrl_state_ = MODBUS_CLIENT_CTRL_ENABLED;
+        if (modbus_connect(ctx_) < 0)
+        {
+             FST_ERROR("Failed to connect socket : %s, socket = %d",
+                modbus_strerror(errno),  modbus_get_socket(ctx_));
+
+            is_connected_ = false;
+            return MODBUS_CLIENT_CONNECT_FAILED;
+        }
+
+        ctrl_state_ = MODBUS_CLIENT_CTRL_CONNECTED;
+        is_connected_ = true;
+    }
+    else if (!config_param_.is_enable && status)
+    {
+        config_param_.is_enable = status;
+        ctrl_state_ = MODBUS_CLIENT_CTRL_ENABLED;
+        ErrorCode error_code = init();
+        if (error_code != SUCCESS) return error_code;
+
+        if (modbus_connect(ctx_) < 0)
+        {
+             FST_ERROR("Failed to connect socket : %s, socket = %d",
+                modbus_strerror(errno),  modbus_get_socket(ctx_));
+
+            is_connected_ = false;
+            return MODBUS_CLIENT_CONNECT_FAILED;
+        }
+
+        ctrl_state_ = MODBUS_CLIENT_CTRL_CONNECTED;
+        is_connected_ = true;
+    }
+    else {}
+
     return SUCCESS;
 }
 
@@ -252,7 +279,11 @@ ModbusClientConfigParams ModbusClient::getConfigParams()
 ErrorCode ModbusClient::init()
 {
     if (ctx_ == NULL)
+    {
         ctx_ = modbus_new_tcp(config_param_.start_info.ip.c_str(), config_param_.start_info.port);
+        printf("config_param_.start_info.ip = %s, port = %d\n", config_param_.start_info.ip.c_str(), config_param_.start_info.port);
+    }
+        
     if(ctx_ == NULL) return MODBUS_CLIENT_INIT_FAILED;
 
     if (modbus_set_error_recovery(ctx_, MODBUS_ERROR_RECOVERY_LINK) < 0)
@@ -270,7 +301,7 @@ ErrorCode ModbusClient::init()
         return MODBUS_CLIENT_INIT_FAILED;
     }
 
-    if (modbus_set_byte_timeout(ctx_, response_timeout_sec, response_timeout_usec) < 0)
+    if (modbus_set_byte_timeout(ctx_, 5, 0) < 0)
     {
         //FST_ERROR("Falied set response timeout : %s", modbus_strerror(errno));
         return MODBUS_CLIENT_INIT_FAILED;
@@ -297,7 +328,7 @@ ErrorCode ModbusClient::connect()
     {
          FST_ERROR("Failed to connect socket : %s, socket = %d",
             modbus_strerror(errno),  modbus_get_socket(ctx_));
-
+        this->close();
         is_connected_ = false;
         return MODBUS_CLIENT_CONNECT_FAILED;
     }
@@ -314,88 +345,105 @@ bool ModbusClient::isSocketValid()
     return true;
 }
 
-bool ModbusClient::scanDataArea()
+ErrorCode ModbusClient::scanDataArea()
 {
-    int value_nb = 0;
-    if(config_param_.reg_info.coil.max_nb < config_param_.reg_info.discrepte_input.max_nb)
+    if(modbus_last_scan_time_.tv_sec == 0
+        && modbus_last_scan_time_.tv_usec == 0)
     {
-        value_nb = config_param_.reg_info.discrepte_input.max_nb;
-    }
-    else
-    {
-        value_nb = config_param_.reg_info.coil.max_nb;
+        gettimeofday(&modbus_last_scan_time_, NULL);
     }
 
-    uint8_t bit_value[value_nb];
+    struct timeval current_time;
+    gettimeofday(&current_time, NULL);
 
+    if(!is_connected_) return SUCCESS;
+
+    ErrorCode error_code = SUCCESS;
+    if (config_param_.start_info.scan_rate 
+        < computeTimeElapse(current_time, modbus_last_scan_time_))
+    {
+        modbus_last_scan_time_ = current_time;
+        error_code = readAllRegs();
+        if (error_code != SUCCESS)
+        {
+            if (!isSocketValid())
+            {
+                ctrl_state_ = MODBUS_CLIENT_CTRL_ENABLED;
+                close();
+            }
+            else
+                ctrl_state_ = MODBUS_CLIENT_CTRL_CONNECTED;
+        }
+        struct timeval last_current_time;
+        gettimeofday(&last_current_time, NULL);
+    }
+
+    return error_code;
+}
+
+ErrorCode ModbusClient::readAllRegs()
+{
     if (0 < config_param_.reg_info.coil.max_nb)
     {
-        ErrorCode error_code = readCoils(config_param_.reg_info.coil.addr, 
+        uint8_t bit_value[config_param_.reg_info.coil.max_nb];
+        return readCoils(config_param_.reg_info.coil.addr, 
             config_param_.reg_info.coil.max_nb, bit_value);
-        if (error_code == MODBUS_CLIENT_OPERATION_FAILED) return false;
     }
 
     if (0 < config_param_.reg_info.discrepte_input.max_nb)
     {
-        ErrorCode error_code = readDiscreteInputs(config_param_.reg_info.discrepte_input.addr, 
+        uint8_t bit_value[config_param_.reg_info.discrepte_input.max_nb];
+        return readDiscreteInputs(config_param_.reg_info.discrepte_input.addr, 
             config_param_.reg_info.discrepte_input.max_nb, bit_value);
-        if (error_code == MODBUS_CLIENT_OPERATION_FAILED) return false;
     }
 
-    if(config_param_.reg_info.holding_reg.max_nb < config_param_.reg_info.input_reg.max_nb)
+    if (0 < config_param_.reg_info.holding_reg.max_nb)
     {
-        value_nb = config_param_.reg_info.input_reg.max_nb;
+        uint16_t reg_value[config_param_.reg_info.holding_reg.max_nb];
+        int reg_read_times = config_param_.reg_info.holding_reg.max_nb / REGISTER_ONE_OP_NUM;
+        int reg_read_left_nb = config_param_.reg_info.holding_reg.max_nb % REGISTER_ONE_OP_NUM;
+
+        if (0 < reg_read_times)
+        {
+            return readHoldingRegs(
+                config_param_.reg_info.holding_reg.addr, REGISTER_ONE_OP_NUM, reg_value);
+        }
+
+        if (0 < reg_read_left_nb)
+        {
+            return readHoldingRegs(
+                config_param_.reg_info.holding_reg.addr, reg_read_left_nb, reg_value);
+        }
     }
-    else
+
+    if (0 < config_param_.reg_info.input_reg.max_nb)
     {
-        value_nb = config_param_.reg_info.holding_reg.max_nb;
+        uint16_t reg_value[config_param_.reg_info.input_reg.max_nb];
+        int reg_read_times = config_param_.reg_info.input_reg.max_nb / REGISTER_ONE_OP_NUM;
+        int reg_read_left_nb = config_param_.reg_info.input_reg.max_nb % REGISTER_ONE_OP_NUM;
+
+        if (0 < reg_read_times)
+        {
+            return readInputRegs(
+                config_param_.reg_info.input_reg.addr, REGISTER_ONE_OP_NUM, reg_value);
+        }
+
+        if (0 < reg_read_left_nb)
+        {
+            return readInputRegs(
+                config_param_.reg_info.input_reg.addr, reg_read_left_nb, reg_value);
+        }
     }
 
-    uint16_t reg_value[value_nb];
-    int reg_read_times = config_param_.reg_info.holding_reg.max_nb / REGISTER_ONE_OP_NUM;
-    int reg_read_left_nb = config_param_.reg_info.holding_reg.max_nb % REGISTER_ONE_OP_NUM;
-
-    for (int i = 0; i != reg_read_times; ++i)
-    {
-        ErrorCode error_code = readHoldingRegs(config_param_.reg_info.holding_reg.addr, 
-            REGISTER_ONE_OP_NUM, reg_value);
-        if (error_code == MODBUS_CLIENT_OPERATION_FAILED) return false;
-    }
-
-    if (reg_read_left_nb != 0)
-    {
-        ErrorCode error_code = readHoldingRegs(config_param_.reg_info.holding_reg.addr, 
-            reg_read_left_nb, reg_value);
-        if (error_code == MODBUS_CLIENT_OPERATION_FAILED) return false;
-    }
-
-    reg_read_times = config_param_.reg_info.input_reg.max_nb / REGISTER_ONE_OP_NUM;
-    reg_read_left_nb = config_param_.reg_info.input_reg.max_nb % REGISTER_ONE_OP_NUM;
-
-    for (int i = 0; i != reg_read_times; ++i)
-    {
-        ErrorCode error_code = readInputRegs(config_param_.reg_info.input_reg.addr, 
-            REGISTER_ONE_OP_NUM, reg_value);
-        if (error_code == MODBUS_CLIENT_OPERATION_FAILED) return false;
-    }
-
-    if (reg_read_left_nb != 0)
-    {
-        ErrorCode error_code = readInputRegs(config_param_.reg_info.input_reg.addr,
-            reg_read_left_nb, reg_value);
-        if (error_code == MODBUS_CLIENT_OPERATION_FAILED) return false;
-    }
-
-    return true;
+    return SUCCESS;
 }
+
 
 void ModbusClient::close()
 {
-    if (!is_connected_) return;
-    modbus_close(ctx_);
-
     if (ctx_ != NULL)
     {
+        modbus_close(ctx_);
         modbus_free(ctx_);
         ctx_ = NULL;
     }
@@ -629,6 +677,12 @@ ErrorCode ModbusClient::writeAndReadHoldingRegs(
     return SUCCESS;
 }
 
+int ModbusClient::computeTimeElapse(struct timeval &current_time, struct timeval &last_time)
+{
+    long long delta_tv_sec = current_time.tv_sec - last_time.tv_sec;
+    long long delta_tv_usec = current_time.tv_usec - last_time.tv_usec;
+    return (delta_tv_sec * 1000 + delta_tv_usec / 1000);
+}
 
 #if 0
 void modbusClientRoutineThreadFunc(void* arg)

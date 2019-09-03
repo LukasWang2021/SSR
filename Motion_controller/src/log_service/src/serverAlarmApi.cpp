@@ -1,140 +1,180 @@
-/**g++ -o files_manager_client27 files_manager_client27.cpp -I/usr/include/python2.7 -L/usr/lib64/python2.7/config -lpython2.7 | ./files_manager_client27 **/
-
 #include "serverAlarmApi.h"
-#include <time.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <stdexcept>
+#include <string.h>
 #include <iostream>
 using namespace std;
-using std::string;
-ServerAlarmApi *ServerAlarmApi::m_pInstance = NULL;
-void* threadFun(void *arg);
+
+ServerAlarmApi *ServerAlarmApi::m_instance_ptr_ = NULL;
+
+static size_t WriteMemoryCallback(void *contents, size_t size, size_t nmemb, void *userp)
+{
+    size_t realsize = size * nmemb;
+    struct MemoryStruct *mem = (struct MemoryStruct *)userp;
+
+    char *ptr = (char*)(realloc(mem->memory, mem->size + realsize + 1));
+    if(ptr == NULL) {
+        /* out of memory! */
+        printf("\033[31;40m%s\033[0m\r\n", "not enough memory (realloc returned NULL)\n");
+        return 0;
+    }
+
+    mem->memory = ptr;
+    memcpy(&(mem->memory[mem->size]), contents, realsize);
+    mem->size += realsize;
+    mem->memory[mem->size] = 0;
+    return realsize;
+}
+
 ServerAlarmApi::ServerAlarmApi():
     enabled(false)
 {
-    pthread_mutex_init(&m_lock, NULL);
-    pthread_cond_init(&m_cond, NULL);
-    m_loop = true;
-    if(pthread_create(&m_tid,NULL,threadFun,this)!=0)
-    {
-        cout<<"create thread failed!"<<endl;
-        return;
+    char *xx = (char*)malloc(256);
+    m_chunk_.memory = (char*)malloc(256);  /* will be grown as needed by the realloc above */
+    m_chunk_.size = 0;    /* no data at this point */
+    CURLcode res  = curl_global_init(CURL_GLOBAL_ALL);
+    if(res != CURLE_OK) {
+        fprintf(stderr, "curl_global_init() failed: %s\n", curl_easy_strerror(res));
     }
-    sleep(3);
 }
 
 ServerAlarmApi *ServerAlarmApi::GetInstance()
 {
-    if(m_pInstance == NULL)
-        m_pInstance = new ServerAlarmApi();
-    return m_pInstance;
+    if(m_instance_ptr_ == NULL)
+        m_instance_ptr_ = new ServerAlarmApi();
+    return m_instance_ptr_;
 }
-void ServerAlarmApi::pyDecref()
-{
-    m_loop = false;
-    pthread_join(m_tid, NULL);
-}
-// @description 发送一条Log
-// @param logCode: Log code
-// @param param: 动态参数
-// @return 返回执行结果, 返回状态码,1000表示执行成功,否则表示执行失败。失败时打印错误信息
-int ServerAlarmApi::sendOneAlarm(unsigned long long log_code, string param)
-{
-    if(!enabled)
-    {
-        std::cout<<"LogService: 0x"<<std::hex<<log_code<<": "<<param<<std::endl;
-        return 0;
-    }
-    pthread_mutex_lock(&m_lock);
-    sprintf(m_buf, "%016llX", log_code);
-    m_record_list.push_back(string(m_buf) + param);
-    pthread_cond_signal(&m_cond);
-    pthread_mutex_unlock(&m_lock);
-    return 1000;
-}
-// @description 发送一条Log
-// @param logCode: Log code
-// @return 返回执行结果, 返回状态码,1000表示执行成功,否则表示执行失败。失败时打印错误信息
-int ServerAlarmApi::sendOneAlarm(unsigned long long log_code)
-{
-    if(!enabled)
-    {
-        std::cout<<"LogService: 0x"<<std::hex<<log_code<<std::endl;
-        return 0;
-    }
-    sprintf(m_buf, "%016llX", log_code);
-    m_record_list.push_back(string(m_buf));
-    return 1000;
-}
-// @description 线程函数,用于向报警服务发送报警
-// @param *arg: 线程入口参数
-// @return NULL
-void* threadFun(void *arg)
-{
-    if ( !Py_IsInitialized() ) {
-        Py_Initialize();
-        PyEval_InitThreads();
-    }
-    if ( !Py_IsInitialized() ) {
-        cout << "Py_Initialize failed " <<endl;
-        return NULL;
-    }
-    PyRun_SimpleString("import sys");
-    PyRun_SimpleString("sys.path.append('/root/install/share/runtime/python/')");
-    PyObject *pName = PyString_FromString("send_one_alarm");
-    PyObject *pModule = PyImport_Import(pName);
-    if (!pModule) {
-        cout<<"Cant open python sendonealarm.py!"<<endl;
-        return NULL;
-    }
-    PyObject *pDict = PyModule_GetDict(pModule);
-    PyObject *postMethod = PyDict_GetItemString(pDict, "send_one_alarm");
-    if (!postMethod) {
-        cout<<"send_one_alarm is NULL!"<<endl;
-        return NULL;
-    }
-    Py_XDECREF(pName);
-    Py_XDECREF(pDict);
-    Py_XDECREF(pModule);
-    // 等待事件超时时间
-    struct timeval now;
-    struct timespec outtime;
 
-    ServerAlarmApi *pServerApi = (ServerAlarmApi *)arg;
-    list<string>::iterator iter;
-    while(pServerApi->m_loop)
-    {
-        pthread_mutex_lock(&pServerApi->m_lock);
-        gettimeofday(&now, NULL);
-        outtime.tv_sec = now.tv_sec + 2; // 2second超时
-        pthread_cond_timedwait(&pServerApi->m_cond, &pServerApi->m_lock, &outtime);
-        for(iter = pServerApi->m_record_list.begin(); iter != pServerApi->m_record_list.end(); iter++)
-        {
-            PyGILState_STATE gstate;
-            gstate = PyGILState_Ensure();
-            int statusCode;
-            PyObject *pArgs = PyTuple_New(1);
-            PyTuple_SetItem(pArgs, 0, Py_BuildValue("s",(*iter).c_str()));
-            PyObject *result = PyObject_CallObject(postMethod, pArgs);
-            Py_XDECREF(pArgs);
-            if(result != NULL){
-                PyArg_Parse(result, "i", &statusCode);// 解析失败返回0
-                Py_XDECREF(result);
-            }
-            if(statusCode != 1000)
-            {
-                // 发送报警失败了,查看终端打印信息
-            }
-            PyGILState_Release(gstate);
-        }
-        pServerApi->m_record_list.clear();
-        pthread_mutex_unlock(&pServerApi->m_lock);
+void ServerAlarmApi::clearUp()
+{
+    curl_global_cleanup();
+    free(m_chunk_.memory);
+}
+void ServerAlarmApi::parseResponse(char *response)
+{
+    cJSON *res_root = cJSON_Parse(response);
+    if (NULL == res_root) {
+        printf("\033[31;40m%s\033[0m\r\n", "json pack into cjson error...");
+        return;
     }
-    cout<< "ServerAlarmApi exit thread" << endl;
-    Py_DECREF(postMethod);
-    Py_Finalize();
+    cJSON *res_status_code = cJSON_GetObjectItem(res_root , "statusCode");
+    if(cJSON_Number ==  res_status_code->type)
+    {
+        if (1000 != res_status_code->valueint)
+        {
+            printf("\033[31;40m%s\033[0m\r\n", "controller send log to service failed!");
+            cJSON *res_param = cJSON_GetObjectItem(res_root , "param");
+            cJSON *res_result = cJSON_GetObjectItem(res_param , "result");
+            if(cJSON_String == res_result->type)
+                printf("\033[31;40m%s\033[0m\r\n", res_result->valuestring);
+        }
+    }
+    cJSON_Delete(res_root);
+}
+
+int ServerAlarmApi::post(const char *str_url, const char *str_post)
+{
+    CURL *curl = curl_easy_init();
+    if(!curl) {
+        fprintf(stderr, "curl_easy_init() failed\n");
+        curl_global_cleanup();
+        return int(CURLE_FAILED_INIT);
+    }
+
+    /* First set the URL that is about to receive our POST. */
+    curl_easy_setopt(curl, CURLOPT_URL, str_url);
+    curl_easy_setopt(curl, CURLOPT_POSTFIELDS/*CURLOPT_HTTPPOST*/, str_post);
+    curl_easy_setopt(curl, CURLOPT_HEADER, 0L); /* include header */
+    curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 2);
+    curl_easy_setopt(curl, CURLOPT_TIMEOUT, 3);
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteMemoryCallback);  //得到请求结果后的回调函数
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &m_chunk_);
+
+    /* Now, we should be making a zero byte POST request */
+    CURLcode res = curl_easy_perform(curl);
+    /* always cleanup */
+    curl_easy_cleanup(curl);
+    if(res != CURLE_OK)
+        printf("\033[31;40mcurl_easy_perform() failed: %s\033[0m\r\n", curl_easy_strerror(res));
+    else
+    {
+        long responseCode = 0;
+        curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &responseCode);
+        if (responseCode < 200 || responseCode >= 300)
+            printf("\033[31;40mresponse Error:%d\033[0m\r\n", int(responseCode));
+        else
+            parseResponse(m_chunk_.memory);
+    }
+    m_chunk_.size = 0;
+    return int(res);
+}
+
+char *ServerAlarmApi::constructEventInfo(unsigned long long event_code, string event_param)
+{
+    cJSON *root;
+    cJSON *cmd;
+    cJSON *param;
+    root = cJSON_CreateObject();
+
+    cJSON_AddItemToObject(root, "cmd", cJSON_CreateString("alarm/append_one_alarm"));
+    cJSON_AddItemToObject(root, "param", param = cJSON_CreateObject());
+    // 时间
+    time_t t = time(0);
+    strftime(time_str_, sizeof(time_str_), "%Y-%m-%d %H:%M:%S", localtime(&t)); //年-月-日 时:分:秒
+    cJSON_AddItemToObject(param, "time", cJSON_CreateString(time_str_));
+    // 事件编码
+    sprintf(event_code_str_, "%016llX", event_code/*0x0001000100A70000*/);
+    cJSON_AddItemToObject(param, "code", cJSON_CreateString(event_code_str_));
+    // 事件参数
+    cJSON *detailEn = cJSON_CreateArray();
+    cJSON *detailCn = cJSON_CreateArray();
+
+    cJSON_AddItemToArray(detailEn, cJSON_CreateString(event_param.c_str()));
+    cJSON_AddItemToArray(detailCn, cJSON_CreateString(event_param.c_str()));
+
+    cJSON_AddItemToObject(param, "detailEn", detailEn);
+    cJSON_AddItemToObject(param, "detailCn", detailCn);
+    char *tmpValue = cJSON_Print(root);
+    cJSON_Delete(root);
+    return tmpValue;
+}
+
+int ServerAlarmApi::sendOneAlarm(unsigned long long event_code, std::string event_param)
+{
+    if(!enabled)
+    {
+        //std::cout<<"LogService: 0x"<<std::hex<<log_code<<": "<<param<<std::endl;
+        return 0;
+    }
+    try
+    {
+        char *tmpValue = constructEventInfo(event_code, event_param);
+        int ret = post(ALARM_SERVER_URL, tmpValue);
+        free(tmpValue);
+        return int(ret);
+    }
+    catch(runtime_error& me)
+    {
+        cout<<me.what();
+    }
+    return 1;
+
+}
+int ServerAlarmApi::sendOneAlarm(unsigned long long event_code)
+{
+    if(!enabled)
+    {
+        //std::cout<<"LogService: 0x"<<std::hex<<log_code<<std::endl;
+        return 0;
+    }
+    char *tmpValue = constructEventInfo(event_code, "");
+    int ret = post(ALARM_SERVER_URL, tmpValue);
+    free(tmpValue);
+    return int(ret);
 }
 
 void ServerAlarmApi::setEnable(bool enable_status)
 {
     enabled = enable_status;
 }
-

@@ -8,7 +8,7 @@
 #ifndef _MOTION_CONTROL_ARM_GROUP_H
 #define _MOTION_CONTROL_ARM_GROUP_H
 
-#include "common_log.h"
+#include <common_log.h>
 #include <motion_control_base_group.h>
 
 
@@ -23,24 +23,15 @@ class ArmGroup : public BaseGroup
     ArmGroup(fst_log::Logger* plog) : BaseGroup(plog) {};
     ~ArmGroup() {};
 
-    ErrorCode initGroup(fst_base::ErrorMonitor *error_monitor_ptr);
+    ErrorCode initGroup(fst_base::ErrorMonitor *error_monitor_ptr, fst_ctrl::CoordinateManager *coordinate_manager_ptr, fst_ctrl::ToolManager *tool_manager_ptr);
 
     size_t getNumberOfJoint(void);
     size_t getFIFOLength(void);
 
   private:
-    ErrorCode computeCompensate(const DynamicsProduct &product, const Joint &omega, const Joint &alpha, Joint &ma_cv_g);
     inline char* printDBLine(const int *data, char *buffer, size_t length);
     inline char* printDBLine(const double *data, char *buffer, size_t length);
 };
-
-
-
-
-
-
-
-
 
 }
 

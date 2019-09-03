@@ -17,7 +17,8 @@ ControllerPublish::ControllerPublish():
     io_mapping_ptr_(NULL),
     device_manager_ptr_(NULL),
     safety_device_ptr_(NULL),
-    io_manager_ptr_(NULL)
+    io_manager_ptr_(NULL),
+    modbus_manager_ptr_(NULL)
 {
 
 }
@@ -51,8 +52,18 @@ void ControllerPublish::init(fst_log::Logger* log_ptr, ControllerParam* param_pt
     {
         if (device_list[i].type == DEVICE_TYPE_FST_SAFETY)
         {
+            
             BaseDevice* device_ptr = device_manager_ptr_->getDevicePtrByDeviceIndex(device_list[i].index);
+            if(device_ptr == NULL || safety_device_ptr_ != NULL) break;
             safety_device_ptr_ = static_cast<FstSafetyDevice*>(device_ptr);
+        }
+        else if (device_list[i].type == DEVICE_TYPE_MODBUS)
+        {
+            BaseDevice* device_ptr = device_manager_ptr_->getDevicePtrByDeviceIndex(device_list[i].index);
+            if (device_ptr != NULL || modbus_manager_ptr_ == NULL)
+            {
+                modbus_manager_ptr_ = static_cast<ModbusManager*>(device_ptr);
+            }
         }
     }
 

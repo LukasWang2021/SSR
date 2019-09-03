@@ -22,7 +22,7 @@
 
 using namespace std;
 
-int main()
+int main(int argc, char* argv[])
 {
     TpCommTest test;
     if (!test.initRpcSocket())
@@ -36,13 +36,20 @@ int main()
 
     unsigned int hash_value = 0x000085D5;
 
-    RequestMessageType_Int32List msg;
+    RequestMessageType_Int32_Int32List msg;
     msg.header.time_stamp = 122;
     msg.property.authority = Comm_Authority_TP;
-
-    msg.data.data_count = 2;
-    msg.data.data[0] = 1;
-    msg.data.data[1] = 6;
+    msg.data1.data = atoi(argv[1]);
+    msg.data2.data_count = 9;
+    msg.data2.data[0] = atoi(argv[2]);
+    msg.data2.data[1] = atoi(argv[3]);
+    msg.data2.data[2] = atoi(argv[4]);
+    msg.data2.data[3] = atoi(argv[5]);
+    msg.data2.data[4] = atoi(argv[6]);
+    msg.data2.data[5] = atoi(argv[7]);
+    msg.data2.data[6] = atoi(argv[8]);
+    msg.data2.data[7] = atoi(argv[9]);
+    msg.data2.data[8] = atoi(argv[10]);
 
     if (!test.generateRequestMessageType(hash_value, (void*)&msg, RequestMessageType_Int32List_fields, buf, buf_size))
     {

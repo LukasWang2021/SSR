@@ -214,7 +214,7 @@ void InterpreterServer::handleResponseList()
         int send_bytes = nn_send(req_resp_socket_, send_buffer_ptr_, send_buffer_size, 0); // block send
         if(send_bytes == -1)
         {
-            FST_ERROR("handleResponseList: send response failed, nn_error = %d", nn_errno());
+            FST_ERROR("handleResponseList: send response failed, %s", nn_strerror(errno));
         }
     }
     response_list_.clear();
@@ -241,7 +241,7 @@ void InterpreterServer::handlePublishList()
             int send_bytes = nn_send(publish_socket_, it->data_ptr, sizeof(InterpreterPublish), 0); // block send
             if(send_bytes == -1)
             {
-                FST_ERROR("handlePublishList: send publish failed, error = %d", nn_errno());
+                FST_ERROR("handlePublishList: send publish failed, %s", nn_strerror(errno));
                 break;
             }
             it->last_publish_time = time_val;
@@ -267,7 +267,7 @@ void InterpreterServer::handleEventList()
         FST_INFO("InterpreterServer::handleEventList: %08llX ", it->data);
         if(send_bytes == -1)
         {
-            FST_ERROR("handleEventList: send publish failed, error = %d", nn_errno());
+            FST_ERROR("handleEventList: send publish failed, %s", nn_strerror(errno));
             break;
         }
     }

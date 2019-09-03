@@ -9,6 +9,8 @@
 #include <string.h>
 #include <motion_control_constraint.h>
 
+using namespace basic_alg;
+
 namespace fst_mc
 {
 

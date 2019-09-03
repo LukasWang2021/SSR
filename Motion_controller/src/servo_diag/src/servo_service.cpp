@@ -1,8 +1,10 @@
 #include <string.h>
 #include <servo_service.h>
 #include <data_monitor.h>
+#include <common_enum.h>
 
 using namespace fst_comm_interface;
+using namespace fst_mc;
 
 CommInterface* fst_controller::ServoService::p_comm_;
 int fst_controller::ServoService::counter_ = 0;
@@ -180,22 +182,23 @@ ErrorCode fst_controller::ServoService::readIntVar(int size_of_varlist,const cha
     return err;
 }
 
-ErrorCode fst_controller::ServoService::readErrCode(int size_of_codelist,int* res,int* numofres)
+ErrorCode fst_controller::ServoService::readErrCode(int max_list_size, unsigned long long int *data, int *list_size)
 {
     ErrorCode err;
     client_service_request_.req_id = READ_SERVO_DTC_SID;
-
     err = sendNRecv(this);
-    if(SUCCESS == err)
+
+    if (SUCCESS == err)
     {
-       *numofres = *(int*)&client_service_response_.res_buff[4];
-       *numofres = (size_of_codelist>*numofres)?*numofres:size_of_codelist;
-       memcpy((char *)res,&client_service_response_.res_buff[8],4*(*numofres)); 
+       *list_size = *(int*)&client_service_response_.res_buff[4];
+       *list_size = (max_list_size > *list_size) ? *list_size : max_list_size;
+       memcpy((void*)data, (void*)&client_service_response_.res_buff[8], sizeof(unsigned long long int) * (*list_size)); 
     } 
     else
     {
        printf("Read ErrCode fail\n");
-    }     
+    }
+
     return err;
 }
 

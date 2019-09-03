@@ -19,7 +19,11 @@ find_package(catkin REQUIRED COMPONENTS
     error_monitor
     thread_help
     kinematics_alg
+    transformation
     path_traj_alg
+    nvram
+    fst_spi
+    dynamic_alg
 )
 
 if(catkin_CROSS)
@@ -57,6 +61,10 @@ set(catkin_INCLUDE_DIRS
     ${depend_PATH_INC}/thread_help/include
     ${depend_PATH_INC}/kinematics_alg/include
     ${depend_PATH_INC}/path_traj_alg/include
+    ${depend_PATH_INC}/transformation/include
+    ${depend_PATH_INC}/nvram/include
+    ${depend_PATH_INC}/fst_spi/include
+    ${depend_PATH_INC}/dynamic_alg/include
 )
 
 catkin_package(
@@ -76,10 +84,14 @@ catkin_package(
     DEPENDS dynamic_alg 
     DEPENDS xml_help
     DEPENDS kinematics_alg
+    DEPENDS transformation
+    DEPENDS nvram
+    DEPENDS fst_spi
+    DEPENDS dynamic_alg
 )
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -g -Wno-unused-but-set-variable -Wno-unused-local-typedefs -O0 -fpermissive -DPB_FIELD_32BIT -DSIMMULATION -DPRINT")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0 -D PB_FIELD_32BIT -D_GLIBCXX_USE_CXX11_ABI=0")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -g -Wno-unused-but-set-variable -Wno-unused-local-typedefs -lrt -O0 -fpermissive -DPB_FIELD_32BIT -DSIMMULATION -DPRINT")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -lrt -O0 -D PB_FIELD_32BIT -D_GLIBCXX_USE_CXX11_ABI=0")
 
 include_directories(
   include
@@ -90,6 +102,7 @@ add_library(motion_control
     src/motion_control.cpp
     src/motion_control_param.cpp
     src/motion_control_arm_group.cpp
+    src/motion_control_scara_group.cpp
     src/motion_control_base_group.cpp
     src/motion_control_manual_teach.cpp
     src/motion_control_core_interface.cpp
@@ -123,7 +136,11 @@ target_link_libraries(motion_control
     error_monitor
     thread_help
     kinematics_alg
+    transformation
     path_traj_alg
+    nvram
+    fst_spi
+    dynamic_alg
 )
 
 target_link_libraries(manual_test
@@ -147,6 +164,14 @@ install(FILES config/base_group.yaml
     DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/runtime/axis_group
 )
 
+install(FILES config/arm_group.yaml
+    DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/runtime/axis_group
+)
+
+install(FILES config/scara_group.yaml
+    DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/runtime/axis_group
+)
+
 install(FILES config/hard_constraint.yaml
     DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/runtime/axis_group
 )
@@ -159,7 +184,7 @@ install(FILES config/soft_constraint.yaml
     DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/runtime/axis_group
 )
 
-install(FILES config/arm_group_offset.yaml
+install(FILES config/group_offset.yaml
     DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/runtime/axis_group
 )
 
@@ -167,11 +192,11 @@ install(FILES config/arm_group_offset_reference.yaml
     DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/runtime/axis_group
 )
 
-install(FILES config/arm_group_gear_ratio.yaml
+install(FILES config/group_gear_ratio.yaml
     DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/runtime/axis_group
 )
 
-install(FILES config/arm_group_coupling_coeff.yaml
+install(FILES config/group_coupling_coeff.yaml
     DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/runtime/axis_group
 )
 
@@ -179,7 +204,7 @@ install(FILES config/arm_manual_teach.yaml
     DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/runtime/axis_group
 )
 
-install(FILES config/arm_dh.yaml
+install(FILES config/scara_manual_teach.yaml
     DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/runtime/axis_group
 )
 

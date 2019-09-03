@@ -9,6 +9,8 @@ using namespace fst_controller;
 #include "motion_control_datatype.h"
 #include "stdint.h"
 using namespace fst_mc;
+#include "basic_alg_datatype.h" 
+using namespace basic_alg;
 #endif
 
 #define ADD_INFO_NUM    10
@@ -80,21 +82,12 @@ typedef enum
     INTERPRETER_PAUSE_TO_EXECUTE  = 104    
 }InterpreterState;
 
-
-typedef enum _RegDIOType
+typedef enum _ProgMode
 {
-    NOTDEFINE = 0,
-    REG = 1,
-    DIO = 2,
-}RegDIOType;
-
-
-typedef enum _DIOType
-{
-    UNDEFINE = 0,
-    DI = 1,
-    DO = 2,
-}DIOType;
+    FULL_MODE = 0,
+    STEP_MODE,
+    ERROR_MODE,
+}ProgMode;
 
 typedef enum _RegOperateType
 {
@@ -146,33 +139,6 @@ typedef enum _RegOperateType
 
 #define REG_TYPE_NUM    32
 
-/*
-typedef struct _DIOMap
-{
-    int     card_seq;
-    DIOType type;
-    int     port_seq;
-    bool has_value;
-    int     value;
-}DIOMap;
-*/
-
-typedef struct _IOMapPortInfo
-{
-    uint32_t    msg_id;
-    uint32_t    dev_id;
-    int         port_type;
-    int         port_index;
-    int         bytes_len;
-    char        value;
-}IOMapPortInfo;
-
-typedef struct _IOPathInfo
-{
-    char        dio_path[128];
-    char        value;
-}IOPathInfo;
-
 typedef struct _Reg
 {
     RegOperateType type;
@@ -214,40 +180,18 @@ typedef struct _InterpreterControl
         // int            jump_line;    // Jump 
         char           jump_line[256];
         int            step_mode;       // auto or debug 
+        int            program_code;    // CODE_START
     };
 }InterpreterControl;
-
-
-typedef struct _CtrlStatus
-{
-    bool        is_permitted;  //if sending next move command is permitted
-    UserOpMode  user_op_mode;
-    bool        is_data_ready;  //if sending next move command is permitted
-}CtrlStatus;
-
-typedef struct _IntprtStatus
-{
-#ifdef USE_XPATH
-    char            line[TP_XPATH_LEN];
-#else
-    int             line;
-#endif
-    InterpreterState    state;
-#ifdef WIN32
-	__int64         warn;
-#else
-    long long int   warn;
-#endif
-}IntprtStatus;
 
 typedef struct _AdditionalOffsetInfomation
 {
     AdditionalOffsetInfomationType        type;
-    union {
+//    union {
         Reg             pr_reg;
         PoseEuler       pose_target;
         Joint           joint_target;
-    };
+//    };
     Reg                 uf_reg;
 } AdditionalOffsetInfomation;
 
@@ -255,21 +199,21 @@ typedef struct _AdditionalExecuteInfomation
 {
     AdditionalExecuteInfomationType type;
     double    range ;
-    union {
+//    union {
         RegMap          assignment;
         char            fname[128];
-    };
+//    };
 } AdditionalExecuteInfomation;
 
 typedef struct _AdditionalInfomation
 {
     AdditionalInfomationType        type;
-    union 
-    {
+//    union 
+//    {
     	int acc_speed ;                         // used for AAC, EV, IND_EV
     	AdditionalOffsetInfomation offset ; // used for OFFSET, TOOL_OFFSET
     	AdditionalExecuteInfomation execute ; // used for TB, TA, DB
-    };
+//    };
 } AdditionalInfomation;
 
 typedef struct _Instruction
@@ -305,37 +249,8 @@ typedef struct _MoveCommandDestination
     MotionType        type;
     PoseEuler       pose_target;
     Joint           joint_target;
+	Posture         posture ;
 } MoveCommandDestination;
-
-
-typedef struct _RegChgList
-{
-    int  command;
-    int             count;
-#ifdef WIN32
-    char additional; //malloc other memory
-#else
-    char additional[0]; //malloc other memory
-#endif
-}RegChgList;
-
-typedef struct _ChgFrameSimple
-{
-	int id;
-	char comment[32];
-} ChgFrameSimple;
-
-// This is output info.
-typedef struct _IODeviceInfoShm
-{
-    char path[128];
-    unsigned int id;
-    char communication_type[128];
-    int device_number;
-    int    device_type;
-    unsigned int input;
-    unsigned int output;
-} IODeviceInfoShm;
 
 typedef struct
 {

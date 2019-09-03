@@ -112,8 +112,11 @@ struct intern_func_type {
 	(char *)"cos",        1, call_cos  ,
 	(char *)"tan",        1, call_tan  ,
 	(char *)"asin",       1, call_asin ,
+	(char *)"arcsin",     1, call_asin ,
 	(char *)"acos",       1, call_acos ,
+	(char *)"arccos",     1, call_acos ,
 	(char *)"atan",       1, call_atan ,
+	(char *)"arctan",     1, call_atan ,
 	(char *)"atan2",      2, call_atan2,
 	(char *)"sinh",       1, call_sinh ,
 	(char *)"cosh",       1, call_cosh ,
@@ -126,6 +129,7 @@ struct intern_func_type {
 	(char *)"ceil",       1, call_ceil ,
 	(char *)"floor",      1, call_floor,
 	(char *)"fabs",       1, call_fabs ,
+	(char *)"abs",        1, call_fabs ,
 //  (char *)"frexp",      2, call_frexp,
 	(char *)"ldexp",      2, call_ldexp,
 	(char *)"modf",       2, call_modf ,
@@ -471,6 +475,7 @@ bool call_strlen (eval_value *result, const char * valFirst,
 						const char * valSecond, const char * valThird)
 {
 	result->setFloatValue(strlen(valFirst));
+	FST_INFO("result = %f", result->getFloatValue());
     return true ;
 }
 
@@ -486,6 +491,7 @@ bool call_findstr (eval_value *result, const char * valFirst,
 	else 
 	{
 		result->setFloatValue((int)(strRet - valFirst));
+		FST_INFO("result = %f", result->getFloatValue());
 		return true ;
 	}
 }
@@ -504,6 +510,7 @@ bool call_substr (eval_value *result, const char * valFirst,
 	else 
 	{
 		result->setStringValue(strRet);
+		FST_INFO("result = %s", result->getStringValue().c_str());
 		return true ;
 	}
 }

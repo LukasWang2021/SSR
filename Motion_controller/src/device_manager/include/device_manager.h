@@ -8,7 +8,6 @@
 #include "base_device.h"
 #include <map>
 #include <vector>
-#include "base_datatype.h"
 
 namespace fst_hal
 {

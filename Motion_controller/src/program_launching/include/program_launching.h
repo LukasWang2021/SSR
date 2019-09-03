@@ -24,7 +24,6 @@ Summary:    dealing with IO macro
 #include "io_mapping.h"
 #include "process_comm.h"
 
-
 namespace fst_ctrl
 {
 
@@ -51,7 +50,6 @@ typedef struct _EnableLaunchInfo
     bool count_start;
     bool enable; 
 }EnableLaunchInfo;
-	
 
 class ProgramLaunching
 {
@@ -66,7 +64,7 @@ public:
     int getLaunchMode(void);
     void setLaunchMode(int value);
 
-	void processMacro(bool enable);
+    bool processMacro(void);
 	
 private:
     void loadProgramsPath(void);
@@ -83,7 +81,7 @@ private:
     bool parseLaunchMode(char * data, int &mode);
     bool openFileLaunchMode(char *filename, int &mode);
 
-    // check rising edge  
+    // process macro launching and check rising edge  
     bool isRisingEdge(int index);
     bool isRisingEdgeAntiShake(int index);
     void sendInterpreterStart(int index);

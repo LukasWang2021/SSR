@@ -8,8 +8,7 @@
 #include <nanomsg/nn.h>
 #include <mutex>
 #include <vector>
-#include "base_datatype.h"
-
+#include "basic_alg_datatype.h"
 
 namespace fst_base
 {
@@ -77,16 +76,17 @@ private:
     void handleRequestSetMrReg();
     void handleRequestSetSrReg();
     void handleRequestSetRReg();
+    void handleRequestSetMi();
+    void handleRequestSetMh();
     void handleRequestGetPrReg();
     void handleRequestGetHrReg();
     void handleRequestGetMrReg();
     void handleRequestGetSrReg();
     void handleRequestGetRReg();
+    void handleRequestGetMi();
+    void handleRequestGetMh();
     void handleRequestSetInstruction();
     void handleRequestIsNextInstructionNeeded();
-    void handleRequestCheckIo();//TODO
-    void handleRequestSetIo();//TODO
-    void handleRequestGetIo();//TODO
     void handleRequestSetInterpreterServerStatus();
     void handleRequestGetDi();
     void handleRequestSetDi();
@@ -96,6 +96,16 @@ private:
     void handleRequestSetRi();
     void handleRequestGetRo();
     void handleRequestSetRo();
+    void handleRequestGetUi();
+    void handleRequestSetUi();
+    void handleRequestGetUo();
+    void handleRequestGetJoint();
+    void handleRequestGetCart();
+    void handleRequestCartToJoint();
+    void handleRequestJointToCart();
+    void handleRequestUserOpMode();
+    void handleRequestSetDoPulse();
+    void handleRequestSetRoPulse();
 
     // rpc response handler
     void handleResponseSetPrReg(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
@@ -103,16 +113,18 @@ private:
     void handleResponseSetMrReg(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
     void handleResponseSetSrReg(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
     void handleResponseSetRReg(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
+    void handleResponseSetMi(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
+    void handleResponseSetMh(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
     void handleResponseGetPrReg(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
     void handleResponseGetHrReg(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
     void handleResponseGetMrReg(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
     void handleResponseGetSrReg(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
     void handleResponseGetRReg(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
+    void handleResponseGetMi(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
+    void handleResponseGetMh(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
     void handleResponseSetInstruction(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
-    void handleResponseIsNextInstructionNeeded(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
-      
+    void handleResponseIsNextInstructionNeeded(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size); 
     void handleResponseSetInterpreterServerStatus(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
-
     void handleResponseGetDi(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
     void handleResponseSetDi(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
     void handleResponseGetDo(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
@@ -121,7 +133,16 @@ private:
     void handleResponseSetRi(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
     void handleResponseGetRo(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
     void handleResponseSetRo(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
-    
+    void handleResponseGetUi(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
+    void handleResponseSetUi(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
+    void handleResponseGetUo(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
+    void handleResponseGetJoint(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
+    void handleResponseGetCart(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
+    void handleResponseCartToJoint(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
+    void handleResponseJointToCart(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
+    void handleResponseUserOpMode(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
+    void handleResponseSetDoPulse(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
+    void handleResponseSetRoPulse(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
 };
 
 }

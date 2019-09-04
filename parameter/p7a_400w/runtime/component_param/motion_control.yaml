@@ -1,0 +1,13 @@
+model_name: "RTM-P7A"
+realtime_task:
+    cycle_time: 2       # ms
+priority_task:
+    cycle_time: 2       # ms
+common_task:
+    cycle_time: 2      # ms
+simulator:
+    enable: false
+    cycle_per_publish: 25
+log_level: 1
+
+#END

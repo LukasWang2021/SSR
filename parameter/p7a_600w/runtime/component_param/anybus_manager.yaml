@@ -1,0 +1,10 @@
+log_level: 1
+operation_mode: 1
+cycle_time: 1 #ms
+abcc_page_size: 16384 #0x4000
+abcc_page_addr: 3225419776 #0xc0400000
+appl_page_size: 1024 #0x400
+appl_page_addr: 3221946380 #0xc00b000c
+safety_enable: false
+ethercat_config_file_name: ethercat_config.xml
+#END

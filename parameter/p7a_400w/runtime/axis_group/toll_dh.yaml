@@ -1,0 +1,28 @@
+base_dh:
+    d: 0.0
+    a: 0.0
+    alpha: 0.0
+    offset: 0.0
+toll_dh:
+    axis-0:
+        d: 0.0
+        a: 412.67
+        alpha: 0.0
+        offset: 0.0
+    axis-1:
+        d: 60.11
+        a: 300.0
+        alpha: 0.0
+        offset: 0.0
+    axis-2:
+        d: 0.0
+        a: 400.0
+        alpha: 0.0
+        offset: 0.0
+    axis-3:
+        d: 69.98
+        a: 198.03
+        alpha: 0.0
+        offset: 0.0
+
+#END

@@ -1,0 +1,30 @@
+number_of_axis: 4
+step:
+    axis:
+        - 1.0
+        - 0.1
+        - 0.1
+        - 0.1
+    position: 0.1
+    orientation: 0.1
+reference:
+    axis:
+        velocity:
+            - 200.0
+            - 2.5
+            - 2.5
+            - 15.0
+        acceleration:
+            - 1500.0
+            - 18.0
+            - 18.0
+            - 100.0
+    position:
+        velocity: 500.0
+        acceleration: 5000.0
+    orientation:
+        omega: 2.0
+        alpha: 20.0
+
+
+#END

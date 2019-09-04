@@ -1,6 +1,6 @@
 log_level: 1
 cycle_time: 2000
-is_virtual: true
+is_virtual: false
 auto_mode_DO: 0
 limited_manual_mode_DO: 0
 manual_mode_DO: 0

@@ -53,9 +53,14 @@ usage() {
     echo -e "\t""$(basename $0) 400w"
     echo -e "\t""or"
     echo -e "\t""$(basename $0) 600w"
+    echo -e "\t""or"
+    echo -e "\t""$(basename $0) -h"
+    echo -e "\t""or"
+    echo -e "\t""$(basename $0) --help"
     echo -e "note:"
     echo -e "\t""400w: install parameters of 400w which is in the directory of \"p7a_400w\""
     echo -e "\t""600w: install parameters of 600w which is in the directory of \"p7a_600w\""
+    echo -e "\t""-h, --help: usage of $(basename $0)"
 }
 
 if [ ! $# -eq 1 ]
@@ -70,6 +75,10 @@ case ${input_opt} in
     dir_=p7a_400w;;
 600w)
     dir_=p7a_600w;;
+-h | --help)
+    usage
+    exit 0
+    ;;
 *)
     echo -e "input wrong param"
     usage
@@ -96,3 +105,5 @@ done
 cd ${root_dir}
 echo -e "leave "${dir_}
 echo -e "The installation of ${input_opt} is finished."
+
+exit 0

@@ -2,10 +2,17 @@ log_level: 1
 number_of_links: 6
 current_payload_id: 0
 acc_scale_factor: 1.0 #0.01~1.0
+motor_power:
+    - 750
+    - 600
+    - 600
+    - 200
+    - 100
+    - 100
 motor_torque:
     - 8.36 #750w
     - 6.68 #600w
-    - 4.46 #400w
+    - 6.68 #600w
     - 2.24 #200w
     - 1.11 #100w
     - 1.11 #100w

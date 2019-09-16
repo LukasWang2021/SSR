@@ -545,22 +545,6 @@ size_t ArmGroup::getNumberOfJoint(void)
 }
 
 
-size_t ArmGroup::getFIFOLength(void)
-{
-    if (group_state_ == MANUAL)
-    {
-        return ceil((manual_traj_.duration - manual_time_) * 1000);
-    }
-    else if (group_state_ == AUTO)
-    {
-        return 0;
-    }
-    else
-    {
-        return 0;
-    }
-}
-
 char* ArmGroup::printDBLine(const int *data, char *buffer, size_t length)
 {
     int len = 0;

@@ -18,7 +18,6 @@
 #include <motion_control_manual_teach.h>
 #include <motion_control_traj_fifo.h>
 #include <kinematics_rtm.h>
-#include <kinematics_toll.h>
 #include <motion_control_cache_pool.h>
 #include <dynamic_alg.h>
 #include <dynamic_alg_rtm.h>
@@ -122,7 +121,6 @@ class BaseGroup
 
     // More APIs:
     virtual size_t getNumberOfJoint(void) = 0;
-    virtual size_t getFIFOLength(void) = 0;
     virtual void getTypeOfAxis(AxisType *types);
 
     // Frame handle APIs:
@@ -214,6 +212,9 @@ class BaseGroup
     inline void sampleBlockEnding(const TrajectoryBlock &block, JointState &state);
     inline void sampleBlockStart(const TrajectoryBlock &block, JointState &state);
     inline void sampleBlock(const TrajectoryBlock &block, MotionTime time_from_block, JointState &state);
+    inline void sampleManualAxisBlock(double sample_time, const ManualAxisBlock &axis, double *start_ptr, double *target_ptr, double *position_ptr);
+    inline void sampleQuinticSpline(double sample_time, const double *coeff, double *pos, double *vel, double *acc);
+
 
     inline PathCache* getLastPathCachePtr(void);
     inline PathCacheList* getLastPathCacheListPtr(void);

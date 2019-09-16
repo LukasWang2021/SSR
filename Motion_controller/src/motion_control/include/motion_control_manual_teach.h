@@ -51,6 +51,13 @@ private:
     ErrorCode   manualCartesianStep(const ManualDirection *dir, MotionTime time, ManualTrajectory &traj);
     ErrorCode   manualCartesianContinuous(const ManualDirection *dir, MotionTime time, ManualTrajectory &traj);
 
+    bool getStopCoefficient(double time_ready_to_stop, double jerk, ManualAxisBlock &axis_block);
+    void getStopCoefficientInPointMode(double time_ready_to_stop, double jerk, ManualAxisBlock &axis_block);
+    void getAxisCoefficient(double time_to_start, double start_position, double total_trip, double absolute_jerk, double expect_omega, double expect_alpha, ManualAxisBlock &axis_block);
+    void getAxisCoefficientWithDuration(double time_to_start, double duration, double start_position, double end_postion, double expect_jerk, double expect_omega, double expect_alpha, ManualAxisBlock &axis_block);
+    void getQuinticSplineCoefficients(double start_pos, double start_vel, double start_acc, double end_pos, double end_vel, double end_acc, double duration, double *coeffs);
+    void sampleQuinticPolynomial(double sample_time, const double *coefficients, double &pos, double &vel, double &acc);
+
     inline char* printDBLine(const int *data, char *buffer, size_t length);
     inline char* printDBLine(const double *data, char *buffer, size_t length);
 
@@ -64,10 +71,15 @@ private:
     double move_to_point_vel_[NUM_OF_JOINT];
     double axis_vel_[NUM_OF_JOINT];
     double axis_acc_[NUM_OF_JOINT];
+    double axis_jerk_[NUM_OF_JOINT];
     double position_vel_reference_;
     double position_acc_reference_;
+    double position_jerk_reference_;
     double orientation_omega_reference_;
     double orientation_alpha_reference_;
+    double orientation_beta_reference_;
+    double time_multiplier_in_step_mode_;
+
 
     Constraint *joint_constraint_ptr_;
     basic_alg::Kinematics *kinematics_ptr_;

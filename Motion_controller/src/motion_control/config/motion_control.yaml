@@ -1,5 +1,4 @@
-#model_name: "SCARA"
-model_name: "PUMA"
+model_name: "RTM-P7A"
 realtime_task:
     cycle_time: 2       # ms
 priority_task:

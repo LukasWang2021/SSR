@@ -41,6 +41,8 @@ typedef unsigned long long int ErrorCode;
 #define MC_SWITCH_STATE_TIMEOUT (unsigned long long int)0x0001000700A90007   /*group switch from one state to other timeout*/
 #define MC_JOINT_TRACKING_ERROR (unsigned long long int)0x0001000700A90008   /*joint tracking error beyond threshold*/
 #define MC_SEND_TRAJECTORY_FAIL (unsigned long long int)0x0001000700A90009   /*fail to send trajectory to barecore*/
+#define MC_TOOL_MISMATCH (unsigned long long int)0x0001000700A9000A   /*tool of the target point mismatch with the activated tool*/
+#define MC_FRAME_MISMATCH (unsigned long long int)0x0001000700A9000B   /*frame of the target point mismatch with the activated frame*/
 #define MC_COMPUTE_IK_FAIL (unsigned long long int)0x0001000400A903E9   /*compute IK failed*/
 #define FAIL_LOADING_PARAMETER (unsigned long long int)0x0011000200A903EB   /*load parameter failed*/
 #define JOINT_OUT_OF_CONSTRAINT (unsigned long long int)0x0001000400A903F3   /*joint out of constraint*/
@@ -229,6 +231,8 @@ typedef unsigned long long int ErrorCode;
 #define MODBUS_START_MODE_ERROR (unsigned long long int)0x0001000200AE0001   /*modbus start mode error*/
 #define MODBUS_MANAGER_SAVE_PARAM_FAILED (unsigned long long int)0x0001000200AE0002   /*modbus manager failed to save parameters*/
 #define MODBUS_INVALID (unsigned long long int)0x0001000200AE0003   /*modbus is invalid*/
+#define MODBUS_REGISTER_ADDRESS_EXCEED_LIMIT (unsigned long long int)0x0001000200AE0004   /*data address excess of modbus accessed*/
+
 #define MODBUS_SERVER_NOT_OPENED (unsigned long long int)0x0001000200AE0019   /*modbus server is closed*/
 #define MODBUS_SERVER_SAVE_PARAM_FALIED (unsigned long long int)0x0001000200AE001A   /*modbus server failed to save parameter*/
 #define MODBUS_SERVER_INVALID_ARG (unsigned long long int)0x0001000200AE001C   /*modbus server has invalid parameters*/
@@ -315,6 +319,9 @@ typedef unsigned long long int ErrorCode;
 
 #define DYNAMIC_PAYLOAD_INVALID_ARG (unsigned long long int)0x0001000200B40001   /*Dynamic payload has invalid argument*/
 #define DYNAMIC_PAYLOAD_INFO_FILE_WRITE_FAILED (unsigned long long int)0x0001000200B40002   /*Dynamic payload failed to write file*/
+
+#define SAFETY_BOARD_DEBUG_ERROR (unsigned long long int)0x0001000700D90000   /*SafetyBoardDebug error code {0}*/
+
 
 #endif
 

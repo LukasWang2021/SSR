@@ -51,20 +51,6 @@ target_link_libraries(kinematics_alg
     parameter_manager 
 )
 
-add_executable(toll_test
-    test/kinematics_toll_test.cpp
-)
-
-target_link_libraries(toll_test
-    ${catkin_LIBRARIES}
-    basic_alg
-    kinematics_alg
-)
-
-install(TARGETS	toll_test
-    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
-
 install(TARGETS kinematics_alg
     LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 )
@@ -76,3 +62,7 @@ install(FILES config/arm_dh.yaml
 install(FILES config/toll_dh.yaml
     DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/runtime/axis_group
 )
+
+add_executable(rtm_test  ${SRC_LIST}  test/kinematics_rtm_test.cpp)
+target_link_libraries(rtm_test ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} kinematics_alg basic_alg)
+install(TARGETS rtm_test RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})

@@ -529,6 +529,25 @@ ErrorCode Calibrator::calibrateOffset(const size_t *pindex, size_t length)
 
     if (bare_core_ptr_->getLatestJoint(cur_joint, servo_state) && getOffsetFromBareCore(cur_offset) == SUCCESS)
     {
+        vector<int> cur_encoder;
+        cur_encoder.resize(joint_num_);
+
+        if(bare_core_ptr_->getEncoder(cur_encoder))
+        {
+            FST_INFO("Current encoder: %s", printDBLine(&cur_encoder[0], buffer, LOG_TEXT_SIZE));
+
+            for (size_t i = 0; i < joint_num_; i++)
+            {
+                int roll = (cur_encoder[i] >> 16) & 0xFFFF;
+                int pulse = cur_encoder[i] & 0xFFFF;
+                FST_INFO("Encoder %d: roll is 0x%x, pulse is 0x%x", i, roll, pulse);
+            }
+        }
+        else
+        {
+            FST_WARN("Fail to get current encoder from bare core");
+        }
+
         FST_INFO("Current-offset: %s", printDBLine(&cur_joint[0], buffer, LOG_TEXT_SIZE));
         FST_INFO("Current-joint:  %s", printDBLine(&cur_offset[0], buffer, LOG_TEXT_SIZE));
 

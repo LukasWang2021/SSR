@@ -108,11 +108,6 @@ struct MotionTarget     // 用于move指令的数据结构
     FrameOffset user_frame_offset;
     FrameOffset tool_frame_offset;
 
-    // -------------------- to be deleted ---------------------------------------------------------------------------
-    int user_frame_offset_id;  // 如果是moveL或者moveC，需要指定目标点所处的用户坐标系标号和所用工具的标号，反解时需要
-    int tool_frame_offset_id;  // 如果用户坐标系标号和工具标号与当前的在用标号不符时直接报错，如果是-1则使用当前激活的uf和tf
-    // --------------------------------------------------------------------------------------------------------------
-
     int prPos[PR_POS_LEN];
     TargetPoint target;   // moveJ和moveL时使用
     TargetPoint via;      // moveC时用作中间一个辅助点
@@ -210,15 +205,10 @@ class GroupDirection        // 手动示教模式下各轴运动方向
     const ManualDirection& operator[](size_t index) const {assert(index < NUM_OF_JOINT); return *(&axis1 + index);}
 };
 
-struct ManualCoef           // 手动示教模式下关节或者笛卡尔坐标的梯形轨迹
+struct ManualAxisBlock
 {
-    MotionTime start_time;  // 开始加速的时刻
-    MotionTime stable_time; // 加速完毕的时刻
-    MotionTime brake_time;  // 开始减速的时刻
-    MotionTime stop_time;   // 停止的时刻
-
-    double  start_alpha;    // 匀加速阶段的加速度
-    double  brake_alpha;    // 匀减速阶段的加速度
+    MotionTime time_stamp[8];
+    AxisCoeff coeff[7];
 };
 
 struct ManualTrajectory     // 手动示教模式下的运动轨迹
@@ -232,10 +222,10 @@ struct ManualTrajectory     // 手动示教模式下的运动轨迹
 
     basic_alg::PoseEuler    cart_start;         // 示教运动的开始笛卡尔位姿
     basic_alg::PoseEuler    cart_ending;        // 示教运动结束始笛卡尔位姿
-    basic_alg::PoseEuler    tool_coordinate;    // 工具坐标系到基座坐标系的变换，用于工具坐标系下的示教
+    basic_alg::PoseEuler    auxiliary_coord;    // 辅助坐标系
 
-    MotionTime      duration;       // 示教运动的耗时
-    ManualCoef      coeff[NUM_OF_JOINT];        // 各轴系数
+    MotionTime ending_time;
+    ManualAxisBlock axis[NUM_OF_JOINT];
 };
 
 }

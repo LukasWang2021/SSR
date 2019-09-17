@@ -717,48 +717,174 @@ static void runTask2(void *null)
     printf("task2 quit\n");
 }
 
+void test11(void)
+{
+    PoseEuler pose;
+    PoseEuler pose_res;
+    Joint ref = {0, 0, 0, 0, -1, 0, 0, 0, 0};
+    Joint res;
+    KinematicsRTM kinematics("/root/install/share/runtime/axis_group/");
+    
+    //Joint joint = {-0.142136, -0.699177, -0.591108, 1.89109, 1.53765, -0.990637};
+    Joint joint = {-0.142138, -0.689292, -0.590827, -1.632113, -1.561919, 1.878400};
+    Posture posture = kinematics.getPostureByJoint(joint);
+    printf("joint: %.6f,%.6f,%.6f,%.6f,%.6f,%.6f\n", joint.j1_, joint.j2_, joint.j3_, joint.j4_, joint.j5_, joint.j6_);
+    //posture.wrist = -1;
+    printf("posture: %d,%d,%d,%d\n", posture.arm, posture.elbow, posture.wrist, posture.flip);
+
+    kinematics.doFK(joint, pose);
+    printf("pose: %.6f,%.6f,%.6f,%.6f,%.6f,%.6f\n", pose.point_.x_, pose.point_.y_, pose.point_.z_, pose.euler_.a_, pose.euler_.b_, pose.euler_.c_);
+    kinematics.doIK(pose, posture, joint);
+    printf("IK result: %.6f,%.6f,%.6f,%.6f,%.6f,%.6f\n", joint.j1_, joint.j2_, joint.j3_, joint.j4_, joint.j5_, joint.j6_);
+}
+
+void test12(void)
+{
+    PoseEuler pose;
+    pose.point_.x_ = 281.262;
+    pose.point_.y_ = 167.878;
+    pose.point_.z_ = 643.5;
+    pose.euler_.a_ = 0;
+    pose.euler_.b_ = 0;
+    pose.euler_.c_ = -3.14159;
+    Posture posture = {1, 1, -1, 0};
+    PoseEuler pose_res;
+    Joint ref = {0, 0, 0, 0, -1, 0, 0, 0, 0};
+    Joint res;
+    KinematicsRTM kinematics("/root/install/share/runtime/axis_group/");
+    printf("pose: %.6f,%.6f,%.6f,%.6f,%.6f,%.6f\n", pose.point_.x_, pose.point_.y_, pose.point_.z_, pose.euler_.a_, pose.euler_.b_, pose.euler_.c_);
+    printf("posture: %d,%d,%d,%d\n", posture.arm, posture.elbow, posture.wrist, posture.flip);
+    printf("IK: %d\n", kinematics.doIK(pose, posture, res));
+    printf("IK result: %.6f,%.6f,%.6f,%.6f,%.6f,%.6f\n", res.j1_, res.j2_, res.j3_, res.j4_, res.j5_, res.j6_);
+}
+
+void test13(void)
+{
+    Posture posture;
+    PoseEuler pose;
+    Joint joint_input, joint_reference, joint_output;
+    KinematicsRTM kinematics("/root/install/share/runtime/axis_group/");
+
+    while (true)
+    {
+        /*
+        joint_reference.j1_ = 0.001 * ((double)rand() / RAND_MAX);
+        joint_reference.j2_ = 0.001 * ((double)rand() / RAND_MAX);
+        joint_reference.j3_ = 0.001 * ((double)rand() / RAND_MAX);
+        joint_reference.j4_ = 0.001 * ((double)rand() / RAND_MAX);
+        joint_reference.j5_ = 0.001 * ((double)rand() / RAND_MAX);
+        joint_reference.j6_ = 0.001 * ((double)rand() / RAND_MAX);
+        joint_reference.j7_ = 0;
+        joint_reference.j8_ = 0;
+        joint_reference.j9_ = 0;
+        */
+        joint_reference.j1_ = 0;
+        joint_reference.j2_ = 0;
+        joint_reference.j3_ = 0;
+        joint_reference.j4_ = 0;
+        joint_reference.j5_ = 0;
+        joint_reference.j6_ = 0;
+        joint_reference.j7_ = 0;
+        joint_reference.j8_ = 0;
+        joint_reference.j9_ = 0;
+
+        joint_input.j1_ = -2.9 + 5.80 * ((double)rand() / RAND_MAX);
+        joint_input.j2_ = -2.35 + 4.09 * ((double)rand() / RAND_MAX);
+        joint_input.j3_ = -1.22 + 4.36 * ((double)rand() / RAND_MAX);
+        joint_input.j4_ = -3.14 + 6.28 * ((double)rand() / RAND_MAX);
+        joint_input.j5_ = -2.0 + 4.0 * ((double)rand() / RAND_MAX);
+        joint_input.j6_ = -3.14 + 6.28 * ((double)rand() / RAND_MAX);
+        joint_input.j7_ = 0;
+        joint_input.j8_ = 0;
+        joint_input.j9_ = 0;
+
+        joint_reference += joint_input;
+
+        kinematics.doFK(joint_input, pose);
+        posture = kinematics.getPostureByJoint(joint_input);
+
+        /*
+        if (!kinematics.doIK(pose, posture, joint_output))
+        {
+            if (fabs(joint_input.j5_) < 0.001)
+            {
+                continue;
+            }
+            
+            printf("ERROR: IK failed.\n");
+            printf("  Joint input: %.6f,%.6f,%.6f,%.6f,%.6f,%.6f\n", joint_input.j1_, joint_input.j2_, joint_input.j3_, joint_input.j4_, joint_input.j5_, joint_input.j6_);
+            printf("  Pose: %.6f,%.6f,%.6f,%.6f,%.6f,%.6f\n", pose.point_.x_, pose.point_.y_, pose.point_.z_, pose.euler_.a_, pose.euler_.b_, pose.euler_.c_);
+            printf("  Posture: %d,%d,%d,%d\n", posture.arm, posture.elbow, posture.wrist, posture.flip);
+            continue;
+        }
+
+        joint_output.j7_ = 0;
+        joint_output.j8_ = 0;
+        joint_output.j9_ = 0;
+
+        if (!joint_input.isEqual(joint_output))
+        {
+            printf("ERROR: output joint different with input\n");
+            printf("  Pose: %.6f,%.6f,%.6f,%.6f,%.6f,%.6f\n", pose.point_.x_, pose.point_.y_, pose.point_.z_, pose.euler_.a_, pose.euler_.b_, pose.euler_.c_);
+            printf("  Posture: %d,%d,%d,%d\n", posture.arm, posture.elbow, posture.wrist, posture.flip);
+            printf("  Joint input:  %.6f,%.6f,%.6f,%.6f,%.6f,%.6f\n", joint_input.j1_, joint_input.j2_, joint_input.j3_, joint_input.j4_, joint_input.j5_, joint_input.j6_);
+            printf("  Joint output: %.6f,%.6f,%.6f,%.6f,%.6f,%.6f\n", joint_output.j1_, joint_output.j2_, joint_output.j3_, joint_output.j4_, joint_output.j5_, joint_output.j6_);
+            continue;
+        }
+        */
+    
+
+        if (!kinematics.doIK(pose, joint_reference, joint_output))
+        {
+            printf("ERROR: IK failed.\n");
+            printf("  Joint input: %.6f,%.6f,%.6f,%.6f,%.6f,%.6f\n", joint_input.j1_, joint_input.j2_, joint_input.j3_, joint_input.j4_, joint_input.j5_, joint_input.j6_);
+            printf("  Joint reference: %.6f,%.6f,%.6f,%.6f,%.6f,%.6f\n", joint_reference.j1_, joint_reference.j2_, joint_reference.j3_, joint_reference.j4_, joint_reference.j5_, joint_reference.j6_);
+            printf("  Pose: %.6f,%.6f,%.6f,%.6f,%.6f,%.6f\n", pose.point_.x_, pose.point_.y_, pose.point_.z_, pose.euler_.a_, pose.euler_.b_, pose.euler_.c_);
+            continue;
+        }
+
+        joint_output.j7_ = 0;
+        joint_output.j8_ = 0;
+        joint_output.j9_ = 0;
+
+        if (!joint_input.isEqual(joint_output))
+        {
+            printf("ERROR: output joint different with input\n");
+            printf("  Pose: %.6f,%.6f,%.6f,%.6f,%.6f,%.6f\n", pose.point_.x_, pose.point_.y_, pose.point_.z_, pose.euler_.a_, pose.euler_.b_, pose.euler_.c_);
+            printf("  Joint reference: %.6f,%.6f,%.6f,%.6f,%.6f,%.6f\n", joint_reference.j1_, joint_reference.j2_, joint_reference.j3_, joint_reference.j4_, joint_reference.j5_, joint_reference.j6_);
+            printf("  Joint input:  %.6f,%.6f,%.6f,%.6f,%.6f,%.6f\n", joint_input.j1_, joint_input.j2_, joint_input.j3_, joint_input.j4_, joint_input.j5_, joint_input.j6_);
+            printf("  Joint output: %.6f,%.6f,%.6f,%.6f,%.6f,%.6f\n", joint_output.j1_, joint_output.j2_, joint_output.j3_, joint_output.j4_, joint_output.j5_, joint_output.j6_);
+            kinematics.doFK(joint_input, pose);
+            printf("  Pose input: %.6f,%.6f,%.6f,%.6f,%.6f,%.6f\n", pose.point_.x_, pose.point_.y_, pose.point_.z_, pose.euler_.a_, pose.euler_.b_, pose.euler_.c_);
+            kinematics.doFK(joint_output, pose);
+            printf("  Pose output: %.6f,%.6f,%.6f,%.6f,%.6f,%.6f\n", pose.point_.x_, pose.point_.y_, pose.point_.z_, pose.euler_.a_, pose.euler_.b_, pose.euler_.c_);
+        }
+    }
+}
+
+
+
 int main(int argc, char **argv)
 {
-
+    /*
     fst_base::ThreadHelp thread1, thread2;
 
     if (thread1.run(&runTask1, NULL, 80))
-    {
-        printf("Startup task success.\n");
-    }
-    else
-    {
-        printf("Fail to create task.\n");
-        return -2;
-    }
-
-    if (thread2.run(&runTask2, NULL, 79))
-    {
-        printf("Startup task2 success.\n");
-    }
-    else
-    {
-        printf("Fail to create task2.\n");
-        return -2;
-    }
-
     
     thread1.join();
     thread2.join();
-
+*/
 
     //test0();
     //test1();
-    //test2();
-    //test3();
-    //test4();
-    //test5();
-    //test6();
-    //test7();
     //test8();
     //test9();
     //test10();
+    test13();
 
     return 0;
 }
+
+
+
 

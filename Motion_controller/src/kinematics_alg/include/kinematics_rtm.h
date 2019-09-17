@@ -1,10 +1,7 @@
 #ifndef KINEMATICS_RTM_H
 #define KINEMATICS_RTM_H
 
-#include "joint.h"
-#include "pose_euler.h"
-#include "pose_quaternion.h"
-#include "trans_matrix.h"
+
 #include "kinematics.h"
 #include "parameter_manager/parameter_manager_param_group.h"
 #include <string>
@@ -29,28 +26,35 @@ public:
     virtual void doFK(const Joint& joint, TransMatrix& trans_matrix, size_t from_joint_index = 0, size_t to_joint_index = 6);
 
     /*find the solution according to posture, return false when singularity or out-of-range happens or invalid posture*/
-    virtual bool doIK(const PoseEuler& pose_euler, const Posture& posture, Joint& joint, double valve = 0.001);
-    virtual bool doIK(const PoseQuaternion& pose_quaternion, const Posture& posture, Joint& joint, double valve = 0.001);
-    virtual bool doIK(const TransMatrix& trans_matrix, const Posture& posture, Joint& joint, double valve = 0.001);
+    virtual bool doIK(const PoseEuler& pose_euler, const Posture& posture, Joint& joint, double valve = 0.000001);
+    virtual bool doIK(const PoseQuaternion& pose_quaternion, const Posture& posture, Joint& joint, double valve = 0.000001);
+    virtual bool doIK(const TransMatrix& trans_matrix, const Posture& posture, Joint& joint, double valve = 0.000001);
+
+    /*find the solution according to posture and turns, return false when singularity or out-of-range happens or invalid posture*/
+    virtual bool doIK(const PoseEuler& pose_euler, const Posture& posture, const Turn& turn, Joint& joint, double valve = 0.000001);
+    virtual bool doIK(const PoseQuaternion& pose_quaternion, const Posture& posture, const Turn& turn, Joint& joint, double valve = 0.000001);
+    virtual bool doIK(const TransMatrix& trans_matrix, const Posture& posture, const Turn& turn, Joint& joint, double valve = 0.000001);
 
     /*find the most close solution accroding to the ref point, return false when out-of-range happens*/
     virtual bool doIK(const PoseEuler& pose_euler, const Joint& ref_joint, Joint& joint, double valve = 0.001);
     virtual bool doIK(const PoseQuaternion& pose_quaternion, const Joint& ref_joint, Joint& joint, double valve = 0.001);
     virtual bool doIK(const TransMatrix& trans_matrix, const Joint& ref_joint, Joint& joint, double valve = 0.001);
 
-    /*apply the ref joint when singularity happens, can always find a solution in range, return false when out-of-range happens or invalid posture*/
-    virtual bool doIK(const PoseEuler& pose_euler, const Posture& posture, const Joint& ref_joint, Joint& joint, double valve = 0.001);
-    virtual bool doIK(const PoseQuaternion& pose_quaternion, const Posture& posture, const Joint& ref_joint, Joint& joint, double valve = 0.001);
-    virtual bool doIK(const TransMatrix& trans_matrix, const Posture& posture, const Joint& ref_joint, Joint& joint, double valve = 0.001);
-
     /*get posture by joint*/
     virtual Posture getPostureByJoint(const Joint& joint, double valve = 0.001);
-
+    /*get turn by joint*/
+    virtual Turn getTurnByJoint(const Joint& joint);
+    /*get geometry joint [-PI~PI] by joint*/
+    virtual Joint getGeometryJointByJoint(const Joint& joint);
+    /*get joint by geometry joint and turn*/
+    virtual Joint getJointByGeometryJointAndTurn(const Joint& geom_joint, const Turn& turn);
+    virtual Joint getJointByGeometryJointAndRefJointAndTurn(const Joint& geom_joint, const Joint& ref_joint, const Turn& turn);    
 private:
     KinematicsRTM();
     inline void scaleResultJoint(double& angle);
     inline bool isPostureValid(const Posture& posture);
     inline double getMostCloseJoint(double joint1, double joint2, double ref_joint, int& posture1);
+    double getSingleJointByGeometryJointAndRefJointAndTurn(const double& geom_single_joint, const double& ref_single_joint, const int& single_turn);
 
     DH base_dh_;
     DH arm_dh_[6];

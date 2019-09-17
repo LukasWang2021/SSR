@@ -102,7 +102,6 @@ add_library(motion_control
     src/motion_control.cpp
     src/motion_control_param.cpp
     src/motion_control_arm_group.cpp
-    src/motion_control_scara_group.cpp
     src/motion_control_base_group.cpp
     src/motion_control_manual_teach.cpp
     src/motion_control_core_interface.cpp

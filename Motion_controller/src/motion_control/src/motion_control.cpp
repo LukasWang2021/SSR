@@ -95,27 +95,16 @@ void stack_prefault(void) {
 
 void MotionControl::ringRealTimeTask(void)
 {
-    /*
-    size_t cycle = 0;
-    size_t total = 150000;
-
+    float duration_1, duration_2;
     struct timeval start_time, middle_time, end_time;
-    float *start_to_middle = new float[total];
-    float *middle_to_end = new float[total];
-
+    /*
+    float *start_to_end = new float[1000000];
+    size_t cycle = 0;
     size_t zone_0_5 = 0;
     size_t zone_5_10 = 0;
     size_t zone_10_15 = 0;
     size_t zone_15_20 = 0;
     size_t zone_over_20 = 0;
-    */
-    
-    /*
-    if (!setPriority(MAIN_PRIORITY))
-    {
-        FST_ERROR("setPriority() failed");
-        return MC_FAIL_IN_INIT; 
-    }
     */
     
     if (mlockall(MCL_CURRENT|MCL_FUTURE) == -1) 
@@ -131,27 +120,109 @@ void MotionControl::ringRealTimeTask(void)
 
     while (realtime_thread_running_)
     {
-        //gettimeofday(&start_time, NULL);
+        gettimeofday(&start_time, NULL);
         group_ptr_->doRealtimeLoop();
-        //gettimeofday(&middle_time, NULL);
+        gettimeofday(&middle_time, NULL);
         usleep(param_ptr_->realtime_cycle_time_ * 1000);
-        //gettimeofday(&end_time, NULL);
-        //start_to_middle[cycle] = (float)(middle_time.tv_sec - start_time.tv_sec) + (float)(middle_time.tv_usec - start_time.tv_usec) / 1000000;
-        //middle_to_end[cycle] = (float)(end_time.tv_sec - middle_time.tv_sec) + (float)(end_time.tv_usec - middle_time.tv_usec) / 1000000;
+        gettimeofday(&end_time, NULL);
+        duration_1 = (float)(middle_time.tv_sec - start_time.tv_sec) + (float)(middle_time.tv_usec - start_time.tv_usec) / 1000000;
+        duration_2 = (float)(end_time.tv_sec - middle_time.tv_sec) + (float)(end_time.tv_usec - middle_time.tv_usec) / 1000000;
+
+        if (duration_1 > 0.02)
+        {
+            FST_ERROR("RT task first stage duration over limit: %.6f", duration_1);
+        }
+
+        if (duration_2 > 0.02)
+        {
+            FST_ERROR("RT task second stage duration over limit: %.6f", duration_2);
+        }
+        //start_to_end[cycle] = (float)(end_time.tv_sec - start_time.tv_sec) + (float)(end_time.tv_usec - start_time.tv_usec) / 1000000;
+        
         /*
-        if (middle_to_end[cycle] < 0.005)
+        if (start_to_end[cycle] < 0.005)
         {
             zone_0_5++;
         }
-        else if (middle_to_end[cycle] < 0.01)
+        else if (start_to_end[cycle] < 0.01)
         {
             zone_5_10++;
         }
-        else if (middle_to_end[cycle] < 0.015)
+        else if (start_to_end[cycle] < 0.015)
         {
             zone_10_15++;
         }
-        else if (middle_to_end[cycle] < 0.02)
+        else if (start_to_end[cycle] < 0.02)
+        {
+            zone_15_20++;
+        }
+        else
+        {
+            zone_over_20++;
+            FST_ERROR("ringRealTimeTask sleep over 20 ms: %.6f", start_to_end[cycle]);
+        }
+
+        cycle = (cycle + 1 == 1000000) ? 0 : cycle + 1;
+        */
+    }
+
+    FST_WARN("Realtime task quit.");
+    /*
+    FST_WARN("ringRealTimeTask: 0-5: %d", zone_0_5);
+    FST_WARN("ringRealTimeTask: 5-10: %d", zone_5_10);
+    FST_WARN("ringRealTimeTask: 10-15: %d", zone_10_15);
+    FST_WARN("ringRealTimeTask: 15-20: %d", zone_15_20);
+    FST_WARN("ringRealTimeTask: over 20: %d", zone_over_20);
+
+    ofstream  time_out("/root/realtime.csv");
+
+    for (size_t i = 0; i < 1000000; i++)
+    {
+        time_out << start_to_end[i] << endl;
+    }
+
+    time_out.close();
+    delete [] start_to_end;
+    */
+}
+
+void MotionControl::ringPriorityTask(void)
+{
+    /*
+    struct timeval start_time, end_time;
+    float *start_to_end = new float[1000000];
+    size_t cycle = 0;
+    size_t zone_0_5 = 0;
+    size_t zone_5_10 = 0;
+    size_t zone_10_15 = 0;
+    size_t zone_15_20 = 0;
+    size_t zone_over_20 = 0;
+    */
+
+    FST_WARN("Priority task start.");
+
+    while (priority_thread_running_)
+    {
+        group_ptr_->doPriorityLoop();
+        //gettimeofday(&start_time, NULL);
+        usleep(param_ptr_->priority_cycle_time_ * 1000);
+        //gettimeofday(&end_time, NULL);
+        //start_to_end[cycle] = (float)(end_time.tv_sec - start_time.tv_sec) + (float)(end_time.tv_usec - start_time.tv_usec) / 1000000;
+        
+        /*
+        if (start_to_end[cycle] < 0.005)
+        {
+            zone_0_5++;
+        }
+        else if (start_to_end[cycle] < 0.01)
+        {
+            zone_5_10++;
+        }
+        else if (start_to_end[cycle] < 0.015)
+        {
+            zone_10_15++;
+        }
+        else if (start_to_end[cycle] < 0.02)
         {
             zone_15_20++;
         }
@@ -160,44 +231,28 @@ void MotionControl::ringRealTimeTask(void)
             zone_over_20++;
         }
 
-        cycle = (cycle + 1 == total) ? 0 : cycle + 1;
+        cycle = (cycle + 1 == 1000000) ? 0 : cycle + 1;
         */
     }
 
-    FST_WARN("Realtime task quit.");
+    FST_WARN("Priority task quit.");
     /*
-    FST_WARN("0-5: %d", zone_0_5);
-    FST_WARN("5-10: %d", zone_5_10);
-    FST_WARN("10-15: %d", zone_10_15);
-    FST_WARN("15-20: %d", zone_15_20);
-    FST_WARN("over 20: %d", zone_over_20);
+    FST_WARN("ringPriorityTask: 0-5: %d", zone_0_5);
+    FST_WARN("ringPriorityTask: 5-10: %d", zone_5_10);
+    FST_WARN("ringPriorityTask: 10-15: %d", zone_10_15);
+    FST_WARN("ringPriorityTask: 15-20: %d", zone_15_20);
+    FST_WARN("ringPriorityTask: over 20: %d", zone_over_20);
 
-    ofstream  time_out("/root/time.csv");
+    ofstream  time_out("/root/priority.csv");
 
-    for (size_t i = 0; i < total; i++)
+    for (size_t i = 0; i < 1000000; i++)
     {
-        time_out << start_to_middle[i] << "," << middle_to_end[i] << endl;
-        //sprintf(buffer, "%d.%06d,%d.%06d,%d.%06d", start_time[i].tv_sec, start_time[i].tv_usec, middle_time[i].tv_sec, middle_time[i].tv_usec, end_time[i].tv_sec, end_time[i].tv_usec);
-        //time_out << buffer << endl;
+        time_out << start_to_end[i] << endl;
     }
 
     time_out.close();
-    delete [] start_to_middle;
-    delete [] middle_to_end;
+    delete [] start_to_end;
     */
-}
-
-void MotionControl::ringPriorityTask(void)
-{
-    FST_WARN("Priority task start.");
-
-    while (priority_thread_running_)
-    {
-        group_ptr_->doPriorityLoop();
-        usleep(param_ptr_->priority_cycle_time_ * 1000);
-    }
-
-    FST_WARN("Priority task quit.");
 }
 
 
@@ -220,23 +275,13 @@ MotionControl::MotionControl()
 
 MotionControl::~MotionControl()
 {
-    if (common_thread_running_)
-    {
-        common_thread_running_ = false;
-        common_thread_.join();
-    }
+    realtime_thread_running_ = false;
+    priority_thread_running_ = false;
+    common_thread_running_ = false;
 
-    if (priority_thread_running_)
-    {
-        priority_thread_running_ = false;
-        priority_thread_.join();
-    }
-
-    if (realtime_thread_running_)
-    {
-        realtime_thread_running_ = false;
-        realtime_thread_.join();
-    }
+    realtime_thread_.join();
+    priority_thread_.join();
+    common_thread_.join();
 
     if (group_ptr_ != NULL)     {delete group_ptr_; group_ptr_ = NULL;};
     if (param_ptr_ != NULL)     {delete param_ptr_; param_ptr_ = NULL;};
@@ -271,13 +316,15 @@ ErrorCode MotionControl::init(fst_hal::DeviceManager* device_manager_ptr, AxisGr
     FST_INFO("Log-level of MotionControl setted to: %d", param_ptr_->log_level_);
     FST_LOG_SET_LEVEL((fst_log::MessageLevel)param_ptr_->log_level_);
 
-    if (param_ptr_->model_name_ == "PUMA")
+    if (param_ptr_->model_name_ == "RTM-P7A")
     {
         group_ptr_ = new ArmGroup(log_ptr_);
     }
     else if (param_ptr_->model_name_ == "SCARA")
     {
-        group_ptr_ = new ScaraGroup(log_ptr_);
+        //group_ptr_ = new ScaraGroup(log_ptr_);
+        FST_ERROR("Invalid model name: %s", param_ptr_->model_name_.c_str());
+        return MC_INTERNAL_FAULT;
     }
     else
     {
@@ -471,6 +518,7 @@ ErrorCode MotionControl::doGotoPointManualMove(const Joint &joint)
     group_ptr_->getTransformationPtr()->convertFcpToTcp(fcp_in_base, point.tool_frame, tcp_in_base);
     group_ptr_->getTransformationPtr()->convertPoseFromBaseToUser(tcp_in_base, point.user_frame, point.pose.pose);
     point.pose.posture = group_ptr_->getKinematicsPtr()->getPostureByJoint(point.joint);
+    point.pose.turn = group_ptr_->getKinematicsPtr()->getTurnByJoint(point.joint);
     return group_ptr_->manualMoveToPoint(point);
 }
 
@@ -502,7 +550,7 @@ ErrorCode MotionControl::doGotoPointManualMove(const PoseAndPosture &pose, int u
     group_ptr_->getTransformationPtr()->convertPoseFromUserToBase(point.pose.pose, point.user_frame, tcp_in_base);
     group_ptr_->getTransformationPtr()->convertTcpToFcp(tcp_in_base, point.tool_frame, fcp_in_base);
 
-    if (!group_ptr_->getKinematicsPtr()->doIK(fcp_in_base, point.pose.posture, point.joint))
+    if (!group_ptr_->getKinematicsPtr()->doIK(fcp_in_base, point.pose.posture, point.pose.turn, point.joint))
     {
         const PoseEuler &pe = point.pose.pose;
         const PoseEuler &tf = point.tool_frame;
@@ -533,7 +581,7 @@ ErrorCode MotionControl::autoMove(int id, const MotionTarget &target)
 {
     FST_INFO("MotionControl::autoMove motion-type: %d, smooth-type: %d", target.type, target.smooth_type);
     FST_INFO("vel: %.6f, acc: %.6f, cnt: %.6f, tool-frame: %d, user-frame: %d", target.vel, target.acc, target.cnt, target.tool_frame_id, target.user_frame_id);
-
+    
     if (group_ptr_->getCalibratorPtr()->getCalibrateState() != MOTION_NORMAL)
     {
         FST_ERROR("Offset of the group is abnormal, auto move is forbidden, calibrator-state = %d.", group_ptr_->getCalibratorPtr()->getCalibrateState());
@@ -549,13 +597,13 @@ ErrorCode MotionControl::autoMove(int id, const MotionTarget &target)
     if (target.user_frame_id != user_frame_id_ && target.user_frame_id != -1)
     {
         FST_ERROR("autoMove: user frame ID = %d mismatch with activated user frame = %d.", target.user_frame_id, user_frame_id_);
-        return INVALID_PARAMETER;
+        return MC_FRAME_MISMATCH;
     }
 
     if (target.tool_frame_id != tool_frame_id_ && target.tool_frame_id != -1)
     {
         FST_ERROR("autoMove: tool frame ID = %d mismatch with activated tool frame = %d.", target.tool_frame_id, tool_frame_id_);
-        return INVALID_PARAMETER;
+        return MC_TOOL_MISMATCH;
     }
 
     ErrorCode err = SUCCESS;
@@ -658,10 +706,13 @@ ErrorCode MotionControl::autoMove(int id, const MotionTarget &target)
 
 ErrorCode MotionControl::offsetPoint(const Joint &offset_joint, IntactPoint &point)
 {
+    Kinematics *kinematics_ptr = group_ptr_->getKinematicsPtr();
+    Transformation *transformation_ptr = group_ptr_->getTransformationPtr();
     point.joint += offset_joint;
-    point.pose.posture = group_ptr_->getKinematicsPtr()->getPostureByJoint(point.joint);
+    point.pose.turn = kinematics_ptr->getTurnByJoint(point.joint);
+    point.pose.posture = kinematics_ptr->getPostureByJoint(point.joint);
     PoseEuler fcp_in_base, tcp_in_base;
-    group_ptr_->getKinematicsPtr()->doFK(point.joint, fcp_in_base);
+    kinematics_ptr->doFK(point.joint, fcp_in_base);
     group_ptr_->getTransformationPtr()->convertFcpToTcp(fcp_in_base, point.tool_frame, tcp_in_base);
     group_ptr_->getTransformationPtr()->convertPoseFromBaseToUser(tcp_in_base, point.user_frame, point.pose.pose);
     return SUCCESS;
@@ -670,13 +721,15 @@ ErrorCode MotionControl::offsetPoint(const Joint &offset_joint, IntactPoint &poi
 ErrorCode MotionControl::offsetPoint(const TransMatrix &trans_offset, IntactPoint &point)
 {
     TransMatrix trans_point;
+    Kinematics *kinematics_ptr = group_ptr_->getKinematicsPtr();
+    Transformation *transformation_ptr = group_ptr_->getTransformationPtr();
     point.pose.pose.convertToTransMatrix(trans_point);
     trans_point.rightMultiply(trans_offset).convertToPoseEuler(point.pose.pose);
     PoseEuler fcp_in_base, tcp_in_base;
-    group_ptr_->getTransformationPtr()->convertPoseFromUserToBase(point.pose.pose, point.user_frame, tcp_in_base);
-    group_ptr_->getTransformationPtr()->convertTcpToFcp(tcp_in_base, point.tool_frame, fcp_in_base);
+    transformation_ptr->convertPoseFromUserToBase(point.pose.pose, point.user_frame, tcp_in_base);
+    transformation_ptr->convertTcpToFcp(tcp_in_base, point.tool_frame, fcp_in_base);
     
-    if (!group_ptr_->getKinematicsPtr()->doIK(fcp_in_base, point.pose.posture, point.joint))
+    if (!kinematics_ptr->doIK(fcp_in_base, point.pose.posture, point.pose.turn, point.joint))
     {
         const Posture &posture = point.pose.posture;
         const PoseEuler &pose = point.pose.pose;
@@ -695,27 +748,29 @@ ErrorCode MotionControl::offsetPoint(const TransMatrix &trans_offset, IntactPoin
 
 ErrorCode MotionControl::handlePoint(const TargetPoint &origin, const PoseEuler &user_frame, const PoseEuler &tool_frame, IntactPoint &point)
 {
+    Kinematics *kinematics_ptr = group_ptr_->getKinematicsPtr();
+    Transformation *transformation_ptr = group_ptr_->getTransformationPtr();
+    point.user_frame = user_frame;
+    point.tool_frame = tool_frame;
+
     if (origin.type == COORDINATE_JOINT)
     {
         PoseEuler fcp_in_base, tcp_in_base;
         point.joint = origin.joint;
-        point.user_frame = user_frame;
-        point.tool_frame = tool_frame;
-        point.pose.posture = group_ptr_->getKinematicsPtr()->getPostureByJoint(point.joint);
-        group_ptr_->getKinematicsPtr()->doFK(point.joint, fcp_in_base);
-        group_ptr_->getTransformationPtr()->convertFcpToTcp(fcp_in_base, tool_frame, tcp_in_base);
-        group_ptr_->getTransformationPtr()->convertPoseFromBaseToUser(tcp_in_base, user_frame, point.pose.pose);
+        point.pose.turn = kinematics_ptr->getTurnByJoint(point.joint);
+        point.pose.posture = kinematics_ptr->getPostureByJoint(point.joint);
+        kinematics_ptr->doFK(point.joint, fcp_in_base);
+        transformation_ptr->convertFcpToTcp(fcp_in_base, tool_frame, tcp_in_base);
+        transformation_ptr->convertPoseFromBaseToUser(tcp_in_base, user_frame, point.pose.pose);
     }
     else
     {
         PoseEuler fcp_in_base, tcp_in_base;
         point.pose = origin.pose;
-        point.user_frame = user_frame;
-        point.tool_frame = tool_frame;
-        group_ptr_->getTransformationPtr()->convertPoseFromUserToBase(point.pose.pose, user_frame, tcp_in_base);
-        group_ptr_->getTransformationPtr()->convertTcpToFcp(tcp_in_base, tool_frame, fcp_in_base);
+        transformation_ptr->convertPoseFromUserToBase(point.pose.pose, user_frame, tcp_in_base);
+        transformation_ptr->convertTcpToFcp(tcp_in_base, tool_frame, fcp_in_base);
         
-        if (!group_ptr_->getKinematicsPtr()->doIK(fcp_in_base, point.pose.posture, point.joint))
+        if (!kinematics_ptr->doIK(fcp_in_base, point.pose.posture, point.pose.turn, point.joint))
         {
             const Posture &posture = point.pose.posture;
             const PoseEuler &pose = point.pose.pose;
@@ -1120,8 +1175,8 @@ ErrorCode MotionControl::convertCartToJoint(const PoseAndPosture &pose, int user
         }
         else
         {
-            FST_ERROR("Fail to get user frame from given ID.");
-            return err_user;
+            FST_ERROR("Fail to get user frame from given ID = %d", user_frame_id);
+            return err_user == SUCCESS ? INVALID_PARAMETER : err_user;
         }
     }
 
@@ -1140,8 +1195,8 @@ ErrorCode MotionControl::convertCartToJoint(const PoseAndPosture &pose, int user
         }
         else
         {
-            FST_ERROR("Fail to get tool frame from given id");
-            return err_tool;
+            FST_ERROR("Fail to get tool frame from given ID = %d", tool_frame_id);
+            return err_tool == SUCCESS ? INVALID_PARAMETER : err_tool;
         }
     }
 
@@ -1224,8 +1279,8 @@ ErrorCode MotionControl::convertJointToCart(const Joint &joint, int user_frame_i
         }
         else
         {
-            FST_ERROR("Fail to get user frame from given ID.");
-            return err_user;
+            FST_ERROR("Fail to get user frame from given ID = %d", user_frame_id);
+            return err_user == SUCCESS ? INVALID_PARAMETER : err_user;
         }
     }
 
@@ -1244,8 +1299,8 @@ ErrorCode MotionControl::convertJointToCart(const Joint &joint, int user_frame_i
         }
         else
         {
-            FST_ERROR("Fail to get tool frame from given id");
-            return err_tool;
+            FST_ERROR("Fail to get tool frame from given id = %d", tool_frame_id);
+            return err_tool == SUCCESS ? INVALID_PARAMETER : err_tool;
         }
     }
 
@@ -1255,6 +1310,11 @@ ErrorCode MotionControl::convertJointToCart(const Joint &joint, int user_frame_i
 Posture MotionControl::getPostureFromJoint(const Joint &joint)
 {
     return group_ptr_->getKinematicsPtr()->getPostureByJoint(joint);
+}
+
+Turn MotionControl::getTurnFromJoint(const Joint &joint)
+{
+    return group_ptr_->getKinematicsPtr()->getTurnByJoint(joint);
 }
 
 string MotionControl::getModelName(void)
@@ -1312,11 +1372,6 @@ Joint MotionControl::getServoJoint(void)
 void MotionControl::getServoJoint(Joint &joint)
 {
     group_ptr_->getLatestJoint(joint);
-}
-
-size_t MotionControl::getFIFOLength(void)
-{
-    return group_ptr_->getFIFOLength();
 }
 
 ErrorCode MotionControl::setGlobalVelRatio(double ratio)

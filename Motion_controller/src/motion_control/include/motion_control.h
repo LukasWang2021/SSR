@@ -14,7 +14,6 @@
 #include <motion_control_datatype.h>
 #include <motion_control_param.h>
 #include <motion_control_arm_group.h>
-#include <motion_control_scara_group.h>
 
 
 namespace fst_mc
@@ -98,6 +97,7 @@ public:
     ErrorCode  convertCartToJoint(const basic_alg::PoseEuler &pose, int user_frame_id, int tool_frame_id, basic_alg::Joint &joint);
     ErrorCode  convertJointToCart(const basic_alg::Joint &joint, int user_frame_id, int tool_frame_id, basic_alg::PoseEuler &pose);
     basic_alg::Posture getPostureFromJoint(const basic_alg::Joint &joint);
+    basic_alg::Turn getTurnFromJoint(const basic_alg::Joint &joint);
 
     ErrorCode   getServoVersion(std::string &version);
     GroupState  getGroupState(void);
@@ -106,8 +106,6 @@ public:
     void    getCurrentPose(basic_alg::PoseEuler &pose);
     basic_alg::Joint getServoJoint(void);
     void    getServoJoint(basic_alg::Joint &joint);
-
-    size_t  getFIFOLength(void);
 
     ErrorCode setGlobalVelRatio(double ratio);
     ErrorCode setGlobalAccRatio(double ratio);

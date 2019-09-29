@@ -189,7 +189,7 @@ ErrorCode ModbusServer::setRegInfo(ModbusServerRegInfo config_reg_info)
             ||  reg_info_.coil.addr + reg_info_.coil.max_nb - 1
             < config_reg_info.coil.max_nb + config_reg_info.coil.addr - 1)
         {
-            return MODBUS_SERVER_INVALID_ARG;
+            return MODBUS_REGISTER_ADDRESS_EXCEED_LIMIT;
         }
 
         config_param_ptr_->reg_info_.coil.addr = config_reg_info.coil.addr;
@@ -202,7 +202,7 @@ ErrorCode ModbusServer::setRegInfo(ModbusServerRegInfo config_reg_info)
             ||  reg_info_.discrepte_input.addr + reg_info_.discrepte_input.max_nb - 1
             < config_reg_info.discrepte_input.max_nb + config_reg_info.discrepte_input.addr - 1)
         {
-            return MODBUS_SERVER_INVALID_ARG;
+            return MODBUS_REGISTER_ADDRESS_EXCEED_LIMIT;
         }
 
         config_param_ptr_->reg_info_.discrepte_input.addr = config_reg_info.discrepte_input.addr;
@@ -215,7 +215,7 @@ ErrorCode ModbusServer::setRegInfo(ModbusServerRegInfo config_reg_info)
             ||  reg_info_.holding_reg.addr + reg_info_.holding_reg.max_nb - 1
             < config_reg_info.holding_reg.max_nb + config_reg_info.holding_reg.addr - 1)
         {
-            return MODBUS_SERVER_INVALID_ARG;
+            return MODBUS_REGISTER_ADDRESS_EXCEED_LIMIT;
         }
 
         config_param_ptr_->reg_info_.holding_reg.addr = config_reg_info.holding_reg.addr;
@@ -228,7 +228,7 @@ ErrorCode ModbusServer::setRegInfo(ModbusServerRegInfo config_reg_info)
             ||  reg_info_.input_reg.addr + reg_info_.input_reg.max_nb - 1
             < config_reg_info.input_reg.max_nb + config_reg_info.input_reg.addr - 1)
         {
-            return MODBUS_SERVER_INVALID_ARG;
+            return MODBUS_REGISTER_ADDRESS_EXCEED_LIMIT;
         }
 
         config_param_ptr_->reg_info_.input_reg.addr = config_reg_info.input_reg.addr;
@@ -530,12 +530,14 @@ void ModbusServer::modbusTcpServerThreadFunc()
 
 ErrorCode ModbusServer::writeCoils(int addr, int nb, uint8_t *dest)
 {
-    if (NULL == dest
-        || addr + nb -1 < addr
-        || addr < config_reg_info_.coil.addr
+    if (NULL == dest || nb == 0)
+    {
+         return MODBUS_SERVER_INVALID_ARG;
+    }
+    if(addr < config_reg_info_.coil.addr
         || config_reg_info_.coil.max_nb  + config_reg_info_.coil.addr - 1 < addr + nb -1)
     {
-        return MODBUS_SERVER_INVALID_ARG;
+        return MODBUS_REGISTER_ADDRESS_EXCEED_LIMIT;
     }
 
     if (!is_running_)
@@ -554,12 +556,14 @@ ErrorCode ModbusServer::writeCoils(int addr, int nb, uint8_t *dest)
 
 ErrorCode ModbusServer::readCoils(int addr, int nb, uint8_t *dest)
 {
-    if (NULL == dest
-        || addr + nb -1 < addr 
-        || addr < config_reg_info_.coil.addr
+    if (NULL == dest || nb == 0)
+    {
+         return MODBUS_SERVER_INVALID_ARG;
+    }
+    if(addr < config_reg_info_.coil.addr
         || config_reg_info_.coil.max_nb  + config_reg_info_.coil.addr - 1 < addr + nb -1)
     {
-        return MODBUS_SERVER_INVALID_ARG;
+        return MODBUS_REGISTER_ADDRESS_EXCEED_LIMIT;
     }
 
     if (!is_running_)
@@ -577,12 +581,14 @@ ErrorCode ModbusServer::readCoils(int addr, int nb, uint8_t *dest)
 
 ErrorCode ModbusServer::readDiscreteInputs(int addr, int nb, uint8_t *dest)
 {
-    if (NULL == dest
-        || addr + nb -1 < addr
-        || addr < config_reg_info_.discrepte_input.addr
+    if (NULL == dest || nb == 0)
+    {
+         return MODBUS_SERVER_INVALID_ARG;
+    }
+    if(addr < config_reg_info_.discrepte_input.addr
         || config_reg_info_.discrepte_input.max_nb  + config_reg_info_.discrepte_input.addr - 1 < addr + nb -1)
     {
-        return MODBUS_SERVER_INVALID_ARG;
+        return MODBUS_REGISTER_ADDRESS_EXCEED_LIMIT;
     }
 
     if (!is_running_)
@@ -601,12 +607,14 @@ ErrorCode ModbusServer::readDiscreteInputs(int addr, int nb, uint8_t *dest)
 
 ErrorCode ModbusServer::writeHoldingRegs(int addr, int nb, uint16_t *dest)
 {
-    if (NULL == dest
-        || addr + nb -1 < addr
-        || addr < config_reg_info_.holding_reg.addr
+    if (NULL == dest || nb == 0)
+    {
+         return MODBUS_SERVER_INVALID_ARG;
+    }
+    if(addr < config_reg_info_.holding_reg.addr
         || config_reg_info_.holding_reg.max_nb  + config_reg_info_.holding_reg.addr - 1 < addr + nb -1)
     {
-        return MODBUS_SERVER_INVALID_ARG;
+        return MODBUS_REGISTER_ADDRESS_EXCEED_LIMIT;
     }
 
     if (!is_running_)
@@ -625,12 +633,14 @@ ErrorCode ModbusServer::writeHoldingRegs(int addr, int nb, uint16_t *dest)
 
 ErrorCode ModbusServer::readHoldingRegs(int addr, int nb, uint16_t *dest)
 {
-    if (NULL == dest
-        || addr + nb -1 < addr 
-        || addr < config_reg_info_.holding_reg.addr
+    if (NULL == dest || nb == 0)
+    {
+         return MODBUS_SERVER_INVALID_ARG;
+    }
+    if(addr < config_reg_info_.holding_reg.addr
         || config_reg_info_.holding_reg.max_nb  + config_reg_info_.holding_reg.addr - 1 < addr + nb -1)
     {
-        return MODBUS_SERVER_INVALID_ARG;
+        return MODBUS_REGISTER_ADDRESS_EXCEED_LIMIT;
     }
 
     if (!is_running_)
@@ -649,12 +659,14 @@ ErrorCode ModbusServer::readHoldingRegs(int addr, int nb, uint16_t *dest)
 
 ErrorCode ModbusServer::readInputRegs(int addr, int nb, uint16_t *dest)
 {
-    if (NULL == dest
-        || addr + nb -1 < addr 
-        || addr < config_reg_info_.input_reg.addr
+    if (NULL == dest || nb == 0)
+    {
+         return MODBUS_SERVER_INVALID_ARG;
+    }
+    if(addr < config_reg_info_.input_reg.addr
         || config_reg_info_.input_reg.max_nb  + config_reg_info_.input_reg.addr - 1 < addr + nb -1)
     {
-        return MODBUS_SERVER_INVALID_ARG;
+        return MODBUS_REGISTER_ADDRESS_EXCEED_LIMIT;
     }
 
     if (!is_running_)
@@ -674,12 +686,14 @@ ErrorCode ModbusServer::readInputRegs(int addr, int nb, uint16_t *dest)
 
 ErrorCode ModbusServer::writeInputRegs(int addr, int nb, uint16_t *dest)
 {
-    if (NULL == dest
-        || addr + nb -1 < addr 
-        || addr < config_reg_info_.input_reg.addr
+    if (NULL == dest || nb == 0)
+    {
+         return MODBUS_SERVER_INVALID_ARG;
+    }
+    if(addr < config_reg_info_.input_reg.addr
         || config_reg_info_.input_reg.max_nb  + config_reg_info_.input_reg.addr - 1 < addr + nb -1)
     {
-        return MODBUS_SERVER_INVALID_ARG;
+        return MODBUS_REGISTER_ADDRESS_EXCEED_LIMIT;
     }
 
     if (!is_running_)

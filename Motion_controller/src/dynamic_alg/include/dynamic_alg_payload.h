@@ -20,7 +20,7 @@ typedef struct
     double Ixx_load;
     double Iyy_load;
     double Izz_load;
-    std::string comment;
+    char comment[256];
 }PayloadInfo;
 
 typedef struct
@@ -56,7 +56,7 @@ private:
     void packDummyPayloadInfo(PayloadInfo& info);
     std::string getPayloadInfoPath(int coord_id);
     bool readAllPayloadInfoFromYaml(void);
-    bool writePayloadInfoToYaml(PayloadInfo& info);
+    bool writePayloadInfoToYaml(const PayloadInfo& info);
     void printfPayload(void);
 };
 

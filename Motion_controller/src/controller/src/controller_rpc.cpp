@@ -153,7 +153,7 @@ void ControllerRpc::recordLog(ErrorCode log_code, ErrorCode error_code, std::str
         FST_ERROR(stream.str().c_str());
         state_machine_ptr_->setSafetyStop(error_code);
 
-        ServerAlarmApi::GetInstance()->sendOneAlarm(error_code, log_str);
+        ServerAlarmApi::GetInstance()->sendOneAlarm(log_code, log_str);
     }    
 }
 

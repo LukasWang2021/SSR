@@ -133,6 +133,12 @@ void ControllerRpc::handleRpc0x0000BA55(void* request_data_ptr, void* response_d
         state_machine_ptr_->setUoPausedOn();//UO[2]=on
         state_machine_ptr_->setUoProgramRunOff();//UO[4]=off
     }
+    else
+    {
+        state_machine_ptr_->setPauseFlag(true);
+    }
+    rs_data_ptr->data.data = SUCCESS;
+
     recordLog(INTERPRETER_LOG, rs_data_ptr->data.data, std::string("/rpc/interpreter/pause"));
 }
 

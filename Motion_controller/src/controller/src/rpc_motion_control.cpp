@@ -168,6 +168,7 @@ void ControllerRpc::handleRpc0x0000D3F5(void* request_data_ptr, void* response_d
         || state_machine_ptr_->getInterpreterState() == INTERPRETER_EXECUTE)
     {
         rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION_MOVE_CONTINUOUS;
+        FST_ERROR("Invalid state to manual move");
         return;
     }
 

@@ -85,10 +85,7 @@ typedef struct _SafetyBoardDIFrm1
 
 typedef struct _SafetyBoardDIFrm2
 {
-	char reserve1;
-	char reserve2;
-	char reserve3;
-	char reserve4;
+	uint32_t data;
 }SafetyBoardDIFrm2;
 
 typedef struct _SafetyBoardDOFrm1
@@ -129,6 +126,8 @@ public:
     //  Description: get the DI status from the first 4 bytes.
     //  -----------------------------------------------------------------------
     uint32_t getDIFrm1(void);
+
+	uint32_t getDIFrm2(void);
 
     //  -----------------------------------------------------------------------
 	//  Function:		isDIFrmChanged
@@ -454,6 +453,7 @@ private:
 	bool is_virtual_;
     std::atomic<SafetyBoardDIFrm1>  din_frm1_;
     std::atomic<SafetyBoardDOFrm1>  dout_frm1_;
+	std::atomic<SafetyBoardDIFrm2>  din_frm2_;
 
 	//safety_alarm
 	char pre_dual_faulty_;

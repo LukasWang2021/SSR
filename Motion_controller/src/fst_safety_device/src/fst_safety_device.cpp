@@ -68,6 +68,7 @@ bool FstSafetyDevice::init()
 {
     memset((char*)&din_frm1_, 0, sizeof(din_frm1_));
     memset((char*)&dout_frm1_, 0, sizeof(dout_frm1_));
+    memset((char*)&din_frm2_, 0, sizeof(din_frm2_));
 
     ErrorCode ret = 0;
     if(!param_ptr_->loadParam()){
@@ -103,6 +104,11 @@ FstSafetyDevice::FstSafetyDevice():
 uint32_t FstSafetyDevice::getDIFrm1()
 {
     return *(uint32_t*)&din_frm1_;
+}
+
+uint32_t FstSafetyDevice::getDIFrm2()
+{
+    return *(uint32_t*)&din_frm2_;
 }
 
 bool FstSafetyDevice::isDIFrmChanged()
@@ -610,30 +616,16 @@ ErrorCode FstSafetyDevice::updateSafetyData()
 {
     static ErrorCode pre_err = SUCCESS;
     uint32_t data;
-    // for test only.
-    //static int count = 0;
+    uint32_t data2;
     ErrorCode result = autorunSafetyData(); 
     if (result == SUCCESS){
         result = getSafety(&data, SAFETY_INPUT_FIRSTFRAME);
         if (result == SUCCESS)
             memcpy((char*)&din_frm1_, (char*)&data, sizeof(uint32_t));
 
-        // for test only.
-        /* count++;
-        if (count >= 5000)
-            count = 0;
-        if (count == 0){
-            printf("\nwrite safety[0] = 0x%x.\n", data);
-        }
-        data = getSafety(SAFETY_INPUT_FIRSTFRAME, &result);
-        if (count == 0){
-            printf("recv safety[0] = 0x%x.\n", data);
-        }
-        data = getSafety(SAFETY_INPUT_SECONDFRAME, &result);
-        if (count == 0){
-            printf("recv safety[1] = 0x%x.\n", data);
-        }
-        */
+        result = getSafety(&data2, SAFETY_INPUT_SECONDFRAME);
+        if (result == SUCCESS)
+            memcpy((char*)&din_frm2_, (char*)&data2, sizeof(uint32_t));
     }else{
         if (pre_err != result){
             ErrorMonitor::instance()->add(result);

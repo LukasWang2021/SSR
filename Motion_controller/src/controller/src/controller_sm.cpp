@@ -534,8 +534,25 @@ void ControllerSm::processSafety()
         }
         pre_user_op_mode_ = user_op_mode_;
 
-        //get the safety_board alarm for TP
+        //get the safety_board alarm and debug code.
         safety_alarm_ = safety_device_ptr_->getExcitorStop();
+        static uint32_t pre_debug_code = 0;
+        if (safety_alarm_ != 0)
+        {
+            uint32_t safety_debug_code = safety_device_ptr_->getDIFrm2();
+            if (safety_debug_code != 0 && safety_debug_code != pre_debug_code)
+            {
+                char safety_debug_string[16] = "";
+                sprintf(safety_debug_string, "0x%lx", safety_debug_code);
+                recordLog(SAFETY_BOARD_DEBUG_ERROR, safety_debug_string);  
+            }
+            pre_debug_code = safety_debug_code;
+        }
+        else
+        {
+            pre_debug_code = 0;
+        }
+
         //get the cabinet reset
         if (safety_device_ptr_->isCabinetResetRequest())
         {

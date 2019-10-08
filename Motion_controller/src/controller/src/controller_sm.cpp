@@ -799,6 +799,7 @@ void ControllerSm::shutdown()
 	// flushshutdown = fsync();
 
 	// sent a message outside to shutdown
+    sleep(10);
 	int fdshutdown;
 	fdshutdown = open("/dev/mem", O_RDWR);
 	if (fdshutdown == -1)

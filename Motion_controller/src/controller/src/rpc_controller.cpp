@@ -24,7 +24,14 @@ void ControllerRpc::handleRpc0x000167C5(void* request_data_ptr, void* response_d
     time_val.tv_usec = 0;
     if(settimeofday(&time_val, NULL) == 0)
     {
-        rs_data_ptr->data.data = SUCCESS;
+        if (system("hwclock -w") != -1)
+        {
+            rs_data_ptr->data.data = SUCCESS;
+        }
+        else
+        {
+            rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION_SET_TIME;
+        }
     }
     else
     {

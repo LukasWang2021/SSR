@@ -34,6 +34,8 @@ public:
     int max_unknown_user_op_mode_timeout_;  //us
     double max_limited_global_vel_ratio_;  // 0~1
     double max_limited_global_acc_ratio_;  // 0~1
+    double max_limited_manual_vel_cart_;  //mm/s
+    double max_limited_manual_vel_joint_; //0~1
     int loop_count_;
     bool enable_set_vel_in_auto_;
 private:

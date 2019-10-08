@@ -443,6 +443,24 @@ void ControllerSm::processInterpreter()
             {
                 case MOTION:
                 {//FST_ERROR("---Instruction Motion");
+                    //limit the MoveJ/MoveL velocity under slowly manual mode.
+                    if (user_op_mode_ == USER_OP_MODE_SLOWLY_MANUAL)
+                    {
+                        if (instruction_.target.type == MOTION_JOINT)
+                        {
+                            if (instruction_.target.vel > param_ptr_->max_limited_manual_vel_joint_)
+                            {
+                                instruction_.target.vel = param_ptr_->max_limited_manual_vel_joint_;
+                            } 
+                        }
+                        else if (instruction_.target.type == MOTION_LINE  || instruction_.target.type == MOTION_CIRCLE)
+                        {
+                            if (instruction_.target.vel > param_ptr_->max_limited_manual_vel_cart_)
+                            {
+                                instruction_.target.vel = param_ptr_->max_limited_manual_vel_cart_;
+                            }
+                        }
+                    }
                     error_code = motion_control_ptr_->autoMove(0, instruction_.target);
                     break;
                 }
@@ -664,6 +682,7 @@ void ControllerSm::transferCtrlState()
                 && servo_state_ == SERVO_IDLE
                 && !is_error_exist_.data)
             {
+                pre_error.data = false;
                 recordLog("Controller transfer from ESTOP_TO_ENGAGED to ENGAGED");
                 ctrl_state_ = CTRL_ENGAGED;
             }
@@ -951,7 +970,7 @@ void ControllerSm::doStopAction(void)
         controller_client_ptr_->abort();
         motion_control_ptr_->stopGroup();
         motion_control_ptr_->abortMove();
-        recordLog("Controller transfer from ENGAGED to CTRL_ANY_TO_ESTOP");
+        recordLog("Controller transfer to CTRL_ANY_TO_ESTOP");
         FST_WARN("doStopAction:prg-abort, mc-stop/abort\n");
         ctrl_state_ = CTRL_ANY_TO_ESTOP;
     }
@@ -960,7 +979,7 @@ void ControllerSm::doStopAction(void)
         controller_client_ptr_->pause();
         motion_control_ptr_->stopGroup();
         motion_control_ptr_->abortMove();
-        recordLog("Controller transfer from ENGAGED to CTRL_ANY_TO_ESTOP");
+        recordLog("Controller transfer to CTRL_ANY_TO_ESTOP");
         FST_WARN("doStopAction:prg-pause, mc-stop/abort\n");
         ctrl_state_ = CTRL_ANY_TO_ESTOP;
     }

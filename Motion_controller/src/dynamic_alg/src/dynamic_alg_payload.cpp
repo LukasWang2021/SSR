@@ -7,7 +7,7 @@
 using namespace basic_alg;
 
 DynamicAlgPayload::DynamicAlgPayload(fst_log::Logger *logger):
-    file_path_(COMPONENT_PARAM_FILE_DIR),
+    file_path_(DYNAMICS_DIR),
     max_number_of_payloads_(10)
 {
     log_ptr_ = logger;

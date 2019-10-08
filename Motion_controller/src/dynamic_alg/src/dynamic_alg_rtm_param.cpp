@@ -5,10 +5,9 @@
 using namespace basic_alg;
 
 DynamicAlgRTMParam::DynamicAlgRTMParam():
-    file_path_(COMPONENT_PARAM_FILE_DIR),
+    file_path_(DYNAMICS_DIR),
     log_level_(3)  // default is Error Level
 {
-    file_path_ += "dynamic_alg_rtm.yaml";
 }
 
 DynamicAlgRTMParam::~DynamicAlgRTMParam()
@@ -18,11 +17,24 @@ DynamicAlgRTMParam::~DynamicAlgRTMParam()
 
 bool DynamicAlgRTMParam::loadParam()
 {
+    type_file_path_ = DYNAMICS_DIR;
+    type_file_path_ += "dynamic_alg_rtm_type.yaml";
+    if (!yaml_type_.loadParamFile(type_file_path_.c_str())
+        || !yaml_type_.getParam("type_file_name", type_file_name_))
+    {
+        return false;
+    }
+    else
+    {
+        file_path_ += type_file_name_;
+    }
+
     if (!yaml_help_.loadParamFile(file_path_.c_str())
         || !yaml_help_.getParam("log_level", log_level_)
         || !yaml_help_.getParam("number_of_links", number_of_links_)
         || !yaml_help_.getParam("current_payload_id", current_payload_id_)
         || !yaml_help_.getParam("acc_scale_factor", acc_scale_factor_)
+        || !yaml_help_.getParam("motor_power", motor_power_)
         || !yaml_help_.getParam("motor_torque", motor_torque_)
         || !yaml_help_.getParam("gear_ratio", gear_ratio_)
         || !yaml_help_.getParam("max_torque", max_torque_)
@@ -99,6 +111,7 @@ bool DynamicAlgRTMParam::saveParam()
         || !yaml_help_.setParam("number_of_links", number_of_links_)
         || !yaml_help_.setParam("current_payload_id", current_payload_id_)
         || !yaml_help_.setParam("acc_scale_factor", acc_scale_factor_)
+        || !yaml_help_.setParam("motor_power", motor_power_)
         || !yaml_help_.setParam("motor_torque", motor_torque_)
         || !yaml_help_.setParam("gear_ratio", gear_ratio_)
         || !yaml_help_.setParam("max_torque", max_torque_)

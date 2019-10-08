@@ -110,13 +110,38 @@ install(TARGETS	test_scale_compare
     RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
-install(FILES config/dynamic_alg_rtm.yaml
-    DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/runtime/component_param/
+install(FILES config/dynamic_payload_info.yaml
+    DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/runtime/dynamics/
 )
 
-install(FILES config/dynamic_payload_info.yaml
-    DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/runtime/component_param/
+install(FILES config/dynamic_alg_rtm_type.yaml
+    DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/runtime/dynamics/
 )
+
+install(FILES config/dynamic_alg_rtm_0kg_A2.yaml
+    DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/runtime/dynamics/
+)
+
+install(FILES config/dynamic_alg_rtm_1.0kg_A2.yaml
+    DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/runtime/dynamics/
+)
+
+install(FILES config/dynamic_alg_rtm_3.5kg_A2.yaml
+    DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/runtime/dynamics/
+)
+
+install(FILES config/dynamic_alg_rtm_3.5kg_A6.yaml
+    DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/runtime/dynamics/
+)
+
+install(FILES config/dynamic_alg_rtm_7kg_A3.yaml
+    DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/runtime/dynamics/
+)
+
+install(FILES config/dynamic_alg_rtm_7kg_A6.yaml
+    DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/runtime/dynamics/
+)
+
 
 install(DIRECTORY config
     DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}

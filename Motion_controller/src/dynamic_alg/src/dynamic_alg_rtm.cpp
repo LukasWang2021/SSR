@@ -210,90 +210,6 @@ bool DynamicAlgRTM::getTorqueInverseDynamics(const Joint& joint, const JointVelo
     return true;
 }
 
-//todo delete
-bool DynamicAlgRTM::getTorqueMax(const Joint& joint, const JointVelocity& vel, JointTorque &torq_pos, JointTorque &torq_neg)
-{
-
-    torq_pos.t1_ = param_ptr_->max_torque_[0];
-    torq_pos.t2_ = param_ptr_->max_torque_[1];
-    torq_pos.t3_ = param_ptr_->max_torque_[2];
-    torq_pos.t4_ = param_ptr_->max_torque_[3];
-    torq_pos.t5_ = param_ptr_->max_torque_[4];
-    torq_pos.t6_ = param_ptr_->max_torque_[5];
-
-    torq_neg.t1_ = - torq_pos.t1_;
-    torq_neg.t2_ = - torq_pos.t2_;
-    torq_neg.t3_ = - torq_pos.t3_;
-    torq_neg.t4_ = - torq_pos.t4_;
-    torq_neg.t5_ = - torq_pos.t5_;
-    torq_neg.t6_ = - torq_pos.t6_;
-
-    //prepare varibles.
-    double Fs[LINKS][LINKS] = {0};
-    Fs[0][0] = FS1;
-    Fs[1][1] = FS2;
-    Fs[2][2] = FS3;
-    Fs[3][3] = FS4;
-    Fs[4][4] = FS5;
-    Fs[5][5] = FS6;
-    
-    double sign_vel[LINKS] = {0};
-    for (int i = 0; i < LINKS; ++i)
-    {
-        sign_vel[i] = sign(vel[i]);
-    }
-
-    double g[LINKS] = {0};
-    computeGExpression(joint, g);//70us
-
-    // compute τ=τ- ̇F_s sgn(q ̇ )-g(q)
-    double temp_pos[LINKS] = {0};
-    double temp_neg[LINKS] = {0};
-    //compute with τ
-    for (int i = 0; i < LINKS; ++i)
-    {
-        temp_pos[i] += torq_pos[i];
-        temp_neg[i] += torq_neg[i];
-    }
-
-    //compute with F_s sgn(q ̇ )
-    for (int i = 0; i < LINKS; ++i)
-    {
-        double fs_multiply_sign_vel = 0;
-        for (int j = 0; j < LINKS; ++j)
-        {
-            fs_multiply_sign_vel += Fs[i][j] * sign_vel[j];
-        }
-        temp_pos[i] += - fs_multiply_sign_vel;
-        temp_neg[i] += - fs_multiply_sign_vel;
-    }
-
-    //compute with g(q)
-    for (int i = 0; i < LINKS; ++i)
-    {
-        temp_pos[i] += - g[i];
-        temp_neg[i] += - g[i];
-    }
-
-    //compute final answer.
-    torq_pos.t1_ = temp_pos[0];
-    torq_pos.t2_ = temp_pos[1];
-    torq_pos.t3_ = temp_pos[2];
-    torq_pos.t4_ = temp_pos[3];
-    torq_pos.t5_ = temp_pos[4];
-    torq_pos.t6_ = temp_pos[5];
-
-    torq_neg.t1_ = temp_neg[0];
-    torq_neg.t2_ = temp_neg[1];
-    torq_neg.t3_ = temp_neg[2];
-    torq_neg.t4_ = temp_neg[3];
-    torq_neg.t5_ = temp_neg[4];
-    torq_neg.t6_ = temp_neg[5];
-
-    return true;
-}
-
-
 
 bool DynamicAlgRTM::getAccMax(const Joint& joint, const JointVelocity& vel, JointAcceleration &acc_pos, JointAcceleration &acc_neg)
 {
@@ -1621,118 +1537,132 @@ void DynamicAlgRTM::getTorqueFromCurve(const JointVelocity& vel, JointTorque &to
     //Joint 1 motor is 750w.
     double velocity = vel.v1_;
     double ratio = param_ptr_->gear_ratio_[0];
-    double torq = param_ptr_->motor_torque_[0];
-    velocity = (30 * velocity * ratio) / PI;
-    velocity = (velocity / 1000) - 3.5;
-    if (velocity <= 0)
-    {
-        torque.t1_ = torq * ratio;
-    }
-    else if (velocity >= 2.5)
-    {
-        torque.t1_ = 0;
-    }
-    else
-    {
-        torque.t1_ = (-2.56 * velocity + torq) * ratio;
-    }
+    double motor_torq = param_ptr_->motor_torque_[0];
+    int motor_power = param_ptr_->motor_power_[0];
+    getSingleTorqueFromCurve(motor_power, velocity, ratio, motor_torq, torque.t1_);
 
     //Joint 2 motor is 600w.
     velocity = vel.v2_;
     ratio = param_ptr_->gear_ratio_[1];
-    torq = param_ptr_->motor_torque_[1];
-    velocity = (30 * velocity * ratio) / PI;
-    velocity = (velocity / 1000) - 3.5;
-    if (velocity <= 0)
-    {
-        torque.t2_ = torq * ratio;
-    }
-    else if (velocity >= 2.5)
-    {
-        torque.t2_ = 0;
-    }
-    else
-    {
-        torque.t2_ = (-2.16 * velocity + torq) * ratio;
-    }
+    motor_torq = param_ptr_->motor_torque_[1];
+    motor_power = param_ptr_->motor_power_[1];
+    getSingleTorqueFromCurve(motor_power, velocity, ratio, motor_torq, torque.t2_);
 
-    //Joint 3 motor is 400w.
+    //Joint 3 motor is 400w or 600w.
     velocity = vel.v3_;
     ratio = param_ptr_->gear_ratio_[2];
-    torq = param_ptr_->motor_torque_[2];
-    velocity = (30 * velocity * ratio) / PI;
-    velocity = (velocity / 1000) - 2.5;
-    if (velocity <= 0)
-    {
-        torque.t3_ = torq * ratio;
-    }
-    else if (velocity >= 3.5)
-    {
-        torque.t3_ = 0;
-    }
-    else
-    {
-        torque.t3_ = (0.198 * velocity * velocity - 1.795 * velocity + torq) * ratio;
-    }
+    motor_torq = param_ptr_->motor_torque_[2];
+    motor_power = param_ptr_->motor_power_[2];
+    getSingleTorqueFromCurve(motor_power, velocity, ratio, motor_torq, torque.t3_);
 
     //Joint 4 motor is 200w.
     velocity = vel.v4_;
     ratio = param_ptr_->gear_ratio_[3];
-    torq = param_ptr_->motor_torque_[3];
-    velocity = (30 * velocity * ratio) / PI;
-    velocity = (velocity / 1000) - 3;
-    if (velocity <= 0)
-    {
-        torque.t4_ = torq * ratio;
-    }
-    else if (velocity >= 3.0)
-    {
-        torque.t4_ = 0;
-    }
-    else
-    {
-        torque.t4_ = (0.0916 * velocity * velocity - 0.7917 * velocity + torq) * ratio;
-    }
+    motor_torq = param_ptr_->motor_torque_[3];
+    motor_power = param_ptr_->motor_power_[3];
+    getSingleTorqueFromCurve(motor_power, velocity, ratio, motor_torq, torque.t4_);
 
     //Joint 5 motor is 100w.
     velocity = vel.v5_;
     ratio = param_ptr_->gear_ratio_[4];
-    torq = param_ptr_->motor_torque_[4];
-    velocity = (30 * velocity * ratio) / PI;
-    velocity = (velocity / 1000) - 2.7;
-    if (velocity <= 0)
-    {
-        torque.t5_ = torq * ratio;
-    }
-    else if (velocity >= 3.3)
-    {
-        torque.t5_ = 0;
-    }
-    else
-    {
-        torque.t5_ = (0.03625 * velocity * velocity - 0.332 * velocity + torq) * ratio;
-    }
+    motor_torq = param_ptr_->motor_torque_[4];
+    motor_power = param_ptr_->motor_power_[4];
+    getSingleTorqueFromCurve(motor_power, velocity, ratio, motor_torq, torque.t5_);
 
     //Joint 6 motor is 100w.
     velocity = vel.v6_;
     ratio = param_ptr_->gear_ratio_[5];
-    torq = param_ptr_->motor_torque_[5];
-    velocity = (30 * velocity * ratio) / PI;
-    velocity = (velocity / 1000) - 2.7;
-    if (velocity <= 0)
-    {
-        torque.t6_ = torq * ratio;
-    }
-    else if (velocity >= 3.3)
-    {
-        torque.t6_ = 0;
-    }
-    else
-    {
-        torque.t6_ = (0.03625 * velocity * velocity - 0.332 * velocity + torq) * ratio;
-    }
+    motor_torq = param_ptr_->motor_torque_[5];
+    motor_power = param_ptr_->motor_power_[5];
+    getSingleTorqueFromCurve(motor_power, velocity, ratio, motor_torq, torque.t6_);
 
 }
+
+void DynamicAlgRTM::getSingleTorqueFromCurve(int motor_power, double vel, double ratio, double motor_torq, double &torque)
+{
+    vel = (30 * vel * ratio) / PI;
+    switch (motor_power)
+    {
+        case 750:
+            vel = (vel / 1000) - 3.5;
+            if (vel <= 0)
+            {
+                torque = motor_torq * ratio;
+            }
+            else if (vel >= 2.5)
+            {
+                torque = 0;
+            }
+            else
+            {
+                torque = (-2.56 * vel + motor_torq) * ratio;
+            }
+            break;
+        case 600:  
+            vel = (vel / 1000) - 3.5;
+            if (vel <= 0)
+            {
+                torque = motor_torq * ratio;
+            }
+            else if (vel >= 2.5)
+            {
+                torque = 0;
+            }
+            else
+            {
+                torque = (-2.16 * vel + motor_torq) * ratio;
+            }
+            break;
+        case 400:
+            vel = (vel / 1000) - 2.5;
+            if (vel <= 0)
+            {
+                torque = motor_torq * ratio;
+            }
+            else if (vel >= 3.5)
+            {
+                torque = 0;
+            }
+            else
+            {
+                torque = (0.198 * vel * vel - 1.795 * vel + motor_torq) * ratio;
+            }
+            break;
+        case 200:
+            vel = (vel / 1000) - 3;
+            if (vel <= 0)
+            {
+                torque = motor_torq * ratio;
+            }
+            else if (vel >= 3.0)
+            {
+                torque = 0;
+            }
+            else
+            {
+                torque = (0.0916 * vel * vel - 0.7917 * vel + motor_torq) * ratio;
+            }
+            break;
+        case 100:
+            vel = (vel / 1000) - 2.7;
+            if (vel <= 0)
+            {
+                torque = motor_torq * ratio;
+            }
+            else if (vel >= 3.3)
+            {
+                torque = 0;
+            }
+            else
+            {
+                torque = (0.03625 * vel * vel - 0.332 * vel + motor_torq) * ratio;
+            }
+            break;
+        default:
+            break;
+    }
+}
+
 
 bool DynamicAlgRTM::getMatrixInverse(const double src[LINKS][LINKS], int n, double dest[LINKS][LINKS])
 {

@@ -4,11 +4,8 @@
 #include "base_device.h"
 #include "fst_safety_device_param.h"
 #include "common_log.h"
-#include <thread>
 #include <mutex>
-
-#include <boost/thread/thread.hpp>
-#include <boost/thread/mutex.hpp>
+#include "thread_help.h"
 
 namespace fst_hal
 {
@@ -434,19 +431,17 @@ public:
 	//check deadman normal
 	ErrorCode checkDeadmanNormal(void);
 
-
+    void routineThreadFunc(void);      // calling data exchange
+	bool isRunning();
 	
 private:
     bool isRisingEdge(char value, ErrorCode code, char &pre_value);
 
     FstSafetyDeviceParam* param_ptr_;
     fst_log::Logger* log_ptr_;
-
-    boost::thread update_thread_;
+    fst_base::ThreadHelp routine_thread_;
+	bool is_running_;
     std::mutex mutex_;  // data protection
-    void startThread(void);
-    void runThread(void); 
-    void updateThreadFunc(void);      // calling data exchange
     ErrorCode updateSafetyData(void); // data exchange
 
     FstSafetyDevice();
@@ -475,8 +470,9 @@ private:
 	//comm error safety_alarm
 	char pre_comm_err_;
 };
-
 }
+
+void safetyDeviceRoutineThreadFunc(void* arg);
 
 #endif
 

@@ -204,7 +204,7 @@ private:
     fst_log::Logger* log_ptr_;
     fst_hal::DeviceManager* device_manager_ptr_;
     std::vector<fst_hal::DeviceInfo> device_list_;
-    fst_base::ThreadHelp thread_routine_ptr_;
+    fst_base::ThreadHelp routine_thread_;
 
 };
 } //namespace

@@ -13,6 +13,7 @@ Summary:    dealing with safety board
 #include "fst_safety_mem.h"
 #include "fst_safety_device.h"
 #include "error_monitor.h"
+#include <sys/mman.h>
 
 using namespace fst_hal;
 using namespace fst_base;
@@ -21,6 +22,7 @@ FstSafetyDevice::FstSafetyDevice(int address):
     BaseDevice(address, fst_hal::DEVICE_TYPE_FST_SAFETY),
     log_ptr_(NULL),
     param_ptr_(NULL),
+    is_running_(false),
     is_virtual_(false),
     pre_dual_faulty_(0),
 	pre_ext_estop_(0),
@@ -46,10 +48,10 @@ FstSafetyDevice::FstSafetyDevice(int address):
 
 FstSafetyDevice::~FstSafetyDevice()
 {
+    is_running_ = false;//stop thread running
     if (is_virtual_ == false)
     {
-        update_thread_.interrupt();
-        update_thread_.join();
+        routine_thread_.join();
         closeSafety();
     } 
 
@@ -86,7 +88,12 @@ bool FstSafetyDevice::init()
             ErrorMonitor::instance()->add(ret);
             return false; 
         }
-        startThread();
+        is_running_ = true;
+        if(!routine_thread_.run(&safetyDeviceRoutineThreadFunc, this, 51))
+        {
+            FST_ERROR("Failed to open safety_device routine thread");
+            return false;
+        }
         setValid(true);
     } else {
         FST_INFO("Use Fake Safety");
@@ -569,47 +576,16 @@ bool FstSafetyDevice::isRisingEdge(char value, ErrorCode code, char &pre_value)
     return false;
 }
 
-//------------------------------------------------------------
-// Function:    startThread
-// Summary: start a thread.
-// In:      None.
-// Out:     None.
-// Return:  None.
-//------------------------------------------------------------
-void FstSafetyDevice::startThread(void)
-{
-    update_thread_ = boost::thread(boost::bind(&FstSafetyDevice::runThread, this));
-    //update_thread_.timed_join(boost::posix_time::milliseconds(100)); // check the thread running or not.
-}
 
-//------------------------------------------------------------
-// Function:    runThread
-// Summary: main function of io thread.
-// In:      None.
-// Out:     None.
-// Return:  None.
-//------------------------------------------------------------
-void FstSafetyDevice::runThread(void)
-{
-    try
-    {   FST_INFO("safety thread running...");
-        while (true)
-        {
-            updateThreadFunc();
-
-            // set interruption point.
-            boost::this_thread::sleep(boost::posix_time::microseconds(param_ptr_->cycle_time_));// add  using  thread_help...
-        }
-    }
-    catch (boost::thread_interrupted &)
-    {
-        std::cout<<"~Stop safety update thread Thread Safely.~"<<std::endl;
-    }
-}
-
-void FstSafetyDevice::updateThreadFunc()
+void FstSafetyDevice::routineThreadFunc()
 {
     updateSafetyData();
+    usleep(param_ptr_->cycle_time_);
+}
+
+bool FstSafetyDevice::isRunning()
+{
+    return is_running_;
 }
 
 ErrorCode FstSafetyDevice::updateSafetyData()
@@ -634,3 +610,23 @@ ErrorCode FstSafetyDevice::updateSafetyData()
     pre_err = result;
     return result;
 }
+
+void safetyDeviceRoutineThreadFunc(void* arg)
+{
+    if (mlockall(MCL_CURRENT|MCL_FUTURE) == -1) 
+    {
+        std::cout<<"safety_device routine thread mlockall failed"<<std::endl;
+        return; 
+    }
+    unsigned char dummy[1024];
+    memset(dummy, 0, 1024);
+
+    std::cout<<"safety_device routine thread running"<<std::endl;
+    fst_hal::FstSafetyDevice* safety_device = static_cast<fst_hal::FstSafetyDevice*>(arg);
+    while(safety_device->isRunning())
+    {
+        safety_device->routineThreadFunc();
+    }
+    std::cout<<"safety_device routine thread exit"<<std::endl;
+}
+

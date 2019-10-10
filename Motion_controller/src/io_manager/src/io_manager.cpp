@@ -38,7 +38,7 @@ IoManager::IoManager():
 IoManager::~IoManager()
 {
     is_running_ = false;//stop thread running
-    thread_routine_ptr_.join();
+    routine_thread_.join();
     
     if(log_ptr_ != NULL){
         delete log_ptr_;
@@ -73,7 +73,7 @@ ErrorCode IoManager::init(fst_hal::DeviceManager* device_manager_ptr)
 
     // start a thread to update IO data.
     is_running_ = true;
-    if(!thread_routine_ptr_.run(&ioManagerRoutineThreadFunc, this, 50))
+    if(!routine_thread_.run(&ioManagerRoutineThreadFunc, this, 50))
     {
         FST_ERROR("Failed to open io_manager routine thread");
         ErrorMonitor::instance()->add(IO_INIT_FAIL);

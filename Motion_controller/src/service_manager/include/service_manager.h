@@ -18,6 +18,7 @@ Summary:    dealing with service
 #include "common_enum.h"
 #include "error_code.h"
 #include "common_log.h"
+#include "thread_help.h"
 #include "service_manager_param.h"
 
 namespace fst_service_manager
@@ -76,13 +77,13 @@ public:
     bool manageResponse(void);
  
     //------------------------------------------------------------
-    // Function:  runLoop
+    // Function:  routineThreadFunc
     // Summary: The main loop to run this process. 
     // In:      None.
     // Out:     None.
     // Return:  None.
     //------------------------------------------------------------
-    void runLoop(void);
+    void routineThreadFunc();
 
     void setExit(void);
     bool isExit(void);
@@ -94,6 +95,7 @@ private:
      
     fst_log::Logger* log_ptr_;
     ServiceManagerParam* param_ptr_;
+    fst_base::ThreadHelp routine_thread_;
     int cycle_time_;
     int max_barecore_timeout_count_;
     int heartbeat_with_barecore_count_;
@@ -268,5 +270,7 @@ private:
 
 };
 } //namespace fst_service_manager
+
+void serviceManagerRoutineThreadFunc(void* arg);
 
 #endif //SERVICE_MANAGER_SERVICE_MANAGER_H_

@@ -36,6 +36,7 @@ ServiceManager::ServiceManager():
 
 ServiceManager::~ServiceManager()
 {
+    routine_thread_.join();
     if(log_ptr_ != NULL){
         delete log_ptr_;
         log_ptr_ = NULL;
@@ -106,6 +107,12 @@ bool ServiceManager::init(void)
     heartbeat_local_resp_.res_id = MONITOR_HEARTBEAT_SID;
 
     channel_flag_ = LOCAL_CHANNEL;
+
+    if(!routine_thread_.run(&serviceManagerRoutineThreadFunc, this, 51))
+    {
+        FST_ERROR("Failed to open service_manager routine thread");
+        return false;
+    }
     
     return true;
 }
@@ -272,13 +279,13 @@ bool ServiceManager::manageResponse(void)
 }
 
 //------------------------------------------------------------
-// Function:  runLoop
+// Function:  routineThreadFunc
 // Summary: The main loop to run this process. 
 // In:      None.
 // Out:     None.
 // Return:  None.
 //------------------------------------------------------------
-void ServiceManager::runLoop(void)
+void ServiceManager::routineThreadFunc(void)
 { 
     receiveRequest();
     interactBareCore();
@@ -294,6 +301,25 @@ void ServiceManager::setExit(void)
 bool ServiceManager::isExit(void)
 {
     return is_exit_;
+}
+
+void serviceManagerRoutineThreadFunc(void* arg)
+{
+    if (mlockall(MCL_CURRENT|MCL_FUTURE) == -1) 
+    {
+        std::cout<<"service_manager routine thread mlockall failed"<<std::endl;
+        return; 
+    }
+    unsigned char dummy[128];
+    memset(dummy, 0, 128);
+
+    std::cout<<"service_manager routine thread running"<<std::endl;
+    fst_service_manager::ServiceManager* service_manager = static_cast<fst_service_manager::ServiceManager*>(arg);
+    while(!service_manager->isExit())
+    {
+        service_manager->routineThreadFunc();
+    }
+    std::cout<<"service_manager routine thread exit"<<std::endl;
 }
 
 
@@ -319,7 +345,7 @@ int main(int argc, char** argv)
 
     while(!service_manager_ptr->isExit())
     {
-        service_manager_ptr->runLoop();
+        usleep(1000000);
     }
  
     delete service_manager_ptr;

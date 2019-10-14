@@ -52,6 +52,8 @@ usage() {
     echo -e "usage:"
     echo -e "\t""$(basename $0) 400w"
     echo -e "\t""or"
+    echo -e "\t""$(basename $0) 400w_dedicated"
+    echo -e "\t""or"
     echo -e "\t""$(basename $0) 600w"
     echo -e "\t""or"
     echo -e "\t""$(basename $0) -h"
@@ -59,6 +61,7 @@ usage() {
     echo -e "\t""$(basename $0) --help"
     echo -e "note:"
     echo -e "\t""400w: install parameters of 400w which is in the directory of \"p7a_400w\""
+    echo -e "\t""400w_dedicated: install parameters of 400w which is in the directory of \"p7a_400w_dedicated\""
     echo -e "\t""600w: install parameters of 600w which is in the directory of \"p7a_600w\""
     echo -e "\t""-h, --help: usage of $(basename $0)"
 }
@@ -75,6 +78,8 @@ case ${input_opt} in
     dir_=p7a_400w;;
 600w)
     dir_=p7a_600w;;
+400w_dedicated)
+    dir_=p7a_400w_dedicated;;
 -h | --help)
     usage
     exit 0

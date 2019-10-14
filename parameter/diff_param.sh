@@ -8,6 +8,7 @@ cur_servo_param_file=/root/install/share/configuration/machine/servo_param.yaml
 
 param_400=p7a_400w
 param_600=p7a_600w
+param_400w_dedicated=p7a_400w_dedicated
 
 param_400_600_dir=""
 param_400_600_file_list=""
@@ -20,9 +21,12 @@ usage() {
     echo -e "usage:"
     echo -e "\t""$(basename $0) 400w"
     echo -e "\t""or"
+    echo -e "\t""$(basename $0) 400w_dedicated"
+    echo -e "\t""or"
     echo -e "\t""$(basename $0) 600w"
     echo -e "note:"
     echo -e "\t""400w: campare the current servo parameters with what is in the directory of \"p7a_400w\""
+    echo -e "\t""400w_dedicated: campare the current servo parameters with what is in the directory of \"p7a_400w_dedicated\""
     echo -e "\t""600w: campare the current servo parameters with what is in the directory of \"p7a_600w\""
     echo -e
     echo -e "the result file is /root/diff-servo-<time>.txt"
@@ -34,6 +38,9 @@ whichDestDir() {
     case ${opt} in
     400w)
         param_400_600_dir=${working_dir}/${param_400}
+        ;;
+    400w_dedicated)
+        param_400_600_dir=${working_dir}/${param_400_dedicated}
         ;;
     600w)
         param_400_600_dir=${working_dir}/${param_600}
@@ -84,6 +91,7 @@ do
     echo "<" ${cur_param_file} >> ${ret_file}
     echo ">" ${parram_400_600_file} >> ${ret_file}
     diff ${cur_param_file} ${parram_400_600_file} >> ${ret_file}
+    echo "========" >> ${ret_file}
 done
 
 echo -e "diff is finished."

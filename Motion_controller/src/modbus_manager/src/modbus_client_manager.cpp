@@ -402,14 +402,20 @@ ErrorCode ModbusClientManager::setRegInfo(int client_id, ModbusClientRegInfo &re
         if ((*it)->getId() == client_id)
         {
             ErrorCode error_code = (*it)->setRegInfo(reg_info);
-            client_list_mutex_.unlock();
-            return error_code;
+            if (error_code != SUCCESS ) 
+            {
+                client_list_mutex_.unlock();
+                return error_code;
+            }
 
             if (!config_param_ptr_->saveRegInfo(client_id, reg_info))
             {
                 client_list_mutex_.unlock();
                 return MODBUS_CLIENT_MANAGER_SAVE_PARAM_FAILED;
             }
+
+            client_list_mutex_.unlock();
+            return SUCCESS;
         }
         ++it;
     }
@@ -807,14 +813,19 @@ ErrorCode ModbusClientManager::updateStartInfo(ModbusClientStartInfo &start_info
                 || 0 < start_info.name.length())
             {
                 ErrorCode error_code = (*it)->setStartInfo(start_info);
-                client_list_mutex_.unlock();
-                return error_code;
-            }
+                if (error_code != SUCCESS)
+                {
+                    client_list_mutex_.unlock();
+                    return error_code;
+                }
+                if (!config_param_ptr_->saveStartInfo(start_info))
+                {
+                    client_list_mutex_.unlock();
+                    return MODBUS_CLIENT_MANAGER_SAVE_PARAM_FAILED;
+                }
 
-            if (!config_param_ptr_->saveStartInfo(start_info))
-            {
                 client_list_mutex_.unlock();
-                return MODBUS_CLIENT_MANAGER_SAVE_PARAM_FAILED;
+                return SUCCESS;
             }
 
             client_list_mutex_.unlock();

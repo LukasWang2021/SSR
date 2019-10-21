@@ -475,7 +475,7 @@ ErrorCode ModbusClient::readDiscreteInputs(int addr, int nb, uint8_t *dest)
         || (config_param_.reg_info.discrepte_input.addr + config_param_.reg_info.discrepte_input.max_nb - 1) < (addr + nb -1))
     {
         ctrl_state_ = MODBUS_CLIENT_CTRL_CONNECTED;
-        return MODBUS_CLIENT_INVALID_ARG;
+        return MODBUS_REGISTER_ADDRESS_EXCEED_LIMIT;
     }
 
     if (nb != modbus_read_input_bits(ctx_, addr, nb, dest))
@@ -505,7 +505,7 @@ ErrorCode ModbusClient::readInputRegs(int addr, int nb, uint16_t *dest)
         || (config_param_.reg_info.input_reg.addr + config_param_.reg_info.input_reg.max_nb - 1) < (addr + nb -1))
     {
         ctrl_state_ = MODBUS_CLIENT_CTRL_CONNECTED;
-        return MODBUS_CLIENT_INVALID_ARG;
+        return MODBUS_REGISTER_ADDRESS_EXCEED_LIMIT;
     }
 
     if(nb != modbus_read_input_registers(ctx_, addr, nb, dest))
@@ -535,7 +535,7 @@ ErrorCode ModbusClient::readCoils(int addr, int nb, uint8_t *dest)
         || (config_param_.reg_info.coil.addr + config_param_.reg_info.coil.max_nb - 1) < (addr + nb -1))
     {
         ctrl_state_ = MODBUS_CLIENT_CTRL_CONNECTED;
-        return MODBUS_CLIENT_INVALID_ARG;
+        return MODBUS_REGISTER_ADDRESS_EXCEED_LIMIT;
     }
 
     if (nb != modbus_read_bits(ctx_, addr, nb, dest))
@@ -565,7 +565,7 @@ ErrorCode ModbusClient::writeCoils(int addr, int nb, uint8_t *dest)
         || (config_param_.reg_info.coil.addr + config_param_.reg_info.coil.max_nb - 1) < (addr + nb -1))
     {
         ctrl_state_ = MODBUS_CLIENT_CTRL_CONNECTED;
-        return MODBUS_CLIENT_INVALID_ARG;
+        return MODBUS_REGISTER_ADDRESS_EXCEED_LIMIT;
     }
 
     if(nb != modbus_write_bits(ctx_, addr, nb, dest))
@@ -596,7 +596,7 @@ ErrorCode ModbusClient::readHoldingRegs(int addr, int nb, uint16_t *dest)
         || (config_param_.reg_info.holding_reg.addr + config_param_.reg_info.holding_reg.max_nb - 1) < (addr + nb -1))
     {
         ctrl_state_ = MODBUS_CLIENT_CTRL_CONNECTED;
-        return MODBUS_CLIENT_INVALID_ARG;
+        return MODBUS_REGISTER_ADDRESS_EXCEED_LIMIT;
     }
 
     if (nb != modbus_read_registers(ctx_, addr, nb, dest))
@@ -626,7 +626,7 @@ ErrorCode ModbusClient::writeHoldingRegs(int addr, int nb, uint16_t *dest)
         || (config_param_.reg_info.holding_reg.addr + config_param_.reg_info.holding_reg.max_nb - 1) < (addr + nb -1))
     {
         ctrl_state_ = MODBUS_CLIENT_CTRL_CONNECTED;
-        return MODBUS_CLIENT_INVALID_ARG;
+        return MODBUS_REGISTER_ADDRESS_EXCEED_LIMIT;
     }
 
     if(nb != modbus_write_registers(ctx_, addr, nb, dest))
@@ -663,7 +663,7 @@ ErrorCode ModbusClient::writeAndReadHoldingRegs(
         || (config_param_.reg_info.holding_reg.addr + config_param_.reg_info.holding_reg.max_nb - 1) < (read_addr + read_nb -1))
     {
         ctrl_state_ = MODBUS_CLIENT_CTRL_CONNECTED;
-        return MODBUS_CLIENT_INVALID_ARG;
+        return MODBUS_REGISTER_ADDRESS_EXCEED_LIMIT;
     }
 
     if(read_nb != modbus_write_and_read_registers(ctx_,

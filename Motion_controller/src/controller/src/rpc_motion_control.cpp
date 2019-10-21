@@ -168,6 +168,7 @@ void ControllerRpc::handleRpc0x0000D3F5(void* request_data_ptr, void* response_d
         || state_machine_ptr_->getInterpreterState() == INTERPRETER_EXECUTE)
     {
         rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION_MOVE_CONTINUOUS;
+        FST_ERROR("Invalid state to manual move");
         return;
     }
 
@@ -1455,7 +1456,8 @@ void ControllerRpc::handleRpc0x000178A4(void* request_data_ptr, void* response_d
     {
         PayloadInfo info;
         info.id = rq_data_ptr->data.id;
-        info.comment = rq_data_ptr->data.comment;
+        strncpy(info.comment, rq_data_ptr->data.comment, 255);
+        info.comment[255] = 0;
         info.is_valid = false; 
         info.m_load = rq_data_ptr->data.weight;
         info.lcx_load = rq_data_ptr->data.mass_center.data[0];
@@ -1491,7 +1493,7 @@ void ControllerRpc::handleRpc0x00017074(void* request_data_ptr, void* response_d
 {
     RequestMessageType_PayloadInfo* rq_data_ptr = static_cast<RequestMessageType_PayloadInfo*>(request_data_ptr);
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
-/*
+
     if (false == state_machine_ptr_->getState())
     {
         rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
@@ -1502,7 +1504,8 @@ void ControllerRpc::handleRpc0x00017074(void* request_data_ptr, void* response_d
     {
         PayloadInfo info;
         info.id = rq_data_ptr->data.id;
-        info.comment = rq_data_ptr->data.comment;
+        strncpy(info.comment, rq_data_ptr->data.comment, 255);
+        info.comment[255] = 0;
         info.is_valid = false;
         info.m_load = rq_data_ptr->data.weight;
         info.lcx_load = rq_data_ptr->data.mass_center.data[0];
@@ -1527,11 +1530,8 @@ void ControllerRpc::handleRpc0x00017074(void* request_data_ptr, void* response_d
     {
         rs_data_ptr->data.data = DYNAMIC_PAYLOAD_INVALID_ARG;
     }
-    */
-    rs_data_ptr->data.data = DYNAMIC_PAYLOAD_INVALID_ARG;
     
     recordLog(MOTION_CONTROL_LOG, rs_data_ptr->data.data, std::string("/rpc/motion_control/axis_group/updatePayload"));
-    
 }
 
 //"/rpc/motion_control/axis_group/movePayload"	
@@ -1562,7 +1562,7 @@ void ControllerRpc::handleRpc0x00010C34(void* request_data_ptr, void* response_d
     if(rs_data_ptr->error_code.data == SUCCESS)
     {
         rs_data_ptr->data.id = info.id;
-        strncpy(rs_data_ptr->data.comment, info.comment.c_str(), 255);
+        strncpy(rs_data_ptr->data.comment, info.comment, 255);
         rs_data_ptr->data.comment[255] = 0;
         rs_data_ptr->data.weight = info.m_load;
         rs_data_ptr->data.mass_center.data_count = 3;

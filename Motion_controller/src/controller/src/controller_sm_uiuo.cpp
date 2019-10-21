@@ -27,7 +27,7 @@ void ControllerSm::processUIUO()
     }
 
     //UO[3]FAULT is on if error is exist
-    if(is_error_exist_)
+    if(is_error_exist_.data)
     {
         setUoFaultOn();
     }
@@ -206,7 +206,7 @@ void ControllerSm::processUIUO()
         setUO(static_cast<uint32_t>(UO_PROGRAM_CONFIRM_5), false);//UO[12]
 
         //UO[3] is on if error is exist
-        if(is_error_exist_)
+        if(is_error_exist_.data)
         {
             setUO(static_cast<uint32_t>(UO_FAULT), true);//UO[3] signal fault
         }
@@ -335,7 +335,7 @@ void ControllerSm::processUIUO()
     }
 
     //UO[3] is on if error is exist
-    if(is_error_exist_)
+    if(is_error_exist_.data)
     {
         setUO(static_cast<uint32_t>(UO_FAULT), true);//UO[3] signal fault
     }
@@ -466,4 +466,64 @@ void ControllerSm::setUO(uint32_t user_port, bool level)
 {
     uint8_t value = level;
     io_mapping_ptr_->setUOByBit(user_port, value);
+}
+
+
+void ControllerSm::setUoEnableOn(void)
+{
+    io_mapping_ptr_->setUOByBit(static_cast<uint32_t>(UO_CMD_ENABLE), 1);
+    uo_cmd_enable_ = true;
+}
+
+void ControllerSm::setUoEnableOff(void)
+{
+    io_mapping_ptr_->setUOByBit(static_cast<uint32_t>(UO_CMD_ENABLE), 0);
+    uo_cmd_enable_ = false;
+}
+
+void ControllerSm::setUoPausedOn(void)
+{
+    io_mapping_ptr_->setUOByBit(static_cast<uint32_t>(UO_PAUSED), 1);
+}
+
+void ControllerSm::setUoPausedOff(void)
+{
+    io_mapping_ptr_->setUOByBit(static_cast<uint32_t>(UO_PAUSED), 0);
+}
+
+void ControllerSm::setUoFaultOn(void)
+{
+    io_mapping_ptr_->setUOByBit(static_cast<uint32_t>(UO_FAULT), 1);
+}
+
+void ControllerSm::setUoFaultOff(void)
+{
+    io_mapping_ptr_->setUOByBit(static_cast<uint32_t>(UO_FAULT), 0);
+}
+
+void ControllerSm::setUoProgramRunOn(void)
+{
+    io_mapping_ptr_->setUOByBit(static_cast<uint32_t>(UO_PROGRAM_RUNNING), 1);
+}
+void ControllerSm::setUoProgramRunOff(void)
+{
+    io_mapping_ptr_->setUOByBit(static_cast<uint32_t>(UO_PROGRAM_RUNNING), 0);
+}
+
+void ControllerSm::setUoServoOn(void)
+{
+    io_mapping_ptr_->setUOByBit(static_cast<uint32_t>(UO_SERVO_STATUS), 1);
+}
+void ControllerSm::setUoServoOff(void)
+{
+    io_mapping_ptr_->setUOByBit(static_cast<uint32_t>(UO_SERVO_STATUS), 0);
+}
+
+void ControllerSm::setUoAllOff(void)
+{
+    setUoEnableOff();
+    setUoPausedOff();
+    setUoFaultOff();
+    setUoProgramRunOff();
+    setUoServoOff();
 }

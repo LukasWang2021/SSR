@@ -103,6 +103,36 @@ typedef enum
     UO_PROGRAM_CONFIRM_6       = 13,
 }UOCommand;
 
+typedef enum
+{
+    ERROR_NONE     = 1,
+    ERROR_INFO     = 2,
+    ERROR_PAUSE_L  = 3,
+    ERROR_PAUSE_G  = 4,
+    ERROR_STOP_L   = 5,
+    ERROR_STOP_G   = 6,
+    ERROR_SERVO1   = 7,
+    ERROR_ABORT_L  = 8,
+    ERROR_ABORT_G  = 9,
+    ERROR_SERVO2   = 10,
+    ERROR_SYSTEM   = 11,
+}ErrorLevel;
+
+typedef union ErrorLevelFlag
+{
+    bool data;
+    struct{
+        char pause:1;      
+        char stop:1;  
+        char servo1:1;   
+        char abort:1;  
+        char servo2:1;  
+        char system:1;  
+        char reserve1:1;
+        char reserve2:1;
+    }level;
+}ErrorLevelFlag;
+
 
 class ControllerSm
 {
@@ -129,7 +159,6 @@ public:
     ErrorCode callEstop();
     ErrorCode callReset();
     ErrorCode callShutdown();
-    void setSafetyStop(ErrorCode error_code);
 
     void transferRobotStateToTeaching();
     void transferRobotStateToRunning();
@@ -156,7 +185,10 @@ public:
     void setUoProgramRunOn(void);//UO[4]
     void setUoProgramRunOff(void);
 
-    
+    //set pause flag, call pause.
+    void setPauseFlag(bool enable);
+    void setSafetyStop(ErrorCode error_code);
+
 private:
     fst_log::Logger* log_ptr_;
     ControllerParam* param_ptr_;
@@ -198,13 +230,16 @@ private:
     // error flags
     long long int interpreter_warning_code_;
     int error_level_;
-    bool is_error_exist_;
+    ErrorLevelFlag is_error_exist_;
 
     //for UIUO 
     bool ui_servo_enable_;
     bool uo_cmd_enable_;
     std::string program_name_;
     int program_code_;
+
+    //call pause
+    bool is_pause_call_;
     
     // state machine transfer
     void processInterpreter();
@@ -217,15 +252,9 @@ private:
     void processMacroLaunching();//to set the enable value of macro launching
     void processModbusClientList();
     void processUIUO();
-    
-    // setUO
-    void setUoEnableOn(void);//UO[1]
-    void setUoEnableOff(void);
-    void setUoFaultOn(void);//UO[3]
-    void setUoFaultOff(void);
-    void setUoServoOn(void);//UO[5]
-    void setUoServoOff(void);
-    void setUoAllOff(void);//UO all
+
+    //call pause
+    void callPause(void);
 
     // UI check if there is falling/rising edge.
     bool isFallingEdgeStart(uint32_t user_port);
@@ -237,12 +266,25 @@ private:
     bool getUI(uint32_t user_port, bool &level);
     void setUO(uint32_t user_port, bool level);
 
+    // setUO
+    void setUoEnableOn(void);//UO[1]
+    void setUoEnableOff(void);
+    void setUoFaultOn(void);//UO[3]
+    void setUoFaultOff(void);
+    void setUoServoOn(void);//UO[5]
+    void setUoServoOff(void);
+    void setUoAllOff(void);//UO all
+
     // manual rpc related
     long long computeTimeElapse(struct timeval &current_time, struct timeval &last_time);
     void handleContinuousManualRpcTimeout();
     
     // interpreter instruction
     void clearInstruction();
+
+    //set error level flag
+    void setErrorLevelFlag(ErrorCode error_code);
+    void doStopAction(void);
 
     // log service
     void recordLog(std::string log_str);

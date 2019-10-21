@@ -22,6 +22,7 @@ set(catkin_INCLUDE_DIRS
     ${catkin_INCLUDE_DIRS}
     ${depend_PATH_INC}/base_device/include
     ${depend_PATH_INC}/common
+    ${depend_PATH_INC}/thread_help/include/
     ${depend_PATH_INC}/parameter_manager/include
     ${depend_PATH_INC}/log_manager/include
     ${depend_PATH_INC}/error_monitor/include 
@@ -32,6 +33,7 @@ catkin_package(
     INCLUDE_DIRS include
     LIBRARIES fst_safety_device
     DEPENDS base_device
+    DEPENDS thread_help
     DEPENDS parameter_manager
     DEPENDS log_manager
     DEPENDS error_monitor 
@@ -59,6 +61,7 @@ add_executable(safety_node
 target_link_libraries(fst_safety_device
     ${catkin_LIBRARIES}
     base_device
+    thread_help
     error_monitor 
 )
 

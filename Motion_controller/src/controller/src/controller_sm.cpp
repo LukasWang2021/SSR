@@ -41,16 +41,17 @@ ControllerSm::ControllerSm():
     program_code_(0),
     interpreter_warning_code_(0),
     error_level_(0),
-    is_error_exist_(false),
     ui_servo_enable_(false),
     uo_cmd_enable_(false),
     is_continuous_manual_move_timeout_(false),
     is_unknown_user_op_mode_exist_(false),
-    is_instruction_available_(false)
+    is_instruction_available_(false),
+    is_pause_call_(false)
 {
     memset(&last_continuous_manual_move_rpc_time_, 0, sizeof(struct timeval));
     memset(&last_unknown_user_op_mode_time_, 0, sizeof(struct timeval));
     memset(&instruction_, 0, sizeof(Instruction));
+    memset(&is_error_exist_, 0, sizeof(ErrorLevelFlag));
 }
 
 ControllerSm::~ControllerSm()
@@ -243,7 +244,7 @@ ErrorCode ControllerSm::callReset()
         || ctrl_state_ == CTRL_INIT)
     {
         is_unknown_user_op_mode_exist_ = false;
-        is_error_exist_ = false;
+        is_error_exist_.data = false;
         ErrorMonitor::instance()->clear();
         clearInstruction();
         ErrorCode error_code = checkOffsetState();
@@ -310,26 +311,6 @@ ErrorCode ControllerSm::callShutdown()
     else
     {
         return CONTROLLER_INVALID_OPERATION;
-    }
-}
-
-void ControllerSm::setSafetyStop(ErrorCode error_code)
-{
-    //STOP process: write bit to the safety_board.
-    if (ErrorMonitor::instance()->isCore0Error(error_code))
-    {
-        int level = ErrorMonitor::instance()->getErrorLevel(error_code);
-        // define error type to stop(0,1,2)
-        if (level == 7 || level == 10 || level == 11)
-        {
-            is_error_exist_ = true;
-            safety_device_ptr_->setDOType0Stop(1);
-        } 
-        else if (level >= 4)
-        {
-            is_error_exist_ = true;
-            safety_device_ptr_->setDOType1Stop(1);
-        }
     }
 }
 
@@ -441,6 +422,18 @@ void ControllerSm::processInterpreter()
         program_name_ = name;
     }
 
+    // to help alg. Sometimes pause is not executed by one time call.
+    static int loop_count_for_pause = 0;
+    if (is_pause_call_ == true)
+    {
+        ++loop_count_for_pause;
+        if (loop_count_for_pause == param_ptr_->loop_count_)
+        {
+            loop_count_for_pause = 0;
+            callPause();
+        }
+    }
+
     if(interpreter_state_ == INTERPRETER_EXECUTE)
     {
         if(is_instruction_available_)
@@ -450,6 +443,24 @@ void ControllerSm::processInterpreter()
             {
                 case MOTION:
                 {//FST_ERROR("---Instruction Motion");
+                    //limit the MoveJ/MoveL velocity under slowly manual mode.
+                    if (user_op_mode_ == USER_OP_MODE_SLOWLY_MANUAL)
+                    {
+                        if (instruction_.target.type == MOTION_JOINT)
+                        {
+                            if (instruction_.target.vel > param_ptr_->max_limited_manual_vel_joint_)
+                            {
+                                instruction_.target.vel = param_ptr_->max_limited_manual_vel_joint_;
+                            } 
+                        }
+                        else if (instruction_.target.type == MOTION_LINE  || instruction_.target.type == MOTION_CIRCLE)
+                        {
+                            if (instruction_.target.vel > param_ptr_->max_limited_manual_vel_cart_)
+                            {
+                                instruction_.target.vel = param_ptr_->max_limited_manual_vel_cart_;
+                            }
+                        }
+                    }
                     error_code = motion_control_ptr_->autoMove(0, instruction_.target);
                     break;
                 }
@@ -534,8 +545,25 @@ void ControllerSm::processSafety()
         }
         pre_user_op_mode_ = user_op_mode_;
 
-        //get the safety_board alarm for TP
+        //get the safety_board alarm and debug code.
         safety_alarm_ = safety_device_ptr_->getExcitorStop();
+        static uint32_t pre_debug_code = 0;
+        if (safety_alarm_ != 0)
+        {
+            uint32_t safety_debug_code = safety_device_ptr_->getDIFrm2();
+            if (safety_debug_code != 0 && safety_debug_code != pre_debug_code)
+            {
+                char safety_debug_string[16] = "";
+                sprintf(safety_debug_string, "0x%lx", safety_debug_code);
+                recordLog(SAFETY_BOARD_DEBUG_ERROR, safety_debug_string);  
+            }
+            pre_debug_code = safety_debug_code;
+        }
+        else
+        {
+            pre_debug_code = 0;
+        }
+
         //get the cabinet reset
         if (safety_device_ptr_->isCabinetResetRequest())
         {
@@ -598,12 +626,6 @@ void ControllerSm::processSafety()
 
 void ControllerSm::processError()
 {
-    error_level_ = ErrorMonitor::instance()->getWarningLevel();
-    if(error_level_ >= 4)
-    {
-        is_error_exist_ = true;
-    }
-
     ErrorCode error_code;
     while(ErrorMonitor::instance()->pop(error_code))
     {
@@ -635,18 +657,13 @@ void ControllerSm::transferServoState()
         {
             motion_control_ptr_->clearGroup();
         }
-        //RobotCtrlCmd cmd = ABORT_CMD;
-        //XXsetCtrlCmd(&cmd, 0);
-        controller_client_ptr_->abort();
-        motion_control_ptr_->stopGroup();
-        motion_control_ptr_->abortMove();
         recordLog("Servo state is abnormal");
-        ctrl_state_ = CTRL_ANY_TO_ESTOP;
     }      
 }
 
 void ControllerSm::transferCtrlState()
 {
+    static ErrorLevelFlag pre_error;
     switch(ctrl_state_)
     {
         case CTRL_ANY_TO_ESTOP:
@@ -663,8 +680,9 @@ void ControllerSm::transferCtrlState()
         case CTRL_ESTOP_TO_ENGAGED:
             if(robot_state_ == ROBOT_IDLE
                 && servo_state_ == SERVO_IDLE
-                && !is_error_exist_)
+                && !is_error_exist_.data)
             {
+                pre_error.data = false;
                 recordLog("Controller transfer from ESTOP_TO_ENGAGED to ENGAGED");
                 ctrl_state_ = CTRL_ENGAGED;
             }
@@ -684,17 +702,21 @@ void ControllerSm::transferCtrlState()
             }
             break;
         case CTRL_ENGAGED:
-            if(is_error_exist_)
+            if(is_error_exist_.data && pre_error.data != is_error_exist_.data)
             {
-                controller_client_ptr_->abort();
-                motion_control_ptr_->stopGroup();
-                motion_control_ptr_->abortMove();
-                recordLog("Controller transfer from ENGAGED to CTRL_ANY_TO_ESTOP");
-                ctrl_state_ = CTRL_ANY_TO_ESTOP;
+                doStopAction();
+                pre_error.data = is_error_exist_.data;
             }
             break;
         case CTRL_INIT:
             ctrl_state_ = CTRL_ESTOP;
+            break;
+        case CTRL_ESTOP:
+            if(pre_error.data != is_error_exist_.data)
+            {
+                doStopAction();
+                pre_error.data = is_error_exist_.data;
+            }
             break;
         default:
             ;
@@ -706,7 +728,7 @@ void ControllerSm::transferRobotState()
     switch(robot_state_)
     {
         case ROBOT_IDLE_TO_RUNNING:
-            if(is_error_exist_)
+            if(is_error_exist_.data)
             {
                 recordLog("Robot transfer from IDLE_TO_RUNNING to RUNNING_TO_IDLE for error");
                 robot_state_ = ROBOT_RUNNING_TO_IDLE;
@@ -777,6 +799,7 @@ void ControllerSm::shutdown()
 	// flushshutdown = fsync();
 
 	// sent a message outside to shutdown
+    sleep(10);
 	int fdshutdown;
 	fdshutdown = open("/dev/mem", O_RDWR);
 	if (fdshutdown == -1)
@@ -830,66 +853,27 @@ void ControllerSm::processModbusClientList()
     }
 }
 
+void ControllerSm::setPauseFlag(bool enable)
+{
+    is_pause_call_ = enable;
+}
+void ControllerSm::callPause(void)
+{
+    if(interpreter_state_ != INTERPRETER_EXECUTE || ctrl_state_ != CTRL_ENGAGED)
+    {
+        is_pause_call_ = false;
+        return;
+    }
 
-void ControllerSm::setUoEnableOn(void)
-{
-    io_mapping_ptr_->setUOByBit(static_cast<uint32_t>(UO_CMD_ENABLE), 1);
-    uo_cmd_enable_ = true;
+    ErrorCode err = motion_control_ptr_->pauseMove();
+    if (err == SUCCESS)
+    {
+        is_pause_call_ = false;
+        controller_client_ptr_->pause(); 
+        setUoPausedOn();//UO[2]=on
+        setUoProgramRunOff();//UO[4]=off
+    }
 }
-
-void ControllerSm::setUoEnableOff(void)
-{
-    io_mapping_ptr_->setUOByBit(static_cast<uint32_t>(UO_CMD_ENABLE), 0);
-    uo_cmd_enable_ = false;
-}
-
-void ControllerSm::setUoPausedOn(void)
-{
-    io_mapping_ptr_->setUOByBit(static_cast<uint32_t>(UO_PAUSED), 1);
-}
-
-void ControllerSm::setUoPausedOff(void)
-{
-    io_mapping_ptr_->setUOByBit(static_cast<uint32_t>(UO_PAUSED), 0);
-}
-
-void ControllerSm::setUoFaultOn(void)
-{
-    io_mapping_ptr_->setUOByBit(static_cast<uint32_t>(UO_FAULT), 1);
-}
-
-void ControllerSm::setUoFaultOff(void)
-{
-    io_mapping_ptr_->setUOByBit(static_cast<uint32_t>(UO_FAULT), 0);
-}
-
-void ControllerSm::setUoProgramRunOn(void)
-{
-    io_mapping_ptr_->setUOByBit(static_cast<uint32_t>(UO_PROGRAM_RUNNING), 1);
-}
-void ControllerSm::setUoProgramRunOff(void)
-{
-    io_mapping_ptr_->setUOByBit(static_cast<uint32_t>(UO_PROGRAM_RUNNING), 0);
-}
-
-void ControllerSm::setUoServoOn(void)
-{
-    io_mapping_ptr_->setUOByBit(static_cast<uint32_t>(UO_SERVO_STATUS), 1);
-}
-void ControllerSm::setUoServoOff(void)
-{
-    io_mapping_ptr_->setUOByBit(static_cast<uint32_t>(UO_SERVO_STATUS), 0);
-}
-
-void ControllerSm::setUoAllOff(void)
-{
-    setUoEnableOff();
-    setUoPausedOff();
-    setUoFaultOff();
-    setUoProgramRunOff();
-    setUoServoOff();
-}
-
 
 long long ControllerSm::computeTimeElapse(struct timeval &current_time, struct timeval &last_time)
 {
@@ -919,6 +903,7 @@ void ControllerSm::handleContinuousManualRpcTimeout()
     manual_rpc_mutex_.unlock();
     if(time_elapse > param_ptr_->max_continuous_manual_move_timeout_)
     {
+        FST_WARN("doContinuousManualMove receive time out, do manual stop");
         is_continuous_manual_move_timeout_ = true;
         GroupDirection direction;
         direction.axis1 = fst_mc::STANDING;
@@ -945,6 +930,94 @@ void ControllerSm::clearInstruction()
     memset(&instruction_, 0, sizeof(Instruction));
 }
 
+//set error level flag
+void ControllerSm::setErrorLevelFlag(ErrorCode error_code)
+{
+    int level = ErrorMonitor::instance()->getErrorLevel(error_code);
+    switch(level)
+    {
+        case ERROR_PAUSE_L:
+        case ERROR_PAUSE_G:
+            is_error_exist_.level.pause = 1;
+            break;
+        case ERROR_STOP_L:
+        case ERROR_STOP_G:
+            is_error_exist_.level.stop = 1;
+            break;
+        case ERROR_SERVO1:
+            is_error_exist_.level.servo1 = 1;
+            break;
+        case ERROR_ABORT_L:
+        case ERROR_ABORT_G:
+            is_error_exist_.level.abort = 1;
+            break;
+        case ERROR_SERVO2:
+            is_error_exist_.level.servo2 = 1;
+            break;
+        case ERROR_SYSTEM:
+            is_error_exist_.level.system = 1;
+            break;
+        default:
+            break;
+    }
+    FST_INFO("setErrorLevelFlag=0x%x",is_error_exist_.data);
+}
+
+void ControllerSm::doStopAction(void)
+{
+    FST_WARN("Going to doStopAction\n");
+    if (is_error_exist_.level.system == 1 || is_error_exist_.level.servo2 == 1 || is_error_exist_.level.abort == 1)
+    {
+        controller_client_ptr_->abort();
+        motion_control_ptr_->stopGroup();
+        motion_control_ptr_->abortMove();
+        recordLog("Controller transfer to CTRL_ANY_TO_ESTOP");
+        FST_WARN("doStopAction:prg-abort, mc-stop/abort\n");
+        ctrl_state_ = CTRL_ANY_TO_ESTOP;
+    }
+    else if(is_error_exist_.level.servo1 == 1 || is_error_exist_.level.stop == 1)
+    {
+        controller_client_ptr_->pause();
+        motion_control_ptr_->stopGroup();
+        motion_control_ptr_->abortMove();
+        recordLog("Controller transfer to CTRL_ANY_TO_ESTOP");
+        FST_WARN("doStopAction:prg-pause, mc-stop/abort\n");
+        ctrl_state_ = CTRL_ANY_TO_ESTOP;
+    }
+    else if(is_error_exist_.level.pause == 1)
+    {
+        ErrorCode err = motion_control_ptr_->pauseMove();
+        if (err == SUCCESS)
+        {
+            controller_client_ptr_->pause();
+            setUoPausedOn();
+            setUoProgramRunOff();
+        }
+        else
+        {
+            setPauseFlag(true);
+        }
+    }
+}
+
+void ControllerSm::setSafetyStop(ErrorCode error_code)
+{
+    //STOP process: write bit to the safety_board.
+    if (ErrorMonitor::instance()->isCore0Error(error_code))
+    {
+        int level = ErrorMonitor::instance()->getErrorLevel(error_code);
+        // define error type to stop(0,1,2)
+        if (level == ERROR_SYSTEM || level == ERROR_SERVO2 || level == ERROR_SERVO1)
+        {
+            safety_device_ptr_->setDOType0Stop(1);
+        } 
+        else if (level >= ERROR_STOP_L)
+        {
+            safety_device_ptr_->setDOType1Stop(1);
+        }
+    }
+}
+
 void ControllerSm::recordLog(std::string log_str)
 {
     std::stringstream stream;
@@ -959,7 +1032,7 @@ void ControllerSm::recordLog(ErrorCode error_code)
     std::stringstream stream;
     stream<<"Log_Code: 0x"<<std::hex<<error_code;
     int level = ErrorMonitor::instance()->getErrorLevel(error_code);
-    if (level >= 4)
+    if (level >= 3)
     {
         FST_ERROR(stream.str().c_str());
     }
@@ -968,6 +1041,7 @@ void ControllerSm::recordLog(ErrorCode error_code)
         FST_WARN(stream.str().c_str());
     }
 
+    setErrorLevelFlag(error_code);
     setSafetyStop(error_code);
 
     ServerAlarmApi::GetInstance()->sendOneAlarm(error_code);
@@ -978,7 +1052,7 @@ void ControllerSm::recordLog(ErrorCode error_code, std::string log_str)
     std::stringstream stream;
     stream<<"Log_Code: 0x"<<std::hex<<error_code<<" : "<<log_str;
     int level = ErrorMonitor::instance()->getErrorLevel(error_code);
-    if (level >= 4)
+    if (level >= 3)
     {
         FST_ERROR(stream.str().c_str());
     }
@@ -986,6 +1060,8 @@ void ControllerSm::recordLog(ErrorCode error_code, std::string log_str)
     {
         FST_WARN(stream.str().c_str());
     }
+
+    setErrorLevelFlag(error_code);
     setSafetyStop(error_code);
 
     ServerAlarmApi::GetInstance()->sendOneAlarm(error_code, log_str);

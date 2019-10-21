@@ -16,6 +16,7 @@ Summary:    dealing with IO module
 #include <string.h>
 #include "error_monitor.h"
 #include "protoc.h"
+#include <sys/mman.h>
 
 using namespace fst_hal;
 using namespace fst_base;
@@ -37,7 +38,7 @@ IoManager::IoManager():
 IoManager::~IoManager()
 {
     is_running_ = false;//stop thread running
-    thread_routine_ptr_.join();
+    routine_thread_.join();
     
     if(log_ptr_ != NULL){
         delete log_ptr_;
@@ -72,7 +73,7 @@ ErrorCode IoManager::init(fst_hal::DeviceManager* device_manager_ptr)
 
     // start a thread to update IO data.
     is_running_ = true;
-    if(!thread_routine_ptr_.run(&ioManagerRoutineThreadFunc, this, 20))
+    if(!routine_thread_.run(&ioManagerRoutineThreadFunc, this, 50))
     {
         FST_ERROR("Failed to open io_manager routine thread");
         ErrorMonitor::instance()->add(IO_INIT_FAIL);
@@ -959,6 +960,14 @@ ErrorCode IoManager::setUoValueToModbusServer(uint32_t port, uint8_t &value, Mod
 // thread function
 void ioManagerRoutineThreadFunc(void* arg)
 {
+    if (mlockall(MCL_CURRENT|MCL_FUTURE) == -1) 
+    {
+        std::cout<<"io_manager routine thread mlockall failed"<<std::endl;
+        return; 
+    }
+    unsigned char dummy[128];
+    memset(dummy, 0, 128);
+
     std::cout<<"io_manager routine thread running"<<std::endl;
     IoManager* io_manager = static_cast<IoManager*>(arg);
     while(io_manager->isRunning())

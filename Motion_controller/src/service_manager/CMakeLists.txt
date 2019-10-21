@@ -24,6 +24,7 @@ set(catkin_INCLUDE_DIRS
 
 catkin_package(
     DEPENDS middleware_to_mem
+    DEPENDS thread_help
     DEPENDS log_manager
     DEPENDS parameter_manager
 )
@@ -35,6 +36,7 @@ include_directories(
     ${catkin_INCLUDE_DIRS}
     ${PROJECT_BINARY_DIR}
     ${depend_PATH_INC}/parameter_manager/include
+    ${depend_PATH_INC}/thread_help/include/
 )
 
 
@@ -51,6 +53,7 @@ target_link_libraries(service_manager
     ${catkin_LIBRARIES}
     middleware_to_mem
     comm_interface
+    thread_help
     logger
     parameter_manager
 )

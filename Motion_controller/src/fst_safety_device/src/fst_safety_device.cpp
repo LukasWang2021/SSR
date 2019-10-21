@@ -13,6 +13,7 @@ Summary:    dealing with safety board
 #include "fst_safety_mem.h"
 #include "fst_safety_device.h"
 #include "error_monitor.h"
+#include <sys/mman.h>
 
 using namespace fst_hal;
 using namespace fst_base;
@@ -21,6 +22,7 @@ FstSafetyDevice::FstSafetyDevice(int address):
     BaseDevice(address, fst_hal::DEVICE_TYPE_FST_SAFETY),
     log_ptr_(NULL),
     param_ptr_(NULL),
+    is_running_(false),
     is_virtual_(false),
     pre_dual_faulty_(0),
 	pre_ext_estop_(0),
@@ -46,10 +48,10 @@ FstSafetyDevice::FstSafetyDevice(int address):
 
 FstSafetyDevice::~FstSafetyDevice()
 {
+    is_running_ = false;//stop thread running
     if (is_virtual_ == false)
     {
-        update_thread_.interrupt();
-        update_thread_.join();
+        routine_thread_.join();
         closeSafety();
     } 
 
@@ -68,6 +70,7 @@ bool FstSafetyDevice::init()
 {
     memset((char*)&din_frm1_, 0, sizeof(din_frm1_));
     memset((char*)&dout_frm1_, 0, sizeof(dout_frm1_));
+    memset((char*)&din_frm2_, 0, sizeof(din_frm2_));
 
     ErrorCode ret = 0;
     if(!param_ptr_->loadParam()){
@@ -85,7 +88,12 @@ bool FstSafetyDevice::init()
             ErrorMonitor::instance()->add(ret);
             return false; 
         }
-        startThread();
+        is_running_ = true;
+        if(!routine_thread_.run(&safetyDeviceRoutineThreadFunc, this, 51))
+        {
+            FST_ERROR("Failed to open safety_device routine thread");
+            return false;
+        }
         setValid(true);
     } else {
         FST_INFO("Use Fake Safety");
@@ -103,6 +111,11 @@ FstSafetyDevice::FstSafetyDevice():
 uint32_t FstSafetyDevice::getDIFrm1()
 {
     return *(uint32_t*)&din_frm1_;
+}
+
+uint32_t FstSafetyDevice::getDIFrm2()
+{
+    return *(uint32_t*)&din_frm2_;
 }
 
 bool FstSafetyDevice::isDIFrmChanged()
@@ -563,77 +576,32 @@ bool FstSafetyDevice::isRisingEdge(char value, ErrorCode code, char &pre_value)
     return false;
 }
 
-//------------------------------------------------------------
-// Function:    startThread
-// Summary: start a thread.
-// In:      None.
-// Out:     None.
-// Return:  None.
-//------------------------------------------------------------
-void FstSafetyDevice::startThread(void)
-{
-    update_thread_ = boost::thread(boost::bind(&FstSafetyDevice::runThread, this));
-    //update_thread_.timed_join(boost::posix_time::milliseconds(100)); // check the thread running or not.
-}
 
-//------------------------------------------------------------
-// Function:    runThread
-// Summary: main function of io thread.
-// In:      None.
-// Out:     None.
-// Return:  None.
-//------------------------------------------------------------
-void FstSafetyDevice::runThread(void)
-{
-    try
-    {   FST_INFO("safety thread running...");
-        while (true)
-        {
-            updateThreadFunc();
-
-            // set interruption point.
-            boost::this_thread::sleep(boost::posix_time::microseconds(param_ptr_->cycle_time_));// add  using  thread_help...
-        }
-    }
-    catch (boost::thread_interrupted &)
-    {
-        std::cout<<"~Stop safety update thread Thread Safely.~"<<std::endl;
-    }
-}
-
-void FstSafetyDevice::updateThreadFunc()
+void FstSafetyDevice::routineThreadFunc()
 {
     updateSafetyData();
+    usleep(param_ptr_->cycle_time_);
+}
+
+bool FstSafetyDevice::isRunning()
+{
+    return is_running_;
 }
 
 ErrorCode FstSafetyDevice::updateSafetyData()
 {
     static ErrorCode pre_err = SUCCESS;
     uint32_t data;
-    // for test only.
-    //static int count = 0;
+    uint32_t data2;
     ErrorCode result = autorunSafetyData(); 
     if (result == SUCCESS){
         result = getSafety(&data, SAFETY_INPUT_FIRSTFRAME);
         if (result == SUCCESS)
             memcpy((char*)&din_frm1_, (char*)&data, sizeof(uint32_t));
 
-        // for test only.
-        /* count++;
-        if (count >= 5000)
-            count = 0;
-        if (count == 0){
-            printf("\nwrite safety[0] = 0x%x.\n", data);
-        }
-        data = getSafety(SAFETY_INPUT_FIRSTFRAME, &result);
-        if (count == 0){
-            printf("recv safety[0] = 0x%x.\n", data);
-        }
-        data = getSafety(SAFETY_INPUT_SECONDFRAME, &result);
-        if (count == 0){
-            printf("recv safety[1] = 0x%x.\n", data);
-        }
-        */
+        result = getSafety(&data2, SAFETY_INPUT_SECONDFRAME);
+        if (result == SUCCESS)
+            memcpy((char*)&din_frm2_, (char*)&data2, sizeof(uint32_t));
     }else{
         if (pre_err != result){
             ErrorMonitor::instance()->add(result);
@@ -642,3 +610,23 @@ ErrorCode FstSafetyDevice::updateSafetyData()
     pre_err = result;
     return result;
 }
+
+void safetyDeviceRoutineThreadFunc(void* arg)
+{
+    if (mlockall(MCL_CURRENT|MCL_FUTURE) == -1) 
+    {
+        std::cout<<"safety_device routine thread mlockall failed"<<std::endl;
+        return; 
+    }
+    unsigned char dummy[1024];
+    memset(dummy, 0, 1024);
+
+    std::cout<<"safety_device routine thread running"<<std::endl;
+    fst_hal::FstSafetyDevice* safety_device = static_cast<fst_hal::FstSafetyDevice*>(arg);
+    while(safety_device->isRunning())
+    {
+        safety_device->routineThreadFunc();
+    }
+    std::cout<<"safety_device routine thread exit"<<std::endl;
+}
+

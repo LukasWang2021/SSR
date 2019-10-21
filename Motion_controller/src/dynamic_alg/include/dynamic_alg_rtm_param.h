@@ -20,6 +20,7 @@ public:
     int number_of_links_;
     int current_payload_id_;
     double acc_scale_factor_;
+    std::vector<int> motor_power_;
     std::vector<double> motor_torque_;
     std::vector<double> gear_ratio_;
     std::vector<double> max_torque_;
@@ -28,6 +29,10 @@ public:
            XXR6, XY6, XZ6, YZ6, ZZ6, MX6, MY6, Im6, FS6, FV6;//puma, 52 parameters.
 
 private:
+    fst_parameter::ParamGroup yaml_type_;
+    std::string type_file_path_;
+    std::string type_file_name_;
+
     fst_parameter::ParamGroup yaml_help_;
     std::string file_path_;
 };

@@ -662,24 +662,37 @@ void getMoveCircleCenterAngle(const basic_alg::PoseEuler &start, const fst_mc::M
     circle_radius = getDistance(start.point_, circle_center_position);
     stack[S_CircleRadius] = circle_radius;
 
-    double unit_vestor_pose2_to_circle_center[3];
-    unit_vestor_pose2_to_circle_center[0] = (end.target.pose.pose.point_.x_ - circle_center_position.x_) / circle_radius;
-    unit_vestor_pose2_to_circle_center[1] = (end.target.pose.pose.point_.y_ - circle_center_position.y_) / circle_radius;
-    unit_vestor_pose2_to_circle_center[2] = (end.target.pose.pose.point_.z_ - circle_center_position.z_) / circle_radius;
+    double unit_vestor_center2start[3];
+    unit_vestor_center2start[0] = (start.point_.x_ - circle_center_position.x_) / circle_radius;
+    unit_vestor_center2start[1] = (start.point_.y_ - circle_center_position.y_) / circle_radius;
+    unit_vestor_center2start[2] = (start.point_.z_ - circle_center_position.z_) / circle_radius;
 
-    double unit_vestor_start_to_circle_center[3];
-    unit_vestor_start_to_circle_center[0] = (start.point_.x_ - circle_center_position.x_) / circle_radius;
-    unit_vestor_start_to_circle_center[1] = (start.point_.y_ - circle_center_position.y_) / circle_radius;
-    unit_vestor_start_to_circle_center[2] = (start.point_.z_ - circle_center_position.z_) / circle_radius;
+    double unit_vestor_center2pose1[3];
+    unit_vestor_center2pose1[0] = (end.via.pose.pose.point_.x_ - circle_center_position.x_) / circle_radius;
+    unit_vestor_center2pose1[1] = (end.via.pose.pose.point_.y_ - circle_center_position.y_) / circle_radius;
+    unit_vestor_center2pose1[2] = (end.via.pose.pose.point_.z_ - circle_center_position.z_) / circle_radius;
 
-    double dot_cos = unit_vestor_pose2_to_circle_center[0] * unit_vestor_start_to_circle_center[0] + unit_vestor_pose2_to_circle_center[1] * unit_vestor_start_to_circle_center[1] + unit_vestor_pose2_to_circle_center[2] * unit_vestor_start_to_circle_center[2];
+    double unit_vestor_center2pose2[3];
+    unit_vestor_center2pose2[0] = (end.target.pose.pose.point_.x_ - circle_center_position.x_) / circle_radius;
+    unit_vestor_center2pose2[1] = (end.target.pose.pose.point_.y_ - circle_center_position.y_) / circle_radius;
+    unit_vestor_center2pose2[2] = (end.target.pose.pose.point_.z_ - circle_center_position.z_) / circle_radius;
 
-    if (fabs(dot_cos) < DOUBLE_ACCURACY)
-        dot_cos = 0;
+    double cross_product_nomal_vector1[3];
+    getVector3CrossProduct(unit_vestor_center2start, unit_vestor_center2pose1, cross_product_nomal_vector1);
+    double cross_product_nomal_vector2[3];
+    getVector3CrossProduct(unit_vestor_center2start, unit_vestor_center2pose2, cross_product_nomal_vector2);
+    double dot_product_normal_vector12 = cross_product_nomal_vector1[0] * cross_product_nomal_vector2[0]
+        + cross_product_nomal_vector1[1] * cross_product_nomal_vector2[1]
+        + cross_product_nomal_vector1[2] * cross_product_nomal_vector2[2];
+
+    double dot_cos = unit_vestor_center2pose2[0] * unit_vestor_center2start[0] 
+        + unit_vestor_center2pose2[1] * unit_vestor_center2start[1] 
+        + unit_vestor_center2pose2[2] * unit_vestor_center2start[2];
+
+    if (fabs(dot_cos) < DOUBLE_ACCURACY) dot_cos = 0;
 
     double dot_sin_pow = 1 - pow(dot_cos, 2);
-    if (fabs(dot_sin_pow) < DOUBLE_ACCURACY)
-        dot_sin_pow = 0;
+    if (fabs(dot_sin_pow) < DOUBLE_ACCURACY) dot_sin_pow = 0;
 
     double dot_sin = sqrt(dot_sin_pow);
     angle = atan2(dot_sin, dot_cos);
@@ -689,11 +702,19 @@ void getMoveCircleCenterAngle(const basic_alg::PoseEuler &start, const fst_mc::M
     getCircleCenterAngle(end.via.pose.pose.point_, end.target.pose.pose.point_, angle_via2end);
     getCircleCenterAngle(start.point_, end.via.pose.pose.point_, angle_start2via);
 
-    double angle_offset = angle_via2end + angle_start2via - angle;
-    if (DOUBLE_ACCURACY < angle)
+    if (dot_product_normal_vector12 < -DOUBLE_ACCURACY)
+    {
         angle = 2 * M_PI - angle;
+    }
+    else if (dot_product_normal_vector12 < DOUBLE_ACCURACY)
+    {
+        angle = M_PI;
+    }
+    else {}
+
     stack[S_CircleAngle] = angle;
 }
+
 
 inline void getCircleCenterAngle(const basic_alg::Point &start, const basic_alg::Point &end, double &angle)
 {
@@ -4749,6 +4770,7 @@ inline void updateTrajPieceA(int traj_a_address, int traj_pva_size, double acc_r
     int traj_a_address_local, traj_piece_a_address, constraint_joint_pos_acc_address, constraint_joint_neg_acc_address;
     int traj_piece_size = traj_pva_size - 1;
     int traj_piece_size_half = (traj_piece_size >> 1);
+
     // first half
     for (i = 0; i < /*traj_piece_size_half*/ (traj_piece_size - 1); ++i)
     {
@@ -4760,9 +4782,9 @@ inline void updateTrajPieceA(int traj_a_address, int traj_pva_size, double acc_r
         {
             if (stack[traj_a_address_local + i + 1] >= 0)
             {
-                if (stack[traj_a_address_local + i + 1] > stack[constraint_joint_pos_acc_address + i + 1])
+                if (stack[traj_a_address_local + i + 1] > fabs(stack[constraint_joint_pos_acc_address + i + 1]))
                 {
-                    stack[traj_piece_a_address + i] = stack[traj_a_address_local + i + 1] / (stack[constraint_joint_pos_acc_address + i + 1] * acc_ratio);
+                    stack[traj_piece_a_address + i] = stack[traj_a_address_local + i + 1] / (fabs(stack[constraint_joint_pos_acc_address + i + 1]) * acc_ratio);
                 }
                 else
                 {
@@ -4771,6 +4793,8 @@ inline void updateTrajPieceA(int traj_a_address, int traj_pva_size, double acc_r
             }
             else
             {
+                if (0 <= stack[constraint_joint_neg_acc_address + i + 1]) stack[constraint_joint_neg_acc_address + i + 1] = -1 * stack[constraint_joint_neg_acc_address + i + 1];
+
                 if (stack[traj_a_address_local + i + 1] < stack[constraint_joint_neg_acc_address + i + 1])
                 {
                     stack[traj_piece_a_address + i] = stack[traj_a_address_local + i + 1] / (stack[constraint_joint_neg_acc_address + i + 1] * acc_ratio);
@@ -4785,8 +4809,10 @@ inline void updateTrajPieceA(int traj_a_address, int traj_pva_size, double acc_r
             traj_piece_a_address += STACK_INDEX_INTERVAL_TRAJ_PIECE;
             constraint_joint_pos_acc_address += STACK_INDEX_INTERVAL_CONSTRAINT_JOINT_ACC;
             constraint_joint_neg_acc_address += STACK_INDEX_INTERVAL_CONSTRAINT_JOINT_ACC;
-        }
+            
+       }
     }
+    
     // second half
     for (; i < traj_piece_size; ++i)
     {
@@ -4798,9 +4824,9 @@ inline void updateTrajPieceA(int traj_a_address, int traj_pva_size, double acc_r
         {
             if (stack[traj_a_address_local + i] >= 0)
             {
-                if (stack[traj_a_address_local + i] > stack[constraint_joint_pos_acc_address + i])
+                if (stack[traj_a_address_local + i] > fabs(stack[constraint_joint_pos_acc_address + i]))
                 {
-                    stack[traj_piece_a_address + i] = stack[traj_a_address_local + i] / (stack[constraint_joint_pos_acc_address + i] * acc_ratio);
+                    stack[traj_piece_a_address + i] = stack[traj_a_address_local + i] / (fabs(stack[constraint_joint_pos_acc_address + i]) * acc_ratio);
                 }
                 else
                 {
@@ -4809,6 +4835,7 @@ inline void updateTrajPieceA(int traj_a_address, int traj_pva_size, double acc_r
             }
             else
             {
+                if (0 <= stack[constraint_joint_neg_acc_address + i]) stack[constraint_joint_neg_acc_address + i] = -1 * stack[constraint_joint_neg_acc_address + i];
                 if (stack[traj_a_address_local + i] < stack[constraint_joint_neg_acc_address + i])
                 {
                     stack[traj_piece_a_address + i] = stack[traj_a_address_local + i] / (stack[constraint_joint_neg_acc_address + i] * acc_ratio);
@@ -4878,23 +4905,22 @@ inline double getMaxOfAllAxes(int traj_piece_address)
         if (stack[traj_piece_address] > max_value)
         {
             max_value = stack[traj_piece_address];
-            traj_piece_address += STACK_INDEX_INTERVAL_TRAJ_PIECE;
         }
+        traj_piece_address += STACK_INDEX_INTERVAL_TRAJ_PIECE;
     }
-   
+
     return max_value;
 }
 
 inline void updateTrajPieceRescaleFactor(int traj_piece_size)
 {
-    double traj_piece_v_max, traj_piece_a_max, traj_piece_v_max_sqrt;
+    double traj_piece_v_max, traj_piece_a_max, traj_piece_a_max_sqrt;
     for (int i = 0; i < traj_piece_size; ++i)
     {
         traj_piece_a_max = getMaxOfAllAxes(S_TrajPieceA0 + i);
-
         traj_piece_v_max = getMaxOfAllAxes(S_TrajPieceV0 + i);
-        traj_piece_v_max_sqrt = sqrt(traj_piece_v_max);
-        stack[S_TrajPieceRescaleFactor + i] = ((traj_piece_v_max_sqrt > traj_piece_a_max) ? traj_piece_v_max_sqrt : traj_piece_a_max);
+        traj_piece_a_max_sqrt = sqrt(traj_piece_a_max);
+        stack[S_TrajPieceRescaleFactor + i] = ((traj_piece_v_max > traj_piece_a_max_sqrt) ? traj_piece_v_max : traj_piece_a_max_sqrt);
     }
 }
 

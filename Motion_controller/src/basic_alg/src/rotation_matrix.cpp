@@ -82,16 +82,8 @@ void RotationMatrix::convertToEuler(basic_alg::Euler& euler) const
 {
     double tmp = matrix_[2][1] * matrix_[2][1] + matrix_[2][2] * matrix_[2][2];
     euler.b_ = atan2(-matrix_[2][0], sqrt(tmp));
-    if(tmp > 0.001)
-    {
-        euler.a_ = atan2(matrix_[1][0], matrix_[0][0]);
-        euler.c_ = atan2(matrix_[2][1], matrix_[2][2]);
-    }
-    else
-    {
-        euler.a_ = atan2(-matrix_[0][1], matrix_[1][1]);
-        euler.c_ = 0;
-    }
+    euler.a_ = atan2(matrix_[1][0], matrix_[0][0]);
+    euler.c_ = atan2(matrix_[2][1], matrix_[2][2]);
 }
 
 void RotationMatrix::multiplyByTransVector(const Point& trans_vector, Point& result_vector) const

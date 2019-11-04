@@ -57,6 +57,7 @@ ErrorCode ToolManager::addTool(ToolInfo& info)
         || info.id == 0
         || tool_set_[info.id].is_valid)
     {
+        FST_ERROR("Failed to add tool %d, invalid tool id", info.id);
         return TOOL_MANAGER_INVALID_ARG;
     }
         
@@ -82,6 +83,7 @@ ErrorCode ToolManager::addTool(ToolInfo& info)
     tool_set_[info.id].data = info.data;
     if(!writeToolInfoToYaml(tool_set_[info.id]))
     {
+        FST_ERROR("Failed to add tool %d, write yaml failed", info.id);
         return TOOL_MANAGER_TOOLINFO_FILE_WRITE_FAILED;
     }
     return SUCCESS;
@@ -92,6 +94,7 @@ ErrorCode ToolManager::deleteTool(int id)
     if(id >= tool_set_.size()
         || id == 0)
     {
+        FST_ERROR("Failed to delete tool %d, invalid tool id", id);
         return TOOL_MANAGER_INVALID_ARG;
     }
         
@@ -102,6 +105,7 @@ ErrorCode ToolManager::deleteTool(int id)
     memset(&tool_set_[id].data, 0, sizeof(PoseEuler));
     if(!writeToolInfoToYaml(tool_set_[id]))
     {
+        FST_ERROR("Failed to delete tool %d, write yaml failed", info.id);
         return TOOL_MANAGER_TOOLINFO_FILE_WRITE_FAILED;
     }
     return SUCCESS;
@@ -113,6 +117,7 @@ ErrorCode ToolManager::updateTool(ToolInfo& info)
         || info.id == 0
         || !tool_set_[info.id].is_valid)
     {
+        FST_ERROR("Failed to update tool %d, invalid tool id", info.id);
         return TOOL_MANAGER_INVALID_ARG;
     }
         
@@ -139,6 +144,7 @@ ErrorCode ToolManager::updateTool(ToolInfo& info)
 
     if(!writeToolInfoToYaml(tool_set_[info.id]))
     {
+        FST_ERROR("Failed to update tool %d, write yaml failed", info.id);
         return TOOL_MANAGER_TOOLINFO_FILE_WRITE_FAILED;
     }
     return SUCCESS;
@@ -150,6 +156,7 @@ ErrorCode ToolManager::moveTool(int expect_id, int original_id)
         || original_id == expect_id
         || !tool_set_[original_id].is_valid)
     {
+        FST_ERROR("Failed to move tool %d to %d, invalid tool id", expect_id, original_id);
         return TOOL_MANAGER_INVALID_ARG;
     }
 
@@ -170,6 +177,7 @@ ErrorCode ToolManager::moveTool(int expect_id, int original_id)
     if(!writeToolInfoToYaml(tool_set_[original_id]) 
         || !writeToolInfoToYaml(tool_set_[expect_id]))
     {
+        FST_ERROR("Failed to move tool %d to %d, write yaml failed", expect_id, original_id);
         return TOOL_MANAGER_TOOLINFO_FILE_WRITE_FAILED;
     }
     return SUCCESS;
@@ -180,6 +188,7 @@ ErrorCode ToolManager::getToolInfoById(int id, ToolInfo& info)
     if(id >= tool_set_.size()
         || id <= 0)
     {
+        FST_ERROR("Failed to get tool %d information, invalid tool id", id);
         return TOOL_MANAGER_INVALID_ARG;
     }
 
@@ -266,7 +275,7 @@ bool ToolManager::readAllToolInfoFromYaml(int number_of_tools)
     }
     else
     {
-        FST_ERROR("lost config file: %s", tool_info_file_path_.c_str());
+        FST_ERROR("Failed to read tool info from yaml: %s", tool_info_file_path_.c_str());
 	    return false;
     }
 }
@@ -287,7 +296,15 @@ bool ToolManager::writeToolInfoToYaml(ToolInfo& info)
     tool_info_yaml_help_.setParam(euler_path + "/a", info.data.euler_.a_);
     tool_info_yaml_help_.setParam(euler_path + "/b", info.data.euler_.b_);
     tool_info_yaml_help_.setParam(euler_path + "/c", info.data.euler_.c_);
-    return tool_info_yaml_help_.dumpParamFile(tool_info_file_path_.c_str());
+    if(tool_info_yaml_help_.dumpParamFile(tool_info_file_path_.c_str()))
+    {
+        return true;
+    }
+    else
+    {
+        FST_ERROR("Failed to write tool info to yaml: %s", tool_info_file_path_.c_str());
+        return false;
+    }
 }
 
 

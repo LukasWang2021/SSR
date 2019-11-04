@@ -57,6 +57,7 @@ ErrorCode CoordinateManager::addCoord(CoordInfo& info)
         || info.id == 0
         || coord_set_[info.id].is_valid)
     {
+        FST_ERROR("Failed to add coord %d, invalid coord id", info.id);
         return COORDINATE_MANAGER_INVALID_ARG;
     }
         
@@ -82,6 +83,7 @@ ErrorCode CoordinateManager::addCoord(CoordInfo& info)
     coord_set_[info.id].data = info.data;
     if(!writeCoordInfoToYaml(coord_set_[info.id]))
     {
+        FST_ERROR("Failed to add coord %d, write yaml failed", info.id);
         return COORDINATE_MANAGER_COORDINFO_FILE_WRITE_FAILED;
     }
     return SUCCESS;
@@ -92,6 +94,7 @@ ErrorCode CoordinateManager::deleteCoord(int id)
     if(id >= coord_set_.size()
         || id == 0)
     {
+        FST_ERROR("Failed to delete coord %d, invalid coord id", id);
         return COORDINATE_MANAGER_INVALID_ARG;
     }
         
@@ -102,6 +105,7 @@ ErrorCode CoordinateManager::deleteCoord(int id)
     memset(&coord_set_[id].data, 0, sizeof(basic_alg::PoseEuler));
     if(!writeCoordInfoToYaml(coord_set_[id]))
     {
+        FST_ERROR("Failed to delete coord %d, write yaml failed", info.id);
         return COORDINATE_MANAGER_COORDINFO_FILE_WRITE_FAILED;
     }
     return SUCCESS;
@@ -113,6 +117,7 @@ ErrorCode CoordinateManager::updateCoord(CoordInfo& info)
         || info.id == 0
         || !coord_set_[info.id].is_valid)
     {
+        FST_ERROR("Failed to update coord %d, invalid coord id", info.id);
         return COORDINATE_MANAGER_INVALID_ARG;
     }
         
@@ -139,6 +144,7 @@ ErrorCode CoordinateManager::updateCoord(CoordInfo& info)
 
     if(!writeCoordInfoToYaml(coord_set_[info.id]))
     {
+        FST_ERROR("Failed to update coord %d, write yaml failed", info.id);
         return COORDINATE_MANAGER_COORDINFO_FILE_WRITE_FAILED;
     }
     return SUCCESS;
@@ -150,6 +156,7 @@ ErrorCode CoordinateManager::moveCoord(int expect_id, int original_id)
         || original_id == expect_id
         || !coord_set_[original_id].is_valid)
     {
+        FST_ERROR("Failed to move coord %d to %d, invalid coord id", expect_id, original_id);
         return COORDINATE_MANAGER_INVALID_ARG;
     }
 
@@ -170,6 +177,7 @@ ErrorCode CoordinateManager::moveCoord(int expect_id, int original_id)
     if(!writeCoordInfoToYaml(coord_set_[original_id]) 
         || !writeCoordInfoToYaml(coord_set_[expect_id]))
     {
+        FST_ERROR("Failed to move coord %d to %d, write yaml failed", expect_id, original_id);
         return COORDINATE_MANAGER_COORDINFO_FILE_WRITE_FAILED;
     }
     return SUCCESS;
@@ -180,6 +188,7 @@ ErrorCode CoordinateManager::getCoordInfoById(int id, CoordInfo& info)
     if(id >= coord_set_.size()
         || id <= 0)
     {
+        FST_ERROR("Failed to get coord %d information, invalid coord id", id);
         return COORDINATE_MANAGER_INVALID_ARG;
     }
 
@@ -261,7 +270,7 @@ bool CoordinateManager::readAllCoordInfoFromYaml(int number_of_coords)
     }
     else
     {
-        FST_ERROR("lost config file: %s", coord_info_file_path_.c_str());
+        FST_ERROR("Failed to read coord info from yaml: %s", coord_info_file_path_.c_str());
 	    return false;
     }
 }
@@ -282,7 +291,15 @@ bool CoordinateManager::writeCoordInfoToYaml(CoordInfo& info)
     coord_info_yaml_help_.setParam(euler_path + "/a", info.data.euler_.a_);
     coord_info_yaml_help_.setParam(euler_path + "/b", info.data.euler_.b_);
     coord_info_yaml_help_.setParam(euler_path + "/c", info.data.euler_.c_);
-    return coord_info_yaml_help_.dumpParamFile(coord_info_file_path_.c_str());
+    if(coord_info_yaml_help_.dumpParamFile(coord_info_file_path_.c_str()))
+    {
+        return true;
+    }
+    else
+    {
+        FST_ERROR("Failed to write coord info to yaml: %s", coord_info_file_path_.c_str());
+        return false;
+    }
 }
 
 

@@ -42,6 +42,8 @@ void ControllerServer::initRpcTable()
     rpc_service = {CONTROLLER_SERVER_CMD_OP_MODE, &ControllerServer::handleRequestUserOpMode, &ControllerServer::handleResponseUserOpMode}; rpc_table_.push_back(rpc_service);
     rpc_service = {CONTROLLER_SERVER_CMD_SET_DO_PULSE, &ControllerServer::handleRequestSetDoPulse, &ControllerServer::handleResponseSetDoPulse}; rpc_table_.push_back(rpc_service);
     rpc_service = {CONTROLLER_SERVER_CMD_SET_RO_PULSE, &ControllerServer::handleRequestSetRoPulse, &ControllerServer::handleResponseSetRoPulse}; rpc_table_.push_back(rpc_service);
+    rpc_service = {CONTROLLER_SERVER_CMD_GET_POSTURE, &ControllerServer::handleRequestGetPosture, &ControllerServer::handleResponseGetPosture}; rpc_table_.push_back(rpc_service);
+    rpc_service = {CONTROLLER_SERVER_CMD_GET_TURN, &ControllerServer::handleRequestGetTurn, &ControllerServer::handleResponseGetTurn}; rpc_table_.push_back(rpc_service);
 
 }
 

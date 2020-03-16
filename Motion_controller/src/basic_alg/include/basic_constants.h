@@ -14,5 +14,7 @@
 #define     MINIMUM_E6      0.000001
 #define     MINIMUM_E9      0.000000001
 #define     MINIMUM_E12     0.000000000001
+#define     MIN_LINE_DISTANCE_TO_SMOOTH (50)
+#define     MAX_LINE_QUATERNION_ANGLE_NO_SMOOTH (0.1)
 
 #endif

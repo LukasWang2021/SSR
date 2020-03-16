@@ -14,22 +14,31 @@ using namespace fst_parameter;
 
 
 PrReg::PrReg(RegManagerParam* param_ptr):
-    BaseReg(REG_TYPE_PR, param_ptr->pr_reg_number_), 
-        param_ptr_(param_ptr), file_path_(param_ptr->reg_info_dir_)
+    BaseReg(REG_TYPE_PR, param_ptr->pr_reg_number_),
+    param_ptr_(param_ptr), 
+    file_path_(param_ptr->reg_info_dir_),
+    log_ptr_(NULL)
      //   ,nvram_obj_(NVRAM_AREA_LENGTH)
 {
+    log_ptr_ = new fst_log::Logger();
+    FST_LOG_INIT("PrRegister");
     file_path_ += param_ptr_->pr_reg_file_name_;
 //    use_nvram_ += param_ptr_->use_nvram_;
 }
 
 PrReg::~PrReg()
 {
+    if(log_ptr_ != NULL)
+    {
+        delete log_ptr_;
+        log_ptr_ = NULL;
+    }
 
 }
 
 ErrorCode PrReg::init()
 {
-	NVRamPrRegData objNVRamPrRegData ;
+	//NVRamPrRegData objNVRamPrRegData ;
     data_list_.resize(getListSize());    // id=0 is not used, id start from 1
 
     /*if(access(file_path_.c_str(), 0) != 0)
@@ -42,6 +51,7 @@ ErrorCode PrReg::init()
 
     if(!readAllRegDataFromYaml())
     {
+		FST_ERROR("PrReg::init readAllRegDataFromYaml failed");
         return REG_MANAGER_LOAD_PR_FAILED;
     }
 /*    
@@ -65,20 +75,23 @@ ErrorCode PrReg::init()
 
 ErrorCode PrReg::addReg(void* data_ptr)
 {
-	NVRamPrRegData objNVRamPrRegData ;
+	//NVRamPrRegData objNVRamPrRegData ;
     if(data_ptr == NULL)
     {
+		FST_ERROR("PrReg::addReg data_ptr == NULL");
         return REG_MANAGER_INVALID_ARG;
     }
 
     PrRegData* reg_ptr = reinterpret_cast<PrRegData*>(data_ptr);
     if(!isAddInputValid(reg_ptr->id))
     {
+		FST_ERROR("PrReg::addReg isAddInputValid(reg_ptr->id = %d)", reg_ptr->id);
         return REG_MANAGER_INVALID_ARG;
     }
     if(reg_ptr->value.pos_type != PR_REG_POS_TYPE_JOINT
         && reg_ptr->value.pos_type != PR_REG_POS_TYPE_CARTESIAN)
     {
+		FST_ERROR("PrReg::addReg reg_ptr->value.pos_type = %d", reg_ptr->value.pos_type);
         return REG_MANAGER_INVALID_ARG;
     }
     if(reg_ptr->value.pos[0] > param_ptr_->pr_value_limit_ || reg_ptr->value.pos[0] < -param_ptr_->pr_value_limit_
@@ -91,6 +104,7 @@ ErrorCode PrReg::addReg(void* data_ptr)
         || reg_ptr->value.pos[7] > param_ptr_->pr_value_limit_ || reg_ptr->value.pos[7] < -param_ptr_->pr_value_limit_
         || reg_ptr->value.pos[8] > param_ptr_->pr_value_limit_ || reg_ptr->value.pos[8] < -param_ptr_->pr_value_limit_)
     {
+		FST_ERROR("PrReg::addReg out of pr_value_limit_");
         return REG_MANAGER_INVALID_ARG;
     }
 
@@ -98,6 +112,7 @@ ErrorCode PrReg::addReg(void* data_ptr)
     packAddRegData(reg_data, reg_ptr->id, reg_ptr->name, reg_ptr->comment);
     if(!setRegList(reg_data))
     {
+		FST_ERROR("PrReg::addReg setRegList failed");
         return REG_MANAGER_INVALID_ARG;
     }
     data_list_[reg_data.id].pos_type = reg_ptr->value.pos_type;
@@ -128,6 +143,7 @@ ErrorCode PrReg::addReg(void* data_ptr)
 
     if(!writeRegDataToYaml(reg_data, data_list_[reg_data.id]))
     {
+		FST_ERROR("PrReg::addReg writeRegDataToYaml failed");
         return REG_MANAGER_REG_FILE_WRITE_FAILED;
     }
 /*    
@@ -146,9 +162,10 @@ ErrorCode PrReg::addReg(void* data_ptr)
 
 ErrorCode PrReg::deleteReg(int id)
 {
-	NVRamPrRegData objNVRamPrRegData ;
+	//NVRamPrRegData objNVRamPrRegData ;
     if(!isDeleteInputValid(id))
     {
+		FST_ERROR("PrReg::deleteReg isDeleteInputValid failed");
         return REG_MANAGER_INVALID_ARG;
     }
 
@@ -156,6 +173,7 @@ ErrorCode PrReg::deleteReg(int id)
     packDeleteRegData(reg_data, id);
     if(!setRegList(reg_data))
     {
+		FST_ERROR("PrReg::deleteReg setRegList failed");
         return REG_MANAGER_INVALID_ARG;
     }
     data_list_[id].pos_type = PR_REG_POS_TYPE_JOINT;
@@ -186,6 +204,7 @@ ErrorCode PrReg::deleteReg(int id)
 	
     if(!writeRegDataToYaml(reg_data, data_list_[id]))
     {
+		FST_ERROR("PrReg::deleteReg writeRegDataToYaml failed");
         return REG_MANAGER_REG_FILE_WRITE_FAILED;
     }
 /*    
@@ -206,6 +225,7 @@ ErrorCode PrReg::getReg(int id, void* data_ptr)
 {
     if(!isGetInputValid(id))
     {
+		FST_ERROR("PrReg::getReg isGetInputValid failed");
         return REG_MANAGER_INVALID_ARG;
     }
 
@@ -213,6 +233,7 @@ ErrorCode PrReg::getReg(int id, void* data_ptr)
     BaseRegData reg_data;
     if(!getRegList(id, reg_data))
     {
+		FST_ERROR("PrReg::getReg getRegList failed");
         return REG_MANAGER_INVALID_ARG;
     }
     reg_ptr->id = reg_data.id;
@@ -249,21 +270,24 @@ ErrorCode PrReg::getReg(int id, void* data_ptr)
 
 ErrorCode PrReg::updateReg(void* data_ptr)
 {
-	NVRamPrRegData objNVRamPrRegData ;
+	//NVRamPrRegData objNVRamPrRegData ;
     if(data_ptr == NULL)
     {
+		FST_ERROR("PrReg::updateReg data_ptr == NULL");
         return REG_MANAGER_INVALID_ARG;
     }
 
     PrRegData* reg_ptr = reinterpret_cast<PrRegData*>(data_ptr);
     if(!isUpdateInputValid(reg_ptr->id))
     {
+		FST_ERROR("PrReg::updateReg isUpdateInputValid failed");
         return REG_MANAGER_INVALID_ARG;
     }
     
     if(reg_ptr->value.pos_type != PR_REG_POS_TYPE_JOINT
         && reg_ptr->value.pos_type != PR_REG_POS_TYPE_CARTESIAN)
     {
+		FST_ERROR("PrReg::updateReg reg_ptr->value.pos_type = %d", reg_ptr->value.pos_type);
         return REG_MANAGER_INVALID_ARG;
     }
         
@@ -277,6 +301,7 @@ ErrorCode PrReg::updateReg(void* data_ptr)
         || reg_ptr->value.pos[7] > param_ptr_->pr_value_limit_ || reg_ptr->value.pos[7] < -param_ptr_->pr_value_limit_
         || reg_ptr->value.pos[8] > param_ptr_->pr_value_limit_ || reg_ptr->value.pos[8] < -param_ptr_->pr_value_limit_)
     {
+		FST_ERROR("PrReg::addReg out of pr_value_limit_");
         return REG_MANAGER_INVALID_ARG;
     }
         
@@ -284,6 +309,7 @@ ErrorCode PrReg::updateReg(void* data_ptr)
     packSetRegData(reg_data, reg_ptr->id, reg_ptr->name, reg_ptr->comment);
     if(!setRegList(reg_data))
     {
+		FST_ERROR("PrReg::updateReg setRegList failed");
         return REG_MANAGER_INVALID_ARG;
     }
     data_list_[reg_data.id].pos_type = reg_ptr->value.pos_type;
@@ -314,6 +340,7 @@ ErrorCode PrReg::updateReg(void* data_ptr)
 
     if(!writeRegDataToYaml(reg_data, data_list_[reg_data.id]))
     {
+		FST_ERROR("PrReg::updateReg writeRegDataToYaml failed");
         return REG_MANAGER_REG_FILE_WRITE_FAILED;
     }
 /*    
@@ -334,6 +361,7 @@ ErrorCode PrReg::moveReg(int expect_id, int original_id)
 {
     if(!isMoveInputValid(expect_id, original_id))
     {
+		FST_ERROR("PrReg::moveReg isMoveInputValid failed");
         return REG_MANAGER_INVALID_ARG;
     }
 
@@ -342,11 +370,13 @@ ErrorCode PrReg::moveReg(int expect_id, int original_id)
     error_code = getReg(original_id, (void*)&data);
     if(error_code != SUCCESS)
     {
+		FST_ERROR("PrReg::moveReg getReg failed");
         return error_code;
     }
     error_code = deleteReg(original_id);
     if(error_code != SUCCESS)
     {
+		FST_ERROR("PrReg::moveReg deleteReg failed");
         return error_code;
     }
     data.id = expect_id;
@@ -365,9 +395,10 @@ void* PrReg::getRegValueById(int id)
 
 bool PrReg::updateRegPos(PrRegDataIpc* data_ptr)
 {
-	NVRamPrRegData objNVRamPrRegData ;
+	//NVRamPrRegData objNVRamPrRegData ;
     if(data_ptr == NULL)
     {
+		FST_ERROR("PrReg::updateRegPos data_ptr == NULL");
         return false;
     }
 
@@ -382,15 +413,17 @@ bool PrReg::updateRegPos(PrRegDataIpc* data_ptr)
         || data_ptr->value.pos[7] > param_ptr_->pr_value_limit_ || data_ptr->value.pos[7] < -param_ptr_->pr_value_limit_
         || data_ptr->value.pos[8] > param_ptr_->pr_value_limit_ || data_ptr->value.pos[8] < -param_ptr_->pr_value_limit_)
     {
+		FST_ERROR("PrReg::updateRegPos param_ptr_->pr_value_limit_");
         return false;
     }
         
     BaseRegData* reg_data_ptr = getBaseRegDataById(data_ptr->id);
     if(reg_data_ptr == NULL)
     {
+		FST_ERROR("PrReg::updateRegPos getBaseRegDataById");
         return false;
     }
-    memcpy(&data_list_[data_ptr->id].pos[0], &data_ptr->value.pos[0], 9*sizeof(double));
+    memcpy(&data_list_[data_ptr->id], &data_ptr->value, sizeof(PrValue));
 /*
 	if(use_nvram_ == REG_USE_NVRAM)
 	{
@@ -409,6 +442,7 @@ bool PrReg::getRegPos(int id, PrRegDataIpc* data_ptr)
 {
     if(!isGetInputValid(id))
     {
+		FST_ERROR("PrReg::getRegPos isGetInputValid");
         return false;
     }
 
@@ -437,10 +471,10 @@ bool PrReg::createYaml()
     fd.close();
     
     yaml_help_.loadParamFile(file_path_.c_str());
-    for(int i = 1; i < data_list_.size(); ++i)
+    for(uint32_t i = 1; i < data_list_.size(); ++i)
     {
         std::string reg_path = getRegPath(i);
-        yaml_help_.setParam(reg_path + "/id", i);
+        yaml_help_.setParam(reg_path + "/id", static_cast<int>(i));
         yaml_help_.setParam(reg_path + "/is_valid", false);
         yaml_help_.setParam(reg_path + "/name", std::string("default"));
         yaml_help_.setParam(reg_path + "/comment", std::string("default"));
@@ -466,15 +500,15 @@ bool PrReg::createYaml()
 bool PrReg::readAllRegDataFromYaml()
 {
     yaml_help_.loadParamFile(file_path_.c_str());
-    for(int i = 1; i < data_list_.size(); ++i)
+    for(uint32_t i = 1; i < data_list_.size(); ++i)
     {
-        std::string reg_path = getRegPath(i);
+        std::string reg_path = getRegPath(static_cast<int>(i));
         BaseRegData base_data;
-        std::string name, comment;
+        // std::string name, comment;
         yaml_help_.getParam(reg_path + "/id", base_data.id);
         yaml_help_.getParam(reg_path + "/is_valid", base_data.is_valid);
-        yaml_help_.getParam(reg_path + "/name", name);
-        yaml_help_.getParam(reg_path + "/comment", comment);
+        yaml_help_.getParam(reg_path + "/name", base_data.name);
+        yaml_help_.getParam(reg_path + "/comment", base_data.comment);
         base_data.is_changed = true;
         if(!setRegList(base_data))
         {

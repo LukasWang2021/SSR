@@ -5,9 +5,9 @@
 using namespace fst_hal;
 
 DeviceManagerParam::DeviceManagerParam():
-    file_path_(COMPONENT_PARAM_FILE_DIR),
     log_level_(3),
-    device_config_file_name_("device_config.xml")
+    device_config_file_name_("device_config.xml"),
+    file_path_(COMPONENT_PARAM_FILE_DIR)
 {
     file_path_ += "device_manager.yaml";
 }

@@ -30,7 +30,7 @@ typedef enum _EvalValueType
 {
 	TYPE_NONE   = 0x00,
 	TYPE_INT    = 0x01,
-	TYPE_FLOAT  = 0x02,
+	TYPE_DOUBLE = 0x02,
 	TYPE_STRING = 0x04,
 	TYPE_POSE   = 0x08,
 	TYPE_JOINT  = 0x10,
@@ -81,7 +81,7 @@ private:
 public:
 	void resetNoneValue(){
 		evalType = TYPE_NONE ;
-		fValue = -1 ;
+		dValue = -1 ;
 		strContent = "";
 		
 #ifdef WIN32
@@ -129,20 +129,20 @@ public:
 			turnFake.j7 = turnFake.j8 = turnFake.j9 = 0;
 		isPulse = false ;
 	}
-	// TYPE_FLOAT
-	void setFloatValue(float fVal){
-		evalType |= TYPE_FLOAT ;
-		fValue = fVal ;
+	// TYPE_DOUBLE
+	void setDoubleValue(double fVal){
+		evalType |= TYPE_DOUBLE ;
+		dValue = fVal ;
 	}
-	void increaseFloatValue(){
-		fValue++ ;
+	void increaseDoubleValue(){
+		dValue++ ;
 	}
-	float getFloatValue(){
-		int iType = evalType & TYPE_FLOAT;
+	double getDoubleValue(){
+		int iType = evalType & TYPE_DOUBLE;
 		if(iType != 0)
-			return fValue ;
+			return dValue ;
 		else {
-			noticeErrorType(TYPE_FLOAT) ;
+			noticeErrorType(TYPE_DOUBLE) ;
 			return -1;
 		}
 	}
@@ -326,8 +326,8 @@ public:
 	{
 		if(hasType(TYPE_INT) == TYPE_INT){
 			iValue = iValue + operand->getIntValue();
-		}else if(hasType(TYPE_FLOAT) == TYPE_FLOAT){
-			fValue = fValue + operand->getFloatValue();
+		}else if(hasType(TYPE_DOUBLE) == TYPE_DOUBLE){
+			dValue = dValue + operand->getDoubleValue();
 		}else if(hasType(TYPE_JOINT) == TYPE_JOINT){
 		    if(operand->hasType(TYPE_JOINT) == TYPE_JOINT)
 		    {
@@ -339,13 +339,6 @@ public:
 				joint.j4 += jointOperand.j4;
 				joint.j5 += jointOperand.j5;
 				joint.j6 += jointOperand.j6;
-				
-				reg_pr.value.joint_pos[0] += jointOperand.j1;
-				reg_pr.value.joint_pos[1] += jointOperand.j2;
-				reg_pr.value.joint_pos[2] += jointOperand.j3;
-				reg_pr.value.joint_pos[3] += jointOperand.j4;
-				reg_pr.value.joint_pos[4] += jointOperand.j5;
-				reg_pr.value.joint_pos[5] += jointOperand.j6;
 #else
 				joint.j1_ += jointOperand.j1_;
 				joint.j2_ += jointOperand.j2_;
@@ -353,18 +346,13 @@ public:
 				joint.j4_ += jointOperand.j4_;
 				joint.j5_ += jointOperand.j5_;
 				joint.j6_ += jointOperand.j6_;
-				
-				reg_pr.value.pos[0] += jointOperand.j1_;
-				reg_pr.value.pos[1] += jointOperand.j2_;
-				reg_pr.value.pos[2] += jointOperand.j3_;
-				reg_pr.value.pos[3] += jointOperand.j4_;
-				reg_pr.value.pos[4] += jointOperand.j5_;
-				reg_pr.value.pos[5] += jointOperand.j6_;
-				reg_pr.value.pos[6] = 0.0;
-				reg_pr.value.pos[7] = 0.0;
-				reg_pr.value.pos[8] = 0.0;
 #endif
 		    }
+			else if(operand->hasType(TYPE_POSE) == TYPE_POSE)
+		    {
+		    	PoseEuler poseOperand = operand->getPoseValue();
+		    	pose = calcCartesianPosAdd(pose, poseOperand);
+			}
 			else {
 				noticeErrorType(operand->getIntType()) ;
 			}
@@ -374,19 +362,24 @@ public:
 		    {
 		    	PoseEuler poseOperand = operand->getPoseValue();
 		    	pose = calcCartesianPosAdd(pose, poseOperand);
+		    }
+			else if(operand->hasType(TYPE_JOINT) == TYPE_JOINT)
+		    {
+		    	Joint jointOperand = operand->getJointValue();
 #ifdef WIN32
-				reg_pr.value.cartesian_pos.position    = pose.position;
-				reg_pr.value.cartesian_pos.orientation = pose.orientation;
+				joint.j1 += jointOperand.j1;
+				joint.j2 += jointOperand.j2;
+				joint.j3 += jointOperand.j3;
+				joint.j4 += jointOperand.j4;
+				joint.j5 += jointOperand.j5;
+				joint.j6 += jointOperand.j6;
 #else
-				reg_pr.value.pos[0] = pose.point_.x_;
-				reg_pr.value.pos[1] = pose.point_.y_;
-				reg_pr.value.pos[2] = pose.point_.z_;
-				reg_pr.value.pos[3] = pose.euler_.a_;
-				reg_pr.value.pos[4] = pose.euler_.b_;
-				reg_pr.value.pos[5] = pose.euler_.c_;
-				reg_pr.value.pos[6] = 0.0;
-				reg_pr.value.pos[7] = 0.0;
-				reg_pr.value.pos[8] = 0.0;
+				joint.j1_ += jointOperand.j1_;
+				joint.j2_ += jointOperand.j2_;
+				joint.j3_ += jointOperand.j3_;
+				joint.j4_ += jointOperand.j4_;
+				joint.j5_ += jointOperand.j5_;
+				joint.j6_ += jointOperand.j6_;
 #endif
 		    }
 			else {
@@ -400,11 +393,11 @@ public:
 		    	strTmp = operand->getStringValue();
 				strContent   += strTmp;
 			}
-			else if(operand->hasType(TYPE_FLOAT) == TYPE_FLOAT)
+			else if(operand->hasType(TYPE_DOUBLE) == TYPE_DOUBLE)
 		    {
 		    	char strTmp[256];
 				memset(strTmp, 0x00, 256);
-		    	sprintf(strTmp, "%.3f", operand->getFloatValue());
+		    	sprintf(strTmp, "%.3f", operand->getDoubleValue());
 				strContent   += strTmp;
 		    }
 			else {
@@ -422,12 +415,17 @@ public:
 			iValue = iValue - operand->getIntValue();
 			return ;
 		}
-		else if(hasType(TYPE_FLOAT) == TYPE_FLOAT){
-			fValue = fValue - operand->getFloatValue();
+		else if(hasType(TYPE_DOUBLE) == TYPE_DOUBLE){
+			dValue = dValue - operand->getDoubleValue();
 			return ;
 		}
 		else if(hasType(TYPE_JOINT) == TYPE_JOINT){
-		    if(operand->hasType(TYPE_JOINT) == TYPE_JOINT)
+		    if(operand->hasType(TYPE_POSE) == TYPE_POSE)
+		    {
+		    	PoseEuler poseOperand = operand->getPoseValue();
+		    	pose = calcCartesianPosSubtract(pose, poseOperand);
+		    }
+			else if(operand->hasType(TYPE_JOINT) == TYPE_JOINT)
 		    {
 		    	Joint jointOperand = operand->getJointValue();
 #ifdef WIN32
@@ -437,13 +435,6 @@ public:
 				joint.j4 -= jointOperand.j4;
 				joint.j5 -= jointOperand.j5;
 				joint.j6 -= jointOperand.j6;
-
-				reg_pr.value.joint_pos[0] -= jointOperand.j1;
-				reg_pr.value.joint_pos[1] -= jointOperand.j2;
-				reg_pr.value.joint_pos[2] -= jointOperand.j3;
-				reg_pr.value.joint_pos[3] -= jointOperand.j4;
-				reg_pr.value.joint_pos[4] -= jointOperand.j5;
-				reg_pr.value.joint_pos[5] -= jointOperand.j6;
 #else
 				joint.j1_ -= jointOperand.j1_;
 				joint.j2_ -= jointOperand.j2_;
@@ -451,16 +442,6 @@ public:
 				joint.j4_ -= jointOperand.j4_;
 				joint.j5_ -= jointOperand.j5_;
 				joint.j6_ -= jointOperand.j6_;
-
-				reg_pr.value.pos[0] -= jointOperand.j1_;
-				reg_pr.value.pos[1] -= jointOperand.j2_;
-				reg_pr.value.pos[2] -= jointOperand.j3_;
-				reg_pr.value.pos[3] -= jointOperand.j4_;
-				reg_pr.value.pos[4] -= jointOperand.j5_;
-				reg_pr.value.pos[5] -= jointOperand.j6_;
-				reg_pr.value.pos[6] = 0.0;
-				reg_pr.value.pos[7] = 0.0;
-				reg_pr.value.pos[8] = 0.0;
 #endif
 		    }
 			else {
@@ -473,19 +454,24 @@ public:
 		    {
 		    	PoseEuler poseOperand = operand->getPoseValue();
 		    	pose = calcCartesianPosSubtract(pose, poseOperand);
+		    }
+			else if(operand->hasType(TYPE_JOINT) == TYPE_JOINT)
+		    {
+		    	Joint jointOperand = operand->getJointValue();
 #ifdef WIN32
-				reg_pr.value.cartesian_pos.position    = pose.position;
-				reg_pr.value.cartesian_pos.orientation = pose.orientation;
+				joint.j1 -= jointOperand.j1;
+				joint.j2 -= jointOperand.j2;
+				joint.j3 -= jointOperand.j3;
+				joint.j4 -= jointOperand.j4;
+				joint.j5 -= jointOperand.j5;
+				joint.j6 -= jointOperand.j6;
 #else
-				reg_pr.value.pos[0] = pose.point_.x_;
-				reg_pr.value.pos[1] = pose.point_.y_;
-				reg_pr.value.pos[2] = pose.point_.z_;
-				reg_pr.value.pos[3] = pose.euler_.a_;
-				reg_pr.value.pos[4] = pose.euler_.b_;
-				reg_pr.value.pos[5] = pose.euler_.c_;
-				reg_pr.value.pos[6] = 0.0;
-				reg_pr.value.pos[7] = 0.0;
-				reg_pr.value.pos[8] = 0.0;
+				joint.j1_ -= jointOperand.j1_;
+				joint.j2_ -= jointOperand.j2_;
+				joint.j3_ -= jointOperand.j3_;
+				joint.j4_ -= jointOperand.j4_;
+				joint.j5_ -= jointOperand.j5_;
+				joint.j6_ -= jointOperand.j6_;
 #endif
 		    }
 			else {
@@ -496,14 +482,14 @@ public:
 		else if(hasType(TYPE_STRING) == TYPE_STRING){
 		    if(operand->hasType(TYPE_STRING) == TYPE_STRING)
 		    {
-		    	std::string testKey;
-		    	testKey = operand->getStringValue();
-				std::string testFind = std::string(strContent);
+		    //	std::string testKey;
+		    //	testKey = operand->getStringValue();
+			//	std::string testFind = std::string(strContent);
 				
-				if (strContent.rfind(testKey) != std::string::npos)
-				{
-					strContent = strContent.substr(0, strContent.length() - testKey.length());
-				}
+			//	if (strContent.rfind(testKey) != std::string::npos)
+			//	{
+			//		strContent = strContent.substr(0, strContent.length() - testKey.length());
+			//	}
 			}
 			else {
 				noticeErrorType(operand->getIntType()) ;
@@ -522,17 +508,58 @@ public:
 			iValue = iValue * operand->getIntValue();
 			return ;
 		}
-		else if(hasType(TYPE_FLOAT) == TYPE_FLOAT){
-			fValue = fValue * operand->getFloatValue();
+		else if(hasType(TYPE_DOUBLE) == TYPE_DOUBLE){
+			dValue = dValue * operand->getDoubleValue();
 			return ;
 		}
+		else if(hasType(TYPE_JOINT) == TYPE_JOINT){
+		    if(operand->hasType(TYPE_DOUBLE) == TYPE_DOUBLE)
+		    {
+#ifdef WIN32
+				joint.j1   = joint.j1 * operand->getDoubleValue();
+				joint.j2   = joint.j2 * operand->getDoubleValue();
+				joint.j3   = joint.j3 * operand->getDoubleValue();
+				joint.j4   = joint.j4 * operand->getDoubleValue();
+				joint.j5   = joint.j5 * operand->getDoubleValue();
+				joint.j6   = joint.j6 * operand->getDoubleValue();
+#else
+				joint.j1_  = joint.j1_ * operand->getDoubleValue();
+				joint.j2_  = joint.j2_ * operand->getDoubleValue();
+				joint.j3_  = joint.j3_ * operand->getDoubleValue();
+				joint.j4_  = joint.j4_ * operand->getDoubleValue();
+				joint.j5_  = joint.j5_ * operand->getDoubleValue();
+				joint.j6_  = joint.j6_ * operand->getDoubleValue();
+#endif
+		    }
+		}
+		else if(hasType(TYPE_POSE) == TYPE_POSE){
+		    if(operand->hasType(TYPE_DOUBLE) == TYPE_DOUBLE)
+		    {
+#ifdef WIN32
+				pose.position.x    = pose.position.x    * operand->getDoubleValue();
+				pose.position.y    = pose.position.y    * operand->getDoubleValue();
+				pose.position.z    = pose.position.z    * operand->getDoubleValue();
+				pose.orientation.a = pose.orientation.a * operand->getDoubleValue();
+				pose.orientation.b = pose.orientation.b * operand->getDoubleValue();
+				pose.orientation.c = pose.orientation.c * operand->getDoubleValue();
+#else
+				pose.point_.x_ = pose.point_.x_ * operand->getDoubleValue();
+				pose.point_.y_ = pose.point_.y_ * operand->getDoubleValue();
+				pose.point_.z_ = pose.point_.z_ * operand->getDoubleValue();
+				
+				pose.euler_.a_ = pose.euler_.a_ * operand->getDoubleValue();
+				pose.euler_.b_ = pose.euler_.b_ * operand->getDoubleValue();
+				pose.euler_.c_ = pose.euler_.c_ * operand->getDoubleValue();
+#endif
+		    }
+		}
 		else if(hasType(TYPE_STRING) == TYPE_STRING){
-		    if(operand->hasType(TYPE_FLOAT) == TYPE_FLOAT)
+		    if(operand->hasType(TYPE_DOUBLE) == TYPE_DOUBLE)
 		    {
 		    	std::string strOpt;
 		    	strOpt = strContent;
 				
-		    	int iTmp = (int)operand->getFloatValue();
+		    	int iTmp = (int)operand->getDoubleValue();
 				for(int i = 0 ; i < iTmp ; i++)
 				{
 					strContent += strOpt;	
@@ -548,12 +575,61 @@ public:
 	void calcDivide(eval_value * operand)
 	{
 		if(hasType(TYPE_INT) == TYPE_INT){
-			iValue = iValue / operand->getIntValue();
+		    if(operand->getIntValue() != 0)
+				iValue = iValue / operand->getIntValue();
 			return ;
 		}
-		else if(hasType(TYPE_FLOAT) == TYPE_FLOAT){
-			fValue = fValue / operand->getFloatValue();
+		else if(hasType(TYPE_DOUBLE) == TYPE_DOUBLE){
+		    if(operand->getDoubleValue() != 0.0)
+				dValue = dValue / operand->getDoubleValue();
 			return ;
+		}
+		else if(hasType(TYPE_JOINT) == TYPE_JOINT){
+		    if(operand->hasType(TYPE_DOUBLE) == TYPE_DOUBLE)
+		    {
+		    	if(operand->getDoubleValue() != 0.0)
+			    {
+#ifdef WIN32
+					joint.j1   = joint.j1 / operand->getDoubleValue();
+					joint.j2   = joint.j2 / operand->getDoubleValue();
+					joint.j3   = joint.j3 / operand->getDoubleValue();
+					joint.j4   = joint.j4 / operand->getDoubleValue();
+					joint.j5   = joint.j5 / operand->getDoubleValue();
+					joint.j6   = joint.j6 / operand->getDoubleValue();
+#else
+					joint.j1_  = joint.j1_ / operand->getDoubleValue();
+					joint.j2_  = joint.j2_ / operand->getDoubleValue();
+					joint.j3_  = joint.j3_ / operand->getDoubleValue();
+					joint.j4_  = joint.j4_ / operand->getDoubleValue();
+					joint.j5_  = joint.j5_ / operand->getDoubleValue();
+					joint.j6_  = joint.j6_ / operand->getDoubleValue();
+#endif
+			    }
+		    }
+		}
+		else if(hasType(TYPE_POSE) == TYPE_POSE){
+		    if(operand->hasType(TYPE_DOUBLE) == TYPE_DOUBLE)
+		    {
+		    	if(operand->getDoubleValue() != 0.0)
+			    {
+#ifdef WIN32
+					pose.position.x    = pose.position.x    / operand->getDoubleValue();
+					pose.position.y    = pose.position.y    / operand->getDoubleValue();
+					pose.position.z    = pose.position.z    / operand->getDoubleValue();
+					pose.orientation.a = pose.orientation.a / operand->getDoubleValue();
+					pose.orientation.b = pose.orientation.b / operand->getDoubleValue();
+					pose.orientation.c = pose.orientation.c / operand->getDoubleValue();
+#else
+					pose.point_.x_ = pose.point_.x_ / operand->getDoubleValue();
+					pose.point_.y_ = pose.point_.y_ / operand->getDoubleValue();
+					pose.point_.z_ = pose.point_.z_ / operand->getDoubleValue();
+					
+					pose.euler_.a_ = pose.euler_.a_ / operand->getDoubleValue();
+					pose.euler_.b_ = pose.euler_.b_ / operand->getDoubleValue();
+					pose.euler_.c_ = pose.euler_.c_ / operand->getDoubleValue();
+#endif
+			    }
+		    }
 		}
 		else {
 			noticeErrorType(operand->getIntType()) ;
@@ -567,9 +643,9 @@ public:
 			iValue = iValue / operand->getIntValue();
 			return ;
 		}
-		else if(hasType(TYPE_FLOAT) == TYPE_FLOAT){
-			fValue = fValue / operand->getFloatValue();
-			fValue = (int)fValue ;
+		else if(hasType(TYPE_DOUBLE) == TYPE_DOUBLE){
+			dValue = dValue / operand->getDoubleValue();
+			dValue = (int)dValue ;
 			return ;
 		}
 		else {
@@ -585,8 +661,8 @@ public:
 			iTmp = iValue / operand->getIntValue();
 			iValue = iValue - (iTmp * operand->getIntValue());
 		}
-		else if(hasType(TYPE_FLOAT) == TYPE_FLOAT){
-			fValue    = fmodf(fValue, operand->getFloatValue());
+		else if(hasType(TYPE_DOUBLE) == TYPE_DOUBLE){
+			dValue    = fmodf(dValue, operand->getDoubleValue());
 		}
 		else {
 			noticeErrorType(operand->getIntType()) ;
@@ -597,21 +673,21 @@ public:
 	void calcPower(eval_value * operand)
 	{
 		int t = 0 ;
-		int ex = (int)operand->getFloatValue();
+		int ex = (int)operand->getDoubleValue();
 		if(hasType(TYPE_INT) == TYPE_INT){
 			if(ex == 0)
 				iValue = 1 ;
 			else {
 				for(t=ex-1; t>0; --t) 
-					iValue = (iValue) * ex;
+					iValue = iValue * iValue;
 			}
 		}
-		else if(hasType(TYPE_FLOAT) == TYPE_FLOAT){
+		else if(hasType(TYPE_DOUBLE) == TYPE_DOUBLE){
 			if(ex == 0)
-				fValue = 1 ;
+				dValue = 1 ;
 			else {
 				for(t=ex-1; t>0; --t) 
-					fValue = (fValue) * ex;
+					dValue = dValue * dValue;
 			}
 		}
 		else {
@@ -625,11 +701,11 @@ public:
 		if(hasType(TYPE_INT) == TYPE_INT){
 			iValue = -(iValue);
 		}
-		else if(hasType(TYPE_FLOAT) == TYPE_FLOAT){
-			fValue = -(fValue);
+		else if(hasType(TYPE_DOUBLE) == TYPE_DOUBLE){
+			dValue = -(dValue);
 		}
 		else {
-			noticeErrorType(TYPE_FLOAT | TYPE_INT) ;
+			noticeErrorType(TYPE_DOUBLE | TYPE_INT) ;
 			return ;
 		}
 	}
@@ -685,10 +761,10 @@ public:
 			else
 				return EVAL_CMP_FALSE ;
 		}
-		else if((hasType(TYPE_FLOAT) == TYPE_FLOAT)
-			&& (operand->hasType(TYPE_FLOAT) == TYPE_FLOAT))
+		else if((hasType(TYPE_DOUBLE) == TYPE_DOUBLE)
+			&& (operand->hasType(TYPE_DOUBLE) == TYPE_DOUBLE))
 		{
-			if(getFloatValue() < operand->getFloatValue()) 
+			if(getDoubleValue() < operand->getDoubleValue()) 
 				return EVAL_CMP_TRUE;
 			else
 				return EVAL_CMP_FALSE ;
@@ -709,10 +785,10 @@ public:
 			else
 				return EVAL_CMP_FALSE ;
 		}
-		else if((hasType(TYPE_FLOAT) == TYPE_FLOAT)
-			&& (operand->hasType(TYPE_FLOAT) == TYPE_FLOAT))
+		else if((hasType(TYPE_DOUBLE) == TYPE_DOUBLE)
+			&& (operand->hasType(TYPE_DOUBLE) == TYPE_DOUBLE))
 		{
-			if(getFloatValue() <= operand->getFloatValue()) 
+			if(getDoubleValue() <= operand->getDoubleValue()) 
 				return EVAL_CMP_TRUE;
 			else
 				return EVAL_CMP_FALSE ;
@@ -733,10 +809,10 @@ public:
 			else
 				return EVAL_CMP_FALSE ;
 		}
-		else if((hasType(TYPE_FLOAT) == TYPE_FLOAT)
-			&& (operand->hasType(TYPE_FLOAT) == TYPE_FLOAT))
+		else if((hasType(TYPE_DOUBLE) == TYPE_DOUBLE)
+			&& (operand->hasType(TYPE_DOUBLE) == TYPE_DOUBLE))
 		{
-			if(getFloatValue() > operand->getFloatValue()) 
+			if(getDoubleValue() > operand->getDoubleValue()) 
 				return EVAL_CMP_TRUE;
 			else
 				return EVAL_CMP_FALSE ;
@@ -757,10 +833,10 @@ public:
 			else
 				return EVAL_CMP_FALSE ;
 		}
-		else if((hasType(TYPE_FLOAT) == TYPE_FLOAT)
-			&& (operand->hasType(TYPE_FLOAT) == TYPE_FLOAT))
+		else if((hasType(TYPE_DOUBLE) == TYPE_DOUBLE)
+			&& (operand->hasType(TYPE_DOUBLE) == TYPE_DOUBLE))
 		{
-			if(getFloatValue() >= operand->getFloatValue()) 
+			if(getDoubleValue() >= operand->getDoubleValue()) 
 				return EVAL_CMP_TRUE;
 			else
 				return EVAL_CMP_FALSE ;
@@ -781,10 +857,10 @@ public:
 			else
 				return EVAL_CMP_FALSE ;
 		}
-		else if((hasType(TYPE_FLOAT) == TYPE_FLOAT)
-			&& (operand->hasType(TYPE_FLOAT) == TYPE_FLOAT))
+		else if((hasType(TYPE_DOUBLE) == TYPE_DOUBLE)
+			&& (operand->hasType(TYPE_DOUBLE) == TYPE_DOUBLE))
 		{
-			if(getFloatValue() == operand->getFloatValue()) 
+			if(getDoubleValue() == operand->getDoubleValue()) 
 				return EVAL_CMP_TRUE;
 			else
 				return EVAL_CMP_FALSE ;
@@ -805,10 +881,10 @@ public:
 			else
 				return EVAL_CMP_FALSE ;
 		}
-		else if((hasType(TYPE_FLOAT) == TYPE_FLOAT)
-			&& (operand->hasType(TYPE_FLOAT) == TYPE_FLOAT))
+		else if((hasType(TYPE_DOUBLE) == TYPE_DOUBLE)
+			&& (operand->hasType(TYPE_DOUBLE) == TYPE_DOUBLE))
 		{
-			if(getFloatValue() != operand->getFloatValue()) 
+			if(getDoubleValue() != operand->getDoubleValue()) 
 				return EVAL_CMP_TRUE;
 			else
 				return EVAL_CMP_FALSE ;
@@ -829,7 +905,7 @@ private:
 	// union {
 		// Basic type ;
 		int iValue ;
-		float fValue ;
+		double dValue ;
 		std::string strContent;
 		
 		// All member of register
@@ -860,7 +936,7 @@ private:
 		mr_shmi_t reg_mr ;
 		uf_shmi_t reg_ur ;
 		tf_shmi_t reg_tf ;
-#else
+		
 		// All of register
         PrRegData reg_pr ;
 		PrRegData     prRegDataFake;

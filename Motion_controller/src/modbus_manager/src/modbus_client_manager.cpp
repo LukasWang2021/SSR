@@ -257,12 +257,12 @@ ErrorCode ModbusClientManager::addClient(ModbusClientStartInfo &start_info)
         return MODBUS_CLIENT_ID_NOT_EXISTED;
 
     error_code = client->setRegInfo(reg_info);
-    if (error_code != SUCCESS) error_code;
+    if (error_code != SUCCESS) return error_code;
 
     // bool is_enable = false;
     // if (!config_param_ptr_->getEnableStatus(start_info.id, is_enable))
         // return MODBUS_CLIENT_ID_NOT_EXISTED;
-// 
+
     // error_code = client->setEnableStatus(is_enable);
     // if (error_code != SUCCESS) error_code;
 

@@ -35,11 +35,23 @@ ManualTeach::ManualTeach(void)
     position_acc_reference_ = 0;
     orientation_omega_reference_ = 0;
     orientation_alpha_reference_ = 0;
-    time_multiplier_in_step_mode_ = 0;
 
     memset(step_axis_, 0, sizeof(step_axis_));
     memset(axis_vel_, 0, sizeof(axis_vel_));
     memset(axis_acc_, 0, sizeof(axis_acc_));
+
+    memset(&wf_matrix_.trans_vector_, 0, sizeof(wf_matrix_.trans_vector_));
+    memset(&uf_matrix_.trans_vector_, 0, sizeof(uf_matrix_.trans_vector_));
+    memset(&tf_matrix_.trans_vector_, 0, sizeof(tf_matrix_.trans_vector_));
+    memset(&wf_matrix_inverse_.trans_vector_, 0, sizeof(wf_matrix_inverse_.trans_vector_));
+    memset(&uf_matrix_inverse_.trans_vector_, 0, sizeof(uf_matrix_inverse_.trans_vector_));
+    memset(&tf_matrix_inverse_.trans_vector_, 0, sizeof(tf_matrix_inverse_.trans_vector_));
+    wf_matrix_.rotation_matrix_.eye();
+    uf_matrix_.rotation_matrix_.eye();
+    tf_matrix_.rotation_matrix_.eye();
+    wf_matrix_inverse_.rotation_matrix_.eye();
+    uf_matrix_inverse_.rotation_matrix_.eye();
+    tf_matrix_inverse_.rotation_matrix_.eye();
 
     log_ptr_ = NULL;
     joint_constraint_ptr_ = NULL;
@@ -48,12 +60,13 @@ ManualTeach::ManualTeach(void)
 ManualTeach::~ManualTeach(void)
 {}
 
-ErrorCode ManualTeach::init(Kinematics *kinematics_ptr, Constraint *pcons, fst_log::Logger *plog, const string &config_file)
+ErrorCode ManualTeach::init(basic_alg::Kinematics *pkinematics, basic_alg::DynamicAlg* pdynamics, Constraint *pcons, fst_log::Logger *plog, const string &config_file)
 {
-    if (kinematics_ptr && pcons && plog)
+    if (pkinematics && pdynamics && pcons && plog)
     {
         log_ptr_ = plog;
-        kinematics_ptr_ = kinematics_ptr;
+        kinematics_ptr_ = pkinematics;
+        dynamics_ptr_ = pdynamics;
         joint_constraint_ptr_ = pcons;
     }
     else
@@ -108,10 +121,8 @@ ErrorCode ManualTeach::init(Kinematics *kinematics_ptr, Constraint *pcons, fst_l
         config.getParam("reference/position/jerk", position_jerk_reference_) &&
         config.getParam("reference/orientation/omega", orientation_omega_reference_) &&
         config.getParam("reference/orientation/alpha", orientation_alpha_reference_) &&
-        config.getParam("reference/orientation/beta", orientation_beta_reference_) &&
-        config.getParam("time_multiplier", time_multiplier_in_step_mode_))
+        config.getParam("reference/orientation/beta", orientation_beta_reference_))
     {
-        FST_INFO("time multiplier in step mode: %.4f", time_multiplier_in_step_mode_);
         FST_INFO("Step: position=%.4f, orientation=%.4f", step_position_, step_orientation_);
         FST_INFO("Reference: position-vel=%.4f, position-acc=%.4f, position-jerk=%.4f, orientation-omega=%.4f, orientation-alpha=%.4f, orientation-beta=%.4f",
                  position_vel_reference_, position_acc_reference_, position_jerk_reference_, orientation_omega_reference_, orientation_alpha_reference_, orientation_beta_reference_);
@@ -161,20 +172,9 @@ ErrorCode ManualTeach::init(Kinematics *kinematics_ptr, Constraint *pcons, fst_l
     return SUCCESS;
 }
 
-
-double ManualTeach::getGlobalVelRatio(void)
-{
-    return vel_ratio_;
-}
-
-double ManualTeach::getGlobalAccRatio(void)
-{
-    return acc_ratio_;
-}
-
 void ManualTeach::getManualStepAxis(double *steps)
 {
-    for (size_t i = 0; i < joint_num_; i++)
+    for (uint32_t i = 0; i < joint_num_; i++)
     {
         steps[i] = step_axis_[i];
     }
@@ -190,23 +190,26 @@ double ManualTeach::getManualStepOrientation(void)
     return step_orientation_;
 }
 
-ErrorCode ManualTeach::setGlobalVelRatio(double ratio)
+double ManualTeach::getDuration(void)
 {
-    vel_ratio_ = ratio;
-    return SUCCESS;
+    return total_duration_;
 }
 
-ErrorCode ManualTeach::setGlobalAccRatio(double ratio)
+void ManualTeach::setGlobalVelRatio(double ratio)
+{
+    vel_ratio_ = ratio;
+}
+
+void ManualTeach::setGlobalAccRatio(double ratio)
 {
     acc_ratio_ = ratio;
-    return SUCCESS;
 }
 
 ErrorCode ManualTeach::setManualStepAxis(const double *steps)
 {
     vector<double> data;
 
-    for (size_t i = 0; i < joint_num_; i++)
+    for (uint32_t i = 0; i < joint_num_; i++)
     {
         data.push_back(steps[i]);
     }
@@ -222,6 +225,8 @@ ErrorCode ManualTeach::setManualStepAxis(const double *steps)
     {
         return param.getLastError();
     }
+
+    return SUCCESS;
 }
 
 ErrorCode ManualTeach::setManualStepPosition(double step)
@@ -268,1430 +273,1742 @@ ErrorCode ManualTeach::setManualStepOrientation(double step)
     }
 }
 
+void ManualTeach::setWorldFrame(const PoseEuler &wf)
+{
+	wf.convertToTransMatrix(wf_matrix_);
+	wf_matrix_inverse_ = wf_matrix_;
+    wf_matrix_inverse_.inverse();
+}
 
+void ManualTeach::setUserFrame(const PoseEuler &uf)
+{
+	uf.convertToTransMatrix(uf_matrix_);
+	uf_matrix_inverse_ = uf_matrix_;
+    uf_matrix_inverse_.inverse();
+}
 
+void ManualTeach::setToolFrame(const PoseEuler &tf)
+{
+	tf.convertToTransMatrix(tf_matrix_);
+	tf_matrix_inverse_ = tf_matrix_;
+    tf_matrix_inverse_.inverse();
+}
 
+void ManualTeach::setManualFrame(ManualFrame frame)
+{
+    frame_type_ = frame;
+}
 
-ErrorCode ManualTeach::manualStepByDirect(const ManualDirection *directions, MotionTime time, ManualTrajectory &traj)
+ManualMode ManualTeach::getManualMode(void)
+{
+    return motion_type_;
+}
+
+ManualFrame ManualTeach::getManualFrame(void)
+{
+    return frame_type_;
+}
+
+ErrorCode ManualTeach::manualStep(const ManualDirection *directions, const Joint &start)
 {
     ErrorCode err = SUCCESS;
-    FST_INFO("Manual step request received, frame=%d", traj.frame);
 
-    switch (traj.frame)
+    switch (frame_type_)
     {
         case JOINT:
-            err = manualJointStep(directions, time, traj);
+            FST_INFO("Manual step in joint space");
+            err = manualStepInJoint(directions, start);
             break;
 
         case BASE:
+            FST_INFO("Manual step in base space");
+            err = manualStepInBase(directions, start);
+            break;
         case USER:
+            FST_INFO("Manual step in user space");
+            err = manualStepInUser(directions, start);
+            break;
         case WORLD:
+            FST_INFO("Manual step in world space");
+            err = manualStepInWorld(directions, start);
+            break;
         case TOOL:
-            err = manualCartesianStep(directions, time, traj);
+            FST_INFO("Manual step in tool space");
+            err = manualStepInTool(directions, start);
             break;
 
         default:
             err = MC_FAIL_MANUAL_STEP;
-            FST_ERROR("Unsupported manual frame: %d", traj.frame);
+            FST_ERROR("Manual step unsupported frame: %d", frame_type_);
             break;
     }
 
     if (err == SUCCESS)
     {
-        FST_INFO("Manual trajectory ready.");
+        FST_INFO("Manual step trajectory ready.");
+        motion_type_ = STEP;
         return SUCCESS;
     }
     else
     {
-        FST_ERROR("Manual failed, err = 0x%llx", err);
+        FST_ERROR("Manual step failed, err = 0x%llx", err);
+        total_duration_ = 0;
         return err;
     }
 }
 
-ErrorCode ManualTeach::manualJointStep(const ManualDirection *dir, MotionTime time, ManualTrajectory &traj)
+ErrorCode ManualTeach::manualStepInJoint(const ManualDirection *dir, const Joint &start)
 {
     char buffer[LOG_TEXT_SIZE];
+    Joint target  = start;
+    int index = -1;
 
-    FST_INFO("manual-Joint-Step: directions = %s, planning trajectory ...", printDBLine((int*)dir, buffer, LOG_TEXT_SIZE));
-    FST_INFO("  step-axis = %s", printDBLine(step_axis_, buffer, LOG_TEXT_SIZE));
-    FST_INFO("  start-joint = %s", printDBLine(&traj.joint_start[0], buffer, LOG_TEXT_SIZE));
-
-    Joint target  = traj.joint_start;
-
-    for (size_t i = 0; i < joint_num_; i++)
+    for (uint32_t i = 0; i < joint_num_; i++)
     {
-        if      (dir[i] == INCREASE) target[i] += step_axis_[i];
-        else if (dir[i] == DECREASE) target[i] -= step_axis_[i];
+        if (dir[i] == STANDING) continue;
+        if (dir[i] == INCREASE) {target[i] += step_axis_[i]; index = i; break;}
+        if (dir[i] == DECREASE) {target[i] -= step_axis_[i]; index = i; break;}
     }
+    
+    FST_INFO("Manual step in joint: directions = %s, planning trajectory ...", printDBLine((int*)dir, buffer, LOG_TEXT_SIZE));
+    FST_INFO("Step-axis = %s", printDBLine(step_axis_, buffer, LOG_TEXT_SIZE));
+    FST_INFO("Start-joint = %s", printDBLine(&start.j1_, buffer, LOG_TEXT_SIZE));
+    FST_INFO("Target-joint = %s", printDBLine(&target.j1_, buffer, LOG_TEXT_SIZE));
 
-    FST_INFO("  target-joint = %s", printDBLine(&target[0], buffer, LOG_TEXT_SIZE));
-
-    if (!joint_constraint_ptr_->isJointInConstraint(target))
+    if (!joint_constraint_ptr_->isJointInConstraint(start))
     {
-        FST_ERROR("Target out of soft constraint.");
+        FST_ERROR("Start joint out of soft constraint.");
         return JOINT_OUT_OF_CONSTRAINT;
     }
 
-    double omega, alpha, delta, trip, axis_duration;
-    double total_duration = 0;
-
-    for (size_t i = 0; i < joint_num_; i++)
+    if (!joint_constraint_ptr_->isJointInConstraint(target))
     {
-        trip = dir[i] == STANDING ? 0 : step_axis_[i];
-        omega = axis_vel_[i];
-        alpha = axis_acc_[i];
-
-        delta = trip - omega * omega / alpha;
-        axis_duration = delta > 0 ? (omega / alpha + trip / omega) : (sqrt(trip / alpha) * 2);
-        // FST_INFO("  J%d: trip=%.4f omega=%f, alpha=%f, delta=%f, t=%f", i, trips, omega, alpha, delta, axis_duration);
-        if (axis_duration > total_duration) total_duration = axis_duration;
+        FST_ERROR("Target joint out of soft constraint.");
+        return JOINT_OUT_OF_CONSTRAINT;
     }
 
-    total_duration = total_duration * time_multiplier_in_step_mode_;
-    traj.ending_time = total_duration;
-    traj.joint_ending = target;
-    FST_INFO("  duration=%.4f, create trajectory ...", total_duration);
-
-    for (size_t i = 0; i < joint_num_; i++)
+    FST_INFO("  axis-vel = %s", printDBLine(axis_vel_, buffer, LOG_TEXT_SIZE));
+    FST_INFO("  axis-acc = %s", printDBLine(axis_acc_, buffer, LOG_TEXT_SIZE));
+    FST_INFO("  axis-jerk = %s", printDBLine(axis_jerk_, buffer, LOG_TEXT_SIZE));
+    joint_start_ = start;
+    joint_end_ = target;
+    double trip = fabs(target[index] - start[index]);
+    
+    if (index < 0 || fabs(target[index] - start[index]) < MINIMUM_E6)
     {
-        traj.direction[i] = dir[i];
-        traj.axis[i].time_stamp[0] = time;
-        traj.axis[i].time_stamp[1] = time;
-        traj.axis[i].time_stamp[2] = time;
-        traj.axis[i].time_stamp[3] = time;
-        traj.axis[i].time_stamp[4] = time;
-        traj.axis[i].time_stamp[5] = time;
-        traj.axis[i].time_stamp[6] = time;
-        traj.axis[i].time_stamp[7] = total_duration;
-        getQuinticSplineCoefficients(traj.joint_start[i], 0, 0, target[i], 0, 0, total_duration, traj.axis[i].coeff[6].data);
+        FST_WARN("Start joint near target joint, do not move");
+        total_duration_ = 0;
+        return SUCCESS;
     }
 
-    FST_INFO("  Create manual trajectory success !");
+    double vel = axis_vel_[index] / trip;
+    double acc = axis_acc_[index] / trip;
+    double jerk = axis_jerk_[index] / trip;
+    FST_INFO("index: %d, trip: %.6f, vel: %.6f, acc: %.6f, jerk: %.6f, create ds curve ...", index, trip, vel, acc, jerk);
+    ds_curve_.planDSCurve(0, 1, vel, acc, &jerk);
+    total_duration_ = ds_curve_.getDuration();
+    FST_INFO("Success, duration: %.6f", total_duration_);
     return SUCCESS;
 }
 
-void ManualTeach::getQuinticSplineCoefficients(double start_pos, double start_vel, double start_acc, double end_pos, double end_vel, double end_acc, double duration, double *coeffs)
-{
-    if (duration < 0.000001)
-    {
-        coeffs[0] = end_pos;
-		coeffs[1] = end_vel;
-		coeffs[2] = end_acc/2;
-		coeffs[3] = 0;
-		coeffs[4] = 0;
-		coeffs[5] = 0;
-        return;
-    }
-
-    double t[6];
-    t[0] = 1;
-    t[1] = duration;
-    t[2] = t[1] * duration;
-    t[3] = t[2] * duration;
-    t[4] = t[3] * duration;
-    t[5] = t[4] * duration;
-    coeffs[0] = start_pos;
-    coeffs[1] = start_vel;
-    coeffs[2] = start_acc/2;
-    coeffs[3] = (end_pos * 20 - start_pos * 20 + end_acc * t[2] - start_acc * t[2] * 3 - start_vel * t[1] * 12 - end_vel * t[1] * 8) / (t[3] * 2);
-    coeffs[4] = (start_pos * 30 - end_pos * 30 + start_vel * t[1] * 16 + end_vel * t[1] * 14 + start_acc * t[2] * 3 - end_acc * t[2] * 2) / (t[4] * 2);
-    coeffs[5] = (end_pos * 12 - start_pos * 12 - start_vel * t[1] * 6 - end_vel * t[1] * 6 - start_acc * t[2] + end_acc * t[2]) / (t[5] * 2);
-}
-
-
-ErrorCode ManualTeach::manualCartesianStep(const ManualDirection *dir, MotionTime time, ManualTrajectory &traj)
+ErrorCode ManualTeach::manualStepInBase(const ManualDirection *dir, const Joint &start)
 {
     char buffer[LOG_TEXT_SIZE];
-    PoseEuler &target = traj.cart_ending;
-    PoseEuler &start = traj.cart_start;
+    PoseEuler start_pose;
+    TransMatrix matrix;
+    kinematics_ptr_->doFK(start, start_pose);
+	start_pose.convertToTransMatrix(matrix);
+	matrix.rightMultiply(tf_matrix_).convertToPoseEuler(start_pose);
+    auxiliary_coord_.euler_ = start_pose.euler_;
+    memset(&auxiliary_coord_.point_, 0, sizeof(auxiliary_coord_.point_));
+    cart_start_.point_ = start_pose.point_;
+    memset(&cart_start_.euler_, 0, sizeof(cart_start_.euler_));
+    cart_end_ = cart_start_;
+    int index = -1;
 
-    FST_INFO("manual-Cartesian-Step: directions = %s, planning trajectory ...", printDBLine((int*)dir, buffer, LOG_TEXT_SIZE));
-    FST_INFO("  step-postion = %.4fmm, step-orientation = %.4frad", step_position_, step_orientation_);
-    FST_INFO("  position: speed = %.4f, acceleration = %.4f", position_vel_reference_, position_acc_reference_);
-    FST_INFO("  orientation: omega = %.4f, alpha = %.4f", orientation_omega_reference_, orientation_alpha_reference_);
-    FST_INFO("  start-joint = %s", printDBLine(&traj.joint_start[0], buffer, LOG_TEXT_SIZE));
-
-    target.point_.x_ = dir[0] == STANDING ? start.point_.x_ : (dir[0] == INCREASE ? start.point_.x_ + step_position_ : start.point_.x_ - step_position_);
-    target.point_.y_ = dir[1] == STANDING ? start.point_.y_ : (dir[1] == INCREASE ? start.point_.y_ + step_position_ : start.point_.y_ - step_position_);
-    target.point_.z_ = dir[2] == STANDING ? start.point_.z_ : (dir[2] == INCREASE ? start.point_.z_ + step_position_ : start.point_.z_ - step_position_);
-    target.euler_.a_ = dir[3] == STANDING ? start.euler_.a_ : (dir[3] == INCREASE ? start.euler_.a_ + step_orientation_ : start.euler_.a_ - step_orientation_);
-    target.euler_.b_ = dir[4] == STANDING ? start.euler_.b_ : (dir[4] == INCREASE ? start.euler_.b_ + step_orientation_ : start.euler_.b_ - step_orientation_);
-    target.euler_.c_ = dir[5] == STANDING ? start.euler_.c_ : (dir[5] == INCREASE ? start.euler_.c_ + step_orientation_ : start.euler_.c_ - step_orientation_);
-
-    FST_INFO("  start-pose = %.4f %.4f %.4f - %.4f %.4f %.4f", start.point_.x_, start.point_.y_, start.point_.z_, start.euler_.a_, start.euler_.b_, start.euler_.c_);
-    FST_INFO("  target-pose = %.4f %.4f %.4f - %.4f %.4f %.4f", target.point_.x_, target.point_.y_, target.point_.z_, target.euler_.a_, target.euler_.b_, target.euler_.c_);
-
-    double dis = (dir[0] != STANDING || dir[1] != STANDING || dir[2] != STANDING) ? step_position_ : 0;
-    double spd = position_vel_reference_;
-    double acc = position_acc_reference_;
-
-    double angle = (dir[3] != STANDING || dir[4] != STANDING || dir[5] != STANDING) ? step_orientation_ : 0;
-    double omega = orientation_omega_reference_;
-    double alpha = orientation_alpha_reference_;
-    //FST_WARN("  spd=%f acc=%f omega=%f alpha=%f", spd, acc, omega, alpha);
-    double delta = dis - spd * spd / acc;
-    double t_pos = delta > 0 ? (spd / acc * 2 + delta / spd) : (sqrt(dis / acc) * 2);
-    double theta = angle - omega * omega / alpha;
-    double t_ort = theta > 0 ? (omega / alpha * 2 + theta / omega) : (sqrt(angle / alpha) * 2);
-    double duration = (t_pos > t_ort ? t_pos : t_ort) * time_multiplier_in_step_mode_;
-    //FST_WARN("  delta=%f t_pos=%f, theta=%f, t_ort=%f, duration=%f", delta, t_pos, theta, t_ort, duration);
-
-    for (size_t i = 0; i < 6; i++)
+    if (dir[0] != STANDING)
     {
-        traj.direction[i] = dir[i];
-        traj.axis[i].time_stamp[0] = time;
-        traj.axis[i].time_stamp[1] = time;
-        traj.axis[i].time_stamp[2] = time;
-        traj.axis[i].time_stamp[3] = time;
-        traj.axis[i].time_stamp[4] = time;
-        traj.axis[i].time_stamp[5] = time;
-        traj.axis[i].time_stamp[6] = time;
-        traj.axis[i].time_stamp[7] = duration;
-        getQuinticSplineCoefficients(*(&start.point_.x_ + i), 0, 0, *(&target.point_.x_ + i), 0, 0, duration, traj.axis[i].coeff[6].data);
+        cart_end_.point_.x_ += step_position_ * ((dir[0] == INCREASE) ? 1 : -1);
+        index = 0;
+    }
+    else if (dir[1] != STANDING)
+    {
+        cart_end_.point_.y_ += step_position_ * ((dir[1] == INCREASE) ? 1 : -1);
+        index = 1;
+    }
+    else if (dir[2] != STANDING)
+    {
+        cart_end_.point_.z_ += step_position_ * ((dir[2] == INCREASE) ? 1 : -1);
+        index = 2;
+    }
+    else if (dir[3] != STANDING)
+    {
+        cart_end_.euler_.a_ += step_orientation_ * ((dir[3] == INCREASE) ? 1 : -1);
+        index = 3;
+    }
+    else if (dir[4] != STANDING)
+    {
+        cart_end_.euler_.b_ += step_orientation_ * ((dir[4] == INCREASE) ? 1 : -1);
+        index = 4;
+    }
+    else if (dir[5] != STANDING)
+    {
+        cart_end_.euler_.c_ += step_orientation_ * ((dir[5] == INCREASE) ? 1 : -1);
+        index = 5;
     }
 
-    traj.ending_time = duration;
-    FST_INFO("  Create manual trajectory success !");
+    FST_INFO("Manual step in base: directions = %s, planning trajectory ...", printDBLine((int*)dir, buffer, LOG_TEXT_SIZE));
+    FST_INFO("Start-joint = %s", printDBLine(&start.j1_, buffer, LOG_TEXT_SIZE));
+    FST_INFO("Auxiliary-coord = %.4f, %.4f, %.4f,   %.4f, %.4f, %.4f,", auxiliary_coord_.point_.x_, auxiliary_coord_.point_.y_, auxiliary_coord_.point_.z_, auxiliary_coord_.euler_.a_, auxiliary_coord_.euler_.b_, auxiliary_coord_.euler_.c_);
+    FST_INFO("Start-pose = %.4f %.4f %.4f - %.4f %.4f %.4f", cart_start_.point_.x_, cart_start_.point_.y_, cart_start_.point_.z_, cart_start_.euler_.a_, cart_start_.euler_.b_, cart_start_.euler_.c_);
+    FST_INFO("End-pose = %.4f %.4f %.4f - %.4f %.4f %.4f", cart_end_.point_.x_, cart_end_.point_.y_, cart_end_.point_.z_, cart_end_.euler_.a_, cart_end_.euler_.b_, cart_end_.euler_.c_);
+    double trip, vel, acc, jerk;
+    
+    if (index >= 0 && index < 3)
+    {
+        trip = step_position_;
+        vel = position_vel_reference_ / trip;
+        acc = position_acc_reference_ / trip;
+        jerk = position_jerk_reference_ / trip;
+    }
+    else if (index >= 3 && index < 6)
+    {
+        trip = step_orientation_;
+        vel = orientation_omega_reference_ / trip;
+        acc = orientation_alpha_reference_ / trip;
+        jerk = orientation_beta_reference_ / trip;
+    }
+    else
+    {
+        FST_ERROR("Manual step directions invalid");
+        return INVALID_PARAMETER;
+    }
+
+    FST_INFO("index: %d, trip: %.6f, vel: %.6f, acc: %.6f, jerk: %.6f, create ds curve ...", index, trip, vel, acc, jerk);
+    ds_curve_.planDSCurve(0, 1, vel, acc, &jerk);
+    total_duration_ = ds_curve_.getDuration();
+    FST_INFO("Success, duration: %.6f", total_duration_);
     return SUCCESS;
 }
 
+ErrorCode ManualTeach::manualStepInUser(const ManualDirection *dir, const Joint &start)
+{
+    char buffer[LOG_TEXT_SIZE];
+    PoseEuler start_pose;
+    TransMatrix matrix;
+    kinematics_ptr_->doFK(start, start_pose);
+	start_pose.convertToTransMatrix(matrix);
+    matrix.rightMultiply(tf_matrix_).leftMultiply(uf_matrix_inverse_).convertToPoseEuler(start_pose);
+    auxiliary_coord_.euler_ = start_pose.euler_;
+    memset(&auxiliary_coord_.point_, 0, sizeof(auxiliary_coord_.point_));
+    cart_start_.point_ = start_pose.point_;
+    memset(&cart_start_.euler_, 0, sizeof(cart_start_.euler_));
+    cart_end_ = cart_start_;
+    int index = -1;
 
-ErrorCode ManualTeach::manualContinuousByDirect(const ManualDirection *directions, MotionTime time, ManualTrajectory &traj)
+    if (dir[0] != STANDING)
+    {
+        cart_end_.point_.x_ += step_position_ * ((dir[0] == INCREASE) ? 1 : -1);
+        index = 0;
+    }
+    else if (dir[1] != STANDING)
+    {
+        cart_end_.point_.y_ += step_position_ * ((dir[1] == INCREASE) ? 1 : -1);
+        index = 1;
+    }
+    else if (dir[2] != STANDING)
+    {
+        cart_end_.point_.z_ += step_position_ * ((dir[2] == INCREASE) ? 1 : -1);
+        index = 2;
+    }
+    else if (dir[3] != STANDING)
+    {
+        cart_end_.euler_.a_ += step_orientation_ * ((dir[3] == INCREASE) ? 1 : -1);
+        index = 3;
+    }
+    else if (dir[4] != STANDING)
+    {
+        cart_end_.euler_.b_ += step_orientation_ * ((dir[4] == INCREASE) ? 1 : -1);
+        index = 4;
+    }
+    else if (dir[5] != STANDING)
+    {
+        cart_end_.euler_.c_ += step_orientation_ * ((dir[5] == INCREASE) ? 1 : -1);
+        index = 5;
+    }
+
+    FST_INFO("Manual step in user: directions = %s, planning trajectory ...", printDBLine((int*)dir, buffer, LOG_TEXT_SIZE));
+    FST_INFO("Start-joint = %s", printDBLine(&start.j1_, buffer, LOG_TEXT_SIZE));
+    FST_INFO("Auxiliary-coord = %.4f, %.4f, %.4f,   %.4f, %.4f, %.4f,", auxiliary_coord_.point_.x_, auxiliary_coord_.point_.y_, auxiliary_coord_.point_.z_, auxiliary_coord_.euler_.a_, auxiliary_coord_.euler_.b_, auxiliary_coord_.euler_.c_);
+    FST_INFO("Start-pose = %.4f %.4f %.4f - %.4f %.4f %.4f", cart_start_.point_.x_, cart_start_.point_.y_, cart_start_.point_.z_, cart_start_.euler_.a_, cart_start_.euler_.b_, cart_start_.euler_.c_);
+    FST_INFO("End-pose = %.4f %.4f %.4f - %.4f %.4f %.4f", cart_end_.point_.x_, cart_end_.point_.y_, cart_end_.point_.z_, cart_end_.euler_.a_, cart_end_.euler_.b_, cart_end_.euler_.c_);
+    double trip, vel, acc, jerk;
+    
+    if (index >= 0 && index < 3)
+    {
+        trip = step_position_;
+        vel = position_vel_reference_ / trip;
+        acc = position_acc_reference_ / trip;
+        jerk = position_jerk_reference_ / trip;
+    }
+    else if (index >= 3 && index < 6)
+    {
+        trip = step_orientation_;
+        vel = orientation_omega_reference_ / trip;
+        acc = orientation_alpha_reference_ / trip;
+        jerk = orientation_beta_reference_ / trip;
+    }
+    else
+    {
+        FST_ERROR("Manual step directions invalid");
+        return INVALID_PARAMETER;
+    }
+
+    FST_INFO("index: %d, trip: %.6f, vel: %.6f, acc: %.6f, jerk: %.6f, create ds curve ...", index, trip, vel, acc, jerk);
+    ds_curve_.planDSCurve(0, 1, vel, acc, &jerk);
+    total_duration_ = ds_curve_.getDuration();
+    FST_INFO("Success, duration: %.6f", total_duration_);
+    return SUCCESS;
+}
+
+ErrorCode ManualTeach::manualStepInWorld(const ManualDirection *dir, const Joint &start)
+{
+    char buffer[LOG_TEXT_SIZE];
+    PoseEuler start_pose;
+    TransMatrix matrix;
+    kinematics_ptr_->doFK(start, start_pose);
+	start_pose.convertToTransMatrix(matrix);
+    matrix.rightMultiply(tf_matrix_).leftMultiply(wf_matrix_inverse_).convertToPoseEuler(start_pose);
+    auxiliary_coord_.euler_ = start_pose.euler_;
+    memset(&auxiliary_coord_.point_, 0, sizeof(auxiliary_coord_.point_));
+    cart_start_.point_ = start_pose.point_;
+    memset(&cart_start_.euler_, 0, sizeof(cart_start_.euler_));
+    cart_end_ = cart_start_;
+    int index = -1;
+
+    if (dir[0] != STANDING)
+    {
+        cart_end_.point_.x_ += step_position_ * ((dir[0] == INCREASE) ? 1 : -1);
+        index = 0;
+    }
+    else if (dir[1] != STANDING)
+    {
+        cart_end_.point_.y_ += step_position_ * ((dir[1] == INCREASE) ? 1 : -1);
+        index = 1;
+    }
+    else if (dir[2] != STANDING)
+    {
+        cart_end_.point_.z_ += step_position_ * ((dir[2] == INCREASE) ? 1 : -1);
+        index = 2;
+    }
+    else if (dir[3] != STANDING)
+    {
+        cart_end_.euler_.a_ += step_orientation_ * ((dir[3] == INCREASE) ? 1 : -1);
+        index = 3;
+    }
+    else if (dir[4] != STANDING)
+    {
+        cart_end_.euler_.b_ += step_orientation_ * ((dir[4] == INCREASE) ? 1 : -1);
+        index = 4;
+    }
+    else if (dir[5] != STANDING)
+    {
+        cart_end_.euler_.c_ += step_orientation_ * ((dir[5] == INCREASE) ? 1 : -1);
+        index = 5;
+    }
+
+    FST_INFO("Manual step in world: directions = %s, planning trajectory ...", printDBLine((int*)dir, buffer, LOG_TEXT_SIZE));
+    FST_INFO("Start-joint = %s", printDBLine(&start.j1_, buffer, LOG_TEXT_SIZE));
+    FST_INFO("Auxiliary-coord = %.4f, %.4f, %.4f,   %.4f, %.4f, %.4f,", auxiliary_coord_.point_.x_, auxiliary_coord_.point_.y_, auxiliary_coord_.point_.z_, auxiliary_coord_.euler_.a_, auxiliary_coord_.euler_.b_, auxiliary_coord_.euler_.c_);
+    FST_INFO("Start-pose = %.4f %.4f %.4f - %.4f %.4f %.4f", cart_start_.point_.x_, cart_start_.point_.y_, cart_start_.point_.z_, cart_start_.euler_.a_, cart_start_.euler_.b_, cart_start_.euler_.c_);
+    FST_INFO("End-pose = %.4f %.4f %.4f - %.4f %.4f %.4f", cart_end_.point_.x_, cart_end_.point_.y_, cart_end_.point_.z_, cart_end_.euler_.a_, cart_end_.euler_.b_, cart_end_.euler_.c_);
+    double trip, vel, acc, jerk;
+    
+    if (index >= 0 && index < 3)
+    {
+        trip = step_position_;
+        vel = position_vel_reference_ / trip;
+        acc = position_acc_reference_ / trip;
+        jerk = position_jerk_reference_ / trip;
+    }
+    else if (index >= 3 && index < 6)
+    {
+        trip = step_orientation_;
+        vel = orientation_omega_reference_ / trip;
+        acc = orientation_alpha_reference_ / trip;
+        jerk = orientation_beta_reference_ / trip;
+    }
+    else
+    {
+        FST_ERROR("Manual step directions invalid");
+        return INVALID_PARAMETER;
+    }
+
+    FST_INFO("index: %d, trip: %.6f, vel: %.6f, acc: %.6f, jerk: %.6f, create ds curve ...", index, trip, vel, acc, jerk);
+    ds_curve_.planDSCurve(0, 1, vel, acc, &jerk);
+    total_duration_ = ds_curve_.getDuration();
+    FST_INFO("Success, duration: %.6f", total_duration_);
+    return SUCCESS;
+}
+
+ErrorCode ManualTeach::manualStepInTool(const ManualDirection *dir, const Joint &start)
+{
+    char buffer[LOG_TEXT_SIZE];
+    PoseEuler start_pose;
+    TransMatrix matrix;
+    kinematics_ptr_->doFK(start, start_pose);
+	start_pose.convertToTransMatrix(matrix);
+    matrix.rightMultiply(tf_matrix_).convertToPoseEuler(start_pose);
+    auxiliary_coord_ = start_pose;
+    memset(&cart_start_, 0, sizeof(cart_start_));
+    cart_end_ = cart_start_;
+    int index = -1;
+
+    if (dir[0] != STANDING)
+    {
+        cart_end_.point_.x_ += step_position_ * ((dir[0] == INCREASE) ? 1 : -1);
+        index = 0;
+    }
+    else if (dir[1] != STANDING)
+    {
+        cart_end_.point_.y_ += step_position_ * ((dir[1] == INCREASE) ? 1 : -1);
+        index = 1;
+    }
+    else if (dir[2] != STANDING)
+    {
+        cart_end_.point_.z_ += step_position_ * ((dir[2] == INCREASE) ? 1 : -1);
+        index = 2;
+    }
+    else if (dir[3] != STANDING)
+    {
+        cart_end_.euler_.a_ += step_orientation_ * ((dir[3] == INCREASE) ? 1 : -1);
+        index = 3;
+    }
+    else if (dir[4] != STANDING)
+    {
+        cart_end_.euler_.b_ += step_orientation_ * ((dir[4] == INCREASE) ? 1 : -1);
+        index = 4;
+    }
+    else if (dir[5] != STANDING)
+    {
+        cart_end_.euler_.c_ += step_orientation_ * ((dir[5] == INCREASE) ? 1 : -1);
+        index = 5;
+    }
+
+    FST_INFO("Manual step in tool: directions = %s, planning trajectory ...", printDBLine((int*)dir, buffer, LOG_TEXT_SIZE));
+    FST_INFO("Start-joint = %s", printDBLine(&start.j1_, buffer, LOG_TEXT_SIZE));
+    FST_INFO("Auxiliary-coord = %.4f, %.4f, %.4f,   %.4f, %.4f, %.4f,", auxiliary_coord_.point_.x_, auxiliary_coord_.point_.y_, auxiliary_coord_.point_.z_, auxiliary_coord_.euler_.a_, auxiliary_coord_.euler_.b_, auxiliary_coord_.euler_.c_);
+    FST_INFO("Start-pose = %.4f %.4f %.4f - %.4f %.4f %.4f", cart_start_.point_.x_, cart_start_.point_.y_, cart_start_.point_.z_, cart_start_.euler_.a_, cart_start_.euler_.b_, cart_start_.euler_.c_);
+    FST_INFO("End-pose = %.4f %.4f %.4f - %.4f %.4f %.4f", cart_end_.point_.x_, cart_end_.point_.y_, cart_end_.point_.z_, cart_end_.euler_.a_, cart_end_.euler_.b_, cart_end_.euler_.c_);
+    double trip, vel, acc, jerk;
+    
+    if (index >= 0 && index < 3)
+    {
+        trip = step_position_;
+        vel = position_vel_reference_ / trip;
+        acc = position_acc_reference_ / trip;
+        jerk = position_jerk_reference_ / trip;
+    }
+    else if (index >= 3 && index < 6)
+    {
+        trip = step_orientation_;
+        vel = orientation_omega_reference_ / trip;
+        acc = orientation_alpha_reference_ / trip;
+        jerk = orientation_beta_reference_ / trip;
+    }
+    else
+    {
+        FST_ERROR("Manual step directions invalid");
+        return INVALID_PARAMETER;
+    }
+
+    FST_INFO("index: %d, trip: %.6f, vel: %.6f, acc: %.6f, jerk: %.6f, create ds curve ...", index, trip, vel, acc, jerk);
+    ds_curve_.planDSCurve(0, 1, vel, acc, &jerk);
+    total_duration_ = ds_curve_.getDuration();
+    FST_INFO("Success, duration: %.6f", total_duration_);
+    return SUCCESS;
+}
+
+ErrorCode ManualTeach::manualContinuous(const ManualDirection *directions, const Joint &start)
 {
     ErrorCode err = SUCCESS;
-    FST_INFO("Manual continuous request received, frame=%d", traj.frame);
 
-    switch (traj.frame)
+    for (uint32_t j = 0; j < joint_num_; j++)
+    {
+        motion_direction_[j] = STANDING;
+        axis_ds_curve_valid_[j] = false;
+        axis_ds_curve_start_time_[j] = 0;
+    }
+    
+    switch (frame_type_)
     {
         case JOINT:
-            err = manualJointContinuous(directions, time, traj);
+            FST_INFO("Manual continuous in joint space");
+            err = manualContinuousInJoint(directions, start);
             break;
+
+        case BASE:
+            FST_INFO("Manual continuous in base space");
+            err = manualContinuousInBase(directions, start);
+            break;
+        case USER:
+            FST_INFO("Manual continuous in user space");
+            err = manualContinuousInUser(directions, start);
+            break;
+        case WORLD:
+            FST_INFO("Manual continuous in world space");
+            err = manualContinuousInWorld(directions, start);
+            break;
+        case TOOL:
+            FST_INFO("Manual continuous in tool space");
+            err = manualContinuousInTool(directions, start);
+            break;
+
+        default:
+            err = MC_FAIL_MANUAL_CONTINUOUS;
+            FST_ERROR("Manual continuous unsupported frame: %d", frame_type_);
+            break;
+    }
+
+    if (err == SUCCESS)
+    {
+        FST_INFO("Manual continuous trajectory ready.");
+        motion_type_ = CONTINUOUS;
+        return SUCCESS;
+    }
+    else
+    {
+        FST_ERROR("Manual continuous failed, err = 0x%llx", err);
+        total_duration_ = 0;
+        return err;
+    }
+}
+
+ErrorCode ManualTeach::manualContinuousInJoint(const ManualDirection *dir, const Joint &start)
+{
+    Joint target;
+    double duration = 0;
+    char buffer[LOG_TEXT_SIZE];
+    FST_INFO("Manual continuous in joint: directions = %s, planning trajectory ...", printDBLine((int*)dir, buffer, LOG_TEXT_SIZE));
+    FST_INFO("Start-joint = %s", printDBLine(&start.j1_, buffer, LOG_TEXT_SIZE));
+    FST_INFO("  axis-vel = %s", printDBLine(axis_vel_, buffer, LOG_TEXT_SIZE));
+    FST_INFO("  axis-acc = %s", printDBLine(axis_acc_, buffer, LOG_TEXT_SIZE));
+    FST_INFO("  axis-jerk = %s", printDBLine(axis_jerk_, buffer, LOG_TEXT_SIZE));
+
+    for (uint32_t j = 0; j < joint_num_; j++)
+    {
+        double trip = 9999.99;
+
+        if (dir[j] == STANDING)
+        {
+            motion_direction_[j] = STANDING;
+            axis_ds_curve_valid_[j] = false;
+            axis_ds_curve_start_time_[j] = 0;
+            target[j] = start[j];
+            continue;
+        }
+
+        if (!joint_constraint_ptr_->isMask(j))
+        {
+            trip = (dir[j] == INCREASE) ? (joint_constraint_ptr_->upper()[j] - start[j]) : (start[j] - joint_constraint_ptr_->lower()[j]);
+        }
+
+        if (trip < MINIMUM_E6)
+        {
+            FST_INFO("index: %d: near soft constraint, cannot manual move", j);
+            motion_direction_[j] = STANDING;
+            axis_ds_curve_valid_[j] = false;
+            axis_ds_curve_start_time_[j] = 0;
+            target[j] = start[j];
+            continue;
+        }
+
+        double vel_ratio = vel_ratio_;
+        double acc_ratio = acc_ratio_ > vel_ratio_ ? vel_ratio_ : acc_ratio_;
+        double vel = axis_vel_[j] * vel_ratio / trip;
+        double acc = axis_acc_[j] * acc_ratio / trip;
+        double jerk = axis_jerk_[j] * acc_ratio / trip;
+        axis_ds_curve_[j].planDSCurve(0, 1, vel, acc, &jerk);
+        motion_direction_[j] = dir[j];
+        axis_ds_curve_valid_[j] = true;
+        axis_ds_curve_start_time_[j] = 0;
+        duration = duration < axis_ds_curve_[j].getDuration() ? axis_ds_curve_[j].getDuration() : duration;
+        target[j] = (dir[j] == INCREASE) ? (start[j] + trip) : (start[j] - trip);
+        FST_INFO("index: %d, trip: %.6f, vel: %.6f, acc: %.6f, jerk: %.6f, duration: %.6f", j, trip, vel, acc, jerk, axis_ds_curve_[j].getDuration());
+    }
+
+    joint_start_ = start;
+    joint_end_ = target;
+    total_duration_ = duration;
+    FST_INFO("Success, duration: %.6f", total_duration_);
+    return SUCCESS;
+}
+
+ErrorCode ManualTeach::manualContinuousInBase(const ManualDirection *dir, const Joint &start)
+{
+    char buffer[LOG_TEXT_SIZE];
+    PoseEuler start_pose;
+    TransMatrix matrix;
+    kinematics_ptr_->doFK(start, start_pose);
+	start_pose.convertToTransMatrix(matrix);
+	matrix.rightMultiply(tf_matrix_).convertToPoseEuler(start_pose);
+    auxiliary_coord_.euler_ = start_pose.euler_;
+    memset(&auxiliary_coord_.point_, 0, sizeof(auxiliary_coord_.point_));
+    cart_start_.point_ = start_pose.point_;
+    memset(&cart_start_.euler_, 0, sizeof(cart_start_.euler_));
+    cart_end_ = cart_start_;
+    int index = -1;
+    double position_trip_max = 9999.9999;
+    double orientation_trip_max = 99.99;
+    double trip, vel, acc, jerk;
+    double vel_ratio = vel_ratio_;
+    double acc_ratio = acc_ratio_ > vel_ratio_ ? vel_ratio_ : acc_ratio_;
+
+    if (dir[0] != STANDING)
+    {
+        cart_end_.point_.x_ += position_trip_max * ((dir[0] == INCREASE) ? 1 : -1);
+        index = 0;
+    }
+    else if (dir[1] != STANDING)
+    {
+        cart_end_.point_.y_ += position_trip_max * ((dir[1] == INCREASE) ? 1 : -1);
+        index = 1;
+    }
+    else if (dir[2] != STANDING)
+    {
+        cart_end_.point_.z_ += position_trip_max * ((dir[2] == INCREASE) ? 1 : -1);
+        index = 2;
+    }
+    else if (dir[3] != STANDING)
+    {
+        cart_end_.euler_.a_ += orientation_trip_max * ((dir[3] == INCREASE) ? 1 : -1);
+        index = 3;
+    }
+    else if (dir[4] != STANDING)
+    {
+        cart_end_.euler_.b_ += orientation_trip_max * ((dir[4] == INCREASE) ? 1 : -1);
+        index = 4;
+    }
+    else if (dir[5] != STANDING)
+    {
+        cart_end_.euler_.c_ += orientation_trip_max * ((dir[5] == INCREASE) ? 1 : -1);
+        index = 5;
+    }
+    
+    if (index >= 0 && index < 3)
+    {
+        trip = position_trip_max;
+        vel = position_vel_reference_ * vel_ratio / trip;
+        acc = position_acc_reference_ * acc_ratio / trip;
+        jerk = position_jerk_reference_ * acc_ratio / trip;
+    }
+    else if (index >= 3 && index < 6)
+    {
+        trip = orientation_trip_max;
+        vel = orientation_omega_reference_ * vel_ratio / trip;
+        acc = orientation_alpha_reference_ * acc_ratio / trip;
+        jerk = orientation_beta_reference_ * acc_ratio / trip;
+    }
+    else
+    {
+        FST_ERROR("Manual continuous directions invalid");
+        return INVALID_PARAMETER;
+    }
+
+    FST_INFO("Manual continuous in base: directions = %s, planning trajectory ...", printDBLine((int*)dir, buffer, LOG_TEXT_SIZE));
+    FST_INFO("Start-joint = %s", printDBLine(&start.j1_, buffer, LOG_TEXT_SIZE));
+    FST_INFO("Auxiliary-coord = %.4f, %.4f, %.4f,   %.4f, %.4f, %.4f,", auxiliary_coord_.point_.x_, auxiliary_coord_.point_.y_, auxiliary_coord_.point_.z_, auxiliary_coord_.euler_.a_, auxiliary_coord_.euler_.b_, auxiliary_coord_.euler_.c_);
+    FST_INFO("Start-pose = %.4f %.4f %.4f - %.4f %.4f %.4f", cart_start_.point_.x_, cart_start_.point_.y_, cart_start_.point_.z_, cart_start_.euler_.a_, cart_start_.euler_.b_, cart_start_.euler_.c_);
+    FST_INFO("End-pose = %.4f %.4f %.4f - %.4f %.4f %.4f", cart_end_.point_.x_, cart_end_.point_.y_, cart_end_.point_.z_, cart_end_.euler_.a_, cart_end_.euler_.b_, cart_end_.euler_.c_);
+    FST_INFO("Index: %d, trip: %.6f, vel: %.6f, acc: %.6f, jerk: %.6f, create ds curve ...", index, trip, vel, acc, jerk);
+    axis_ds_curve_[index].planDSCurve(0, 1, vel, acc, &jerk);
+    motion_direction_[index] = dir[index];
+    axis_ds_curve_valid_[index] = true;
+    axis_ds_curve_start_time_[index] = 0;
+    total_duration_ = axis_ds_curve_[index].getDuration();
+    FST_INFO("Success, duration: %.6f", total_duration_);
+    return SUCCESS;
+}
+
+ErrorCode ManualTeach::manualContinuousInUser(const ManualDirection *dir, const Joint &start)
+{
+    char buffer[LOG_TEXT_SIZE];
+    PoseEuler start_pose;
+    TransMatrix matrix;
+    kinematics_ptr_->doFK(start, start_pose);
+	start_pose.convertToTransMatrix(matrix);
+	matrix.rightMultiply(tf_matrix_).leftMultiply(uf_matrix_inverse_).convertToPoseEuler(start_pose);
+    auxiliary_coord_.euler_ = start_pose.euler_;
+    memset(&auxiliary_coord_.point_, 0, sizeof(auxiliary_coord_.point_));
+    cart_start_.point_ = start_pose.point_;
+    memset(&cart_start_.euler_, 0, sizeof(cart_start_.euler_));
+    cart_end_ = cart_start_;
+    int index = -1;
+    double position_trip_max = 9999.9999;
+    double orientation_trip_max = 99.99;
+    double trip, vel, acc, jerk;
+    double vel_ratio = vel_ratio_;
+    double acc_ratio = acc_ratio_ > vel_ratio_ ? vel_ratio_ : acc_ratio_;
+
+    if (dir[0] != STANDING)
+    {
+        cart_end_.point_.x_ += position_trip_max * ((dir[0] == INCREASE) ? 1 : -1);
+        index = 0;
+    }
+    else if (dir[1] != STANDING)
+    {
+        cart_end_.point_.y_ += position_trip_max * ((dir[1] == INCREASE) ? 1 : -1);
+        index = 1;
+    }
+    else if (dir[2] != STANDING)
+    {
+        cart_end_.point_.z_ += position_trip_max * ((dir[2] == INCREASE) ? 1 : -1);
+        index = 2;
+    }
+    else if (dir[3] != STANDING)
+    {
+        cart_end_.euler_.a_ += orientation_trip_max * ((dir[3] == INCREASE) ? 1 : -1);
+        index = 3;
+    }
+    else if (dir[4] != STANDING)
+    {
+        cart_end_.euler_.b_ += orientation_trip_max * ((dir[4] == INCREASE) ? 1 : -1);
+        index = 4;
+    }
+    else if (dir[5] != STANDING)
+    {
+        cart_end_.euler_.c_ += orientation_trip_max * ((dir[5] == INCREASE) ? 1 : -1);
+        index = 5;
+    }
+    
+    if (index >= 0 && index < 3)
+    {
+        trip = position_trip_max;
+        vel = position_vel_reference_ * vel_ratio / trip;
+        acc = position_acc_reference_ * acc_ratio / trip;
+        jerk = position_jerk_reference_ * acc_ratio / trip;
+    }
+    else if (index >= 3 && index < 6)
+    {
+        trip = orientation_trip_max;
+        vel = orientation_omega_reference_ * vel_ratio / trip;
+        acc = orientation_alpha_reference_ * acc_ratio / trip;
+        jerk = orientation_beta_reference_ * acc_ratio / trip;
+    }
+    else
+    {
+        FST_ERROR("Manual continuous directions invalid");
+        return INVALID_PARAMETER;
+    }
+
+    FST_INFO("Manual continuous in user: directions = %s, planning trajectory ...", printDBLine((int*)dir, buffer, LOG_TEXT_SIZE));
+    FST_INFO("Start-joint = %s", printDBLine(&start.j1_, buffer, LOG_TEXT_SIZE));
+    FST_INFO("Auxiliary-coord = %.4f, %.4f, %.4f,   %.4f, %.4f, %.4f,", auxiliary_coord_.point_.x_, auxiliary_coord_.point_.y_, auxiliary_coord_.point_.z_, auxiliary_coord_.euler_.a_, auxiliary_coord_.euler_.b_, auxiliary_coord_.euler_.c_);
+    FST_INFO("Start-pose = %.4f %.4f %.4f - %.4f %.4f %.4f", cart_start_.point_.x_, cart_start_.point_.y_, cart_start_.point_.z_, cart_start_.euler_.a_, cart_start_.euler_.b_, cart_start_.euler_.c_);
+    FST_INFO("End-pose = %.4f %.4f %.4f - %.4f %.4f %.4f", cart_end_.point_.x_, cart_end_.point_.y_, cart_end_.point_.z_, cart_end_.euler_.a_, cart_end_.euler_.b_, cart_end_.euler_.c_);
+    FST_INFO("Index: %d, trip: %.6f, vel: %.6f, acc: %.6f, jerk: %.6f, create ds curve ...", index, trip, vel, acc, jerk);
+    axis_ds_curve_[index].planDSCurve(0, 1, vel, acc, &jerk);
+    motion_direction_[index] = dir[index];
+    axis_ds_curve_valid_[index] = true;
+    axis_ds_curve_start_time_[index] = 0;
+    total_duration_ = axis_ds_curve_[index].getDuration();
+    FST_INFO("Success, duration: %.6f", total_duration_);
+    return SUCCESS;
+}
+
+ErrorCode ManualTeach::manualContinuousInWorld(const ManualDirection *dir, const Joint &start)
+{
+    char buffer[LOG_TEXT_SIZE];
+    PoseEuler start_pose;
+    TransMatrix matrix;
+    kinematics_ptr_->doFK(start, start_pose);
+	start_pose.convertToTransMatrix(matrix);
+	matrix.rightMultiply(tf_matrix_).leftMultiply(wf_matrix_inverse_).convertToPoseEuler(start_pose);
+    auxiliary_coord_.euler_ = start_pose.euler_;
+    memset(&auxiliary_coord_.point_, 0, sizeof(auxiliary_coord_.point_));
+    cart_start_.point_ = start_pose.point_;
+    memset(&cart_start_.euler_, 0, sizeof(cart_start_.euler_));
+    cart_end_ = cart_start_;
+    int index = -1;
+    double position_trip_max = 9999.9999;
+    double orientation_trip_max = 99.99;
+    double trip, vel, acc, jerk;
+    double vel_ratio = vel_ratio_;
+    double acc_ratio = acc_ratio_ > vel_ratio_ ? vel_ratio_ : acc_ratio_;
+
+    if (dir[0] != STANDING)
+    {
+        cart_end_.point_.x_ += position_trip_max * ((dir[0] == INCREASE) ? 1 : -1);
+        index = 0;
+    }
+    else if (dir[1] != STANDING)
+    {
+        cart_end_.point_.y_ += position_trip_max * ((dir[1] == INCREASE) ? 1 : -1);
+        index = 1;
+    }
+    else if (dir[2] != STANDING)
+    {
+        cart_end_.point_.z_ += position_trip_max * ((dir[2] == INCREASE) ? 1 : -1);
+        index = 2;
+    }
+    else if (dir[3] != STANDING)
+    {
+        cart_end_.euler_.a_ += orientation_trip_max * ((dir[3] == INCREASE) ? 1 : -1);
+        index = 3;
+    }
+    else if (dir[4] != STANDING)
+    {
+        cart_end_.euler_.b_ += orientation_trip_max * ((dir[4] == INCREASE) ? 1 : -1);
+        index = 4;
+    }
+    else if (dir[5] != STANDING)
+    {
+        cart_end_.euler_.c_ += orientation_trip_max * ((dir[5] == INCREASE) ? 1 : -1);
+        index = 5;
+    }
+    
+    if (index >= 0 && index < 3)
+    {
+        trip = position_trip_max;
+        vel = position_vel_reference_ * vel_ratio / trip;
+        acc = position_acc_reference_ * acc_ratio / trip;
+        jerk = position_jerk_reference_ * acc_ratio / trip;
+    }
+    else if (index >= 3 && index < 6)
+    {
+        trip = orientation_trip_max;
+        vel = orientation_omega_reference_ * vel_ratio / trip;
+        acc = orientation_alpha_reference_ * acc_ratio / trip;
+        jerk = orientation_beta_reference_ * acc_ratio / trip;
+    }
+    else
+    {
+        FST_ERROR("Manual continuous directions invalid");
+        return INVALID_PARAMETER;
+    }
+
+    FST_INFO("Manual continuous in world: directions = %s, planning trajectory ...", printDBLine((int*)dir, buffer, LOG_TEXT_SIZE));
+    FST_INFO("Start-joint = %s", printDBLine(&start.j1_, buffer, LOG_TEXT_SIZE));
+    FST_INFO("Auxiliary-coord = %.4f, %.4f, %.4f,   %.4f, %.4f, %.4f,", auxiliary_coord_.point_.x_, auxiliary_coord_.point_.y_, auxiliary_coord_.point_.z_, auxiliary_coord_.euler_.a_, auxiliary_coord_.euler_.b_, auxiliary_coord_.euler_.c_);
+    FST_INFO("Start-pose = %.4f %.4f %.4f - %.4f %.4f %.4f", cart_start_.point_.x_, cart_start_.point_.y_, cart_start_.point_.z_, cart_start_.euler_.a_, cart_start_.euler_.b_, cart_start_.euler_.c_);
+    FST_INFO("End-pose = %.4f %.4f %.4f - %.4f %.4f %.4f", cart_end_.point_.x_, cart_end_.point_.y_, cart_end_.point_.z_, cart_end_.euler_.a_, cart_end_.euler_.b_, cart_end_.euler_.c_);
+    FST_INFO("Index: %d, trip: %.6f, vel: %.6f, acc: %.6f, jerk: %.6f, create ds curve ...", index, trip, vel, acc, jerk);
+    axis_ds_curve_[index].planDSCurve(0, 1, vel, acc, &jerk);
+    motion_direction_[index] = dir[index];
+    axis_ds_curve_valid_[index] = true;
+    axis_ds_curve_start_time_[index] = 0;
+    total_duration_ = axis_ds_curve_[index].getDuration();
+    FST_INFO("Success, duration: %.6f", total_duration_);
+    return SUCCESS;
+}
+
+ErrorCode ManualTeach::manualContinuousInTool(const ManualDirection *dir, const Joint &start)
+{
+    char buffer[LOG_TEXT_SIZE];
+    PoseEuler start_pose;
+    TransMatrix matrix;
+    kinematics_ptr_->doFK(start, start_pose);
+	start_pose.convertToTransMatrix(matrix);
+	matrix.rightMultiply(tf_matrix_).convertToPoseEuler(start_pose);
+    auxiliary_coord_ = start_pose;
+    memset(&cart_start_, 0, sizeof(cart_start_));
+    cart_end_ = cart_start_;
+    int index = -1;
+    double position_trip_max = 9999.9999;
+    double orientation_trip_max = 99.99;
+    double trip, vel, acc, jerk;
+    double vel_ratio = vel_ratio_;
+    double acc_ratio = acc_ratio_ > vel_ratio_ ? vel_ratio_ : acc_ratio_;
+
+    if (dir[0] != STANDING)
+    {
+        cart_end_.point_.x_ += position_trip_max * ((dir[0] == INCREASE) ? 1 : -1);
+        index = 0;
+    }
+    else if (dir[1] != STANDING)
+    {
+        cart_end_.point_.y_ += position_trip_max * ((dir[1] == INCREASE) ? 1 : -1);
+        index = 1;
+    }
+    else if (dir[2] != STANDING)
+    {
+        cart_end_.point_.z_ += position_trip_max * ((dir[2] == INCREASE) ? 1 : -1);
+        index = 2;
+    }
+    else if (dir[3] != STANDING)
+    {
+        cart_end_.euler_.a_ += orientation_trip_max * ((dir[3] == INCREASE) ? 1 : -1);
+        index = 3;
+    }
+    else if (dir[4] != STANDING)
+    {
+        cart_end_.euler_.b_ += orientation_trip_max * ((dir[4] == INCREASE) ? 1 : -1);
+        index = 4;
+    }
+    else if (dir[5] != STANDING)
+    {
+        cart_end_.euler_.c_ += orientation_trip_max * ((dir[5] == INCREASE) ? 1 : -1);
+        index = 5;
+    }
+    
+    if (index >= 0 && index < 3)
+    {
+        trip = position_trip_max;
+        vel = position_vel_reference_ * vel_ratio / trip;
+        acc = position_acc_reference_ * acc_ratio / trip;
+        jerk = position_jerk_reference_ * acc_ratio / trip;
+    }
+    else if (index >= 3 && index < 6)
+    {
+        trip = orientation_trip_max;
+        vel = orientation_omega_reference_ * vel_ratio / trip;
+        acc = orientation_alpha_reference_ * acc_ratio / trip;
+        jerk = orientation_beta_reference_ * acc_ratio / trip;
+    }
+    else
+    {
+        FST_ERROR("Manual continuous directions invalid");
+        return INVALID_PARAMETER;
+    }
+
+    FST_INFO("Manual continuous in tool: directions = %s, planning trajectory ...", printDBLine((int*)dir, buffer, LOG_TEXT_SIZE));
+    FST_INFO("Start-joint = %s", printDBLine(&start.j1_, buffer, LOG_TEXT_SIZE));
+    FST_INFO("Auxiliary-coord = %.4f, %.4f, %.4f,   %.4f, %.4f, %.4f,", auxiliary_coord_.point_.x_, auxiliary_coord_.point_.y_, auxiliary_coord_.point_.z_, auxiliary_coord_.euler_.a_, auxiliary_coord_.euler_.b_, auxiliary_coord_.euler_.c_);
+    FST_INFO("Start-pose = %.4f %.4f %.4f - %.4f %.4f %.4f", cart_start_.point_.x_, cart_start_.point_.y_, cart_start_.point_.z_, cart_start_.euler_.a_, cart_start_.euler_.b_, cart_start_.euler_.c_);
+    FST_INFO("End-pose = %.4f %.4f %.4f - %.4f %.4f %.4f", cart_end_.point_.x_, cart_end_.point_.y_, cart_end_.point_.z_, cart_end_.euler_.a_, cart_end_.euler_.b_, cart_end_.euler_.c_);
+    FST_INFO("Index: %d, trip: %.6f, vel: %.6f, acc: %.6f, jerk: %.6f, create ds curve ...", index, trip, vel, acc, jerk);
+    axis_ds_curve_[index].planDSCurve(0, 1, vel, acc, &jerk);
+    motion_direction_[index] = dir[index];
+    axis_ds_curve_valid_[index] = true;
+    axis_ds_curve_start_time_[index] = 0;
+    total_duration_ = axis_ds_curve_[index].getDuration();
+    FST_INFO("Success, duration: %.6f", total_duration_);
+    return SUCCESS;
+}
+
+ErrorCode ManualTeach::manualContinuous(const ManualDirection *directions, double time)
+{
+    switch (frame_type_)
+    {
+        case JOINT:
+            manualContinuousInJoint(directions, time);
+            return SUCCESS;
 
         case BASE:
         case USER:
         case WORLD:
         case TOOL:
-            err = manualCartesianContinuous(directions, time, traj);
-            break;
-        //case TOOL:
-        //    err = manualCartesianContinuousInToolFrame(directions, time, traj);
-        //    break;
+            manualContinuousInCartesian(directions, time);
+            return SUCCESS;
+
         default:
-            err = MC_FAIL_MANUAL_CONTINUOUS;
-            FST_ERROR("Unsupported manual frame: %d", traj.frame);
-            break;
-    }
-
-    if (err == SUCCESS)
-    {
-        FST_INFO("Manual trajectory ready.");
-        return SUCCESS;
-    }
-    else
-    {
-        FST_ERROR("Manual failed, err = 0x%llx", err);
-        return err;
+            FST_ERROR("Manual continuous unsupported frame: %d", frame_type_);
+            return MC_FAIL_MANUAL_CONTINUOUS;
     }
 }
 
-void ManualTeach::getAxisCoefficient(double time_to_start, double start_position, double total_trip, double absolute_jerk, double expect_omega, double expect_alpha, ManualAxisBlock &axis_block)
+ErrorCode ManualTeach::manualContinuousInJoint(const ManualDirection *dir, double time)
 {
-    double absolute_alpha = expect_alpha >= 0 ? expect_alpha : -expect_alpha;
-    double absolute_omega = expect_omega >= 0 ? expect_omega : -expect_omega;
-    
-    double t1, t2, t4;
-    double theta = absolute_omega - absolute_alpha * absolute_alpha / absolute_jerk;
-    double start_pos, start_vel, start_acc, end_pos, end_vel, end_acc;
-
-    if (theta < 0)
+    for (uint32_t j = 0; j < joint_num_; j++)
     {
-        // 目标速度Ｖ不足以加速度达到Ａ，没有匀加速阶段，４段或５段
-        t1 = sqrt(absolute_omega / absolute_jerk);
-        t2 = 0;
-        double delta = total_trip - absolute_jerk * t1 * t1 * t1 * 2;
-
-        if (delta < 0)
+        if (motion_direction_[j] == dir[j])
         {
-            // 目标距离不足以速度达到Ｖ，没有匀速阶段，４段
-            t1 = pow(total_trip / absolute_jerk / 2, 1.0 / 3.0);
-            t4 = 0;
-            double jerk = expect_alpha < 0 ? -absolute_jerk : absolute_jerk;
-            double alpha = jerk * t1;
-            double omega = jerk * t1 * t1;
-            axis_block.time_stamp[0] = time_to_start;
-            axis_block.time_stamp[1] = axis_block.time_stamp[0] + t1;
-            axis_block.time_stamp[2] = axis_block.time_stamp[1] + t2;
-            axis_block.time_stamp[3] = axis_block.time_stamp[2] + t1;
-            axis_block.time_stamp[4] = axis_block.time_stamp[3] + t4;
-            axis_block.time_stamp[5] = axis_block.time_stamp[4] + t1;
-            axis_block.time_stamp[6] = axis_block.time_stamp[5] + t2;
-            axis_block.time_stamp[7] = axis_block.time_stamp[6] + t1;
-            
-            start_pos = start_position;
-            start_vel = 0;
-            start_acc = 0;
-            end_pos = start_pos + jerk * t1 * t1 * t1 / 6;
-            end_vel = alpha * t1 / 2;
-            end_acc = alpha;
-            getQuinticSplineCoefficients(start_pos, start_vel, start_acc, end_pos, end_vel, end_acc, t1, axis_block.coeff[0].data);
-            getQuinticSplineCoefficients(start_pos, start_vel, start_acc, end_pos, end_vel, end_acc, t2, axis_block.coeff[1].data);
-            start_pos = end_pos;
-            start_vel = end_vel;
-            start_acc = end_acc;
-            end_pos = start_pos + jerk * t1 * t1 * t1 * 5 / 6;
-            end_vel = omega;
-            end_acc = 0;
-            getQuinticSplineCoefficients(start_pos, start_vel, start_acc, end_pos, end_vel, end_acc, t1, axis_block.coeff[2].data);
-            getQuinticSplineCoefficients(start_pos, start_vel, start_acc, end_pos, end_vel, end_acc, t4, axis_block.coeff[3].data);
-            start_pos = end_pos;
-            start_vel = end_vel;
-            start_acc = end_acc;
-            end_pos = start_pos + jerk * t1 * t1 * t1 * 5 / 6;
-            end_vel = jerk * t1 * t1 / 2;
-            end_acc = -alpha;
-            getQuinticSplineCoefficients(start_pos, start_vel, start_acc, end_pos, end_vel, end_acc, t1, axis_block.coeff[4].data);
-            getQuinticSplineCoefficients(start_pos, start_vel, start_acc, end_pos, end_vel, end_acc, t2, axis_block.coeff[5].data);
-            start_pos = end_pos;
-            start_vel = end_vel;
-            start_acc = end_acc;
-            end_pos = start_pos + jerk * t1 * t1 * t1 / 6;
-            end_vel = 0;
-            end_acc = 0;
-            getQuinticSplineCoefficients(start_pos, start_vel, start_acc, end_pos, end_vel, end_acc, t1, axis_block.coeff[6].data);
-        }
-        else
-        {
-            // 目标距离足以速度达到Ｖ，有匀速阶段，5段
-            t4 = delta / absolute_omega;
-            double jerk = expect_alpha < 0 ? -absolute_jerk : absolute_jerk;
-            double alpha = jerk * t1;
-            double omega = expect_omega;
-            axis_block.time_stamp[0] = time_to_start;
-            axis_block.time_stamp[1] = axis_block.time_stamp[0] + t1;
-            axis_block.time_stamp[2] = axis_block.time_stamp[1] + t2;
-            axis_block.time_stamp[3] = axis_block.time_stamp[2] + t1;
-            axis_block.time_stamp[4] = axis_block.time_stamp[3] + t4;
-            axis_block.time_stamp[5] = axis_block.time_stamp[4] + t1;
-            axis_block.time_stamp[6] = axis_block.time_stamp[5] + t2;
-            axis_block.time_stamp[7] = axis_block.time_stamp[6] + t1;
-            
-            start_pos = start_position;
-            start_vel = 0;
-            start_acc = 0;
-            end_pos = start_pos + jerk * t1 * t1 * t1 / 6;
-            end_vel = omega / 2;
-            end_acc = alpha;
-            getQuinticSplineCoefficients(start_pos, start_vel, start_acc, end_pos, end_vel, end_acc, t1, axis_block.coeff[0].data);
-            getQuinticSplineCoefficients(start_pos, start_vel, start_acc, end_pos, end_vel, end_acc, t2, axis_block.coeff[1].data);
-            start_pos = end_pos;
-            start_vel = end_vel;
-            start_acc = end_acc;
-            end_pos = start_pos + jerk * t1 * t1 * t1 * 5 / 6;
-            end_vel = omega;
-            end_acc = 0;
-            getQuinticSplineCoefficients(start_pos, start_vel, start_acc, end_pos, end_vel, end_acc, t1, axis_block.coeff[2].data);
-            start_pos = end_pos;
-            start_vel = end_vel;
-            start_acc = end_acc;
-            end_pos = start_pos + omega * t4;
-            end_vel = omega;
-            end_acc = 0;
-            getQuinticSplineCoefficients(start_pos, start_vel, start_acc, end_pos, end_vel, end_acc, t4, axis_block.coeff[3].data);
-            start_pos = end_pos;
-            start_vel = end_vel;
-            start_acc = end_acc;
-            end_pos = start_pos + jerk * t1 * t1 * t1 * 5 / 6;
-            end_vel = omega / 2;
-            end_acc = -alpha;
-            getQuinticSplineCoefficients(start_pos, start_vel, start_acc, end_pos, end_vel, end_acc, t1, axis_block.coeff[4].data);
-            getQuinticSplineCoefficients(start_pos, start_vel, start_acc, end_pos, end_vel, end_acc, t2, axis_block.coeff[5].data);
-            start_pos = end_pos;
-            start_vel = end_vel;
-            start_acc = end_acc;
-            end_pos = start_pos + jerk * t1 * t1 * t1 / 6;
-            end_vel = 0;
-            end_acc = 0;
-            getQuinticSplineCoefficients(start_pos, start_vel, start_acc, end_pos, end_vel, end_acc, t1, axis_block.coeff[6].data);
-        }
-    }
-    else
-    {
-        // 目标速度Ｖ足以加速度达到Ａ，有匀加速阶段，６段或７段
-        double delta = total_trip - absolute_omega * (absolute_omega / absolute_alpha + absolute_alpha / absolute_jerk);
-
-        if (delta > 0)
-        {
-            // 目标距离足以使速度达到Ｖ，有匀速阶段，7段
-            t1 = absolute_alpha / absolute_jerk;
-            t2 = absolute_omega / absolute_alpha - t1;
-            t4 = delta / absolute_omega;
-            double jerk = expect_alpha < 0 ? -absolute_jerk : absolute_jerk;
-            double alpha = expect_alpha;
-            double omega = expect_omega;
-            axis_block.time_stamp[0] = time_to_start;
-            axis_block.time_stamp[1] = axis_block.time_stamp[0] + t1;
-            axis_block.time_stamp[2] = axis_block.time_stamp[1] + t2;
-            axis_block.time_stamp[3] = axis_block.time_stamp[2] + t1;
-            axis_block.time_stamp[4] = axis_block.time_stamp[3] + t4;
-            axis_block.time_stamp[5] = axis_block.time_stamp[4] + t1;
-            axis_block.time_stamp[6] = axis_block.time_stamp[5] + t2;
-            axis_block.time_stamp[7] = axis_block.time_stamp[6] + t1;
-            
-            start_pos = start_position;
-            start_vel = 0;
-            start_acc = 0;
-            end_pos = start_pos + jerk * t1 * t1 * t1 / 6;
-            end_vel = jerk * t1 * t1 / 2;
-            end_acc = alpha;
-            getQuinticSplineCoefficients(start_pos, start_vel, start_acc, end_pos, end_vel, end_acc, t1, axis_block.coeff[0].data);
-            start_pos = end_pos;
-            start_vel = end_vel;
-            start_acc = end_acc;
-            end_pos = start_pos + jerk * t1 * t1 * t2 / 2 + jerk * t1 * t2 * t2 / 2;
-            end_vel = jerk * t1 * t1 / 2 + jerk * t1 * t2;
-            end_acc = alpha;
-            getQuinticSplineCoefficients(start_pos, start_vel, start_acc, end_pos, end_vel, end_acc, t2, axis_block.coeff[1].data);
-            start_pos = end_pos;
-            start_vel = end_vel;
-            start_acc = end_acc;
-            end_pos = start_pos + omega * t1 - jerk * t1 * t1 * t1 / 6;
-            end_vel = omega;
-            end_acc = 0;
-            getQuinticSplineCoefficients(start_pos, start_vel, start_acc, end_pos, end_vel, end_acc, t1, axis_block.coeff[2].data);
-            start_pos = end_pos;
-            start_vel = end_vel;
-            start_acc = end_acc;
-            end_pos = start_pos + omega * t4;
-            end_vel = omega;
-            end_acc = 0;
-            getQuinticSplineCoefficients(start_pos, start_vel, start_acc, end_pos, end_vel, end_acc, t4, axis_block.coeff[3].data);
-            start_pos = end_pos;
-            start_vel = end_vel;
-            start_acc = end_acc;
-            end_pos = start_pos + omega * t1 - jerk * t1 * t1 * t1 / 6;
-            end_vel = jerk * t1 * t1 / 2 + jerk * t1 * t2;
-            end_acc = -alpha;
-            getQuinticSplineCoefficients(start_pos, start_vel, start_acc, end_pos, end_vel, end_acc, t1, axis_block.coeff[4].data);
-            start_pos = end_pos;
-            start_vel = end_vel;
-            start_acc = end_acc;
-            end_pos = start_pos + omega * t2 / 2;
-            end_vel = jerk * t1 * t1 / 2;
-            end_acc = -alpha;
-            getQuinticSplineCoefficients(start_pos, start_vel, start_acc, end_pos, end_vel, end_acc, t2, axis_block.coeff[5].data);
-            start_pos = end_pos;
-            start_vel = end_vel;
-            start_acc = end_acc;
-            end_pos = start_pos + jerk * t1 * t1 * t1 / 6;
-            end_vel = 0;
-            end_acc = 0;
-            getQuinticSplineCoefficients(start_pos, start_vel, start_acc, end_pos, end_vel, end_acc, t1, axis_block.coeff[6].data);
-        }
-        else
-        {
-            // 目标距离不足以速度达到Ｖ，没有匀速阶段，6段或４段
-            t1 = absolute_alpha / absolute_jerk;
-            delta = total_trip - absolute_jerk * t1 * t1 * t1 * 2;
-
-            if (delta > 0)
-            {
-                // 目标距离足以使加速度达到A，有匀加速阶段，6段
-                t2 = (sqrt(t1 * t1 + total_trip / absolute_alpha * 4) - t1 * 3) / 2;
-                t4 = 0;
-                double jerk = expect_alpha < 0 ? -absolute_jerk : absolute_jerk;
-                double alpha = expect_alpha;
-                double omega = jerk * t1 * t1 + jerk * t1 * t2;
-                axis_block.time_stamp[0] = time_to_start;
-                axis_block.time_stamp[1] = axis_block.time_stamp[0] + t1;
-                axis_block.time_stamp[2] = axis_block.time_stamp[1] + t2;
-                axis_block.time_stamp[3] = axis_block.time_stamp[2] + t1;
-                axis_block.time_stamp[4] = axis_block.time_stamp[3] + t4;
-                axis_block.time_stamp[5] = axis_block.time_stamp[4] + t1;
-                axis_block.time_stamp[6] = axis_block.time_stamp[5] + t2;
-                axis_block.time_stamp[7] = axis_block.time_stamp[6] + t1;
-                
-                start_pos = start_position;
-                start_vel = 0;
-                start_acc = 0;
-                end_pos = start_pos + jerk * t1 * t1 * t1 / 6;
-                end_vel = jerk * t1 * t1 / 2;
-                end_acc = alpha;
-                getQuinticSplineCoefficients(start_pos, start_vel, start_acc, end_pos, end_vel, end_acc, t1, axis_block.coeff[0].data);
-                start_pos = end_pos;
-                start_vel = end_vel;
-                start_acc = end_acc;
-                end_pos = start_pos + omega * t2 / 2;
-                end_vel = jerk * t1 * t1 / 2 + jerk * t1 * t2;
-                end_acc = alpha;
-                getQuinticSplineCoefficients(start_pos, start_vel, start_acc, end_pos, end_vel, end_acc, t2, axis_block.coeff[1].data);
-                start_pos = end_pos;
-                start_vel = end_vel;
-                start_acc = end_acc;
-                end_pos = start_pos + omega * t1 - jerk * t1 * t1 * t1 / 6;
-                end_vel = omega;
-                end_acc = 0;
-                getQuinticSplineCoefficients(start_pos, start_vel, start_acc, end_pos, end_vel, end_acc, t1, axis_block.coeff[2].data);
-                getQuinticSplineCoefficients(start_pos, start_vel, start_acc, end_pos, end_vel, end_acc, t4, axis_block.coeff[3].data);
-                start_pos = end_pos;
-                start_vel = end_vel;
-                start_acc = end_acc;
-                end_pos = start_pos + omega * t1 - jerk * t1 * t1 * t1 / 6;
-                end_vel = jerk * t1 * t1 / 2 + jerk * t1 * t2;
-                end_acc = -alpha;
-                getQuinticSplineCoefficients(start_pos, start_vel, start_acc, end_pos, end_vel, end_acc, t1, axis_block.coeff[4].data);
-                start_pos = end_pos;
-                start_vel = end_vel;
-                start_acc = end_acc;
-                end_pos = start_pos + omega * t2 / 2;
-                end_vel = jerk * t1 * t1 / 2;
-                end_acc = -alpha;
-                getQuinticSplineCoefficients(start_pos, start_vel, start_acc, end_pos, end_vel, end_acc, t2, axis_block.coeff[5].data);
-                start_pos = end_pos;
-                start_vel = end_vel;
-                start_acc = end_acc;
-                end_pos = start_pos + jerk * t1 * t1 * t1 / 6;
-                end_vel = 0;
-                end_acc = 0;
-                getQuinticSplineCoefficients(start_pos, start_vel, start_acc, end_pos, end_vel, end_acc, t1, axis_block.coeff[6].data);
-            }
-            else
-            {
-                // 目标距离不足以使加速度达到A，无匀加速阶段，4段
-                t1 = pow(total_trip / absolute_jerk / 2, 1.0 / 3.0);
-                t2 = 0;
-                t4 = 0;
-                double jerk = expect_alpha < 0 ? -absolute_jerk : absolute_jerk;
-                double alpha = t1 * jerk;
-                double omega = jerk * t1 * t1;
-                axis_block.time_stamp[0] = time_to_start;
-                axis_block.time_stamp[1] = axis_block.time_stamp[0] + t1;
-                axis_block.time_stamp[2] = axis_block.time_stamp[1] + t2;
-                axis_block.time_stamp[3] = axis_block.time_stamp[2] + t1;
-                axis_block.time_stamp[4] = axis_block.time_stamp[3] + t4;
-                axis_block.time_stamp[5] = axis_block.time_stamp[4] + t1;
-                axis_block.time_stamp[6] = axis_block.time_stamp[5] + t2;
-                axis_block.time_stamp[7] = axis_block.time_stamp[6] + t1;
-
-                start_pos = start_position;
-                start_vel = 0;
-                start_acc = 0;
-                end_pos = start_pos + jerk * t1 * t1 * t1 / 6;
-                end_vel = jerk * t1 * t1 / 2;
-                end_acc = alpha;
-                getQuinticSplineCoefficients(start_pos, start_vel, start_acc, end_pos, end_vel, end_acc, t1, axis_block.coeff[0].data);
-                getQuinticSplineCoefficients(start_pos, start_vel, start_acc, end_pos, end_vel, end_acc, t2, axis_block.coeff[1].data);
-                start_pos = end_pos;
-                start_vel = end_vel;
-                start_acc = end_acc;
-                end_pos = start_pos + jerk * t1 * t1 * t1 * 5 / 6;
-                end_vel = omega;
-                end_acc = 0;
-                getQuinticSplineCoefficients(start_pos, start_vel, start_acc, end_pos, end_vel, end_acc, t1, axis_block.coeff[2].data);
-                getQuinticSplineCoefficients(start_pos, start_vel, start_acc, end_pos, end_vel, end_acc, t4, axis_block.coeff[3].data);
-                start_pos = end_pos;
-                start_vel = end_vel;
-                start_acc = end_acc;
-                end_pos = start_pos + jerk * t1 * t1 * t1 * 5 / 6;
-                end_vel = jerk * t1 * t1 / 2;
-                end_acc = -alpha;
-                getQuinticSplineCoefficients(start_pos, start_vel, start_acc, end_pos, end_vel, end_acc, t1, axis_block.coeff[4].data);
-                getQuinticSplineCoefficients(start_pos, start_vel, start_acc, end_pos, end_vel, end_acc, t2, axis_block.coeff[5].data);
-                start_pos = end_pos;
-                start_vel = end_vel;
-                start_acc = end_acc;
-                end_pos = start_pos + jerk * t1 * t1 * t1 / 6;
-                end_vel = 0;
-                end_acc = 0;
-                getQuinticSplineCoefficients(start_pos, start_vel, start_acc, end_pos, end_vel, end_acc, t1, axis_block.coeff[6].data);
-            }
-        }
-    }
-}
-
-void ManualTeach::getAxisCoefficientWithDuration(double time_to_start, double duration, double start_position, double end_postion, 
-                                                 double expect_jerk, double expect_omega, double expect_alpha, ManualAxisBlock &axis_block)
-{
-    double t1, t2, t4;
-    double start_pos, start_vel, start_acc, end_pos, end_vel, end_acc;
-
-    // 假设使用4段式轨迹
-    t1 = duration / 4;
-    double jerk = (end_postion - start_position) / t1 / t1 / t1 / 2;
-    double alpha = jerk * t1;
-    double omega = jerk * t1 * t1;
-
-    if (fabs(jerk) <= fabs(expect_jerk) && fabs(alpha) <= fabs(expect_alpha) && fabs(omega) <= fabs(expect_omega))
-    {
-        //FST_INFO("4 segment -> t1: %.6f, jerk: %.6f, alpha: %.6f, omega: %.6f, trip: %.6f", t1, jerk, alpha, omega, end_postion - start_position);
-        t2 = 0;
-        t4 = 0;
-        axis_block.time_stamp[0] = time_to_start;
-        axis_block.time_stamp[1] = axis_block.time_stamp[0] + t1;
-        axis_block.time_stamp[2] = axis_block.time_stamp[1] + t2;
-        axis_block.time_stamp[3] = axis_block.time_stamp[2] + t1;
-        axis_block.time_stamp[4] = axis_block.time_stamp[3] + t4;
-        axis_block.time_stamp[5] = axis_block.time_stamp[4] + t1;
-        axis_block.time_stamp[6] = axis_block.time_stamp[5] + t2;
-        axis_block.time_stamp[7] = axis_block.time_stamp[6] + t1;
-
-        start_pos = start_position;
-        start_vel = 0;
-        start_acc = 0;
-        end_pos = start_pos + jerk * t1 * t1 * t1 / 6;
-        end_vel = jerk * t1 * t1 / 2;
-        end_acc = alpha;
-        getQuinticSplineCoefficients(start_pos, start_vel, start_acc, end_pos, end_vel, end_acc, t1, axis_block.coeff[0].data);
-        getQuinticSplineCoefficients(start_pos, start_vel, start_acc, end_pos, end_vel, end_acc, t2, axis_block.coeff[1].data);
-        start_pos = end_pos;
-        start_vel = end_vel;
-        start_acc = end_acc;
-        end_pos = start_pos + jerk * t1 * t1 * t1 * 5 / 6;
-        end_vel = omega;
-        end_acc = 0;
-        getQuinticSplineCoefficients(start_pos, start_vel, start_acc, end_pos, end_vel, end_acc, t1, axis_block.coeff[2].data);
-        getQuinticSplineCoefficients(start_pos, start_vel, start_acc, end_pos, end_vel, end_acc, t4, axis_block.coeff[3].data);
-        start_pos = end_pos;
-        start_vel = end_vel;
-        start_acc = end_acc;
-        end_pos = start_pos + jerk * t1 * t1 * t1 * 5 / 6;
-        end_vel = jerk * t1 * t1 / 2;
-        end_acc = -alpha;
-        getQuinticSplineCoefficients(start_pos, start_vel, start_acc, end_pos, end_vel, end_acc, t1, axis_block.coeff[4].data);
-        getQuinticSplineCoefficients(start_pos, start_vel, start_acc, end_pos, end_vel, end_acc, t2, axis_block.coeff[5].data);
-        start_pos = end_pos;
-        start_vel = end_vel;
-        start_acc = end_acc;
-        end_pos = start_pos + jerk * t1 * t1 * t1 / 6;
-        end_vel = 0;
-        end_acc = 0;
-        getQuinticSplineCoefficients(start_pos, start_vel, start_acc, end_pos, end_vel, end_acc, t1, axis_block.coeff[6].data);
-        return;
-    }
-
-    if (fabs(omega) > fabs(expect_omega))
-    {
-        // 使用4段式轨迹将导致速度超出限制，使用５段式轨迹
-        t4 = (end_postion - start_position) * 2 / expect_omega - duration;
-        t2 = 0;
-        t1 = (duration - t4) / 4;
-        jerk = expect_omega / t1 / t1;
-        alpha = jerk * t1;
-        omega = expect_omega;
-        //FST_INFO("4 segment -> t1: %.6f, t4: %.6f, jerk: %.6f, alpha: %.6f, omega: %.6f", t1, t4, jerk, alpha, omega);
-        axis_block.time_stamp[0] = time_to_start;
-        axis_block.time_stamp[1] = axis_block.time_stamp[0] + t1;
-        axis_block.time_stamp[2] = axis_block.time_stamp[1] + t2;
-        axis_block.time_stamp[3] = axis_block.time_stamp[2] + t1;
-        axis_block.time_stamp[4] = axis_block.time_stamp[3] + t4;
-        axis_block.time_stamp[5] = axis_block.time_stamp[4] + t1;
-        axis_block.time_stamp[6] = axis_block.time_stamp[5] + t2;
-        axis_block.time_stamp[7] = axis_block.time_stamp[6] + t1;
-        
-        start_pos = start_position;
-        start_vel = 0;
-        start_acc = 0;
-        end_pos = start_pos + jerk * t1 * t1 * t1 / 6;
-        end_vel = omega / 2;
-        end_acc = alpha;
-        getQuinticSplineCoefficients(start_pos, start_vel, start_acc, end_pos, end_vel, end_acc, t1, axis_block.coeff[0].data);
-        getQuinticSplineCoefficients(start_pos, start_vel, start_acc, end_pos, end_vel, end_acc, t2, axis_block.coeff[1].data);
-        start_pos = end_pos;
-        start_vel = end_vel;
-        start_acc = end_acc;
-        end_pos = start_pos + jerk * t1 * t1 * t1 * 5 / 6;
-        end_vel = omega;
-        end_acc = 0;
-        getQuinticSplineCoefficients(start_pos, start_vel, start_acc, end_pos, end_vel, end_acc, t1, axis_block.coeff[2].data);
-        start_pos = end_pos;
-        start_vel = end_vel;
-        start_acc = end_acc;
-        end_pos = start_pos + omega * t4;
-        end_vel = omega;
-        end_acc = 0;
-        getQuinticSplineCoefficients(start_pos, start_vel, start_acc, end_pos, end_vel, end_acc, t4, axis_block.coeff[3].data);
-        start_pos = end_pos;
-        start_vel = end_vel;
-        start_acc = end_acc;
-        end_pos = start_pos + jerk * t1 * t1 * t1 * 5 / 6;
-        end_vel = omega / 2;
-        end_acc = -alpha;
-        getQuinticSplineCoefficients(start_pos, start_vel, start_acc, end_pos, end_vel, end_acc, t1, axis_block.coeff[4].data);
-        getQuinticSplineCoefficients(start_pos, start_vel, start_acc, end_pos, end_vel, end_acc, t2, axis_block.coeff[5].data);
-        start_pos = end_pos;
-        start_vel = end_vel;
-        start_acc = end_acc;
-        end_pos = start_pos + jerk * t1 * t1 * t1 / 6;
-        end_vel = 0;
-        end_acc = 0;
-        getQuinticSplineCoefficients(start_pos, start_vel, start_acc, end_pos, end_vel, end_acc, t1, axis_block.coeff[6].data);
-        return;
-    }
-
-    else
-    {
-        FST_ERROR("t1: %.6f, jerk: %.6f, alpha: %.6f, omega: %.6f, trip: %.6f", t1, jerk, alpha, omega, end_postion - start_position);
-        FST_ERROR("duration: %.6f, jerk: %.6f, alpha: %.6f, omega: %.6f", duration, expect_jerk, expect_alpha, expect_omega);
-    }
-}
-
-bool ManualTeach::getStopCoefficient(double time_ready_to_stop, double jerk, ManualAxisBlock &axis_block)
-{
-    if (time_ready_to_stop < axis_block.time_stamp[0])
-    {
-        axis_block.time_stamp[0] = 0;
-        axis_block.time_stamp[1] = 0;
-        axis_block.time_stamp[2] = 0;
-        axis_block.time_stamp[3] = 0;
-        axis_block.time_stamp[4] = 0;
-        axis_block.time_stamp[5] = 0;
-        axis_block.time_stamp[6] = 0;
-        axis_block.time_stamp[7] = 0;
-        double start_pos, start_vel, start_acc;
-        sampleQuinticPolynomial(0, axis_block.coeff[0].data, start_pos, start_vel, start_acc);
-        getQuinticSplineCoefficients(start_pos, 0, 0, start_pos, 0, 0, 0, axis_block.coeff[6].data);
-        return true;
-    }
-    else if (time_ready_to_stop < axis_block.time_stamp[1])
-    {
-        // 加加速阶段，共计４段停止
-        double start_pos, start_vel, start_acc, end_pos, end_vel, end_acc;
-        double t1 = time_ready_to_stop - axis_block.time_stamp[0];
-        axis_block.time_stamp[1] = axis_block.time_stamp[0] + t1;
-        axis_block.time_stamp[2] = axis_block.time_stamp[1];
-        axis_block.time_stamp[3] = axis_block.time_stamp[2] + t1;
-        axis_block.time_stamp[4] = axis_block.time_stamp[3];
-        axis_block.time_stamp[5] = axis_block.time_stamp[4] + t1;
-        axis_block.time_stamp[6] = axis_block.time_stamp[5];
-        axis_block.time_stamp[7] = axis_block.time_stamp[6] + t1;
-        sampleQuinticPolynomial(0, axis_block.coeff[0].data, start_pos, start_vel, start_acc);
-        sampleQuinticPolynomial(t1, axis_block.coeff[0].data, end_pos, end_vel, end_acc);
-
-        if (start_pos > end_pos)
-        {
-            // 负向运动
-            jerk = -jerk;
-        }
-
-        double alpha = jerk * t1;
-        double omega = jerk * t1 * t1;
-        getQuinticSplineCoefficients(start_pos, start_vel, start_acc, end_pos, end_vel, end_acc, 0, axis_block.coeff[1].data);
-        start_pos = end_pos;
-        start_vel = end_vel;
-        start_acc = end_acc;
-        end_pos = end_pos + omega * t1 - jerk * t1 * t1 * t1 / 6;
-        end_vel = omega;
-        end_acc = 0;
-        getQuinticSplineCoefficients(start_pos, start_vel, start_acc, end_pos, end_vel, end_acc, t1, axis_block.coeff[2].data);
-        getQuinticSplineCoefficients(start_pos, start_vel, start_acc, end_pos, end_vel, end_acc, 0, axis_block.coeff[3].data);
-        start_pos = end_pos;
-        start_vel = end_vel;
-        start_acc = end_acc;
-        end_pos = end_pos + omega * t1 - jerk * t1 * t1 * t1 / 6;
-        end_vel = omega / 2;
-        end_acc = -alpha;
-        getQuinticSplineCoefficients(start_pos, start_vel, start_acc, end_pos, end_vel, end_acc, t1, axis_block.coeff[4].data);
-        getQuinticSplineCoefficients(start_pos, start_vel, start_acc, end_pos, end_vel, end_acc, 0, axis_block.coeff[5].data);
-        start_pos = end_pos;
-        start_vel = end_vel;
-        start_acc = end_acc;
-        end_pos = end_pos + jerk * t1 * t1 * t1 / 6;
-        end_vel = 0;
-        end_acc = 0;
-        getQuinticSplineCoefficients(start_pos, start_vel, start_acc, end_pos, end_vel, end_acc, t1, axis_block.coeff[6].data);
-        return true;
-    }
-    else if (time_ready_to_stop < axis_block.time_stamp[2])
-    {
-        // 匀加速阶段，共计６段停止
-        double start_pos, start_vel, start_acc, end_pos, end_vel, end_acc;
-        double t1 = axis_block.time_stamp[1] - axis_block.time_stamp[0];
-        double t2 = time_ready_to_stop - axis_block.time_stamp[1];
-        axis_block.time_stamp[2] = axis_block.time_stamp[1] + t2;
-        axis_block.time_stamp[3] = axis_block.time_stamp[2] + t1;
-        axis_block.time_stamp[4] = axis_block.time_stamp[3];
-        axis_block.time_stamp[5] = axis_block.time_stamp[4] + t1;
-        axis_block.time_stamp[6] = axis_block.time_stamp[5] + t2;
-        axis_block.time_stamp[7] = axis_block.time_stamp[6] + t1;
-        sampleQuinticPolynomial(0, axis_block.coeff[0].data, start_pos, start_vel, start_acc);
-        sampleQuinticPolynomial(t1, axis_block.coeff[0].data, end_pos, end_vel, end_acc);
-        
-        if (start_pos > end_pos)
-        {
-            // 负向运动
-            jerk = -jerk;
-        }
-
-        double alpha = jerk * t1;
-        double omega = jerk * t1 * t1 + jerk * t1 * t2;
-        sampleQuinticPolynomial(t2, axis_block.coeff[1].data, start_pos, start_vel, start_acc);
-        end_pos = start_pos + omega * t1 - jerk * t1 * t1 * t1 / 6;
-        end_vel = omega;
-        end_acc = 0;
-        getQuinticSplineCoefficients(start_pos, start_vel, start_acc, end_pos, end_vel, end_acc, t1, axis_block.coeff[2].data);
-        getQuinticSplineCoefficients(start_pos, start_vel, start_acc, end_pos, end_vel, end_acc, 0, axis_block.coeff[3].data);
-        start_pos = end_pos;
-        start_vel = end_vel;
-        start_acc = end_acc;
-        end_pos = start_pos + omega * t1 - jerk * t1 * t1 * t1 / 6;
-        end_vel = jerk * t1 * t1 / 2 + jerk * t1 * t2;
-        end_acc = -alpha;
-        getQuinticSplineCoefficients(start_pos, start_vel, start_acc, end_pos, end_vel, end_acc, t1, axis_block.coeff[4].data);
-        start_pos = end_pos;
-        start_vel = end_vel;
-        start_acc = end_acc;
-        end_pos = start_pos + omega * t2 / 2;
-        end_vel = jerk * t1 * t1 / 2;
-        end_acc = -alpha;
-        getQuinticSplineCoefficients(start_pos, start_vel, start_acc, end_pos, end_vel, end_acc, t2, axis_block.coeff[5].data);
-        start_pos = end_pos;
-        start_vel = end_vel;
-        start_acc = end_acc;
-        end_pos = start_pos + jerk * t1 * t1 * t1 / 6;
-        end_vel = 0;
-        end_acc = 0;
-        getQuinticSplineCoefficients(start_pos, start_vel, start_acc, end_pos, end_vel, end_acc, t1, axis_block.coeff[6].data);
-        return true;
-    }
-    else if (time_ready_to_stop < axis_block.time_stamp[3])
-    {
-        // 减加速阶段，共计６段停止
-        double start_pos, start_vel, start_acc, end_pos, end_vel, end_acc;
-        double t1 = axis_block.time_stamp[1] - axis_block.time_stamp[0];
-        double t2 = axis_block.time_stamp[2] - axis_block.time_stamp[1];
-        axis_block.time_stamp[4] = axis_block.time_stamp[3];
-        axis_block.time_stamp[5] = axis_block.time_stamp[4] + t1;
-        axis_block.time_stamp[6] = axis_block.time_stamp[5] + t2;
-        axis_block.time_stamp[7] = axis_block.time_stamp[6] + t1;
-        sampleQuinticPolynomial(0, axis_block.coeff[2].data, start_pos, start_vel, start_acc);
-        sampleQuinticPolynomial(t1, axis_block.coeff[2].data, end_pos, end_vel, end_acc);
-        
-        if (start_pos > end_pos)
-        {
-            // 负向运动
-            jerk = -jerk;
-        }
-
-        double alpha = jerk * t1;
-        double omega = jerk * t1 * t1 + jerk * t1 * t2;
-        getQuinticSplineCoefficients(start_pos, start_vel, start_acc, end_pos, end_vel, end_acc, 0, axis_block.coeff[3].data);
-        start_pos = end_pos;
-        start_vel = end_vel;
-        start_acc = end_acc;
-        end_pos = start_pos + omega * t1 - jerk * t1 * t1 * t1 / 6;
-        end_vel = jerk * t1 * t1 / 2 + jerk * t1 * t2;
-        end_acc = -alpha;
-        getQuinticSplineCoefficients(start_pos, start_vel, start_acc, end_pos, end_vel, end_acc, t1, axis_block.coeff[4].data);
-        start_pos = end_pos;
-        start_vel = end_vel;
-        start_acc = end_acc;
-        end_pos = start_pos + omega * t2 / 2;
-        end_vel = jerk * t1 * t1 / 2;
-        end_acc = -alpha;
-        getQuinticSplineCoefficients(start_pos, start_vel, start_acc, end_pos, end_vel, end_acc, t2, axis_block.coeff[5].data);
-        start_pos = end_pos;
-        start_vel = end_vel;
-        start_acc = end_acc;
-        end_pos = start_pos + jerk * t1 * t1 * t1 / 6;
-        end_vel = 0;
-        end_acc = 0;
-        getQuinticSplineCoefficients(start_pos, start_vel, start_acc, end_pos, end_vel, end_acc, t1, axis_block.coeff[6].data);
-        return true;
-    }
-    else if (time_ready_to_stop < axis_block.time_stamp[4])
-    {
-        // 匀速阶段，共计7段停止
-        double start_pos, start_vel, start_acc, end_pos, end_vel, end_acc;
-        double t1 = axis_block.time_stamp[1] - axis_block.time_stamp[0];
-        double t2 = axis_block.time_stamp[2] - axis_block.time_stamp[1];
-        double t4 = time_ready_to_stop - axis_block.time_stamp[3];
-        axis_block.time_stamp[4] = axis_block.time_stamp[3] + t4;
-        axis_block.time_stamp[5] = axis_block.time_stamp[4] + t1;
-        axis_block.time_stamp[6] = axis_block.time_stamp[5] + t2;
-        axis_block.time_stamp[7] = axis_block.time_stamp[6] + t1;
-        sampleQuinticPolynomial(0, axis_block.coeff[3].data, start_pos, start_vel, start_acc);
-        sampleQuinticPolynomial(t4, axis_block.coeff[3].data, end_pos, end_vel, end_acc);
-
-        if (start_pos > end_pos)
-        {
-            // 负向运动
-            jerk = -jerk;
-        }
-
-        double alpha = jerk * t1;
-        double omega = jerk * t1 * t1 + jerk * t1 * t2;
-        start_pos = end_pos;
-        start_vel = end_vel;
-        start_acc = end_acc;
-        end_pos = start_pos + omega * t1 - jerk * t1 * t1 * t1 / 6;
-        end_vel = jerk * t1 * t1 / 2 + jerk * t1 * t2;
-        end_acc = -alpha;
-        getQuinticSplineCoefficients(start_pos, start_vel, start_acc, end_pos, end_vel, end_acc, t1, axis_block.coeff[4].data);
-        start_pos = end_pos;
-        start_vel = end_vel;
-        start_acc = end_acc;
-        end_pos = start_pos + omega * t2 / 2;
-        end_vel = jerk * t1 * t1 / 2;
-        end_acc = -alpha;
-        getQuinticSplineCoefficients(start_pos, start_vel, start_acc, end_pos, end_vel, end_acc, t2, axis_block.coeff[5].data);
-        start_pos = end_pos;
-        start_vel = end_vel;
-        start_acc = end_acc;
-        end_pos = start_pos + jerk * t1 * t1 * t1 / 6;
-        end_vel = 0;
-        end_acc = 0;
-        getQuinticSplineCoefficients(start_pos, start_vel, start_acc, end_pos, end_vel, end_acc, t1, axis_block.coeff[6].data);
-        return true;
-    }
-    else
-    {
-        // 已经进入减速阶段，不再重新规划
-        return false;
-    }
-}
-
-void ManualTeach::getStopCoefficientInPointMode(double time_ready_to_stop, double jerk, ManualAxisBlock &axis_block)
-{
-    if (time_ready_to_stop < axis_block.time_stamp[0])
-    {
-        axis_block.time_stamp[0] = 0;
-        axis_block.time_stamp[1] = 0;
-        axis_block.time_stamp[2] = 0;
-        axis_block.time_stamp[3] = 0;
-        axis_block.time_stamp[4] = 0;
-        axis_block.time_stamp[5] = 0;
-        axis_block.time_stamp[6] = 0;
-        axis_block.time_stamp[7] = 0;
-        double start_pos, start_vel, start_acc;
-        sampleQuinticPolynomial(0, axis_block.coeff[0].data, start_pos, start_vel, start_acc);
-        getQuinticSplineCoefficients(start_pos, 0, 0, start_pos, 0, 0, 0, axis_block.coeff[6].data);
-        return;
-    }
-    
-    if (time_ready_to_stop < axis_block.time_stamp[1])
-    {
-        // 加加速阶段，共计４段停止
-        double start_pos, start_vel, start_acc, end_pos, end_vel, end_acc;
-        double t1 = time_ready_to_stop - axis_block.time_stamp[0];
-        sampleQuinticPolynomial(0, axis_block.coeff[0].data, start_pos, start_vel, start_acc);
-        sampleQuinticPolynomial(t1, axis_block.coeff[0].data, end_pos, end_vel, end_acc);
-        getQuinticSplineCoefficients(start_pos, start_vel, start_acc, end_pos, end_vel, end_acc, 0, axis_block.coeff[1].data);
-        double t3 = fabs(end_acc) / jerk;
-
-        if (start_pos > end_pos)
-        {
-            // 负向运动
-            jerk = -jerk;
-        }
-
-        start_pos = end_pos;
-        start_vel = end_vel;
-        start_acc = end_acc;
-        end_pos = start_pos + start_vel * t3 + start_acc * t3 * t3 / 2 - jerk * t3 * t3 * t3 / 6;
-        end_vel = start_vel + start_acc * t3 - jerk * t3 * t3 / 2;
-        end_acc = 0;
-        getQuinticSplineCoefficients(start_pos, start_vel, start_acc, end_pos, end_vel, end_acc, t3, axis_block.coeff[2].data);
-        getQuinticSplineCoefficients(start_pos, start_vel, start_acc, end_pos, end_vel, end_acc, 0, axis_block.coeff[3].data);
-        double t5 = sqrt(fabs(end_vel / jerk));
-        start_pos = end_pos;
-        start_vel = end_vel;
-        start_acc = end_acc;
-        end_pos = start_pos + jerk * t5 * t5 * t5 * 5 / 6;
-        end_vel = jerk * t5 * t5 / 2;
-        end_acc = -jerk * t5;
-        getQuinticSplineCoefficients(start_pos, start_vel, start_acc, end_pos, end_vel, end_acc, t5, axis_block.coeff[4].data);
-        getQuinticSplineCoefficients(start_pos, start_vel, start_acc, end_pos, end_vel, end_acc, 0, axis_block.coeff[5].data);
-        start_pos = end_pos;
-        start_vel = end_vel;
-        start_acc = end_acc;
-        end_pos = start_pos + jerk * t5 * t5 * t5 / 6;
-        end_vel = 0;
-        end_acc = 0;
-        getQuinticSplineCoefficients(start_pos, start_vel, start_acc, end_pos, end_vel, end_acc, t1, axis_block.coeff[6].data);
-
-        axis_block.time_stamp[1] = axis_block.time_stamp[0] + t1;
-        axis_block.time_stamp[2] = axis_block.time_stamp[1];
-        axis_block.time_stamp[3] = axis_block.time_stamp[2] + t3;
-        axis_block.time_stamp[4] = axis_block.time_stamp[3];
-        axis_block.time_stamp[5] = axis_block.time_stamp[4] + t5;
-        axis_block.time_stamp[6] = axis_block.time_stamp[5];
-        axis_block.time_stamp[7] = axis_block.time_stamp[6] + t5;
-        return;
-    }
-
-    if (time_ready_to_stop < axis_block.time_stamp[3])
-    {
-        // 减加速阶段，共计4段停止
-        double start_pos, start_vel, start_acc, end_pos, end_vel, end_acc;
-        double t1 = axis_block.time_stamp[1] - axis_block.time_stamp[0];
-        double t3 = time_ready_to_stop - axis_block.time_stamp[2];
-        sampleQuinticPolynomial(0, axis_block.coeff[2].data, start_pos, start_vel, start_acc);
-        sampleQuinticPolynomial(t3, axis_block.coeff[2].data, end_pos, end_vel, end_acc);
-        t3 = fabs(end_acc) / jerk;
-
-        if (start_pos > end_pos)
-        {
-            // 负向运动
-            jerk = -jerk;
-        }
-
-        start_pos = end_pos;
-        start_vel = end_vel;
-        start_acc = end_acc;
-        end_pos = start_pos + start_vel * t3 + start_acc * t3 * t3 / 2 - jerk * t3 * t3 * t3 / 6;
-        end_vel = start_vel + jerk * t3 * t3 / 2;
-        end_acc = 0;
-        getQuinticSplineCoefficients(start_pos, start_vel, start_acc, end_pos, end_vel, end_acc, t3, axis_block.coeff[2].data);
-        getQuinticSplineCoefficients(start_pos, start_vel, start_acc, end_pos, end_vel, end_acc, 0, axis_block.coeff[3].data);
-        double t5 = sqrt(fabs(end_vel / jerk));
-        start_pos = end_pos;
-        start_vel = end_vel;
-        start_acc = end_acc;
-        end_pos = start_pos + jerk * t5 * t5 * t5 * 5 / 6;
-        end_vel = jerk * t5 * t5 / 2;
-        end_acc = -jerk * t5;
-        getQuinticSplineCoefficients(start_pos, start_vel, start_acc, end_pos, end_vel, end_acc, t5, axis_block.coeff[4].data);
-        getQuinticSplineCoefficients(start_pos, start_vel, start_acc, end_pos, end_vel, end_acc, 0, axis_block.coeff[5].data);
-        start_pos = end_pos;
-        start_vel = end_vel;
-        start_acc = end_acc;
-        end_pos = start_pos + jerk * t5 * t5 * t5 / 6;
-        end_vel = 0;
-        end_acc = 0;
-        getQuinticSplineCoefficients(start_pos, start_vel, start_acc, end_pos, end_vel, end_acc, t5, axis_block.coeff[6].data);
-
-        axis_block.time_stamp[2] = time_ready_to_stop;
-        axis_block.time_stamp[3] = axis_block.time_stamp[2] + t3;
-        axis_block.time_stamp[4] = axis_block.time_stamp[3];
-        axis_block.time_stamp[5] = axis_block.time_stamp[4] + t5;
-        axis_block.time_stamp[6] = axis_block.time_stamp[5];
-        axis_block.time_stamp[7] = axis_block.time_stamp[6] + t5;
-        return;
-    }
-
-    if (time_ready_to_stop < axis_block.time_stamp[4])
-    {
-        // 匀速阶段，共计5段停止
-        double start_pos, start_vel, start_acc, end_pos, end_vel, end_acc;
-        double t1 = axis_block.time_stamp[1] - axis_block.time_stamp[0];
-        double t4 = time_ready_to_stop - axis_block.time_stamp[3];
-        sampleQuinticPolynomial(0, axis_block.coeff[3].data, start_pos, start_vel, start_acc);
-        sampleQuinticPolynomial(t4, axis_block.coeff[3].data, end_pos, end_vel, end_acc);
-        double t5 = sqrt(fabs(end_vel / jerk));
-
-        if (start_pos > end_pos)
-        {
-            // 负向运动
-            jerk = -jerk;
-        }
-
-        start_pos = end_pos;
-        start_vel = end_vel;
-        start_acc = end_acc;
-        end_pos = start_pos + jerk * t5 * t5 * t5 * 5 / 6;
-        end_vel = jerk * t5 * t5 / 2;
-        end_acc = -jerk * t5;
-        getQuinticSplineCoefficients(start_pos, start_vel, start_acc, end_pos, end_vel, end_acc, t1, axis_block.coeff[4].data);
-        getQuinticSplineCoefficients(start_pos, start_vel, start_acc, end_pos, end_vel, end_acc, 0, axis_block.coeff[5].data);
-        start_pos = end_pos;
-        start_vel = end_vel;
-        start_acc = end_acc;
-        end_pos = start_pos + jerk * t1 * t1 * t1 / 6;
-        end_vel = 0;
-        end_acc = 0;
-        getQuinticSplineCoefficients(start_pos, start_vel, start_acc, end_pos, end_vel, end_acc, t1, axis_block.coeff[6].data);
-
-        axis_block.time_stamp[4] = axis_block.time_stamp[3] + t4;
-        axis_block.time_stamp[5] = axis_block.time_stamp[4] + t5;
-        axis_block.time_stamp[6] = axis_block.time_stamp[5];
-        axis_block.time_stamp[7] = axis_block.time_stamp[6] + t5;
-        return;
-    }
-
-    if (time_ready_to_stop < axis_block.time_stamp[5])
-    {
-        // 加减速阶段，共计4段或5段停止
-        double start_pos, start_vel, start_acc, end_pos, end_vel, end_acc;
-        double t5 = axis_block.time_stamp[5] - axis_block.time_stamp[4];
-        sampleQuinticPolynomial(0, axis_block.coeff[4].data, start_pos, start_vel, start_acc);
-        sampleQuinticPolynomial(t5, axis_block.coeff[4].data, end_pos, end_vel, end_acc);
-        double t7 = sqrt(fabs(end_vel * 2 / jerk));
-
-        if (start_pos > end_pos)
-        {
-            // 负向运动
-            jerk = -jerk;
-        }
-
-        start_pos = end_pos;
-        start_vel = end_vel;
-        start_acc = end_acc;
-        end_pos = start_pos + jerk * t7 * t7 * t7 / 6;
-        end_vel = 0;
-        end_acc = 0;
-        getQuinticSplineCoefficients(start_pos, start_vel, start_acc, end_pos, end_vel, end_acc, t7, axis_block.coeff[6].data);
-        axis_block.time_stamp[7] = axis_block.time_stamp[6] + t7;
-        return;
-    }
-}
-
-void ManualTeach::sampleQuinticPolynomial(double sample_time, const double *coefficients, double &pos, double &vel, double &acc)
-{
-    double t1 = sample_time;
-    double t2 = t1 * sample_time;
-    double t3 = t2 * sample_time;
-    double t4 = t3 * sample_time;
-    double t5 = t4 * sample_time;
-    pos = coefficients[5] * t5 + coefficients[4] * t4 + coefficients[3] * t3 + coefficients[2] * t2 + coefficients[1] * t1 + coefficients[0];
-    vel = coefficients[5] * t4 * 5 + coefficients[4] * t3 * 4 + coefficients[3] * t2 * 3 + coefficients[2] * t1 * 2 + coefficients[1];
-    acc = coefficients[5] * t3 * 20 + coefficients[4] * t2 * 12 + coefficients[3] * t1 * 6 + coefficients[2] * 2;
-}
-
-ErrorCode ManualTeach::manualJointContinuous(const ManualDirection *dir, MotionTime time, ManualTrajectory &traj)
-{
-    double jerk, alpha, omega;
-    char buffer[LOG_TEXT_SIZE];
-
-    FST_INFO("manual-Joint-Continuous: directions = %s, planning trajectory ...", printDBLine((int*)dir, buffer, LOG_TEXT_SIZE));
-    FST_INFO("  manual-time = %.4f, vel-ratio = %.0f%%, acc-ratio = %.0f%%", time, vel_ratio_ * 100, acc_ratio_ * 100);
-    FST_INFO("  start-joint = %s", printDBLine(&traj.joint_start[0], buffer, LOG_TEXT_SIZE));
-
-    if (traj.ending_time < MINIMUM_E6)
-    {
-        // begin to manual-continuous, update ending joint
-        traj.joint_ending = traj.joint_start;
-    }
-
-    for (size_t i = 0; i < joint_num_; i++)
-    {
-        jerk = axis_jerk_[i];
-        alpha = axis_acc_[i] * acc_ratio_;
-        omega = axis_vel_[i] * vel_ratio_;
-
-        if (traj.direction[i] == dir[i])
-        {
-            // keep STANDING or motion
-            // do nothing
-            // FST_INFO("  J%d: given direction same as current motion, running along the original trajectory", i + 1);
+            // direction do not change, do nothing
             continue;
         }
-        else if (dir[i] == STANDING && traj.direction[i] != STANDING)
-        {
-            // stop joint motion
-            if (getStopCoefficient(time, jerk, traj.axis[i]))
-            {
-                double pos, vel, acc;
-                sampleQuinticPolynomial(traj.axis[i].time_stamp[7] - traj.axis[i].time_stamp[6], traj.axis[i].coeff[6].data, pos, vel, acc);
-                traj.joint_ending[i] = pos;
-                traj.direction[i] = STANDING;
-            }
-        }
-        else if (dir[i] != STANDING && traj.direction[i] == STANDING)
-        {
-            // startup motion in this axis
-            if (time >= traj.axis[i].time_stamp[7])
-            {
-                // start joint motion
-                // stop until soft constraint
-                double trip = 99.99;
 
-                if (!joint_constraint_ptr_->isJointMasked(i))
+        if (dir[j] != STANDING && motion_direction_[j] == STANDING)
+        {
+            // start motion
+            double p, v, a;
+            double last_stop_time = axis_ds_curve_valid_[j] ? axis_ds_curve_start_time_[j] + axis_ds_curve_[j].getDuration() : 0;
+            axis_ds_curve_[j].sampleDSCurve(axis_ds_curve_[j].getDuration(), p, v, a);
+            double last_stop_pos = (1 - p) * joint_start_[j] + p * joint_end_[j];
+
+            if (time > last_stop_time)
+            {
+                double trip = 9999.99;
+
+                if (!joint_constraint_ptr_->isMask(j))
                 {
-                    trip = (dir[i] == INCREASE) ? (joint_constraint_ptr_->upper()[i] - traj.joint_start[i]) :
-                           (traj.joint_start[i] - joint_constraint_ptr_->lower()[i]);
+                    trip = (dir[j] == INCREASE) ? (joint_constraint_ptr_->upper()[j] - last_stop_pos) : (last_stop_pos - joint_constraint_ptr_->lower()[j]);
                 }
 
                 if (trip < MINIMUM_E6)
                 {
-                    FST_WARN("  J%d: near soft constraint, cannot manual move", i + 1);
                     continue;
                 }
-                
-                memset(traj.axis[i].coeff, 0, sizeof(traj.axis[i].coeff));
-                if (dir[i] == INCREASE)
-                {
-                    getAxisCoefficient(time, traj.joint_start[i], trip, jerk, omega, alpha, traj.axis[i]);
-                    //getIncreaseCoefficient(time, traj.joint_start[i], trip, omega, alpha, jerk, traj.axis[i]);
-                }
-                else
-                {
-                    getAxisCoefficient(time, traj.joint_start[i], trip, jerk, -omega, -alpha, traj.axis[i]);
-                    //getDecreaseCoefficient(time, traj.joint_start[i], trip, omega, alpha, jerk, traj.axis[i]);
-                }
-                
-                
-                traj.direction[i] = dir[i];
 
-                if (joint_constraint_ptr_->isJointMasked(i))
-                {
-                    traj.joint_ending[i] = dir[i] == INCREASE ? traj.joint_start[i] + trip :
-                                            traj.joint_start[i] - trip;
-                }
-                else
-                {
-                    traj.joint_ending[i] = dir[i] == INCREASE ? joint_constraint_ptr_->upper()[i] :
-                                            joint_constraint_ptr_->lower()[i];
-                }
-            }
-            else
-            {
-                // axis-slow-down trajectory havn't finished
-                FST_WARN("  J%d: in slow-down trajectory, cannot startup until STANDING", i + 1);
-                continue;
+                double vel_ratio = vel_ratio_;
+                double acc_ratio = acc_ratio_ > vel_ratio_ ? vel_ratio_ : acc_ratio_;
+                double vel = axis_vel_[j] * vel_ratio / trip;
+                double acc = axis_acc_[j] * acc_ratio / trip;
+                double jerk = axis_jerk_[j] * acc_ratio / trip;
+                axis_ds_curve_[j].planDSCurve(0, 1, vel, acc, &jerk);
+                axis_ds_curve_valid_[j] = true;
+                motion_direction_[j] = dir[j];
+                axis_ds_curve_start_time_[j] = time;
+                joint_start_[j] = last_stop_pos;
+                joint_end_[j] = (dir[j] == INCREASE) ? (last_stop_pos + trip) : (last_stop_pos - trip);
             }
         }
-        else
+        else if (motion_direction_[j] != STANDING)
         {
-            // prev-direction = INCREASE && input-direction = DECREASE or
-            // prev-direction = DECREASE && input-direction = INCREASE,
-            // stop joint motion
+            // stop motion
+            double stop_time = time - axis_ds_curve_start_time_[j];
 
-            traj.direction[i] = STANDING;
-
-            if (getStopCoefficient(time, jerk, traj.axis[i]))
+            if (axis_ds_curve_valid_[j] == true && stop_time < axis_ds_curve_[j].getDuration())
             {
-                double pos, vel, acc;
-                sampleQuinticPolynomial(traj.axis[i].time_stamp[7] - traj.axis[i].time_stamp[6], traj.axis[i].coeff[6].data, pos, vel, acc);
-                traj.joint_ending[i] = pos;
-            }
-            else
-            {
-                // already in axis-slow-down trajectory, do nothing
-                FST_WARN("  J%d: STANDING or in slow-down trajectory, will stop on soft constraint", i + 1);
-                continue;
+                axis_ds_curve_[j].planStopDSCurve(stop_time);
+                motion_direction_[j] = STANDING;
             }
         }
     }
 
     double duration = 0;
 
-    for (size_t i = 0; i < joint_num_; i++)
+    for (uint32_t j = 0; j < joint_num_; j++)
     {
-        if (traj.axis[i].time_stamp[7] > duration)
+        if (axis_ds_curve_valid_[j] == true && axis_ds_curve_start_time_[j] + axis_ds_curve_[j].getDuration() > duration)
         {
-            duration = traj.axis[i].time_stamp[7];
+            duration = axis_ds_curve_start_time_[j] + axis_ds_curve_[j].getDuration();
         }
     }
 
-    traj.ending_time = duration;
-    FST_INFO("Create manual trajectory success, end-time: %.4f", duration);
+    total_duration_ = duration;
     return SUCCESS;
 }
 
-ErrorCode ManualTeach::manualCartesianContinuous(const ManualDirection *dir, MotionTime time, ManualTrajectory &traj)
+ErrorCode ManualTeach::manualContinuousInCartesian(const ManualDirection *dir, double time)
 {
-    char buffer[LOG_TEXT_SIZE];
-    PoseEuler &start = traj.cart_start;
-    PoseEuler &target = traj.cart_ending;
-    FST_INFO("manual-Cartesian-Continuous: directions = %s, planning trajectory ...", printDBLine((int*)dir, buffer, LOG_TEXT_SIZE));
-    FST_INFO("  manual-time = %.4f, vel-ratio = %.0f%%, acc-ratio = %.0f%%", time, vel_ratio_ * 100, acc_ratio_ * 100);
-    FST_INFO("  start-joint = %s", printDBLine(&traj.joint_start[0], buffer, LOG_TEXT_SIZE));
-    FST_INFO("  start-pose  = %.2f %.2f %.2f - %.4f %.4f %.4f", start.point_.x_, start.point_.y_, start.point_.z_, start.euler_.a_, start.euler_.b_, start.euler_.c_);
-
-    if (traj.ending_time < MINIMUM_E6)
+    for (uint32_t j = 0; j < 6; j++)
     {
-        // begin to manual-continuous, update ending joint
-        traj.joint_ending = traj.joint_start;
-    }
-
-    double spd, acc, jerk;
-    
-    for (size_t i = 0; i < 6; i++)
-    {
-        spd = (i < 3 ? position_vel_reference_ : orientation_omega_reference_) * vel_ratio_;
-        acc = (i < 3 ? position_acc_reference_ : orientation_alpha_reference_) * acc_ratio_;
-        jerk = i < 3 ? position_jerk_reference_ : orientation_beta_reference_;
-
-        if (traj.direction[i] == dir[i])
+        if (motion_direction_[j] == dir[j])
         {
-            // keep standby or motion direction
-            // do nothing
-            //if (traj.direction[i] == STANDING)
-            //{
-            //    *(&traj.cart_ending.point_.x_ + i) = *(&traj.cart_start.point_.x_ + i);
-            //}
-
-            //FST_INFO("  PoseEuler[%d]: given direction same as current motion, running along the current trajectory", i);
+            // direction do not change, do nothing
             continue;
         }
-        else if (dir[i] == STANDING && traj.direction[i] != STANDING)
-        {
-            // stop motion in this direction
-            if (getStopCoefficient(time, jerk, traj.axis[i]))
-            {
-                double p, v, a;
-                sampleQuinticPolynomial(traj.axis[i].time_stamp[7] - traj.axis[i].time_stamp[6], traj.axis[i].coeff[6].data, p, v, a);
-                traj.joint_ending[i] = p;
-                *(&target.point_.x_ + i) = p;
-                traj.direction[i] = STANDING;
-            }
-        }
-        else if (dir[i] != STANDING && traj.direction[i] == STANDING)
-        {
-            // startup motion in this axis
-            if (time >= traj.axis[i].time_stamp[7])
-            {
-                // start motion
-                double trip = 2000;
-                memset(traj.axis[i].coeff, 0, sizeof(traj.axis[i].coeff));
 
-                if (dir[i] == INCREASE)
+        if (dir[j] != STANDING && motion_direction_[j] == STANDING)
+        {
+            // start motion
+            double p, v, a;
+            double last_stop_time = axis_ds_curve_valid_[j] ? axis_ds_curve_start_time_[j] + axis_ds_curve_[j].getDuration() : 0;
+            axis_ds_curve_[j].sampleDSCurve(axis_ds_curve_[j].getDuration(), p, v, a);
+            double start = j < 3 ? cart_start_.point_[j] : cart_start_.euler_[j - 3];
+            double end = j < 3 ? cart_end_.point_[j] : cart_end_.euler_[j - 3];
+            double last_stop_pos = (1 - p) * start + p * end;
+
+            double trip = j < 3 ? 9999.99 : 99.99;
+            double vel = j < 3 ? position_vel_reference_ : orientation_omega_reference_;
+            double acc = j < 3 ? position_acc_reference_ : orientation_alpha_reference_;
+            double jerk = j < 3 ? position_jerk_reference_ : orientation_beta_reference_;
+            double vel_ratio = vel_ratio_;
+            double acc_ratio = acc_ratio_ > vel_ratio_ ? vel_ratio_ : acc_ratio_;
+
+            if (time > last_stop_time)
+            {
+                vel = vel * vel_ratio / trip;
+                acc = acc * acc_ratio / trip;
+                jerk = jerk * acc_ratio / trip;
+                axis_ds_curve_[j].planDSCurve(0, 1, vel, acc, &jerk);
+                axis_ds_curve_valid_[j] = true;
+                motion_direction_[j] = dir[j];
+                axis_ds_curve_start_time_[j] = time;
+
+                if (j < 3)
                 {
-                    getAxisCoefficient(time, *(&start.point_.x_ + i), trip, jerk, spd, acc, traj.axis[i]);
+                    cart_start_.point_[j] = last_stop_pos;
+                    cart_end_.point_[j] = (dir[j] == INCREASE) ? (last_stop_pos + trip) : (last_stop_pos - trip);
                 }
                 else
                 {
-                    getAxisCoefficient(time, *(&start.point_.x_ + i), trip, jerk, -spd, -acc, traj.axis[i]);
+                    cart_start_.euler_[j - 3] = last_stop_pos;
+                    cart_end_.euler_[j - 3] = (dir[j] == INCREASE) ? (last_stop_pos + trip) : (last_stop_pos - trip);
                 }
-                
-                traj.direction[i] = dir[i];
-                *(&target.point_.x_ + i) = *(&start.point_.x_ + i) + (dir[i] == INCREASE ? trip : -trip);
-            }
-            else
-            {
-                // axis-slow-down trajectory havn't finished
-                FST_WARN("  J%d: in slow-down trajectory, cannot startup until STANDING", i + 1);
-                continue;
             }
         }
         else
         {
-            // prev-direction = INCREASE && input-direction = DECREASE or
-            // prev-direction = DECREASE && input-direction = INCREASE,
-            // stop motion in this direction
-            traj.direction[i] = STANDING;
+            // stop motion
+            double stop_time = time - axis_ds_curve_start_time_[j];
 
-            if (getStopCoefficient(time, jerk, traj.axis[i]))
+            if (axis_ds_curve_valid_[j] == true && stop_time < axis_ds_curve_[j].getDuration())
             {
-                double p, v, a;
-                sampleQuinticPolynomial(traj.axis[i].time_stamp[7] - traj.axis[i].time_stamp[6], traj.axis[i].coeff[6].data, p, v, a);
-                *(&target.point_.x_ + i) = p;
-            }
-            else
-            {
-                // already in axis-slow-down trajectory, do nothing
-                FST_WARN("  PoseEuler[%d]: Standby or in slow-down trajectory, will stop soon", i);
-                continue;
+                axis_ds_curve_[j].planStopDSCurve(stop_time);
+                motion_direction_[j] = STANDING;
             }
         }
     }
 
     double duration = 0;
 
-    for (size_t i = 0; i < 6; i++)
+    for (uint32_t j = 0; j < joint_num_; j++)
     {
-        if (traj.axis[i].time_stamp[7] > duration)
+        if (axis_ds_curve_valid_[j] == true && axis_ds_curve_start_time_[j] + axis_ds_curve_[j].getDuration() > duration)
         {
-            duration = traj.axis[i].time_stamp[7];
+            duration = axis_ds_curve_start_time_[j] + axis_ds_curve_[j].getDuration();
         }
     }
 
-    traj.ending_time = duration;
-    FST_INFO("Create manual trajectory success, end-time: %.4f", duration);
+    total_duration_ = duration;
     return SUCCESS;
 }
 
-ErrorCode ManualTeach::manualByTarget(const Joint &target, MotionTime time, ManualTrajectory &traj)
-{
-    FST_INFO("Manual request received, frame=%d", traj.frame);
-    return manualJointAPoint(target, time, traj);
-}
-
-ErrorCode ManualTeach::manualJointAPoint(const Joint &target, MotionTime time, ManualTrajectory &traj)
+ErrorCode ManualTeach::manualToJoint(const Joint &start, const Joint &end)
 {
     char buffer[LOG_TEXT_SIZE];
+    FST_INFO("Manual move to joint: planning trajectory ...");
+    FST_INFO("Start joint = %s", printDBLine(&start.j1_, buffer, LOG_TEXT_SIZE));
+    FST_INFO("Target joint = %s", printDBLine(&end.j1_, buffer, LOG_TEXT_SIZE));
+    FST_INFO("Axis-vel = %s", printDBLine(move_to_point_vel_, buffer, LOG_TEXT_SIZE));
+    FST_INFO("Axis-acc = %s", printDBLine(axis_acc_, buffer, LOG_TEXT_SIZE));
+    FST_INFO("Axis-jerk = %s", printDBLine(axis_jerk_, buffer, LOG_TEXT_SIZE));
+    FST_INFO("vel-ratio = %.0f%%, acc-ratio = %.0f%%", vel_ratio_ * 100, acc_ratio_ * 100);
+    joint_start_ = start;
+    joint_end_ = end;
+    uint32_t index = 0;
+    double duration = -1;
 
-    FST_INFO("manual-Joint-APOINT: planning trajectory ...");
-    FST_INFO("  axis-vel = %s", printDBLine(&move_to_point_vel_[0], buffer, LOG_TEXT_SIZE));
-    FST_INFO("  start joint = %s", printDBLine(&traj.joint_start[0], buffer, LOG_TEXT_SIZE));
-    FST_INFO("  target joint = %s", printDBLine(&target[0], buffer, LOG_TEXT_SIZE));
-
-    double trips[NUM_OF_JOINT], alpha[NUM_OF_JOINT], omega[NUM_OF_JOINT], beta[NUM_OF_JOINT];
-    double max_duration = 0;
-    size_t index_of_max_duration = 0;
-
-    // 单轴预规划
-    for (size_t i = 0; i < joint_num_; i++)
+    for (uint32_t j = 0; j < joint_num_; j++)
     {
-        trips[i] = target[i] - traj.joint_start[i];
-        alpha[i] = trips[i] < 0 ? -axis_acc_[i] : axis_acc_[i];
-        omega[i] = trips[i] < 0 ? -move_to_point_vel_[i] : move_to_point_vel_[i];
-        beta[i] = trips[i] < 0 ? -axis_jerk_[i] : axis_jerk_[i];
-        getAxisCoefficient(0, traj.joint_start[i], fabs(trips[i]), axis_jerk_[i], omega[i], alpha[i], traj.axis[i]);
-
-        if (traj.axis[i].time_stamp[7] > max_duration)
+        if (fabs((end[j] - start[j]) / move_to_point_vel_[j]) > duration)
         {
-            max_duration = traj.axis[i].time_stamp[7];
-            index_of_max_duration = i;
+            duration = fabs((end[j] - start[j]) / move_to_point_vel_[j]);
+            index = j;
         }
     }
 
-    if (max_duration < 0.000001)
+    double trip = fabs(end[index] - start[index]);
+    
+    if (trip < MINIMUM_E6)
     {
-        FST_INFO("Target joint neer start joint, do nothing!");
-        traj.ending_time = 0;
+        FST_WARN("Start joint near target joint, do not move");
+        total_duration_ = 0;
         return SUCCESS;
     }
 
-    FST_INFO("Max-duration: %.4f, index: %d, create trajectory ...", max_duration, index_of_max_duration);
-
-    for (size_t i = 0; i < joint_num_; i++)
-    {
-        traj.joint_ending[i] = target[i];
-        // 预规划时间最长的轴不需要重新规划，其他轴重新规划
-        if (i == index_of_max_duration) continue;
-
-        getAxisCoefficientWithDuration(0, max_duration, traj.joint_start[i], target[i], beta[i], omega[i], alpha[i], traj.axis[i]);
-    }
-
-    traj.ending_time = max_duration;
-    FST_INFO("Create manual trajectory success !");
+    double vel_ratio = vel_ratio_;
+    double acc_ratio = acc_ratio_ > vel_ratio_ ? vel_ratio_ : acc_ratio_;
+    double vel = move_to_point_vel_[index] * vel_ratio / trip;
+    double acc = axis_acc_[index] * acc_ratio / trip;
+    double jerk = axis_jerk_[index] * acc_ratio / trip;
+    FST_INFO("index: %d, trip: %.6f, vel: %.6f, acc: %.6f, jerk: %.6f, create ds curve ...", index, trip, vel, acc, jerk);
+    ds_curve_.planDSCurve(0, 1, vel, acc, &jerk);
+    total_duration_ = ds_curve_.getDuration();
+    motion_type_ = APOINT;
+    FST_INFO("Success, duration: %.6f", total_duration_);
     return SUCCESS;
 }
 
-ErrorCode ManualTeach::manualStop(MotionTime time, ManualTrajectory &traj)
+ErrorCode ManualTeach::sampleTrajectory(double sample_time, const Joint &reference, JointState &state)
 {
-    FST_INFO("stopTeach: curr-time=%.4f, total-time=%.4f", time, traj.ending_time);
-    
-    if (traj.mode == CONTINUOUS)
-    {
-        FST_WARN("manual-mode is continuous, stop motion by change direction input");
-        return SUCCESS;
-    }
+    double t = sample_time > 0 ? sample_time : 0;
+    double p, v, a;
+    double trip;
+    double delta_time = 0.00001;
+    PoseEuler sample, sample_delta1, sample_delta2;
 
-    if (traj.mode == STEP)
+    if (motion_type_ == APOINT)
     {
-        FST_WARN("manual-mode is STEP, stop motion by trajectory");
-        return SUCCESS;
-    }
-    
-    for (size_t i = 0; i < joint_num_; i++)
-    {
-        getStopCoefficientInPointMode(time, axis_jerk_[i], traj.axis[i]);
-        double pos, vel, acc;
-        sampleQuinticPolynomial(traj.axis[i].time_stamp[7] - traj.axis[i].time_stamp[6], traj.axis[i].coeff[6].data, pos, vel, acc);
-        traj.joint_ending[i] = pos;
-    }
+        ds_curve_.sampleDSCurve(t, p, v, a);
 
-    double max_duration = 0;
-
-    for (size_t i = 0; i < joint_num_; i++)
-    {
-        if (traj.axis[i].time_stamp[7] > max_duration)
+        for (uint32_t j = 0; j < joint_num_; j++)
         {
-            max_duration = traj.axis[i].time_stamp[7];
+            trip = joint_end_[j] - joint_start_[j];
+            state.angle[j] = joint_start_[j] + p * trip;
+            state.omega[j] = v * trip;
+            state.alpha[j] = a * trip;
+            state.torque[j] = 0;
         }
+
+        dynamics_ptr_->getTorqueInverseDynamics(state.angle, (*(JointVelocity*)(&state.omega)), (*(JointAcceleration*)(&state.alpha)), (*(JointTorque*)(&state.torque)));
+        return SUCCESS;
     }
 
-    traj.ending_time = max_duration;
-    FST_INFO("Success, total duration=%.4f", traj.ending_time);
-    return SUCCESS;
+    if (motion_type_ == STEP)
+    {
+        if (frame_type_ == JOINT)
+        {
+            ds_curve_.sampleDSCurve(t, p, v, a);
+
+            for (uint32_t j = 0; j < joint_num_; j++)
+            {
+                trip = joint_end_[j] - joint_start_[j];
+                state.angle[j] = joint_start_[j] + p * trip;
+                state.omega[j] = v * trip;
+                state.alpha[j] = a * trip;
+                state.torque[j] = 0;
+            }
+        }
+        else if (frame_type_ == BASE)
+        {
+            ds_curve_.sampleDSCurve(t, p, v, a);
+            sample = interpolatPoseEuler(p, cart_start_, cart_end_);
+            ds_curve_.sampleDSCurve(t + delta_time, p, v, a);
+            sample_delta1 = interpolatPoseEuler(p, cart_start_, cart_end_);
+            ds_curve_.sampleDSCurve(t + delta_time * 2, p, v, a);
+            sample_delta2 = interpolatPoseEuler(p, cart_start_, cart_end_);
+
+            Joint joint_delta1, joint_delta2;
+            TransMatrix trans, trans_delta1, trans_delta2, trans_auxiliary_coord;
+            auxiliary_coord_.convertToTransMatrix(trans_auxiliary_coord);
+            sample.convertToTransMatrix(trans);
+            sample_delta1.convertToTransMatrix(trans_delta1);
+            sample_delta2.convertToTransMatrix(trans_delta2);
+            trans.rightMultiply(trans_auxiliary_coord).rightMultiply(tf_matrix_inverse_);
+            trans_delta1.rightMultiply(trans_auxiliary_coord).rightMultiply(tf_matrix_inverse_);
+            trans_delta2.rightMultiply(trans_auxiliary_coord).rightMultiply(tf_matrix_inverse_);
+            
+            if (!kinematics_ptr_->doIK(trans, reference, state.angle) ||
+				!kinematics_ptr_->doIK(trans_delta1, reference, joint_delta1) ||
+				!kinematics_ptr_->doIK(trans_delta2, reference, joint_delta2))
+            {
+                char buffer[LOG_TEXT_SIZE];
+                PoseEuler pe0, pe1, pe2;
+                trans.convertToPoseEuler(pe0);
+                trans_delta1.convertToPoseEuler(pe1);
+                trans_delta2.convertToPoseEuler(pe2);
+                FST_ERROR("Compute IK failed.");
+                FST_ERROR("Reference: %s", printDBLine(&reference.j1_, buffer, LOG_TEXT_SIZE));
+                FST_ERROR("Pose: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", pe0.point_.x_, pe0.point_.y_, pe0.point_.z_, pe0.euler_.a_, pe0.euler_.b_, pe0.euler_.c_);
+                FST_ERROR("Pose delta 1: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", pe1.point_.x_, pe1.point_.y_, pe1.point_.z_, pe1.euler_.a_, pe1.euler_.b_, pe1.euler_.c_);
+                FST_ERROR("Pose delta 2: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", pe2.point_.x_, pe2.point_.y_, pe2.point_.z_, pe2.euler_.a_, pe2.euler_.b_, pe2.euler_.c_);
+                return MC_COMPUTE_IK_FAIL;
+            }
+
+            for (uint32_t j = 0; j < joint_num_; j++)
+            {
+                state.omega[j] = (joint_delta1[j] - state.angle[j]) / delta_time;
+                state.alpha[j] = ((joint_delta2[j] - joint_delta1[j]) / delta_time - state.omega[j]) / delta_time;
+                state.torque[j] = 0;
+            }
+        }
+        else if (frame_type_ == USER)
+        {
+            ds_curve_.sampleDSCurve(t, p, v, a);
+            sample = interpolatPoseEuler(p, cart_start_, cart_end_);
+            ds_curve_.sampleDSCurve(t + delta_time, p, v, a);
+            sample_delta1 = interpolatPoseEuler(p, cart_start_, cart_end_);
+            ds_curve_.sampleDSCurve(t + delta_time * 2, p, v, a);
+            sample_delta2 = interpolatPoseEuler(p, cart_start_, cart_end_);
+
+            Joint joint_delta1, joint_delta2;
+            TransMatrix trans, trans_delta1, trans_delta2, trans_auxiliary_coord;
+            auxiliary_coord_.convertToTransMatrix(trans_auxiliary_coord);
+            sample.convertToTransMatrix(trans);
+            sample_delta1.convertToTransMatrix(trans_delta1);
+            sample_delta2.convertToTransMatrix(trans_delta2);
+            trans.leftMultiply(uf_matrix_).rightMultiply(trans_auxiliary_coord).rightMultiply(tf_matrix_inverse_);
+            trans_delta1.leftMultiply(uf_matrix_).rightMultiply(trans_auxiliary_coord).rightMultiply(tf_matrix_inverse_);
+            trans_delta2.leftMultiply(uf_matrix_).rightMultiply(trans_auxiliary_coord).rightMultiply(tf_matrix_inverse_);
+            
+            if (!kinematics_ptr_->doIK(trans, reference, state.angle) ||
+				!kinematics_ptr_->doIK(trans_delta1, reference, joint_delta1) ||
+				!kinematics_ptr_->doIK(trans_delta2, reference, joint_delta2))
+            {
+                char buffer[LOG_TEXT_SIZE];
+                PoseEuler pe0, pe1, pe2;
+                trans.convertToPoseEuler(pe0);
+                trans_delta1.convertToPoseEuler(pe1);
+                trans_delta2.convertToPoseEuler(pe2);
+                FST_ERROR("Compute IK failed.");
+                FST_ERROR("Reference: %s", printDBLine(&reference.j1_, buffer, LOG_TEXT_SIZE));
+                FST_ERROR("Pose: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", pe0.point_.x_, pe0.point_.y_, pe0.point_.z_, pe0.euler_.a_, pe0.euler_.b_, pe0.euler_.c_);
+                FST_ERROR("Pose delta 1: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", pe1.point_.x_, pe1.point_.y_, pe1.point_.z_, pe1.euler_.a_, pe1.euler_.b_, pe1.euler_.c_);
+                FST_ERROR("Pose delta 2: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", pe2.point_.x_, pe2.point_.y_, pe2.point_.z_, pe2.euler_.a_, pe2.euler_.b_, pe2.euler_.c_);
+                return MC_COMPUTE_IK_FAIL;
+            }
+
+            for (uint32_t j = 0; j < joint_num_; j++)
+            {
+                state.omega[j] = (joint_delta1[j] - state.angle[j]) / delta_time;
+                state.alpha[j] = ((joint_delta2[j] - joint_delta1[j]) / delta_time - state.omega[j]) / delta_time;
+                state.torque[j] = 0;
+            }
+        }
+        else if (frame_type_ == WORLD)
+        {
+            ds_curve_.sampleDSCurve(t, p, v, a);
+            sample = interpolatPoseEuler(p, cart_start_, cart_end_);
+            ds_curve_.sampleDSCurve(t + delta_time, p, v, a);
+            sample_delta1 = interpolatPoseEuler(p, cart_start_, cart_end_);
+            ds_curve_.sampleDSCurve(t + delta_time * 2, p, v, a);
+            sample_delta2 = interpolatPoseEuler(p, cart_start_, cart_end_);
+
+            Joint joint_delta1, joint_delta2;
+            TransMatrix trans, trans_delta1, trans_delta2, trans_auxiliary_coord;
+            auxiliary_coord_.convertToTransMatrix(trans_auxiliary_coord);
+            sample.convertToTransMatrix(trans);
+            sample_delta1.convertToTransMatrix(trans_delta1);
+            sample_delta2.convertToTransMatrix(trans_delta2);
+            trans.leftMultiply(wf_matrix_).rightMultiply(trans_auxiliary_coord).rightMultiply(tf_matrix_inverse_);
+            trans_delta1.leftMultiply(wf_matrix_).rightMultiply(trans_auxiliary_coord).rightMultiply(tf_matrix_inverse_);
+            trans_delta2.leftMultiply(wf_matrix_).rightMultiply(trans_auxiliary_coord).rightMultiply(tf_matrix_inverse_);
+            
+            if (!kinematics_ptr_->doIK(trans, reference, state.angle) ||
+				!kinematics_ptr_->doIK(trans_delta1, reference, joint_delta1) ||
+				!kinematics_ptr_->doIK(trans_delta2, reference, joint_delta2))
+            {
+                char buffer[LOG_TEXT_SIZE];
+                PoseEuler pe0, pe1, pe2;
+                trans.convertToPoseEuler(pe0);
+                trans_delta1.convertToPoseEuler(pe1);
+                trans_delta2.convertToPoseEuler(pe2);
+                FST_ERROR("Compute IK failed.");
+                FST_ERROR("Reference: %s", printDBLine(&reference.j1_, buffer, LOG_TEXT_SIZE));
+                FST_ERROR("Pose: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", pe0.point_.x_, pe0.point_.y_, pe0.point_.z_, pe0.euler_.a_, pe0.euler_.b_, pe0.euler_.c_);
+                FST_ERROR("Pose delta 1: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", pe1.point_.x_, pe1.point_.y_, pe1.point_.z_, pe1.euler_.a_, pe1.euler_.b_, pe1.euler_.c_);
+                FST_ERROR("Pose delta 2: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", pe2.point_.x_, pe2.point_.y_, pe2.point_.z_, pe2.euler_.a_, pe2.euler_.b_, pe2.euler_.c_);
+                return MC_COMPUTE_IK_FAIL;
+            }
+
+            for (uint32_t j = 0; j < joint_num_; j++)
+            {
+                state.omega[j] = (joint_delta1[j] - state.angle[j]) / delta_time;
+                state.alpha[j] = ((joint_delta2[j] - joint_delta1[j]) / delta_time - state.omega[j]) / delta_time;
+                state.torque[j] = 0;
+            }
+        }
+        else if (frame_type_ == TOOL)
+        {
+            ds_curve_.sampleDSCurve(t, p, v, a);
+            sample = interpolatPoseEuler(p, cart_start_, cart_end_);
+            ds_curve_.sampleDSCurve(t + delta_time, p, v, a);
+            sample_delta1 = interpolatPoseEuler(p, cart_start_, cart_end_);
+            ds_curve_.sampleDSCurve(t + delta_time * 2, p, v, a);
+            sample_delta2 = interpolatPoseEuler(p, cart_start_, cart_end_);
+
+            Joint joint_delta1, joint_delta2;
+            TransMatrix trans, trans_delta1, trans_delta2, trans_auxiliary_coord;
+            auxiliary_coord_.convertToTransMatrix(trans_auxiliary_coord);
+            
+            sample.convertToTransMatrix(trans);
+            sample_delta1.convertToTransMatrix(trans_delta1);
+            sample_delta2.convertToTransMatrix(trans_delta2);
+            trans.leftMultiply(trans_auxiliary_coord).rightMultiply(tf_matrix_inverse_);
+            trans_delta1.leftMultiply(trans_auxiliary_coord).rightMultiply(tf_matrix_inverse_);
+            trans_delta2.leftMultiply(trans_auxiliary_coord).rightMultiply(tf_matrix_inverse_);
+            
+            if (!kinematics_ptr_->doIK(trans, reference, state.angle) ||
+				!kinematics_ptr_->doIK(trans_delta1, reference, joint_delta1) ||
+				!kinematics_ptr_->doIK(trans_delta2, reference, joint_delta2))
+            {
+                char buffer[LOG_TEXT_SIZE];
+                PoseEuler pe0, pe1, pe2;
+                trans.convertToPoseEuler(pe0);
+                trans_delta1.convertToPoseEuler(pe1);
+                trans_delta2.convertToPoseEuler(pe2);
+                FST_ERROR("Compute IK failed.");
+                FST_ERROR("Reference: %s", printDBLine(&reference.j1_, buffer, LOG_TEXT_SIZE));
+                FST_ERROR("Pose: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", pe0.point_.x_, pe0.point_.y_, pe0.point_.z_, pe0.euler_.a_, pe0.euler_.b_, pe0.euler_.c_);
+                FST_ERROR("Pose delta 1: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", pe1.point_.x_, pe1.point_.y_, pe1.point_.z_, pe1.euler_.a_, pe1.euler_.b_, pe1.euler_.c_);
+                FST_ERROR("Pose delta 2: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", pe2.point_.x_, pe2.point_.y_, pe2.point_.z_, pe2.euler_.a_, pe2.euler_.b_, pe2.euler_.c_);
+                return MC_COMPUTE_IK_FAIL;
+            }
+
+            for (uint32_t j = 0; j < joint_num_; j++)
+            {
+                state.omega[j] = (joint_delta1[j] - state.angle[j]) / delta_time;
+                state.alpha[j] = ((joint_delta2[j] - joint_delta1[j]) / delta_time - state.omega[j]) / delta_time;
+                state.torque[j] = 0;
+            }
+        }
+        else
+        {
+            FST_ERROR("Sample manual trajectory failed, type: %d, frame: %d", motion_type_, frame_type_);
+            return MC_MANUAL_FRAME_ERROR;
+        }
+
+        dynamics_ptr_->getTorqueInverseDynamics(state.angle, (*(JointVelocity*)(&state.omega)), (*(JointAcceleration*)(&state.alpha)), (*(JointTorque*)(&state.torque)));
+        return SUCCESS;
+    }
+    
+    if (motion_type_ == CONTINUOUS)
+    {
+        if (frame_type_ == JOINT)
+        {
+            for (uint32_t j = 0; j < joint_num_; j++)
+            {
+                if (axis_ds_curve_valid_[j] == false)
+                {
+                    state.angle[j] = joint_end_[j];
+                    state.omega[j] = 0;
+                    state.alpha[j] = 0;
+                    state.torque[j] = 0;
+                    continue;
+                }
+
+                double t_sample = t - axis_ds_curve_start_time_[j];
+                axis_ds_curve_[j].sampleDSCurve(t_sample, p, v, a);
+                trip = joint_end_[j] - joint_start_[j];
+                state.angle[j] = joint_start_[j] + p * trip;
+                state.omega[j] = v * trip;
+                state.alpha[j] = a * trip;
+                state.torque[j] = 0;
+            }
+        }
+        else if (frame_type_ == BASE)
+        {
+            for (uint32_t j = 0; j < 3; j++)
+            {
+                if (axis_ds_curve_valid_[j] == false)
+                {
+                    sample.point_[j] = cart_end_.point_[j];
+                    sample_delta1.point_[j] = cart_end_.point_[j];
+                    sample_delta2.point_[j] = cart_end_.point_[j];
+                    continue;
+                }
+
+                double t_sample = t - axis_ds_curve_start_time_[j];
+                trip = cart_end_.point_[j] - cart_start_.point_[j];
+                axis_ds_curve_[j].sampleDSCurve(t_sample, p, v, a);
+                sample.point_[j] = cart_start_.point_[j] + p * trip;
+                axis_ds_curve_[j].sampleDSCurve(t_sample + delta_time, p, v, a);
+                sample_delta1.point_[j] = cart_start_.point_[j] + p * trip;
+                axis_ds_curve_[j].sampleDSCurve(t_sample + delta_time * 2, p, v, a);
+                sample_delta2.point_[j] = cart_start_.point_[j] + p * trip;
+            }
+            
+            for (uint32_t j = 0; j < 3; j++)
+            {
+                if (axis_ds_curve_valid_[j + 3] == false)
+                {
+                    sample.euler_[j] = cart_end_.euler_[j];
+                    sample_delta1.euler_[j] = cart_end_.euler_[j];
+                    sample_delta2.euler_[j] = cart_end_.euler_[j];
+                    continue;
+                }
+
+                double t_sample = t - axis_ds_curve_start_time_[j + 3];
+                trip = cart_end_.euler_[j] - cart_start_.euler_[j];
+                axis_ds_curve_[j + 3].sampleDSCurve(t_sample, p, v, a);
+                sample.euler_[j] = cart_start_.euler_[j] + p * trip;
+                axis_ds_curve_[j + 3].sampleDSCurve(t_sample + delta_time, p, v, a);
+                sample_delta1.euler_[j] = cart_start_.euler_[j] + p * trip;
+                axis_ds_curve_[j + 3].sampleDSCurve(t_sample + delta_time * 2, p, v, a);
+                sample_delta2.euler_[j] = cart_start_.euler_[j] + p * trip;
+            }
+
+            Joint joint_delta1, joint_delta2;
+            TransMatrix trans, trans_delta1, trans_delta2, trans_auxiliary_coord;
+            auxiliary_coord_.convertToTransMatrix(trans_auxiliary_coord);
+            sample.convertToTransMatrix(trans);
+            sample_delta1.convertToTransMatrix(trans_delta1);
+            sample_delta2.convertToTransMatrix(trans_delta2);
+            trans.rightMultiply(trans_auxiliary_coord).rightMultiply(tf_matrix_inverse_);
+            trans_delta1.rightMultiply(trans_auxiliary_coord).rightMultiply(tf_matrix_inverse_);
+            trans_delta2.rightMultiply(trans_auxiliary_coord).rightMultiply(tf_matrix_inverse_);
+            
+            if (!kinematics_ptr_->doIK(trans, reference, state.angle) ||
+				!kinematics_ptr_->doIK(trans_delta1, reference, joint_delta1) ||
+				!kinematics_ptr_->doIK(trans_delta2, reference, joint_delta2))
+            {
+                char buffer[LOG_TEXT_SIZE];
+                PoseEuler pe0, pe1, pe2;
+                trans.convertToPoseEuler(pe0);
+                trans_delta1.convertToPoseEuler(pe1);
+                trans_delta2.convertToPoseEuler(pe2);
+                FST_ERROR("Compute IK failed.");
+                FST_ERROR("Reference: %s", printDBLine(&reference.j1_, buffer, LOG_TEXT_SIZE));
+                FST_ERROR("Pose: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", pe0.point_.x_, pe0.point_.y_, pe0.point_.z_, pe0.euler_.a_, pe0.euler_.b_, pe0.euler_.c_);
+                FST_ERROR("Pose delta 1: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", pe1.point_.x_, pe1.point_.y_, pe1.point_.z_, pe1.euler_.a_, pe1.euler_.b_, pe1.euler_.c_);
+                FST_ERROR("Pose delta 2: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", pe2.point_.x_, pe2.point_.y_, pe2.point_.z_, pe2.euler_.a_, pe2.euler_.b_, pe2.euler_.c_);
+                return MC_COMPUTE_IK_FAIL;
+            }
+
+            for (uint32_t j = 0; j < joint_num_; j++)
+            {
+                state.omega[j] = (joint_delta1[j] - state.angle[j]) / delta_time;
+                state.alpha[j] = ((joint_delta2[j] - joint_delta1[j]) / delta_time - state.omega[j]) / delta_time;
+                state.torque[j] = 0;
+            }
+        }
+        else if (frame_type_ == USER)
+        {
+            for (uint32_t j = 0; j < 3; j++)
+            {
+                if (axis_ds_curve_valid_[j] == false)
+                {
+                    sample.point_[j] = cart_end_.point_[j];
+                    sample_delta1.point_[j] = cart_end_.point_[j];
+                    sample_delta2.point_[j] = cart_end_.point_[j];
+                    continue;
+                }
+
+                double t_sample = t - axis_ds_curve_start_time_[j];
+                trip = cart_end_.point_[j] - cart_start_.point_[j];
+                axis_ds_curve_[j].sampleDSCurve(t_sample, p, v, a);
+                sample.point_[j] = cart_start_.point_[j] + p * trip;
+                axis_ds_curve_[j].sampleDSCurve(t_sample + delta_time, p, v, a);
+                sample_delta1.point_[j] = cart_start_.point_[j] + p * trip;
+                axis_ds_curve_[j].sampleDSCurve(t_sample + delta_time * 2, p, v, a);
+                sample_delta2.point_[j] = cart_start_.point_[j] + p * trip;
+            }
+            
+            for (uint32_t j = 0; j < 3; j++)
+            {
+                if (axis_ds_curve_valid_[j + 3] == false)
+                {
+                    sample.euler_[j] = cart_end_.euler_[j];
+                    sample_delta1.euler_[j] = cart_end_.euler_[j];
+                    sample_delta2.euler_[j] = cart_end_.euler_[j];
+                    continue;
+                }
+
+                double t_sample = t - axis_ds_curve_start_time_[j + 3];
+                trip = cart_end_.euler_[j] - cart_start_.euler_[j];
+                axis_ds_curve_[j + 3].sampleDSCurve(t_sample, p, v, a);
+                sample.euler_[j] = cart_start_.euler_[j] + p * trip;
+                axis_ds_curve_[j + 3].sampleDSCurve(t_sample + delta_time, p, v, a);
+                sample_delta1.euler_[j] = cart_start_.euler_[j] + p * trip;
+                axis_ds_curve_[j + 3].sampleDSCurve(t_sample + delta_time * 2, p, v, a);
+                sample_delta2.euler_[j] = cart_start_.euler_[j] + p * trip;
+            }
+
+            Joint joint_delta1, joint_delta2;
+            TransMatrix trans, trans_delta1, trans_delta2, trans_auxiliary_coord;
+            auxiliary_coord_.convertToTransMatrix(trans_auxiliary_coord);
+            sample.convertToTransMatrix(trans);
+            sample_delta1.convertToTransMatrix(trans_delta1);
+            sample_delta2.convertToTransMatrix(trans_delta2);
+            trans.leftMultiply(uf_matrix_).rightMultiply(trans_auxiliary_coord).rightMultiply(tf_matrix_inverse_);
+            trans_delta1.leftMultiply(uf_matrix_).rightMultiply(trans_auxiliary_coord).rightMultiply(tf_matrix_inverse_);
+            trans_delta2.leftMultiply(uf_matrix_).rightMultiply(trans_auxiliary_coord).rightMultiply(tf_matrix_inverse_);
+            
+            if (!kinematics_ptr_->doIK(trans, reference, state.angle) ||
+				!kinematics_ptr_->doIK(trans_delta1, reference, joint_delta1) ||
+				!kinematics_ptr_->doIK(trans_delta2, reference, joint_delta2))
+            {
+                char buffer[LOG_TEXT_SIZE];
+                PoseEuler pe0, pe1, pe2;
+                trans.convertToPoseEuler(pe0);
+                trans_delta1.convertToPoseEuler(pe1);
+                trans_delta2.convertToPoseEuler(pe2);
+                FST_ERROR("Compute IK failed.");
+                FST_ERROR("Reference: %s", printDBLine(&reference.j1_, buffer, LOG_TEXT_SIZE));
+                FST_ERROR("Pose: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", pe0.point_.x_, pe0.point_.y_, pe0.point_.z_, pe0.euler_.a_, pe0.euler_.b_, pe0.euler_.c_);
+                FST_ERROR("Pose delta 1: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", pe1.point_.x_, pe1.point_.y_, pe1.point_.z_, pe1.euler_.a_, pe1.euler_.b_, pe1.euler_.c_);
+                FST_ERROR("Pose delta 2: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", pe2.point_.x_, pe2.point_.y_, pe2.point_.z_, pe2.euler_.a_, pe2.euler_.b_, pe2.euler_.c_);
+                return MC_COMPUTE_IK_FAIL;
+            }
+
+            for (uint32_t j = 0; j < joint_num_; j++)
+            {
+                state.omega[j] = (joint_delta1[j] - state.angle[j]) / delta_time;
+                state.alpha[j] = ((joint_delta2[j] - joint_delta1[j]) / delta_time - state.omega[j]) / delta_time;
+                state.torque[j] = 0;
+            }
+        }
+        else if (frame_type_ == WORLD)
+        {
+            for (uint32_t j = 0; j < 3; j++)
+            {
+                if (axis_ds_curve_valid_[j] == false)
+                {
+                    sample.point_[j] = cart_end_.point_[j];
+                    sample_delta1.point_[j] = cart_end_.point_[j];
+                    sample_delta2.point_[j] = cart_end_.point_[j];
+                    continue;
+                }
+
+                double t_sample = t - axis_ds_curve_start_time_[j];
+                trip = cart_end_.point_[j] - cart_start_.point_[j];
+                axis_ds_curve_[j].sampleDSCurve(t_sample, p, v, a);
+                sample.point_[j] = cart_start_.point_[j] + p * trip;
+                axis_ds_curve_[j].sampleDSCurve(t_sample + delta_time, p, v, a);
+                sample_delta1.point_[j] = cart_start_.point_[j] + p * trip;
+                axis_ds_curve_[j].sampleDSCurve(t_sample + delta_time * 2, p, v, a);
+                sample_delta2.point_[j] = cart_start_.point_[j] + p * trip;
+            }
+            
+            for (uint32_t j = 0; j < 3; j++)
+            {
+                if (axis_ds_curve_valid_[j + 3] == false)
+                {
+                    sample.euler_[j] = cart_end_.euler_[j];
+                    sample_delta1.euler_[j] = cart_end_.euler_[j];
+                    sample_delta2.euler_[j] = cart_end_.euler_[j];
+                    continue;
+                }
+
+                double t_sample = t - axis_ds_curve_start_time_[j + 3];
+                trip = cart_end_.euler_[j] - cart_start_.euler_[j];
+                axis_ds_curve_[j + 3].sampleDSCurve(t_sample, p, v, a);
+                sample.euler_[j] = cart_start_.euler_[j] + p * trip;
+                axis_ds_curve_[j + 3].sampleDSCurve(t_sample + delta_time, p, v, a);
+                sample_delta1.euler_[j] = cart_start_.euler_[j] + p * trip;
+                axis_ds_curve_[j + 3].sampleDSCurve(t_sample + delta_time * 2, p, v, a);
+                sample_delta2.euler_[j] = cart_start_.euler_[j] + p * trip;
+            }
+
+            Joint joint_delta1, joint_delta2;
+            TransMatrix trans, trans_delta1, trans_delta2, trans_auxiliary_coord;
+            auxiliary_coord_.convertToTransMatrix(trans_auxiliary_coord);
+            sample.convertToTransMatrix(trans);
+            sample_delta1.convertToTransMatrix(trans_delta1);
+            sample_delta2.convertToTransMatrix(trans_delta2);
+            trans.leftMultiply(wf_matrix_).rightMultiply(trans_auxiliary_coord).rightMultiply(tf_matrix_inverse_);
+            trans_delta1.leftMultiply(wf_matrix_).rightMultiply(trans_auxiliary_coord).rightMultiply(tf_matrix_inverse_);
+            trans_delta2.leftMultiply(wf_matrix_).rightMultiply(trans_auxiliary_coord).rightMultiply(tf_matrix_inverse_);
+            
+            if (!kinematics_ptr_->doIK(trans, reference, state.angle) ||
+				!kinematics_ptr_->doIK(trans_delta1, reference, joint_delta1) ||
+				!kinematics_ptr_->doIK(trans_delta2, reference, joint_delta2))
+            {
+                char buffer[LOG_TEXT_SIZE];
+                PoseEuler pe0, pe1, pe2;
+                trans.convertToPoseEuler(pe0);
+                trans_delta1.convertToPoseEuler(pe1);
+                trans_delta2.convertToPoseEuler(pe2);
+                FST_ERROR("Compute IK failed.");
+                FST_ERROR("Reference: %s", printDBLine(&reference.j1_, buffer, LOG_TEXT_SIZE));
+                FST_ERROR("Pose: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", pe0.point_.x_, pe0.point_.y_, pe0.point_.z_, pe0.euler_.a_, pe0.euler_.b_, pe0.euler_.c_);
+                FST_ERROR("Pose delta 1: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", pe1.point_.x_, pe1.point_.y_, pe1.point_.z_, pe1.euler_.a_, pe1.euler_.b_, pe1.euler_.c_);
+                FST_ERROR("Pose delta 2: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", pe2.point_.x_, pe2.point_.y_, pe2.point_.z_, pe2.euler_.a_, pe2.euler_.b_, pe2.euler_.c_);
+                return MC_COMPUTE_IK_FAIL;
+            }
+
+            for (uint32_t j = 0; j < joint_num_; j++)
+            {
+                state.omega[j] = (joint_delta1[j] - state.angle[j]) / delta_time;
+                state.alpha[j] = ((joint_delta2[j] - joint_delta1[j]) / delta_time - state.omega[j]) / delta_time;
+                state.torque[j] = 0;
+            }
+        }
+        else if (frame_type_ == TOOL)
+        {
+            for (uint32_t j = 0; j < 3; j++)
+            {
+                if (axis_ds_curve_valid_[j] == false)
+                {
+                    sample.point_[j] = cart_end_.point_[j];
+                    sample_delta1.point_[j] = cart_end_.point_[j];
+                    sample_delta2.point_[j] = cart_end_.point_[j];
+                    continue;
+                }
+
+                double t_sample = t - axis_ds_curve_start_time_[j];
+                trip = cart_end_.point_[j] - cart_start_.point_[j];
+                axis_ds_curve_[j].sampleDSCurve(t_sample, p, v, a);
+                sample.point_[j] = cart_start_.point_[j] + p * trip;
+                axis_ds_curve_[j].sampleDSCurve(t_sample + delta_time, p, v, a);
+                sample_delta1.point_[j] = cart_start_.point_[j] + p * trip;
+                axis_ds_curve_[j].sampleDSCurve(t_sample + delta_time * 2, p, v, a);
+                sample_delta2.point_[j] = cart_start_.point_[j] + p * trip;
+            }
+            
+            for (uint32_t j = 0; j < 3; j++)
+            {
+                if (axis_ds_curve_valid_[j + 3] == false)
+                {
+                    sample.euler_[j] = cart_end_.euler_[j];
+                    sample_delta1.euler_[j] = cart_end_.euler_[j];
+                    sample_delta2.euler_[j] = cart_end_.euler_[j];
+                    continue;
+                }
+
+                double t_sample = t - axis_ds_curve_start_time_[j + 3];
+                trip = cart_end_.euler_[j] - cart_start_.euler_[j];
+                axis_ds_curve_[j + 3].sampleDSCurve(t_sample, p, v, a);
+                sample.euler_[j] = cart_start_.euler_[j] + p * trip;
+                axis_ds_curve_[j + 3].sampleDSCurve(t_sample + delta_time, p, v, a);
+                sample_delta1.euler_[j] = cart_start_.euler_[j] + p * trip;
+                axis_ds_curve_[j + 3].sampleDSCurve(t_sample + delta_time * 2, p, v, a);
+                sample_delta2.euler_[j] = cart_start_.euler_[j] + p * trip;
+            }
+
+            Joint joint_delta1, joint_delta2;
+            TransMatrix trans, trans_delta1, trans_delta2, trans_auxiliary_coord;
+            auxiliary_coord_.convertToTransMatrix(trans_auxiliary_coord);
+            
+            sample.convertToTransMatrix(trans);
+            sample_delta1.convertToTransMatrix(trans_delta1);
+            sample_delta2.convertToTransMatrix(trans_delta2);
+            trans.leftMultiply(trans_auxiliary_coord).rightMultiply(tf_matrix_inverse_);
+            trans_delta1.leftMultiply(trans_auxiliary_coord).rightMultiply(tf_matrix_inverse_);
+            trans_delta2.leftMultiply(trans_auxiliary_coord).rightMultiply(tf_matrix_inverse_);
+            
+            if (!kinematics_ptr_->doIK(trans, reference, state.angle) ||
+				!kinematics_ptr_->doIK(trans_delta1, reference, joint_delta1) ||
+				!kinematics_ptr_->doIK(trans_delta2, reference, joint_delta2))
+            {
+                char buffer[LOG_TEXT_SIZE];
+                PoseEuler pe0, pe1, pe2;
+                trans.convertToPoseEuler(pe0);
+                trans_delta1.convertToPoseEuler(pe1);
+                trans_delta2.convertToPoseEuler(pe2);
+                FST_ERROR("Compute IK failed.");
+                FST_ERROR("Reference: %s", printDBLine(&reference.j1_, buffer, LOG_TEXT_SIZE));
+                FST_ERROR("Pose: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", pe0.point_.x_, pe0.point_.y_, pe0.point_.z_, pe0.euler_.a_, pe0.euler_.b_, pe0.euler_.c_);
+                FST_ERROR("Pose delta 1: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", pe1.point_.x_, pe1.point_.y_, pe1.point_.z_, pe1.euler_.a_, pe1.euler_.b_, pe1.euler_.c_);
+                FST_ERROR("Pose delta 2: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", pe2.point_.x_, pe2.point_.y_, pe2.point_.z_, pe2.euler_.a_, pe2.euler_.b_, pe2.euler_.c_);
+                return MC_COMPUTE_IK_FAIL;
+            }
+
+            for (uint32_t j = 0; j < joint_num_; j++)
+            {
+                state.omega[j] = (joint_delta1[j] - state.angle[j]) / delta_time;
+                state.alpha[j] = ((joint_delta2[j] - joint_delta1[j]) / delta_time - state.omega[j]) / delta_time;
+                state.torque[j] = 0;
+            }
+        }
+        else
+        {
+            FST_ERROR("Sample manual trajectory failed, type: %d, frame: %d", motion_type_, frame_type_);
+            return MC_MANUAL_FRAME_ERROR;
+        }
+
+        dynamics_ptr_->getTorqueInverseDynamics(state.angle, (*(JointVelocity*)(&state.omega)), (*(JointAcceleration*)(&state.alpha)), (*(JointTorque*)(&state.torque)));
+        return SUCCESS;
+    }
+
+    FST_ERROR("Internal fault, type: %d, frame: %d, in file: %s line: %d", motion_type_, frame_type_, __FILE__, __LINE__);
+    return MC_INTERNAL_FAULT;
 }
 
-char* ManualTeach::printDBLine(const int *data, char *buffer, size_t length)
+PoseEuler ManualTeach::interpolatPoseEuler(double p, const PoseEuler &start, const PoseEuler &end)
+{
+    PoseEuler result;
+    result.point_.x_ = (1 - p) * start.point_.x_ + p * end.point_.x_;
+    result.point_.y_ = (1 - p) * start.point_.y_ + p * end.point_.y_;
+    result.point_.z_ = (1 - p) * start.point_.z_ + p * end.point_.z_;
+    result.euler_.a_ = (1 - p) * start.euler_.a_ + p * end.euler_.a_;
+    result.euler_.b_ = (1 - p) * start.euler_.b_ + p * end.euler_.b_;
+    result.euler_.c_ = (1 - p) * start.euler_.c_ + p * end.euler_.c_;
+    return result;
+}
+
+ErrorCode ManualTeach::manualStop(MotionTime stop_time)
+{
+    FST_INFO("stopTeach: stop-time=%.6f, total-duration=%.6f", stop_time, total_duration_);
+
+    if (motion_type_ == CONTINUOUS)
+    {
+        ManualDirection direction[NUM_OF_JOINT] = {STANDING};
+        manualContinuous(direction, stop_time);
+        FST_INFO("Success, total-duration=%.6f", total_duration_);
+        return SUCCESS;
+    }
+    else if (motion_type_ == APOINT)
+    {
+        ds_curve_.planStopDSCurve(stop_time);
+        total_duration_ = ds_curve_.getDuration();
+        FST_INFO("Success, total duration=%.6f", total_duration_);
+        return SUCCESS;
+    }
+    else
+    {
+        FST_INFO("Cannot stop manual motion in step mode, total-duration=%.6f", total_duration_);
+        return SUCCESS;
+    }
+}
+
+char* ManualTeach::printDBLine(const int *data, char *buffer, uint32_t length)
 {
     int len = 0;
 
-    for (size_t i = 0; i < joint_num_; i++)
+    for (uint32_t i = 0; i < joint_num_; i++)
     {
         len += snprintf(buffer + len, length - len, "%d ", data[i]);
     }
@@ -1705,11 +2022,11 @@ char* ManualTeach::printDBLine(const int *data, char *buffer, size_t length)
     return buffer;
 }
 
-char* ManualTeach::printDBLine(const double *data, char *buffer, size_t length)
+char* ManualTeach::printDBLine(const double *data, char *buffer, uint32_t length)
 {
     int len = 0;
 
-    for (size_t i = 0; i < joint_num_; i++)
+    for (uint32_t i = 0; i < joint_num_; i++)
     {
         len += snprintf(buffer + len, length - len, "%.6f ", data[i]);
     }

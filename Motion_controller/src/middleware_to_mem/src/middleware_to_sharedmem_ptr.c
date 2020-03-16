@@ -18,7 +18,7 @@ Summary:    Init the middleware
 //for communication between processes
 #define MEM_MAP_SIZE_PROCESS 65536
 //for communication between cores (running in linux)
-#define MEM_MAP_SIZE_CORE 65536
+#define MEM_MAP_SIZE_CORE 524288
 
 HandleTable handleTable[HANDLE_TABLE_LEN] = 
 {

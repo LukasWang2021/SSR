@@ -12,9 +12,7 @@ Summary:    to store the simulation values.
 using namespace fst_ctrl;
 
 
-IoSimulation::IoSimulation(fst_log::Logger *logger, IoMappingParam *param):
-    log_ptr_(NULL),
-    param_ptr_(NULL)
+IoSimulation::IoSimulation(fst_log::Logger *logger, IoMappingParam *param)
 {
     log_ptr_ = logger;
     param_ptr_ = param;

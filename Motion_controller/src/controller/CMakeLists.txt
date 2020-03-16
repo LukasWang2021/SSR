@@ -13,10 +13,10 @@ find_package(catkin REQUIRED COMPONENTS
 )
 
 set(MAIN_VERSION 1) # 1 if release version (with version.h.in modify)
-set(VERSION_MAJOR 4)
-set(VERSION_MINOR 0)
-set(VERSION_PATCH 0)
-set(VERSION_COMMIT \"14ec3460\") #from gitlab commit number.
+set(VERSION_MAJOR 5)
+set(VERSION_MINOR 3)
+set(VERSION_PATCH 7)
+set(VERSION_COMMIT \"ec385a29\") #from gitlab commit number.
 string(TIMESTAMP BUILD_DATE \"%Y%m%d\")
 string(TIMESTAMP BUILD_TIME \"%H:%M:%S\")
 
@@ -58,8 +58,7 @@ set(catkin_INCLUDE_DIRS
     ${depend_PATH_INC}/xml_help/include 
     ${depend_PATH_INC}/base_device/include
     ${depend_PATH_INC}/error_monitor/include 
-    ${depend_PATH_INC}/motion_control/include 
-    ${depend_PATH_INC}/path_traj_alg/include 
+    ${depend_PATH_INC}/motion_control/include
     ${depend_PATH_INC}/axis_group_manager/include
     ${depend_PATH_INC}/base_axis_group/include
     ${depend_PATH_INC}/log_service/include
@@ -81,6 +80,8 @@ set(catkin_INCLUDE_DIRS
     ${depend_PATH_INC}/nvram/include
     ${depend_PATH_INC}/fst_spi/include
     ${depend_PATH_INC}/dynamic_alg/include
+    ${depend_PATH_INC}/trajectory_planner/include
+    ${depend_PATH_INC}/joint_constraint/include
 )
 
 catkin_package(
@@ -101,6 +102,9 @@ catkin_package(
     DEPENDS nvram 
     DEPENDS fst_spi 
     DEPENDS dynamic_alg
+    DEPENDS prg_interpreter
+    DEPENDS trajectory_planner 
+    DEPENDS joint_constraint
 )
  
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wno-unused-but-set-variable -Wno-unused-local-typedefs -O0 -fpermissive -DPB_FIELD_32BIT -DSIMMULATION")
@@ -151,6 +155,9 @@ target_link_libraries(controller
     param_manager
     transformation
     dynamic_alg
+    prg_interpreter
+    trajectory_planner
+    joint_constraint
 )
 
 #############
@@ -158,6 +165,10 @@ target_link_libraries(controller
 #############
 install(TARGETS controller 
     RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}    
+)
+
+install(FILES script/setIP 
+    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}    
 )
 
 install(FILES config/controller.yaml

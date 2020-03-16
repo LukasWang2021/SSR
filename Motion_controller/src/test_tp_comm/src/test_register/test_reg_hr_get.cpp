@@ -93,12 +93,12 @@ int main(int argc, char* argv[])
     cout << "Reply : msg.data.joints.data_count = " << recv_msg.data.joints.data_count << endl;
     cout << "Reply : msg.data.diffs.data_count = " << recv_msg.data.diffs.data_count << endl;
 
-    for (int i = 0; i != recv_msg.data.joints.data_count; ++i)
+    for (size_t i = 0; i != recv_msg.data.joints.data_count; ++i)
     {
         cout << "Reply : msg.data.joints.data[" << i << "] = " << recv_msg.data.joints.data[i] << endl;
     }
 
-    for (int i = 0; i != recv_msg.data.diffs.data_count; ++i)
+    for (size_t i = 0; i != recv_msg.data.diffs.data_count; ++i)
     {
         cout << "Reply : msg.data.diffs.data[" << i << "] = " << recv_msg.data.diffs.data[i] << endl;
     }

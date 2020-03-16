@@ -88,11 +88,11 @@ int main(int argc, char* argv[])
     cout << "Reply : msg.error_code = " <<recv_msg.error_code.data << endl;
     cout << "Reply : msg.data.param_info_count = " << recv_msg.data.param_info_count << endl;
 
-    for (int i = 0; i != recv_msg.data.param_info_count; ++i)
+    for (size_t i = 0; i != recv_msg.data.param_info_count; ++i)
     {
         cout << "Reply : msg.data.data.param_info[i].name" << recv_msg.data.param_info[i].name << endl;
         cout << "Reply : msg.data.data.param_info[i].type" << recv_msg.data.param_info[i].type << endl;
-        cout << "Reply : msg.data.data.param_info[i].data" << std::putwchar <<  recv_msg.data.param_info[i].data.bytes << endl;
+        // cout << "Reply : msg.data.data.param_info[i].data" << std::putwchar <<  recv_msg.data.param_info[i].data.bytes << endl;
         printf("Reply : data =%02x-%02x-%02x-%02x--%02x-%02x-%02x-%02x\n", 
         recv_msg.data.param_info[i].data.bytes[7],recv_msg.data.param_info[i].data.bytes[6],
         recv_msg.data.param_info[i].data.bytes[5],recv_msg.data.param_info[i].data.bytes[4],

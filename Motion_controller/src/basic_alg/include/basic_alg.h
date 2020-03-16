@@ -45,7 +45,7 @@ static inline int POLAR(double x) {return x < 0 ? -1 : 1;}
 // Return:  a   -> a < b
 //          b   -> a > b
 //------------------------------------------------------------------------------
-static inline double MIN(double a, double b) {return (a < b) ? a : b;}
+//static inline double MIN(double a, double b) {return (a < b) ? a : b;}
 
 //------------------------------------------------------------------------------
 // Function:    MAX
@@ -56,7 +56,7 @@ static inline double MIN(double a, double b) {return (a < b) ? a : b;}
 // Return:  a   -> a > b
 //          b   -> a < b
 //------------------------------------------------------------------------------
-static inline double MAX(double a, double b) {return (a > b) ? a : b;}
+//static inline double MAX(double a, double b) {return (a > b) ? a : b;}
 
 //------------------------------------------------------------------------------
 // Function:    assignVector
@@ -771,6 +771,13 @@ static inline void crossProduct(const double (&v)[3], const double (&u)[3], doub
     res[2] = v[0] * u[1] - u[0] * v[1];
 }
 
+static inline double getAngleBetweenTwoVectors(const double(&v)[3], const double(&u)[3])
+{
+	double axb[3];
+	crossProduct(v, u, axb);
+	return atan2(norm(axb), innerProduct(v, u));
+}
+
 //------------------------------------------------------------------------------
 // Function:    eye
 // Summary: Reset the matrix to identity matrix.
@@ -1298,6 +1305,7 @@ static inline bool inverseMatrix(double (&m)[4][4])
     return true;
 }
 
+
 static inline void DHMatrix(const double (&l)[4], double q, double (&m)[4][4])
 {
     double tmp[4][4];
@@ -1358,9 +1366,132 @@ static inline double getOrientationAngle(const PoseQuaternion &pose1, const Pose
     return getOrientationAngle(pose1.quaternion_, pose2.quaternion_);
 }
 
+static inline double maxInArray(double *array, int length)
+{
+    double max = array[0];
 
+    for (int i = 1; i < length; i++)
+    {
+        if (array[i] > max)
+        {
+            max = array[i];
+        }
+    }
+
+    return max;
 }
 
+static inline double minInArray(double *array, int length)
+{
+    double min = array[0];
+
+    for (int i = 1; i < length; i++)
+    {
+        if (array[i] < min)
+        {
+            min = array[i];
+        }
+    }
+
+    return min;
+}
+
+static inline void point2Double(const Point &p, double (&array)[3])
+{
+    array[0] = p.x_;
+    array[1] = p.y_;
+    array[2] = p.z_;
+}
+
+
+static inline void quaternion2Double(const Quaternion &q, double (&array)[4])
+{
+    array[0] = q.x_;
+    array[1] = q.y_;
+    array[2] = q.z_;
+    array[3] = q.w_;
+}
+
+static inline void getSepticSpline(double p0, double v0, double a0, double j0, double p1, double v1, double a1, double j1, double duration, double (&coeff)[8])
+{
+    double h = p1 - p0;
+    double t1 = duration;
+    double t2 = t1 * duration;
+    double t3 = t2 * duration;
+    double t4 = t3 * duration;
+    double t5 = t4 * duration;
+    double t6 = t5 * duration;
+    double t7 = t6 * duration;
+
+    coeff[0] = p0;
+    coeff[1] = v0;
+    coeff[2] = a0 / 2;
+    coeff[3] = j0 / 6;
+    coeff[4] = (h * 210 - t1 * (t1 * (a0 * 30 - a1 * 15) + t2 * (j0 * 4 + j1) + v0 * 120 + v1 * 90)) / (t4 * 6);
+    coeff[5] = (t1 * (t1 * (a0 * 20 - a1 * 14) + t2 * (j0 * 2 + j1) + v0 * 90 + v1 * 78) - h * 168) / (t5 * 2);
+    coeff[6] = (h * 420 - t1 * (t1 * (a0 * 45 - a1 * 39) + t2 * (j0 * 4 + j1 * 3) + v0 * 216 + v1 * 204)) / (t6 * 6);
+    coeff[7] = (t1 * (t1 * (a0 * 12 - a1 * 12) + t2 * (j0 + j1) + v0 * 60 + v1 * 60) - h * 120) / (t7 * 6);
+}
+
+static inline void sampleSepticSpline(double t, const double (&coeff)[8], double &p, double &v, double &a, double &j)
+{
+    double t1 = t;
+    double t2 = t1 * t;
+    double t3 = t2 * t;
+    double t4 = t3 * t;
+    double t5 = t4 * t;
+    double t6 = t5 * t;
+    double t7 = t6 * t;
+
+    p = coeff[0] + 
+        coeff[1] * t1 + 
+        coeff[2] * t2 + 
+        coeff[3] * t3 + 
+        coeff[4] * t4 + 
+        coeff[5] * t5 + 
+        coeff[6] * t6 + 
+        coeff[7] * t7;
+    v = coeff[1] + 
+        coeff[2] * t1 * 2 + 
+        coeff[3] * t2 * 3 + 
+        coeff[4] * t3 * 4 + 
+        coeff[5] * t4 * 5 + 
+        coeff[6] * t5 * 6 + 
+        coeff[7] * t6 * 7;
+    a = coeff[2] * 2 + 
+        coeff[3] * t1 * 6 + 
+        coeff[4] * t2 * 12 + 
+        coeff[5] * t3 * 20 + 
+        coeff[6] * t4 * 30 + 
+        coeff[7] * t5 * 42;
+    j = coeff[3] * 6 + 
+        coeff[4] * t1 * 24 + 
+        coeff[5] * t2 * 60 + 
+        coeff[6] * t3 * 120 + 
+        coeff[7] * t4 * 210;
+}
+
+static inline  void sampleSlerpInterpolationQuaternion(const Quaternion &start, const Quaternion end, double ratio, double orientation_angle, Quaternion &result)
+{
+    if (orientation_angle < 0.001)
+    {
+        // ��̬�н�С��0.1rad,��̬���Բ�ֵ
+        result.w_ = (1 - ratio) * start.w_ + ratio * end.w_;
+        result.x_ = (1 - ratio) * start.x_ + ratio * end.x_;
+        result.y_ = (1 - ratio) * start.y_ + ratio * end.y_;
+        result.z_ = (1 - ratio) * start.z_ + ratio * end.z_;
+    }
+    else
+    {
+        // ��̬�нǴ���0.1rad,��̬������ֵ
+        result.w_ = (sin((1 - ratio) * orientation_angle) * start.w_ + sin(ratio * orientation_angle) * end.w_) / sin(orientation_angle);
+        result.x_ = (sin((1 - ratio) * orientation_angle) * start.x_ + sin(ratio * orientation_angle) * end.x_) / sin(orientation_angle);
+        result.y_ = (sin((1 - ratio) * orientation_angle) * start.y_ + sin(ratio * orientation_angle) * end.y_) / sin(orientation_angle);
+        result.z_ = (sin((1 - ratio) * orientation_angle) * start.z_ + sin(ratio * orientation_angle) * end.z_) / sin(orientation_angle);
+    }
+}
+
+}
 #endif
 
 

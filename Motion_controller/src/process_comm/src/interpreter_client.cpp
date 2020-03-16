@@ -586,6 +586,32 @@ ErrorCode InterpreterClient::setRoPulse(uint32_t port_offset, double time)
     return *((unsigned long long*)(recv_buffer_ptr_ + PROCESS_COMM_CMD_ID_SIZE));
 }
 
+ErrorCode InterpreterClient::getPosture(basic_alg::Posture &posture)
+{
+    if(!sendRequest(CONTROLLER_SERVER_CMD_GET_POSTURE, NULL, 0)
+       || !recvResponse(sizeof(Posture))
+       || *((unsigned int*)recv_buffer_ptr_) != CONTROLLER_SERVER_CMD_GET_POSTURE)
+    {
+        return PROCESS_COMM_OPERATION_FAILED;
+    }
+    memcpy(&posture, recv_buffer_ptr_ + PROCESS_COMM_CMD_ID_SIZE, sizeof(Posture));
+    return SUCCESS;
+}
+
+ErrorCode InterpreterClient::getTurn(basic_alg::Turn &turn)
+{
+    if(!sendRequest(CONTROLLER_SERVER_CMD_GET_TURN, NULL, 0)
+       || !recvResponse(sizeof(Turn))
+       || *((unsigned int*)recv_buffer_ptr_) != CONTROLLER_SERVER_CMD_GET_TURN)
+    {
+        return PROCESS_COMM_OPERATION_FAILED;
+    }
+    memcpy(&turn, recv_buffer_ptr_ + PROCESS_COMM_CMD_ID_SIZE, sizeof(Turn));
+    return SUCCESS;
+}
+
+
+
 
 bool InterpreterClient::sendRequest(unsigned int cmd_id, void* data_ptr, int send_size)
 {

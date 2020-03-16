@@ -40,10 +40,10 @@ public:
     virtual std::vector<PayloadSummaryInfo> getAllValidPayloadSummaryInfo(void);
     virtual void getAllValidPayloadSummaryInfo(std::vector<PayloadSummaryInfo>& info_list);  
     
-    static const double DYN_DOUBLE_ACCURACY = 1e-6;
-    static const double G = -9.81;
-    static const int LINKS = 6;
-    static const int PARAM_SET = 52;
+    static constexpr double DYN_DOUBLE_ACCURACY = 1e-6;
+    static constexpr double G = -9.81;
+    static constexpr int LINKS = 6;
+    static constexpr int PARAM_SET = 52;
 
 private:
 
@@ -67,7 +67,7 @@ private:
     bool getMatrixLUInverse(const double src[LINKS][LINKS], int n, double dest[LINKS][LINKS]);
     bool matrixLUPDecomposition(double A[LINKS*LINKS], double L[LINKS*LINKS], double U[LINKS*LINKS], int P[LINKS]);
     bool matrixLUPSolve(const double L[LINKS*LINKS], const double U[LINKS*LINKS], const int P[LINKS], const double b[LINKS], double inv_A_column[LINKS]);
-    bool matrixTranspose(double matrix[LINKS*LINKS], int m, int n);
+    void matrixTranspose(double matrix[LINKS*LINKS], int m, int n);
 
     DH base_dh_;
     DH arm_dh_[6];

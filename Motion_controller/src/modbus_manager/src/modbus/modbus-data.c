@@ -47,13 +47,13 @@
 # define bswap_16 _byteswap_ushort
 #endif
 
-#if !defined(bswap_16)
-#   warning "Fallback on C functions for bswap_16"
+// #if !defined(bswap_16)
+// #   warning "Fallback on C functions for bswap_16"
 static inline uint16_t bswap_16(uint16_t x)
 {
     return (x >> 8) | (x << 8);
 }
-#endif
+// #endif
 
 #if !defined(bswap_32)
 #   warning "Fallback on C functions for bswap_32"

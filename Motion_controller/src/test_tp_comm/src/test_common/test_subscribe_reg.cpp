@@ -55,7 +55,7 @@ int main()
         }
 
         printf("Sub : recv topic hash = %x\n", recv_hash);
-        printf("Sub : recv time_stamp = %d\n", msg.time_stamp);
+        printf("Sub : recv time_stamp = %lld\n", msg.time_stamp);
         printf("Sub : recv element_count = %d\n", msg.element_count);
 
         MessageType_PrValue pr_value;
@@ -64,7 +64,7 @@ int main()
         MessageType_MrValue mr_value;
         MessageType_RValue r_value;
 
-        for (int i = 0 ; i != msg.element_count; ++i)
+        for (size_t i = 0 ; i != msg.element_count; ++i)
         {
             int reg_type =  (msg.element[i].hash >> 16);
             int reg_index = (msg.element[i].hash & 0x00ff);
@@ -88,12 +88,12 @@ int main()
                         cout << "Reply : pr_value.pos.data_count = " << pr_value.pos.data_count << endl;
                         cout << "Reply : pr_value.posture.data_count = " << pr_value.posture.data_count << endl;
                     
-                        for (int i = 0; i != pr_value.pos.data_count; ++i)
+                        for (size_t i = 0; i != pr_value.pos.data_count; ++i)
                         {
                             cout << "Reply : pr_value..pos.data[" << i << "] = " << pr_value.pos.data[i] << endl;
                         }
                     
-                        for (int i = 0; i != pr_value.posture.data_count; ++i)
+                        for (size_t i = 0; i != pr_value.posture.data_count; ++i)
                         {
                             cout << "Reply : pr_value.posture.data[" << i << "] = " << pr_value.posture.data[i] << endl;
                         }
@@ -131,12 +131,12 @@ int main()
                         cout << "Reply : hr_value.joints.data_count = " <<hr_value.joint_pos.data_count << endl;
                         cout << "Reply : hr_value.diffs.data_count = " << hr_value.diff_pos.data_count << endl;
                     
-                        for (int i = 0; i != hr_value.joint_pos.data_count; ++i)
+                        for (size_t i = 0; i != hr_value.joint_pos.data_count; ++i)
                         {
                             cout << "Reply : hr_value.joint_pos.data[" << i << "] = " << hr_value.joint_pos.data[i] << endl;
                         }
                     
-                        for (int i = 0; i != hr_value.diff_pos.data_count; ++i)
+                        for (size_t i = 0; i != hr_value.diff_pos.data_count; ++i)
                         {
                             cout << "Reply : hr_value.diff_pos.data[" << i << "] = " << hr_value.diff_pos.data[i] << endl;
                         }

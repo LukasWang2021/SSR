@@ -43,5 +43,7 @@ void ControllerIpc::initIpcTable()
     ipc_service = {CONTROLLER_SERVER_CMD_OP_MODE, &ControllerIpc::handleIpcUserOpMode}; ipc_table_.push_back(ipc_service);
     ipc_service = {CONTROLLER_SERVER_CMD_SET_DO_PULSE, &ControllerIpc::handleIpcSetDoPulse}; ipc_table_.push_back(ipc_service);
     ipc_service = {CONTROLLER_SERVER_CMD_SET_RO_PULSE, &ControllerIpc::handleIpcSetRoPulse}; ipc_table_.push_back(ipc_service);
+    ipc_service = {CONTROLLER_SERVER_CMD_GET_POSTURE, &ControllerIpc::handleIpcGetPosture}; ipc_table_.push_back(ipc_service);
+    ipc_service = {CONTROLLER_SERVER_CMD_GET_TURN, &ControllerIpc::handleIpcGetTurn}; ipc_table_.push_back(ipc_service);
 }
 

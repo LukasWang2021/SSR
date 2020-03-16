@@ -691,3 +691,27 @@ void ControllerServer::handleRequestSetRoPulse()
     copyRecvBufferToRequestData(request_data_ptr, sizeof(RequestSetPulse));
     pushTaskToRequestList(CONTROLLER_SERVER_CMD_SET_RO_PULSE, (void*)request_data_ptr, (void*)response_data_ptr); 
 }
+
+//getPosture
+void ControllerServer::handleRequestGetPosture()
+{
+    Posture* response_data_ptr = new Posture;
+    if(response_data_ptr == NULL)
+    {
+        FST_ERROR("handleRequest: can't allocate memory for response_data");
+        return;
+    }
+    pushTaskToRequestList(CONTROLLER_SERVER_CMD_GET_POSTURE, NULL, (void*)response_data_ptr);
+}
+
+//getTurn
+void ControllerServer::handleRequestGetTurn()
+{
+    Turn* response_data_ptr = new Turn;
+    if(response_data_ptr == NULL)
+    {
+        FST_ERROR("handleRequest: can't allocate memory for response_data");
+        return;
+    }
+    pushTaskToRequestList(CONTROLLER_SERVER_CMD_GET_TURN, NULL, (void*)response_data_ptr);
+}

@@ -43,6 +43,9 @@ typedef unsigned long long int ErrorCode;
 #define MC_SEND_TRAJECTORY_FAIL (unsigned long long int)0x0001000700A90009   /*fail to send trajectory to barecore*/
 #define MC_TOOL_MISMATCH (unsigned long long int)0x0001000700A9000A   /*tool of the target point mismatch with the activated tool*/
 #define MC_FRAME_MISMATCH (unsigned long long int)0x0001000700A9000B   /*frame of the target point mismatch with the activated frame*/
+#define MC_POSTURE_MISMATCH (unsigned long long int)0x0001000700A9000C   /*posture of the target point mismatch with the start or via point*/
+#define MC_TURN_MISMATCH (unsigned long long int)0x0001000700A9000D   /*turn of the last point in path cache mismatch with the target point*/
+#define MC_TRAJECTORY_OUT_OF_TARGET (unsigned long long int)0x0001000400A9000E   /*last point of the trajectory different with target*/
 #define MC_COMPUTE_IK_FAIL (unsigned long long int)0x0001000400A903E9   /*compute IK failed*/
 #define FAIL_LOADING_PARAMETER (unsigned long long int)0x0011000200A903EB   /*load parameter failed*/
 #define JOINT_OUT_OF_CONSTRAINT (unsigned long long int)0x0001000400A903F3   /*joint out of constraint*/
@@ -51,6 +54,7 @@ typedef unsigned long long int ErrorCode;
 #define CALIBRATION_FAULT (unsigned long long int)0x0001000A00A907D1   /*error while calibrating zero offset*/
 #define ZERO_OFFSET_LOST (unsigned long long int)0x0001000200A907D2   /*one or more axis lost its zero offset*/
 #define ZERO_OFFSET_DEVIATE (unsigned long long int)0x0001000200A907D3   /*axis zero offset deviated*/
+#define ZERO_OFFSET_INVALID (unsigned long long int)0x0001000200A907D4   /*axis {0} zero offset invalid*/
 #define FAIL_GET_FEEDBACK_JOINT (unsigned long long int)0x0001000600A907E6   /*fail to get FeedbackJointState*/
 #define IPC_COMMUNICATION_ERROR (unsigned long long int)0x0001000200A907E7   /*fail to communication with other process*/
 #define TRAJECTORY_FIFO_FULL (unsigned long long int)0x0000000100A90BB9   /*trajectory fifo is full*/
@@ -59,6 +63,7 @@ typedef unsigned long long int ErrorCode;
 #define TARGET_COINCIDENCE (unsigned long long int)0x0001000200A90BC2   /*target pose is same as target or start pose*/
 #define MC_PATH_PLANNING_FAIL (unsigned long long int)0x0001000400A90BBB   /*fail to plan a valid path*/
 #define MC_TRAJECTORY_PLANNING_FAIL (unsigned long long int)0x0001000400A90BBC   /*fail to plan a valid trajectory*/
+#define MC_TRAJECTORY_SMOOTH_FAIL (unsigned long long int)0x0001000400A90BBD   /*fail to plan smooth from one trajectory to another trajectory*/
 #define MC_FAIL_MANUAL_TO_POINT (unsigned long long int)0x0001000200A90FA0   /*fail to manual move to target point*/
 #define MC_FAIL_MANUAL_STEP (unsigned long long int)0x0001000200A90FA1   /*fail to manual move step*/
 #define MC_FAIL_MANUAL_CONTINUOUS (unsigned long long int)0x0001000200A90FA2   /*fail to manual move continuous*/
@@ -204,6 +209,8 @@ typedef unsigned long long int ErrorCode;
 #define CONTROLLER_INVALID_OPERATION_RESET (unsigned long long int)0x0001000200A8001B   /*Controller failed to do reset*/
 #define CONTROLLER_OFFSET_NEED_CALIBRATE (unsigned long long int)0x0001000200A8001C   /*Controller needs to calibrate the offset */
 #define CONTROLLER_SAFETY_NOT_READY (unsigned long long int)0x0001000200A8001D   /*Controller detects the safety board is not ready when reset operation*/
+#define CONTROLLER_DECTECT_SERVO_ABNORMAL (unsigned long long int)0x0001000B00A8001F   /*Controller detects the servo state is disable*/
+
 #define TP_COMM_LOG (unsigned long long int)0x0000000100A70000   /*TpComm log{0}*/
 #define TP_COMM_LOAD_PARAM_FAILED (unsigned long long int)0x0011000B00A70001   /*TpComm loading param is failed in initialization phase*/
 #define TP_COMM_INIT_OBJECT_FAILED (unsigned long long int)0x0011000B00A70002   /*TpComm failed to initialize internal variables*/
@@ -284,7 +291,7 @@ typedef unsigned long long int ErrorCode;
 #define INFO_INTERPRETER_TOO_LONG_PROJECT_NAME          (unsigned long long int)0x0001000900AA0018   /*Project name does too long*/
 #define INFO_INTERPRETER_ARITHMETIC_EXCEPTION           (unsigned long long int)0x0001000900AA0019   /*Arithm Exception(Ex:Division By Zero)*/
 #define INFO_INTERPRETER_UNKNOWN_ARITHM                 (unsigned long long int)0x0001000900AA001A   /*Unknown Arithm Operator in the program*/
-#define INFO_INTERPRETER_WAIT_TIMEOUT                   (unsigned long long int)0x0001000900AA001B   /*WAIT Timeout in the program*/
+#define INFO_INTERPRETER_WAIT_TIMEOUT                   (unsigned long long int)0x0001000200AA001B   /*WAIT Timeout in the program*/
 #define INFO_INTERPRETER_OVERRUN_HOME_POSE              (unsigned long long int)0x0001000900AA001C   /*Home Pose of program out of range*/
 #define INFO_INTERPRETER_HOME_POSE_NOT_EXIST            (unsigned long long int)0x0001000900AA001D   /*Home Pose of program does not exist*/
 #define FAIL_INTERPRETER_DUPLICATE_START                (unsigned long long int)0x0001000900AA001E   /*Duplicate START is executing*/
@@ -292,6 +299,7 @@ typedef unsigned long long int ErrorCode;
 #define INFO_INTERPRETER_BACK_TO_LOGIC                  (unsigned long long int)0x0001000200AA0020   /*reverted executing to logic statement*/
 #define INFO_INTERPRETER_XML_WRONG_ELEMENT              (unsigned long long int)0x0001000200AA0021   /*Wrong Command in FunctionBody*/
 #define FAIL_INTERPRETER_SPECIAL_CHARACTER              (unsigned long long int)0x0001000900AA0022   /*Finding special character*/
+#define WARN_INTERPRETER_DEFAULT_TIMEOUT                (unsigned long long int)0x0001000400AA0023   /*Wait condition default time out*/
 
 #define FAIL_INTERPRETER_ALARM_EXEC_BASE                (unsigned long long int)0x0000000200AA0100   /*User defined WARNING：User Alarm BASE*/
 #define FAIL_INTERPRETER_USER_ALARM1                    (unsigned long long int)0x0001000200AA0101   /*User defined WARNING：User Alarm 1*/
@@ -322,6 +330,7 @@ typedef unsigned long long int ErrorCode;
 
 #define SAFETY_BOARD_DEBUG_ERROR (unsigned long long int)0x0001000700D90000   /*SafetyBoardDebug error code {0}*/
 
+#define DOUBLES_TIME_OUT_OF_RANGE (unsigned long long int)0x0001000200B90000   /*TrajectoryPlanner detected time out of range to plan double s*/
 
 #endif
 

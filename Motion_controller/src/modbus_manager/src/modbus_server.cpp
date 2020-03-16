@@ -3,6 +3,7 @@
 #include "error_monitor.h"
 #include "error_code.h"
 #include "serverAlarmApi.h"
+#include <sys/syscall.h>
 
 using namespace fst_hal;
 
@@ -423,7 +424,7 @@ ErrorCode ModbusServer::openServer()
     if (error_code != SUCCESS) return error_code;
 
     is_running_ = true;
-    if(!thread_ptr_.run(&modbusServerRoutineThreadFunc, this, thread_priority_))
+    if(!thread_ptr_.run(modbusServerRoutineThreadFunc, this, thread_priority_))
     {
         FST_ERROR("Failed to open ModbusTcpServer");
         return MODBUS_SERVER_OPEN_FAILED;
@@ -544,7 +545,7 @@ ErrorCode ModbusServer::writeCoils(int addr, int nb, uint8_t *dest)
         return MODBUS_SERVER_NOT_OPENED;
 
     tab_bit_mutex_.lock();
-    for (unsigned int i = addr; i < addr + nb; i++)
+    for (int i = addr; i < addr + nb; i++)
     {
         mb_mapping_->tab_bits[i] = (*dest) & 0x01;
         dest++;
@@ -570,7 +571,7 @@ ErrorCode ModbusServer::readCoils(int addr, int nb, uint8_t *dest)
         return MODBUS_SERVER_NOT_OPENED;
 
     tab_bit_mutex_.lock();
-    for (unsigned int i = addr; i < addr + nb; i++)
+    for (int i = addr; i < addr + nb; i++)
     {
         *dest = mb_mapping_->tab_bits[i];
         dest++;
@@ -595,7 +596,7 @@ ErrorCode ModbusServer::readDiscreteInputs(int addr, int nb, uint8_t *dest)
         return MODBUS_SERVER_NOT_OPENED;
 
     tab_input_bit_mutex_.lock();
-    for (unsigned int i = addr; i < addr + nb; i++)
+    for (int i = addr; i < addr + nb; i++)
     {
         *dest = mb_mapping_->tab_input_bits[i];
         dest++;
@@ -621,7 +622,7 @@ ErrorCode ModbusServer::writeHoldingRegs(int addr, int nb, uint16_t *dest)
         return MODBUS_SERVER_NOT_OPENED;
 
     tab_reg_mutex_.lock();
-    for (unsigned int i = addr; i < addr + nb; i++)
+    for (int i = addr; i < addr + nb; i++)
     {
         mb_mapping_->tab_registers[i] = (*dest) & 0xffff;
         dest++;
@@ -647,7 +648,7 @@ ErrorCode ModbusServer::readHoldingRegs(int addr, int nb, uint16_t *dest)
         return MODBUS_SERVER_NOT_OPENED;
 
     tab_reg_mutex_.lock();
-    for (unsigned int i = addr; i < addr + nb; i++)
+    for (int i = addr; i < addr + nb; i++)
     {
         *dest = mb_mapping_->tab_registers[i];
         dest++;
@@ -673,7 +674,7 @@ ErrorCode ModbusServer::readInputRegs(int addr, int nb, uint16_t *dest)
         return MODBUS_SERVER_NOT_OPENED;
 
     tab_input_reg_mutex_.lock();
-    for (unsigned int i = addr; i < addr + nb; i++)
+    for (int i = addr; i < addr + nb; i++)
     {
         *dest = mb_mapping_->tab_input_registers[i];
         dest++;
@@ -700,7 +701,7 @@ ErrorCode ModbusServer::writeInputRegs(int addr, int nb, uint16_t *dest)
         return MODBUS_SERVER_NOT_OPENED;
 
     tab_input_reg_mutex_.lock();
-    for (unsigned int i = addr; i < addr + nb; i++)
+    for (int i = addr; i < addr + nb; i++)
     {
         mb_mapping_->tab_input_registers[i] = (*dest) & 0xffff;
         dest++;
@@ -719,11 +720,17 @@ ModbusServerConfigParams ModbusServer::getConfigParams()
     return params;
 }
 
-void modbusServerRoutineThreadFunc(void* arg)
+void* modbusServerRoutineThreadFunc(void* arg)
 {
+    fst_log::Logger* log_ptr_ = new fst_log::Logger();
+    FST_LOG_INIT("ThreadModbusServer");
+    FST_WARN("ThreadModbusServer TID is %ld", syscall(SYS_gettid));
+
     ModbusServer* modbus_server = static_cast<ModbusServer*>(arg);
     while(modbus_server->isRunning())
     {
         modbus_server->modbusTcpServerThreadFunc();
     }
+    delete log_ptr_;
+    return NULL;
 }

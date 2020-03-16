@@ -1,3 +1,4 @@
+/*
 #include "stdio.h"
 #include "version.h"
 
@@ -39,4 +40,4 @@ int get_ver_rev()
 {  
     return VER_REVISION;
 }
-  
+*/  

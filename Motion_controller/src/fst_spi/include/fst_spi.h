@@ -29,7 +29,7 @@ class FstSpi {
         static FstSpi* getInstance();
     public:
         ErrCode transferData(uint8_t *tx, uint8_t *rx, uint32_t len);
-        bool trylockSpi();
+        void lockSpi();
         void unlockSpi();
     private:
         FstSpi();

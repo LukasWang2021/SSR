@@ -76,7 +76,7 @@ int main()
     cout << "Reply : msg.header.package_left = " << recv_msg.header.package_left << endl;
     cout << "Reply : msg.header.error_code = " << recv_msg.header.error_code << endl;
     cout << "Reply : msg.property.authority = " << recv_msg.property.authority << endl;
-    printf("Reply : msg.error_code.data = 0x%x\n", recv_msg.error_code.data);
+    printf("Reply : msg.error_code.data = 0x%llx\n", recv_msg.error_code.data);
     cout << "Reply : msg.error_code.data = " << std::hex << recv_msg.error_code.data << endl;
     cout << "Reply : msg.data.data = " << recv_msg.data.data << endl;
 

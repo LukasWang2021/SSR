@@ -80,7 +80,7 @@ int main()
     cout << "Reply : msg.error_code.data = " << recv_msg.error_code.data << endl;
     cout << "Reply : msg.data.data_count = " << recv_msg.data.data_count << endl;
 
-    for (int i = 0; i != recv_msg.data.data_count; ++i)
+    for (size_t i = 0; i != recv_msg.data.data_count; ++i)
     {
         cout << "Reply : recv_msg.data.data["<< i <<"] = " << recv_msg.data.data[i] << endl;  
     }

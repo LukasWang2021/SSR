@@ -111,6 +111,16 @@ enum AxisType
     LINEAR_AXIS = 1,
 };
 
+enum EncoderState
+{
+    VALID = 0,
+    BATTERY_ERROR = 1,
+    BATTERY_WARN = 2,
+    COMMUNICATION_LOST = 4,
+    COMMUNICATION_ERROR = 8,
+    INVALID = 16,
+};
+
 enum GroupState
 {
     UNKNOW  = 0x0,
@@ -122,6 +132,7 @@ enum GroupState
     PAUSE_RETURN = 0x6,
     PAUSE_MANUAL = 0x7,
     PAUSING = 0x8,
+    OFFLINE = 0x9,
 
     DISABLE_TO_STANDBY = 0x12,
     STANDBY_TO_DISABLE = 0x21,
@@ -129,6 +140,8 @@ enum GroupState
     STANDBY_TO_MANUAL = 0x23,
     AUTO_TO_STANDBY = 0x42,
     STANDBY_TO_AUTO = 0x24,
+    OFFLINE_TO_STANDBY = 0x92,
+    STANDBY_TO_OFFLINE = 0x29,
     AUTO_TO_PAUSE = 0x45,
     PAUSE_RETURN_TO_STANDBY = 0x62,
     PAUSE_TO_PAUSE_RETURN = 0x56,

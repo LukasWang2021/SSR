@@ -79,7 +79,7 @@ ErrorCode SystemManager::init(void)
 void SystemManager::controllerBackup(void)
 {
     command_type_ = INSTALL_BACKUP;
-    if(!thread_ptr_.run(&systemManagerRoutineThreadFunc, this, 20))
+    if(!thread_ptr_.run(systemManagerRoutineThreadFunc, this, 20))
     {
         FST_ERROR("Failed to open system_manager software backup thread");
         ErrorMonitor::instance()->add(SYS_START_THREAD_FAIL);
@@ -89,7 +89,7 @@ void SystemManager::controllerBackup(void)
 void SystemManager::controllerRestore(void)
 {
     command_type_ = INSTALL_RESTORE;
-    if(!thread_ptr_.run(&systemManagerRoutineThreadFunc, this, 20))
+    if(!thread_ptr_.run(systemManagerRoutineThreadFunc, this, 20))
     {
         FST_ERROR("Failed to open system_manager software restore thread");
         ErrorMonitor::instance()->add(SYS_START_THREAD_FAIL);
@@ -239,7 +239,7 @@ bool SystemManager::checkSize(std::string path)
 }
 
 // thread function
-void systemManagerRoutineThreadFunc(void* arg)
+void* systemManagerRoutineThreadFunc(void* arg)
 {
     std::cout<<"system_manager routine thread running"<<std::endl;
     /* start time messurement. */
@@ -252,6 +252,7 @@ void systemManagerRoutineThreadFunc(void* arg)
     /* end time measurement. */
     t_end = clock();
     printf("system_manager routine(time:%f s) thread exit", (double)(t_end - t_start)/CLOCKS_PER_SEC);
+    return NULL;
 }
 
 

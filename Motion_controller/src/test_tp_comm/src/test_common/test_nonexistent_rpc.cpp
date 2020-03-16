@@ -66,7 +66,7 @@ int main()
 
     cout << "Recv buf success!" << endl;
 
-    ResponseMessageType_Void recv_msg;
+    // ResponseMessageType_Void recv_msg;
     unsigned int recv_hash = 0;
 
     memcpy(&recv_hash, buf, 4);

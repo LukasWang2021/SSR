@@ -48,6 +48,7 @@ add_library(log_service
 
 target_link_libraries(log_service
     ${catkin_LIBRARIES}
+    boost_filesystem
 )
 
 install(TARGETS log_service

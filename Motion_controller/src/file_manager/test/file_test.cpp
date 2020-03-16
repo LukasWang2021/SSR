@@ -17,7 +17,6 @@ Summary:    test process
 int main(int argc, char** argv)
 {
     fst_base::FileManager op;
-    unsigned long long int err = 0;
     long length = 0;
     const char *path = "/root/robot_data/io/io_mapping/di_mapping.json";
 

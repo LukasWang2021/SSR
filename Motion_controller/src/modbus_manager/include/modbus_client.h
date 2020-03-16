@@ -72,8 +72,8 @@ private:
     enum {SOCKET_ID_MIN = 1, SOCKET_ID_MAX = 247, };
     enum RegsOneOpNum{ STATUS_ONE_OP_NUM = 1024, REGISTER_ONE_OP_NUM = 121, };
 
-    int log_level_;
     bool is_debug_;
+    int log_level_;
 
     bool is_config_param_valid_;
     int ctrl_state_;

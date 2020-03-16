@@ -338,7 +338,8 @@ bool HrReg::createYaml()
     fd.close();
     
     yaml_help_.loadParamFile(file_path_.c_str());
-    for(int i = 1; i < data_list_.size(); ++i)
+    int length = static_cast<int>(data_list_.size());
+    for(int i = 1; i < length; ++i)
     {
         std::string reg_path = getRegPath(i);
         yaml_help_.setParam(reg_path + "/id", i);
@@ -371,15 +372,16 @@ bool HrReg::createYaml()
 bool HrReg::readAllRegDataFromYaml()
 {
     yaml_help_.loadParamFile(file_path_.c_str());
-    for(int i = 1; i < data_list_.size(); ++i)
+    int length = static_cast<int>(data_list_.size());
+    for(int i = 1; i < length; ++i)
     {
         std::string reg_path = getRegPath(i);
         BaseRegData base_data;
-        std::string name, comment;
+        // std::string name, comment;
         yaml_help_.getParam(reg_path + "/id", base_data.id);
         yaml_help_.getParam(reg_path + "/is_valid", base_data.is_valid);
-        yaml_help_.getParam(reg_path + "/name", name);
-        yaml_help_.getParam(reg_path + "/comment", comment);
+        yaml_help_.getParam(reg_path + "/name", base_data.name);
+        yaml_help_.getParam(reg_path + "/comment", base_data.comment);
         base_data.is_changed = true;
         if(!setRegList(base_data))
         {

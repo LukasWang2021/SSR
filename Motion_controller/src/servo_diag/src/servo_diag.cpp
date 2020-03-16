@@ -83,8 +83,16 @@ void ServoDiag::servoDiagThread(Servconf *servconf,
             }
             case PC_SETTRIGGER:
             {
-                ErrorCode err = service->setTrig(&pkg.data[8],*(int*)&pkg.data[0],(int*)&pkg.data[0]);
-                DataMonitor::setSnapshotSize(monitor,*(unsigned int*)&pkg.data[4]);
+                unsigned short nameindex = 8;
+                unsigned short trigger_type = 0;
+                if('*'== pkg.data[nameindex])
+                {
+                    nameindex += 1;
+                    trigger_type = 1;
+                }
+
+                ErrorCode err = service->setTrig(&pkg.data[nameindex],*(int*)&pkg.data[0],(int*)&pkg.data[0]);
+                DataMonitor::setSnapshotSize(monitor,*(unsigned int*)&pkg.data[4],trigger_type);
                 if(SUCCESS!=err)  
                 {
                     std::cout<<"Set trigger failed!"<<std::endl;
@@ -172,8 +180,8 @@ int main(int argc, char** argv)
     
     if (1 == argc)
     {
-        pconf->initDownloadConf(*pservice);
-        std::cout << "initDownloadConf: done" << std::endl;
+        //pconf->initDownloadConf(*pservice);
+        //std::cout << "initDownloadConf: done" << std::endl;
     }
     else
     {

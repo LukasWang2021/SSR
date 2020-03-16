@@ -11,8 +11,8 @@ namespace basic_alg
 {
 
 DynamicAlgRTM::DynamicAlgRTM():
-    log_ptr_(NULL),
     param_ptr_(NULL),
+    log_ptr_(NULL),
     is_valid_(false),
     current_payload_id_(0),
     acc_scale_factor_(1.0)
@@ -1521,15 +1521,7 @@ void DynamicAlgRTM::computeMatrixElementInverseDynamics(const Joint& joint, cons
 
 int DynamicAlgRTM::sign(double value)
 {
-    if (value >= 0)
-    {
-        return 1;
-    }
-    else if (value < 0)
-    {
-        return -1;
-    }
-
+    return value >= 0 ? 1 : -1;
 }
 
 void DynamicAlgRTM::getTorqueFromCurve(const JointVelocity& vel, JointTorque &torque)
@@ -1916,7 +1908,7 @@ bool DynamicAlgRTM::matrixLUPSolve(const double L[LINKS*LINKS], const double U[L
     return true;
 }
 
-bool DynamicAlgRTM::matrixTranspose(double matrix[LINKS*LINKS], int m, int n)
+void DynamicAlgRTM::matrixTranspose(double matrix[LINKS*LINKS], int m, int n)
 {
     for(int i = 0; i < m*n; ++i)
     {
@@ -1939,7 +1931,6 @@ bool DynamicAlgRTM::matrixTranspose(double matrix[LINKS*LINKS], int m, int n)
             matrix[cur] = temp;
         }
     }
-
 }
 
 

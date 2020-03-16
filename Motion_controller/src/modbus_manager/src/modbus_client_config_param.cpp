@@ -27,7 +27,7 @@ bool ModbusClientConfigParam::loadParam()
 
     vector<ModbusClientConfigParams>::iterator it = client_config_list_.begin();
 
-    for(int client_id = 1; client_id != client_config_list_.size() + 1; client_id++)
+    for(uint32_t client_id = 1; client_id != client_config_list_.size() + 1; client_id++)
     {
         std::string id_str;
         std::stringstream stream;

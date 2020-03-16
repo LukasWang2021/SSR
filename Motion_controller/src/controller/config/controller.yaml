@@ -19,4 +19,11 @@ max_limited_manual_vel_cart: 250.0 #250mm/s
 max_limited_manual_vel_joint: 0.055 #18.5*3.14/180/5.81 = 0.055
 loop_count: 20
 enable_set_vel_in_auto: true
+hp_joints:
+    - -22.756
+    - -38.302
+    - -7.566
+    - -3.21
+    - -43.194
+    - 69.325
 #END

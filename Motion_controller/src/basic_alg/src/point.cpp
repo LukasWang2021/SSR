@@ -23,7 +23,7 @@ bool Point::isEqual(const Point& point, double valve) const
 
 bool Point::isParallel(const Point& point, double valve) const
 {
-    double max1, max2;
+    double max1;
     int max_index;
     max1 = point.x_;
     max_index = 1;
@@ -153,18 +153,11 @@ double Point::dotProduct(const Point& point) const
     return (x_ * point.x_ + y_ * point.y_ + z_ * point.z_);
 }
 
-void Point::crossProduct(const Point& by, Point& result)
+void Point::crossProduct(const Point& by, Point& result) const
 {
-    if(&result != this)
-    {
-        result.x_ = y_ * by.z_ - z_ * by.y_;
-        result.y_ = z_ * by.x_ - x_ * by.z_;
-        result.z_ = x_ * by.y_ - y_ * by.x_;
-    }
-    else
-    {
-        crossProduct(by);
-    }
+    result.x_ = y_ * by.z_ - z_ * by.y_;
+    result.y_ = z_ * by.x_ - x_ * by.z_;
+    result.z_ = x_ * by.y_ - y_ * by.x_;
 }
 
 void Point::crossProduct(const Point& by)
@@ -188,7 +181,7 @@ const double& Point::operator[](size_t index) const
     return *(&x_ + index);
 }
 
-const Point Point::operator+(const Point& point)
+const Point Point::operator+(const Point& point) const
 {
     Point result;
     result.x_ = x_ + point.x_;
@@ -197,7 +190,7 @@ const Point Point::operator+(const Point& point)
     return result;
 }
 
-const Point Point::operator-(const Point& point)
+const Point Point::operator-(const Point& point) const
 {
     Point result;
     result.x_ = x_ - point.x_;
@@ -222,7 +215,7 @@ Point& Point::operator-=(const Point& point)
     return *this;
 }
 
-const Point Point::operator*(double value)
+const Point Point::operator*(double value) const
 {
     Point result;    
     result.x_ = value * x_;

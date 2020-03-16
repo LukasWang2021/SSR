@@ -10,20 +10,20 @@ void ControllerRpc::handleRpc0x0000D3A5(void* request_data_ptr, void* response_d
 
     rs_data_ptr->data.data = modbus_manager_ptr_->setStartMode(rq_data_ptr->data.data);
 
-    //if (rs_data_ptr->data.data != SUCCESS)
+    if (rs_data_ptr->data.data != SUCCESS)
         recordLog(MODBUS_LOG, rs_data_ptr->data.data, std::string("/rpc/modbus/setStartMode"));
 }
 
 //"/rpc/modbus/getStartMode"	
 void ControllerRpc::handleRpc0x000041C5(void* request_data_ptr, void* response_data_ptr)
 {
-    RequestMessageType_Void* rq_data_ptr = static_cast<RequestMessageType_Void*>(request_data_ptr);
+    //RequestMessageType_Void* rq_data_ptr = static_cast<RequestMessageType_Void*>(request_data_ptr);
     ResponseMessageType_Uint64_Int32* rs_data_ptr = static_cast<ResponseMessageType_Uint64_Int32*>(response_data_ptr);
 
     rs_data_ptr->error_code.data = SUCCESS;
     rs_data_ptr->data.data = modbus_manager_ptr_->getStartMode();
 
-    //if (rs_data_ptr->error_code.data != SUCCESS)
+    if (rs_data_ptr->error_code.data != SUCCESS)
         recordLog(MODBUS_LOG, rs_data_ptr->error_code.data, std::string("/rpc/modbus/getStartMode"));
 }
 //"/rpc/modbus/setServerEnableStatus"
@@ -34,18 +34,18 @@ void ControllerRpc::handleRpc0x00004033(void* request_data_ptr, void* response_d
 
     rs_data_ptr->data.data = modbus_manager_ptr_->setServerEnableStatus(rq_data_ptr->data.data);
 
-    //if (rs_data_ptr->data.data != SUCCESS)
+    if (rs_data_ptr->data.data != SUCCESS)
         recordLog(MODBUS_LOG, rs_data_ptr->data.data, std::string("/rpc/modbus/setServerEnableStatus"));
 }
 //"/rpc/modbus/getServerEnableStatus"	
 void ControllerRpc::handleRpc0x00004C33(void* request_data_ptr, void* response_data_ptr)
 {
-    RequestMessageType_Void* rq_data_ptr = static_cast<RequestMessageType_Void*>(request_data_ptr);
+    //RequestMessageType_Void* rq_data_ptr = static_cast<RequestMessageType_Void*>(request_data_ptr);
     ResponseMessageType_Uint64_Bool* rs_data_ptr = static_cast<ResponseMessageType_Uint64_Bool*>(response_data_ptr);
 
     rs_data_ptr->error_code.data = modbus_manager_ptr_->getServerEnableStatus(rs_data_ptr->data.data);
 
-    //if (rs_data_ptr->error_code.data != SUCCESS)
+    if (rs_data_ptr->error_code.data != SUCCESS)
         recordLog(MODBUS_LOG, rs_data_ptr->error_code.data, std::string("/rpc/modbus/getServerEnableStatus"));
 
 }
@@ -62,14 +62,14 @@ void ControllerRpc::handleRpc0x0001300F(void* request_data_ptr, void* response_d
 
     rs_data_ptr->data.data = modbus_manager_ptr_->setServerStartInfo(start_info);
 
-    //if (rs_data_ptr->data.data != SUCCESS)
+    if (rs_data_ptr->data.data != SUCCESS)
          recordLog(MODBUS_LOG, rs_data_ptr->data.data, std::string("/rpc/modbus/setServerStartInfo"));
 }
 
 //"/rpc/modbus/getServerStartInfo"	
 void ControllerRpc::handleRpc0x000018AF(void* request_data_ptr, void* response_data_ptr)
 {
-    RequestMessageType_Void* rq_data_ptr = static_cast<RequestMessageType_Void*>(request_data_ptr);
+    //RequestMessageType_Void* rq_data_ptr = static_cast<RequestMessageType_Void*>(request_data_ptr);
     ResponseMessageType_Uint64_ModbusServerStartInfo* rs_data_ptr = static_cast<ResponseMessageType_Uint64_ModbusServerStartInfo*>(response_data_ptr);
 
     ModbusServerStartInfo start_info;
@@ -85,7 +85,7 @@ void ControllerRpc::handleRpc0x000018AF(void* request_data_ptr, void* response_d
         rs_data_ptr->data.response_delay = start_info.response_delay;
     }
     
-    //if (rs_data_ptr->error_code.data != SUCCESS)
+    if (rs_data_ptr->error_code.data != SUCCESS)
         recordLog(MODBUS_LOG, rs_data_ptr->error_code.data, std::string("/rpc/modbus/getServerStartInfo"));
 }
 
@@ -107,14 +107,14 @@ void ControllerRpc::handleRpc0x0000A4BF(void* request_data_ptr, void* response_d
 
     rs_data_ptr->data.data = modbus_manager_ptr_->setServerRegInfo(reg_info);
 
-    //if (rs_data_ptr->data.data != SUCCESS)
+    if (rs_data_ptr->data.data != SUCCESS)
         recordLog(MODBUS_LOG, rs_data_ptr->data.data, std::string("/rpc/modbus/setServerAllFunctionAddrInfo"));
 }
 
 //"/rpc/modbus/getServerAllFunctionAddrInfo"
 void ControllerRpc::handleRpc0x00005E1F(void* request_data_ptr, void* response_data_ptr)
 {
-    RequestMessageType_Void* rq_data_ptr = static_cast<RequestMessageType_Void*>(request_data_ptr);
+    //RequestMessageType_Void* rq_data_ptr = static_cast<RequestMessageType_Void*>(request_data_ptr);
     ResponseMessageType_Uint64_ModbusAllFucntionAddrInfo* rs_data_ptr = static_cast<ResponseMessageType_Uint64_ModbusAllFucntionAddrInfo*>(response_data_ptr);
 
     ModbusServerRegInfo reg_info;
@@ -132,13 +132,13 @@ void ControllerRpc::handleRpc0x00005E1F(void* request_data_ptr, void* response_d
         rs_data_ptr->data.input_reg.number = reg_info.input_reg.max_nb;
     }
 
-    //if (rs_data_ptr->error_code.data != SUCCESS)
+    if (rs_data_ptr->error_code.data != SUCCESS)
          recordLog(MODBUS_LOG, rs_data_ptr->error_code.data, std::string("/rpc/modbus/getServerAllFunctionAddrInfo"));
 }
 //"/rpc/modbus/getServerConfigParams"
 void ControllerRpc::handleRpc0x0000E2E3(void* request_data_ptr, void* response_data_ptr)
 {
-    RequestMessageType_Void* rq_data_ptr = static_cast<RequestMessageType_Void*>(request_data_ptr);
+    //RequestMessageType_Void* rq_data_ptr = static_cast<RequestMessageType_Void*>(request_data_ptr);
     ResponseMessageType_Uint64_ModbusServerConfigParams* rs_data_ptr = 
         static_cast<ResponseMessageType_Uint64_ModbusServerConfigParams*>(response_data_ptr);
 
@@ -165,14 +165,14 @@ void ControllerRpc::handleRpc0x0000E2E3(void* request_data_ptr, void* response_d
         rs_data_ptr->data.function_addr_info.input_reg.number = params.reg_info.input_reg.max_nb;
     }
 
-    //if (rs_data_ptr->error_code.data != SUCCESS)
+    if (rs_data_ptr->error_code.data != SUCCESS)
          recordLog(MODBUS_LOG, rs_data_ptr->error_code.data, std::string("/rpc/modbus/getServerConfigParams"));
 }
 
 //"/rpc/modbus/openServer"	
 void ControllerRpc::handleRpc0x00010912(void* request_data_ptr, void* response_data_ptr)
 {
-    RequestMessageType_Void* rq_data_ptr = static_cast<RequestMessageType_Void*>(request_data_ptr);
+    //RequestMessageType_Void* rq_data_ptr = static_cast<RequestMessageType_Void*>(request_data_ptr);
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
     rs_data_ptr->data.data = modbus_manager_ptr_->openServer();
@@ -183,7 +183,7 @@ void ControllerRpc::handleRpc0x00010912(void* request_data_ptr, void* response_d
 //"/rpc/modbus/closeServer"	
 void ControllerRpc::handleRpc0x000045B2(void* request_data_ptr, void* response_data_ptr)
 {
-    RequestMessageType_Void* rq_data_ptr = static_cast<RequestMessageType_Void*>(request_data_ptr);
+    //RequestMessageType_Void* rq_data_ptr = static_cast<RequestMessageType_Void*>(request_data_ptr);
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
     rs_data_ptr->data.data = modbus_manager_ptr_->closeServer();
@@ -194,13 +194,13 @@ void ControllerRpc::handleRpc0x000045B2(void* request_data_ptr, void* response_d
 //"/rpc/modbus/getServerRunningStatus"
 void ControllerRpc::handleRpc0x00000953(void* request_data_ptr, void* response_data_ptr)
 {
-    RequestMessageType_Void* rq_data_ptr = static_cast<RequestMessageType_Void*>(request_data_ptr);
+    //RequestMessageType_Void* rq_data_ptr = static_cast<RequestMessageType_Void*>(request_data_ptr);
     ResponseMessageType_Uint64_Bool* rs_data_ptr = static_cast<ResponseMessageType_Uint64_Bool*>(response_data_ptr);
 
     rs_data_ptr->error_code.data = SUCCESS;
     rs_data_ptr->data.data = modbus_manager_ptr_->isServerRunning();
 
-    //if (rs_data_ptr->error_code.data != SUCCESS)
+    if (rs_data_ptr->error_code.data != SUCCESS)
          recordLog(MODBUS_LOG, rs_data_ptr->error_code.data, std::string("/rpc/modbus/getServerRunningStatus"));
 }
 
@@ -210,7 +210,7 @@ void ControllerRpc::handleRpc0x0000BD83(void* request_data_ptr, void* response_d
     RequestMessageType_Int32_ModbusStatusInfo* rq_data_ptr = static_cast<RequestMessageType_Int32_ModbusStatusInfo*>(request_data_ptr);
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
-    if (rq_data_ptr->data2.number != rq_data_ptr->data2.value_count)
+    if (rq_data_ptr->data2.number != (int)(rq_data_ptr->data2.value_count))
     {
         rs_data_ptr->data.data = CONTROLLER_INVALID_ARG;
         recordLog(MODBUS_LOG, rs_data_ptr->data.data, std::string("/rpc/modbus/writeCoils"));
@@ -247,7 +247,7 @@ void ControllerRpc::handleRpc0x0000A433(void* request_data_ptr, void* response_d
         rs_data_ptr->data.number = rq_data_ptr->data2.number;
         rs_data_ptr->data.value_count = rq_data_ptr->data2.number;
 
-        for (int i = 0; i != rs_data_ptr->data.value_count; ++i)
+        for (uint32_t i = 0; i != rs_data_ptr->data.value_count; ++i)
         {
             rs_data_ptr->data.value[i] = static_cast<bool>(value[i]);
         }
@@ -280,7 +280,7 @@ void ControllerRpc::handleRpc0x0000C063(void* request_data_ptr, void* response_d
         rs_data_ptr->data.number = rq_data_ptr->data2.number;
         rs_data_ptr->data.value_count = rq_data_ptr->data2.number;
 
-        for (int i = 0; i != rs_data_ptr->data.value_count; ++i)
+        for (uint32_t i = 0; i != rs_data_ptr->data.value_count; ++i)
         {
             rs_data_ptr->data.value[i] = static_cast<bool>(value[i]);
         }
@@ -302,7 +302,7 @@ void ControllerRpc::handleRpc0x00008C43(void* request_data_ptr, void* response_d
     RequestMessageType_Int32_ModbusRegInfo* rq_data_ptr = static_cast<RequestMessageType_Int32_ModbusRegInfo*>(request_data_ptr);
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
-    if (rq_data_ptr->data2.number != rq_data_ptr->data2.value_count)
+    if (rq_data_ptr->data2.number != (int)(rq_data_ptr->data2.value_count))
     {
         rs_data_ptr->data.data = CONTROLLER_INVALID_ARG;
         recordLog(MODBUS_LOG, rs_data_ptr->data.data, std::string("/rpc/modbus/writeHoldingRegs"));
@@ -339,7 +339,7 @@ void ControllerRpc::handleRpc0x00003583(void* request_data_ptr, void* response_d
         rs_data_ptr->data.number = rq_data_ptr->data2.number;
         rs_data_ptr->data.value_count = rq_data_ptr->data2.number;
 
-        for (int i = 0; i != rs_data_ptr->data.value_count; ++i)
+        for (uint32_t i = 0; i != rs_data_ptr->data.value_count; ++i)
         {
             rs_data_ptr->data.value[i] = static_cast<uint16_t>(value[i]);
         }
@@ -372,7 +372,7 @@ void ControllerRpc::handleRpc0x000072C3(void* request_data_ptr, void* response_d
         rs_data_ptr->data.number = rq_data_ptr->data2.number;
         rs_data_ptr->data.value_count = rq_data_ptr->data2.number;
 
-        for (int i = 0; i != rs_data_ptr->data.value_count; ++i)
+        for (uint32_t i = 0; i != rs_data_ptr->data.value_count; ++i)
         {
             rs_data_ptr->data.value[i] = static_cast<uint16_t>(value[i]);
         }
@@ -404,7 +404,7 @@ void ControllerRpc::handleRpc0x00012E44(void* request_data_ptr, void* response_d
 
     rs_data_ptr->data.data = modbus_manager_ptr_->addClient(start_info);
 
-    //if (rs_data_ptr->data.data != SUCCESS)
+    if (rs_data_ptr->data.data != SUCCESS)
         recordLog(MODBUS_LOG, rs_data_ptr->data.data, std::string("/rpc/modbus/addClient"));
 }
 
@@ -415,14 +415,14 @@ void ControllerRpc::handleRpc0x00014CF4(void* request_data_ptr, void* response_d
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
     rs_data_ptr->data.data = modbus_manager_ptr_->deleteClient(rq_data_ptr->data.data);
 
-    //if (rs_data_ptr->data.data != SUCCESS)
+    if (rs_data_ptr->data.data != SUCCESS)
         recordLog(MODBUS_LOG, rs_data_ptr->data.data, std::string("/rpc/modbus/deleteClient"));
 }
 
 //"/rpc/modbus/getClientIdList"
 void ControllerRpc::handleRpc0x000046C4(void* request_data_ptr, void* response_data_ptr)
 {
-    RequestMessageType_Void* rq_data_ptr = static_cast<RequestMessageType_Void*>(request_data_ptr);
+    //RequestMessageType_Void* rq_data_ptr = static_cast<RequestMessageType_Void*>(request_data_ptr);
     ResponseMessageType_Uint64_Int32List* rs_data_ptr = static_cast<ResponseMessageType_Uint64_Int32List*>(response_data_ptr);
     
     vector<int> id_list;
@@ -433,13 +433,13 @@ void ControllerRpc::handleRpc0x000046C4(void* request_data_ptr, void* response_d
 
     vector<int>::iterator it = id_list.begin();
 
-    for (int i = 0; i != id_list.size(); ++i)
+    for (uint32_t i = 0; i != id_list.size(); ++i)
     {
         rs_data_ptr->data.data[i] = *it;
         it++;
     }
 
-    //if (rs_data_ptr->error_code.data != SUCCESS)
+    if (rs_data_ptr->error_code.data != SUCCESS)
         recordLog(MODBUS_LOG, rs_data_ptr->error_code.data, std::string("/rpc/modbus/getClientIdList"));
 }
 
@@ -452,7 +452,7 @@ void ControllerRpc::handleRpc0x00002AD3(void* request_data_ptr, void* response_d
     rs_data_ptr->data.data = modbus_manager_ptr_->setClientEnableStatus(
         rq_data_ptr->data1.data, rq_data_ptr->data2.data);
 
-    //if (rs_data_ptr->data.data != SUCCESS)
+    if (rs_data_ptr->data.data != SUCCESS)
         recordLog(MODBUS_LOG, rs_data_ptr->data.data, std::string("/rpc/modbus/setClientEnableStatus"));
 }
 //"/rpc/modbus/getClientEnableStatus"
@@ -464,7 +464,7 @@ void ControllerRpc::handleRpc0x00018573(void* request_data_ptr, void* response_d
     rs_data_ptr->error_code.data = modbus_manager_ptr_->getClientEnableStatus(
         rq_data_ptr->data.data, rs_data_ptr->data.data);
 
-    //if (rs_data_ptr->error_code.data != SUCCESS)
+    if (rs_data_ptr->error_code.data != SUCCESS)
          recordLog(MODBUS_LOG, rs_data_ptr->error_code.data, std::string("rpc/modbus/getClientEnableStatus"));
 }
 //"/rpc/modbus/setClientAllFunctionAddrInfo"
@@ -485,7 +485,7 @@ void ControllerRpc::handleRpc0x0000A4CF(void* request_data_ptr, void* response_d
 
     rs_data_ptr->data.data = modbus_manager_ptr_->setClientRegInfo(rq_data_ptr->data1.data, reg_info);
 
-    //if (rs_data_ptr->data.data != SUCCESS)
+    if (rs_data_ptr->data.data != SUCCESS)
          recordLog(MODBUS_LOG, rs_data_ptr->data.data, std::string("/rpc/modbus/setClientAllFunctionAddrInfo"));
 }
 //"/rpc/modbus/getClientAllFunctionAddrInfo"
@@ -510,7 +510,7 @@ void ControllerRpc::handleRpc0x0000132F(void* request_data_ptr, void* response_d
         rs_data_ptr->data.input_reg.number = reg_info.input_reg.max_nb;
     }
 
-    //if (rs_data_ptr->error_code.data != SUCCESS)
+    if (rs_data_ptr->error_code.data != SUCCESS)
         recordLog(MODBUS_LOG, rs_data_ptr->error_code.data, std::string("/rpc/modbus/getClientAllFunctionAddrInfo"));
 }
 
@@ -530,7 +530,7 @@ void ControllerRpc::handleRpc0x00008C7F(void* request_data_ptr, void* response_d
 
     rs_data_ptr->data.data = modbus_manager_ptr_->updateClientStartInfo(start_info);
 
-    //if (rs_data_ptr->data.data != SUCCESS)
+    if (rs_data_ptr->data.data != SUCCESS)
         recordLog(MODBUS_LOG, rs_data_ptr->data.data, std::string("/rpc/modbus/updateClientStartInfo"));
 }
 
@@ -555,8 +555,8 @@ void ControllerRpc::handleRpc0x0000084F(void* request_data_ptr, void* response_d
         rs_data_ptr->data.response_timeout = start_info.response_timeout;
     }
 
-    //if (rs_data_ptr->error_code.data != SUCCESS)
-    recordLog(MODBUS_LOG, rs_data_ptr->error_code.data, std::string("/rpc/modbus/getClientStartInfo"));
+    if (rs_data_ptr->error_code.data != SUCCESS)
+        recordLog(MODBUS_LOG, rs_data_ptr->error_code.data, std::string("/rpc/modbus/getClientStartInfo"));
 }
 
 //"/rpc/modbus/getClientConfigParams"
@@ -606,7 +606,7 @@ void ControllerRpc::handleRpc0x00009833(void* request_data_ptr, void* response_d
         rs_data_ptr->data.start_info.name[127] = '0';
     }
 
-    //if (rs_data_ptr->error_code.data != SUCCESS)
+    if (rs_data_ptr->error_code.data != SUCCESS)
         recordLog(MODBUS_LOG, rs_data_ptr->error_code.data, std::string("/rpc/modbus/getClientConfigParams"));
 }
 
@@ -617,7 +617,7 @@ void ControllerRpc::handleRpc0x00014594(void* request_data_ptr, void* response_d
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
     rs_data_ptr->data.data = modbus_manager_ptr_->connectClient(rq_data_ptr->data.data);
 
-    //if (rs_data_ptr->data.data != SUCCESS)
+    if (rs_data_ptr->data.data != SUCCESS)
         recordLog(MODBUS_LOG, rs_data_ptr->data.data, std::string("/rpc/modbus/connectClient"));
 }
 
@@ -628,7 +628,7 @@ void ControllerRpc::handleRpc0x00006CA4(void* request_data_ptr, void* response_d
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
     rs_data_ptr->data.data = modbus_manager_ptr_->closeClient(rq_data_ptr->data.data);
 
-    //if (rs_data_ptr->data.data != SUCCESS)
+    if (rs_data_ptr->data.data != SUCCESS)
         recordLog(MODBUS_LOG, rs_data_ptr->data.data, std::string("/rpc/modbus/closeClient"));
 }
 
@@ -639,7 +639,7 @@ void ControllerRpc::handleRpc0x00002FC4(void* request_data_ptr, void* response_d
     ResponseMessageType_Uint64_Bool* rs_data_ptr = static_cast<ResponseMessageType_Uint64_Bool*>(response_data_ptr);
     rs_data_ptr->error_code.data = modbus_manager_ptr_->isConnected(rq_data_ptr->data.data, rs_data_ptr->data.data);
 
-    //if (rs_data_ptr->error_code.data != SUCCESS)
+    if (rs_data_ptr->error_code.data != SUCCESS)
          recordLog(MODBUS_LOG, rs_data_ptr->error_code.data, std::string("/rpc/modbus/isClientConnected"));
 }
 
@@ -650,7 +650,7 @@ void ControllerRpc::handleRpc0x000170E3(void* request_data_ptr, void* response_d
     ResponseMessageType_Uint64_Int32* rs_data_ptr = static_cast<ResponseMessageType_Uint64_Int32*>(response_data_ptr);
     rs_data_ptr->error_code.data = modbus_manager_ptr_->getClientCtrlState(rq_data_ptr->data.data, rs_data_ptr->data.data);
 
-    //if (rs_data_ptr->error_code.data != SUCCESS)
+    if (rs_data_ptr->error_code.data != SUCCESS)
         recordLog(MODBUS_LOG, rs_data_ptr->error_code.data, std::string("/rpc/modbus/getClientCtrlStatus"));
 }
 
@@ -670,14 +670,14 @@ void ControllerRpc::handleRpc0x0000C2F4(void* request_data_ptr, void* response_d
 
     rs_data_ptr->data.data = modbus_manager_ptr_->replaceClient(rq_data_ptr->data1.data, start_info);
 
-    //if (rs_data_ptr->data.data != SUCCESS)
+    if (rs_data_ptr->data.data != SUCCESS)
         recordLog(MODBUS_LOG, rs_data_ptr->data.data, std::string("/rpc/modbus/getClientCtrlStatus"));
 }
 
 //"/rpc/modbus/getConnectedClientList"
 void ControllerRpc::handleRpc0x00001DC4(void* request_data_ptr, void* response_data_ptr)
 {
-    RequestMessageType_Void* rq_data_ptr = static_cast<RequestMessageType_Void*>(request_data_ptr);
+    //RequestMessageType_Void* rq_data_ptr = static_cast<RequestMessageType_Void*>(request_data_ptr);
     ResponseMessageType_Uint64_Int32List* rs_data_ptr = static_cast<ResponseMessageType_Uint64_Int32List*>(response_data_ptr);
 
     vector<int> id_list;
@@ -688,20 +688,20 @@ void ControllerRpc::handleRpc0x00001DC4(void* request_data_ptr, void* response_d
 
     vector<int>::iterator it = id_list.begin();
 
-    for (int i = 0; i != id_list.size(); ++i)
+    for (size_t i = 0; i != id_list.size(); ++i)
     {
         rs_data_ptr->data.data[i] = *it;
         it++;
     }
 
-    //if (rs_data_ptr->error_code.data != SUCCESS)
+    if (rs_data_ptr->error_code.data != SUCCESS)
         recordLog(MODBUS_LOG, rs_data_ptr->error_code.data, std::string("/rpc/modbus/getConnectedClientList"));
 }
 
 //"/rpc/modbus/getClientSummaryStartInfoList"
 void ControllerRpc::handleRpc0x00005564(void* request_data_ptr, void* response_data_ptr)
 {
-    RequestMessageType_Void* rq_data_ptr = static_cast<RequestMessageType_Void*>(request_data_ptr);
+    //RequestMessageType_Void* rq_data_ptr = static_cast<RequestMessageType_Void*>(request_data_ptr);
     ResponseMessageType_Uint64_ModbusClientSummaryStartInfoList* rs_data_ptr = static_cast<ResponseMessageType_Uint64_ModbusClientSummaryStartInfoList*>(response_data_ptr);
 
     vector<int> id_list;
@@ -715,7 +715,7 @@ void ControllerRpc::handleRpc0x00005564(void* request_data_ptr, void* response_d
     ModbusClientStartInfo start_info;
     if (rs_data_ptr->error_code.data == SUCCESS)
     {
-        for (int i = 0; i != id_list.size(); ++i)
+        for (size_t i = 0; i != id_list.size(); ++i)
         {
             rs_data_ptr->error_code.data = modbus_manager_ptr_->getClientStartInfo(*it, start_info);
             if (rs_data_ptr->error_code.data == SUCCESS)
@@ -728,6 +728,6 @@ void ControllerRpc::handleRpc0x00005564(void* request_data_ptr, void* response_d
         }
     }
 
-    //if (rs_data_ptr->error_code.data != SUCCESS)
+    if (rs_data_ptr->error_code.data != SUCCESS)
         recordLog(MODBUS_LOG, rs_data_ptr->error_code.data, std::string("/rpc/modbus/getClientSummaryStartInfoList"));
 }

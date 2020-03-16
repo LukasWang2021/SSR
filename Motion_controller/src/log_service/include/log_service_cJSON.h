@@ -20,13 +20,20 @@
   THE SOFTWARE.
 */
 
-#ifndef cJSON__h
-#define cJSON__h
+#ifndef LOG_SERVICE_cJSON__h
+#define LOG_SERVICE_cJSON__h
+
+#include <stddef.h>
 
 #ifdef __cplusplus
 extern "C"
 {
 #endif
+
+/* project version */
+#define CJSON_VERSION_MAJOR 1
+#define CJSON_VERSION_MINOR 3
+#define CJSON_VERSION_PATCH 2
 
 /* cJSON Types: */
 #define cJSON_False 0
@@ -41,17 +48,26 @@ extern "C"
 #define cJSON_StringIsConst 512
 
 /* The cJSON structure: */
-typedef struct cJSON {
-	struct cJSON *next,*prev;	/* next/prev allow you to walk array/object chains. Alternatively, use GetArraySize/GetArrayItem/GetObjectItem */
-	struct cJSON *child;		/* An array or object item will have a child pointer pointing to a chain of the items in the array/object. */
+typedef struct cJSON
+{
+    /* next/prev allow you to walk array/object chains. Alternatively, use GetArraySize/GetArrayItem/GetObjectItem */
+    struct cJSON *next;
+    struct cJSON *prev;
+    /* An array or object item will have a child pointer pointing to a chain of the items in the array/object. */
+    struct cJSON *child;
 
-	int type;					/* The type of the item, as above. */
+    /* The type of the item, as above. */
+    int type;
 
-	char *valuestring;			/* The item's string, if type==cJSON_String */
-	int valueint;				/* The item's number, if type==cJSON_Number */
-	double valuedouble;			/* The item's number, if type==cJSON_Number */
+    /* The item's string, if type==cJSON_String  and type == cJSON_Raw */
+    char *valuestring;
+    /* The item's number, if type==cJSON_Number */
+    int valueint;
+    /* The item's number, if type==cJSON_Number */
+    double valuedouble;
 
-	char *string;				/* The item's name string, if this item is the child of, or is in the list of subitems of an object. */
+    /* The item's name string, if this item is the child of, or is in the list of subitems of an object. */
+    char *string;
 } cJSON;
 
 typedef struct cJSON_Hooks {

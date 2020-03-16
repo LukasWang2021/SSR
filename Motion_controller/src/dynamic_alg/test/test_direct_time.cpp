@@ -26,10 +26,10 @@ int main(int argc, char** argv)
     bool err = false;
     Joint joint;
     JointVelocity vel;
-    JointAcceleration acc;
+    //JointAcceleration acc;
     JointAcceleration acc_pos;
     JointAcceleration acc_neg;
-    JointTorque torque;
+    //JointTorque torque;
 
     //--------read nposiont.txt, push to a vector------------//
     vector<double> position_vector;
@@ -56,7 +56,7 @@ int main(int argc, char** argv)
     {
         getline(position_file, line);
         num_str = ""; 
-        for (int j = 0; j < line.length(); ++j)
+        for (uint32_t j = 0; j < line.length(); ++j)
         {
             if (line[j] == ',' || line[j] == ' ' || j == (line.length() - 1)) 
             {
@@ -79,7 +79,7 @@ int main(int argc, char** argv)
     {
         getline(velocity_file, line);
         num_str = ""; 
-        for (int j = 0; j < line.length(); ++j)
+        for (uint32_t j = 0; j < line.length(); ++j)
         {
             if (line[j] == ',' || line[j] == ' ' || j == (line.length() - 1))
             {
@@ -102,7 +102,7 @@ int main(int argc, char** argv)
     {
         getline(tau_file, line);
         num_str = ""; 
-        for (int j = 0; j < line.length(); ++j)
+        for (uint32_t j = 0; j < line.length(); ++j)
         {
             if (line[j] == ',' || line[j] == ' ' || j == (line.length() - 1))
             {
@@ -122,7 +122,7 @@ int main(int argc, char** argv)
     printf("tau size=%d\n", tau_vector.size());
 
   //print position, velocity, tau values
-    for (int k = 0; k < position_vector.size(); ++k)
+    for (uint32_t k = 0; k < position_vector.size(); ++k)
     {
         printf("%f, ", position_vector[k]);
         if ((k+1) % 6 == 0)
@@ -130,7 +130,7 @@ int main(int argc, char** argv)
             printf("\n");
         }
     }
-    for (int k = 0; k < velocity_vector.size(); ++k)
+    for (uint32_t k = 0; k < velocity_vector.size(); ++k)
     {
         printf("%f, ", velocity_vector[k]);
         if ((k+1) % 6 == 0)
@@ -174,7 +174,7 @@ int main(int argc, char** argv)
     //under max torque
     for (int i = 0; i < count; ++i)
     {
-        for(int j = 0; j < 6; ++j)
+        for(uint32_t j = 0; j < 6; ++j)
         {
             joint[j] = position_vector[i*6 + j];
             vel[j] = velocity_vector[i*6 +j];
@@ -198,7 +198,7 @@ int main(int argc, char** argv)
     
     gettimeofday(&t_end, NULL);
     cost_time = (t_end.tv_sec - t_start.tv_sec) * 1000000 + (t_end.tv_usec - t_start.tv_usec);
-    printf("direct dynamics total_time = %d us, average_time = %d us\n", cost_time, cost_time/count);
+    printf("direct dynamics total_time = %ld us, average_time = %ld us\n", cost_time, cost_time/count);
 
     printf("end\n");
     return 0;

@@ -24,6 +24,7 @@
 #include "system_manager.h"
 #include "param_manager.h"
 #include <string>
+#include "forsight_inter_control.h"
 // for test only
 #include "virtual_core1.h"
 #include <cstdint>
@@ -69,6 +70,8 @@ private:
     fst_ctrl::SystemManager system_manager_;
     fst_mc::ParamManager param_manager_;
 
+    fst_hal::ModbusManager* modbus_manager_ptr_; 
+
     // thread related
     bool is_exit_;
     fst_base::ThreadHelp routine_thread_;
@@ -86,8 +89,8 @@ private:
 
 
 // thread function
-void controllerRoutineThreadFunc(void* arg);
-void heartbeatThreadFunc(void* arg);
+void* controllerRoutineThreadFunc(void* arg);
+void* heartbeatThreadFunc(void* arg);
 
 
 #endif

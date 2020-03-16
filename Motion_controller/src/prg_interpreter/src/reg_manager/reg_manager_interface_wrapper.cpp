@@ -1,4 +1,7 @@
 // #include "stdafx.h"
+#ifdef WIN32
+#pragma warning(disable : 4786)
+#endif
 #include "stdio.h"
 #include "string.h"
 #include "setjmp.h"
@@ -12,9 +15,6 @@
 
 #ifndef WIN32
 extern InterpreterPublish  g_interpreter_publish; 
-fst_base::ProcessComm* g_process_comm_ptr       = NULL;
-fst_base::InterpreterClient* g_objRegManagerInterface = NULL;
-fst_base::InterpreterServer* g_objInterpreterServer   = NULL;
 using namespace fst_ctrl ;
 #endif
 
@@ -26,6 +26,7 @@ static int isdelim(char c)
   return 0;
 }
 
+#if 0
 static int get_char_token(char * src, char * dst)
 {
 	char * tmp = src ;
@@ -45,6 +46,7 @@ static int get_num_token(char * src, char * dst)
 	}
 	return src - tmp ;
 }
+#endif
 
 /************************************************* 
 	Function:		load_register_data
@@ -55,34 +57,7 @@ static int get_num_token(char * src, char * dst)
 bool load_register_data()
 {
 #ifndef WIN32
-	g_process_comm_ptr = fst_base::ProcessComm::getInstance();
-    if(fst_base::ProcessComm::getInitErrorCode() != SUCCESS)
-    {
-        FST_ERROR("load_register_data getInitErrorCode return failed");
-        return false;
-    }
-	if(g_process_comm_ptr->getInterpreterClientPtr()->init() != SUCCESS)
-	{
-        FST_ERROR("load_register_data getInterpreterClientPtr return false");
-		return false;
-	}
-    if(g_process_comm_ptr->getInterpreterServerPtr()->init() != SUCCESS)
-	{
-        FST_ERROR("load_register_data getInterpreterServerPtr init return false");
-		return false;
-	}
-    if(g_process_comm_ptr->getInterpreterServerPtr()->open() != SUCCESS)
-	{
-        FST_ERROR("load_register_data getInterpreterServerPtr open return false");
-		return false;
-	}
-	usleep(10);
-	g_objRegManagerInterface = g_process_comm_ptr->getInterpreterClientPtr();
-	g_objInterpreterServer   = g_process_comm_ptr->getInterpreterServerPtr();
-	g_objRegManagerInterface->setInterpreterServerStatus(true);
-	usleep(10);
 	memset(&g_interpreter_publish, 0x00, sizeof(InterpreterPublish));
-	g_objInterpreterServer->addPublishTask(300, &g_interpreter_publish);
 #endif
 	return true ;
 }
@@ -99,7 +74,7 @@ bool reg_manager_interface_getPr(PrRegData *ptr, uint16_t num)
 	bool bRet = false ;
 	ptr->id    = num ;
 #ifndef WIN32
-	if(g_objRegManagerInterface)
+	if(reg_manager_ptr_)
 	{
 		PrRegDataIpc objPrRegDataIpc ;
 		ptr->value.pos[0] = 0.0;
@@ -109,10 +84,11 @@ bool reg_manager_interface_getPr(PrRegData *ptr, uint16_t num)
 		ptr->value.pos[4] = 0.0;
 		ptr->value.pos[5] = 0.0;
 		ptr->value.pos_type = PR_REG_POS_TYPE_CARTESIAN ;
-		bRet = g_objRegManagerInterface->getPrReg(num, &objPrRegDataIpc);
+		bRet = reg_manager_ptr_->getPrRegPos(num, &objPrRegDataIpc);
 		ptr->value = objPrRegDataIpc.value;
 		
-		FST_INFO("getPrReg: id = (%d)(%f, %f, %f, %f, %f, %f) at %d with %s ", 
+		FST_INFO("getPrReg: id = %d (%d)(%f, %f, %f, %f, %f, %f) at %d with %s ", 
+			ptr->id,
 			ptr->value.pos_type, 
 			ptr->value.pos[0], ptr->value.pos[1], 
 			ptr->value.pos[2], ptr->value.pos[3], 
@@ -120,7 +96,7 @@ bool reg_manager_interface_getPr(PrRegData *ptr, uint16_t num)
 	}
 	else
 	{
-		FST_ERROR("g_objRegManagerInterface is NULL");
+		FST_ERROR("reg_manager_ptr_ is NULL");
 	}
 #else
 	memset(ptr->comment, 0x00, MAX_REG_COMMENT_LENGTH);
@@ -147,13 +123,13 @@ bool reg_manager_interface_setPr(PrRegData *ptr, uint16_t num)
 {
 	bool bRet = false ;
 #ifndef WIN32
-	if(g_objRegManagerInterface)
+	if(reg_manager_ptr_)
 	{
 		PrRegDataIpc objPrRegDataIpc ;
 		objPrRegDataIpc.id     = num;
 		objPrRegDataIpc.value = ptr->value;
 		
-		bRet = g_objRegManagerInterface->setPrReg(&objPrRegDataIpc);
+		bRet = reg_manager_ptr_->updatePrRegPos(&objPrRegDataIpc);
 		FST_INFO("setPr: id = %d (%f, %f, %f, %f, %f, %f) at %d with %s ", num, 
 			objPrRegDataIpc.value.pos[0], objPrRegDataIpc.value.pos[1], 
 			objPrRegDataIpc.value.pos[2], objPrRegDataIpc.value.pos[3], 
@@ -162,13 +138,13 @@ bool reg_manager_interface_setPr(PrRegData *ptr, uint16_t num)
 #ifdef USE_LOCAL_REG_MANAGER_INTERFACE
 		if(bRet == false)
 		{
-			bRet = g_objRegManagerInterface->addPrReg(&objPrRegDataIpc);
+			bRet = reg_manager_ptr_->addPrReg(&objPrRegDataIpc);
 		}
 #endif
 	}
 	else
 	{
-		FST_ERROR("g_objRegManagerInterface is NULL");
+		FST_ERROR("reg_manager_ptr_ is NULL");
 	}
 #else
 	bRet = true ;
@@ -186,15 +162,15 @@ bool reg_manager_interface_delPr(uint16_t num)
 {
 	bool bRet = false ;
 #ifndef WIN32
-	if(g_objRegManagerInterface)
+	if(reg_manager_ptr_)
 	{
 #ifdef USE_LOCAL_REG_MANAGER_INTERFACE
-		bRet = g_objRegManagerInterface->deletePrReg(num);
+		bRet = reg_manager_ptr_->deletePrReg(num);
 #endif
 	}
 	else
 	{
-		FST_ERROR("g_objRegManagerInterface is NULL");
+		FST_ERROR("reg_manager_ptr_ is NULL");
 	}
 #else
 	bRet = true ;
@@ -213,10 +189,10 @@ bool reg_manager_interface_getPosePr(PoseEuler *ptr, uint16_t num)
 {
 	bool bRet = false ;
 #ifndef WIN32
-	if(g_objRegManagerInterface)
+	if(reg_manager_ptr_)
 	{
 		PrRegDataIpc objPrRegDataIpc ;
-		bRet = g_objRegManagerInterface->getPrReg(num, &objPrRegDataIpc);
+		bRet = reg_manager_ptr_->getPrRegPos(num, &objPrRegDataIpc);
 		if(bRet)
 		{
 #ifndef WIN32
@@ -238,7 +214,7 @@ bool reg_manager_interface_getPosePr(PoseEuler *ptr, uint16_t num)
 	}
 	else
 	{
-		FST_ERROR("g_objRegManagerInterface is NULL");
+		FST_ERROR("reg_manager_ptr_ is NULL");
 	}
 #else
 	bRet = true ;
@@ -253,11 +229,11 @@ bool reg_manager_interface_getPosePr(PoseEuler *ptr, uint16_t num)
 	Input:			ptr        -  PoseEuler Data of PR
 	Return: 		1 - success
 *************************************************/
-bool reg_manager_interface_setPosePr(PoseEuler *ptr, Posture *posture, uint16_t num)
+bool reg_manager_interface_setPosePr(PoseEuler *ptr, Posture *posture, Turn *turn, uint16_t num)
 {
 	bool bRet = false ;
 #ifndef WIN32
-	if(g_objRegManagerInterface)
+	if(reg_manager_ptr_)
 	{
 		PrRegDataIpc objPrRegDataIpc ;
 		objPrRegDataIpc.id     = num ;
@@ -281,20 +257,30 @@ bool reg_manager_interface_setPosePr(PoseEuler *ptr, Posture *posture, uint16_t 
 		objPrRegDataIpc.value.pos[7] = 0.0;
 		objPrRegDataIpc.value.pos[8] = 0.0;
 		
-		objPrRegDataIpc.value.posture[0] = posture->arm ;
-		objPrRegDataIpc.value.posture[1] = posture->elbow ;
-		objPrRegDataIpc.value.posture[2] = posture->wrist ;
-		objPrRegDataIpc.value.posture[3] = posture->flip  ;
+		objPrRegDataIpc.value.posture[0] = posture->flip ;
+		objPrRegDataIpc.value.posture[1] = posture->arm ;
+		objPrRegDataIpc.value.posture[2] = posture->elbow ;
+		objPrRegDataIpc.value.posture[3] = posture->wrist  ;
 		
-		bRet = g_objRegManagerInterface->setPrReg(&objPrRegDataIpc);
-		FST_INFO("setPr: id = %d (%f, %f, %f, %f, %f, %f) at %d with %s ", num, 
+		objPrRegDataIpc.value.turn[0]    = turn->j1 ;
+		objPrRegDataIpc.value.turn[1]    = turn->j2 ;
+		objPrRegDataIpc.value.turn[2]    = turn->j3 ;
+		objPrRegDataIpc.value.turn[3]    = turn->j4 ;
+		objPrRegDataIpc.value.turn[4]    = turn->j5 ;
+		objPrRegDataIpc.value.turn[5]    = turn->j6 ;
+		objPrRegDataIpc.value.turn[6]    = turn->j7 ;
+		objPrRegDataIpc.value.turn[7]    = turn->j8 ;
+		objPrRegDataIpc.value.turn[8]    = turn->j9 ;
+		
+		bRet = reg_manager_ptr_->updatePrRegPos(&objPrRegDataIpc);
+		FST_INFO("setPosePr: id = %d (%f, %f, %f, %f, %f, %f) at %d with %s ", num, 
 			objPrRegDataIpc.value.pos[0], objPrRegDataIpc.value.pos[1], 
 			objPrRegDataIpc.value.pos[2], objPrRegDataIpc.value.pos[3], 
 			objPrRegDataIpc.value.pos[4], objPrRegDataIpc.value.pos[5], num, bRet?"TRUE":"FALSE");
 	}
 	else
 	{
-		FST_ERROR("g_objRegManagerInterface is NULL");
+		FST_ERROR("reg_manager_ptr_ is NULL");
 	}
 #else
 	bRet = true ;
@@ -313,10 +299,10 @@ bool reg_manager_interface_getJointPr(Joint *ptr, uint16_t num)
 {
 	bool bRet = false ;
 #ifndef WIN32
-	if(g_objRegManagerInterface)
+	if(reg_manager_ptr_)
 	{
 		PrRegDataIpc objPrRegDataIpc ;
-		bRet = g_objRegManagerInterface->getPrReg(num, &objPrRegDataIpc);
+		bRet = reg_manager_ptr_->getPrRegPos(num, &objPrRegDataIpc);
 		if(bRet)
 		{
 #ifndef WIN32
@@ -338,7 +324,7 @@ bool reg_manager_interface_getJointPr(Joint *ptr, uint16_t num)
 	}
 	else
 	{
-		FST_ERROR("g_objRegManagerInterface is NULL");
+		FST_ERROR("reg_manager_ptr_ is NULL");
 	}
 #else
 	bRet = true ;
@@ -353,14 +339,14 @@ bool reg_manager_interface_getJointPr(Joint *ptr, uint16_t num)
 	Input:			ptr        -  Joint Data of PR
 	Return: 		1 - success
 *************************************************/
-bool reg_manager_interface_setJointPr(Joint *ptr, Posture *posture, uint16_t num)
+bool reg_manager_interface_setJointPr(Joint *ptr, Posture *posture, Turn *turn, uint16_t num)
 {
 	bool bRet = false ;
 #ifndef WIN32
-	if(g_objRegManagerInterface)
+	if(reg_manager_ptr_)
 	{
 		PrRegDataIpc objPrRegDataIpc ;
-		bRet = g_objRegManagerInterface->getPrReg(num, &objPrRegDataIpc);
+		bRet = reg_manager_ptr_->getPrRegPos(num, &objPrRegDataIpc);
 		if(bRet)
 		{
             objPrRegDataIpc.value.pos_type     = PR_REG_POS_TYPE_JOINT;
@@ -382,18 +368,33 @@ bool reg_manager_interface_setJointPr(Joint *ptr, Posture *posture, uint16_t num
 			objPrRegDataIpc.value.pos[6] = 0.0;
 			objPrRegDataIpc.value.pos[7] = 0.0;
 			objPrRegDataIpc.value.pos[8] = 0.0;
-			
-			objPrRegDataIpc.value.posture[0] = posture->arm ;
-			objPrRegDataIpc.value.posture[1] = posture->elbow ;
-			objPrRegDataIpc.value.posture[2] = posture->wrist ;
-			objPrRegDataIpc.value.posture[3] = posture->flip  ;
 		
-			bRet = g_objRegManagerInterface->setPrReg(&objPrRegDataIpc);
+			objPrRegDataIpc.value.posture[0] = posture->flip ;
+			objPrRegDataIpc.value.posture[1] = posture->arm ;
+			objPrRegDataIpc.value.posture[2] = posture->elbow ;
+			objPrRegDataIpc.value.posture[3] = posture->wrist  ;
+
+			objPrRegDataIpc.value.turn[0]    = turn->j1 ;
+			objPrRegDataIpc.value.turn[1]    = turn->j2 ;
+			objPrRegDataIpc.value.turn[2]    = turn->j3 ;
+			objPrRegDataIpc.value.turn[3]    = turn->j4 ;
+			objPrRegDataIpc.value.turn[4]    = turn->j5 ;
+			objPrRegDataIpc.value.turn[5]    = turn->j6 ;
+			objPrRegDataIpc.value.turn[6]    = turn->j7 ;
+			objPrRegDataIpc.value.turn[7]    = turn->j8 ;
+			objPrRegDataIpc.value.turn[8]    = turn->j9 ;
+		
+			bRet = reg_manager_ptr_->updatePrRegPos(&objPrRegDataIpc);
+			
+			FST_INFO("setJointPr: id = %d (%f, %f, %f, %f, %f, %f) at %d with %s ", num, 
+				objPrRegDataIpc.value.pos[0], objPrRegDataIpc.value.pos[1], 
+				objPrRegDataIpc.value.pos[2], objPrRegDataIpc.value.pos[3], 
+				objPrRegDataIpc.value.pos[4], objPrRegDataIpc.value.pos[5], num, bRet?"TRUE":"FALSE");
 		}
 	}
 	else
 	{
-		FST_ERROR("g_objRegManagerInterface is NULL");
+		FST_ERROR("reg_manager_ptr_ is NULL");
 	}
 #else
 	bRet = true ;
@@ -416,17 +417,17 @@ bool reg_manager_interface_getSr(string &ptr, uint16_t num)
 {
 	bool bRet = false ;
 #ifndef WIN32
-	if(g_objRegManagerInterface)
+	if(reg_manager_ptr_)
 	{
 		SrRegDataIpc objSrRegDataIpc ;
 		ptr = "";
-		bRet = g_objRegManagerInterface->getSrReg(num, &objSrRegDataIpc);
+		bRet = reg_manager_ptr_->getSrRegValue(num, &objSrRegDataIpc);
 		ptr = string(objSrRegDataIpc.value) ;
 		FST_INFO("getSr[%d]:(%s) at %d with %s", num, ptr.c_str(), num, bRet?"TRUE":"FALSE");
 	}
 	else
 	{
-		FST_ERROR("g_objRegManagerInterface is NULL");
+		FST_ERROR("reg_manager_ptr_ is NULL");
 	}
 #else
     ptr = string("Test");
@@ -446,7 +447,7 @@ bool reg_manager_interface_setSr(string &ptr, uint16_t num)
 {
 	bool bRet = false ;
 #ifndef WIN32
-	if(g_objRegManagerInterface)
+	if(reg_manager_ptr_)
 	{
 		SrRegDataIpc objSrRegDataIpc ;
 		// memcpy(&objSrRegData, ptr, sizeof(objSrRegData));
@@ -454,17 +455,17 @@ bool reg_manager_interface_setSr(string &ptr, uint16_t num)
 		strcpy(objSrRegDataIpc.value, ptr.c_str()) ;
 		FST_INFO("setSr:(%s) at %d with %s", objSrRegDataIpc.value, num, bRet?"TRUE":"FALSE");
 		
-		bRet = g_objRegManagerInterface->setSrReg(&objSrRegDataIpc);
+		bRet = reg_manager_ptr_->updateSrRegValue(&objSrRegDataIpc);
 #ifdef USE_LOCAL_REG_MANAGER_INTERFACE
 		if(bRet == false)
 		{
-			bRet = g_objRegManagerInterface->addSrReg(&objSrRegDataIpc);
+			bRet = reg_manager_ptr_->addSrReg(&objSrRegDataIpc);
 		}
 #endif
 	}
 	else
 	{
-		FST_ERROR("g_objRegManagerInterface is NULL");
+		FST_ERROR("reg_manager_ptr_ is NULL");
 	}
 #else
 	bRet = true ;
@@ -483,10 +484,10 @@ bool reg_manager_interface_getValueSr(string &strVal, uint16_t num)
 {
 	bool bRet = false ;
 #ifndef WIN32
-	if(g_objRegManagerInterface)
+	if(reg_manager_ptr_)
 	{
 		SrRegDataIpc objSrRegDataIpc ;
-		bRet = g_objRegManagerInterface->getSrReg(num, &objSrRegDataIpc);
+		bRet = reg_manager_ptr_->getSrRegValue(num, &objSrRegDataIpc);
 		strVal = string(objSrRegDataIpc.value);
 		if(bRet)
 		{
@@ -495,7 +496,7 @@ bool reg_manager_interface_getValueSr(string &strVal, uint16_t num)
 	}
 	else
 	{
-		FST_ERROR("g_objRegManagerInterface is NULL");
+		FST_ERROR("reg_manager_ptr_ is NULL");
 	}
 #else
 	bRet = true ;
@@ -514,17 +515,17 @@ bool reg_manager_interface_setValueSr(string &strVal, uint16_t num)
 {
 	bool bRet = false ;
 #ifndef WIN32
-	if(g_objRegManagerInterface)
+	if(reg_manager_ptr_)
 	{
 		SrRegDataIpc objSrRegDataIpc ;
 		objSrRegDataIpc.id    = num;
 		strcpy(objSrRegDataIpc.value, strVal.c_str());
 		FST_INFO("setValueSr:(%s)", objSrRegDataIpc.value);
-		bRet = g_objRegManagerInterface->setSrReg(&objSrRegDataIpc);
+		bRet = reg_manager_ptr_->updateSrRegValue(&objSrRegDataIpc);
 	}
 	else
 	{
-		FST_ERROR("g_objRegManagerInterface is NULL");
+		FST_ERROR("reg_manager_ptr_ is NULL");
 	}
 #else
 	bRet = true ;
@@ -547,18 +548,18 @@ bool reg_manager_interface_getR(double *ptr, uint16_t num)
 {
 	bool bRet = false ;
 #ifndef WIN32
-	if(g_objRegManagerInterface)
+	if(reg_manager_ptr_)
 	{
 		RRegDataIpc objRRegDataIpc ;
 		*ptr = 0.0;
-		bRet = g_objRegManagerInterface->getRReg(num, &objRRegDataIpc);
+		bRet = reg_manager_ptr_->getRRegValue(num, &objRRegDataIpc);
 		FST_INFO("getR: value = (%f) at %d with %s", 
 			objRRegDataIpc.value, num, bRet?"TRUE":"FALSE");
 		*ptr = objRRegDataIpc.value;
 	}
 	else
 	{
-		FST_ERROR("g_objRegManagerInterface is NULL");
+		FST_ERROR("reg_manager_ptr_ is NULL");
 	}
 #else
 	*ptr = 1.0 ;
@@ -578,24 +579,24 @@ bool reg_manager_interface_setR(double *ptr, uint16_t num)
 {
 	bool bRet = false ;
 #ifndef WIN32
-	if(g_objRegManagerInterface)
+	if(reg_manager_ptr_)
 	{
 		RRegDataIpc objRRegDataIpc ;
 		objRRegDataIpc.id    = num;
 		objRRegDataIpc.value = *ptr;
 		// memcpy(&objRRegData, ptr, sizeof(objRRegData));
-		bRet = g_objRegManagerInterface->setRReg(&objRRegDataIpc);
+		bRet = reg_manager_ptr_->updateRRegValue(&objRRegDataIpc);
 		FST_INFO("setR:(%f) at %d with %s", objRRegDataIpc.value, num, bRet?"TRUE":"FALSE");
 #ifdef USE_LOCAL_REG_MANAGER_INTERFACE
 		if(bRet == false)
 		{
-			bRet = g_objRegManagerInterface->addRReg(objRRegDataIpc);
+			bRet = reg_manager_ptr_->addRReg(objRRegDataIpc);
 		}
 #endif
 	}
 	else
 	{
-		FST_ERROR("g_objRegManagerInterface is NULL");
+		FST_ERROR("reg_manager_ptr_ is NULL");
 	}
 #else
 	bRet = true ;
@@ -614,10 +615,10 @@ bool reg_manager_interface_getValueR(double *ptr, uint16_t num)
 {
 	bool bRet = false ;
 #ifndef WIN32
-	if(g_objRegManagerInterface)
+	if(reg_manager_ptr_)
 	{
 		RRegDataIpc objRRegDataIpc ;
-		bRet = g_objRegManagerInterface->getRReg(num, &objRRegDataIpc);
+		bRet = reg_manager_ptr_->getRRegValue(num, &objRRegDataIpc);
 		if(bRet)
 		{
 		   *ptr = objRRegDataIpc.value;
@@ -625,7 +626,7 @@ bool reg_manager_interface_getValueR(double *ptr, uint16_t num)
 	}
 	else
 	{
-		FST_ERROR("g_objRegManagerInterface is NULL");
+		FST_ERROR("reg_manager_ptr_ is NULL");
 	}
 #else
 	bRet = true ;
@@ -644,18 +645,18 @@ bool reg_manager_interface_setValueR(double *ptr, uint16_t num)
 {
 	bool bRet = false ;
 #ifndef WIN32
-	if(g_objRegManagerInterface)
+	if(reg_manager_ptr_)
 	{
 		RRegDataIpc objRRegDataIpc ;
 		objRRegDataIpc.id    = num;
 		objRRegDataIpc.value = *ptr;
-		bRet = g_objRegManagerInterface->setRReg(&objRRegDataIpc);
+		bRet = reg_manager_ptr_->updateRRegValue(&objRRegDataIpc);
 		FST_INFO("setValueR:(%f) at %d with %s", 
 			objRRegDataIpc.value, num, bRet?"TRUE":"FALSE");
 	}
 	else
 	{
-		FST_ERROR("g_objRegManagerInterface is NULL");
+		FST_ERROR("reg_manager_ptr_ is NULL");
 	}
 #else
 	bRet = true ;
@@ -678,18 +679,18 @@ bool reg_manager_interface_getMr(int *ptr, uint16_t num)
 {
 	bool bRet = false ;
 #ifndef WIN32
-	if(g_objRegManagerInterface)
+	if(reg_manager_ptr_)
 	{
 		MrRegDataIpc objMrRegDataIpc ;
 		*ptr = 0.0;
-		bRet = g_objRegManagerInterface->getMrReg(num, &objMrRegDataIpc);
+		bRet = reg_manager_ptr_->getMrRegValue(num, &objMrRegDataIpc);
 		FST_INFO("getMR: value = (%d) at %d with %s", 
 			objMrRegDataIpc.value, num, bRet?"TRUE":"FALSE");
 		*ptr = objMrRegDataIpc.value ;
 	}
 	else
 	{
-		FST_ERROR("g_objRegManagerInterface is NULL");
+		FST_ERROR("reg_manager_ptr_ is NULL");
 	}
 #else
 	*ptr = 1 ;
@@ -709,23 +710,23 @@ bool reg_manager_interface_setMr(int *ptr, uint16_t num)
 {
 	bool bRet = false ;
 #ifndef WIN32
-	if(g_objRegManagerInterface)
+	if(reg_manager_ptr_)
 	{
 		MrRegDataIpc objMrRegDataIpc ;
 		objMrRegDataIpc.id = num ;
 		objMrRegDataIpc.value = *ptr ;
 		FST_INFO("setR:(%f) at %d with %s", objMrRegDataIpc.value, num, bRet?"TRUE":"FALSE");
-		bRet = g_objRegManagerInterface->setMrReg(&objMrRegDataIpc);
+		bRet = reg_manager_ptr_->updateMrRegValue(&objMrRegDataIpc);
 #ifdef USE_LOCAL_REG_MANAGER_INTERFACE
 		if(bRet == false)
 		{
-			bRet = g_objRegManagerInterface->addMrReg(&objMrRegDataIpc);
+			bRet = reg_manager_ptr_->addMrReg(&objMrRegDataIpc);
 		}
 #endif
 	}
 	else
 	{
-		FST_ERROR("g_objRegManagerInterface is NULL");
+		FST_ERROR("reg_manager_ptr_ is NULL");
 	}
 #else
 	bRet = true ;
@@ -744,10 +745,10 @@ bool reg_manager_interface_getValueMr(int *ptr, uint16_t num)
 {
 	bool bRet = false ;
 #ifndef WIN32
-	if(g_objRegManagerInterface)
+	if(reg_manager_ptr_)
 	{
 		MrRegDataIpc objMrRegDataIpc ;
-		bRet = g_objRegManagerInterface->getMrReg(num, &objMrRegDataIpc);
+		bRet = reg_manager_ptr_->getMrRegValue(num, &objMrRegDataIpc);
 		if(bRet)
 		{
 		   *ptr = objMrRegDataIpc.value;
@@ -755,7 +756,7 @@ bool reg_manager_interface_getValueMr(int *ptr, uint16_t num)
 	}
 	else
 	{
-		FST_ERROR("g_objRegManagerInterface is NULL");
+		FST_ERROR("reg_manager_ptr_ is NULL");
 	}
 #else
 	bRet = true ;
@@ -774,17 +775,17 @@ bool reg_manager_interface_setValueMr(int *ptr, uint16_t num)
 {
 	bool bRet = false ;
 #ifndef WIN32
-	if(g_objRegManagerInterface)
+	if(reg_manager_ptr_)
 	{
 		MrRegDataIpc objMrRegDataIpc ;
 		objMrRegDataIpc.id    = num;
 		objMrRegDataIpc.value = *ptr;
-		bRet = g_objRegManagerInterface->setMrReg(&objMrRegDataIpc);
+		bRet = reg_manager_ptr_->updateMrRegValue(&objMrRegDataIpc);
 		FST_INFO("setValueMr:(%d) at %d with %s", objMrRegDataIpc.value, num, bRet?"TRUE":"FALSE");
 	}
 	else
 	{
-		FST_ERROR("g_objRegManagerInterface is NULL");
+		FST_ERROR("reg_manager_ptr_ is NULL");
 	}
 #else
 	bRet = true ;
@@ -807,10 +808,11 @@ bool reg_manager_interface_getMI(int *ptr, uint16_t num)
 {
 	bool bRet = false ;
 #ifndef WIN32
-	if(g_objRegManagerInterface)
+	if(modbus_manager_ptr_)
 	{
 		fst_base::MiDataIpc objMiDataIpc ;
-		bRet = g_objRegManagerInterface->getMi(num, &objMiDataIpc);
+		bRet = true;
+		modbus_manager_ptr_->readInputRegs(0, (int)num, 1, (uint16_t *)&objMiDataIpc.value); // (num, &objMiDataIpc);
 		FST_INFO("getMI: value = (%d) at %d with %s", 
 			objMiDataIpc.value, num, bRet?"TRUE":"FALSE");
 		if(bRet)
@@ -825,7 +827,7 @@ bool reg_manager_interface_getMI(int *ptr, uint16_t num)
 	}
 	else
 	{
-		FST_ERROR("g_objRegManagerInterface is NULL");
+		FST_ERROR("modbus_manager_ptr_ is NULL");
 	}
 #else
 	*ptr = 1 ;
@@ -845,19 +847,16 @@ bool reg_manager_interface_setMI(int *ptr, uint16_t num)
 {
 	bool bRet = false ;
 #ifndef WIN32
-	if(g_objRegManagerInterface)
+	if(reg_manager_ptr_)
 	{
 		fst_base::MiDataIpc objMiDataIpc ;
 		objMiDataIpc.id    = num;
 		objMiDataIpc.value = *ptr;
-		bRet = g_objRegManagerInterface->setMi(&objMiDataIpc);
+		// bRet = g_objRegManagerInterface->setMi(&objMiDataIpc);
+		bRet = true ;
+		modbus_manager_ptr_->writeInputRegs(0, (int)num, 1, (uint16_t *)&objMiDataIpc.value);
 		FST_INFO("setR:(%f) at %d with %s", objMiDataIpc.value, num, bRet?"TRUE":"FALSE");
-#ifdef USE_LOCAL_REG_MANAGER_INTERFACE
-		if(bRet == false)
-		{
-			bRet = g_objRegManagerInterface->addMi(objMiDataIpc);
-		}
-#endif
+
 		if(!bRet)
 		{
 			bRet = true ;
@@ -865,7 +864,7 @@ bool reg_manager_interface_setMI(int *ptr, uint16_t num)
 	}
 	else
 	{
-		FST_ERROR("g_objRegManagerInterface is NULL");
+		FST_ERROR("reg_manager_ptr_ is NULL");
 	}
 #else
 	bRet = true ;
@@ -884,10 +883,12 @@ bool reg_manager_interface_getValueMI(int *ptr, uint16_t num)
 {
 	bool bRet = false ;
 #ifndef WIN32
-	if(g_objRegManagerInterface)
+	if(reg_manager_ptr_)
 	{
 		fst_base::MiDataIpc objMiDataIpc ;
-		bRet = g_objRegManagerInterface->getMi(num, &objMiDataIpc);
+		// bRet = g_objRegManagerInterface->getMi(num, &objMiDataIpc);
+		bRet = true ;
+		modbus_manager_ptr_->readInputRegs(0, (int)num, 1, (uint16_t *)&objMiDataIpc.value);
 		if(bRet)
 		{
 		   *ptr = objMiDataIpc.value;
@@ -900,7 +901,7 @@ bool reg_manager_interface_getValueMI(int *ptr, uint16_t num)
 	}
 	else
 	{
-		FST_ERROR("g_objRegManagerInterface is NULL");
+		FST_ERROR("reg_manager_ptr_ is NULL");
 	}
 #else
 	bRet = true ;
@@ -919,12 +920,14 @@ bool reg_manager_interface_setValueMI(int *ptr, uint16_t num)
 {
 	bool bRet = false ;
 #ifndef WIN32
-	if(g_objRegManagerInterface)
+	if(reg_manager_ptr_)
 	{
 		fst_base::MiDataIpc objMiDataIpc ;
 		objMiDataIpc.id    = num;
 		objMiDataIpc.value = *ptr;
-		bRet = g_objRegManagerInterface->setMi(&objMiDataIpc);
+		// bRet = g_objRegManagerInterface->setMi(&objMiDataIpc);
+		bRet = true ;
+		modbus_manager_ptr_->writeInputRegs(0, (int)num, 1, (uint16_t *)&objMiDataIpc.value);
 		FST_INFO("setValueMI:(%f) at %d with %s", 
 			objMiDataIpc.value, num, bRet?"TRUE":"FALSE");
 		if(!bRet)
@@ -934,7 +937,7 @@ bool reg_manager_interface_setValueMI(int *ptr, uint16_t num)
 	}
 	else
 	{
-		FST_ERROR("g_objRegManagerInterface is NULL");
+		FST_ERROR("reg_manager_ptr_ is NULL");
 	}
 #else
 	bRet = true ;
@@ -957,16 +960,38 @@ bool reg_manager_interface_getMH(int *ptr, uint16_t num)
 {
 	bool bRet = false ;
 #ifndef WIN32
-	if(g_objRegManagerInterface)
+	if(modbus_manager_ptr_)
 	{
 		fst_base::MhDataIpc objMhDataIpc ;
 	    FST_INFO("getMh at TXT_MH = %d", num);
-		bRet = g_objRegManagerInterface->getMh(num, &objMhDataIpc);
+		// bRet = g_objRegManagerInterface->getMh(num, &objMhDataIpc);
+		bRet = true ;
+		uint16_t temp_data = 0;
+		if(modbus_manager_ptr_->readHoldingRegs(0, (int)num, 1, &temp_data)!=SUCCESS)
+		{
+			bRet = false;
+		}
+
+		objMhDataIpc.value =  static_cast<int>(temp_data);
+		
 		FST_INFO("getMH: value = (%d) at %d with %s", 
-			objMhDataIpc.value, num, bRet?"TRUE":"FALSE");
+			temp_data, num, bRet?"TRUE":"FALSE");
+
 		if(bRet)
 		{
-		   *ptr = objMhDataIpc.value;
+		   // uint16 to int
+		   // *ptr = objMhDataIpc.value;
+		   if((objMhDataIpc.value >> 15) > 0)
+		   {
+				*ptr = objMhDataIpc.value ;
+				*ptr -= 65536; 
+				FST_INFO("getMH: value  test = %d\n", *ptr);
+		   }
+		   else
+		   {
+				*ptr = objMhDataIpc.value ;
+				printf("getMH: value  test = %d\n", *ptr);
+		   }
 		}
 		else 
 		{
@@ -976,7 +1001,7 @@ bool reg_manager_interface_getMH(int *ptr, uint16_t num)
 	}
 	else
 	{
-		FST_ERROR("g_objRegManagerInterface is NULL");
+		FST_ERROR("modbus_manager_ptr_ is NULL");
 	}
 #else
 	*ptr = 1 ;
@@ -996,19 +1021,16 @@ bool reg_manager_interface_setMH(int *ptr, uint16_t num)
 {
 	bool bRet = false ;
 #ifndef WIN32
-	if(g_objRegManagerInterface)
+	if(reg_manager_ptr_)
 	{
 		fst_base::MhDataIpc objMhDataIpc ;
 		objMhDataIpc.id    = num;
 		objMhDataIpc.value = *ptr;
-		bRet = g_objRegManagerInterface->setMh(&objMhDataIpc);
+		// bRet = g_objRegManagerInterface->setMh(&objMhDataIpc);
+		bRet = true ;
+		modbus_manager_ptr_->writeHoldingRegs(0, (int)num, 1, (uint16_t *)&objMhDataIpc.value);
+		
 		FST_INFO("setR:(%f) at %d with %s", objMhDataIpc.value, num, bRet?"TRUE":"FALSE");
-#ifdef USE_LOCAL_REG_MANAGER_INTERFACE
-		if(bRet == false)
-		{
-			bRet = g_objRegManagerInterface->addMh(objMhDataIpc);
-		}
-#endif
 		if(!bRet)
 		{
 			bRet = true ;
@@ -1016,7 +1038,7 @@ bool reg_manager_interface_setMH(int *ptr, uint16_t num)
 	}
 	else
 	{
-		FST_ERROR("g_objRegManagerInterface is NULL");
+		FST_ERROR("reg_manager_ptr_ is NULL");
 	}
 #else
 	bRet = true ;
@@ -1035,10 +1057,12 @@ bool reg_manager_interface_getValueMH(int *ptr, uint16_t num)
 {
 	bool bRet = false ;
 #ifndef WIN32
-	if(g_objRegManagerInterface)
+	if(reg_manager_ptr_)
 	{
 		fst_base::MhDataIpc objMhDataIpc ;
-		bRet = g_objRegManagerInterface->getMh(num, &objMhDataIpc);
+		// bRet = g_objRegManagerInterface->getMh(num, &objMhDataIpc);
+		bRet = true ;
+		modbus_manager_ptr_->readHoldingRegs(0, (int)num, 1, (uint16_t *)&objMhDataIpc.value);
 		if(bRet)
 		{
 		   *ptr = objMhDataIpc.value;
@@ -1051,7 +1075,7 @@ bool reg_manager_interface_getValueMH(int *ptr, uint16_t num)
 	}
 	else
 	{
-		FST_ERROR("g_objRegManagerInterface is NULL");
+		FST_ERROR("reg_manager_ptr_ is NULL");
 	}
 #else
 	bRet = true ;
@@ -1070,12 +1094,14 @@ bool reg_manager_interface_setValueMH(int *ptr, uint16_t num)
 {
 	bool bRet = false ;
 #ifndef WIN32
-	if(g_objRegManagerInterface)
+	if(reg_manager_ptr_)
 	{
 		fst_base::MhDataIpc objMhDataIpc ;
 		objMhDataIpc.id    = num;
 		objMhDataIpc.value = *ptr;
-		bRet = g_objRegManagerInterface->setMh(&objMhDataIpc);
+		// bRet = g_objRegManagerInterface->setMh(&objMhDataIpc);
+		bRet = true ;
+		modbus_manager_ptr_->writeHoldingRegs(0, (int)num, 1, (uint16_t *)&objMhDataIpc.value);
 // crash sometimes
 //		FST_INFO("setValueMH:(%f) at %d with %s", 
 //			objMhDataIpc.value, num, bRet?"TRUE":"FALSE");
@@ -1086,7 +1112,7 @@ bool reg_manager_interface_setValueMH(int *ptr, uint16_t num)
 	}
 	else
 	{
-		FST_ERROR("g_objRegManagerInterface is NULL");
+		FST_ERROR("reg_manager_ptr_ is NULL");
 	}
 #else
 	bRet = true ;
@@ -1097,22 +1123,22 @@ bool reg_manager_interface_setValueMH(int *ptr, uint16_t num)
 std::vector<BaseRegData> reg_manager_interface_read_valid_pr_lst(int start_id, int size)
 {
     std::vector<BaseRegData> vecRet ;
-	bool bRet = false ;
+	// bool bRet = false ;
 	vecRet.clear();
-#ifndef WIN32
-	if(g_objRegManagerInterface)
+// #ifndef WIN32
+	if(reg_manager_ptr_)
 	{
 #ifdef USE_LOCAL_REG_MANAGER_INTERFACE
-		vecRet = g_objRegManagerInterface->getPrRegValidIdList(0, 255);
+		vecRet = reg_manager_ptr_->getPrRegValidIdList(0, 255);
 #endif
 	}
 	else
 	{
-		FST_ERROR("g_objRegManagerInterface is NULL");
+		FST_ERROR("reg_manager_ptr_ is NULL");
 	}
-#else
-	bRet = true ;
-#endif
+// #else
+	// bRet = true ;
+// #endif
 	return vecRet ;
 }
 
@@ -1121,15 +1147,15 @@ std::vector<BaseRegData> reg_manager_interface_read_valid_sr_lst(int start_id, i
     std::vector<BaseRegData> vecRet ;
 	vecRet.clear();
 #ifndef WIN32
-	if(g_objRegManagerInterface)
+	if(reg_manager_ptr_)
 	{
 #ifdef USE_LOCAL_REG_MANAGER_INTERFACE
-		vecRet = g_objRegManagerInterface->getSrRegValidIdList(0, 255);
+		vecRet = reg_manager_ptr_->getSrRegValidIdList(0, 255);
 #endif
 	}
 	else
 	{
-		FST_ERROR("g_objRegManagerInterface is NULL");
+		FST_ERROR("reg_manager_ptr_ is NULL");
 	}
 #endif
 	return vecRet ;
@@ -1140,15 +1166,15 @@ std::vector<BaseRegData> reg_manager_interface_read_valid_r_lst(int start_id, in
     std::vector<BaseRegData> vecRet ;
 	vecRet.clear();
 #ifndef WIN32
-	if(g_objRegManagerInterface)
+	if(reg_manager_ptr_)
 	{
 #ifdef USE_LOCAL_REG_MANAGER_INTERFACE
-		vecRet = g_objRegManagerInterface->getRRegValidIdList(0, 255);
+		vecRet = reg_manager_ptr_->getRRegValidIdList(0, 255);
 #endif
 	}
 	else
 	{
-		FST_ERROR("g_objRegManagerInterface is NULL");
+		FST_ERROR("reg_manager_ptr_ is NULL");
 	}
 #endif
 	return vecRet ;
@@ -1159,16 +1185,16 @@ std::vector<BaseRegData> reg_manager_interface_read_valid_mr_lst(int start_id, i
     std::vector<BaseRegData> vecRet ;
 	vecRet.clear();
 #ifndef WIN32
-	if(g_objRegManagerInterface)
+	if(reg_manager_ptr_)
 	{
 #ifdef USE_LOCAL_REG_MANAGER_INTERFACE
-		vecRet = g_objRegManagerInterface->getMrRegValidIdList(0, 255);
+		vecRet = reg_manager_ptr_->getMrRegValidIdList(0, 255);
 		bRet = true ;
 #endif
 	}
 	else
 	{
-		FST_ERROR("g_objRegManagerInterface is NULL");
+		FST_ERROR("reg_manager_ptr_ is NULL");
 	}
 #endif
 	return vecRet ;
@@ -1179,15 +1205,15 @@ std::vector<BaseRegData> reg_manager_interface_read_valid_hr_lst(int start_id, i
     std::vector<BaseRegData> vecRet ;
 	vecRet.clear();
 #ifndef WIN32
-	if(g_objRegManagerInterface)
+	if(reg_manager_ptr_)
 	{
 #ifdef USE_LOCAL_REG_MANAGER_INTERFACE
-		vecRet = g_objRegManagerInterface->getHrRegValidIdList(0, 255);
+		vecRet = reg_manager_ptr_->getHrRegValidIdList(0, 255);
 #endif
 	}
 	else
 	{
-		FST_ERROR("g_objRegManagerInterface is NULL");
+		FST_ERROR("reg_manager_ptr_ is NULL");
 	}
 #endif
 	return vecRet ;
@@ -1197,9 +1223,11 @@ bool reg_manager_interface_getJoint(Joint &joint)
 {
 	bool bRet = false ;
 #ifndef WIN32
-	if(g_objRegManagerInterface)
+	if(motion_control_ptr_)
 	{
-		bRet = g_objRegManagerInterface->getJoint(1, joint);
+		bRet = true ;
+		joint = motion_control_ptr_->getServoJoint();
+		// bRet = g_objRegManagerInterface->getJoint(1, joint);
 		if(bRet)
 		{
 			return bRet ;
@@ -1207,7 +1235,7 @@ bool reg_manager_interface_getJoint(Joint &joint)
 	}
 	else
 	{
-		FST_ERROR("g_objRegManagerInterface is NULL");
+		FST_ERROR("motion_control_ptr_ is NULL");
 	}
 #else
 	joint.j1 = joint.j2 = joint.j3 = joint.j4 = 
@@ -1222,9 +1250,11 @@ bool reg_manager_interface_getCart(PoseEuler &pos)
 {
 	bool bRet = false ;
 #ifndef WIN32
-	if(g_objRegManagerInterface)
+	if(motion_control_ptr_)
 	{
-		bRet = g_objRegManagerInterface->getCart(1, pos);
+		bRet = true ;
+		pos = motion_control_ptr_->getCurrentPose();
+		// bRet = g_objRegManagerInterface->getCart(1, pos);
 		if(bRet)
 		{
 			return bRet ;
@@ -1232,7 +1262,7 @@ bool reg_manager_interface_getCart(PoseEuler &pos)
 	}
 	else
 	{
-		FST_ERROR("g_objRegManagerInterface is NULL");
+		FST_ERROR("motion_control_ptr_ is NULL");
 	}
 #else
 	bRet = true ;
@@ -1242,19 +1272,27 @@ bool reg_manager_interface_getCart(PoseEuler &pos)
 
 bool reg_manager_interface_cartToJoint(PoseEuler pos, Joint &joint)
 {
-	bool bRet = false ;
+	// bool bRet = false ;
 #ifndef WIN32
-	if(g_objRegManagerInterface)
+	if(motion_control_ptr_)
 	{
-		bRet = g_objRegManagerInterface->cartToJoint(pos, joint);
-		if(bRet)
+	    int user_frame_id = 0;
+	    int tool_frame_id = 0;
+	    motion_control_ptr_->getUserFrame(user_frame_id);
+	    motion_control_ptr_->getToolFrame(tool_frame_id);
+		
+		// bRet = true ;
+    	ErrorCode result = motion_control_ptr_->convertCartToJoint(pos, user_frame_id, tool_frame_id, joint);
+		// bRet = g_objRegManagerInterface->cartToJoint(pos, joint);
+		if(result)
 		{
-			return bRet ;
+			return false ;
 		}
 	}
 	else
 	{
-		FST_ERROR("g_objRegManagerInterface is NULL");
+		FST_ERROR("motion_control_ptr_ is NULL");
+		return false;
 	}
 #else
 	bRet = true ;
@@ -1264,19 +1302,26 @@ bool reg_manager_interface_cartToJoint(PoseEuler pos, Joint &joint)
 
 bool reg_manager_interface_jointToCart(Joint joint, PoseEuler &pos)
 {
-	bool bRet = false ;
+	// bool bRet = false ;
 #ifndef WIN32
-	if(g_objRegManagerInterface)
+	if(motion_control_ptr_)
 	{
-		bRet = g_objRegManagerInterface->jointToCart(joint, pos);
-		if(bRet)
+	    int user_frame_id = 0;
+	    int tool_frame_id = 0;
+	    motion_control_ptr_->getUserFrame(user_frame_id);
+	    motion_control_ptr_->getToolFrame(tool_frame_id);
+		
+		// bRet = true ;
+		ErrorCode result = motion_control_ptr_->convertJointToCart(joint, user_frame_id, tool_frame_id, pos);
+		if(result)
 		{
-			return bRet ;
+			return false ;
 		}
 	}
 	else
 	{
-		FST_ERROR("g_objRegManagerInterface is NULL");
+		FST_ERROR("motion_control_ptr_ is NULL");
+		return false;
 	}
 #else
 	bRet = true ;
@@ -1288,9 +1333,10 @@ bool reg_manager_interface_getUserOpMode(int& mode)
 {
 	bool bRet = false ;
 #ifndef WIN32
-	if(g_objRegManagerInterface)
+	if(state_machine_ptr_)
 	{
-		bRet = g_objRegManagerInterface->getUserOpMode(mode);
+		bRet = true ;
+		mode = state_machine_ptr_->getUserOpMode();
 		if(bRet)
 		{
 			return bRet ;
@@ -1298,7 +1344,7 @@ bool reg_manager_interface_getUserOpMode(int& mode)
 	}
 	else
 	{
-		FST_ERROR("g_objRegManagerInterface is NULL");
+		FST_ERROR("state_machine_ptr_ is NULL");
 	}
 #else
 	bRet = true ;
@@ -1306,4 +1352,53 @@ bool reg_manager_interface_getUserOpMode(int& mode)
 	return true ;
 }
 
+bool reg_manager_interface_getPosture(Posture &posture)
+{
+	bool bRet = false ;
+#ifndef WIN32
+	if(motion_control_ptr_)
+	{
+		// bRet = g_objRegManagerInterface->getPosture(turn);
+		bRet = true ;
+        Joint joint = motion_control_ptr_->getServoJoint();
+        posture = motion_control_ptr_->getPostureFromJoint(joint);
+		if(bRet)
+		{
+			return bRet ;
+		}
+	}
+	else
+	{
+		FST_ERROR("motion_control_ptr_ is NULL");
+	}
+#else
+	bRet = true ;
+#endif
+	return true ;
+}
+
+bool reg_manager_interface_getTurn(Turn &turn)
+{
+	bool bRet = false ;
+#ifndef WIN32
+	if(motion_control_ptr_)
+	{
+		// bRet = g_objRegManagerInterface->getTurn(turn);
+		bRet = true ;
+	    Joint joint = motion_control_ptr_->getServoJoint();
+	    turn = motion_control_ptr_->getTurnFromJoint(joint);
+		if(bRet)
+		{
+			return bRet ;
+		}
+	}
+	else
+	{
+		FST_ERROR("motion_control_ptr_ is NULL");
+	}
+#else
+	bRet = true ;
+#endif
+	return true ;
+}
 

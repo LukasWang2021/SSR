@@ -5,9 +5,9 @@
 using namespace fst_hal;
 
 FstAxisDeviceParam::FstAxisDeviceParam():
-    file_path_(COMPONENT_PARAM_FILE_DIR),
     log_level_(3),  // default is Error Level
-    cycle_time_(0)
+    cycle_time_(0),
+    file_path_(COMPONENT_PARAM_FILE_DIR)
 {
     file_path_ += "fst_axis_device.yaml";
 }

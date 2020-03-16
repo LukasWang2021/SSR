@@ -8,7 +8,7 @@
 
 namespace fst_base
 {
-typedef void (*threadFunc)(void*);
+typedef void* (*threadFunc)(void*);
 
 class ThreadHelp
 {

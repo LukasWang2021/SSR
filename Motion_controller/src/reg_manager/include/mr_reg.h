@@ -4,6 +4,7 @@
 #include "base_reg.h"
 #include "parameter_manager/parameter_manager_param_group.h"
 #include "reg_manager_param.h"
+#include "common_log.h"
 
 namespace fst_ctrl
 {
@@ -32,7 +33,7 @@ class MrReg:public BaseReg
 {
 public:
     MrReg(RegManagerParam* param_ptr);
-    ~MrReg();
+    virtual ~MrReg();
 
     virtual ErrorCode init();
     virtual ErrorCode addReg(void* data_ptr);
@@ -49,6 +50,7 @@ private:
     std::string file_path_;
     fst_parameter::ParamGroup yaml_help_;
     std::vector<int> data_list_;
+    fst_log::Logger* log_ptr_;
 
 	Nvram nvram_obj_ ;
     int use_nvram_;

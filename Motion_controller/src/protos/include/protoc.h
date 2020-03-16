@@ -13,6 +13,8 @@
 #include "request/request_coord_user.pb.h"
 #include "request/request_file.pb.h"
 
+#include "request/request_int32_uftf_pose_and_posture.pb.h"
+
 #include "request/request_reg_hr.pb.h"
 #include "request/request_reg_mr.pb.h"
 #include "request/request_reg_pr.pb.h"
@@ -77,6 +79,7 @@
 #include "message_type/device_version.pb.h"
 
 #include "message_type/timeval.pb.h"
+#include "message_type/posture.pb.h"
 
 #include "message_type/modbus_start_mode.pb.h"
 #include "message_type/modbus_function.pb.h"
@@ -91,6 +94,8 @@
 
 #include "message_type/param_info.pb.h"
 #include "message_type/payload_info.pb.h"
+#include "message_type/pose_and_posture.pb.h"
+#include "message_type/uftf_pose_and_posture.pb.h"
 
 #include "response/response_base.pb.h"
 #include "response/response_publish_table.pb.h"
@@ -139,4 +144,7 @@
 
 #include "response/response_uint64_payload_info.pb.h"
 #include "response/response_uint64_payload_summary_list.pb.h"
+
+#include "response/response_uint64_posture.pb.h"
+#include "response/response_uint64_pose_and_posture.pb.h"
 #endif

@@ -106,6 +106,8 @@ private:
     void handleRequestUserOpMode();
     void handleRequestSetDoPulse();
     void handleRequestSetRoPulse();
+    void handleRequestGetPosture();
+    void handleRequestGetTurn();
 
     // rpc response handler
     void handleResponseSetPrReg(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
@@ -143,11 +145,13 @@ private:
     void handleResponseUserOpMode(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
     void handleResponseSetDoPulse(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
     void handleResponseSetRoPulse(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
+    void handleResponseGetPosture(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
+    void handleResponseGetTurn(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
 };
 
 }
 
-void controllerServerThreadFunc(void* arg);
+void* controllerServerThreadFunc(void* arg);
 
 #endif
 

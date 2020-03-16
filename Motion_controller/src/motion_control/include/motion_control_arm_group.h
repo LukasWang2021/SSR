@@ -27,6 +27,7 @@ class ArmGroup : public BaseGroup
 
     size_t getNumberOfJoint(void);
     size_t getFIFOLength(void);
+    bool isPostureMatch(const basic_alg::Posture &posture_1, const basic_alg::Posture &posture_2);
 
   private:
     inline char* printDBLine(const int *data, char *buffer, size_t length);

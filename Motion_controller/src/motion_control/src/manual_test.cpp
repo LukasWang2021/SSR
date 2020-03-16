@@ -12,14 +12,15 @@
 #include <sys/mman.h>
 #include <string.h>
 #include <fstream>
+#include <struct_to_mem/shared_mem_core.h>
 
 #include <unistd.h>
 #include <pthread.h>
 #include <iostream>
+#include <basic_alg.h>
 #include <motion_control_arm_group.h>
 #include "thread_help.h"
 #include <motion_control_cache_pool.h>
-#include <segment_alg.h>
 #include <parameter_manager/parameter_manager_param_group.h>
 #include <transformation.h>
 
@@ -40,7 +41,7 @@ void test0(void)
     Joint reference, res_joint;
     Transformation transformation;
     transformation.init(&kinematics);
-    PoseQuaternion tcp_in_user, tcp_in_base, fcp_in_base;
+    PoseQuaternion tcp_in_user, fcp_in_base;
     PoseEuler user_frame_, tool_frame_;
     tcp_in_user.point_.x_ = 250;
     tcp_in_user.point_.y_ = 342;
@@ -66,7 +67,7 @@ void test0(void)
     double used_time = (double)(end_clock - start_clock) / CLOCKS_PER_SEC * 1000;
     printf("used time: %.6f\n", used_time);
     
-    char buffer[LOG_TEXT_SIZE];
+    //char buffer[LOG_TEXT_SIZE];
     PoseQuaternion &pose = tcp_in_user;
     PoseEuler tcp_user = Pose2PoseEuler(pose);
     PoseEuler fcp_base = Pose2PoseEuler(fcp_in_base);
@@ -140,7 +141,7 @@ void test3(void)
 
 static bool g_thread_running = false;
 
-static void rtTask(void *group)
+static void* rtTask(void *group)
 {
     cout << "---------------rt thread running---------------" << endl;
     while (g_thread_running)
@@ -149,9 +150,10 @@ static void rtTask(void *group)
         usleep(2 * 1000);
     }
     cout << "---------------rt thread quit---------------" << endl;
+    return NULL;
 }
 
-static void nrtTask(void *group)
+static void* nrtTask(void *group)
 {
     cout << "---------------nrt thread running---------------" << endl;
     while (g_thread_running)
@@ -160,6 +162,7 @@ static void nrtTask(void *group)
         usleep(2 * 1000);
     }
     cout << "---------------nrt thread quit---------------" << endl;
+    return NULL;
 }
 
 void test2(void)
@@ -172,8 +175,8 @@ void test2(void)
 
     arm.initGroup(&error_monitor, NULL, NULL);
     g_thread_running = true;
-    rt_thread.run(&rtTask, &arm, 80);
-    nrt_thread.run(&nrtTask, &arm, 78);
+    rt_thread.run(rtTask, &arm, 80);
+    nrt_thread.run(nrtTask, &arm, 78);
     sleep(1);
     arm.setGlobalVelRatio(0.5);
     arm.setGlobalAccRatio(0.8);
@@ -378,48 +381,6 @@ void test4(void)
 }
 */
 
-void test5(void)
-{
-    PathCache path_cache;
-    MotionInfo via, target;
-    PoseEuler start_pose;
-
-    start_pose.point_.x_ = 261.7164;
-    start_pose.point_.y_ = -133.4895;
-    start_pose.point_.z_ = 533.6744;
-    start_pose.euler_.a_ = -0.6651;
-    start_pose.euler_.b_ = -0.1726;
-    start_pose.euler_.c_ = 2.7489;
-
-    target.type = MOTION_LINE;
-    target.cnt = 0.25;
-    target.vel = 1200;
-    target.target.pose.pose.point_.x_ = 565.3530;
-    target.target.pose.pose.point_.y_ = -84.3829;
-    target.target.pose.pose.point_.z_ = 489.7908;
-    target.target.pose.pose.euler_.a_ = -0.0007;
-    target.target.pose.pose.euler_.b_ = 0.0053;
-    target.target.pose.pose.euler_.c_ = 3.1414;
-
-    via.type = MOTION_LINE;
-    via.cnt = 0.6;
-    via.vel = 1000;
-    via.target.pose.pose.point_.x_ = 204.4835;
-    via.target.pose.pose.point_.y_ = -290.8357;
-    via.target.pose.pose.point_.z_ = 467.5943;
-    via.target.pose.pose.euler_.a_ = -0.9580;
-    via.target.pose.pose.euler_.b_ = -0.0338;
-    via.target.pose.pose.euler_.c_ = 3.1416;
-
-    ErrorCode err = planPathSmoothLine(start_pose, via, target, path_cache);
-    printf("planPathSmoothLine return %llx", err);
-
-    for (size_t i = 0; i < path_cache.cache_length; i++)
-    {
-        PoseQuaternion &pose = path_cache.cache[i].pose;
-        printf("%.6f,%.6f,%.6f,  %.6f,%.6f,%.6f,%.6f\n", pose.point_.x_, pose.point_.y_, pose.point_.z_, pose.quaternion_.w_, pose.quaternion_.x_, pose.quaternion_.y_, pose.quaternion_.z_);
-    }
-}
 
 void test6(void)
 {
@@ -454,7 +415,7 @@ void test6(void)
 
     clock_t start = clock();
     for (size_t i = 0; i < 1000; i++)
-        ErrorCode err = arm.getKinematicsPtr()->doIK(p, ref, res) ? SUCCESS : MC_COMPUTE_IK_FAIL;
+        arm.getKinematicsPtr()->doIK(p, ref, res);
     clock_t end = clock();
 
     double seconds  = (double)(end - start)/CLOCKS_PER_SEC;
@@ -472,97 +433,8 @@ void test6(void)
 }
 
 
-extern ComplexAxisGroupModel model;
 
-void test7(void)
-{
-    /*
-    KinematicsRTM kinematics;
-    DynamicsInterface dynamics;
-    double dh_matrix[9][4] = {{0, 0, 365, 0}, {PI/2, 30, 0, PI/2}, {0, 340, 0, 0}, {PI/2, 35, 350, 0}, {-PI/2, 0, 0, 0}, {PI/2, 0, 96.5, 0}, {0,0,0,0}, {0,0,0,0}, {0,0,0,0}};
-    kinematics.initKinematics(dh_matrix);
-    SegmentAlgParam seg_param;
-    ParamGroup param;
 
-    if (param.loadParamFile("/root/install/share/runtime/component_param/segment_alg.yaml"))
-    {
-        if (param.getParam("accuracy_cartesian_factor", seg_param.accuracy_cartesian_factor) &&
-            param.getParam("accuracy_joint_factor", seg_param.accuracy_joint_factor) &&
-            param.getParam("max_traj_points_num", seg_param.max_traj_points_num) &&
-            param.getParam("path_interval", seg_param.path_interval) &&
-            param.getParam("joint_interval", seg_param.joint_interval) &&
-            param.getParam("angle_interval", seg_param.angle_interval) &&
-            param.getParam("angle_valve", seg_param.angle_valve) &&
-            param.getParam("conservative_acc", seg_param.conservative_acc) &&
-            param.getParam("time_factor_first", seg_param.time_factor_first) &&
-            param.getParam("time_factor_last", seg_param.time_factor_last) &&
-            param.getParam("is_fake_dynamics", seg_param.is_fake_dynamics))
-        {}
-        else
-        {
-            printf("Fail to load segment algorithm config, code = 0x%llx\n", param.getLastError());
-            return;
-        }
-    }
-    else
-    {
-        printf("Fail to load segment algorithm config, code = 0x%llx\n", param.getLastError());
-        return;
-    }
-
-    initComplexAxisGroupModel();
-    initSegmentAlgParam(&seg_param);
-
-    Joint start_joint;
-    double data[] = {0.234, 1.234, -2.044, 0.876, -1.2432, 0.003, 0, 0, 0};
-    memcpy(&start_joint, data, sizeof(start_joint));
-    MotionTarget target;
-    target.joint_target.j1_ = -1.34;
-    target.joint_target.j2_ = -0.23;
-    target.joint_target.j3_ = 1.455;
-    target.joint_target.j4_ = 0.034;
-    target.joint_target.j5_ = 0.567;
-    target.joint_target.j6_ = -1.4556;
-    target.cnt = 0;
-    target.vel = 1.0;
-    target.type = MOTION_JOINT;
-    PathCache path_cache;
-    TrajectoryCache traj_cache;
-    JointState start_state;
-    start_state.angle = start_joint;
-    memset(&start_state.omega, 0, sizeof(start_state.omega));
-    memset(&start_state.alpha, 0, sizeof(start_state.alpha));
-    clock_t t1 = clock();
-    ErrorCode err = planPathJoint(start_joint, target, path_cache);
-    clock_t t2 = clock();
-    err = planTrajectory(path_cache, start_state, 1, 1, traj_cache);
-    clock_t t3 = clock();
-    double delta_path  =(double)(t2 - t1)/CLOCKS_PER_SEC;
-    double delta_traj  =(double)(t3 - t2)/CLOCKS_PER_SEC;
-
-    std::cout<<"delta_path = "<<delta_path<<" delta_traj = "<<delta_traj<<std::endl;
-    */
-
-/*
-    printTraj(traj_cache, 0, 0.01);
-    printTraj(traj_cache, 1, 0.01);
-    printTraj(traj_cache, 2, 0.01);
-    printTraj(traj_cache, 3, 0.01);
-    printTraj(traj_cache, 4, 0.01);
-    printTraj(traj_cache, 5, 0.01);
-    */
-}
-
-void test8(void)
-{
-    CachePool<TrajectoryCacheList> traj_cache;
-    CachePool<PathCacheList> path_cache;
-    traj_cache.initCachePool(4);
-    path_cache.initCachePool(4);
-
-    TrajectoryCacheList *p1 = traj_cache.getCachePtr();
-    traj_cache.freeCachePtr(p1);
-}
 
 using namespace basic_alg;
 using namespace std;
@@ -570,9 +442,9 @@ using namespace std;
 void test9(void)
 {
     PoseEuler pose = {600, 100, 500, 0, 0, 3.14159};
-    PoseEuler pose_res;
+    //PoseEuler pose_res;
     Joint ref = {0, 0, 0, 0, -1, 0, 0, 0, 0};
-    Joint res;
+    //Joint res;
     static KinematicsRTM kinematics("/root/install/share/runtime/axis_group/");
     
     /*
@@ -690,8 +562,8 @@ void test10(void)
 bool run_flag = true;
 
 
-
-static void runTask1(void *null)
+/*
+static void* runTask1(void *null)
 {
     printf("run task1\n");
 
@@ -702,9 +574,10 @@ static void runTask1(void *null)
     }
 
     printf("task1 quit\n");
+    return NULL;
 }
 
-static void runTask2(void *null)
+static void* runTask2(void *null)
 {
     printf("run task2\n");
 
@@ -715,14 +588,16 @@ static void runTask2(void *null)
     }
 
     printf("task2 quit\n");
+    return NULL;
 }
+*/
 
 void test11(void)
 {
     PoseEuler pose;
-    PoseEuler pose_res;
-    Joint ref = {0, 0, 0, 0, -1, 0, 0, 0, 0};
-    Joint res;
+    //PoseEuler pose_res;
+    //Joint ref = {0, 0, 0, 0, -1, 0, 0, 0, 0};
+    //Joint res;
     KinematicsRTM kinematics("/root/install/share/runtime/axis_group/");
     
     //Joint joint = {-0.142136, -0.699177, -0.591108, 1.89109, 1.53765, -0.990637};
@@ -748,8 +623,8 @@ void test12(void)
     pose.euler_.b_ = 0;
     pose.euler_.c_ = -3.14159;
     Posture posture = {1, 1, -1, 0};
-    PoseEuler pose_res;
-    Joint ref = {0, 0, 0, 0, -1, 0, 0, 0, 0};
+    //PoseEuler pose_res;
+    //Joint ref = {0, 0, 0, 0, -1, 0, 0, 0, 0};
     Joint res;
     KinematicsRTM kinematics("/root/install/share/runtime/axis_group/");
     printf("pose: %.6f,%.6f,%.6f,%.6f,%.6f,%.6f\n", pose.point_.x_, pose.point_.y_, pose.point_.z_, pose.euler_.a_, pose.euler_.b_, pose.euler_.c_);
@@ -862,6 +737,41 @@ void test13(void)
     }
 }
 
+void test14(void)
+{
+    ThreeJerkDSCurvePlanner ds_planner_;
+    double jerk[] = {20, 10, 5};
+    ds_planner_.planDSCurve(0, 1, 0.5, 2, jerk);
+    ds_planner_.outputDSCurve(0.001, "ads.csv");
+}
+
+void test15(void)
+{
+    CirclePlanner planner;
+    PoseQuaternion a,b,c;
+    a.point_.x_ = -100;
+    a.point_.y_ = 25;
+    a.point_.z_ = 5;
+    b.point_.x_ = 15;
+    b.point_.y_ = 100;
+    b.point_.z_ = 30;
+    c.point_.x_ = 100;
+    c.point_.y_ = 45;
+    c.point_.z_ = 50;
+    planner.planTrajectory(a,b,c,1,1,1);
+}
+
+struct TestItem
+{
+	double stamp;
+	double q[6];
+} ;
+
+struct TestBuffer
+{
+	uint32_t index;
+	TestItem items[10000];
+} ;
 
 
 int main(int argc, char **argv)
@@ -869,7 +779,7 @@ int main(int argc, char **argv)
     /*
     fst_base::ThreadHelp thread1, thread2;
 
-    if (thread1.run(&runTask1, NULL, 80))
+    if (thread1.run(runTask1, NULL, 80))
     
     thread1.join();
     thread2.join();
@@ -880,7 +790,60 @@ int main(int argc, char **argv)
     //test8();
     //test9();
     //test10();
-    test13();
+    //test15();
+    /*
+    int fd = open("/dev/fst_shmem", O_RDWR);
+    static TestBuffer* test_buffer = (TestBuffer *) mmap(NULL, 1000 * 1024, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0x3B000000);
+    if (test_buffer == MAP_FAILED) 
+    {
+        close(fd);
+        printf("\nError in openMem(): failed on mapping core sharedmem\n");
+        return -1;
+    }
+    
+    ofstream jtac("jtac.csv");
+
+    for (uint32_t i = 0; i < test_buffer->index; i++)
+    {
+        jtac << i << "," << test_buffer->items[i].stamp << "," << test_buffer->items[i].q[0] << "," << test_buffer->items[i].q[1] << "," << test_buffer->items[i].q[2] << "," << test_buffer->items[i].q[3] << "," << test_buffer->items[i].q[4] << "," << test_buffer->items[i].q[5] << endl;
+    }
+    
+    jtac.close();
+    */
+    TrajectorySeg seg;
+    cout << "size of TrajectorySeg: " << sizeof(TrajectorySeg) << endl;
+    cout << "size of TrajectoryPoints: " << sizeof(TrajectoryPoints) << endl;
+    cout << "offset of points[0]: " << (uint32_t)(&seg.points[0]) - (uint32_t)(&seg) << endl;
+    cout << "offset of points[1]: " << (uint32_t)(&seg.points[1]) - (uint32_t)(&seg) << endl;
+    cout << "offset of points[2]: " << (uint32_t)(&seg.points[2]) - (uint32_t)(&seg) << endl;
+    cout << "offset of points[3]: " << (uint32_t)(&seg.points[3]) - (uint32_t)(&seg) << endl;
+    cout << "offset of points[4]: " << (uint32_t)(&seg.points[4]) - (uint32_t)(&seg) << endl;
+    cout << "offset of points[5]: " << (uint32_t)(&seg.points[5]) - (uint32_t)(&seg) << endl;
+    cout << "offset of points[6]: " << (uint32_t)(&seg.points[6]) - (uint32_t)(&seg) << endl;
+    cout << "offset of points[7]: " << (uint32_t)(&seg.points[7]) - (uint32_t)(&seg) << endl;
+    cout << "offset of points[8]: " << (uint32_t)(&seg.points[8]) - (uint32_t)(&seg) << endl;
+    cout << "offset of points[9]: " << (uint32_t)(&seg.points[9]) - (uint32_t)(&seg) << endl;
+    cout << "offset of total_points: " << (uint32_t)(&seg.total_points) - (uint32_t)(&seg) << endl;
+    cout << "offset of seq: " << (uint32_t)(&seg.seq) - (uint32_t)(&seg) << endl;
+    cout << "offset of last_fragment: " << (uint32_t)(&seg.last_fragment) - (uint32_t)(&seg) << endl;
+
+    ofstream  shm_out("/root/share_memory.dump");
+    int fd = open("/dev/fst_shmem", O_RDWR);
+    void *ptr = mmap(NULL, 524288, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0x38100000);
+    uint32_t *pdata = (uint32_t*)ptr;
+    char buffer[1024];
+
+    for (uint32_t i = 0; i < 524288; i += 16 * 4)
+    {
+        sprintf(buffer, "0x%08x: 0x%08x 0x%08x 0x%08x 0x%08x 0x%08x 0x%08x 0x%08x 0x%08x 0x%08x 0x%08x 0x%08x 0x%08x 0x%08x 0x%08x 0x%08x 0x%08x", i,
+            pdata[0], pdata[1], pdata[2], pdata[3], pdata[4], pdata[5], pdata[6], pdata[7], 
+            pdata[8], pdata[9], pdata[10], pdata[11], pdata[12], pdata[13], pdata[14], pdata[15]);
+        pdata += 16;
+        shm_out << buffer << endl;
+    }
+
+    shm_out.flush();
+    shm_out.close();
 
     return 0;
 }

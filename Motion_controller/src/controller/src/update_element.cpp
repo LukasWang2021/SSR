@@ -1,5 +1,6 @@
 #include "controller_publish.h"
 #include "basic_alg_datatype.h"
+#include "forsight_inter_control.h"
 
 using namespace fst_ctrl;
 using namespace fst_mc;
@@ -111,14 +112,16 @@ void ControllerPublish::updateGlobalAccRatio()
 
 void ControllerPublish::updateProgramStatus()
 {
-    InterpreterPublish* data_ptr = controller_client_ptr_->getInterpreterPublishPtr();
+    // InterpreterPublish* data_ptr = controller_client_ptr_->getInterpreterPublishPtr();
+	InterpreterPublish* data_ptr = getInterpreterPublishPtr();
     memcpy(&program_status_.data1.data[0], data_ptr->program_name, 256);
     program_status_.data2.data = data_ptr->current_line_num;
 }
 
 void ControllerPublish::updateTpProgramStatus()
 {
-    InterpreterPublish* data_ptr = controller_client_ptr_->getInterpreterPublishPtr();
+    // InterpreterPublish* data_ptr = controller_client_ptr_->getInterpreterPublishPtr();
+	InterpreterPublish* data_ptr = getInterpreterPublishPtr();
     tp_program_status_.data_count = 2;
     memcpy(&tp_program_status_.data[0].data[0], data_ptr->program_name, 256);
     memcpy(&tp_program_status_.data[1].data[0], data_ptr->current_line_path, 256);
@@ -137,7 +140,7 @@ void ControllerPublish::updateIoBoardStatus()
     fst_hal::IODevicePortValues values;
 
     io_board_status_.io_board_count = 4;
-    for (int i = 0; i < io_board_status_.io_board_count; ++i)
+    for (size_t i = 0; i < io_board_status_.io_board_count; ++i)
     {
         if (info_list[i].dev_type == DEVICE_TYPE_FST_IO)
         {
@@ -257,7 +260,8 @@ void ControllerPublish::updateReg()
                     it->r_value.is_valid = false;
                 }
                 break;               
-            }                
+            }   
+            default: break;             
         }
     }
 }
@@ -372,7 +376,7 @@ void ControllerPublish::updateModbusClientCtrlStatus()
         vector<int>::iterator it = id_list.begin();
         modbus_client_ctrl_status_.ctrl_status_count = id_list.size();
 
-        for (int i = 0; i != id_list.size(); ++i)
+        for (size_t i = 0; i != id_list.size(); ++i)
         {
             modbus_client_ctrl_status_.ctrl_status[i].id = *it;
             error_code = modbus_manager_ptr_->getClientCtrlState(*it, modbus_client_ctrl_status_.ctrl_status[i].status);

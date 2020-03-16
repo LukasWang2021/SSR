@@ -17,7 +17,7 @@ public:
 
     // param to load & save
     int log_level_;
-    int max_mapping_number_;
+    uint32_t max_mapping_number_;
     bool enable_set_io_in_auto_;
 
 private:

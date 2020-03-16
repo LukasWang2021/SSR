@@ -34,14 +34,14 @@ class BareCoreInterface
     BareCoreInterface();
     ~BareCoreInterface();
 
-    bool initInterface(void);
+    bool initInterface(uint32_t joint_num);
     
     bool sendPoint(void);
     bool isPointCacheEmpty(void);
     bool clearPointCache(void);
     bool fillPointCache(TrajectoryPoint *points, size_t length, PointProperty proerty);
 
-    bool getLatestJoint(basic_alg::Joint &joint, ServoState &state);
+    bool getLatestJoint(basic_alg::Joint &joint, uint32_t (&encoder_state)[NUM_OF_JOINT], ServoState &state);
 
     bool resetBareCore(void);
     bool stopBareCore(void);
@@ -51,13 +51,15 @@ class BareCoreInterface
     bool getConfigData(int id, std::vector<double> &data);
     bool getEncoder(std::vector<int> &data);
     bool getEncoderError(std::vector<int> &data);
-    bool resetEncoderError(void);
+    bool resetEncoderError(size_t index);
     bool getControlPosition(double *data, size_t len);
     bool readVersion(char *buffer, size_t size);
+    bool downloadServoParam(uint32_t addr, const char *data, uint32_t length);
 
   private:
     bool sendRequest(fst_comm_interface::CommInterface &comm, const ServiceRequest &req);
     bool recvResponse(fst_comm_interface::CommInterface &comm, ServiceResponse &res);
+    uint32_t joint_num_;
     PointCache  point_cache_;
 
     fst_core_interface::CoreInterface   core_interface_;

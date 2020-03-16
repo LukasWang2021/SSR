@@ -27,26 +27,24 @@ bool Matrix33::isEqual(const Matrix33& matrix, double valve) const
     }
 }
 
+void Matrix33::eye(void)
+{
+    matrix_[0][0] = 1; matrix_[0][1] = 0; matrix_[0][2] = 0;
+    matrix_[1][0] = 0; matrix_[1][1] = 1; matrix_[1][2] = 0;
+    matrix_[2][0] = 0; matrix_[2][1] = 0; matrix_[2][2] = 1;
+}
+
 Matrix33& Matrix33::leftMultiply(const Matrix33& left_matrix)
 {
     Matrix33 tmp_matrix;
     multiply(left_matrix, *this, tmp_matrix);
     *this = tmp_matrix;
-    return *this;   
+    return *this;
 }
 
-void Matrix33::leftMultiply(const Matrix33& left_matrix, Matrix33& result_matrix)
+void Matrix33::leftMultiply(const Matrix33& left_matrix, Matrix33& result_matrix) const
 {
-    if(&result_matrix != this)
-    {
-        multiply(left_matrix, *this, result_matrix);
-    }
-    else
-    {
-        Matrix33 tmp_matrix;
-        multiply(left_matrix, *this, tmp_matrix);
-        *this = tmp_matrix;
-    }
+    multiply(left_matrix, *this, result_matrix);
 }
 
 Matrix33& Matrix33::rightMultiply(const Matrix33& right_matrix)
@@ -57,18 +55,9 @@ Matrix33& Matrix33::rightMultiply(const Matrix33& right_matrix)
     return *this;
 }
 
-void Matrix33::rightMultiply(const Matrix33& right_matrix, Matrix33& result_matrix)
+void Matrix33::rightMultiply(const Matrix33& right_matrix, Matrix33& result_matrix) const
 {
-    if(&result_matrix != this)
-    {
-        multiply(*this, right_matrix, result_matrix);
-    }
-    else
-    {
-        Matrix33 tmp_matrix;
-        multiply(*this, right_matrix, tmp_matrix);
-        *this = tmp_matrix;
-    }
+    multiply(*this, right_matrix, result_matrix);
 }
 
 Matrix33& Matrix33::operator=(const Matrix33& matrix)
@@ -89,7 +78,7 @@ void Matrix33::print(std::string comment) const
     std::cout<<std::endl;
 }
 
-void Matrix33::multiply(const Matrix33& left_matrix, const Matrix33& right_matrix, Matrix33& result_matrix)
+void Matrix33::multiply(const Matrix33& left_matrix, const Matrix33& right_matrix, Matrix33& result_matrix) const
 {
     result_matrix.matrix_[0][0] = left_matrix.matrix_[0][0] * right_matrix.matrix_[0][0] 
                                 + left_matrix.matrix_[0][1] * right_matrix.matrix_[1][0]

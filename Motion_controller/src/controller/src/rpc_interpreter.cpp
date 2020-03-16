@@ -1,4 +1,5 @@
 #include "controller_rpc.h"
+#include "forsight_inter_control.h"
 
 using namespace fst_ctrl;
 
@@ -16,7 +17,11 @@ void ControllerRpc::handleRpc0x00006154(void* request_data_ptr, void* response_d
         return;
     }
 
-    controller_client_ptr_->start(std::string(rq_data_ptr->data.data));
+//    controller_client_ptr_->start(std::string(rq_data_ptr->data.data));
+	InterpreterControl intprt_ctrl ;
+	intprt_ctrl.cmd = fst_base::INTERPRETER_SERVER_CMD_START ;
+	parseCtrlComand(intprt_ctrl, rq_data_ptr->data.data);
+	
     rs_data_ptr->data.data = SUCCESS;
 
     state_machine_ptr_->transferRobotStateToRunning();
@@ -39,7 +44,11 @@ void ControllerRpc::handleRpc0x000072D8(void* request_data_ptr, void* response_d
         return;
     }
 
-    controller_client_ptr_->launch(std::string(rq_data_ptr->data.data)); 
+    // controller_client_ptr_->launch(std::string(rq_data_ptr->data.data)); 
+	InterpreterControl intprt_ctrl ;
+	intprt_ctrl.cmd = fst_base::INTERPRETER_SERVER_CMD_LAUNCH ;
+	parseCtrlComand(intprt_ctrl, rq_data_ptr->data.data);
+	
     rs_data_ptr->data.data = SUCCESS;
 
     recordLog(INTERPRETER_LOG, rs_data_ptr->data.data, std::string("/rpc/interpreter/launch"));
@@ -59,7 +68,11 @@ void ControllerRpc::handleRpc0x0000D974(void* request_data_ptr, void* response_d
         return;
     }
 
-    controller_client_ptr_->forward(); 
+    // controller_client_ptr_->forward(); 
+	InterpreterControl intprt_ctrl ;
+	intprt_ctrl.cmd = fst_base::INTERPRETER_SERVER_CMD_FORWARD ;
+	parseCtrlComand(intprt_ctrl, "");
+	
     rs_data_ptr->data.data = SUCCESS;
     state_machine_ptr_->transferRobotStateToRunning();
     recordLog(INTERPRETER_LOG, rs_data_ptr->data.data, std::string("/rpc/interpreter/forward"));
@@ -82,7 +95,11 @@ void ControllerRpc::handleRpc0x00008E74(void* request_data_ptr, void* response_d
     rs_data_ptr->data.data = motion_control_ptr_->abortMove();
     if (rs_data_ptr->data.data == SUCCESS)
     {
-        controller_client_ptr_->backward();
+    //    controller_client_ptr_->backward(); 
+		InterpreterControl intprt_ctrl ;
+		intprt_ctrl.cmd = fst_base::INTERPRETER_SERVER_CMD_BACKWARD ;
+		parseCtrlComand(intprt_ctrl, "");
+	
         state_machine_ptr_->transferRobotStateToRunning();
     }
 
@@ -97,19 +114,25 @@ void ControllerRpc::handleRpc0x00015930(void* request_data_ptr, void* response_d
 
     if(state_machine_ptr_->getUserOpMode() == USER_OP_MODE_AUTO
         || state_machine_ptr_->getUserOpMode() == USER_OP_MODE_NONE
-        || state_machine_ptr_->getCtrlState() != CTRL_ENGAGED)
+        || state_machine_ptr_->getRobotState() != ROBOT_IDLE
+        || state_machine_ptr_->getInterpreterState() == INTERPRETER_EXECUTE
+        || state_machine_ptr_->getInterpreterState() == INTERPRETER_IDLE_TO_EXECUTE
+        || state_machine_ptr_->getInterpreterState() == INTERPRETER_PAUSE_TO_EXECUTE)
     {
         rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION_JUMP;
         recordLog(INTERPRETER_LOG, rs_data_ptr->data.data, std::string("/rpc/interpreter/jump"));
         return;
     }
 
-    rs_data_ptr->data.data = motion_control_ptr_->abortMove(); 
+    rs_data_ptr->data.data = motion_control_ptr_->abortMove();
     if (rs_data_ptr->data.data == SUCCESS)
     {
-        controller_client_ptr_->jump(std::string(rq_data_ptr->data.data));
+    //    controller_client_ptr_->jump(std::string(rq_data_ptr->data.data));
+		InterpreterControl intprt_ctrl ;
+		intprt_ctrl.cmd = fst_base::INTERPRETER_SERVER_CMD_JUMP ;
+		parseCtrlComand(intprt_ctrl, rq_data_ptr->data.data);
     }
-  
+
     recordLog(INTERPRETER_LOG, rs_data_ptr->data.data, std::string("/rpc/interpreter/jump"));
 }
 
@@ -129,7 +152,11 @@ void ControllerRpc::handleRpc0x0000BA55(void* request_data_ptr, void* response_d
     rs_data_ptr->data.data = motion_control_ptr_->pauseMove();
     if (rs_data_ptr->data.data == SUCCESS)
     {
-        controller_client_ptr_->pause(); 
+        // controller_client_ptr_->pause(); 
+		InterpreterControl intprt_ctrl ;
+		intprt_ctrl.cmd = fst_base::INTERPRETER_SERVER_CMD_PAUSE ;
+		parseCtrlComand(intprt_ctrl, "");
+		
         state_machine_ptr_->setUoPausedOn();//UO[2]=on
         state_machine_ptr_->setUoProgramRunOff();//UO[4]=off
     }
@@ -138,7 +165,6 @@ void ControllerRpc::handleRpc0x0000BA55(void* request_data_ptr, void* response_d
         state_machine_ptr_->setPauseFlag(true);
     }
     rs_data_ptr->data.data = SUCCESS;
-
     recordLog(INTERPRETER_LOG, rs_data_ptr->data.data, std::string("/rpc/interpreter/pause"));
 }
 
@@ -159,7 +185,11 @@ void ControllerRpc::handleRpc0x0000CF55(void* request_data_ptr, void* response_d
     rs_data_ptr->data.data = motion_control_ptr_->restartMove();
     if (rs_data_ptr->data.data == SUCCESS)
     {
-        controller_client_ptr_->resume(); 
+    //    controller_client_ptr_->resume(); 
+		InterpreterControl intprt_ctrl ;
+		intprt_ctrl.cmd = fst_base::INTERPRETER_SERVER_CMD_RESUME ;
+		parseCtrlComand(intprt_ctrl, "");
+		
         state_machine_ptr_->transferRobotStateToRunning();
         state_machine_ptr_->setUoPausedOff();//UO[2]=off
         state_machine_ptr_->setUoProgramRunOn();//UO[4]=on
@@ -175,8 +205,11 @@ void ControllerRpc::handleRpc0x000086F4(void* request_data_ptr, void* response_d
     rs_data_ptr->data.data = motion_control_ptr_->abortMove();
     if (rs_data_ptr->data.data == SUCCESS)
     {
-        controller_client_ptr_->abort(); 
-        state_machine_ptr_->setUoPausedOff();//UO[2]=off
+    //    controller_client_ptr_->abort(); 
+		InterpreterControl intprt_ctrl ;
+		intprt_ctrl.cmd = fst_base::INTERPRETER_SERVER_CMD_ABORT ;
+		parseCtrlComand(intprt_ctrl, "");
+		
         state_machine_ptr_->setUoProgramRunOff();//UO[4]=off
     }
 

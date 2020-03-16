@@ -69,6 +69,6 @@ private:
 };
 }
 
-void systemManagerRoutineThreadFunc(void* arg);
+void* systemManagerRoutineThreadFunc(void* arg);
 
 #endif

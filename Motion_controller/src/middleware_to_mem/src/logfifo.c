@@ -6,7 +6,7 @@
 
 #define FIFO_START_ADDRESS  (MEM_ADDRESS_CORE + FIFO_START_OFFSET)   /*start at 8k*/
 
-#define FIFO_TOTAL_MEMSIZE  0xDD00      /*55k, end at 63k*/
+#define FIFO_TOTAL_MEMSIZE  0x7D000      /*500k, end at 508k*/
 
 #define FIFO_RECORD_TOTALNUM      (FIFO_TOTAL_MEMSIZE/sizeof(LOG_RECORD_T)-1)
 
@@ -196,6 +196,7 @@ int open_LOG_FIFO(void *ptr)
 {
     if (NULL!=ptr)
         locateLogFifo(ptr+FIFO_START_OFFSET);
+    
     return 0;
 }
 

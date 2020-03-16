@@ -5,8 +5,8 @@
 using namespace fst_ctrl;
 
 SystemManagerParam::SystemManagerParam():
-    file_path_(COMPONENT_PARAM_FILE_DIR),
-    log_level_(3)
+    log_level_(3),
+    file_path_(COMPONENT_PARAM_FILE_DIR)
 {
     file_path_ += "system_manager.yaml";
 }

@@ -1,3 +1,4 @@
+#include "log_service_cJSON.h"
 #include "serverAlarmApi.h"
 #include <stdlib.h>
 #include <stdio.h>
@@ -5,6 +6,7 @@
 #include <string.h>
 #include <iostream>
 #include <fstream>
+#include <boost/filesystem.hpp>
 using namespace std;
 
 ServerAlarmApi *ServerAlarmApi::m_instance_ptr_ = NULL;
@@ -30,7 +32,6 @@ static size_t WriteMemoryCallback(void *contents, size_t size, size_t nmemb, voi
 
 ServerAlarmApi::ServerAlarmApi():enabled(false)
 {
-    char *xx = (char*)malloc(256);
     m_chunk_.memory = (char*)malloc(256);  /* will be grown as needed by the realloc above */
     m_chunk_.size = 0;    /* no data at this point */
     CURLcode res  = curl_global_init(CURL_GLOBAL_ALL);
@@ -125,7 +126,6 @@ int ServerAlarmApi::post(const char *str_url, const char *str_post)
 char *ServerAlarmApi::constructEventInfo(unsigned long long event_code, string event_param)
 {
     cJSON *root;
-    cJSON *cmd;
     cJSON *param;
     root = cJSON_CreateObject();
 
@@ -206,15 +206,19 @@ void* threadFun(void *arg)
     string string_cache;
     std::ofstream log_file;
     std::ofstream alarm_file;
-    struct timeval now;
-    struct timespec outtime;
     ServerAlarmApi *pServerApi = (ServerAlarmApi *)arg;
+    boost::filesystem::path path = "/root/event/";
+
+    if (!boost::filesystem::is_directory(path))
+    {
+        boost::filesystem::create_directories(path);
+    }
 
     time_t time_now = time(NULL);
     tm *local = localtime(&time_now);
     strftime(temp, 64, "%Y%m%d%H%M%S", local);
     srand(int(time(0)));
-    sprintf(buffer, "/root/log/Alarm_%s_%x.log", temp, rand());
+    sprintf(buffer, "/root/event/Alarm_%s_%x.log", temp, rand());
 
     alarm_file.open(buffer, std::ios::app);
     log_file.open("/root/Alarm.history", std::ios::app);
@@ -277,6 +281,7 @@ void* threadFun(void *arg)
 
     alarm_file.close();
     cout<< "ServerAlarmApi exit thread" << endl;
+    return NULL;
 }
 
 void ServerAlarmApi::setEnable(bool enable_status)

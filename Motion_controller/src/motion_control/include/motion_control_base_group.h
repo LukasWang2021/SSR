@@ -8,52 +8,49 @@
 #ifndef _MOTION_CONTROL_BASE_GROUP_H
 #define _MOTION_CONTROL_BASE_GROUP_H
 
+#include <fstream>
 #include <common_log.h>
 #include <error_monitor.h>
 #include <error_code.h>
+#include <joint_constraint.h>
 #include <motion_control_datatype.h>
-#include <motion_control_constraint.h>
 #include <motion_control_core_interface.h>
 #include <motion_control_offset_calibrator.h>
 #include <motion_control_manual_teach.h>
-#include <motion_control_traj_fifo.h>
 #include <kinematics_rtm.h>
-#include <motion_control_cache_pool.h>
 #include <dynamic_alg.h>
 #include <dynamic_alg_rtm.h>
 #include <transformation.h>
 #include <coordinate_manager.h>
 #include <tool_manager.h>
+#include <traj_planner.h>
+#include <smooth_planner.h>
+#include <lock_free_fifo.h>
 
 
-#define AUTO_CACHE_SIZE     5
+
+#define TRAJECTORY_CACHE_SIZE     8
+#define OFFLINE_TRAJECTORY_CACHE_SIZE   512
 
 namespace fst_mc
 {
 
-
-class FineWaiter
+struct TrajectoryCache
 {
-  public:
-    FineWaiter();
-    ~FineWaiter();
-    void initFineWaiter(size_t stable_cycle, double threshold);
-
-    void enableWaiter(const basic_alg::PoseQuaternion &target);
-    void disableWaiter(void);
-    void checkWaiter(const basic_alg::PoseQuaternion &pose);
-    bool isEnable(void);
-    bool isStable(void);
-
-    const basic_alg::PoseQuaternion getWaitingPose(void);
-
-  private:
-    bool    enable_;
-    double  threshold_;
-    size_t  stable_cnt_;
-    size_t  stable_cycle_;
-    basic_alg::PoseQuaternion    waiting_pose_;
+    SmoothPlanner smooth;
+    TrajectoryPlanner trajectory;
+    double smooth_in_time;
+    double orientation_smooth_in_time;
+    bool valid;
+    bool start_from_smooth;
+    bool end_with_smooth;
+    double orientation_smooth_out_time;
+    double smooth_time;
+    double smooth_distance;
+    TrajectoryCache *prev;
+    TrajectoryCache *next;
 };
+
 
 struct PauseStatus
 {
@@ -72,24 +69,22 @@ class BaseGroup
     virtual ErrorCode resetGroup(void);
     virtual ErrorCode clearGroup(void);
 
-
-    void  getLatestJoint(basic_alg::Joint &joint);
-    void  getServoState(ServoState &state);
-    void  getGroupState(GroupState &state);
     basic_alg::Joint getLatestJoint(void);
     GroupState getGroupState(void);
     ServoState getServoState(void);
     ErrorCode  getServoVersion(std::string &version);
 
-    // Off-line trajectory
-    virtual ErrorCode moveOffLineTrajectory(int id, const std::string &file_name);
-
     // Auto move APIs:
-    virtual ErrorCode autoMove(int id, const MotionInfo &info);
+    virtual ErrorCode autoMove(const MotionInfo &info);
     virtual ErrorCode abortMove(void);
     virtual ErrorCode pauseMove(void);
     virtual ErrorCode restartMove(void);
     virtual bool nextMovePermitted(void);
+
+    // API for off line trajectory
+    virtual ErrorCode setOfflineTrajectory(const std::string &offline_trajectory);
+    virtual basic_alg::Joint getStartJointOfOfflineTrajectory(void);
+    virtual ErrorCode moveOfflineTrajectory(void);
 
     // Manual teach APIs:
     virtual ManualFrame getManualFrame(void);
@@ -153,7 +148,9 @@ class BaseGroup
     virtual basic_alg::Kinematics* getKinematicsPtr(void);
     virtual Calibrator* getCalibratorPtr(void);
     virtual Constraint* getSoftConstraintPtr(void);
-
+    
+    virtual bool isPostureMatch(const basic_alg::Posture &posture_1, const basic_alg::Posture &posture_2);
+    
     virtual void doCommonLoop(void);
     virtual void doPriorityLoop(void);
     virtual void doRealtimeLoop(void);
@@ -164,64 +161,56 @@ class BaseGroup
   protected:
     void sendTrajectoryFlow(void);
     void updateServoStateAndJoint(void);
+
+    // state machine
     void doStateMachine(void);
+    void doDisableToStandby(const ServoState &servo_state, uint32_t &fail_counter);
+    void doStandbyToDisable(const ServoState &servo_state, uint32_t &fail_counter);
+    void doAutoToStandby(const ServoState &servo_state, uint32_t &fail_counter, uint32_t &fine_counter);
+    void doStandbyToAuto(const ServoState &servo_state, uint32_t &fail_counter);
+    void doManualToStandby(const ServoState &servo_state, uint32_t &fail_counter);
+    void doStandbyToManual(void);
+    void doOfflineToStandby(const ServoState &servo_state, uint32_t &fail_counter);
+    void doStandbyToOffline(void);
+    void doAutoToPause(const ServoState &servo_state, uint32_t &fail_counter);
+
     void fillTrajectoryFifo(void);
     bool updateStartJoint(void);
     void updateJointRecorder(void);
 
     virtual ErrorCode sendAutoTrajectoryFlow(void);
     virtual ErrorCode sendManualTrajectoryFlow(void);
-
-    virtual ErrorCode autoJoint(const basic_alg::Joint &start, const MotionInfo &info, PathCacheList &path, TrajectoryCacheList &trajectory);
-    virtual ErrorCode autoStableJoint(const basic_alg::Joint &start, const MotionInfo &info, PathCache &path, TrajectoryCache &trajectory);
-    virtual ErrorCode autoSmoothJoint(const JointState &start_state, const MotionInfo &via, const MotionInfo &info, PathCache &path, TrajectoryCache &trajectory);
     
-    virtual ErrorCode autoLine(const basic_alg::Joint &start, const MotionInfo &info, PathCacheList &path, TrajectoryCacheList &trajectory);
-    virtual ErrorCode autoStableLine(const basic_alg::Joint &start, const MotionInfo &info, PathCache &path, TrajectoryCache &trajectory);
-    virtual ErrorCode autoSmoothLine(const JointState &start_state, const MotionInfo &via, const MotionInfo &info, PathCache &path, TrajectoryCache &trajectory);
-    
-    virtual ErrorCode autoCircle(const basic_alg::Joint &start, const MotionInfo &info, PathCacheList &path, TrajectoryCacheList &trajectory);
-    virtual ErrorCode autoStableCircle(const basic_alg::Joint &start, const MotionInfo &info, PathCache &path, TrajectoryCache &trajectory);
-    virtual ErrorCode autoSmoothCircle(const JointState &start_state, const MotionInfo &via, const MotionInfo &info, PathCache &path, TrajectoryCache &trajectory);
-
-    virtual ErrorCode replanPathCache(void);
-
-    virtual ErrorCode computeInverseKinematicsOnPathCache(const basic_alg::Joint &start, PathCache &path);
-    virtual bool checkPath(const PathCache &path);
-    virtual bool checkTrajectory(const TrajectoryCache &trajectory);
-
+    virtual ErrorCode pickManualPoint(TrajectoryPoint &point);
     virtual ErrorCode pickPointsFromTrajectoryFifo(TrajectoryPoint *points, size_t &length);
     virtual ErrorCode pickPointsFromManualTrajectory(TrajectoryPoint *points, size_t &length);
-    virtual ErrorCode pickPointsFromManualJoint(TrajectoryPoint *points, size_t &length);
-    virtual ErrorCode pickPointsFromManualCartesian(TrajectoryPoint *points, size_t &length);
 
-    inline  ErrorCode checkMotionTarget(const MotionInfo &info);
-    inline  ErrorCode checkStartState(const basic_alg::Joint &start_joint);
+    ErrorCode checkMotionTarget(const MotionInfo &info);
+    ErrorCode checkStartState(const basic_alg::Joint &start_joint);
 
-    inline void reportError(const ErrorCode &error);
-    inline bool isSameJoint(const basic_alg::Joint &joint1, const basic_alg::Joint &joint2, double thres = MINIMUM_E6);
-    inline bool isSameJoint(const basic_alg::Joint &joint1, const basic_alg::Joint &joint2, const basic_alg::Joint &thres);
-    inline bool isLastMotionSmooth(void);
-    inline void resetManualTrajectory(void);
-    inline void freeFirstCacheList(void);
-    inline void linkCacheList(PathCacheList *path_ptr, TrajectoryCacheList *traj_ptr);
-    inline void updateTimeFromStart(TrajectoryCacheList &cache);
-    inline void setFineWaiter(void);
-    inline void loopFineWaiter(void);
+    void reportError(const ErrorCode &error);
+    bool isSameJoint(const basic_alg::Joint &joint1, const basic_alg::Joint &joint2, double thres = MINIMUM_E6);
+    bool isSameJoint(const basic_alg::Joint &joint1, const basic_alg::Joint &joint2, const basic_alg::Joint &thres);
+
+    bool fillOfflineCache(void);
+    uint32_t getOfflineCacheSize(void);
+    ErrorCode sendOfflineTrajectoryFlow(void);
+    ErrorCode pickPointsFromOfflineCache(TrajectoryPoint *points, size_t &length);
     
-    inline void sampleBlockEnding(const TrajectoryBlock &block, JointState &state);
-    inline void sampleBlockStart(const TrajectoryBlock &block, JointState &state);
-    inline void sampleBlock(const TrajectoryBlock &block, MotionTime time_from_block, JointState &state);
-    inline void sampleManualAxisBlock(double sample_time, const ManualAxisBlock &axis, double *start_ptr, double *target_ptr, double *position_ptr);
-    inline void sampleQuinticSpline(double sample_time, const double *coeff, double *pos, double *vel, double *acc);
-
-
-    inline PathCache* getLastPathCachePtr(void);
-    inline PathCacheList* getLastPathCacheListPtr(void);
-    inline TrajectoryCache* getLastTrajectoryCachePtr(void);
-    inline TrajectoryCacheList* getLastTrajectoryCacheListPtr(void);
-
+    ErrorCode downloadServoParam(const char *file_name);
     
+
+    TrajectoryCache trajectory_a_;
+    TrajectoryCache trajectory_b_;
+    TrajectoryCache *plan_traj_ptr_;
+    TrajectoryCache *pick_traj_ptr_;
+    LockFreeFIFO<TrajectoryPoint> traj_fifo_;
+    uint32_t traj_fifo_lower_limit_;
+    bool start_of_motion_;
+    bool fine_enable_;
+    double fine_threshold_;
+    uint32_t fine_cycle_;
+    basic_alg::PoseQuaternion fine_pose_;
 
     
     double  vel_ratio_, acc_ratio_;
@@ -239,7 +228,7 @@ class BaseGroup
     basic_alg::Joint  start_joint_;
     ServoState  servo_state_;
     GroupState  group_state_;
-
+    uint32_t    encoder_state_[NUM_OF_JOINT];
     AxisType    type_of_axis_[NUM_OF_JOINT];
     
     
@@ -249,11 +238,9 @@ class BaseGroup
     MotionTime  duration_per_segment_;
 
     Calibrator  calibrator_;
-    FineWaiter  fine_waiter_;
     ManualTeach manual_teach_;
     PauseStatus pause_status_;
 
-    ManualTrajectory        manual_traj_;
     BareCoreInterface       bare_core_;
     fst_log::Logger         *log_ptr_;
     fst_base::ErrorMonitor  *error_monitor_ptr_;
@@ -263,34 +250,42 @@ class BaseGroup
     basic_alg::Transformation   transformation_;
     basic_alg::DynamicAlg   *dynamics_ptr_;
 
-    CachePool<PathCacheList>        path_cache_pool_;
-    CachePool<TrajectoryCacheList>  traj_cache_pool_;
+    std::ifstream offline_trajectory_file_;
+    bool offline_trajectory_first_point_;
+    bool offline_trajectory_last_point_;
+    uint32_t offline_trajectory_size_;
+    basic_alg::Joint offline_start_joint_;
+    TrajectoryPoint offline_trajectory_cache_[OFFLINE_TRAJECTORY_CACHE_SIZE];
+    uint32_t offline_trajectory_cache_head_, offline_trajectory_cache_tail_;
 
-    TrajectoryFifo      traj_fifo_;
-    PathCacheList       *path_list_ptr_;
-    TrajectoryCacheList *traj_list_ptr_;
-
-    pthread_mutex_t     cache_list_mutex_;
+    pthread_mutex_t     planner_list_mutex_;
     pthread_mutex_t     manual_traj_mutex_;
     pthread_mutex_t     servo_mutex_;
+    pthread_mutex_t     offline_mutex_;
     
     bool stop_request_;
     bool reset_request_;
     bool abort_request_;
     bool clear_request_;
     bool error_request_;
+    bool offline_request_;
     bool auto_to_pause_request_;
     bool pause_to_auto_request_;
+    bool standby_to_auto_request_;
+    bool standby_to_manual_request_;
     bool auto_to_standby_request_;
     bool manual_to_standby_request_;
+    bool offline_to_standby_request_;
     bool pause_return_to_standby_request_;
     bool pausing_to_pause_request_;
+
 
     size_t  disable_to_standby_timeout_;
     size_t  standby_to_disable_timeout_;
     size_t  standby_to_auto_timeout_;
     size_t  auto_to_standby_timeout_;
     size_t  manual_to_standby_timeout_;
+    size_t  offline_to_standby_timeout_;
     size_t  auto_to_pause_timeout_;
     size_t  trajectory_flow_timeout_;
     size_t  servo_update_timeout_;
@@ -301,21 +296,6 @@ class BaseGroup
 
 
 
-
-/*
-class PathCachePool
-{
-  public:
-    PathCachePool(void);
-    PathCache* getCachePtr(void);
-    void freeCachePtr(PathCache *pcache);
-
-  private:
-    PathCache   cache_pool_[PATH_CACHE_SIZE];
-    PathCache*  free_cache_list_;
-    pthread_mutex_t  mutex_;
-};
-*/
 
 
 

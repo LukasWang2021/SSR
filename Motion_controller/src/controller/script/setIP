@@ -1,0 +1,23 @@
+#!/bin/bash
+#This is a script to set IP address
+echo "
+# interface(5) file used by ifup(8) and ifdown(8)
+# Include files from /etc/network/interfaces.d:
+# source-directory /etc/network/interfaces.d
+
+auto lo
+iface lo inet loopback
+
+auto eth0
+iface eth0 inet static
+address $1
+#iface eth0 inet dhcp
+#hwaddress ether 00:01:02:04:A8:17
+">/etc/network/interfaces
+if [ -n "$2" ];then
+    sed -i "14i netmask $2" /etc/network/interfaces
+fi
+if [ -n "$3" ];then
+    sed -i "15i gateway $3" /etc/network/interfaces
+fi
+#sudo ifdown eth0 && sudo ifup eth0

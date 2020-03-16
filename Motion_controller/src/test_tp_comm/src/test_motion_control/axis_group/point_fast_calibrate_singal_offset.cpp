@@ -41,7 +41,7 @@ int main()
     msg.property.authority = Comm_Authority_TP;
     msg.data.data_count = 2;
 
-    for (int i = 0; i != msg.data.data_count; ++i)
+    for (size_t i = 0; i != msg.data.data_count; ++i)
     {
         msg.data.data[i] = i;
     }

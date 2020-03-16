@@ -114,7 +114,7 @@ int main(int argc, char** argv)
     {
         getline(position_file, line);
         num_str = ""; 
-        for (int j = 0; j < line.length(); ++j)
+        for (uint32_t j = 0; j < line.length(); ++j)
         {
             if (line[j] == ',' || line[j] == ' ' || j == (line.length() - 1)) // can not read the final char "e-8"
             {
@@ -137,7 +137,7 @@ int main(int argc, char** argv)
     {
         getline(velocity_file, line);
         num_str = ""; 
-        for (int j = 0; j < line.length(); ++j)
+        for (uint32_t j = 0; j < line.length(); ++j)
         {
             if (line[j] == ',' || line[j] == ' ' || j == (line.length() - 1))
             {
@@ -160,7 +160,7 @@ int main(int argc, char** argv)
     {
         getline(accelerate_file, line);
         num_str = ""; 
-        for (int j = 0; j < line.length(); ++j)
+        for (uint32_t j = 0; j < line.length(); ++j)
         {
             if (line[j] == ',' || line[j] == ' ' || j == (line.length() - 1))
             {
@@ -213,7 +213,7 @@ int main(int argc, char** argv)
 
     for (int i = 0; i < count; ++i)
     {
-        for(int j = 0; j < 6; ++j)
+        for(uint32_t j = 0; j < 6; ++j)
         {
             joint[j] = position_vector[i*6 + j];
             vel[j] = velocity_vector[i*6 +j];
@@ -240,7 +240,7 @@ int main(int argc, char** argv)
     
     gettimeofday(&t_end, NULL);
     cost_time = (t_end.tv_sec - t_start.tv_sec) * 1000000 + (t_end.tv_usec - t_start.tv_usec);
-    printf("total_time = %d us, average_time = %d us\n", cost_time, cost_time/count);
+    printf("total_time = %ld us, average_time = %ld us\n", cost_time, cost_time/count);
 
     printf("end\n");
     return 0;

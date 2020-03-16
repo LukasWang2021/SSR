@@ -36,6 +36,7 @@ typedef enum
     RUNNING_STATUS_LIMITED   = 1,
 }RunningState;
 
+/*
 typedef enum
 {
     INTERPRETER_IDLE      = 0,    
@@ -46,6 +47,7 @@ typedef enum
     INTERPRETER_PAUSE_TO_IDLE     = 103,
     INTERPRETER_PAUSE_TO_EXECUTE  = 104    
 }InterpreterState;
+*/
 
 typedef enum
 {
@@ -160,12 +162,14 @@ public:
     ErrorCode callReset();
     ErrorCode callShutdown();
 
+
     void transferRobotStateToTeaching();
     void transferRobotStateToRunning();
     bool updateContinuousManualMoveRpcTime();
 
     void getNewInstruction(Instruction* data_ptr);
     bool isNextInstructionNeeded();
+    void clearInterpreterCmdErr();
 
     // for publish data
     fst_hal::UserOpMode* getUserOpModePtr();
@@ -187,7 +191,9 @@ public:
 
     //set pause flag, call pause.
     void setPauseFlag(bool enable);
+    
     void setSafetyStop(ErrorCode error_code);
+    void clearPreError();
 
 private:
     fst_log::Logger* log_ptr_;
@@ -226,11 +232,14 @@ private:
     // interpreter instruction
     Instruction instruction_;
     bool is_instruction_available_;
+    bool is_interpreter_cmd_error_;
 
     // error flags
     long long int interpreter_warning_code_;
     int error_level_;
     ErrorLevelFlag is_error_exist_;
+    ErrorLevelFlag pre_error_;
+    //bool is_error_exist_;
 
     //for UIUO 
     bool ui_servo_enable_;
@@ -253,19 +262,21 @@ private:
     void processModbusClientList();
     void processUIUO();
 
+
     //call pause
     void callPause(void);
 
     // UI check if there is falling/rising edge.
     bool isFallingEdgeStart(uint32_t user_port);
     bool isFallingEdgeAbort(uint32_t user_port);
-    bool isRisingEdgeCodeStart(uint32_t user_port);
+    bool isFallingEdgeCodeStart(uint32_t user_port);
     // UI get and UO set program launching code.
+    int getProgramCode();
     int getSetProgramCode();
     // getUI, setUO
     bool getUI(uint32_t user_port, bool &level);
     void setUO(uint32_t user_port, bool level);
-
+        
     // setUO
     void setUoEnableOn(void);//UO[1]
     void setUoEnableOff(void);

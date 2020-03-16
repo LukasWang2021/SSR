@@ -167,7 +167,7 @@ void TpComm::handleResponse0x00010C05(std::vector<TpRequestResponse>::iterator& 
     }
     if(task->request_data_ptr != NULL)
     {
-        delete (RequestMessageType_Int32_DoubleList*)task->request_data_ptr;
+        delete (RequestMessageType_Int32_UFTF_PoseAndPosture*)task->request_data_ptr;
     }
     if(task->response_data_ptr != NULL)
     {
@@ -423,7 +423,7 @@ void TpComm::handleResponse0x00010FD4(std::vector<TpRequestResponse>::iterator& 
     }
     if(task->request_data_ptr != NULL)
     {
-        delete (RequestMessageType_Int32List_DoubleList*)task->request_data_ptr;
+        delete (RequestMessageType_Int32_UFTF_PoseAndPosture*)task->request_data_ptr;
     }
     if(task->response_data_ptr != NULL)
     {
@@ -434,7 +434,7 @@ void TpComm::handleResponse0x00010FD4(std::vector<TpRequestResponse>::iterator& 
 //"/rpc/motion_control/axis_group/convertJointToCart"
 void TpComm::handleResponse0x0000B6D4(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size)
 {
-    if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_DoubleList_fields, task->response_data_ptr, send_buffer_size))
+    if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_PoseAndPosture_fields, task->response_data_ptr, send_buffer_size))
     {
         FST_ERROR("handleResponse: failed to encode response package");// send
     }
@@ -444,7 +444,7 @@ void TpComm::handleResponse0x0000B6D4(std::vector<TpRequestResponse>::iterator& 
     }
     if(task->response_data_ptr != NULL)
     {
-        delete (ResponseMessageType_Uint64_DoubleList*)task->response_data_ptr;
+        delete (ResponseMessageType_Uint64_PoseAndPosture*)task->response_data_ptr;
     }
 }
 
@@ -944,7 +944,7 @@ void TpComm::handleResponse0x00012404(std::vector<TpRequestResponse>::iterator& 
 //"/rpc/motion_control/getPostureByJoint"
 void TpComm::handleResponse0x0000EC64(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size)
 {
-    if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_Int32List_fields, task->response_data_ptr, send_buffer_size))
+    if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_Posture_fields, task->response_data_ptr, send_buffer_size))
     {
         FST_ERROR("handleResponse: failed to encode response package");// send
     }
@@ -954,7 +954,7 @@ void TpComm::handleResponse0x0000EC64(std::vector<TpRequestResponse>::iterator& 
     }
     if(task->response_data_ptr != NULL)
     {
-        delete (ResponseMessageType_Uint64_Int32List*)task->response_data_ptr;
+        delete (ResponseMessageType_Uint64_Posture*)task->response_data_ptr;
     }
 }
 
@@ -1025,3 +1025,53 @@ void TpComm::handleResponse0x00003B45(std::vector<TpRequestResponse>::iterator& 
     }
 }
 
+//"/rpc/motion_control/axis_group/setOfflineTrajectoryFile, ResponseMessageType_Uint64"
+void TpComm::handleResponse0x00011275(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size)
+{
+    if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_fields, task->response_data_ptr, send_buffer_size))
+    {
+        FST_ERROR("handleResponse: failed to encode response package");// send
+    }
+    if(task->request_data_ptr != NULL)
+    {
+        delete (RequestMessageType_String*)task->request_data_ptr;
+    }
+    if(task->response_data_ptr != NULL)
+    {
+        delete (ResponseMessageType_Uint64*)task->response_data_ptr;
+    }
+}
+
+//"/rpc/motion_control/axis_group/PrepareOfflineTrajectory, ResponseMessageType_Uint64"
+void TpComm::handleResponse0x000051E9(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size)
+{
+    if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_fields, task->response_data_ptr, send_buffer_size))
+    {
+        FST_ERROR("handleResponse: failed to encode response package");// send
+    }
+    if(task->request_data_ptr != NULL)
+    {
+        delete (RequestMessageType_Void*)task->request_data_ptr;
+    }
+    if(task->response_data_ptr != NULL)
+    {
+        delete (ResponseMessageType_Uint64*)task->response_data_ptr;
+    }
+}
+
+//"/rpc/motion_control/axis_group/moveOfflineTrajectory, ResponseMessageType_Uint64"
+void TpComm::handleResponse0x0000C4D9(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size)
+{
+    if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_fields, task->response_data_ptr, send_buffer_size))
+    {
+        FST_ERROR("handleResponse: failed to encode response package");// send
+    }
+    if(task->request_data_ptr != NULL)
+    {
+        delete (RequestMessageType_Void*)task->request_data_ptr;
+    }
+    if(task->response_data_ptr != NULL)
+    {
+        delete (ResponseMessageType_Uint64*)task->response_data_ptr;
+    }
+}

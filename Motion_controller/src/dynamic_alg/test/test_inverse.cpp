@@ -119,7 +119,7 @@ int main(int argc, char** argv)
 
     gettimeofday(&t_end, NULL);
     cost_time = (t_end.tv_sec - t_start.tv_sec) * 1000000 + (t_end.tv_usec - t_start.tv_usec);
-    printf("1: time = %d us\n", cost_time);
+    printf("1: time = %ld us\n", cost_time);
 
     printf("%f\n%f\n%f\n%f\n%f\n%f\n", torque.t1_, torque.t2_, torque.t3_, torque.t4_, torque.t5_, torque.t6_);
 
@@ -155,7 +155,7 @@ int main(int argc, char** argv)
 
     gettimeofday(&t_end, NULL);
     cost_time = (t_end.tv_sec - t_start.tv_sec) * 1000000 + (t_end.tv_usec - t_start.tv_usec);
-    printf("2: time = %d us\n", cost_time);
+    printf("2: time = %ld us\n", cost_time);
 
     printf("%f\n%f\n%f\n%f\n%f\n%f\n", torque.t1_, torque.t2_, torque.t3_, torque.t4_, torque.t5_, torque.t6_);
 

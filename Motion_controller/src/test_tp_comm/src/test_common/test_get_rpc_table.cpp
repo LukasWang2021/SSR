@@ -81,7 +81,7 @@ int main()
     cout << "Reply : msg.error_code = " << msg.error_code.data << endl;
     cout << "Reply : msg.data.element_count = " << msg.data.element_count << endl;
 
-    for (int i = 0; i != msg.data.element_count; ++i)
+    for (size_t i = 0; i != msg.data.element_count; ++i)
     {
         cout << "Reply : msg.data.element[" << i << "].hash = " << msg.data.element[i].hash << endl;
         cout << "Reply : msg.data.element[" << i << "].path = " << msg.data.element[i].path << endl;

@@ -32,7 +32,7 @@ private:
     fst_parameter::ParamGroup yaml_type_;
     std::string type_file_path_;
     std::string type_file_name_;
-
+    
     fst_parameter::ParamGroup yaml_help_;
     std::string file_path_;
 };

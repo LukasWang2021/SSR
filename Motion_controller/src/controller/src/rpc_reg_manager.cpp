@@ -22,7 +22,9 @@ void ControllerRpc::handleRpc0x00004FF7(void* request_data_ptr, void* response_d
     reg.comment = rq_data_ptr->data.comment;
     reg.value = rq_data_ptr->data.value;
     rs_data_ptr->data.data = reg_manager_ptr_->addRReg(&reg);
-    recordLog(REG_MANAGER_LOG, rs_data_ptr->data.data, std::string("/rpc/reg_manager/r/addReg"));
+
+    if (rs_data_ptr->data.data != SUCCESS)
+        recordLog(REG_MANAGER_LOG, rs_data_ptr->data.data, std::string("/rpc/reg_manager/r/addReg"));
 }
 
 // "/rpc/reg_manager/r/deleteReg"
@@ -38,7 +40,9 @@ void ControllerRpc::handleRpc0x000012F7(void* request_data_ptr, void* response_d
     }
 
     rs_data_ptr->data.data = reg_manager_ptr_->deleteRReg(rq_data_ptr->data.data);
-    recordLog(REG_MANAGER_LOG, rs_data_ptr->data.data, std::string("/rpc/reg_manager/r/deleteReg"));
+
+    if (rs_data_ptr->data.data != SUCCESS)
+        recordLog(REG_MANAGER_LOG, rs_data_ptr->data.data, std::string("/rpc/reg_manager/r/deleteReg"));
 }
 
 // "/rpc/reg_manager/r/updateReg"
@@ -59,7 +63,9 @@ void ControllerRpc::handleRpc0x00005757(void* request_data_ptr, void* response_d
     reg.comment = rq_data_ptr->data.comment;
     reg.value = rq_data_ptr->data.value;
     rs_data_ptr->data.data = reg_manager_ptr_->updateRReg(&reg);
-    recordLog(REG_MANAGER_LOG, rs_data_ptr->data.data, std::string("/rpc/reg_manager/r/updateReg"));
+
+    if (rs_data_ptr->data.data != SUCCESS)
+        recordLog(REG_MANAGER_LOG, rs_data_ptr->data.data, std::string("/rpc/reg_manager/r/updateReg"));
 }
 
 // "/rpc/reg_manager/r/getReg"
@@ -83,7 +89,9 @@ void ControllerRpc::handleRpc0x0000EAB7(void* request_data_ptr, void* response_d
     {
         memset(&rs_data_ptr->data, 0, sizeof(MessageType_RRegData));
     }
-    recordLog(REG_MANAGER_LOG, rs_data_ptr->error_code.data, std::string("/rpc/reg_manager/r/getReg"));
+
+    if (rs_data_ptr->error_code.data != SUCCESS)
+        recordLog(REG_MANAGER_LOG, rs_data_ptr->error_code.data, std::string("/rpc/reg_manager/r/getReg"));
 }
 
 // "/rpc/reg_manager/r/moveReg"
@@ -106,6 +114,8 @@ void ControllerRpc::handleRpc0x0000C877(void* request_data_ptr, void* response_d
     {
         rs_data_ptr->data.data = REG_MANAGER_INVALID_ARG;
     }
+
+    if (rs_data_ptr->data.data != SUCCESS)
     recordLog(REG_MANAGER_LOG, rs_data_ptr->data.data, std::string("/rpc/reg_manager/r/moveReg"));
 }
 
@@ -135,7 +145,9 @@ void ControllerRpc::handleRpc0x0000A904(void* request_data_ptr, void* response_d
         rs_data_ptr->data.summary_count = 0;
         rs_data_ptr->error_code.data = REG_MANAGER_INVALID_ARG;
     }
-    recordLog(REG_MANAGER_LOG, rs_data_ptr->error_code.data, std::string("/rpc/reg_manager/r/getChangedList"));
+
+    if (rs_data_ptr->error_code.data != SUCCESS)
+        recordLog(REG_MANAGER_LOG, rs_data_ptr->error_code.data, std::string("/rpc/reg_manager/r/getChangedList"));
 }
 
 // "/rpc/reg_manager/r/getValidList"
@@ -164,7 +176,9 @@ void ControllerRpc::handleRpc0x00008CE4(void* request_data_ptr, void* response_d
         rs_data_ptr->data.summary_count = 0;
         rs_data_ptr->error_code.data = REG_MANAGER_INVALID_ARG;
     }
-    recordLog(REG_MANAGER_LOG, rs_data_ptr->error_code.data, std::string("/rpc/reg_manager/r/getValidList"));
+
+    if (rs_data_ptr->error_code.data != SUCCESS)
+        recordLog(REG_MANAGER_LOG, rs_data_ptr->error_code.data, std::string("/rpc/reg_manager/r/getValidList"));
 }
 
 // "/rpc/reg_manager/mr/addReg"
@@ -185,7 +199,9 @@ void ControllerRpc::handleRpc0x000097E7(void* request_data_ptr, void* response_d
     reg.comment = rq_data_ptr->data.comment;
     reg.value = rq_data_ptr->data.value;
     rs_data_ptr->data.data = reg_manager_ptr_->addMrReg(&reg);
-    recordLog(REG_MANAGER_LOG, rs_data_ptr->data.data, std::string("/rpc/reg_manager/mr/addReg"));
+
+    if (rs_data_ptr->data.data != SUCCESS)
+        recordLog(REG_MANAGER_LOG, rs_data_ptr->data.data, std::string("/rpc/reg_manager/mr/addReg"));
 }
 
 // "/rpc/reg_manager/mr/deleteReg"
@@ -201,7 +217,9 @@ void ControllerRpc::handleRpc0x0000E5D7(void* request_data_ptr, void* response_d
     }
 
     rs_data_ptr->data.data = reg_manager_ptr_->deleteMrReg(rq_data_ptr->data.data);
-    recordLog(REG_MANAGER_LOG, rs_data_ptr->data.data, std::string("/rpc/reg_manager/mr/deleteReg"));
+
+    if (rs_data_ptr->data.data != SUCCESS)
+        recordLog(REG_MANAGER_LOG, rs_data_ptr->data.data, std::string("/rpc/reg_manager/mr/deleteReg"));
 }
 
 // "/rpc/reg_manager/mr/updateReg"
@@ -222,7 +240,9 @@ void ControllerRpc::handleRpc0x0000E9B7(void* request_data_ptr, void* response_d
     reg.comment = rq_data_ptr->data.comment;
     reg.value = rq_data_ptr->data.value;
     rs_data_ptr->data.data = reg_manager_ptr_->updateMrReg(&reg);
-    recordLog(REG_MANAGER_LOG, rs_data_ptr->data.data, std::string("/rpc/reg_manager/mr/updateReg"));
+
+    if (rs_data_ptr->data.data != SUCCESS)
+        recordLog(REG_MANAGER_LOG, rs_data_ptr->data.data, std::string("/rpc/reg_manager/mr/updateReg"));
 }
 
 // "/rpc/reg_manager/mr/getReg"
@@ -246,7 +266,9 @@ void ControllerRpc::handleRpc0x0000B507(void* request_data_ptr, void* response_d
     {
         memset(&rs_data_ptr->data, 0, sizeof(MessageType_MrRegData));
     }
-    recordLog(REG_MANAGER_LOG, rs_data_ptr->error_code.data, std::string("/rpc/reg_manager/mr/getReg"));
+
+    if (rs_data_ptr->error_code.data != SUCCESS)
+        recordLog(REG_MANAGER_LOG, rs_data_ptr->error_code.data, std::string("/rpc/reg_manager/mr/getReg"));
 }
 
 // "/rpc/reg_manager/mr/moveReg"
@@ -269,7 +291,9 @@ void ControllerRpc::handleRpc0x00015BA7(void* request_data_ptr, void* response_d
     {
         rs_data_ptr->data.data = REG_MANAGER_INVALID_ARG;
     }
-    recordLog(REG_MANAGER_LOG, rs_data_ptr->data.data, std::string("/rpc/reg_manager/mr/moveReg"));
+
+    if (rs_data_ptr->data.data != SUCCESS)
+        recordLog(REG_MANAGER_LOG, rs_data_ptr->data.data, std::string("/rpc/reg_manager/mr/moveReg"));
 }
 
 // "/rpc/reg_manager/mr/getChangedList"
@@ -298,7 +322,9 @@ void ControllerRpc::handleRpc0x00001774(void* request_data_ptr, void* response_d
         rs_data_ptr->data.summary_count = 0;
         rs_data_ptr->error_code.data = REG_MANAGER_INVALID_ARG;
     }
-    recordLog(REG_MANAGER_LOG, rs_data_ptr->error_code.data, std::string("/rpc/reg_manager/mr/getChangedList"));
+
+    if (rs_data_ptr->error_code.data != SUCCESS)
+        recordLog(REG_MANAGER_LOG, rs_data_ptr->error_code.data, std::string("/rpc/reg_manager/mr/getChangedList"));
 }
 
 // "/rpc/reg_manager/mr/getValidList"
@@ -327,7 +353,9 @@ void ControllerRpc::handleRpc0x00015CF4(void* request_data_ptr, void* response_d
         rs_data_ptr->data.summary_count = 0;
         rs_data_ptr->error_code.data = REG_MANAGER_INVALID_ARG;
     }
-    recordLog(REG_MANAGER_LOG, rs_data_ptr->error_code.data, std::string("/rpc/reg_manager/mr/getValidList"));
+
+    if (rs_data_ptr->error_code.data != SUCCESS)
+        recordLog(REG_MANAGER_LOG, rs_data_ptr->error_code.data, std::string("/rpc/reg_manager/mr/getValidList"));
 }
 
 // "/rpc/reg_manager/sr/addReg"
@@ -348,7 +376,9 @@ void ControllerRpc::handleRpc0x000161E7(void* request_data_ptr, void* response_d
     reg.comment = rq_data_ptr->data.comment;
     reg.value = rq_data_ptr->data.value;
     rs_data_ptr->data.data = reg_manager_ptr_->addSrReg(&reg);
-    recordLog(REG_MANAGER_LOG, rs_data_ptr->data.data, std::string("/rpc/reg_manager/sr/addReg"));
+
+    if (rs_data_ptr->data.data != SUCCESS)
+        recordLog(REG_MANAGER_LOG, rs_data_ptr->data.data, std::string("/rpc/reg_manager/sr/addReg"));
 }
 
 // "/rpc/reg_manager/sr/deleteReg"
@@ -364,7 +394,9 @@ void ControllerRpc::handleRpc0x0000B817(void* request_data_ptr, void* response_d
     }
 
     rs_data_ptr->data.data = reg_manager_ptr_->deleteSrReg(rq_data_ptr->data.data);
-    recordLog(REG_MANAGER_LOG, rs_data_ptr->data.data, std::string("/rpc/reg_manager/sr/deleteReg"));
+
+    if (rs_data_ptr->data.data != SUCCESS)
+        recordLog(REG_MANAGER_LOG, rs_data_ptr->data.data, std::string("/rpc/reg_manager/sr/deleteReg"));
 }
 
 // "/rpc/reg_manager/sr/updateReg"
@@ -385,7 +417,9 @@ void ControllerRpc::handleRpc0x000119F7(void* request_data_ptr, void* response_d
     reg.comment = rq_data_ptr->data.comment;
     reg.value = rq_data_ptr->data.value;
     rs_data_ptr->data.data = reg_manager_ptr_->updateSrReg(&reg);
-    recordLog(REG_MANAGER_LOG, rs_data_ptr->data.data, std::string("/rpc/reg_manager/sr/updateReg"));
+
+    if (rs_data_ptr->data.data != SUCCESS)
+        recordLog(REG_MANAGER_LOG, rs_data_ptr->data.data, std::string("/rpc/reg_manager/sr/updateReg"));
 }
 
 // "/rpc/reg_manager/sr/getReg"
@@ -410,7 +444,9 @@ void ControllerRpc::handleRpc0x00017F07(void* request_data_ptr, void* response_d
     {
         memset(&rs_data_ptr->data, 0, sizeof(MessageType_SrRegData));
     }
-    recordLog(REG_MANAGER_LOG, rs_data_ptr->error_code.data, std::string("/rpc/reg_manager/sr/getReg"));
+
+    if (rs_data_ptr->error_code.data != SUCCESS)
+        recordLog(REG_MANAGER_LOG, rs_data_ptr->error_code.data, std::string("/rpc/reg_manager/sr/getReg"));
 }
 
 // "/rpc/reg_manager/sr/moveReg"
@@ -433,7 +469,9 @@ void ControllerRpc::handleRpc0x00002127(void* request_data_ptr, void* response_d
     {
         rs_data_ptr->data.data = REG_MANAGER_INVALID_ARG;
     }
-    recordLog(REG_MANAGER_LOG, rs_data_ptr->data.data, std::string("/rpc/reg_manager/sr/moveReg"));
+
+    if (rs_data_ptr->data.data != SUCCESS)
+        recordLog(REG_MANAGER_LOG, rs_data_ptr->data.data, std::string("/rpc/reg_manager/sr/moveReg"));
 }
 
 // "/rpc/reg_manager/sr/getChangedList"
@@ -462,7 +500,9 @@ void ControllerRpc::handleRpc0x00004834(void* request_data_ptr, void* response_d
         rs_data_ptr->data.summary_count = 0;
         rs_data_ptr->error_code.data = REG_MANAGER_INVALID_ARG;
     }
-    recordLog(REG_MANAGER_LOG, rs_data_ptr->error_code.data, std::string("/rpc/reg_manager/sr/getChangedList"));
+
+    if (rs_data_ptr->error_code.data != SUCCESS)
+        recordLog(REG_MANAGER_LOG, rs_data_ptr->error_code.data, std::string("/rpc/reg_manager/sr/getChangedList"));
 }
 
 // "/rpc/reg_manager/sr/getValidList"
@@ -491,7 +531,9 @@ void ControllerRpc::handleRpc0x00009854(void* request_data_ptr, void* response_d
         rs_data_ptr->data.summary_count = 0;
         rs_data_ptr->error_code.data = REG_MANAGER_INVALID_ARG;
     }
-    recordLog(REG_MANAGER_LOG, rs_data_ptr->error_code.data, std::string("/rpc/reg_manager/sr/getValidList"));
+
+    if (rs_data_ptr->error_code.data != SUCCESS)
+        recordLog(REG_MANAGER_LOG, rs_data_ptr->error_code.data, std::string("/rpc/reg_manager/sr/getValidList"));
 }
 
 // "/rpc/reg_manager/pr/addReg"
@@ -513,9 +555,22 @@ void ControllerRpc::handleRpc0x000154E7(void* request_data_ptr, void* response_d
     reg.value.pos_type = rq_data_ptr->data.pos_type;
     reg.value.group_id = rq_data_ptr->data.group_id;
     memcpy(reg.value.pos, rq_data_ptr->data.pos.data, 9*sizeof(double));
-    memcpy(reg.value.posture, rq_data_ptr->data.posture.data, 4*sizeof(int));
+
+    reg.value.posture[3] = rq_data_ptr->data.posture.wrist_flip;
+    reg.value.posture[2] = rq_data_ptr->data.posture.arm_up_down;
+    reg.value.posture[1] = rq_data_ptr->data.posture.arm_back_front;
+    reg.value.posture[0] = rq_data_ptr->data.posture.arm_left_right;
+
+    if (rq_data_ptr->data.posture.turn_cycle.data_count != 9)
+    {
+        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
+        return;
+    }
+    memcpy(reg.value.turn, rq_data_ptr->data.posture.turn_cycle.data, 9*sizeof(int));
     rs_data_ptr->data.data = reg_manager_ptr_->addPrReg(&reg);
-    recordLog(REG_MANAGER_LOG, rs_data_ptr->data.data, std::string("/rpc/reg_manager/pr/addReg"));
+
+    if (rs_data_ptr->data.data != SUCCESS)
+        recordLog(REG_MANAGER_LOG, rs_data_ptr->data.data, std::string("/rpc/reg_manager/pr/addReg"));
 }
 
 // "/rpc/reg_manager/pr/deleteReg"
@@ -531,7 +586,9 @@ void ControllerRpc::handleRpc0x00001097(void* request_data_ptr, void* response_d
     }
 
     rs_data_ptr->data.data = reg_manager_ptr_->deletePrReg(rq_data_ptr->data.data);
-    recordLog(REG_MANAGER_LOG, rs_data_ptr->data.data, std::string("/rpc/reg_manager/pr/deleteReg"));
+
+    if (rs_data_ptr->data.data != SUCCESS)
+        recordLog(REG_MANAGER_LOG, rs_data_ptr->data.data, std::string("/rpc/reg_manager/pr/deleteReg"));
 }
 
 // "/rpc/reg_manager/pr/updateReg"
@@ -553,9 +610,22 @@ void ControllerRpc::handleRpc0x00009EF7(void* request_data_ptr, void* response_d
     reg.value.pos_type = rq_data_ptr->data.pos_type;
     reg.value.group_id = rq_data_ptr->data.group_id;
     memcpy(reg.value.pos, rq_data_ptr->data.pos.data, 9*sizeof(double));
-    memcpy(reg.value.posture, rq_data_ptr->data.posture.data, 4*sizeof(int));
+
+    reg.value.posture[3] = rq_data_ptr->data.posture.wrist_flip;
+    reg.value.posture[2] = rq_data_ptr->data.posture.arm_up_down;
+    reg.value.posture[1] = rq_data_ptr->data.posture.arm_back_front;
+    reg.value.posture[0] = rq_data_ptr->data.posture.arm_left_right;
+
+    if (rq_data_ptr->data.posture.turn_cycle.data_count != 9)
+    {
+        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
+        return;
+    }
+    memcpy(reg.value.turn, rq_data_ptr->data.posture.turn_cycle.data, 9*sizeof(int));
     rs_data_ptr->data.data = reg_manager_ptr_->updatePrReg(&reg);
-    recordLog(REG_MANAGER_LOG, rs_data_ptr->data.data, std::string("/rpc/reg_manager/pr/updateReg"));
+
+    if (rs_data_ptr->data.data != SUCCESS)
+        recordLog(REG_MANAGER_LOG, rs_data_ptr->data.data, std::string("/rpc/reg_manager/pr/updateReg"));
 }
 
 // "/rpc/reg_manager/pr/getReg"
@@ -577,14 +647,22 @@ void ControllerRpc::handleRpc0x00017207(void* request_data_ptr, void* response_d
         rs_data_ptr->data.pos_type = reg.value.pos_type;
         rs_data_ptr->data.pos.data_count = 9;
         memcpy(rs_data_ptr->data.pos.data, reg.value.pos, 9*sizeof(double));
-        rs_data_ptr->data.posture.data_count = 4;
-        memcpy(rs_data_ptr->data.posture.data, reg.value.posture, 4*sizeof(int));
+
+        rs_data_ptr->data.posture.wrist_flip = reg.value.posture[3];        // wrist
+        rs_data_ptr->data.posture.arm_up_down = reg.value.posture[2];       // elbow
+        rs_data_ptr->data.posture.arm_back_front = reg.value.posture[1];    // arm
+        rs_data_ptr->data.posture.arm_left_right = reg.value.posture[0];    // flip
+
+        rs_data_ptr->data.posture.turn_cycle.data_count = 9;
+        memcpy(rs_data_ptr->data.posture.turn_cycle.data, reg.value.turn, 9*sizeof(int));
     }
     else
     {
         memset(&rs_data_ptr->data, 0, sizeof(MessageType_PrRegData));
     }
-    recordLog(REG_MANAGER_LOG, rs_data_ptr->error_code.data, std::string("/rpc/reg_manager/pr/getReg"));
+
+    if (rs_data_ptr->error_code.data != SUCCESS)
+        recordLog(REG_MANAGER_LOG, rs_data_ptr->error_code.data, std::string("/rpc/reg_manager/pr/getReg"));
 }
 
 // "/rpc/reg_manager/pr/moveReg"
@@ -607,7 +685,9 @@ void ControllerRpc::handleRpc0x0000D7C7(void* request_data_ptr, void* response_d
     {
         rs_data_ptr->data.data = REG_MANAGER_INVALID_ARG;
     }
-    recordLog(REG_MANAGER_LOG, rs_data_ptr->data.data, std::string("/rpc/reg_manager/pr/moveReg"));
+
+    if (rs_data_ptr->data.data != SUCCESS)
+        recordLog(REG_MANAGER_LOG, rs_data_ptr->data.data, std::string("/rpc/reg_manager/pr/moveReg"));
 }
 
 // "/rpc/reg_manager/pr/getChangedList"
@@ -636,7 +716,9 @@ void ControllerRpc::handleRpc0x0000B454(void* request_data_ptr, void* response_d
         rs_data_ptr->data.summary_count = 0;
         rs_data_ptr->error_code.data = REG_MANAGER_INVALID_ARG;
     }
-    recordLog(REG_MANAGER_LOG, rs_data_ptr->error_code.data, std::string("/rpc/reg_manager/pr/getChangedList"));
+
+    if (rs_data_ptr->error_code.data != SUCCESS)
+        recordLog(REG_MANAGER_LOG, rs_data_ptr->error_code.data, std::string("/rpc/reg_manager/pr/getChangedList"));
 }
 
 // "/rpc/reg_manager/pr/getValidList"
@@ -665,7 +747,9 @@ void ControllerRpc::handleRpc0x00009354(void* request_data_ptr, void* response_d
         rs_data_ptr->data.summary_count = 0;
         rs_data_ptr->error_code.data = REG_MANAGER_INVALID_ARG;
     }
-    recordLog(REG_MANAGER_LOG, rs_data_ptr->error_code.data, std::string("/rpc/reg_manager/pr/getValidList"));
+
+    if (rs_data_ptr->error_code.data != SUCCESS)
+        recordLog(REG_MANAGER_LOG, rs_data_ptr->error_code.data, std::string("/rpc/reg_manager/pr/getValidList"));
 }
 
 // "/rpc/reg_manager/hr/addReg"
@@ -688,7 +772,9 @@ void ControllerRpc::handleRpc0x00016CE7(void* request_data_ptr, void* response_d
     memcpy(reg.value.joint_pos, rq_data_ptr->data.joints.data, 9*sizeof(double));
     memcpy(reg.value.diff_pos, rq_data_ptr->data.diffs.data, 9*sizeof(double));
     rs_data_ptr->data.data = reg_manager_ptr_->addHrReg(&reg);
-    recordLog(REG_MANAGER_LOG, rs_data_ptr->data.data, std::string("/rpc/reg_manager/hr/addReg"));
+
+    if (rs_data_ptr->data.data != SUCCESS)
+        recordLog(REG_MANAGER_LOG, rs_data_ptr->data.data, std::string("/rpc/reg_manager/hr/addReg"));
 }
 
 // "/rpc/reg_manager/hr/deleteReg"
@@ -704,7 +790,9 @@ void ControllerRpc::handleRpc0x00003D17(void* request_data_ptr, void* response_d
     }
 
     rs_data_ptr->data.data = reg_manager_ptr_->deleteHrReg(rq_data_ptr->data.data);
-    recordLog(REG_MANAGER_LOG, rs_data_ptr->data.data, std::string("/rpc/reg_manager/hr/deleteReg"));
+
+    if (rs_data_ptr->data.data != SUCCESS)
+        recordLog(REG_MANAGER_LOG, rs_data_ptr->data.data, std::string("/rpc/reg_manager/hr/deleteReg"));
 }
 
 // "/rpc/reg_manager/hr/updateReg"
@@ -727,7 +815,9 @@ void ControllerRpc::handleRpc0x0000CB77(void* request_data_ptr, void* response_d
     memcpy(reg.value.joint_pos, rq_data_ptr->data.joints.data, 9*sizeof(double));
     memcpy(reg.value.diff_pos, rq_data_ptr->data.diffs.data, 9*sizeof(double));
     rs_data_ptr->data.data = reg_manager_ptr_->updateHrReg(&reg);
-    recordLog(REG_MANAGER_LOG, rs_data_ptr->data.data, std::string("/rpc/reg_manager/hr/updateReg"));
+
+    if (rs_data_ptr->data.data != SUCCESS)
+        recordLog(REG_MANAGER_LOG, rs_data_ptr->data.data, std::string("/rpc/reg_manager/hr/updateReg"));
 }
 
 // "/rpc/reg_manager/hr/getReg"
@@ -755,7 +845,9 @@ void ControllerRpc::handleRpc0x00000367(void* request_data_ptr, void* response_d
     {
         memset(&rs_data_ptr->data, 0, sizeof(MessageType_HrRegData));
     }
-    recordLog(REG_MANAGER_LOG, rs_data_ptr->error_code.data, std::string("/rpc/reg_manager/hr/getReg"));
+
+    if (rs_data_ptr->error_code.data != SUCCESS)
+        recordLog(REG_MANAGER_LOG, rs_data_ptr->error_code.data, std::string("/rpc/reg_manager/hr/getReg"));
 }
 
 // "/rpc/reg_manager/hr/moveReg"
@@ -778,7 +870,9 @@ void ControllerRpc::handleRpc0x00014A87(void* request_data_ptr, void* response_d
     {
         rs_data_ptr->data.data = REG_MANAGER_INVALID_ARG;
     }
-    recordLog(REG_MANAGER_LOG, rs_data_ptr->data.data, std::string("/rpc/reg_manager/hr/moveReg"));
+
+    if (rs_data_ptr->data.data != SUCCESS)
+        recordLog(REG_MANAGER_LOG, rs_data_ptr->data.data, std::string("/rpc/reg_manager/hr/moveReg"));
 }
 
 // "/rpc/reg_manager/hr/getChangedList"
@@ -807,7 +901,9 @@ void ControllerRpc::handleRpc0x00012974(void* request_data_ptr, void* response_d
         rs_data_ptr->data.summary_count = 0;
         rs_data_ptr->error_code.data = REG_MANAGER_INVALID_ARG;
     }
-    recordLog(REG_MANAGER_LOG, rs_data_ptr->error_code.data, std::string("/rpc/reg_manager/hr/getChangedList"));
+
+    if (rs_data_ptr->error_code.data != SUCCESS)
+        recordLog(REG_MANAGER_LOG, rs_data_ptr->error_code.data, std::string("/rpc/reg_manager/hr/getChangedList"));
 }
 
 // "/rpc/reg_manager/hr/getValidList"
@@ -836,6 +932,8 @@ void ControllerRpc::handleRpc0x00006B54(void* request_data_ptr, void* response_d
         rs_data_ptr->data.summary_count = 0;
         rs_data_ptr->error_code.data = REG_MANAGER_INVALID_ARG;
     }
-    recordLog(REG_MANAGER_LOG, rs_data_ptr->error_code.data, std::string("/rpc/reg_manager/hr/getValidList"));
+
+    if (rs_data_ptr->error_code.data != SUCCESS)
+        recordLog(REG_MANAGER_LOG, rs_data_ptr->error_code.data, std::string("/rpc/reg_manager/hr/getValidList"));
 }
 

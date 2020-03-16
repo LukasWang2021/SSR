@@ -69,13 +69,16 @@ void fst_controller::DataMonitor::startMonitor(DataMonitor* moni,
     ss_size = moni->snapshot_size_;
 }
 
-void fst_controller::DataMonitor::setSnapshotSize(DataMonitor* moni,unsigned int ss_size)
+void fst_controller::DataMonitor::setSnapshotSize(DataMonitor* moni,
+                                                    unsigned int ss_size,
+                                                    unsigned short trig_type)
 {   
     if(false == moni->start_monitor_)
     {
         if(ss_size > MAX_SNAPSHOT_SIZE)
             ss_size = MAX_SNAPSHOT_SIZE;
-        moni->snapshot_size_ = ss_size;            
+        moni->snapshot_size_ = ss_size; 
+        moni->trig_type_ = trig_type;
     }
 }
 
@@ -236,7 +239,6 @@ void fst_controller::DataMonitor::onFinishRecord(DataMonitor* moni)
 
 int fst_controller::DataMonitor::onGetdataRequest(unsigned char seq,DataMonitor* moni)
 {
-    int res;
     static int l_seq = -1;
     static int cnt = 0;
     int cnt_help = 0;
@@ -283,7 +285,7 @@ int fst_controller::DataMonitor::onGetdataRequest(unsigned char seq,DataMonitor*
             cnt_help = 0;
         }
 
-        res = sendResponse(moni->p_comm_,
+        bool res = sendResponse(moni->p_comm_,
                          &moni->data_package_, 
                          sizeof(moni->data_package_));
 
@@ -389,7 +391,8 @@ void fst_controller::DataMonitor::dataMonitor_Thread(DataMonitor* moni)
             servo_record.flag = (int)record.time_flag;
             if(0==servo_record.flag)
             {
-                moni->record_fifo_->push_item(servo_record,true,moni->snapshot_size_/2);//push anyway
+                if(0==moni->trig_type_)
+                    moni->record_fifo_->push_item(servo_record,true,moni->snapshot_size_/2);//push anyway
             }
             else
             {

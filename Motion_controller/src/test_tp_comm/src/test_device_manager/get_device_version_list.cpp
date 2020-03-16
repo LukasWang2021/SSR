@@ -79,7 +79,7 @@ int main()
     cout << "Reply : msg.error_code = " << recv_msg.error_code.data << endl;
     cout << "Reply : msg.data.device_version_count = " << recv_msg.data.device_version_count << endl;
 
-    for (int i = 0; i != recv_msg.data.device_version_count; ++i)
+    for (size_t i = 0; i != recv_msg.data.device_version_count; ++i)
     {
         cout << "Reply : msg.data.device_version["<< i <<"].name = " << recv_msg.data.device_version[i].name << endl;
         cout << "Reply : msg.data.device_version["<< i <<"].version = " << recv_msg.data.device_version[i].version << endl;

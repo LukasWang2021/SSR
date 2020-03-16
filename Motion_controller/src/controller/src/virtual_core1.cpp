@@ -82,7 +82,7 @@ void VirtualCore1::threadFunc()
     usleep(100000);
 }
 
-void virtualCore1ThreadFunc(void* arg)
+void* virtualCore1ThreadFunc(void* arg)
 {
     std::cout<<"virtual core1 thread running"<<std::endl;
     VirtualCore1* virtual_core1_ptr = static_cast<VirtualCore1*>(arg);
@@ -91,6 +91,7 @@ void virtualCore1ThreadFunc(void* arg)
         virtual_core1_ptr->threadFunc();
     }
     std::cout<<"virtual core1 thread exit"<<std::endl;
+    return NULL;
 }
 
 

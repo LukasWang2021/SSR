@@ -24,17 +24,17 @@ public:
     double norm() const;
     bool normalize(double valve = 0.001);
     double dotProduct(const Point& point) const;
-    void crossProduct(const Point& by, Point& result);
+    void crossProduct(const Point& by, Point& result) const;
     void crossProduct(const Point& by);
 
     
     double& operator[](size_t index);
     const double& operator[](size_t index) const;
-    const Point operator+(const Point& point);
-    const Point operator-(const Point& point);    
+    const Point operator+(const Point& point) const;
+    const Point operator-(const Point& point) const;
     Point& operator+=(const Point& point);
     Point& operator-=(const Point& point);
-    const Point operator*(double value);
+    const Point operator*(double value) const;
     
     void print(std::string comment = "") const;
 };

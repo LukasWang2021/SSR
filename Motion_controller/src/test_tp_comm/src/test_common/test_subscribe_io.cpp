@@ -63,12 +63,12 @@ int main()
         }
 
         printf("Sub : recv topic hash = %x\n", recv_hash);
-        printf("Sub : recv time_stamp = %d\n", msg.time_stamp);
+        printf("Sub : recv time_stamp = %lld\n", msg.time_stamp);
         printf("Sub : recv element_count = %d\n", msg.element_count);
 
         MessageType_Uint32 io_value;
 
-        for (int i = 0 ; i != msg.element_count; ++i)
+        for (size_t i = 0 ; i != msg.element_count; ++i)
         {
             //int device_index = (msg.element[i].hash >> 24);
             uint32_t port_type = (msg.element[i].hash >> 16) & 0x0000FFFF;

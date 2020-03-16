@@ -21,13 +21,14 @@ const static size_t MAX_ATTEMPTS = 100;
 
 BareCoreInterface::BareCoreInterface(void)
 {
+    joint_num_ = 0;
     point_cache_.is_empty = true;
 }
 
 BareCoreInterface::~BareCoreInterface(void)
 {}
 
-bool BareCoreInterface::initInterface(void)
+bool BareCoreInterface::initInterface(uint32_t joint_num)
 {
     if (core_interface_.init() != SUCCESS)
     {
@@ -44,6 +45,7 @@ bool BareCoreInterface::initInterface(void)
     //    return false;
     //}
 
+    joint_num_ = joint_num;
     return true;
 }
 
@@ -64,10 +66,10 @@ bool BareCoreInterface::fillPointCache(TrajectoryPoint *points, size_t length, P
     {
         for (size_t i = 0; i < length; i++)
         {
-            memcpy(point_cache_.cache.points[i].angle, &points[i].pos, JOINT_NUM * sizeof(double));
-            memcpy(point_cache_.cache.points[i].omega, &points[i].vel, JOINT_NUM * sizeof(double));
-            memcpy(point_cache_.cache.points[i].alpha, &points[i].acc, JOINT_NUM * sizeof(double));
-            memcpy(point_cache_.cache.points[i].inertia, &points[i].torque, JOINT_NUM * sizeof(double));
+            memcpy(point_cache_.cache.points[i].angle, &points[i].state.angle, JOINT_NUM * sizeof(double));
+            memcpy(point_cache_.cache.points[i].omega, &points[i].state.omega, JOINT_NUM * sizeof(double));
+            memcpy(point_cache_.cache.points[i].alpha, &points[i].state.alpha, JOINT_NUM * sizeof(double));
+            memcpy(point_cache_.cache.points[i].inertia, &points[i].state.torque, JOINT_NUM * sizeof(double));
             point_cache_.cache.points[i].point_position = points[i].level;
         }
 
@@ -105,17 +107,22 @@ bool BareCoreInterface::sendPoint(void)
     //return true;
 }
 
-bool BareCoreInterface::getLatestJoint(Joint &joint, ServoState &state)
+bool BareCoreInterface::getLatestJoint(Joint &joint, uint32_t (&encoder_state)[NUM_OF_JOINT], ServoState &state)
 {
     FeedbackJointState fbjs;
 
-    for (size_t cnt = 0; cnt < MAX_ATTEMPTS; cnt++)
+    for (uint32_t cnt = 0; cnt < MAX_ATTEMPTS; cnt++)
     {
         if (core_interface_.recvBareCore(fbjs) == SUCCESS)
         {
             state = ServoState(fbjs.state);
-            memcpy(&joint, fbjs.position, JOINT_NUM * sizeof(double));
-            memset((char*)&joint + JOINT_NUM * sizeof(double), 0, sizeof(Joint) - JOINT_NUM * sizeof(double));
+
+            for (uint32_t j = 0; j < joint_num_; j++)
+            {
+                joint[j] = fbjs.position[j];
+                encoder_state[j] = fbjs.encoder_state[j];
+            }
+            
             return true;
         }
         else
@@ -125,6 +132,13 @@ bool BareCoreInterface::getLatestJoint(Joint &joint, ServoState &state)
         }
     }
 
+    for (uint32_t j = 0; j < joint_num_; j++)
+    {
+        joint[j] = 0;
+        encoder_state[j] = INVALID;
+    }
+
+    state = SERVO_INIT;
     return false;
 }
 
@@ -198,7 +212,8 @@ bool BareCoreInterface::getEncoder(vector<int> &data)
 {
     ServiceRequest req;
     req.req_id = GET_ENCODER_SID;
-    int len = data.size();
+    data.resize(joint_num_);
+    int len = joint_num_;
     memcpy(&req.req_buff[0], (void*)&len, sizeof(len));
 
     //if (sendRequest(jtac_param_interface_, req))
@@ -224,7 +239,8 @@ bool BareCoreInterface::getEncoderError(vector<int> &data)
 {
     ServiceRequest req;
     req.req_id = GET_ENCODER_ERR_SID;
-    int len = data.size();
+    data.resize(joint_num_);
+    int len = joint_num_;
     memcpy(&req.req_buff[0], (void*)&len, sizeof(len));
 
     //if (sendRequest(jtac_param_interface_, req))
@@ -246,10 +262,11 @@ bool BareCoreInterface::getEncoderError(vector<int> &data)
     return false;
 }
 
-bool BareCoreInterface::resetEncoderError(void)
+bool BareCoreInterface::resetEncoderError(size_t index)
 {
     ServiceRequest req;
     req.req_id = RESET_ENCODER_ERR_SID;
+    memcpy(req.req_buff, &index, sizeof(size_t));
 
     //if (sendRequest(jtac_param_interface_, req))
     if (sendRequest(command_interface_, req))
@@ -309,6 +326,34 @@ bool BareCoreInterface::readVersion(char *buffer, size_t size)
             memcpy(buffer, res.res_buff, len);
             buffer[len] = '\0';
             return true;
+        }
+    }
+
+    return false;
+}
+
+bool BareCoreInterface::downloadServoParam(uint32_t addr, const char *data, uint32_t length)
+{
+    ServiceRequest req;
+    req.req_id = WRITE_SERVO_DATA_BY_ADDR;
+    
+    memcpy(&req.req_buff[0], (void*)&addr, sizeof(uint32_t));
+    //std::cout << *((uint32_t*)&req.req_buff[0]) << std::endl;
+    memcpy(&req.req_buff[4], (void*)&length, sizeof(uint32_t));
+    //std::cout<<*((unsigned int *)&req.req_buff[4])<<std::endl;
+    memcpy(&req.req_buff[8], (void*)data, length);
+    //std::cout<<*((unsigned short *)&req.req_buff[8])<<std::endl;
+
+    if (sendRequest(command_interface_, req))
+    {
+        ServiceResponse res;
+
+        if (recvResponse(command_interface_, res))
+        {
+            if (*((uint32_t*)(&res.res_buff[0])) == addr && *((uint32_t*)(&res.res_buff[4])) == length)
+            {
+                return true;
+            }
         }
     }
 

@@ -77,7 +77,7 @@ static int get_num_token(char * src, char * dst)
 eval_value forgesight_get_io_status(
 			struct thread_control_block* objThreadCntrolBlock, char *name)
 {	
-	bool bRet = false ;
+	ErrorCode errorRet = 0 ;
 	eval_value value;
 	uint32_t  iValue = 0;
 	char io_name[16] ;
@@ -112,70 +112,75 @@ eval_value forgesight_get_io_status(
 	}
 	namePtr++ ;
 
-	FST_INFO("set_io status: %s:%d (%s).", io_name, iIOIdx, name);
-	if(!strcmp(io_name, TXT_AI))
+	// FST_INFO("set_io status: %s:%d (%s).", io_name, iIOIdx, name);
+	if(!strcasecmp(io_name, TXT_AI))
 	{
 	//	bRet = g_objRegManagerInterface->getAi(iIOIdx, iValue);
 	}
-	else if(!strcmp(io_name, TXT_AO))
+	else if(!strcasecmp(io_name, TXT_AO))
 	{
 	//	bRet = g_objRegManagerInterface->getAo(iIOIdx, iValue);
 	}
-	else if(!strcmp(io_name, TXT_DI))
+	else if(!strcasecmp(io_name, TXT_DI))
+	{
+#ifdef WIN32
+		errorRet = SUCCESS;
+#else
+		//bRet = SUCCESS;
+        errorRet = io_mapping_ptr_->getDIByBit((uint32_t)iIOIdx, (uint8_t&)iValue);
+#endif
+	}
+	else if(!strcasecmp(io_name, TXT_DO))
+	{
+#ifdef WIN32
+        iValue = 0;
+		errorRet = SUCCESS;
+#else
+		//bRet = SUCCESS;
+        errorRet = io_mapping_ptr_->getDOByBit((uint32_t)iIOIdx, (uint8_t&)iValue);
+#endif
+	}
+	else if(!strcasecmp(io_name, TXT_RI))
+	{
+#ifdef WIN32
+		errorRet = SUCCESS;
+#else
+		//bRet = SUCCESS;
+        errorRet = io_mapping_ptr_->getRIByBit((uint32_t)iIOIdx, (uint8_t&)iValue);
+#endif
+	}
+	else if(!strcasecmp(io_name, TXT_RO))
 	{
 #ifdef WIN32
 		bRet = SUCCESS;
 #else
-		bRet = g_objRegManagerInterface->getDi(iIOIdx, iValue);
+		//bRet = SUCCESS;
+        errorRet = io_mapping_ptr_->getROByBit((uint32_t)iIOIdx, (uint8_t&)iValue);
 #endif
 	}
-	else if(!strcmp(io_name, TXT_DO))
-	{
-#ifdef WIN32
-		bRet = SUCCESS;
-#else
-		bRet = g_objRegManagerInterface->getDo(iIOIdx, iValue);
-#endif
-	}
-	else if(!strcmp(io_name, TXT_RI))
-	{
-#ifdef WIN32
-		bRet = SUCCESS;
-#else
-		bRet = g_objRegManagerInterface->getRi(iIOIdx, iValue);
-#endif
-	}
-	else if(!strcmp(io_name, TXT_RO))
-	{
-#ifdef WIN32
-		bRet = SUCCESS;
-#else
-		bRet = g_objRegManagerInterface->getRo(iIOIdx, iValue);
-#endif
-	}
-	else if(!strcmp(io_name, TXT_SI))
+	else if(!strcasecmp(io_name, TXT_SI))
 	{
 	//	bRet = g_objRegManagerInterface->getSi(iIOIdx, iValue);
 	}
-	else if(!strcmp(io_name, TXT_SO))
+	else if(!strcasecmp(io_name, TXT_SO))
 	{
 	//	bRet = g_objRegManagerInterface->getSo(iIOIdx, iValue);
 	}
-	else if(!strcmp(io_name, TXT_UI))
+	else if(!strcasecmp(io_name, TXT_UI))
 	{
-	//	bRet = g_objRegManagerInterface->getUi(iIOIdx, iValue);
+		errorRet = io_mapping_ptr_->getUIByBit((uint32_t)iIOIdx, (uint8_t&)iValue);
 	}
-	else if(!strcmp(io_name, TXT_UO))
+	else if(!strcasecmp(io_name, TXT_UO))
 	{
-	//	bRet = g_objRegManagerInterface->getUo(iIOIdx, iValue);
+		errorRet = io_mapping_ptr_->getUOByBit((uint32_t)iIOIdx, (uint8_t&)iValue);
 	}
-	FST_INFO("get_io status: %s:%d (%s) = %d.", io_name, iIOIdx, name, iValue);
+	// FST_INFO("get_io status: %s:%d (%s) = %d.", io_name, iIOIdx, name, iValue);
 	
-	if(bRet != SUCCESS)
+	if(errorRet != SUCCESS)
 	{
 		serror(objThreadCntrolBlock, 4) ; 
 	}
-	value.setFloatValue(iValue);
+	value.setDoubleValue(iValue);
 	return value;
 }
 
@@ -224,68 +229,82 @@ int forgesight_set_io_status(
 	}
 	namePtr++ ;
 	
-	FST_INFO("set_io status: %s:%d (%s) = %d.", io_name, iIOIdx, name, (int)valueStart.getFloatValue());
-	if(!strcmp(io_name, TXT_AI))
+	// FST_INFO("set_io status: %s:%d (%s) = %d.", io_name, iIOIdx, name, (int)valueStart.getDoubleValue());
+	if(!strcasecmp(io_name, TXT_AI))
 	{
-	//	bRet = g_objRegManagerInterface->setAi(iIOIdx, (int)valueStart.getFloatValue());
+	//	bRet = g_objRegManagerInterface->setAi(iIOIdx, (int)valueStart.getDoubleValue());
 	}
-	else if(!strcmp(io_name, TXT_AO))
+	else if(!strcasecmp(io_name, TXT_AO))
 	{
-	//	bRet = g_objRegManagerInterface->setAo(iIOIdx, (int)valueStart.getFloatValue());
+	//	bRet = g_objRegManagerInterface->setAo(iIOIdx, (int)valueStart.getDoubleValue());
 	}
-	else if(!strcmp(io_name, TXT_DI))
-	{
-#ifdef WIN32
-		bRet = SUCCESS;
-#else
-		bRet = g_objRegManagerInterface->setDi(iIOIdx, (int)valueStart.getFloatValue());
-#endif
-	}
-	else if(!strcmp(io_name, TXT_DO))
+	else if(!strcasecmp(io_name, TXT_DI))
 	{
 #ifdef WIN32
 		bRet = SUCCESS;
 #else
-		if(valueStart.getPulse() == true)
-			bRet = g_objRegManagerInterface->setDoPulse(iIOIdx, valueStart.getFloatValue());
-		else
-			bRet = g_objRegManagerInterface->setDo(iIOIdx, (int)valueStart.getFloatValue());
-#endif
-	}
-	else if(!strcmp(io_name, TXT_RI))
-	{
-#ifdef WIN32
 		bRet = SUCCESS;
-#else
-		bRet = g_objRegManagerInterface->setRi(iIOIdx, (int)valueStart.getFloatValue());
+        io_mapping_ptr_->setDIByBit((uint32_t)iIOIdx, (uint8_t)valueStart.getDoubleValue());
 #endif
 	}
-	else if(!strcmp(io_name, TXT_RO))
+	else if(!strcasecmp(io_name, TXT_DO))
 	{
 #ifdef WIN32
 		bRet = SUCCESS;
 #else
 		if(valueStart.getPulse() == true)
-			bRet = g_objRegManagerInterface->setRoPulse(iIOIdx, valueStart.getFloatValue());
+		{
+			bRet = SUCCESS;
+        	io_mapping_ptr_->setDOPulse((uint32_t)iIOIdx, valueStart.getDoubleValue());
+		}
 		else
-			bRet = g_objRegManagerInterface->setRo(iIOIdx, (int)valueStart.getFloatValue());
+		{
+			bRet = SUCCESS;
+        	io_mapping_ptr_->setDOByBit((uint32_t)iIOIdx, (uint8_t)valueStart.getDoubleValue());
+		}
 #endif
 	}
-	else if(!strcmp(io_name, TXT_SI))
+	else if(!strcasecmp(io_name, TXT_RI))
 	{
-	//	bRet = g_objRegManagerInterface->setSi(iIOIdx, (int)valueStart.getFloatValue());
+#ifdef WIN32
+		bRet = SUCCESS;
+#else
+		bRet = SUCCESS;
+        io_mapping_ptr_->setRIByBit((uint32_t)iIOIdx, (uint8_t)valueStart.getDoubleValue());
+#endif
 	}
-	else if(!strcmp(io_name, TXT_SO))
+	else if(!strcasecmp(io_name, TXT_RO))
 	{
-	//	bRet = g_objRegManagerInterface->setSo(iIOIdx, (int)valueStart.getFloatValue());
+#ifdef WIN32
+		bRet = SUCCESS;
+#else
+		if(valueStart.getPulse() == true)
+		{
+			bRet = SUCCESS;
+        	io_mapping_ptr_->setROPulse((uint32_t)iIOIdx, valueStart.getDoubleValue());
+		}
+		else
+		{
+			bRet = SUCCESS;
+        	io_mapping_ptr_->setROByBit((uint32_t)iIOIdx, (uint8_t)valueStart.getDoubleValue());
+		}
+#endif
 	}
-	else if(!strcmp(io_name, TXT_UI))
+	else if(!strcasecmp(io_name, TXT_SI))
 	{
-	//	bRet = g_objRegManagerInterface->setUi(iIOIdx, (int)valueStart.getFloatValue());
+	//	bRet = g_objRegManagerInterface->setSi(iIOIdx, (int)valueStart.getDoubleValue());
 	}
-	else if(!strcmp(io_name, TXT_UO))
+	else if(!strcasecmp(io_name, TXT_SO))
 	{
-	//	bRet = g_objRegManagerInterface->setUo(iIOIdx, (int)valueStart.getFloatValue());
+	//	bRet = g_objRegManagerInterface->setSo(iIOIdx, (int)valueStart.getDoubleValue());
+	}
+	else if(!strcasecmp(io_name, TXT_UI))
+	{
+	//	bRet = g_objRegManagerInterface->setUi(iIOIdx, (int)valueStart.getDoubleValue());
+	}
+	else if(!strcasecmp(io_name, TXT_UO))
+	{
+	//	bRet = g_objRegManagerInterface->setUo(iIOIdx, (int)valueStart.getDoubleValue());
 	}
 	
 	if(bRet != SUCCESS)

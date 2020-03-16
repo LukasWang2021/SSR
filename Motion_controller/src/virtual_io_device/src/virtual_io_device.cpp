@@ -7,8 +7,8 @@ using namespace fst_hal;
 
 VirtualIoDevice::VirtualIoDevice(int address):
     BaseDevice(address, fst_hal::DEVICE_TYPE_VIRTUAL_IO),
-    log_ptr_(NULL),
     param_ptr_(NULL),
+    log_ptr_(NULL),
     address_(address)
 {
     log_ptr_ = new fst_log::Logger();

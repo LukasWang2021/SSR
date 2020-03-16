@@ -91,12 +91,12 @@ int main(int argc, char* argv[])
     cout << "Reply : msg.data.mass_center.data_count = " << recv_msg.data.mass_center.data_count << endl;
     cout << "Reply : msg.data.inertia_moment.data_count = " << recv_msg.data.inertia_moment.data_count << endl;
 
-    for (int i = 0; i != recv_msg.data.mass_center.data_count; ++i)
+    for (size_t i = 0; i != recv_msg.data.mass_center.data_count; ++i)
     {
         cout << "Reply : msg.data.mass_center.data["<< i << "] = " << recv_msg.data.mass_center.data[i] << endl;
     }
 
-    for (int i = 0; i != recv_msg.data.inertia_moment.data_count; ++i)
+    for (size_t i = 0; i != recv_msg.data.inertia_moment.data_count; ++i)
     {
         cout << "Reply : msg.data.inertia_moment.data["<< i << "] = " << recv_msg.data.inertia_moment.data[i] << endl;
     }

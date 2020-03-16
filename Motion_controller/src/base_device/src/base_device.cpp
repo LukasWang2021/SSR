@@ -11,9 +11,7 @@ BaseDevice::BaseDevice(int address, DeviceType type):
 }
 
 BaseDevice::~BaseDevice()
-{
-
-}
+{}
 
 int BaseDevice::getAddress()
 {

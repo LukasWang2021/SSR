@@ -7,6 +7,7 @@
 #include <mutex>
 #include "thread_help.h"
 
+
 namespace fst_hal
 {
 	
@@ -439,7 +440,8 @@ private:
 
     FstSafetyDeviceParam* param_ptr_;
     fst_log::Logger* log_ptr_;
-    fst_base::ThreadHelp routine_thread_;
+
+    fst_base::ThreadHelp thread_routine_ptr_;
 	bool is_running_;
     std::mutex mutex_;  // data protection
     ErrorCode updateSafetyData(void); // data exchange
@@ -470,9 +472,10 @@ private:
 	//comm error safety_alarm
 	char pre_comm_err_;
 };
+
 }
 
-void safetyDeviceRoutineThreadFunc(void* arg);
+void* safetyDeviceRoutineThreadFunc(void* arg);
 
 #endif
 

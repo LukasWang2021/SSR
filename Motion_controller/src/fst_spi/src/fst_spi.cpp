@@ -64,20 +64,8 @@ ErrCode FstSpi::initSpi() {
     return ret;
 }
 
-bool FstSpi::trylockSpi() {
-    std::chrono::microseconds sleep_time(1000);
-    auto start = std::chrono::high_resolution_clock::now();
-    auto end = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double, std::micro> interval;
-    while(!spi_mutex_.try_lock()) {
-        end = std::chrono::high_resolution_clock::now();
-        interval = end - start;
-        if(interval.count() > timeout_trylock_spi_) {
-            return false;
-        }
-        std::this_thread::sleep_for(sleep_time);       
-    }
-    return true;
+void FstSpi::lockSpi() {
+    spi_mutex_.lock();     
 }
 
 void FstSpi::unlockSpi() {

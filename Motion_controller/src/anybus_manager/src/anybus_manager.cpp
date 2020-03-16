@@ -11,8 +11,8 @@ volatile unsigned char* pAbcc;
 volatile unsigned char* pMemSys;
 
 AnybusManager::AnybusManager():
-    log_ptr_(NULL),
-    param_ptr_(NULL)
+    param_ptr_(NULL),
+    log_ptr_(NULL)
 {
     log_ptr_ = new fst_log::Logger();
     param_ptr_ = new AnybusManagerParam();
@@ -43,13 +43,18 @@ AnybusManager::~AnybusManager()
 
 unsigned long long int AnybusManager::initAnybus()
 {
-    char* pc_args_info = "";
+    // char* pc_args_info = "";
     if (safety_enable_)
     {
-        pc_args_info = "(T100 Safety enabled)";
+        char pc_args_info[] = "(T100 Safety enabled)";
         //SAFE_SetSafetyEnable( false );
+        FST_INFO("%s %s\n", ABCC_STARTER_KIT_VER_STRING, pc_args_info);
     }
-    FST_INFO("%s %s\n", ABCC_STARTER_KIT_VER_STRING, pc_args_info);
+    else 
+    {
+        char pc_args_info[] = "";
+        FST_INFO("%s %s\n", ABCC_STARTER_KIT_VER_STRING, pc_args_info);
+    }
 
     int fd = open("/dev/mem", O_RDWR);
     if( fd < 1 )
@@ -145,10 +150,10 @@ void AnybusManager::closeServer()
     thread_ptr_.join();
 }
 
-void AnybusManager::anybusManagerThreadFunc()
+void* AnybusManager::anybusManagerThreadFunc()
 {
-    UINT8 test1 = *( (volatile UINT8 *)pAbcc + 0x3FF0);
-    //FST_INFO("test1 = 0x%x\n", test1);
+    // UINT8 test1 = *( (volatile UINT8 *)pAbcc + 0x3FF0);
+    // FST_INFO("test1 = 0x%x\n", test1);
     abcc_handler_status_ = APPL_HandleAbcc();
 
     switch(abcc_handler_status_)
@@ -172,6 +177,8 @@ void AnybusManager::anybusManagerThreadFunc()
 
     usleep(1000);
     ABCC_RunTimerSystem(1);
+
+    return NULL;
 }
 
 bool AnybusManager::isRunning()
@@ -179,11 +186,13 @@ bool AnybusManager::isRunning()
     return is_running_;
 }
 
-void anybusManagerRoutineThreadFunc(void* arg)
+void* anybusManagerRoutineThreadFunc(void* arg)
 {
     AnybusManager* anybus_manager = static_cast<AnybusManager*>(arg);
     while(anybus_manager->isRunning())
     {
         anybus_manager->anybusManagerThreadFunc();
     }
+
+    return NULL;
 }

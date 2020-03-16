@@ -77,7 +77,7 @@ int main()
     cout << "Reply : msg.header.error_code = " << msg.header.error_code << endl;
     cout << "Reply : msg.property.authority = " << msg.property.authority << endl;
 
-    for (int i = 0; i !=  msg.data.data_count; ++i)
+    for (size_t i = 0; i !=  msg.data.data_count; ++i)
     {
         cout << "Reply : msg. msg.data.data[" << i << "] = " << msg.data.data[i] << endl;
     }

@@ -22,6 +22,8 @@
 #define MAX_LOG_CONTROL_BLOCK           200     // MAX_LOG_CONTROL_BLOCK should less than 256,
                                                 // cause there are 256 IDs at most, and ID=0 is reserved
 #define SERVER_ITEM_POOL_SIZE           1000
+#define LOG_DIRECTORY                   "/root/log/"
+
 namespace fst_log {
 
 struct LogControlBlock {
@@ -46,13 +48,17 @@ void error(const char *format, ...);
 uintmax_t totalLogFileSize(boost::filesystem::path &path);
 bool delOldestLogFile(boost::filesystem::path &path);
 void checkLogSpace(boost::filesystem::path &path);
+void cleanControlBlockQueue(void);
+bool isFileExist(const char *file);
+bool createLogFile(fst_log::LogControlBlock *plcb);
 
 char buildLogControlBlock(std::string &name);
 std::string getNameFromID(char id);
 
-int initLogSpace(void);
 int initShareMemory(void);
-int initServerLog(void);
+int initLogSpace(const char *dir);
+int initServerLog(const char *dir);
+void createLogSpace(const char *dir);
 
 //bool lockFile(std::string &file);
 //bool unlockFile(std::string &file);

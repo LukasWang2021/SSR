@@ -63,6 +63,7 @@ bool ErrorMonitor::pop(unsigned long long& error_code)
     else 
     {
         error_code = 0;
+        pre_code_ = SUCCESS;
         return false;
     }
 }

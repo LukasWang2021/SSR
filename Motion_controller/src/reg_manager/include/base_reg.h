@@ -59,8 +59,8 @@ typedef struct
 class BaseReg
 {
 public:
-    BaseReg(RegType type, int size);
-    ~BaseReg();
+    BaseReg(RegType type, size_t size);
+    virtual ~BaseReg();
 
     virtual ErrorCode init() = 0;
     virtual ErrorCode addReg(void* data_ptr) = 0;
@@ -75,7 +75,7 @@ public:
 
     BaseRegData* getBaseRegDataById(int id);
     RegType getRegType();
-    int getListSize();
+    size_t getListSize();
     bool isValid(int id);
     bool setValid(int id, bool is_valid);
     bool setName(int id, std::string name);

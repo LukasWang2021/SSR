@@ -22,7 +22,7 @@ public:
     void init(fst_log::Logger* log_ptr, ControllerParam* param_ptr, 
                 fst_base::ControllerServer* controller_server_ptr, fst_base::ControllerClient* controller_client_ptr,
                 RegManager* reg_manager_ptr, ControllerSm* state_machine_ptr, fst_hal::DeviceManager* device_manager_ptr,
-                IoMapping* io_mapping_ptr, fst_mc::MotionControl* motion_control_ptr);
+                IoMapping* io_mapping_ptr, fst_mc::MotionControl* motion_control_ptr, IoManager* io_manager_ptr);
 
     void processIpc();
 private:
@@ -36,6 +36,7 @@ private:
     fst_hal::ModbusManager* modbus_manager_ptr_; 
     IoMapping* io_mapping_ptr_;
     fst_mc::MotionControl* motion_control_ptr_;
+    IoManager* io_manager_ptr_;
 
     enum {CMD_ID_BYTE_SIZE = 4,};
 
@@ -85,6 +86,8 @@ private:
     void handleIpcUserOpMode(void* request_data_ptr, void* response_data_ptr);
     void handleIpcSetDoPulse(void* request_data_ptr, void* response_data_ptr);
     void handleIpcSetRoPulse(void* request_data_ptr, void* response_data_ptr);
+    void handleIpcGetPosture(void* request_data_ptr, void* response_data_ptr);
+    void handleIpcGetTurn(void* request_data_ptr, void* response_data_ptr);
 
 };
 

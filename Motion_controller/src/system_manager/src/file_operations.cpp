@@ -60,6 +60,7 @@ bool FileOperations::copyFile(const char *source, const char *destination)
     if (out == NULL)
     {
         printf("FileOperations::copyFile: Can't open destination file -> %s", destination);
+        fclose(in);
         return false;
     }
 
@@ -106,6 +107,7 @@ bool FileOperations::copyDir(const char *source, const char *destination)
         if (mkdir(destination, 0777) != 0)
         {
             printf("FileOperations::copyDir: Can't open destination directory -> %s", destination);
+            closedir(dp);
             return false;
         }
     }
@@ -580,6 +582,8 @@ int FileOperations::copyData(struct archive *ar, struct archive *aw)
 			return result;
 		}
 	}*/
+
+    return -1;
 }
 
 

@@ -135,6 +135,8 @@ private:
     void handleRpc0x0000C7A5(void* request_data_ptr, void* response_data_ptr);
     //"/rpc/controller/restoreDone"	
     void handleRpc0x000079F5(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/controller/setControllerIp"	
+    void handleRpc0x0000B090(void* request_data_ptr, void* response_data_ptr);
 
 
     /* tool manager rpc */
@@ -376,6 +378,12 @@ private:
     //"/rpc/motion_control/axis_group/getAllValidPayloadSummaryInfo"	
     void handleRpc0x00010C8F(void* request_data_ptr, void* response_data_ptr);
 
+    //"/rpc/motion_control/axis_group/setOfflineTrajectoryFile"	
+    void handleRpc0x00011275(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/motion_control/axis_group/PrepareOfflineTrajectory"	
+    void handleRpc0x000051E9(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/motion_control/axis_group/moveOfflineTrajectory"	
+    void handleRpc0x0000C4D9(void* request_data_ptr, void* response_data_ptr);
     
     /* interpreter rpc */
     // "/rpc/interpreter/start"

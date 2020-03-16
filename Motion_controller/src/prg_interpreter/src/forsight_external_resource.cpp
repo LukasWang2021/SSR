@@ -196,9 +196,9 @@ int import_external_resource(char *file_name,
 			bool bRet = generateKeyWord(nodeProgBody, objKeyVariable);
 			if(bRet)
 			{
-				if(strstr(REGSITER_NAMES, objKeyVariable.key_name) 
-					&& (strcmp(objKeyVariable.key_name, "p") != 0)
-					&& (strcmp(objKeyVariable.key_name, "r") != 0))  // Not R register
+				if(strcasestr(REGSITER_NAMES, objKeyVariable.key_name) 
+					&& (strcasecmp(objKeyVariable.key_name, "p") != 0)
+					&& (strcasecmp(objKeyVariable.key_name, "r") != 0))  // Not R register
 				{
 					FST_INFO("Duplicate %s", objKeyVariable.key_name);
 				}

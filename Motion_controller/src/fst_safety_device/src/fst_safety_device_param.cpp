@@ -5,10 +5,10 @@
 using namespace fst_hal;
 
 FstSafetyDeviceParam::FstSafetyDeviceParam():
-    file_path_(COMPONENT_PARAM_FILE_DIR),
     log_level_(3),  // default is Error Level
     cycle_time_(1000),
-    is_virtual_(false)
+    is_virtual_(false),
+    file_path_(COMPONENT_PARAM_FILE_DIR)
 {
     file_path_ += "fst_safety_device.yaml";
 }

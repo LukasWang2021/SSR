@@ -76,7 +76,7 @@ int main()
     cout << "Reply : msg.header.package_left = " << recv_msg.header.package_left << endl;
     cout << "Reply : msg.header.error_code = " << recv_msg.header.error_code << endl;
     cout << "Reply : msg.property.authority = " << recv_msg.property.authority << endl;
-    printf("Reply : msg.data.data = 0x%16x\n", recv_msg.data.data);
+    printf("Reply : msg.data.data = 0x%16llx\n", recv_msg.data.data);
     cout << "Reply : msg.data.data = " << std::hex << recv_msg.data.data << endl;
 
     usleep(200000);

@@ -61,7 +61,7 @@ void HeartbeatClient::sendHeartbeat()
     {
         return;
     }
-    
+    static bool send_req = false;
     int recv_bytes;
     if(poll_fd_.revents & NN_POLLIN)
     {
@@ -70,7 +70,9 @@ void HeartbeatClient::sendHeartbeat()
         {
             return;
         }
+        send_req = false;
         memcpy(&response_data_, recv_buffer_ptr_, sizeof(HeartbeatClientRequestResponseData));
+
         if(response_data_.cmd != CMD_HEARTBEAT)
         {
             FST_ERROR("sendHeartbeat: unexpected heartbeat response");
@@ -88,7 +90,7 @@ void HeartbeatClient::sendHeartbeat()
     {
         gettimeofday(&current_time_, NULL);
         long long time_elapsed = computeTimeElapsed();
-        if(time_elapsed >= (long long)param_ptr_->heartbeat_cycle_time_)
+        if(time_elapsed >= (long long)param_ptr_->heartbeat_cycle_time_ && (send_req == false))
         {
             int send_bytes = nn_send(req_resp_socket_, &request_data_, sizeof(HeartbeatClientRequestResponseData), 0);
             if(send_bytes == -1 || send_bytes != sizeof(HeartbeatClientRequestResponseData))
@@ -100,6 +102,7 @@ void HeartbeatClient::sendHeartbeat()
             {
                 last_send_time_ = current_time_;
             }
+            send_req = true;
         }
     }
 }

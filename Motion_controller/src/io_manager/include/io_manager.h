@@ -204,11 +204,11 @@ private:
     fst_log::Logger* log_ptr_;
     fst_hal::DeviceManager* device_manager_ptr_;
     std::vector<fst_hal::DeviceInfo> device_list_;
-    fst_base::ThreadHelp routine_thread_;
+    fst_base::ThreadHelp thread_routine_ptr_;
 
 };
 } //namespace
 
-void ioManagerRoutineThreadFunc(void* arg);
+void* ioManagerRoutineThreadFunc(void* arg);
 
 #endif //IO_MANAGER_H_

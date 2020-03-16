@@ -108,7 +108,7 @@ private:
 
     void initIODeviceData(IODeviceData &data);
 
-    ErrorCode getDeviceDataFromMem(IODeviceData &data);
+    ErrorCode freshenDeviceDataFromMem(IODeviceData &data);
 
     bool readWriteMem(IODeviceData &data);
 

@@ -10,6 +10,7 @@ using namespace fst_controller;
 #include "stdint.h"
 using namespace fst_mc;
 #include "basic_alg_datatype.h" 
+#include "fst_safety_device.h"
 using namespace basic_alg;
 #endif
 
@@ -45,11 +46,14 @@ typedef enum _AdditionalInfomationType
 typedef enum _AdditionalOffsetInfomationType
 {
     PR, 
-    PR_UF, 
+	PR_UF,
+    PR_TF, 
     C_VEC ,
     C_VEC_UF ,
+    C_VEC_TF ,
     J_VEC, 
     J_VEC_UF, 
+    J_VEC_TF, 
 } AdditionalOffsetInfomationType;
 
 typedef enum __AdditionalExecuteInfomationType
@@ -152,13 +156,13 @@ typedef struct _RegMap
     char    value[1024];
 }RegMap;
 
-typedef enum _UserOpMode
-{
-    NONE_U                  = 0,
-    AUTO_MODE_U             = 1,
-    SLOWLY_MANUAL_MODE_U    = 2,
-    UNLIMITED_MANUAL_MODE_U = 3,
-}UserOpMode;
+// typedef enum _UserOpMode
+// {
+//     NONE_U                  = 0,
+//     AUTO_MODE_U             = 1,
+//     SLOWLY_MANUAL_MODE_U    = 2,
+//     UNLIMITED_MANUAL_MODE_U = 3,
+// }UserOpMode;
 
 typedef enum _AutoMode
 {
@@ -224,6 +228,7 @@ typedef struct _Instruction
     int             line;
 #endif
     InstType        type;
+    fst_hal::UserOpMode user_op_mode;
 
     MotionTarget    target;
     int  loop_cnt;
@@ -250,6 +255,7 @@ typedef struct _MoveCommandDestination
     PoseEuler       pose_target;
     Joint           joint_target;
 	Posture         posture ;
+	Turn            turn ;
 } MoveCommandDestination;
 
 typedef struct

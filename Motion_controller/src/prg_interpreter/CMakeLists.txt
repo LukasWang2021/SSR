@@ -3,6 +3,8 @@ project(prg_interpreter)
 
 
 find_package(catkin REQUIRED COMPONENTS 
+    device_manager 
+    controller 
     log_manager
 #    io_manager
 #    motion_plan
@@ -10,6 +12,9 @@ find_package(catkin REQUIRED COMPONENTS
 #    mem_share
     motion_control
     kinematics_alg
+    xml_help
+    middleware_to_mem
+    dynamic_alg
 )
 set(VERSION_MAJOR ?)
 set(VERSION_MINOR ?)
@@ -39,41 +44,71 @@ endif()
 
 set(catkin_INCLUDE_DIRS
     ${catkin_INCLUDE_DIRS}
+    /usr/include/python2.7 
 
+    ${depend_PATH_INC}/controller/include 
+    ${depend_PATH_INC}/comm_interface/include 
+    ${depend_PATH_INC}/middleware_to_mem/include
     ${depend_PATH_INC}/parameter_manager/include
     ${depend_PATH_INC}/log_manager/include
-    ${depend_PATH_INC}/ioboard/include
-    ${depend_PATH_INC}/io_manager/include
-    ${depend_PATH_INC}/mem_share/include
-    ${depend_PATH_INC}/tp_interface/include
-    ${depend_PATH_INC}/tp_interface/include/proto
+    ${depend_PATH_INC}/service_manager/include
+    ${depend_PATH_INC}/prg_interpreter/include
     ${depend_PATH_INC}/prg_interpreter/include/reg_manager
-#    ${depend_PATH_INC}/prg_interpreter/include/reg_shmi
+    ${depend_PATH_INC}/protos/include 
+    ${depend_PATH_INC}/tp_comm/include 
     ${depend_PATH_INC}/thread_help/include 
     ${depend_PATH_INC}/common/
+    ${depend_PATH_INC}/tool_manager/include 
+    ${depend_PATH_INC}/coordinate_manager/include 
     ${depend_PATH_INC}/reg_manager/include 
-    ${depend_PATH_INC}/fst_io_device/include 
-    ${depend_PATH_INC}/base_device/include
     ${depend_PATH_INC}/process_comm/include 
-    ${depend_PATH_INC}/modbus_manager/include
-    ${depend_PATH_INC}/motion_control/include 
-    ${depend_PATH_INC}/io_mapping/include 
+    ${depend_PATH_INC}/device_manager/include 
+    ${depend_PATH_INC}/xml_help/include 
+    ${depend_PATH_INC}/base_device/include
+    ${depend_PATH_INC}/error_monitor/include 
+    ${depend_PATH_INC}/motion_control/include
+    ${depend_PATH_INC}/axis_group_manager/include
+    ${depend_PATH_INC}/base_axis_group/include
+    ${depend_PATH_INC}/log_service/include
     ${depend_PATH_INC}/basic_alg/include 
+    ${depend_PATH_INC}/kinematics_alg/include 
+    ${depend_PATH_INC}/transformation/include 
+    ${depend_PATH_INC}/process_comm/include 
+    ${depend_PATH_INC}/preformance_monitor/include 
+    ${depend_PATH_INC}/modbus_manager/include
+    ${depend_PATH_INC}/fst_safety_device/include 
+    ${depend_PATH_INC}/io_mapping/include 
+    ${depend_PATH_INC}/io_manager/include 
+    ${depend_PATH_INC}/fst_io_device/include 
+    ${depend_PATH_INC}/virtual_io_device/include 
+    ${depend_PATH_INC}/program_launching/include 
+    ${depend_PATH_INC}/file_manager/include 
+    ${depend_PATH_INC}/system_manager/include 
+    ${depend_PATH_INC}/param_manager/include 
     ${depend_PATH_INC}/nvram/include
     ${depend_PATH_INC}/fst_spi/include
     ${depend_PATH_INC}/kinematics_alg/include
+    ${depend_PATH_INC}/dynamic_alg/include
+    ${depend_PATH_INC}/trajectory_planner/include
+    ${depend_PATH_INC}/joint_constraint/include
 )
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wwrite-strings -fpermissive -O0")
 
 catkin_package(
-#    DEPENDS motion_plan 
+#    DEPENDS motion_plan  
+    DEPENDS device_manager 
+    DEPENDS controller 
     DEPENDS fst_io_device 
     DEPENDS motion_control 
     DEPENDS basic_alg 
     DEPENDS nvram 
     DEPENDS fst_spi 
+    DEPENDS dynamic_alg
     DEPENDS kinematics_alg
+    DEPENDS trajectory_planner
+    DEPENDS joint_constraint
+    DEPENDS python2.7 
 )
  
 
@@ -86,7 +121,7 @@ include_directories(
 ###########
 ## Build ##
 ###########
-add_executable(prg_interpreter
+add_library(prg_interpreter
     src/reg_manager/reg_manager_interface_wrapper.cpp
     src/reg_manager/forsight_registers_manager.cpp
     src/forsight_innercmd.cpp
@@ -101,15 +136,32 @@ add_executable(prg_interpreter
     src/launch_code_mgr.cpp
     src/forsight_home_pose.cpp
     src/forsight_external_resource.cpp
-#   src/io_interface.cpp
 )
 
 target_link_libraries(prg_interpreter
     ${catkin_LIBRARIES}
-#    io_manager
-    parameter_manager
+    core_interface
+    protos 
+    tp_comm
+    modbus_manager
+    thread_help
+    tool_manager 
+    coordinate_manager 
+    reg_manager 
+    process_comm 
+    device_manager 
+    error_monitor 
+    motion_control
+    log_service
+    preformance_monitor 
+    fst_safety_device
+    io_mapping
+    io_manager
+    file_manager
+    system_manager
+    param_manager
+    transformation
     xml2
-#    motion_plan
     process_comm 
     thread_help
     pthread
@@ -117,13 +169,19 @@ target_link_libraries(prg_interpreter
     logger
     basic_alg
     kinematics_alg
+    dynamic_alg
+    xml_help
+    trajectory_planner
+    joint_constraint
+    python2.7
+    boost_filesystem
 )
 
 #############
 ## Install ##
 #############
 install(TARGETS prg_interpreter
-    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+    LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 )
 
 install(DIRECTORY config
@@ -145,4 +203,5 @@ install(FILES config/user_defined_variable.xml
 install(FILES config/prg_interpreter_config.yaml
     DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/runtime/component_param
 )
+
 

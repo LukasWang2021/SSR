@@ -12,9 +12,7 @@ Summary:    to handle the bypass values.
 using namespace fst_ctrl;
 
 
-IoBypass::IoBypass(fst_log::Logger *logger, IoMappingParam *param):
-    log_ptr_(NULL),
-    param_ptr_(NULL)
+IoBypass::IoBypass(fst_log::Logger *logger, IoMappingParam *param)
 {
     log_ptr_ = logger;
     param_ptr_ = param;

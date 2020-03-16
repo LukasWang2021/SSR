@@ -8,12 +8,12 @@ using namespace std;
 
 
 ModbusManagerParam::ModbusManagerParam():
-    client_file_path_(MODBUS_DIR),
+    log_level_(fst_log::MSG_LEVEL_ERROR),
     server_file_path_(MODBUS_DIR),
-    client_config_file_path_(MODBUS_DIR),
     server_config_file_path_(MODBUS_DIR),
-    file_path_(COMPONENT_PARAM_FILE_DIR),
-    log_level_(fst_log::MSG_LEVEL_ERROR)
+    client_file_path_(MODBUS_DIR),
+    client_config_file_path_(MODBUS_DIR),
+    file_path_(COMPONENT_PARAM_FILE_DIR)
 {
     file_path_ += "modbus_manager.yaml";
     start_mode_ = 0;

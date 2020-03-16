@@ -6,8 +6,8 @@ using namespace fst_hal;
 
 VirtualSafetyDevice::VirtualSafetyDevice(int address):
     BaseDevice(address, fst_hal::DEVICE_TYPE_VIRTUAL_SAFETY),
-    log_ptr_(NULL),
-    param_ptr_(NULL)
+    param_ptr_(NULL),
+    log_ptr_(NULL)
 {
     log_ptr_ = new fst_log::Logger();
     param_ptr_ = new VirtualSafetyDeviceParam();

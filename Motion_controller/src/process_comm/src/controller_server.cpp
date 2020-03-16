@@ -12,9 +12,8 @@ using namespace fst_base;
 
 
 ControllerServer::ControllerServer(fst_log::Logger* log_ptr, ProcessCommParam* param_ptr):
-    log_ptr_(log_ptr), param_ptr_(param_ptr), is_exit_(false),
-    recv_buffer_ptr_(NULL), send_buffer_ptr_(NULL),
-    is_interpreter_server_ready_(false)
+    log_ptr_(log_ptr), param_ptr_(param_ptr), is_interpreter_server_ready_(false), is_exit_(false),
+    recv_buffer_ptr_(NULL), send_buffer_ptr_(NULL)
 {
 
 }
@@ -216,7 +215,7 @@ void ControllerServer::copyResponseDataToSendBuffer(ControllerServerCmd cmd_id, 
     send_buffer_size = response_data_size + PROCESS_COMM_CMD_ID_SIZE;
 }
 
-void controllerServerThreadFunc(void* arg)
+void* controllerServerThreadFunc(void* arg)
 {
     std::cout<<"---controllerServerThreadFunc running"<<std::endl;
     ControllerServer* controller_server_ptr = static_cast<ControllerServer*>(arg);
@@ -224,6 +223,7 @@ void controllerServerThreadFunc(void* arg)
     {
         controller_server_ptr->runThreadFunc();
     }
+    return NULL;
 }
 
 

@@ -6,10 +6,11 @@ using namespace fst_hal;
 
 VirtualAxisDevice::VirtualAxisDevice(int address):
     BaseDevice(address, fst_hal::DEVICE_TYPE_VIRTUAL_AXIS),
-    status_(VIRTUAL_AXIS_DEVICE_INIT), target_position_(0),
-    feedback_position_(0),
+    param_ptr_(NULL),
     log_ptr_(NULL),
-    param_ptr_(NULL)
+    status_(VIRTUAL_AXIS_DEVICE_INIT),
+    target_position_(0),
+    feedback_position_(0)
 {
     log_ptr_ = new fst_log::Logger();
     param_ptr_ = new VirtualAxisDeviceParam();

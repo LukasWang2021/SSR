@@ -491,3 +491,23 @@ void ControllerServer::handleResponseSetRoPulse(std::vector<ProcessCommRequestRe
     }
 
 }
+
+//getPosture
+void ControllerServer::handleResponseGetPosture(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size)
+{
+    copyResponseDataToSendBuffer(CONTROLLER_SERVER_CMD_GET_POSTURE, task->response_data_ptr, sizeof(Posture), send_buffer_size);
+    if(task->response_data_ptr != NULL)
+    {
+        delete (Posture*)task->response_data_ptr;
+    }
+}
+
+//getTurn
+void ControllerServer::handleResponseGetTurn(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size)
+{
+    copyResponseDataToSendBuffer(CONTROLLER_SERVER_CMD_GET_TURN, task->response_data_ptr, sizeof(Turn), send_buffer_size);
+    if(task->response_data_ptr != NULL)
+    {
+        delete (Turn*)task->response_data_ptr;
+    }
+}

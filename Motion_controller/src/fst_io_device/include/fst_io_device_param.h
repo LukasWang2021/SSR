@@ -20,10 +20,10 @@ public:
     int cycle_time_;    // thread cycle time, ms
     std::string device_type_;
     std::string comm_type_;
-    int max_DI_number_;
-    int max_DO_number_;
-    int max_RI_number_;
-    int max_RO_number_;
+    uint32_t max_DI_number_;
+    uint32_t max_DO_number_;
+    uint32_t max_RI_number_;
+    uint32_t max_RO_number_;
     bool is_virtual_;
     int comm_tolerance_;
   

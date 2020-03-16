@@ -1,12 +1,11 @@
 #include "base_reg.h"
 #include <cstring>
 
-
 using namespace std;
 using namespace fst_ctrl;
 
 
-BaseReg::BaseReg(RegType type, int size):
+BaseReg::BaseReg(RegType type, size_t size):
     type_(type)
 {
     reg_list_.resize(size + 1); // id=0 is not used, id start from 1
@@ -21,10 +20,10 @@ std::vector<BaseRegSummary> BaseReg::getChangedList(int start_id, int size)
 {
     BaseRegSummary summary;
     std::vector<BaseRegSummary> list;
-    int end_id = start_id + size;
+    uint32_t end_id = static_cast<uint32_t>(start_id + size);
     start_id = (start_id <= 0 ? 1 : start_id);
     end_id = (end_id < reg_list_.size() ? end_id : reg_list_.size());
-    for(int i = start_id; i < end_id; ++i)
+    for(uint32_t i = static_cast<uint32_t>(start_id); i < end_id; ++i)
     {
         if(reg_list_[i].is_changed)
         {
@@ -42,10 +41,10 @@ std::vector<BaseRegSummary> BaseReg::getValidList(int start_id, int size)
 {
     BaseRegSummary summary;
     std::vector<BaseRegSummary> list;
-    int end_id = start_id + size;
+    uint32_t end_id = static_cast<uint32_t>(start_id + size);
     start_id = (start_id <= 0 ? 1 : start_id);
     end_id = (end_id < reg_list_.size() ? end_id : reg_list_.size());
-    for(int i = start_id; i < end_id; ++i)
+    for(uint32_t i = static_cast<uint32_t>(start_id); i < end_id; ++i)
     {
         if(reg_list_[i].is_valid)
         {
@@ -60,9 +59,9 @@ std::vector<BaseRegSummary> BaseReg::getValidList(int start_id, int size)
 
 bool BaseReg::isRegValid(int id)
 {
-    if(id <= 0
-        || id >= reg_list_.size()
-        || !reg_list_[id].is_valid)
+    if (id <= 0) return false;
+    uint32_t uid = static_cast<uint32_t>(id);
+    if (uid >= reg_list_.size() || !reg_list_[uid].is_valid)
     {
         return false;
     }
@@ -74,14 +73,16 @@ bool BaseReg::isRegValid(int id)
 
 BaseRegData* BaseReg::getBaseRegDataById(int id)
 {
-    if(id <= 0
-        || id >= reg_list_.size())
+    if (id <= 0) return false;
+    uint32_t uid = static_cast<uint32_t>(id);
+
+    if(uid >= reg_list_.size())
     {
         return NULL;
     }
     else
     {
-        return &reg_list_[id];
+        return &reg_list_[uid];
     }
 }
 
@@ -92,40 +93,46 @@ RegType BaseReg::getRegType()
 
 bool BaseReg::isValid(int id)
 {
-    if(id <= 0
-        || id >= reg_list_.size())
+    if (id <= 0) return false;
+    uint32_t uid = static_cast<uint32_t>(id);
+
+    if(uid >= reg_list_.size())
     {
         return false;
     }
     else
     {
-        return reg_list_[id].is_valid;
+        return reg_list_[uid].is_valid;
     }
 }
 
-int BaseReg::getListSize()
+size_t BaseReg::getListSize()
 {
     return reg_list_.size();
 }
 
 bool BaseReg::setValid(int id, bool is_valid)
 {
-    if(id <= 0
-        || id >= reg_list_.size())
+    if (id <= 0) return false;
+    uint32_t uid = static_cast<uint32_t>(id);
+
+    if(uid >= reg_list_.size())
     {
         return false;
     }
     else
     {
-        reg_list_[id].is_valid = is_valid;
+        reg_list_[uid].is_valid = is_valid;
         return true;
     }
 }
 
 bool BaseReg::setName(int id, std::string name)
 {
-    if(id <= 0
-        || id >= reg_list_.size())
+    if (id <= 0) return false;
+    uint32_t uid = static_cast<uint32_t>(id);
+
+    if(uid >= reg_list_.size())
     {
         return false;
     }
@@ -133,11 +140,11 @@ bool BaseReg::setName(int id, std::string name)
     {
         if(name.size() == 0)
         {
-            reg_list_[id].name = std::string("default");
+            reg_list_[uid].name = std::string("default");
         }
         else
         {
-            reg_list_[id].name = name;
+            reg_list_[uid].name = name;
         }
         return true;
     }
@@ -145,21 +152,25 @@ bool BaseReg::setName(int id, std::string name)
 
 std::string BaseReg::getName(int id)
 {
-    if(id <= 0
-        || id >= reg_list_.size())
+    if (id <= 0) return false;
+    uint32_t uid = static_cast<uint32_t>(id);
+
+    if(uid >= reg_list_.size())
     {
         return NULL;
     }
     else
     {
-        return reg_list_[id].name;
+        return reg_list_[uid].name;
     }
 }
 
 bool BaseReg::setComment(int id, std::string comment)
 {
-    if(id <= 0
-        || id >= reg_list_.size())
+    if (id <= 0) return false;
+    uint32_t uid = static_cast<uint32_t>(id);
+
+    if(uid >= reg_list_.size())
     {
         return false;
     }
@@ -167,11 +178,11 @@ bool BaseReg::setComment(int id, std::string comment)
     {
         if(comment.size() == 0)
         {
-            reg_list_[id].comment = std::string("default");
+            reg_list_[uid].comment = std::string("default");
         }
         else
         {
-            reg_list_[id].comment = comment;
+            reg_list_[uid].comment = comment;
         }
         return true;
     }
@@ -179,21 +190,22 @@ bool BaseReg::setComment(int id, std::string comment)
 
 std::string BaseReg::getComment(int id)
 {
-    if(id <= 0
-        || id >= reg_list_.size())
+    if (id <= 0) return std::string("");
+    uint32_t uid = static_cast<uint32_t>(id);
+
+    if(uid >= reg_list_.size())
     {
-        return NULL;
+        return std::string("");
     }
     else
     {
-        return reg_list_[id].comment;
+        return reg_list_[uid].comment;
     }
 }
 
 bool BaseReg::setRegList(BaseRegData& data)
 {
-    if(data.id <= 0
-        || data.id >= reg_list_.size())
+    if(data.id <= 0 || static_cast<uint32_t>(data.id) >= reg_list_.size())
     {
         return false;
     }
@@ -224,8 +236,7 @@ bool BaseReg::setRegList(BaseRegData& data)
 
 bool BaseReg::getRegList(int id, BaseRegData& data)
 {
-    if(id <= 0
-        || id >= reg_list_.size())
+    if(id <= 0 || static_cast<uint32_t>(id) >= reg_list_.size())
     {
         return false;
     }
@@ -243,7 +254,7 @@ bool BaseReg::getRegList(int id, BaseRegData& data)
 bool BaseReg::isAddInputValid(int id)
 {
     if(id <= 0
-        || id >= reg_list_.size()
+        || static_cast<uint32_t>(id) >= reg_list_.size()
         || reg_list_[id].is_valid)   // can't add some exist reg
     {
         return false;
@@ -257,7 +268,7 @@ bool BaseReg::isAddInputValid(int id)
 bool BaseReg::isDeleteInputValid(int id)
 {
     if(id <= 0
-        || id >= reg_list_.size())
+        || static_cast<uint32_t>(id) >= reg_list_.size())
     {
         return false;
     }
@@ -270,7 +281,7 @@ bool BaseReg::isDeleteInputValid(int id)
 bool BaseReg::isUpdateInputValid(int id)
 {
     if(id <= 0
-        || id >= reg_list_.size()
+        || static_cast<uint32_t>(id) >= reg_list_.size()
         || !reg_list_[id].is_valid)
     {
         return false;

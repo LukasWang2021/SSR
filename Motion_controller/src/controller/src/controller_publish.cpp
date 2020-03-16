@@ -136,7 +136,7 @@ void* ControllerPublish::addTaskToRegUpdateList(RegType reg_type, int reg_index)
         }
     }
 
-    if(reg_update_list_.size() >= param_ptr_->max_reg_publish_number_)
+    if(reg_update_list_.size() >= (size_t)(param_ptr_->max_reg_publish_number_))
     {
         return NULL;
     }
@@ -173,7 +173,7 @@ void* ControllerPublish::addTaskToIoUpdateList(uint32_t port_type, uint32_t port
         }
     }
 
-    if(io_update_list_.size() >= param_ptr_->max_io_publish_number_)
+    if(io_update_list_.size() >= (size_t)(param_ptr_->max_io_publish_number_))
     {
         return NULL;
     }
@@ -279,7 +279,6 @@ void ControllerPublish::cleanRegUpdateList()
 //delete io topic
 void ControllerPublish::deleteTaskFromIoUpdateList(std::vector<fst_comm::TpPublishElement>& publish_element_list)
 {
-    int device_index;
     int port_type;
     int port_offset;
     std::vector<TpPublishElement>::iterator it;

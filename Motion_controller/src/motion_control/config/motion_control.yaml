@@ -3,6 +3,8 @@ realtime_task:
     cycle_time: 2       # ms
 priority_task:
     cycle_time: 2       # ms
+planner_task:
+    cycle_time: 2       # ms
 common_task:
     cycle_time: 2      # ms
 simulator:

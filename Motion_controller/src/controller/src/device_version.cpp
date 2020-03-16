@@ -13,8 +13,8 @@ using namespace fst_ctrl;
 DeviceVersion::DeviceVersion():
     log_ptr_(NULL),
     file_path_(SERVO_PARAM_FILE_DIR),
-    io_manager_ptr_(NULL),
     safety_device_ptr_(NULL),
+    io_manager_ptr_(NULL),
     hand_off_ptr_(NULL),
     rbf_ptr_(NULL)   
 {
@@ -151,7 +151,7 @@ void DeviceVersion::getHandOffVersion(std::string &name, std::string &version)
         return;
     }
     char temp[16];
-    sprintf(temp, "%lx", *hand_off_ptr_);
+    sprintf(temp, "%x", *hand_off_ptr_);
     version = temp;
 }
 //uboot version
@@ -165,7 +165,7 @@ void DeviceVersion::getUbootVersion(std::string &name, std::string &version)
         return;
     }
     char temp[16];
-    sprintf(temp, "%lx", *(hand_off_ptr_ + 1));
+    sprintf(temp, "%x", *(hand_off_ptr_ + 1));
     version = temp;
 }
 
@@ -180,7 +180,7 @@ void DeviceVersion::getRbfVersion(std::string &name, std::string &version)
         return;
     }
     char temp[16];
-    sprintf(temp, "%lx", *rbf_ptr_);
+    sprintf(temp, "%x", *rbf_ptr_);
     version = temp;
 }
 
@@ -210,7 +210,7 @@ void DeviceVersion::getSafetyBoardVersion(std::string &name, std::string &versio
     int local_version = 0;
     safety_device_ptr_->getSafetyBoardVersion(local_version);
     char temp[16];
-    sprintf(temp, "%lx", local_version);
+    sprintf(temp, "%x", local_version);
     version = temp;
 }
 
@@ -228,7 +228,7 @@ std::map<std::string, std::string> DeviceVersion::getIoBoardVersion(void)
     {
         name = board_name + to_string(iter->first);
         char temp[16];
-        sprintf(temp, "%lx", iter->second);
+        sprintf(temp, "%x", iter->second);
         version = temp;
         io_version_map.insert(pair<std::string, std::string>(name, version));
     }

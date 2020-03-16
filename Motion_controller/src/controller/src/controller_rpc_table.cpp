@@ -34,6 +34,7 @@ void ControllerRpc::initRpcTable()
     rpc_service = {"/rpc/controller/backupDone",	0x000143E5,	&ControllerRpc::handleRpc0x000143E5	};	rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/controller/isRestoreAvailable",	0x0000C7A5,	&ControllerRpc::handleRpc0x0000C7A5	};	rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/controller/restoreDone",	0x000079F5,	&ControllerRpc::handleRpc0x000079F5	};	rpc_table_.push_back(rpc_service);
+	rpc_service = {"/rpc/controller/setControllerIp",	0x0000B090,	&ControllerRpc::handleRpc0x0000B090	};	rpc_table_.push_back(rpc_service);
 
 
     rpc_service = {"/rpc/tool_manager/addTool", 0x0000A22C, &ControllerRpc::handleRpc0x0000A22C}; rpc_table_.push_back(rpc_service);
@@ -154,6 +155,10 @@ void ControllerRpc::initRpcTable()
     rpc_service =	{	"/rpc/motion_control/axis_group/movePayload",	0x00006CE4,	&ControllerRpc::handleRpc0x00006CE4	};	rpc_table_.push_back(rpc_service);
     rpc_service =	{	"/rpc/motion_control/axis_group/getPayloadInfoById",	0x00010C34,	&ControllerRpc::handleRpc0x00010C34	};	rpc_table_.push_back(rpc_service);
     rpc_service =	{	"/rpc/motion_control/axis_group/getAllValidPayloadSummaryInfo",	0x00010C8F,	&ControllerRpc::handleRpc0x00010C8F	};	rpc_table_.push_back(rpc_service);
+    rpc_service =	{	"/rpc/motion_control/axis_group/setOfflineTrajectoryFile",	0x00011275,	&ControllerRpc::handleRpc0x00011275	};	rpc_table_.push_back(rpc_service);
+    rpc_service =	{	"/rpc/motion_control/axis_group/PrepareOfflineTrajectory",	0x000051E9,	&ControllerRpc::handleRpc0x000051E9	};	rpc_table_.push_back(rpc_service);
+    rpc_service =	{	"/rpc/motion_control/axis_group/moveOfflineTrajectory",	0x0000C4D9,	&ControllerRpc::handleRpc0x0000C4D9	};	rpc_table_.push_back(rpc_service);
+
 
     rpc_service = {"/rpc/interpreter/start", 0x00006154, &ControllerRpc::handleRpc0x00006154}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/interpreter/launch", 0x000072D8, &ControllerRpc::handleRpc0x000072D8}; rpc_table_.push_back(rpc_service);

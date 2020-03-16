@@ -12,10 +12,11 @@ using namespace std;
 using namespace fst_hal;
 
 ModbusManager::ModbusManager(int address):
-    BaseDevice(address, fst_hal::DEVICE_TYPE_MODBUS), address_(address),
-    log_ptr_(NULL), param_ptr_(NULL),
+    BaseDevice(address, fst_hal::DEVICE_TYPE_MODBUS),
+    param_ptr_(NULL), log_ptr_(NULL), 
     client_manager_ptr_(NULL), server_(NULL),
-    start_mode_(MODBUS_START_MODE_INVALID)
+    start_mode_(MODBUS_START_MODE_INVALID),
+    address_(address)
 {
     log_ptr_ = new fst_log::Logger();
     param_ptr_ = new ModbusManagerParam();
@@ -24,10 +25,11 @@ ModbusManager::ModbusManager(int address):
 }
 
 ModbusManager::ModbusManager():
-    BaseDevice(0, fst_hal::DEVICE_TYPE_MODBUS), address_(0),
-    log_ptr_(NULL), param_ptr_(NULL),
+    BaseDevice(0, fst_hal::DEVICE_TYPE_MODBUS),
+    param_ptr_(NULL), log_ptr_(NULL), 
     client_manager_ptr_(NULL), server_(NULL),
-    start_mode_(MODBUS_START_MODE_INVALID)
+    start_mode_(MODBUS_START_MODE_INVALID),
+    address_(0)
 {
     log_ptr_ = new fst_log::Logger();
     param_ptr_ = new ModbusManagerParam();

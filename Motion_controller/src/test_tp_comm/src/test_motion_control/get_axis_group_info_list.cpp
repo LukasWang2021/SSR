@@ -79,15 +79,15 @@ int main()
     cout << "Reply : msg.error_code = " <<recv_msg.error_code.data << endl;
     cout << "Reply : msg.data.info_list_count = " << recv_msg.data.info_list_count << endl;
 
-    for (int i = 0; i != recv_msg.data.info_list_count; ++i)
+    for (size_t i = 0; i != recv_msg.data.info_list_count; ++i)
     {
         cout << "Reply : msg.data.data.info_list[i].group_id" << recv_msg.data.info_list[i].group_id << endl;
         cout << "Reply : msg.data.data.info_list[i].group_type" << recv_msg.data.info_list[i].group_type << endl;
-        cout << "Reply : msg.data.data.info_list[i].group_name" << recv_msg.data.info_list[i].group_name << endl;
+        cout << "Reply : msg.data.data.info_list[i].group_name" << recv_msg.data.info_list[i].model_name << endl;
         cout << "Reply : msg.data.data.info_list[i].axis_number" << recv_msg.data.info_list[i].axis_number << endl;
         cout << "Reply : msg.data.data.info_list[i].axis_info_list_count" << recv_msg.data.info_list[i].axis_info_list_count << endl;
         
-        for (int j = 0; j != recv_msg.data.info_list[i].axis_info_list_count; ++j)
+        for (size_t j = 0; j != recv_msg.data.info_list[i].axis_info_list_count; ++j)
         {
             cout << "Reply : msg.data.data.info_list[i].axis_info_list[i].axis_id" << recv_msg.data.info_list[0].axis_info_list[j].axis_id<< endl;
             cout << "Reply : msg.data.data.info_list[i].axis_info_list[i].axis_type" << recv_msg.data.info_list[0].axis_info_list[j].axis_type<< endl;

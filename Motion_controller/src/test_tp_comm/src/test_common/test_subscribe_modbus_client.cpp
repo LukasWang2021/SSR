@@ -62,10 +62,10 @@ int main(int argc, char* argv[])
         }
 
         printf("Sub : recv topic hash = %x\n", recv_hash);
-        printf("Sub : recv time_stamp = %d\n", msg.time_stamp);
+        printf("Sub : recv time_stamp = %lld\n", msg.time_stamp);
         printf("Sub : recv element_count = %d\n", msg.element_count);
 
-        for (int i = 0 ; i != msg.element_count; ++i)
+        for (size_t i = 0 ; i != msg.element_count; ++i)
         {
             switch(msg.element[i].hash)
             {
@@ -81,7 +81,7 @@ int main(int argc, char* argv[])
                     {
                         printf("Sub : parse data msg success, hash = 0x%x, ctrl_status_count = %d\n",
                             msg.element[i].hash, client_data.ctrl_status_count);
-                        for (int i = 0; i != client_data.ctrl_status_count; ++i)
+                        for (size_t i = 0; i != client_data.ctrl_status_count; ++i)
                         {
                             printf("Sub : client_data[%d].id = %d, client_data[%d].status = %d\n",i, 
                                 client_data.ctrl_status[i].id, i, client_data.ctrl_status[i].status);

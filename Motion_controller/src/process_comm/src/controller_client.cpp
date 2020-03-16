@@ -13,8 +13,8 @@
 using namespace fst_base;
 
 ControllerClient::ControllerClient(fst_log::Logger* log_ptr, ProcessCommParam* param_ptr):
-    log_ptr_(log_ptr), param_ptr_(param_ptr),
-    recv_buffer_ptr_(NULL), send_buffer_ptr_(NULL), controller_server_ptr_(NULL)
+    log_ptr_(log_ptr), param_ptr_(param_ptr), controller_server_ptr_(NULL),
+    recv_buffer_ptr_(NULL), send_buffer_ptr_(NULL)
 {
     memset(&interpreter_publish_data_, 0, sizeof(InterpreterPublish));
 }
@@ -247,8 +247,12 @@ void ControllerClient::handleEvent()
     if(poll_event_fd_.revents & NN_POLLIN)
     {
         int recv_bytes = nn_recv(event_socket_, recv_buffer_ptr_, param_ptr_->recv_buffer_size_, 0);
-        if(recv_bytes == -1
-            || recv_bytes != sizeof(ErrorCode))
+        if(recv_bytes == -1)
+        {
+        	FST_ERROR("nn_recv failed = %d", recv_bytes);
+            return;
+        }
+        if(recv_bytes != sizeof(ErrorCode))
         {
         	FST_ERROR("nn_recv failed = %d", recv_bytes);
             return;

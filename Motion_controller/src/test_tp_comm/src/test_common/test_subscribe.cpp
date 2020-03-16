@@ -55,10 +55,10 @@ int main()
         }
 
         printf("Sub : recv topic hash = %x\n", recv_hash);
-        printf("Sub : recv time_stamp = %d\n", msg.time_stamp);
+        printf("Sub : recv time_stamp = %lld\n", msg.time_stamp);
         printf("Sub : recv element_count = %d\n", msg.element_count);
 
-        for (int i = 0 ; i != msg.element_count; ++i)
+        for (size_t i = 0 ; i != msg.element_count; ++i)
         {
             switch(msg.element[i].hash)
             {
@@ -105,7 +105,7 @@ int main()
                         printf("Sub : parse data msg success, hash = 0x%x, io_board_count = %d\n",
                             msg.element[i].hash, io.io_board_count);
                         
-                        for (int i = 0; i != io.io_board_count; ++i)
+                        for (size_t i = 0; i != io.io_board_count; ++i)
                         {
                             //printf("io_board[%d].id = 0x%x\n", i, io.io_board[i].id);
                             //printf("io_board[%d].DI = 0x%x\n", i, io.io_board[i].DI);

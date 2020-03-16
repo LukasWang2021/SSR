@@ -143,7 +143,7 @@ void InterpreterServer::sendEvent(int event_type, void* data_ptr)
     event.data = *((unsigned long long int*)data_ptr);
 	
     event_list_mutex_.lock();
-    if(event_list_.size() <  param_ptr_->interpreter_server_event_buffer_size_)
+    if(event_list_.size() <  (size_t)(param_ptr_->interpreter_server_event_buffer_size_))
     {
         event_list_.push_back(event);
     }
@@ -311,7 +311,7 @@ bool InterpreterServer::checkPublishCondition(long long time_elapsed, int interv
     return (time_elapsed >= interval ? true : false);
 }
 
-void interpreterServerThreadFunc(void* arg)
+void* interpreterServerThreadFunc(void* arg)
 {
     std::cout<<"---interpreterServerThreadFunc running"<<std::endl;
     InterpreterServer* interpreter_server_ptr = static_cast<InterpreterServer*>(arg);
@@ -320,6 +320,7 @@ void interpreterServerThreadFunc(void* arg)
         interpreter_server_ptr->runThreadFunc();
     }
     std::cout<<"---interpreterServerThreadFunc exit"<<std::endl;
+    return NULL;
 }
 
 

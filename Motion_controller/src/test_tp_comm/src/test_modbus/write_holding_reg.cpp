@@ -51,13 +51,15 @@ int main(int argc, char** argv)
     msg.data2.number = atoi(argv[3]);
     msg.data2.value_count = msg.data2.number;
 
-    for (int i = 0; i != msg.data2.value_count; ++i)
+    for (size_t i = 0; i != msg.data2.value_count; ++i)
     {
         msg.data2.value[i] = atoi(argv[4]);
         printf("value[%d] = %d\n", i, msg.data2.value[i]);
     }
 
-    printf("client_id = %d; value_1 = %d; number = %d; value_count = %d; value = %d\n",
+    // printf("client_id = %d; value_1 = %d; number = %d; value_count = %d; value = %d\n",
+    //     msg.data1.data, msg.data2.address, msg.data2.number, msg.data2.value_count);
+    printf("client_id = %d; value_1 = %d; number = %d; value_count = %d",
         msg.data1.data, msg.data2.address, msg.data2.number, msg.data2.value_count);
 
     if (!test.generateRequestMessageType(hash_value, (void*)&msg, RequestMessageType_Int32_ModbusRegInfo_fields, buf, buf_size))
@@ -92,10 +94,10 @@ int main(int argc, char** argv)
         return -1;
     }
 
-    printf("Reply : msg.header.time_stamp = %d\n", recv_msg.header.time_stamp);
+    printf("Reply : msg.header.time_stamp = %lld\n", recv_msg.header.time_stamp);
     printf("Reply : msg.header.package_left = %d\n", recv_msg.header.package_left);
     printf("Reply : msg.property.authority = %d\n", recv_msg.property.authority);
-    printf("Reply : msg.data.data = 0x%x\n", recv_msg.data.data);
+    printf("Reply : msg.data.data = 0x%llx\n", recv_msg.data.data);
     cout << "Reply : msg.data.data = " << std::hex << recv_msg.data.data << endl;;
     usleep(200000);
 

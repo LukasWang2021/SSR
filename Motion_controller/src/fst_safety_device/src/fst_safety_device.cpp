@@ -14,14 +14,15 @@ Summary:    dealing with safety board
 #include "fst_safety_device.h"
 #include "error_monitor.h"
 #include <sys/mman.h>
+#include <sys/syscall.h>
 
 using namespace fst_hal;
 using namespace fst_base;
 
 FstSafetyDevice::FstSafetyDevice(int address):
     BaseDevice(address, fst_hal::DEVICE_TYPE_FST_SAFETY),
-    log_ptr_(NULL),
     param_ptr_(NULL),
+    log_ptr_(NULL),
     is_running_(false),
     is_virtual_(false),
     pre_dual_faulty_(0),
@@ -51,7 +52,7 @@ FstSafetyDevice::~FstSafetyDevice()
     is_running_ = false;//stop thread running
     if (is_virtual_ == false)
     {
-        routine_thread_.join();
+        thread_routine_ptr_.join();
         closeSafety();
     } 
 
@@ -89,7 +90,7 @@ bool FstSafetyDevice::init()
             return false; 
         }
         is_running_ = true;
-        if(!routine_thread_.run(&safetyDeviceRoutineThreadFunc, this, 51))
+        if(!thread_routine_ptr_.run(safetyDeviceRoutineThreadFunc, this, 51))
         {
             FST_ERROR("Failed to open safety_device routine thread");
             return false;
@@ -303,12 +304,12 @@ char FstSafetyDevice::getDOType1Stop()
 ErrorCode FstSafetyDevice::setDOType1Stop(char data)
 {
     if (isSafetyVirtual() == true){
-        FST_WARN("setDOType1Stop set 0x%x", data);
+        FST_WARN("setDOType1Stop Virtual set 0x%x", data);
         return SUCCESS;
     }
     SafetyBoardDOFrm1 out = dout_frm1_;
     out.byte1.core0_sw1 = data;
-    FST_WARN("setDOType1Stop set 0x%X", *(int*)&out);
+    FST_WARN("setDOType1Stop Real set 0x%X", *(int*)&out);
     return setSafety(*(int*)&out, SAFETY_OUTPUT_FIRSTFRAME);
 }
 
@@ -576,7 +577,6 @@ bool FstSafetyDevice::isRisingEdge(char value, ErrorCode code, char &pre_value)
     return false;
 }
 
-
 void FstSafetyDevice::routineThreadFunc()
 {
     updateSafetyData();
@@ -593,15 +593,34 @@ ErrorCode FstSafetyDevice::updateSafetyData()
     static ErrorCode pre_err = SUCCESS;
     uint32_t data;
     uint32_t data2;
+    // for test only.
+    //static int count = 0;
     ErrorCode result = autorunSafetyData(); 
     if (result == SUCCESS){
-        result = getSafety(&data, SAFETY_INPUT_FIRSTFRAME);
+        result = getSafety((int*)&data, SAFETY_INPUT_FIRSTFRAME);
         if (result == SUCCESS)
             memcpy((char*)&din_frm1_, (char*)&data, sizeof(uint32_t));
 
-        result = getSafety(&data2, SAFETY_INPUT_SECONDFRAME);
+        result = getSafety((int*)&data2, SAFETY_INPUT_SECONDFRAME);
         if (result == SUCCESS)
             memcpy((char*)&din_frm2_, (char*)&data2, sizeof(uint32_t));
+
+        // for test only.
+        /* count++;
+        if (count >= 5000)
+            count = 0;
+        if (count == 0){
+            printf("\nwrite safety[0] = 0x%x.\n", data);
+        }
+        data = getSafety(SAFETY_INPUT_FIRSTFRAME, &result);
+        if (count == 0){
+            printf("recv safety[0] = 0x%x.\n", data);
+        }
+        data = getSafety(SAFETY_INPUT_SECONDFRAME, &result);
+        if (count == 0){
+            printf("recv safety[1] = 0x%x.\n", data);
+        }
+        */
     }else{
         if (pre_err != result){
             ErrorMonitor::instance()->add(result);
@@ -611,22 +630,28 @@ ErrorCode FstSafetyDevice::updateSafetyData()
     return result;
 }
 
-void safetyDeviceRoutineThreadFunc(void* arg)
+
+void* safetyDeviceRoutineThreadFunc(void* arg)
 {
     if (mlockall(MCL_CURRENT|MCL_FUTURE) == -1) 
     {
         std::cout<<"safety_device routine thread mlockall failed"<<std::endl;
-        return; 
+        return NULL; 
     }
     unsigned char dummy[1024];
     memset(dummy, 0, 1024);
 
     std::cout<<"safety_device routine thread running"<<std::endl;
+    
+    fst_log::Logger* log_ptr_ = new fst_log::Logger();
+    FST_LOG_INIT("ThreadSafetyManager");
+    FST_WARN("ThreadSafetyManager TID is %ld", syscall(SYS_gettid));
+
     fst_hal::FstSafetyDevice* safety_device = static_cast<fst_hal::FstSafetyDevice*>(arg);
     while(safety_device->isRunning())
     {
         safety_device->routineThreadFunc();
     }
     std::cout<<"safety_device routine thread exit"<<std::endl;
+    return NULL;
 }
-

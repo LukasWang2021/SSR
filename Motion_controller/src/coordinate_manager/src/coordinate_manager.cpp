@@ -9,8 +9,8 @@ using namespace fst_ctrl;
 
 
 CoordinateManager::CoordinateManager():
-    log_ptr_(NULL),
-    param_ptr_(NULL)
+    param_ptr_(NULL),
+    log_ptr_(NULL)
 {
     log_ptr_ = new fst_log::Logger();
     param_ptr_ = new CoordinateManagerParam();
@@ -53,7 +53,7 @@ ErrorCode CoordinateManager::init()
 
 ErrorCode CoordinateManager::addCoord(CoordInfo& info)
 {
-    if(info.id >= coord_set_.size()
+    if(info.id >= static_cast<int>(coord_set_.size())
         || info.id == 0
         || coord_set_[info.id].is_valid)
     {
@@ -91,7 +91,7 @@ ErrorCode CoordinateManager::addCoord(CoordInfo& info)
 
 ErrorCode CoordinateManager::deleteCoord(int id)
 {
-    if(id >= coord_set_.size()
+    if(id >= static_cast<int>(coord_set_.size())
         || id == 0)
     {
         FST_ERROR("Failed to delete coord %d, invalid coord id", id);
@@ -105,7 +105,7 @@ ErrorCode CoordinateManager::deleteCoord(int id)
     memset(&coord_set_[id].data, 0, sizeof(basic_alg::PoseEuler));
     if(!writeCoordInfoToYaml(coord_set_[id]))
     {
-        FST_ERROR("Failed to delete coord %d, write yaml failed", info.id);
+        FST_ERROR("Failed to delete coord %d, write yaml failed", id);
         return COORDINATE_MANAGER_COORDINFO_FILE_WRITE_FAILED;
     }
     return SUCCESS;
@@ -113,7 +113,7 @@ ErrorCode CoordinateManager::deleteCoord(int id)
 
 ErrorCode CoordinateManager::updateCoord(CoordInfo& info)
 {
-    if(info.id >= coord_set_.size()
+    if(info.id >= static_cast<int>(coord_set_.size())
         || info.id == 0
         || !coord_set_[info.id].is_valid)
     {
@@ -185,7 +185,7 @@ ErrorCode CoordinateManager::moveCoord(int expect_id, int original_id)
 
 ErrorCode CoordinateManager::getCoordInfoById(int id, CoordInfo& info)
 {
-    if(id >= coord_set_.size()
+    if(id >= static_cast<int>(coord_set_.size())
         || id <= 0)
     {
         FST_ERROR("Failed to get coord %d information, invalid coord id", id);
@@ -243,7 +243,7 @@ bool CoordinateManager::readAllCoordInfoFromYaml(int number_of_coords)
     
     if (coord_info_yaml_help_.loadParamFile(coord_info_file_path_.c_str()))
     {
-        for(unsigned int i = 1; i <= number_of_coords; ++i)
+        for(int i = 1; i <= number_of_coords; ++i)
         {
             std::string coord_info_path;
             coord_info_path = getCoordInfoPath(i);

@@ -231,7 +231,7 @@ bool ServiceManager::manageLocalResponse(void)
     {
         if((temp_response).res_buff[0] !=0)
         {
-            FST_INFO("New Diagnostice infomation!");
+            //FST_INFO("New Diagnostice infomation!");
             dtc_flag_ = true;
         }
         if ((temp_response).res_buff[1] == 1)
@@ -243,15 +243,15 @@ bool ServiceManager::manageLocalResponse(void)
     {
         ErrorCode error_code = 0;
         unsigned int size = *(int*)(&(temp_response).res_buff[4]);
-        if (size > 0)
-        {
-            FST_ERROR("%d Diagnostice infomation(s)!",size);
-        }
+        //if (size > 0)
+        //{
+        //    FST_ERROR("%d Diagnostice infomation(s)!",size);
+        //}
         for (unsigned int i = 0; i < size; ++i)
         {                     
             memcpy(&error_code, &temp_response.res_buff[8 + i*8], 8);
             storeError(error_code);
-            FST_ERROR("error code = %016llX", error_code);
+            FST_ERROR("Core1 report error code: 0x%016llX", error_code);
         }
     }
 

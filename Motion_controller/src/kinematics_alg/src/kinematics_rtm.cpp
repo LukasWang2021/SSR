@@ -682,7 +682,7 @@ bool KinematicsRTM::doIK(const TransMatrix& trans_matrix, const Joint& ref_joint
     scaleResultJoint(joint.j3_);
 
     // compute q4
-    double omega, sign_ang5;
+    double sign_ang5;
     TransMatrix trans_matrix_1to3;
     doFK(joint, trans_matrix_1to3, 1, 3);    // trans_matrix_tmp is from joint 1 to joint 3
     Point x3, y3, z3, x4, y4, cross_product_z3_a6;
@@ -775,13 +775,12 @@ Posture KinematicsRTM::getPostureByJoint(const Joint& joint, double valve)
 
     if(g_theta >= 0)
     {
-        g_theta = 1;
+        posture.arm = 1;
     }
     else
     {
-        g_theta = -1;
+        posture.arm = -1;
     }
-    posture.arm = g_theta;
     
     // elbow
     TransMatrix trans_matrix_3to4;
@@ -817,7 +816,6 @@ Posture KinematicsRTM::getPostureByJoint(const Joint& joint, double valve)
 
     double w_vector_dot_z4 = cross_product_w_vector.dotProduct(z4);
 
-    double s6_dot_z4 = vector_s6.dotProduct(z4);
     if(w_vector_dot_z4 > 0)
     {
         posture.wrist = -1;

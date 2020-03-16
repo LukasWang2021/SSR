@@ -5,8 +5,8 @@
 using namespace fst_anybus;
 
 AnybusManagerParam::AnybusManagerParam():
-    file_path_(COMPONENT_PARAM_FILE_DIR),
-    log_level_(1)
+    log_level_(1),
+    file_path_(COMPONENT_PARAM_FILE_DIR)
 {
     file_path_ += "anybus_manager.yaml";
     abcc_page_addr_ = 0xc0400000;

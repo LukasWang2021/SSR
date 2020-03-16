@@ -7,7 +7,7 @@ find_package(catkin REQUIRED COMPONENTS
 )
 
 set(VERSION_MAJOR 1)
-set(VERSION_MINOR 6)
+set(VERSION_MINOR 7)
 set(VERSION_PATCH 0)
 string(TIMESTAMP BUILD_TIME \"%Y-%m-%d|%H:%M:%S\")
 

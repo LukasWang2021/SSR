@@ -124,4 +124,4 @@ private:
 
 #endif
 
-void modbusServerRoutineThreadFunc(void* arg);
+void* modbusServerRoutineThreadFunc(void* arg);

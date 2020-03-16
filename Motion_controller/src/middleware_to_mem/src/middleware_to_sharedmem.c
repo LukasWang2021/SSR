@@ -112,7 +112,15 @@ int readWriteSharedMemByIndex(int handle, void *structure, int index, int access
             return 0;
         } //check if writing process is working on.
         memcpy((ptr+table[index].offset) , structure, table[index].size);
+#ifndef CPU1_SHAREDMEM
+        asm("dsb");
+		*(ptr_latest) = MEM_WRITE_ALREADY;
+		asm("dsb");
+#else
+        __asm__("dsb");
         *(ptr_latest) = MEM_WRITE_ALREADY;
+        __asm__("dsb");
+#endif
         *(ptr_write) = MEM_FALSE;       
     } 
     else if (access == MEM_READ && *(ptr_read) == MEM_FALSE && *(ptr_write)  ==  MEM_FALSE)
@@ -125,7 +133,9 @@ int readWriteSharedMemByIndex(int handle, void *structure, int index, int access
             return 0;
         } //check if writing process is working on.
         memcpy(structure, (ptr+table[index].offset), table[index].size);
+        asm("dsb");
         *(ptr_latest) = MEM_READ_ALREADY;
+        asm("dsb");
         *(ptr_read) = MEM_FALSE;
     }
     else

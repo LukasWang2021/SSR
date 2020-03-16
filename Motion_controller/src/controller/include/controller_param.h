@@ -38,6 +38,7 @@ public:
     double max_limited_manual_vel_joint_; //0~1
     int loop_count_;
     bool enable_set_vel_in_auto_;
+    std::vector<double> hp_joints_;
 private:
     fst_parameter::ParamGroup yaml_help_;
     std::string file_path_;

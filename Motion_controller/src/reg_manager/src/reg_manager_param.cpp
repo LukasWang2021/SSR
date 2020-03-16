@@ -7,8 +7,8 @@
 using namespace fst_ctrl;
 
 RegManagerParam::RegManagerParam():
-    file_path_(COMPONENT_PARAM_FILE_DIR),
-    log_level_(fst_log::MSG_LEVEL_ERROR)
+    log_level_(fst_log::MSG_LEVEL_ERROR),
+    file_path_(COMPONENT_PARAM_FILE_DIR)
 {
     file_path_ += "reg_manager.yaml";
 }

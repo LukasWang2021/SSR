@@ -267,7 +267,7 @@ void ControllerRpc::handleRpc0x000002C4(void* request_data_ptr, void* response_d
 // "/rpc/io_mapping/syncFileIoStatus"
 void ControllerRpc::handleRpc0x0000BA73(void* request_data_ptr, void* response_data_ptr)
 {
-    RequestMessageType_String* rq_data_ptr = static_cast<RequestMessageType_String*>(request_data_ptr);
+    //RequestMessageType_String* rq_data_ptr = static_cast<RequestMessageType_String*>(request_data_ptr);
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
     rs_data_ptr->data.data =io_mapping_ptr_->updateSimFile();
@@ -279,7 +279,7 @@ void ControllerRpc::handleRpc0x0000BA73(void* request_data_ptr, void* response_d
 // "/rpc/io_mapping/syncFileIoMapping"
 void ControllerRpc::handleRpc0x0000C2A7(void* request_data_ptr, void* response_data_ptr)
 {
-    RequestMessageType_StringList* rq_data_ptr = static_cast<RequestMessageType_StringList*>(request_data_ptr);
+    //RequestMessageType_StringList* rq_data_ptr = static_cast<RequestMessageType_StringList*>(request_data_ptr);
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
     rs_data_ptr->data.data =io_mapping_ptr_->updateMappingFile();

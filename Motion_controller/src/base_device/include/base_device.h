@@ -21,7 +21,7 @@ class BaseDevice
 {
 public:
     BaseDevice(int address, DeviceType type);
-    ~BaseDevice();
+    virtual ~BaseDevice();
 
     virtual bool init() = 0;
 

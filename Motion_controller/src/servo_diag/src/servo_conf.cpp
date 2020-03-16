@@ -126,8 +126,6 @@ int fst_controller::Servconf::downloadConf(fst_controller::ServoService &serv,
     char *data;
     int l_len;
 
-    std::cout << "startaddr=" << startaddr << ", length=" << length << std::endl;
-
     if (startaddr < 0 || length < 0)
     {
         std::cout << "fail and exit" << std::endl;
@@ -139,8 +137,6 @@ int fst_controller::Servconf::downloadConf(fst_controller::ServoService &serv,
     int addr;
     ErrorCode err;
     l_len = getConf(startaddr, data, length);
-
-    std::cout << "l_len" << l_len << std::endl;
 
     if (l_len > 0)
     {

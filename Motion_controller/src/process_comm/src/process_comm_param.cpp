@@ -6,7 +6,6 @@
 using namespace fst_base;
 
 ProcessCommParam::ProcessCommParam():
-    file_path_(COMPONENT_PARAM_FILE_DIR),
     log_level_(fst_log::MSG_LEVEL_ERROR),
     controller_server_thread_priority_(0),
     controller_server_cycle_time_(0),
@@ -20,10 +19,10 @@ ProcessCommParam::ProcessCommParam():
     heartbeat_ip_(""),
     interpreter_server_event_buffer_size_(0),
     recv_buffer_size_(0),
-    send_buffer_size_(0)
-    
+    send_buffer_size_(0),
+    file_path_(COMPONENT_PARAM_FILE_DIR)  
 {
-    file_path_ += "process_comm.yaml";
+    file_path_ += std::string("process_comm.yaml");
 }
 
 ProcessCommParam::~ProcessCommParam()

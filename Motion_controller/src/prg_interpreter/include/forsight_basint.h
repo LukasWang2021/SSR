@@ -29,8 +29,10 @@
 #else
 #include <pthread.h>
 // #include "motion_plan_arm_group.h"
+#include "controller_sm.h"
+#include "reg_manager.h"
+#include "io_mapping.h"
 #endif
-
 
 using namespace std;
 
@@ -68,6 +70,7 @@ using namespace std;
 
 #define FORSIGHT_TIMER          "timer"
 
+#define    DOUBLE_OPS_LENGTH      1
 enum double_ops {
 	LT=1,    // value < partial_value
 	LE,      // value <= partial_value
@@ -108,7 +111,6 @@ struct sub_label {
 
 struct var_type {
     char var_name[LAB_LEN]; // name
-    // var_inner_type v_type; // data type
 	eval_value value ;
 };
 
@@ -157,7 +159,9 @@ struct thread_control_block {
 	vector<prog_line_info> prog_jmp_line;   // jmp_line info
 	ProgMode  prog_mode ; 					// = 0;   /* 0 - run to end, 1 - step  */
 	ExecuteDirection  execute_direction ;  	/* 0 - FORWARD, 1 - BACKWARD  */
-	bool is_abort , is_paused, is_in_macro; 
+	bool is_abort, is_in_macro, is_paused; //add is_paused to fix can not JUMP in wait
+	bool is_marco_launch, is_code_launch;    //add to mark program is lunched by lunch code or macro
+	bool home_pose_enabled;
 	int  is_main_thread ; 					// = 0;   /* 0 - Monitor, 1 - Main  */
 	
 	char token[80];					// Current token
@@ -175,12 +179,13 @@ struct thread_control_block {
 	int gosub_tos;  						/* index to top of GOSUB stack */
 
 	Instruction * instrSet ;               // used by MOV*
+	uint32_t instr_cnt;
 	// LineNum and Update flag
 	int               iLineNum ;           // Current LineNum
 //	LineNumState      stateLineNum ;
 //    MotionTarget      currentMotionTarget ;
     map<int, MoveCommandDestination>  start_mov_position ;  // iLineNum :: movCmdDst
-    
+
 	vector<string> vector_XPath ;
 	// Home Pose
 	char home_pose_exp[LAB_LEN];
@@ -189,6 +194,12 @@ struct thread_control_block {
 } ;
 #ifndef WIN32
 extern fst_log::Logger* log_ptr_;
+extern ControllerSm* state_machine_ptr_;
+extern fst_mc::MotionControl* motion_control_ptr_;
+extern RegManager* reg_manager_ptr_;
+extern IoMapping* io_mapping_ptr_;
+extern IoManager* io_manager_ptr_;
+extern fst_hal::ModbusManager* modbus_manager_ptr_; 
 #endif
 void setLinenum(struct thread_control_block* objThreadCntrolBlock, int iLinenum);
 // LineNumState getLinenum(struct thread_control_block* objThreadCntrolBlock, int & num);
@@ -216,7 +227,7 @@ eval_value find_var(struct thread_control_block * objThreadCntrolBlock, char *s,
 int erase_var(struct thread_control_block * objThreadCntrolBlock, char *vname);
 
 void find_eol(struct thread_control_block * objThreadCntrolBlock);
-int  jump_prog_from_line(struct thread_control_block * objThreadCntrolBlock, int iNum);
+bool  jump_prog_from_line(struct thread_control_block * objThreadCntrolBlock, int iNum);
 int  calc_line_from_prog(struct thread_control_block * objThreadCntrolBlock);
 void serror(struct thread_control_block * objThreadCntrolBlock, int error);
 

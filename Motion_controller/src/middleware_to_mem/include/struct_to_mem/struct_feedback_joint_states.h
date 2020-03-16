@@ -18,6 +18,7 @@ typedef struct
     double position[JOINT_NUM]; 
     double velocity[JOINT_NUM];
     double effort[JOINT_NUM];
+    unsigned int encoder_state[JOINT_NUM];
     unsigned int state;
 }FeedbackJointState;
 

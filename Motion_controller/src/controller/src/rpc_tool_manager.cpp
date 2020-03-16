@@ -40,7 +40,8 @@ void ControllerRpc::handleRpc0x0000A22C(void* request_data_ptr, void* response_d
         rs_data_ptr->data.data = TOOL_MANAGER_INVALID_ARG;
     }
 
-    recordLog(TOOL_MANAGER_LOG, rs_data_ptr->data.data, std::string("/rpc/tool_manager/addTool"));
+    if (rs_data_ptr->data.data != SUCCESS)
+        recordLog(TOOL_MANAGER_LOG, rs_data_ptr->data.data, std::string("/rpc/tool_manager/addTool"));
 }
 
 // "/rpc/tool_manager/deleteTool"
@@ -50,7 +51,9 @@ void ControllerRpc::handleRpc0x00010E4C(void* request_data_ptr, void* response_d
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
     rs_data_ptr->data.data = tool_manager_ptr_->deleteTool(rq_data_ptr->data.data);
-    recordLog(TOOL_MANAGER_LOG, rs_data_ptr->data.data, std::string("/rpc/tool_manager/deleteTool"));
+
+    if (rs_data_ptr->data.data != SUCCESS)
+        recordLog(TOOL_MANAGER_LOG, rs_data_ptr->data.data, std::string("/rpc/tool_manager/deleteTool"));
 }
 
 // "/rpc/tool_manager/updateTool"
@@ -95,7 +98,8 @@ void ControllerRpc::handleRpc0x0000C78C(void* request_data_ptr, void* response_d
         rs_data_ptr->data.data = TOOL_MANAGER_INVALID_ARG;
     }
 
-    recordLog(TOOL_MANAGER_LOG, rs_data_ptr->data.data, std::string("/rpc/tool_manager/updateTool"));
+    if (rs_data_ptr->data.data != SUCCESS)
+        recordLog(TOOL_MANAGER_LOG, rs_data_ptr->data.data, std::string("/rpc/tool_manager/updateTool"));
 }
 
 // "/rpc/tool_manager/moveTool"
@@ -112,7 +116,9 @@ void ControllerRpc::handleRpc0x000085FC(void* request_data_ptr, void* response_d
     {
         rs_data_ptr->data.data = TOOL_MANAGER_INVALID_ARG;
     }
-    recordLog(TOOL_MANAGER_LOG, rs_data_ptr->data.data, std::string("/rpc/tool_manager/moveTool"));
+
+    if (rs_data_ptr->data.data != SUCCESS)
+        recordLog(TOOL_MANAGER_LOG, rs_data_ptr->data.data, std::string("/rpc/tool_manager/moveTool"));
 }
 
 // "/rpc/tool_manager/getToolInfoById"
@@ -139,7 +145,9 @@ void ControllerRpc::handleRpc0x00009E34(void* request_data_ptr, void* response_d
         rs_data_ptr->data.data.data[4] = info.data.euler_.b_;
         rs_data_ptr->data.data.data[5] = info.data.euler_.c_;
     }
-    recordLog(TOOL_MANAGER_LOG, rs_data_ptr->error_code.data, std::string("/rpc/tool_manager/getToolInfoById"));
+
+    if (rs_data_ptr->error_code.data != SUCCESS)
+        recordLog(TOOL_MANAGER_LOG, rs_data_ptr->error_code.data, std::string("/rpc/tool_manager/getToolInfoById"));
 }
 
 // "/rpc/tool_manager/getAllValidToolSummaryInfo"
@@ -160,6 +168,8 @@ void ControllerRpc::handleRpc0x0001104F(void* request_data_ptr, void* response_d
     }
     rs_data_ptr->data.tool_summary_info_count = info_list.size();
     rs_data_ptr->error_code.data = SUCCESS;
-    recordLog(TOOL_MANAGER_LOG, rs_data_ptr->error_code.data, std::string("/rpc/tool_manager/getAllValidToolSummaryInfo"));
+
+    if (rs_data_ptr->error_code.data != SUCCESS)
+        recordLog(TOOL_MANAGER_LOG, rs_data_ptr->error_code.data, std::string("/rpc/tool_manager/getAllValidToolSummaryInfo"));
 }
 

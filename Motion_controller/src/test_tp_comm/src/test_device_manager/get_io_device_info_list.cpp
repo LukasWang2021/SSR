@@ -79,7 +79,7 @@ int main()
     cout << "Reply : msg.error_code = " << std::hex << recv_msg.error_code.data << endl;
     cout << "Reply : msg.data.io_device_info_count = " <<std::dec << recv_msg.data.io_device_info_count << endl;
 
-    for (int i = 0; i != recv_msg.data.io_device_info_count; ++i)
+    for (size_t i = 0; i != recv_msg.data.io_device_info_count; ++i)
     {
         cout << "Reply : msg.data.io_device_info["<< i <<"].device_type = " << recv_msg.data.io_device_info[i].device_type << endl;
         cout << "Reply : msg.data.io_device_info["<< i <<"].comm_type = " << recv_msg.data.io_device_info[i].comm_type << endl;

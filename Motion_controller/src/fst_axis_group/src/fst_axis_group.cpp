@@ -6,8 +6,8 @@ using namespace fst_hal;
 
 FstAxisGroup::FstAxisGroup():
     BaseAxisGroup(),
-    log_ptr_(NULL),
-    param_ptr_(NULL)
+    param_ptr_(NULL),
+    log_ptr_(NULL)
 {
     log_ptr_ = new fst_log::Logger();
     param_ptr_ = new FstAxisGroupParam();

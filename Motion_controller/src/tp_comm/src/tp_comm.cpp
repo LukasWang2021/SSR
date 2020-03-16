@@ -1,6 +1,7 @@
 #include <unistd.h>
 #include <string>
 #include <iostream>
+#include <sys/syscall.h>
 #include <nanomsg/nn.h>
 #include <nanomsg/ws.h>
 #include <nanomsg/pubsub.h>
@@ -12,25 +13,26 @@
 #include "serverAlarmApi.h"
 #include "tp_comm.h"
 
+
 using namespace fst_base;
 using namespace std;
 using namespace fst_comm;
 
 
 TpComm::TpComm():
-    log_ptr_(NULL), param_ptr_(NULL),
-    is_running_(false), cycle_time_(10), 
+    param_ptr_(NULL), log_ptr_(NULL),
+    is_running_(false), cycle_time_(10),
+    recv_buffer_size_(65536), send_buffer_size_(65536), 
     req_resp_socket_(-1), publish_socket_(-1),
-    req_resp_endpoint_id_(-1), publish_endpoint_id_(-1),
-    recv_buffer_size_(65536), send_buffer_size_(65536)
+    req_resp_endpoint_id_(-1), publish_endpoint_id_(-1)
 {
     string ip = local_ip_.get();
     req_resp_ip_ = "ws://" + ip + ":5600";
     publish_ip_ = "ws://" + ip + ":5601";
     is_received_ = false;
-
-    log_ptr_ = new fst_log::Logger();
+  
     param_ptr_ = new TpCommManagerParam();
+    log_ptr_ = new fst_log::Logger();
     FST_LOG_INIT("TpComm");
     FST_LOG_SET_LEVEL((fst_log::MessageLevel)param_ptr_->log_level_);
 }
@@ -39,6 +41,16 @@ TpComm::~TpComm()
 {
     this->close();
 
+    if (recv_buffer_ptr_ != NULL)
+    {
+        delete[] recv_buffer_ptr_;
+        recv_buffer_ptr_ = NULL;
+    }
+    if (send_buffer_ptr_ != NULL)
+    {
+        delete[] send_buffer_ptr_;
+        send_buffer_ptr_ = NULL;
+    }
     if(log_ptr_ != NULL)
     {
         delete log_ptr_;
@@ -120,7 +132,7 @@ unsigned long long int TpComm::open()
 {
     is_running_ = true;
 
-    if(!thread_ptr_.run(&tpCommRoutineThreadFunc, this, 50))
+    if(!thread_ptr_.run(tpCommRoutineThreadFunc, this, 50))
     {
         FST_ERROR("Failed to open tpcomm");
         return TP_COMM_CREATE_ROUTINE_THREAD_FAILED;
@@ -345,7 +357,7 @@ void TpComm::handleRequest()
         return;
     }
 
-    if(request_list_.size() > param_ptr_->rpc_list_max_size_)
+    if(request_list_.size() > (unsigned int)param_ptr_->rpc_list_max_size_)
     {
         ErrorMonitor::instance()->add(TP_COMM_RPC_OVERLOAD);
         FST_ERROR("Too much rpc to handle.");
@@ -405,6 +417,7 @@ void TpComm::handleResponseList()
         }
 
         int send_bytes = nn_send(req_resp_socket_, send_buffer_ptr_, send_buffer_size, 0); // block send
+        FST_INFO("---handleResponse: %x %x %x %x", send_buffer_ptr_[0], send_buffer_ptr_[1], send_buffer_ptr_[2], send_buffer_ptr_[3]);
         if(send_bytes == -1)
         {
             ErrorMonitor::instance()->add(TP_COMM_SEND_FAILED);
@@ -430,7 +443,7 @@ void TpComm::handlePublishList()
         if(checkPublishCondition(time_elapsed, it->is_element_changed, it->interval_min, it->interval_max))
         {
             // encode TpPublishElement
-            for(int i = 0; i < it->package.element_count; ++i)
+            for(size_t i = 0; i < it->package.element_count; ++i)
             {
                 func_ptr = getPublishElementHandlerByHash(it->package.element[i].hash);
                 if(func_ptr != NULL)
@@ -661,13 +674,19 @@ std::vector<TpPublishElement> TpComm::eraseTaskFromPublishList(unsigned int &top
 }
 
 
-void tpCommRoutineThreadFunc(void* arg)
+void* tpCommRoutineThreadFunc(void* arg)
 {
+    fst_log::Logger* log_ptr_ = new fst_log::Logger();
+    FST_LOG_INIT("ThreadTpComm");
+    FST_WARN("ThreadTpComm TID is %ld", syscall(SYS_gettid));
+
     TpComm* tp_comm = static_cast<TpComm*>(arg);
     while(tp_comm->isRunning())
     {
         tp_comm->tpCommThreadFunc();
     }
+    delete log_ptr_;
+    return NULL;
 }
 
 void TpComm::lockIoPublishMutex()
@@ -718,7 +737,7 @@ void  TpComm::handleRegPublishList()
         if(checkPublishCondition(time_elapsed, it->is_element_changed, it->interval_min, it->interval_max))
         {
             // encode TpPublishElement
-            for(int i = 0; i < it->package.element_count; ++i)
+            for(size_t i = 0; i < it->package.element_count; ++i)
             {
                 int reg_type = (MessageType_RegType)(it->element_list_[i].hash >> 16);
                 switch(reg_type)
@@ -789,7 +808,7 @@ void  TpComm::handleIoPublishList()
         if(checkPublishCondition(time_elapsed, it->is_element_changed, it->interval_min, it->interval_max))
         {
             // encode TpPublishElement
-            for(int i = 0; i < it->package.element_count; ++i)
+            for(size_t i = 0; i < it->package.element_count; ++i)
             {
                 int io_type = (it->element_list_[i].hash >> 16) & 0x000000FF;
 

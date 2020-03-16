@@ -58,11 +58,11 @@ int HomePoseMgr::parseJointValueAndFloat(
 		switch ((child->type)&255)
 		{
 		case cJSON_Number:	
-			if(strcmp(child->string, "value") == 0)
+			if(strcasecmp(child->string, "value") == 0)
 			{
 				value = child->valuedouble;
 			}
-			else if(strcmp(child->string, "float") == 0)
+			else if(strcasecmp(child->string, "float") == 0)
 			{
 				floatValue = child->valuedouble;
 			}
@@ -101,7 +101,7 @@ int HomePoseMgr::parseAdditional(cJSON *jsonJoint, HomePose& homePos)
 			//		child->string, child->valuestring); 
 			break;
 		case cJSON_Object:	
-			if(strcmp(child->string, "e1") == 0)
+			if(strcasecmp(child->string, "e1") == 0)
 			{
 #ifndef WIN32
 				parseJointValueAndFloat(child, 
@@ -111,7 +111,7 @@ int HomePoseMgr::parseAdditional(cJSON *jsonJoint, HomePose& homePos)
 					homePos.joint.j7, homePos.jointFloat.j7);
 #endif
 			}
-			else if(strcmp(child->string, "e2") == 0)
+			else if(strcasecmp(child->string, "e2") == 0)
 			{
 #ifndef WIN32
 				parseJointValueAndFloat(child, 
@@ -121,7 +121,7 @@ int HomePoseMgr::parseAdditional(cJSON *jsonJoint, HomePose& homePos)
 					homePos.joint.j8, homePos.jointFloat.j8);
 #endif
 			}
-			else if(strcmp(child->string, "e3") == 0)
+			else if(strcasecmp(child->string, "e3") == 0)
 			{
 #ifndef WIN32
 				parseJointValueAndFloat(child, 
@@ -160,7 +160,7 @@ int HomePoseMgr::parseJoint(cJSON *jsonJoint, HomePose& homePos)
 			//		child->string, child->valuestring); 
 			break;
 		case cJSON_Object:
-			if(strcmp(child->string, "j1") == 0)
+			if(strcasecmp(child->string, "j1") == 0)
 			{
 #ifndef WIN32
 				parseJointValueAndFloat(child, 
@@ -170,7 +170,7 @@ int HomePoseMgr::parseJoint(cJSON *jsonJoint, HomePose& homePos)
 					homePos.joint.j1, homePos.jointFloat.j1);
 #endif
 			}
-			else if(strcmp(child->string, "j2") == 0)
+			else if(strcasecmp(child->string, "j2") == 0)
 			{
 #ifndef WIN32
 				parseJointValueAndFloat(child, 
@@ -180,7 +180,7 @@ int HomePoseMgr::parseJoint(cJSON *jsonJoint, HomePose& homePos)
 					homePos.joint.j2, homePos.jointFloat.j2);
 #endif
 			}
-			else if(strcmp(child->string, "j3") == 0)
+			else if(strcasecmp(child->string, "j3") == 0)
 			{
 #ifndef WIN32
 				parseJointValueAndFloat(child, 
@@ -190,7 +190,7 @@ int HomePoseMgr::parseJoint(cJSON *jsonJoint, HomePose& homePos)
 					homePos.joint.j3, homePos.jointFloat.j3);
 #endif
 			}
-			else if(strcmp(child->string, "j4") == 0)
+			else if(strcasecmp(child->string, "j4") == 0)
 			{
 #ifndef WIN32
 				parseJointValueAndFloat(child, 
@@ -200,7 +200,7 @@ int HomePoseMgr::parseJoint(cJSON *jsonJoint, HomePose& homePos)
 					homePos.joint.j4, homePos.jointFloat.j4);
 #endif
 			}
-			else if(strcmp(child->string, "j5") == 0)
+			else if(strcasecmp(child->string, "j5") == 0)
 			{
 #ifndef WIN32
 				parseJointValueAndFloat(child, 
@@ -210,7 +210,7 @@ int HomePoseMgr::parseJoint(cJSON *jsonJoint, HomePose& homePos)
 					homePos.joint.j5, homePos.jointFloat.j5);
 #endif
 			}
-			else if(strcmp(child->string, "j6") == 0)
+			else if(strcasecmp(child->string, "j6") == 0)
 			{
 #ifndef WIN32
 				parseJointValueAndFloat(child, 
@@ -245,12 +245,12 @@ int HomePoseMgr::parseHomePose(char * data, HomePose& homePos)
 		case cJSON_Number:
 			break;
 		case cJSON_String:
-			if(strcmp(child->string, "name") == 0)
+			if(strcasecmp(child->string, "name") == 0)
 			{
 				strcpy(homePos.name, 
 					child->valuestring);
 			}
-			else if(strcmp(child->string, "groupNumber") == 0)
+			else if(strcasecmp(child->string, "groupNumber") == 0)
 			{
 				homePos.groupNumber = 
 					(int)atoi(child->valuestring) ;
@@ -259,11 +259,11 @@ int HomePoseMgr::parseHomePose(char * data, HomePose& homePos)
 		case cJSON_Array:
 			break;
 		case cJSON_Object:	
-			if(strcmp(child->string, "joint") == 0)
+			if(strcasecmp(child->string, "joint") == 0)
 			{
 				parseJoint(child, homePos);
 			}
-			else if(strcmp(child->string, "additional") == 0)
+			else if(strcasecmp(child->string, "additional") == 0)
 			{
 				parseAdditional(child, homePos);
 			}
@@ -338,7 +338,7 @@ int HomePoseMgr::readHomePoseFileList(char *basePath)
 			strExtPtr = strrchr(ptr->d_name, '.');
 			if(strExtPtr)
 			{
-				if(strcmp(strExtPtr, ".json") == 0)
+				if(strcasecmp(strExtPtr, ".json") == 0)
 				{
 		            memset(base,'\0',sizeof(base));
 		            strcpy(base,basePath);

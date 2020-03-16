@@ -7,8 +7,8 @@ using namespace fst_hal;
 using namespace std;
 
 ModbusServerParam::ModbusServerParam(string file_path):
-    file_path_(file_path),
-    log_level_(fst_log::MSG_LEVEL_ERROR)
+    log_level_(fst_log::MSG_LEVEL_ERROR),
+    file_path_(file_path)
 {
     cycle_time_ = 0;
     thread_priority_ = 0;

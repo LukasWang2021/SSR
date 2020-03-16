@@ -43,12 +43,12 @@ int main()
     msg.limit.positive_limit.data_count = 9;
     msg.limit.negative_limit.data_count = 9;
 
-    for (int i = 0; i != msg.limit.positive_limit.data_count; ++i)
+    for (size_t i = 0; i != msg.limit.positive_limit.data_count; ++i)
     {
         msg.limit.positive_limit.data[i] = 0.1 + i;
     }
 
-    for (int i = 0; i != msg.limit.negative_limit.data_count; ++i)
+    for (size_t i = 0; i != msg.limit.negative_limit.data_count; ++i)
     {
         msg.limit.negative_limit.data[i] = 0.2 + i;
     }

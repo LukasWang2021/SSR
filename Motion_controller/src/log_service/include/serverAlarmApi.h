@@ -2,7 +2,6 @@
 #define ServerAlarmApi_H_2018_10_19_
 
 #include <string>
-#include <cjson/cJSON.h>
 #include <curl/curl.h>
 #include <queue>
 using  std::string;

@@ -20,6 +20,7 @@ public:
     bool    enable_ros_publish_;
     int     cycle_per_publish_;
     int     common_cycle_time_;
+    int     planner_cycle_time_;
     int     priority_cycle_time_;
     int     realtime_cycle_time_;
     int     log_level_;

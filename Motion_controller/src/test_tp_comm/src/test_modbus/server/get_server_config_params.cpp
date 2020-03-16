@@ -77,7 +77,7 @@ int main()
     cout << "Reply : msg.header.error_code = " << recv_msg.header.error_code << endl;
     cout << "Reply : msg.property.authority = " << recv_msg.property.authority << endl;
     cout << "Reply : msg.error_code.data = " << std::hex << recv_msg.error_code.data << endl;
-    printf("Reply : msg.error_code.data = %x\n", recv_msg.error_code.data);
+    printf("Reply : msg.error_code.data = %llx\n", recv_msg.error_code.data);
 
     cout << "Reply : msg.data.is_enable = " << recv_msg.data.is_enable<< endl;
 

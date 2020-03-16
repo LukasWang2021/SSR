@@ -30,8 +30,8 @@ bool DynamicAlgPayload::init()
 
 ErrorCode DynamicAlgPayload::addPayload(const PayloadInfo& info)
 {
-    if(info.id >= payload_set_.size()
-        || info.id == 0
+    if(info.id >= static_cast<int>(payload_set_.size())
+        || info.id <= 0
         || payload_set_[info.id].is_valid)
     {
         return DYNAMIC_PAYLOAD_INVALID_ARG;
@@ -39,7 +39,7 @@ ErrorCode DynamicAlgPayload::addPayload(const PayloadInfo& info)
         
     payload_set_[info.id].id = info.id;
     payload_set_[info.id].is_valid = true;
-    if(strlen(info.comment) == 0)
+    if(strlen(info.comment)== 0)
     {
         memcpy(payload_set_[info.id].comment, "default", strlen("default") + 1);
     }
@@ -64,8 +64,8 @@ ErrorCode DynamicAlgPayload::addPayload(const PayloadInfo& info)
 
 ErrorCode DynamicAlgPayload::deletePayload(int id)
 {
-    if(id >= payload_set_.size()
-        || id == 0)
+    if(id >= static_cast<int>(payload_set_.size())
+        || id <= 0)
     {
         return DYNAMIC_PAYLOAD_INVALID_ARG;
     }
@@ -88,13 +88,13 @@ ErrorCode DynamicAlgPayload::deletePayload(int id)
 
 ErrorCode DynamicAlgPayload::updatePayload(const PayloadInfo& info)
 {
-    if(info.id >= payload_set_.size()
-        || info.id == 0
+    if(info.id >= static_cast<int>(payload_set_.size())
+        || info.id <= 0
         || !payload_set_[info.id].is_valid)
     {
         return DYNAMIC_PAYLOAD_INVALID_ARG;
     }
-        
+      
     payload_set_[info.id].id = info.id;
     payload_set_[info.id].is_valid = true;
     if(strlen(info.comment) == 0)
@@ -161,14 +161,12 @@ ErrorCode DynamicAlgPayload::movePayload(int expect_id, int original_id)
 
 ErrorCode DynamicAlgPayload::getPayloadInfoById(int id, PayloadInfo& info)
 {
-    if(id >= payload_set_.size()
+    if(id >= static_cast<int>(payload_set_.size())
         || id < 0)
     {
         return DYNAMIC_PAYLOAD_INVALID_ARG;
     }
-
     memcpy(&info, &payload_set_[id], sizeof(PayloadInfo));
-
     return SUCCESS;
 }
 
@@ -209,6 +207,7 @@ void DynamicAlgPayload::packDummyPayloadInfo(PayloadInfo& info)
     info.id = 0;
     info.is_valid = true;
     memcpy(info.comment, "No payload", strlen("No payload") + 1);
+    
     info.m_load = 0;
     info.lcx_load = 0;
     info.lcy_load = 0;
@@ -238,7 +237,7 @@ bool DynamicAlgPayload::readAllPayloadInfoFromYaml(void)
     {
         yaml_help_.getParam("max_number_of_payloads", max_number_of_payloads_);
 
-        for(unsigned int i = 1; i <= max_number_of_payloads_; ++i)
+        for(int i = 1; i <= max_number_of_payloads_; ++i)
         {
             std::string payload_info_path;
             payload_info_path = getPayloadInfoPath(i);
@@ -273,6 +272,7 @@ bool DynamicAlgPayload::readAllPayloadInfoFromYaml(void)
 bool DynamicAlgPayload::writePayloadInfoToYaml(const PayloadInfo& info)
 {
     std::string payload_info_path = getPayloadInfoPath(info.id);
+
     yaml_help_.setParam(payload_info_path + "/id", info.id);
     yaml_help_.setParam(payload_info_path + "/is_valid", info.is_valid);
     yaml_help_.setParam(payload_info_path + "/m_load", info.m_load);
@@ -283,13 +283,13 @@ bool DynamicAlgPayload::writePayloadInfoToYaml(const PayloadInfo& info)
     yaml_help_.setParam(payload_info_path + "/Iyy_load", info.Iyy_load);
     yaml_help_.setParam(payload_info_path + "/Izz_load", info.Izz_load);
     yaml_help_.setParam(payload_info_path + "/comment", std::string(info.comment));
-  
+ 
     return yaml_help_.dumpParamFile(file_path_.c_str());
 }
 
 void DynamicAlgPayload::printfPayload(void)
 {
-    for(unsigned int i = 0; i <= max_number_of_payloads_; ++i)
+    for(int i = 0; i <= max_number_of_payloads_; ++i)
     {
         printf("id=%d, valid=%d, comment=%s, load=%lf, %lf, %lf, %lf, %lf, %lf, %lf\n",
                payload_set_[i].id, payload_set_[i].is_valid, payload_set_[i].comment, payload_set_[i].m_load, 

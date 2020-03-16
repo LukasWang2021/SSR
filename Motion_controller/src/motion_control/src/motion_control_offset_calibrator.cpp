@@ -29,6 +29,8 @@ Calibrator::Calibrator(void)
     nvram_ptr_ = NULL;
     bare_core_ptr_ = NULL;
     current_state_ = MOTION_FORBIDDEN;
+    b_check_flag_ = false;
+    memset(i_com_flag_, NORMAL, NUM_OF_JOINT * sizeof(int));
     memset(offset_need_save_, 0, NUM_OF_JOINT * sizeof(int));
     memset(normal_threshold_, 0, NUM_OF_JOINT * sizeof(double));
     memset(lost_threshold_, 0, NUM_OF_JOINT * sizeof(double));
@@ -38,7 +40,13 @@ Calibrator::Calibrator(void)
 }
 
 Calibrator::~Calibrator(void)
-{}
+{
+    if (nvram_ptr_ != NULL)
+    {
+        delete nvram_ptr_;
+        nvram_ptr_ = NULL;
+    }
+}
 
 //------------------------------------------------------------------------------
 // 方法：  initCalibrator
@@ -284,9 +292,10 @@ ErrorCode Calibrator::initCalibrator(size_t joint_num, BareCoreInterface *pcore,
         {
             Joint cur_jnt;
             ServoState servo_state;
+            uint32_t encoder_state[NUM_OF_JOINT];
             char buffer[LOG_TEXT_SIZE];
             usleep(256 * 1000);
-            bare_core_ptr_->getLatestJoint(cur_jnt, servo_state);
+            bare_core_ptr_->getLatestJoint(cur_jnt, encoder_state, servo_state);
             memcpy(zero_offset_, &data[0], joint_num_ * sizeof(data[0]));
             FST_INFO("Current joint: %s", printDBLine(&cur_jnt[0], buffer, LOG_TEXT_SIZE));
             FST_INFO("Success.");
@@ -305,14 +314,6 @@ ErrorCode Calibrator::initCalibrator(size_t joint_num, BareCoreInterface *pcore,
         return result;
     }
     
-
-    // 进行一次零位检测
-    /*
-    CalibrateState calibrate_stat;
-    OffsetState offset_stat[NUM_OF_JOINT];
-    checkOffset(&calibrate_stat, offset_stat);
-    */
-
     return SUCCESS;
 }
 
@@ -325,20 +326,21 @@ ErrorCode Calibrator::checkOffset(CalibrateState &cali_stat, OffsetState (&offse
 {
     ServoState servo_state;
     Joint cur_jnt, old_jnt;
-    vector<int> encoder_err;
-    encoder_err.resize(joint_num_);
+    uint32_t encoder_state[NUM_OF_JOINT];
+    // vector<int> encoder_err;
+    // encoder_err.resize(joint_num_);
     char buffer[LOG_TEXT_SIZE];
     FST_INFO("Check zero offset.");
 
-    // 获取编码器错误标志
-    if (!bare_core_ptr_->getEncoderError(encoder_err))
-    {
-        current_state_ = MOTION_LIMITED;
-        cali_stat = current_state_;
-        memcpy(offset_stat, offset_stat_, sizeof(offset_stat));
-        FST_ERROR("Fail to get encoder error from bare core, code = 0x%llx", MC_COMMUNICATION_WITH_BARECORE_FAIL);
-        return MC_COMMUNICATION_WITH_BARECORE_FAIL;
-    }
+    // // 获取编码器错误标志
+    // if (!bare_core_ptr_->getEncoderError(encoder_err))
+    // {
+    //     current_state_ = MOTION_LIMITED;
+    //     cali_stat = current_state_;
+    //     memcpy(offset_stat, offset_stat_, sizeof(offset_stat));
+    //     FST_ERROR("Fail to get encoder error from bare core, code = 0x%llx", MC_COMMUNICATION_WITH_BARECORE_FAIL);
+    //     return MC_COMMUNICATION_WITH_BARECORE_FAIL;
+    // }
 
     // 获取NvRam中各关节的位置
     ErrorCode err = readOffsetJoint(old_jnt);
@@ -353,9 +355,9 @@ ErrorCode Calibrator::checkOffset(CalibrateState &cali_stat, OffsetState (&offse
     }
 
     // 获取当前各关节的位置
-    if (!bare_core_ptr_->getLatestJoint(cur_jnt, servo_state))
+    if (!bare_core_ptr_->getLatestJoint(cur_jnt, encoder_state, servo_state))
     {
-        FST_ERROR("Fail to get current joint from share mem.");
+        FST_ERROR("Fail to get current joint from share mem."); 
         current_state_ = MOTION_FORBIDDEN;
         cali_stat = current_state_;
         memcpy(offset_stat, offset_stat_, sizeof(offset_stat));
@@ -366,74 +368,158 @@ ErrorCode Calibrator::checkOffset(CalibrateState &cali_stat, OffsetState (&offse
     FST_INFO("Last-joint: %s", printDBLine(&old_jnt[0], buffer, LOG_TEXT_SIZE));
     FST_INFO("Mask-flags: %s", printDBLine((int*)offset_mask_, buffer, LOG_TEXT_SIZE));
     FST_INFO("Last-state: %s", printDBLine((int*)offset_stat_, buffer, LOG_TEXT_SIZE));
+    FST_INFO("encoder_state: %s", printDBLine((int*)encoder_state, buffer, LOG_TEXT_SIZE));
+    // for(size_t i = 0; i < joint_num_; i++)
+    // {
+    //     FST_INFO("encoder_state 0 bit, axis: %d, %d", i+1,encoder_state[i]&1);
+    //     FST_INFO("encoder_state 4 bit, axis: %d, %d", i+1,(encoder_state[i]>>4)&1);
+    // }
 
     // 当前各关节位置和记录文件中各关节位置进行比对
     OffsetState state[NUM_OF_JOINT];
-    checkOffset(cur_jnt, old_jnt, state);
-    FST_INFO("Curr-state: %s", printDBLine((int*)state, buffer, LOG_TEXT_SIZE));
+    checkOffset(cur_jnt, old_jnt, state, encoder_state);
+    // FST_INFO("Curr-state: %s", printDBLine((int*)state, buffer, LOG_TEXT_SIZE));
 
-    for (size_t i = 0; i < joint_num_; i++)
-    {
-        OffsetState tmp_state = (encoder_err[i] == -1 || encoder_err[i] == -3) ? OFFSET_LOST : OFFSET_NORMAL;
-        state[i] = (state[i] >= tmp_state) ? state[i] : tmp_state;
-    }
+    // for (size_t i = 0; i < joint_num_; i++)
+    // {
+    //     OffsetState tmp_state = (encoder_err[i] == -1 || encoder_err[i] == -3) ? OFFSET_LOST : OFFSET_NORMAL;
+    //     state[i] = (state[i] >= tmp_state) ? state[i] : tmp_state;
+    // }
 
-    FST_INFO("Encoder-err: %s", printDBLine(&encoder_err[0], buffer, LOG_TEXT_SIZE));
+    // FST_INFO("Encoder-err: %s", printDBLine(&encoder_err[0], buffer, LOG_TEXT_SIZE));
     FST_INFO("New-state: %s", printDBLine((int*)state, buffer, LOG_TEXT_SIZE));
 
-    bool recorder_need_update = false;
+    // bool recorder_need_update = false;
 
     // 比对结果比记录文件中的状态标志更严重，则更新记录文件中的标志
     for (size_t i = 0; i < joint_num_; i++)
     {
-        if (offset_mask_[i] == OFFSET_UNMASK && state[i] > offset_stat_[i])
+        if (offset_mask_[i] == OFFSET_UNMASK /*&& state[i] > offset_stat_[i]*/)
         {
-            recorder_need_update = true;
+            // recorder_need_update = true;
+            offset_stat_[i] = state[i];
         }
-        else
-        {
-            state[i] = offset_stat_[i];
-        }
+        // else
+        // {
+        //     state[i] = offset_stat_[i];
+        // }
     }
 
     for (size_t i = joint_num_; i < NUM_OF_JOINT; i++)
     {
-        state[i] = OFFSET_LOST;
+        offset_stat_[i] = OFFSET_LOST;
     }
 
-    FST_INFO("Offset-state: %s", printDBLine((int*)state, buffer, LOG_TEXT_SIZE));
+    FST_INFO("Offset-state: %s", printDBLine((int*)offset_stat_, buffer, LOG_TEXT_SIZE));
 
-    if (recorder_need_update)
+    // for (size_t i = joint_num_; i < NUM_OF_JOINT; i++)
+    // {
+    //     state[i] = OFFSET_LOST;
+    // }
+
+    // FST_INFO("Offset-state: %s", printDBLine((int*)state, buffer, LOG_TEXT_SIZE));
+
+    // if (recorder_need_update)
+    // {
+    //     // 更新记录文件中的零位标志
+    //     FST_INFO("Update offset state into recorder.");
+    //     err = writeOffsetState(state);
+
+    //     if (err != SUCCESS)
+    //     {
+    //         FST_ERROR("Failed, code = 0x%llx", err);
+    //         current_state_ = MOTION_FORBIDDEN;
+    //         cali_stat = current_state_;
+    //         memcpy(offset_stat, offset_stat_, sizeof(offset_stat));
+    //         return err;
+    //     }
+
+    //     for (size_t i = 0; i < joint_num_; i++)
+    //     {
+    //         offset_stat_[i] = state[i];
+    //     }
+    // }
+
+    // bool limited = false;
+    // bool forbidden = false;
+
+    // // 综合各轴校验结果和零位错误屏蔽标志，给出允许运行标志
+    //         // 函数？？？
+    // for (size_t i = 0; i < joint_num_; i++)
+    // {
+    //     if (offset_mask_[i] == OFFSET_UNMASK)
+    //     {
+    //         if (state[i] != OFFSET_NORMAL /*&& state[i] != OFFSET_INVALID*/)
+    //         {
+    //             forbidden = true;
+    //         }
+    //     }
+    //     else
+    //     {
+    //         limited = true;
+    //     }
+    // }
+
+    // current_state_ = forbidden ? MOTION_FORBIDDEN : (limited ? MOTION_LIMITED : MOTION_NORMAL);
+    checkCalibrateState();
+    cali_stat = current_state_;
+    memcpy(offset_stat, offset_stat_, sizeof(offset_stat));
+    FST_INFO("Done, calibrate motion-state is %d", current_state_);
+    return SUCCESS;
+}
+
+//------------------------------------------------------------------------------
+// 方法：  checkOffset
+// 摘要：  对各个轴的当前读数和记录值进行比对，根据偏移门限和丢失门限给出比对结果；
+//------------------------------------------------------------------------------
+void Calibrator::checkOffset(Joint curr_jnt, Joint last_jnt, OffsetState *offset_stat, const uint32_t (&encoder_state)[NUM_OF_JOINT])
+{
+    for (size_t i = 0; i < joint_num_; i++)
     {
-        // 更新记录文件中的零位标志
-        FST_INFO("Update offset state into recorder.");
-        err = writeOffsetState(state);
-
-        if (err != SUCCESS)
+        FST_INFO("encoder_state 0 bit, axis: %d, state: %d", i+1,encoder_state[i]&1);
+        FST_INFO("encoder_state 4 bit, axis: %d, state: %d", i+1,(encoder_state[i]>>4)&1);
+        if(((encoder_state[i]>>4)&1) != 0)
         {
-            FST_ERROR("Failed, code = 0x%llx", err);
-            current_state_ = MOTION_FORBIDDEN;
-            cali_stat = current_state_;
-            memcpy(offset_stat, offset_stat_, sizeof(offset_stat));
-            return err;
+            FST_INFO("checkOffset encoder communication unnormal, axis: %d", i+1);
+            offset_stat[i] = OFFSET_INVALID;
         }
-
-        for (size_t i = 0; i < joint_num_; i++)
+        else
         {
-            offset_stat_[i] = state[i];
+            if(((encoder_state[i])&1) != 0)
+            {
+                FST_INFO("checkOffset encoder battery unnormal, axis: %d", i+1);
+                offset_stat[i] = OFFSET_LOST;
+            }
+            else
+            {
+                if (fabs(curr_jnt[i] - last_jnt[i]) > lost_threshold_[i])
+                {
+                    offset_stat[i] = OFFSET_LOST;
+                }
+                else if (fabs(curr_jnt[i] - last_jnt[i]) > normal_threshold_[i])
+                {
+                    offset_stat[i] = OFFSET_DEVIATE;
+                }
+                else
+                {
+                    offset_stat[i] = OFFSET_NORMAL;
+                }
+            }
         }
     }
+}
 
+void Calibrator::checkCalibrateState(void)
+{
+    //FST_INFO("Check Calibrate State.");   
     bool limited = false;
     bool forbidden = false;
 
-    // 综合各轴校验结果和零位错误屏蔽标志，给出允许运行标志
-            // 函数？？？
     for (size_t i = 0; i < joint_num_; i++)
     {
         if (offset_mask_[i] == OFFSET_UNMASK)
         {
-            if (state[i] != OFFSET_NORMAL)
+            if (offset_stat_[i] != OFFSET_NORMAL)
             {
                 forbidden = true;
             }
@@ -445,35 +531,7 @@ ErrorCode Calibrator::checkOffset(CalibrateState &cali_stat, OffsetState (&offse
     }
 
     current_state_ = forbidden ? MOTION_FORBIDDEN : (limited ? MOTION_LIMITED : MOTION_NORMAL);
-    cali_stat = current_state_;
-    memcpy(offset_stat, offset_stat_, sizeof(offset_stat));
-    FST_INFO("Done, calibrate motion-state is %d", current_state_);
-    return SUCCESS;
-
-
-}
-
-//------------------------------------------------------------------------------
-// 方法：  checkOffset
-// 摘要：  对各个轴的当前读数和记录值进行比对，根据偏移门限和丢失门限给出比对结果；
-//------------------------------------------------------------------------------
-void Calibrator::checkOffset(Joint curr_jnt, Joint last_jnt, OffsetState *offset_stat)
-{
-    for (size_t i = 0; i < joint_num_; i++)
-    {
-        if (fabs(curr_jnt[i] - last_jnt[i]) > lost_threshold_[i])
-        {
-            offset_stat[i] = OFFSET_LOST;
-        }
-        else if (fabs(curr_jnt[i] - last_jnt[i]) > normal_threshold_[i])
-        {
-            offset_stat[i] = OFFSET_DEVIATE;
-        }
-        else
-        {
-            offset_stat[i] = OFFSET_NORMAL;
-        }
-    }
+    //FST_INFO("Done check Calibrate State, calibrate motion-state is %d", current_state_);   
 }
 
 //------------------------------------------------------------------------------
@@ -514,6 +572,12 @@ ErrorCode Calibrator::calibrateOffset(const size_t *pindex, size_t length)
         if (pindex[i] < joint_num_)
         {
             FST_INFO("  joint index=%d", pindex[i]);
+            FST_INFO("Reset encoder error flags and rolls ...");
+            if (!bare_core_ptr_->resetEncoderError(pindex[i]))
+            {
+                FST_ERROR("Fail to reset encoder errors.");
+                return MC_COMMUNICATION_WITH_BARECORE_FAIL;
+            }
         }
         else
         {
@@ -522,12 +586,15 @@ ErrorCode Calibrator::calibrateOffset(const size_t *pindex, size_t length)
         }
     }
 
+    usleep(250 * 1000);
+
     Joint cur_joint;
     ServoState servo_state;
     vector<double> cur_offset;
+    uint32_t encoder_state[NUM_OF_JOINT];
     char buffer[LOG_TEXT_SIZE];
 
-    if (bare_core_ptr_->getLatestJoint(cur_joint, servo_state) && getOffsetFromBareCore(cur_offset) == SUCCESS)
+    if (bare_core_ptr_->getLatestJoint(cur_joint, encoder_state, servo_state) && getOffsetFromBareCore(cur_offset) == SUCCESS)
     {
         vector<int> cur_encoder;
         cur_encoder.resize(joint_num_);
@@ -557,12 +624,21 @@ ErrorCode Calibrator::calibrateOffset(const size_t *pindex, size_t length)
         for (size_t i = 0; i < length; i++)
         {
             index = pindex[i];
-            zero_offset_[index] = calculateOffset(cur_offset[index], cur_joint[index], 0);
-            offset_need_save_[index] = NEED_SAVE;
+            if(((encoder_state[index]>>4)&1) != 0)
+            {
+                FST_INFO("encoder communication unnormal,axis: %d, do not calculate & need save Offset",index+1);
+                offset_need_save_[index] = UNNEED_SAVE;
+            }
+            else
+            {
+                zero_offset_[index] = calculateOffset(cur_offset[index], cur_joint[index], 0);
+                offset_need_save_[index] = NEED_SAVE;
+            }
         }
 
         FST_INFO("New-offset: %s", printDBLine(&zero_offset_[0], buffer, LOG_TEXT_SIZE));
-        return SUCCESS;
+        // 由于已经清了多圈值和编码器电池错误，标定和保存必须在一个操作之内完成
+        return saveOffset();
     }
     else
     {
@@ -591,6 +667,24 @@ ErrorCode Calibrator::saveOffset(void)
 {
     FST_INFO("Save zero offset into config file ...");
     //vector<double> data(zero_offset_, zero_offset_ + NUM_OF_JOINT);
+    Joint cur_joint, old_joint;
+    ServoState  state;
+    uint32_t encoder_state[NUM_OF_JOINT];
+    if (!bare_core_ptr_->getLatestJoint(cur_joint, encoder_state, state))
+    {
+        FST_ERROR("Fail to get current joint from core1.");
+        return MC_COMMUNICATION_WITH_BARECORE_FAIL;
+    }
+
+    for (size_t i = 0; i < joint_num_; i++)
+    {
+        if(((encoder_state[i]>>4)&1) != 0)
+        {
+            FST_INFO("encoder communication unnormal, save Offset set UNNEED_SAVE, axis: %d",i+1);
+            offset_need_save_[i] = UNNEED_SAVE;
+        }
+    }
+
     bool need_save = false;
 
     for (size_t i = 0; i < joint_num_; i++)
@@ -625,8 +719,15 @@ ErrorCode Calibrator::saveOffset(void)
 
     for (size_t i = 0; i < joint_num_; i++)
     {
-        if (offset_need_save_[i] == NEED_SAVE)
+        if(((encoder_state[i]>>4)&1) != 0)
+        {
+             FST_INFO("encoder communication unnormal, do not update zero_offset Param, axis: %d",i+1);
+        }
+        else
+        {
+            if (offset_need_save_[i] == NEED_SAVE)
             data[i] = zero_offset_[i];
+        }
     }
 
     if (!offset_param_.setParam("zero_offset/data", data) || !offset_param_.dumpParamFile())
@@ -649,13 +750,15 @@ ErrorCode Calibrator::saveOffset(void)
     usleep(200 * 1000);
     FST_INFO("Core1 offset updated, update recorder ...");
 
-    Joint cur_joint, old_joint;
-    ServoState  state;
+    // Joint cur_joint, old_joint;
+    // ServoState  state;
+    // uint32_t encoder_state[NUM_OF_JOINT];
+
     OffsetMask  offset_mask[NUM_OF_JOINT];
     OffsetState offset_stat[NUM_OF_JOINT];
 
     // 更新记录文件，清除零位丢失标志和错误屏蔽标志
-    if (!bare_core_ptr_->getLatestJoint(cur_joint, state))
+    if (!bare_core_ptr_->getLatestJoint(cur_joint, encoder_state, state))
     {
         FST_ERROR("Fail to get current joint from core1.");
         return MC_COMMUNICATION_WITH_BARECORE_FAIL;
@@ -701,6 +804,7 @@ ErrorCode Calibrator::saveOffset(void)
         return FST_NVRAM_R_TIMEOUT_F;
     }
 
+    /*
     FST_INFO("Reset encoder error flags ...");
 
     if (!bare_core_ptr_->resetEncoderError())
@@ -708,6 +812,7 @@ ErrorCode Calibrator::saveOffset(void)
         FST_ERROR("Fail to reset encoder errors.");
         return MC_COMMUNICATION_WITH_BARECORE_FAIL;
     }
+    */
 
     for (size_t i = 0; i < joint_num_; i++)
     {
@@ -732,20 +837,96 @@ ErrorCode Calibrator::saveJoint(void)
     Joint cur_jnt;
     ServoState state;
     memset(&cur_jnt, 0, sizeof(Joint));
+    Joint read_nvram_jnt;
+    memset(&read_nvram_jnt, 0, sizeof(Joint));
+    uint32_t encoder_state[NUM_OF_JOINT];
 
-    if (!bare_core_ptr_->getLatestJoint(cur_jnt, state))
+    ErrorCode err = readOffsetJoint(read_nvram_jnt);;
+    if (err != SUCCESS)
+    {
+        FST_ERROR("Fail to get offset joint from NvRam, code = 0x%llx.", err);
+        return err;
+    }
+
+    if (!bare_core_ptr_->getLatestJoint(cur_jnt, encoder_state, state))
     {
         FST_ERROR("Fail to get current joint from share memory");
         return MC_COMMUNICATION_WITH_BARECORE_FAIL;
     }
 
-    ErrorCode err = writeOffsetJoint(cur_jnt);
+    for (size_t i = 0; i < joint_num_; i++)
+    {
+        // FST_INFO("saveJoint encoder_state , axis: %d, %d", i+1,encoder_state[i]);
+        // FST_INFO("saveJoint encoder_state 0 bit, axis: %d, %d", i+1,encoder_state[i]&1);
+        // FST_INFO("saveJoint encoder_state 4 bit, axis: %d, %d", i+1,(encoder_state[i]>>4)&1);
+        if(((encoder_state[i])&1) != 0)
+        {
+            // FST_ERROR("encoder battery unnormal, axis: %d", i+1);
+            offset_stat_[i] = OFFSET_LOST;
+        }
+
+        if(((encoder_state[i]>>4)&1) != 0)
+        {
+            // FST_ERROR("encoder communication unnormal, axis: %d", i+1);
+            offset_stat_[i] = OFFSET_INVALID;
+        }
+    }
+
+    for(size_t i = 0; i < joint_num_; ++i)
+    {
+        if(((encoder_state[i])&1) != 0)
+        {
+            FST_INFO("encoder battery unnormal axis: %d", i+1);
+            cur_jnt[i] = read_nvram_jnt[i];
+        }
+        if(((encoder_state[i]>>4)&1) != 0)
+        {
+            FST_INFO("encoder communication unnormal axis: %d", i+1);
+            i_com_flag_[i] = UNNORMAL;
+            cur_jnt[i] = read_nvram_jnt[i];
+        }
+        else if(i_com_flag_[i] == UNNORMAL)
+        {
+            FST_INFO("encoder communication recovery axis: %d", i+1);
+            i_com_flag_[i] = RECOVERY;
+        }
+    }
+
+    for(size_t i = 0; i < joint_num_; ++i)
+    {
+        if(i_com_flag_[i] == RECOVERY)
+        {
+            i_com_flag_[i] = NORMAL;
+            b_check_flag_ = true;
+        }
+    }
+
+    if(b_check_flag_)
+    {
+        b_check_flag_ = false;
+        CalibrateState calibrate_stat;
+        OffsetState offset_stat[NUM_OF_JOINT];
+        return checkOffset(calibrate_stat, offset_stat);  
+    }
+
+    for (size_t i = 0; i < joint_num_; i++)
+    {
+        if(offset_stat_[i] != OFFSET_NORMAL)
+        {
+            FST_ERROR("offset unormal axis: %d",i+1);
+            cur_jnt[i] = read_nvram_jnt[i];
+        }
+    }
+    
+    err = writeOffsetJoint(cur_jnt);
 
     if (err != SUCCESS)
     {
         FST_ERROR("Fail to record joint, code = 0x%llx", err);
         return err;
     }
+
+    // FST_INFO("write Offset Joint success");
 
     //char buffer[LOG_TEXT_SIZE];
     //FST_INFO("Save current joint into record file: %s", printDBLine(&cur_jnt.j1_, buffer, LOG_TEXT_SIZE));
@@ -792,7 +973,6 @@ ErrorCode Calibrator::maskOffsetLostError(void)
         FST_INFO("No lost-offset error need mask");
         return SUCCESS;
     }
-
 
     FST_INFO("Saving mask flags ...");
     ErrorCode err = writeOffsetMask(mask);
@@ -845,6 +1025,8 @@ ErrorCode Calibrator::setOffsetState(size_t index, OffsetState stat)
 
     Joint cur_joint;
     ServoState servo_state;
+    uint32_t encoder_state[NUM_OF_JOINT];
+    
     ErrorCode err = readOffsetJoint(old_joint);
 
     if (err != SUCCESS)
@@ -853,10 +1035,16 @@ ErrorCode Calibrator::setOffsetState(size_t index, OffsetState stat)
         return err;
     }
 
-    if (!bare_core_ptr_->getLatestJoint(cur_joint, servo_state))
+    if (!bare_core_ptr_->getLatestJoint(cur_joint, encoder_state, servo_state))
     {
         FST_ERROR("Fail to get current joint from bare core.");
         return MC_COMMUNICATION_WITH_BARECORE_FAIL;
+    }
+
+    if(((encoder_state[index]>>4)&1) != 0)
+    {
+        FST_INFO("encoder communication unnormal, do not set Offset State.");
+        return ZERO_OFFSET_INVALID;
     }
 
     if (update_joint)
@@ -879,20 +1067,41 @@ ErrorCode Calibrator::setOffsetState(size_t index, OffsetState stat)
 // 方法：  setOffset
 // 摘要：  允许用户直接设置某个轴的零位值，被改变的零位值需要调用saveOffset借口才会被写入配置文件中；
 //------------------------------------------------------------------------------
-void Calibrator::setOffset(size_t index, double offset)
+ErrorCode Calibrator::setOffset(size_t index, double offset)
 {
     FST_INFO("Set offset, index = %d, offset = %.6f", index, offset);
 
     if (index >= joint_num_)
     {
         FST_ERROR("Given index out of range, joint-number is %d", joint_num_);
-        return;
+        return INVALID_PARAMETER;
     }
     
     FST_INFO("Old-offset: %.6f, new-offset: %.6f", zero_offset_[index], offset);
-    zero_offset_[index] = offset;
-    offset_need_save_[index] = NEED_SAVE;
+
+    Joint cur_joint;
+    ServoState  state;
+    uint32_t encoder_state[NUM_OF_JOINT];
+    if (!bare_core_ptr_->getLatestJoint(cur_joint, encoder_state, state))
+    {
+        FST_ERROR("Fail to get current joint from core1.");
+        return MC_COMMUNICATION_WITH_BARECORE_FAIL;
+    }
+
+    if(((encoder_state[index]>>4)&1) != 0)
+    {
+        FST_ERROR("encoder communication unnormal, axis: %d ,setOffset set UNNEED_SAVE",index);
+        offset_need_save_[index] = UNNEED_SAVE;
+        return ZERO_OFFSET_INVALID;
+    }
+    else
+    {
+        zero_offset_[index] = offset;
+        offset_need_save_[index] = NEED_SAVE;
+    }
+
     FST_INFO("Done.");
+    return SUCCESS;
 }
 
 //------------------------------------------------------------------------------
@@ -900,16 +1109,36 @@ void Calibrator::setOffset(size_t index, double offset)
 // 摘要：  允许用户直接设置所有轴的零位值，被改变的零位值需要调用saveOffset借口才会被写入配置文件中；
 //        注意确保传入的offset数组长度不小于有效轴数
 //------------------------------------------------------------------------------
-void Calibrator::setOffset(const double *offset)
+ErrorCode Calibrator::setOffset(const double *offset)
 {
     char buf[LOG_TEXT_SIZE];
     FST_INFO("Set offset, new-offset: %s", printDBLine(offset, buf, LOG_TEXT_SIZE));
+
+    Joint cur_joint;
+    ServoState  state;
+    uint32_t encoder_state[NUM_OF_JOINT];
+    if (!bare_core_ptr_->getLatestJoint(cur_joint, encoder_state, state))
+    {
+        FST_ERROR("Fail to get current joint from core1.");
+        return MC_COMMUNICATION_WITH_BARECORE_FAIL;
+    }
     
     for (size_t i = 0; i < joint_num_; i++)
     {
-        zero_offset_[i] = offset[i];
-        offset_need_save_[i] = NEED_SAVE;
+        if(((encoder_state[i]>>4)&1) != 0)
+        {
+            FST_ERROR("encoder communication unnormal, axis: %d ,setOffset set UNNEED_SAVE",i);
+            offset_need_save_[i] = UNNEED_SAVE;
+            return ZERO_OFFSET_INVALID;
+        }
+        else
+        {
+            zero_offset_[i] = offset[i];
+            offset_need_save_[i] = NEED_SAVE;
+        }
     }
+
+    return SUCCESS;
 }
 
 //------------------------------------------------------------------------------
@@ -936,8 +1165,8 @@ void Calibrator::getOffset(double *offset)
 }
 
 //------------------------------------------------------------------------------
-// 方法：  getOffsetMask
-// 摘要：  获取所有轴的错误屏蔽标志，注意确保数组长度不小于实际轴数；
+// 方法：  getOffsetState
+// 摘要：  获取所有轴的零位状态，注意确保数组长度不小于实际轴数；
 //------------------------------------------------------------------------------
 void Calibrator::getOffsetState(OffsetState *state)
 {
@@ -973,6 +1202,7 @@ void Calibrator::getOffsetMask(OffsetMask *mask)
 //------------------------------------------------------------------------------
 CalibrateState Calibrator::getCalibrateState(void)
 {
+    checkCalibrateState();
     return current_state_;
 }
 
@@ -1063,6 +1293,7 @@ ErrorCode Calibrator::saveReference(void)
 {
     Joint joint;
     ServoState state;
+    uint32_t encoder_state[NUM_OF_JOINT];
     char buffer[LOG_TEXT_SIZE];
 
     FST_INFO("Save referenece point");
@@ -1074,7 +1305,7 @@ ErrorCode Calibrator::saveReference(void)
         return params.getLastError();
     }
 
-    if (!bare_core_ptr_->getLatestJoint(joint, state))
+    if (!bare_core_ptr_->getLatestJoint(joint, encoder_state, state))
     {
         FST_ERROR("Fail to get current joint from bare core");
         return MC_COMMUNICATION_WITH_BARECORE_FAIL;
@@ -1186,11 +1417,28 @@ ErrorCode Calibrator::fastCalibrate(const size_t *pindex, size_t length)
                     size_t index;
                     FST_INFO("Current encoder: %s", printDBLine(&cur_encoder[0], buffer, LOG_TEXT_SIZE));
 
+                    Joint cur_joint;
+                    ServoState  state;
+                    uint32_t encoder_state[NUM_OF_JOINT];
+                    if (!bare_core_ptr_->getLatestJoint(cur_joint, encoder_state, state))
+                    {
+                        FST_ERROR("Fail to get current joint from core1.");
+                        return MC_COMMUNICATION_WITH_BARECORE_FAIL;
+                    }
+
                     for (size_t i = 0; i < length; i++)
                     {
                         index = pindex[i];
-                        zero_offset_[index] = calculateOffsetEasy(gear_ratio[index], ref_offset[index], ref_encoder[index], cur_encoder[index]);
-                        offset_need_save_[index] = NEED_SAVE;
+                        if(((encoder_state[index]>>4)&1) != 0)
+                        {
+                            FST_INFO("encoder communication unnormal,axis: %d, do not fast calculate & need save Offset",index+1);
+                            offset_need_save_[index] = UNNEED_SAVE;
+                        }
+                        else
+                        {
+                            zero_offset_[index] = calculateOffsetEasy(gear_ratio[index], ref_offset[index], ref_encoder[index], cur_encoder[index]);
+                            offset_need_save_[index] = NEED_SAVE;
+                        }
                     }
 
                     FST_INFO("New offset: %s", printDBLine(zero_offset_, buffer, LOG_TEXT_SIZE));

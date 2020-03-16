@@ -1,7 +1,7 @@
 #ifndef MOTION_CONTROL_H
 #define MOTION_CONTROL_H
 
-
+#include <queue>
 #include <common_log.h>
 #include <device_manager.h>
 #include <axis_group_manager.h>
@@ -14,6 +14,7 @@
 #include <motion_control_datatype.h>
 #include <motion_control_param.h>
 #include <motion_control_arm_group.h>
+#include <interpreter_common.h>
 
 
 namespace fst_mc
@@ -42,20 +43,25 @@ public:
     ErrorCode doStepManualMove(const GroupDirection &direction);
     ErrorCode doContinuousManualMove(const GroupDirection &direction);
     ErrorCode doGotoPointManualMove(const basic_alg::Joint &joint);
-    ErrorCode doGotoPointManualMove(const basic_alg::PoseEuler &pose);
     ErrorCode doGotoPointManualMove(const PoseAndPosture &pose, int user_frame_id, int tool_frame_id);
     ErrorCode manualStop(void);
 
     // API for auto run
-    ErrorCode autoMove(int id, const MotionTarget &target);
+    ErrorCode autoMove(const Instruction &instruction);
     ErrorCode abortMove(void);
     ErrorCode restartMove(void);
     ErrorCode pauseMove(void);
+    void clearErrorFlag(void);
     bool nextMovePermitted(void);
 
+    // API for off line trajectory
+    ErrorCode setOfflineTrajectory(const std::string &offline_trajectory);
+    ErrorCode prepairOfflineTrajectory(void);
+    ErrorCode moveOfflineTrajectory(void);
+
     // API for zero offset and calibrator
-    void setOffset(size_t index, double offset);
-    void setOffset(const double (&offset)[NUM_OF_JOINT]);
+    ErrorCode setOffset(size_t index, double offset);
+    ErrorCode setOffset(const double (&offset)[NUM_OF_JOINT]);
     void getOffset(double (&offset)[NUM_OF_JOINT]);
     void getOffsetMask(OffsetMask (&mask)[NUM_OF_JOINT]);
     CalibrateState getCalibrateState(void);
@@ -105,7 +111,6 @@ public:
     basic_alg::PoseEuler getCurrentPose(void);
     void    getCurrentPose(basic_alg::PoseEuler &pose);
     basic_alg::Joint getServoJoint(void);
-    void    getServoJoint(basic_alg::Joint &joint);
 
     ErrorCode setGlobalVelRatio(double ratio);
     ErrorCode setGlobalAccRatio(double ratio);
@@ -136,10 +141,12 @@ public:
     // ...
 
     void ringCommonTask(void);
+    void ringPlannerTask(void);
     void ringRealTimeTask(void);
     void ringPriorityTask(void);
     
 private:
+    ErrorCode autoMove(const MotionTarget &target);
     ErrorCode offsetToolFrame(int tool_id, const basic_alg::PoseEuler &offset, basic_alg::PoseEuler &tool_frame);
     ErrorCode getFrameOffsetMatrix(int frame_id, const basic_alg::PoseEuler &offset, const basic_alg::PoseEuler &current_frame, basic_alg::TransMatrix &matrix);
     ErrorCode handlePoint(const TargetPoint &origin, const basic_alg::PoseEuler &user_frame, const basic_alg::PoseEuler &tool_frame, IntactPoint &point);
@@ -151,7 +158,14 @@ private:
 
     bool realtime_thread_running_;
     bool priority_thread_running_;
+    bool planner_thread_running_;
     bool common_thread_running_;
+    bool motion_error_flag_;
+
+    std::queue<Instruction> instruction_fifo_;
+    pthread_mutex_t  instruction_mutex_;
+    uint32_t instructions_recv_counter_;
+    uint32_t instructions_handle_counter_;
 
     MotionControlParam* param_ptr_;
     fst_log::Logger* log_ptr_;
@@ -163,6 +177,7 @@ private:
     BaseGroup *group_ptr_;
     fst_base::ThreadHelp realtime_thread_;
     fst_base::ThreadHelp priority_thread_;
+    fst_base::ThreadHelp planner_thread_;
     fst_base::ThreadHelp common_thread_;
 
     RosBasic        *ros_basic_ptr_;

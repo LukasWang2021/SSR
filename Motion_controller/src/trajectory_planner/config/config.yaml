@@ -1,0 +1,5 @@
+max_jerk_num: 2
+inverse_dynamics_check: true
+adjust_acc_by_vel: true
+
+#END

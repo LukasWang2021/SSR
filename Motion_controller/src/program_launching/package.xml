@@ -49,6 +49,8 @@
   <build_depend>process_comm</build_depend>
   <build_depend>modbus_manager</build_depend>
   <build_depend>kinematics_alg</build_depend>
+  <build_depend>trajectory_planner</build_depend>
+  <build_depend>joint_constraint</build_depend>
 
   <run_depend>base_device</run_depend>
   <run_depend>log_manager</run_depend>
@@ -59,6 +61,8 @@
   <run_depend>process_comm</run_depend>
   <run_depend>modbus_manager</run_depend>
   <run_depend>kinematics_alg</run_depend>
+  <run_depend>trajectory_planner</run_depend>
+  <run_depend>joint_constraint</run_depend>
 
 
   <!-- The export tag contains other, unspecified, tags -->

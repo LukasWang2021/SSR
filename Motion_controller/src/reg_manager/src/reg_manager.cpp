@@ -6,8 +6,8 @@ using namespace fst_ctrl;
 
 
 RegManager::RegManager():
-    log_ptr_(NULL),
     param_ptr_(NULL),
+    log_ptr_(NULL),
     nvram_obj_(NVRAM_AREA_LENGTH)
 {
     log_ptr_ = new fst_log::Logger();
@@ -22,6 +22,14 @@ RegManager::RegManager():
 
 RegManager::~RegManager()
 {
+    for(int i = 0; i < REG_TYPE_MAX; ++i)
+    {
+        if (reg_ptr_[i] != NULL)
+        {
+            delete reg_ptr_[i];
+            reg_ptr_[i] = NULL;
+        }
+    }
     if(log_ptr_ != NULL)
     {
         delete log_ptr_;
@@ -39,23 +47,23 @@ void RegManager::initNVRam()
     bool bWriteSync = false ;
 	char mr_buf[sizeof(NVRamMrRegData)];
 	char r_buf[sizeof(NVRamRRegData)];
-	char pr_buf[sizeof(NVRamPrRegData)];
+	//char pr_buf[sizeof(NVRamPrRegData)];
 	
-	char * pWriteAddr = NVRAM_HEAD ;
-	unsigned int uiWrite = NVRAM_Magic_NUM;
+	uint32_t pWriteAddr = NVRAM_HEAD ;
+	uint32_t uiWrite = NVRAM_Magic_NUM;
 	
-    FST_INFO("RegManager::initNVRam write = %08X at %08X", uiWrite, pWriteAddr);
-	bWriteSync = nvram_obj_.writeSync((uint8_t*)&uiWrite, pWriteAddr, sizeof(unsigned int));
+    FST_INFO("RegManager::initNVRam write = %08X at %08X", uiWrite, NVRAM_HEAD);
+	bWriteSync = nvram_obj_.writeSync((uint8_t*)&uiWrite, NVRAM_HEAD, sizeof(uint32_t));
 	while(bWriteSync == false)
 	{
     	FST_ERROR("writeSync NVRAM_HEAD failed");
-		bWriteSync = nvram_obj_.writeSync((uint8_t*)&uiWrite, pWriteAddr, sizeof(unsigned int));
+		bWriteSync = nvram_obj_.writeSync((uint8_t*)&uiWrite, NVRAM_HEAD, sizeof(uint32_t));
 		usleep(10000);
 	}
 	usleep(30000);
 	uiWrite = 0 ;
     FST_INFO("RegManager::initNVRam reset to = %08X", uiWrite);
-	nvram_obj_.read((uint8_t*)&uiWrite, NVRAM_HEAD, sizeof(unsigned int));
+	nvram_obj_.read((uint8_t*)&uiWrite, NVRAM_HEAD, sizeof(uint32_t));
 	if(uiWrite != NVRAM_Magic_NUM)
 	{
 		FST_INFO("RegManager::initNVRam read NG = %08X", uiWrite);
@@ -63,8 +71,8 @@ void RegManager::initNVRam()
 	}
 	
 	uiWrite = NVRAM_VERSION;
-	pWriteAddr += sizeof(unsigned int);
-	nvram_obj_.write((uint8_t*)&uiWrite, pWriteAddr, sizeof(unsigned int));
+	pWriteAddr += sizeof(uint32_t);
+	nvram_obj_.write((uint8_t*)&uiWrite, pWriteAddr, sizeof(uint32_t));
 	usleep(30000);
 
     FST_INFO("RegManager::initNVRam Starting 30% ...... ");
@@ -135,9 +143,9 @@ ErrorCode RegManager::init()
 			error = nvram_obj_.isNvramReady();
 			if(error == FST_NVRAM_OK)
 			{
-				char * pReadAddr = NVRAM_HEAD ;
+				uint32_t pReadAddr = NVRAM_HEAD ;
 				ErrCode error = nvram_obj_.read(
-					(uint8_t*)&uiMagic, pReadAddr, sizeof(unsigned int));
+					(uint8_t*)&uiMagic, pReadAddr, sizeof(uint32_t));
 			    FST_INFO("RegManager::init nvram_obj_.read = %08X at %08X return %08X",
 					uiMagic, pReadAddr, error);
 				if(NVRAM_Magic_NUM != uiMagic)

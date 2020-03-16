@@ -68,7 +68,7 @@ class DataMonitor {
     // Out:     None
     // Return:  None
     //------------------------------------------------------------    
-    static void setSnapshotSize(DataMonitor* moni,unsigned int ss_size);
+    static void setSnapshotSize(DataMonitor* moni,unsigned int ss_size, unsigned short trig_type);
     //------------------------------------------------------------
     // Function:    stopMonitor
     // Summary: Stop Monitor
@@ -152,6 +152,7 @@ class DataMonitor {
     std::vector<int> t_list_;
     int data_state_;// -1: record data not required 0: record  is required 1: record fifo is locked
     unsigned int snapshot_size_;
+    unsigned short trig_type_; // 0: trigger point at the middle 1: trigger point at the begin
 };  // class ServcfComm
 }   // namespace fst_controller
 

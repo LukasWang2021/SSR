@@ -16,8 +16,8 @@
 #define DEVICE_DIR                  "/root/install/share/runtime/device/"
 #define MODBUS_DIR                  "/root/install/share/runtime/modbus/"
 #define SERVO_DIR                   "/root/install/share/configuration/machine/"
-#define DYNAMICS_DIR                 "/root/install/share/runtime/dynamics/"
-
+#define DYNAMICS_DIR                "/root/install/share/runtime/dynamics/"
+#define ALGORITHM_DIR               "/root/install/share/runtime/algorithm/"
 
 #endif
 

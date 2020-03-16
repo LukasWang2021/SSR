@@ -78,10 +78,10 @@ int main()
     cout << "Reply : msg.header.error_code = " << recv_msg.header.error_code << endl;
     cout << "Reply : msg.property.authority = " << recv_msg.property.authority << endl;
     cout << "Reply : msg.error_code.data = " << std::hex << recv_msg.error_code.data << endl;
-    printf("Reply : msg.error_code.data = %x\n", recv_msg.error_code.data);
+    printf("Reply : msg.error_code.data = %llx\n", recv_msg.error_code.data);
     cout << "Reply : msg.data.summary_start_info_count = " << std::hex << recv_msg.data.summary_start_info_count << endl;
 
-    for (int i = 0; i != recv_msg.data.summary_start_info_count; ++i)
+    for (size_t i = 0; i != recv_msg.data.summary_start_info_count; ++i)
     {
         cout << "Reply : msg.data.summary_start_info[" << i << "].id = " << recv_msg.data.summary_start_info[i].id << endl;
         cout << "Reply : msg.data.summary_start_info[" << i << "].name = " << recv_msg.data.summary_start_info[i].name << endl;

@@ -81,13 +81,13 @@ int main()
     cout << "Reply : msg.data.positive_list_count = " << recv_msg.data.positive_list_count << endl;
     cout << "Reply : msg.data.negative_list_count = " << recv_msg.data.negative_list_count << endl;
 
-    for (int i = 0; i != recv_msg.data.positive_list_count; ++i)
+    for (size_t i = 0; i != recv_msg.data.positive_list_count; ++i)
     {
         cout << "Reply : msg.data.positive_list["<< i <<"].data = " << recv_msg.data.positive_list[i].data << endl;  
         cout << "Reply : msg.data.positive_list["<< i <<"].unit = " << recv_msg.data.positive_list[i].unit << endl;  
     }
 
-    for (int i = 0; i != recv_msg.data.negative_list_count; ++i)
+    for (size_t i = 0; i != recv_msg.data.negative_list_count; ++i)
     {
         cout << "Reply : msg.data.negative_list["<< i <<"].data = " << recv_msg.data.negative_list[i].data << endl;  
         cout << "Reply : msg.data.negative_list["<< i <<"].unit = " << recv_msg.data.negative_list[i].unit << endl;  

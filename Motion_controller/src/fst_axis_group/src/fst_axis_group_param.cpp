@@ -5,8 +5,8 @@
 using namespace fst_mc;
 
 FstAxisGroupParam::FstAxisGroupParam():
-    file_path_(COMPONENT_PARAM_FILE_DIR),
-    log_level_(3)  // default is Error Level
+    log_level_(3),  // default is Error Level
+    file_path_(COMPONENT_PARAM_FILE_DIR)
 {
     file_path_ += "fst_axis_group.yaml";
 }

@@ -14,8 +14,8 @@ using namespace fst_hal;
 using namespace fst_base;
 
 IoMapping::IoMapping():
-    log_ptr_(NULL),
 	param_ptr_(NULL),
+    log_ptr_(NULL),
 	sim_ptr_(NULL),
 	bypass_ptr_(NULL)
 {
@@ -238,7 +238,7 @@ ErrorCode IoMapping::setDOByBit(uint32_t user_port, uint8_t value)
 		return io_manager_ptr_->setBitValue(physics_id, value);
 	}
 
-	FST_WARN("invalid strKey = %s\n", strKey.c_str());
+	//FST_WARN("invalid strKey = %s\n", strKey.c_str());
 
 	return IO_INVALID_PARAM_ID;
 }
@@ -310,7 +310,6 @@ ErrorCode IoMapping::getROByBit(uint32_t user_port, uint8_t &value)
 	string strKey;
 	strKey.assign(cTemp);
 
-	ErrorCode ret = SUCCESS;
 	map<string, uint64_t>::iterator iter = io_mapper_.find(strKey);
 
 	if (iter != io_mapper_.end())
@@ -691,7 +690,7 @@ bool IoMapping::printIOMapper()
 
 	map<string, uint64_t>::iterator it;
 	for (it = io_mapper_.begin(); it != io_mapper_.end(); ++it)
-		printf("\t\t%s :: 0x%x \n", it->first.c_str(), it->second);
+		printf("\t\t%s :: 0x%llx \n", it->first.c_str(), it->second);
 
 	return true;
 }
@@ -724,11 +723,11 @@ vector<string> IoMapping::split(string str,string pattern)
 	str += pattern;
 
 	vector<string> result;
-	for(int i = 0; i < str.size(); i++)
+	for(uint32_t i = 0; i < str.size(); i++)
 	{
 		string::size_type pos = str.find(pattern, i);
 
-		if((int)pos < str.size())
+		if(pos < str.size())
 		{
 			string s = str.substr(i, pos-i);
 			result.push_back(s);

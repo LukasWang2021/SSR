@@ -11,8 +11,6 @@
 #include <atomic>
 #include <string.h>
 
-#define LOCK_FREE_FIFO_SIZE_MIN    2
-#define LOCK_FREE_FIFO_SIZE_MAX    1024
 
 #define ITEM_FREE   0
 #define ITEM_USED   1
@@ -40,34 +38,30 @@ class LockFreeFIFO
         if (flag_ptr_ != NULL) { delete[] flag_ptr_; flag_ptr_ = NULL; }
     }
 
-    bool init(size_t capacity)
+    bool init(uint32_t capacity)
     {
-        if (fifo_ptr_ == NULL && flag_ptr_ == NULL && capacity >= LOCK_FREE_FIFO_SIZE_MIN && capacity <= LOCK_FREE_FIFO_SIZE_MAX)
-        {
-            fifo_ptr_ = new T[capacity];
-            flag_ptr_ = new char[capacity];
+        if (fifo_ptr_ != NULL) { delete[] fifo_ptr_; fifo_ptr_ = NULL; }
+        if (flag_ptr_ != NULL) { delete[] flag_ptr_; flag_ptr_ = NULL; }
 
-            if (fifo_ptr_ != NULL && flag_ptr_ != NULL)
-            {
-                capacity_ = capacity;
-                fifo_head_ = 0;
-                fifo_tail_ = 0;
-                memset(fifo_ptr_, 0, capacity_ * sizeof(T));
-                memset(flag_ptr_, 0, capacity_ * sizeof(char));
-                return true;
-            }
-            else
-            {
-                if (fifo_ptr_ != NULL) { delete[] fifo_ptr_; flag_ptr_ = NULL; }
-                if (flag_ptr_ != NULL) { delete[] flag_ptr_; flag_ptr_ = NULL; }
-                return false;
-            }
+        fifo_ptr_ = new T[capacity + 1];
+        flag_ptr_ = new char[capacity + 1];
+
+        if (fifo_ptr_ != NULL && flag_ptr_ != NULL)
+        {
+            capacity_ = capacity;
+            fifo_head_ = 0;
+            fifo_tail_ = 0;
+            memset(fifo_ptr_, 0, (capacity + 1) * sizeof(T));
+            memset(flag_ptr_, 0, (capacity + 1) * sizeof(char));
+            return true;
         }
         else
         {
+            if (fifo_ptr_ != NULL) { delete[] fifo_ptr_; flag_ptr_ = NULL; }
+            if (flag_ptr_ != NULL) { delete[] flag_ptr_; flag_ptr_ = NULL; }
             return false;
         }
-    }    
+    }
 
     bool empty(void) const
     {
@@ -76,23 +70,28 @@ class LockFreeFIFO
 
     bool full(void) const
     {
-        size_t head = fifo_head_;
-        size_t tail = fifo_tail_;
-        tail = tail + 1 < capacity_ ? tail + 1 : 0;
+        uint32_t head = fifo_head_;
+        uint32_t tail = fifo_tail_;
+        tail = tail + 1 < (capacity_ + 1) ? tail + 1 : 0;
         return tail == head;
     }
     
-    size_t size(void) const
+    uint32_t size(void) const
     {
-        size_t head = fifo_head_;
-        size_t tail = fifo_tail_;
-        return tail >= head ? tail - head : tail + capacity_ - head;
+        uint32_t head = fifo_head_;
+        uint32_t tail = fifo_tail_;
+        return tail >= head ? tail - head : tail + (capacity_ + 1) - head;
+    }
+
+    uint32_t capacity(void) const
+    {
+        return capacity_;
     }
 
     bool push(const T &item)
     {
-        size_t target = fifo_tail_;
-        size_t next = target + 1 < capacity_ ? target + 1 : 0;
+        uint32_t target = fifo_tail_;
+        uint32_t next = target + 1 < (capacity_ + 1) ? target + 1 : 0;
 
         while (next != fifo_head_ && flag_ptr_[target] == ITEM_FREE)
         {
@@ -104,7 +103,7 @@ class LockFreeFIFO
             }
 
             target = fifo_tail_;
-            next = target + 1 < capacity_ ? target + 1 : 0;
+            next = target + 1 < (capacity_ + 1) ? target + 1 : 0;
         }
 
         return false;
@@ -112,8 +111,8 @@ class LockFreeFIFO
 
     bool fetch(T &item)
     {
-        size_t target = fifo_head_;
-        size_t next = target + 1 < capacity_ ? target + 1 : 0;
+        uint32_t target = fifo_head_;
+        uint32_t next = target + 1 < (capacity_ + 1) ? target + 1 : 0;
 
         while (target != fifo_tail_ && flag_ptr_[target] == ITEM_USED)
         {
@@ -125,7 +124,7 @@ class LockFreeFIFO
             }
 
             target = fifo_head_;
-            next = target + 1 < capacity_ ? target + 1 : 0;
+            next = target + 1 < (capacity_ + 1) ? target + 1 : 0;
         }
 
         return false;
@@ -140,9 +139,9 @@ class LockFreeFIFO
   private:
     T*      fifo_ptr_;
     char*   flag_ptr_;
-    size_t  capacity_;
-    std::atomic<size_t>  fifo_head_;
-    std::atomic<size_t>  fifo_tail_;
+    uint32_t  capacity_;
+    std::atomic<uint32_t>  fifo_head_;
+    std::atomic<uint32_t>  fifo_tail_;
 };
 
 

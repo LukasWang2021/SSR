@@ -13,11 +13,11 @@ void ControllerRpc::handleRpc0x000050E3(void* request_data_ptr, void* response_d
     if(tp_comm_ptr_->isTopicExisted(rq_data_ptr->data.topic_hash))
     {
         rs_data_ptr->data.data = CONTROLLER_PUBLISH_EXIST;
-        recordLog(CONTROLLER_LOG, rs_data_ptr->data.data, std::string("/rpc/controller/addTopic"));
+        //recordLog(CONTROLLER_LOG, rs_data_ptr->data.data, std::string("/rpc/controller/addTopic"));
         return;        
     }
 
-    int element_count = 0;
+    uint32_t element_count = 0;
     void* data_ptr;    
     TpPublish task = tp_comm_ptr_->generateTpPublishTask(rq_data_ptr->data.topic_hash, rq_data_ptr->data.time_min, rq_data_ptr->data.time_max);
     for(unsigned int i = 0; i < rq_data_ptr->data.element_hash_list_count; ++i)
@@ -61,7 +61,7 @@ void ControllerRpc::handleRpc0x000163A3(void* request_data_ptr, void* response_d
     if(tp_comm_ptr_->isRegTopicExisted(rq_data_ptr->data.topic_hash))
     {
         rs_data_ptr->data.data = CONTROLLER_PUBLISH_EXIST;
-        recordLog(CONTROLLER_LOG, rs_data_ptr->data.data, std::string("/rpc/controller/addRegTopic"));
+        //recordLog(CONTROLLER_LOG, rs_data_ptr->data.data, std::string("/rpc/controller/addRegTopic"));
         return;        
     }
     RegType reg_type;
@@ -79,7 +79,7 @@ void ControllerRpc::handleRpc0x000163A3(void* request_data_ptr, void* response_d
         }
     }
 
-    int element_count = 0;
+    uint32_t element_count = 0;
     void* data_ptr;
     TpPublish task = tp_comm_ptr_->generateTpPublishTask(rq_data_ptr->data.topic_hash, rq_data_ptr->data.time_min, rq_data_ptr->data.time_max);
     for(unsigned int i = 0; i < rq_data_ptr->data.element_hash_list_count; ++i)
@@ -115,11 +115,11 @@ void ControllerRpc::handleRpc0x000058F3(void* request_data_ptr, void* response_d
     if(tp_comm_ptr_->isIoTopicExisted(rq_data_ptr->data.topic_hash))
     {
         rs_data_ptr->data.data = CONTROLLER_PUBLISH_EXIST;
-        recordLog(CONTROLLER_LOG, rs_data_ptr->data.data, std::string("/rpc/controller/addIoTopic"));
+        //recordLog(CONTROLLER_LOG, rs_data_ptr->data.data, std::string("/rpc/controller/addIoTopic"));
         return;        
     }
 
-    int element_count = 0;
+    uint32_t element_count = 0;
     void* data_ptr;
     uint32_t port_type;
     uint32_t port_offset;

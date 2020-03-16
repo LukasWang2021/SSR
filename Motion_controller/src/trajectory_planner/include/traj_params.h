@@ -1,0 +1,52 @@
+#ifndef TRAJ_PARAMS_H
+#define TRAJ_PARAMS_H
+
+#include <string>
+#include <joint.h>
+#include <parameter_manager/parameter_manager_param_group.h>
+#include <ds_planner/ds_planner.h>
+
+
+
+class TrajParams
+{
+public:
+    TrajParams();
+    ~TrajParams();
+
+    void setNumOfJoint(uint32_t joint_num);
+
+    basic_alg::Joint torque_max_;
+    basic_alg::Joint omega_max_;
+    basic_alg::Joint alpha_max_;
+    basic_alg::Joint beta_max_[MAX_JERK_NUM];
+
+    double position_vel_max_;
+    double position_acc_max_;
+    double position_jerk_max_[MAX_JERK_NUM];
+
+    double quaternion_vel_max_;
+    double quaternion_acc_max_;
+    double quaternion_jerk_max_[MAX_JERK_NUM];
+
+    basic_alg::Joint  omega_max_of_cart_motion_;
+
+    int max_jerk_num_;
+    bool dynamics_check_;
+    bool adjust_acc_by_vel_;
+ 
+    bool loadConstraint();
+    bool saveConstraint();
+    bool loadConfig();
+
+private:
+    uint32_t joint_num_;
+    fst_parameter::ParamGroup yaml_help_;
+    std::string constraint_file_path_;
+    std::string config_file_path_;
+
+
+};
+
+#endif
+

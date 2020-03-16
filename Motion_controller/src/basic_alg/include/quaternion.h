@@ -24,7 +24,7 @@ public:
     void reverse();
     void convertToEuler(basic_alg::Euler& euler) const;
     void convertToRotationMatrix(basic_alg::RotationMatrix& matrix) const;
-    double getIncludedAngle(const Quaternion& quaternion, bool auto_reverse = true) const;
+    double getIncludedAngle(const Quaternion& quaternion) const;
     
     double& operator[](size_t index);
     const double& operator[](size_t index) const;

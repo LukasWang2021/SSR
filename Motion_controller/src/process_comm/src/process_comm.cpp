@@ -10,8 +10,8 @@ ProcessComm* ProcessComm::instance_ = NULL;
 ErrorCode ProcessComm::init_error_code_ = SUCCESS;
 
 ProcessComm::ProcessComm():
-    log_ptr_(NULL), 
     param_ptr_(NULL), 
+    log_ptr_(NULL), 
     controller_server_ptr_(NULL),
     controller_client_ptr_(NULL),
     interpreter_server_ptr_(NULL),
@@ -74,7 +74,7 @@ ProcessComm::ProcessComm():
 
 ProcessComm::~ProcessComm()
 {
-    /*if(controller_client_ptr_ != NULL)
+    if(controller_client_ptr_ != NULL)
     {
         delete controller_client_ptr_;
         controller_client_ptr_ = NULL;
@@ -102,7 +102,7 @@ ProcessComm::~ProcessComm()
     {
         delete heartbeat_client_ptr_;
         heartbeat_client_ptr_ = NULL;
-    }*/
+    }
 
     if(log_ptr_ != NULL)
     {
@@ -113,7 +113,7 @@ ProcessComm::~ProcessComm()
     {
         delete param_ptr_;
         param_ptr_ = NULL;
-    }    
+    }   
 }
 
 ProcessComm* ProcessComm::getInstance()

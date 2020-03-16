@@ -2,7 +2,6 @@
 #include <unistd.h>
 #include <sys/wait.h>
 #include <sys/types.h>
-
 #include "common.h"
 using namespace fst_log;
 #else
@@ -43,6 +42,14 @@ void signalInterrupt(int signo)
 	Return: 		Never
 *************************************************/ 
 int main(int  argc, char *argv[])
+{}
+
+void prgRoutine(ControllerSm* state_machine_ptr, 
+					fst_mc::MotionControl* motion_control_ptr, 
+					RegManager* reg_manager_ptr, 
+                    IoMapping* io_mapping_ptr, 
+                    IoManager* io_manager_ptr, 
+                    fst_hal::ModbusManager* modbus_manager_ptr)
 {
 	InterpreterControl intprt_ctrl; 
 	memset(&intprt_ctrl, 0x00, sizeof(intprt_ctrl));
@@ -53,6 +60,13 @@ int main(int  argc, char *argv[])
 		log_ptr_ = new fst_log::Logger();
     	FST_LOG_INIT("Interpreter");
 	}
+	
+	state_machine_ptr_  = state_machine_ptr;
+	motion_control_ptr_ = motion_control_ptr;
+	reg_manager_ptr_    = reg_manager_ptr;
+	io_mapping_ptr_     = io_mapping_ptr;
+	io_manager_ptr_     = io_manager_ptr;
+	modbus_manager_ptr_ = modbus_manager_ptr;
 #else
 	//	append_io_mapping();
 	intprt_ctrl.cmd = fst_base::INTERPRETER_SERVER_CMD_LAUNCH ;
@@ -60,56 +74,10 @@ int main(int  argc, char *argv[])
 	initInterpreter();
 
 	bool bRet = load_register_data();
-	if(bRet)
-	{
-		while(1)
-		{
-#ifndef WIN32
-			std::vector<fst_base::ProcessCommRequestResponse>::iterator it;
-			std::vector<fst_base::ProcessCommRequestResponse> request_list
-				= g_objInterpreterServer->popTaskFromRequestList();
-			if(request_list.size() != 0)
-			{
-				for(it = request_list.begin(); it != request_list.end(); ++it)
-				{
-					memset(&intprt_ctrl, 0x00, sizeof(intprt_ctrl));
-					intprt_ctrl.cmd = it->cmd_id ;
-		            FST_INFO("parseCtrlComand at %d ", intprt_ctrl.cmd);
-					parseCtrlComand(intprt_ctrl, it->request_data_ptr);
-					bool * bRsp = it->response_data_ptr;
-					*bRsp = true;
-					g_objInterpreterServer->pushTaskToResponseList(*it);
-				}
-				usleep(1000);
-			    static int count = 0;
-			    if (++count >= IO_ERROR_INTERVAL_COUNT)
-			    {
-					updateIOError();
-			        count = 0;
-			    }
-			}
-			else
-			{
-				intprt_ctrl.cmd = fst_base::INTERPRETER_SERVER_CMD_LOAD ;
-				usleep(1000);
-			}
-#else
-			if (intprt_ctrl.cmd != fst_base::INTERPRETER_SERVER_CMD_LOAD)
-			{
-				parseCtrlComand(intprt_ctrl, "Test_MOVFKG");
-				Sleep(1);
-				intprt_ctrl.cmd = fst_base::INTERPRETER_SERVER_CMD_RESUME ;
-				parseCtrlComand(intprt_ctrl, "");
-				intprt_ctrl.cmd = fst_base::INTERPRETER_SERVER_CMD_LOAD ;
-			}
-			Sleep(100);
-#endif
-		}
-	}
-	else
-	{
-        FST_ERROR("fst_base::ProcessComm Failed");
-	}
+}
+	
+void prgRoutineUnInit(void)
+{
 	uninitInterpreter();
 #ifndef WIN32
 	if(log_ptr_ != NULL)

@@ -38,7 +38,8 @@ void ControllerRpc::handleRpc0x00016764(void* request_data_ptr, void* response_d
         rs_data_ptr->data.data = COORDINATE_MANAGER_INVALID_ARG;
     }
 
-    recordLog(COORDINATE_MANAGER_LOG, rs_data_ptr->data.data, std::string("/rpc/coordinate_manager/addUserCoord"));
+    if (rs_data_ptr->data.data != SUCCESS)
+        recordLog(COORDINATE_MANAGER_LOG, rs_data_ptr->data.data, std::string("/rpc/coordinate_manager/addUserCoord"));
 }
 
 // "/rpc/coordinate_manager/deleteUserCoord"
@@ -48,7 +49,9 @@ void ControllerRpc::handleRpc0x0000BAF4(void* request_data_ptr, void* response_d
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
     rs_data_ptr->data.data = coordinate_manager_ptr_->deleteCoord(rq_data_ptr->data.data);
-    recordLog(COORDINATE_MANAGER_LOG, rs_data_ptr->data.data, std::string("/rpc/coordinate_manager/deleteUserCoord"));
+
+    if (rs_data_ptr->data.data != SUCCESS)
+        recordLog(COORDINATE_MANAGER_LOG, rs_data_ptr->data.data, std::string("/rpc/coordinate_manager/deleteUserCoord"));
 }
 
 // "/rpc/coordinate_manager/updateUserCoord"
@@ -93,7 +96,8 @@ void ControllerRpc::handleRpc0x0000EC14(void* request_data_ptr, void* response_d
         rs_data_ptr->data.data = COORDINATE_MANAGER_INVALID_ARG;
     }
 
-    recordLog(COORDINATE_MANAGER_LOG, rs_data_ptr->data.data, std::string("/rpc/coordinate_manager/updateUserCoord"));
+    if (rs_data_ptr->data.data != SUCCESS)
+        recordLog(COORDINATE_MANAGER_LOG, rs_data_ptr->data.data, std::string("/rpc/coordinate_manager/updateUserCoord"));
 }
 
 // "/rpc/coordinate_manager/moveUserCoord"
@@ -110,7 +114,9 @@ void ControllerRpc::handleRpc0x0000E104(void* request_data_ptr, void* response_d
     {
         rs_data_ptr->data.data = COORDINATE_MANAGER_INVALID_ARG;
     }
-    recordLog(COORDINATE_MANAGER_LOG, rs_data_ptr->data.data, std::string("/rpc/coordinate_manager/moveUserCoord"));
+
+    if (rs_data_ptr->data.data != SUCCESS)
+        recordLog(COORDINATE_MANAGER_LOG, rs_data_ptr->data.data, std::string("/rpc/coordinate_manager/moveUserCoord"));
 }
 
 // "/rpc/coordinate_manager/getUserCoordInfoById"
@@ -137,7 +143,9 @@ void ControllerRpc::handleRpc0x00004324(void* request_data_ptr, void* response_d
         rs_data_ptr->data.data.data[4] = info.data.euler_.b_;
         rs_data_ptr->data.data.data[5] = info.data.euler_.c_;
     }
-    recordLog(COORDINATE_MANAGER_LOG, rs_data_ptr->error_code.data, std::string("/rpc/coordinate_manager/getUserCoordInfoById"));
+
+    if (rs_data_ptr->error_code.data != SUCCESS)
+        recordLog(COORDINATE_MANAGER_LOG, rs_data_ptr->error_code.data, std::string("/rpc/coordinate_manager/getUserCoordInfoById"));
 }
 
 // "/rpc/coordinate_manager/getAllValidUserCoordSummaryInfo"

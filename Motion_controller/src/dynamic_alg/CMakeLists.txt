@@ -142,7 +142,6 @@ install(FILES config/dynamic_alg_rtm_7kg_A6.yaml
     DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/runtime/dynamics/
 )
 
-
 install(DIRECTORY config
     DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )

@@ -31,7 +31,7 @@ bool isCorrect(Joint& init, Joint& result)
 
 bool isNearestReferenceJointSingle(const double& init_single_joint, const double& ref_single_joint, const int& single_turn)
 {
-    double turn_joint[4], delta_joint[4], single_joint;
+    double turn_joint[4], delta_joint[4];
     turn_joint[0] = init_single_joint;
     turn_joint[1] = init_single_joint - single_turn * 2 * M_PI;
     turn_joint[2] = init_single_joint - 2 * M_PI;

@@ -15,18 +15,19 @@ Summary:    dealing with UIUO
 #include <iostream>
 #include <sstream>
 #include "error_monitor.h"
+#include "forsight_inter_control.h"
 
 using namespace std;
 using namespace fst_base;
 using namespace fst_ctrl;
 
 ProgramLaunching::ProgramLaunching():
-    log_ptr_(NULL),
     param_ptr_(NULL),
+    log_ptr_(NULL),
     io_mapping_ptr_(NULL),
     controller_client_ptr_(NULL),
-    launch_mode_setting_(PROGRAM_LOCAL_TRIGGER),
-    launch_info_(NULL)
+    launch_info_(NULL),
+    launch_mode_setting_(PROGRAM_LOCAL_TRIGGER)
 {
     log_ptr_ = new fst_log::Logger();
     param_ptr_ = new ProgramLaunchingParam();
@@ -211,7 +212,12 @@ bool ProgramLaunching::isRisingEdgeAntiShake(int index)
 void ProgramLaunching::sendInterpreterStart(int index)
 {
     FST_INFO("Macro start prgram: %s", macro_vector_[index].macroProgram);
-    controller_client_ptr_->start(std::string(macro_vector_[index].macroProgram));  
+    // controller_client_ptr_->start(std::string(macro_vector_[index].macroProgram));  
+    InterpreterControl intprt_ctrl ;
+    intprt_ctrl.autoMode = MACRO_TRIGGER_U;
+    FST_ERROR("intprt_ctrl.autoMode %d", intprt_ctrl.autoMode);
+	intprt_ctrl.cmd = fst_base::INTERPRETER_SERVER_CMD_START ;
+    parseCtrlComand(intprt_ctrl, macro_vector_[index].macroProgram);
 }
 
 void ProgramLaunching::initLaunchInfo(void)

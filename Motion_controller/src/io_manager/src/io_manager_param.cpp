@@ -5,9 +5,9 @@
 using namespace fst_hal;
 
 IoManagerParam::IoManagerParam():
-    file_path_(COMPONENT_PARAM_FILE_DIR),
     log_level_(3),  // default is Error Level
-    cycle_time_(10000)
+    cycle_time_(10000),
+    file_path_(COMPONENT_PARAM_FILE_DIR)
 {
     file_path_ += "io_manager.yaml";
 }

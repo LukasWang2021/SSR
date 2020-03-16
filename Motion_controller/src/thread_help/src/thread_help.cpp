@@ -3,7 +3,8 @@
 
 using namespace fst_base;
 
-ThreadHelp::ThreadHelp()
+ThreadHelp::ThreadHelp():
+    pid_(0)
 {
 
 }

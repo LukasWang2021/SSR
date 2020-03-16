@@ -20,9 +20,9 @@ ControllerRpc::ControllerRpc():
     device_manager_ptr_(NULL),
     motion_control_ptr_(NULL),
     controller_client_ptr_(NULL),
-    io_mapping_ptr_(NULL),
-    program_launching_(NULL),
+    io_mapping_ptr_(NULL),   
     modbus_manager_ptr_(NULL),
+    program_launching_(NULL),
     file_manager_ptr_(NULL),
     system_manager_ptr_(NULL),
     param_manager_ptr_(NULL)

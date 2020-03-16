@@ -27,11 +27,11 @@ int FstIoDevice::io_dev_count_ = 0;
 
 FstIoDevice::FstIoDevice(int address):
     BaseDevice(address, fst_hal::DEVICE_TYPE_FST_IO),
-    log_ptr_(NULL),
     param_ptr_(NULL),
+    log_ptr_(NULL),
+    address_(address),
     error_code_(0),
-    pre_code_(0),
-    address_(address)
+    pre_code_(0)
 {
     log_ptr_ = new fst_log::Logger();
     param_ptr_ = new FstIoDeviceParam();
@@ -169,7 +169,16 @@ ErrorCode FstIoDevice::getDiValue(uint32_t port_offset, uint8_t &value)
     
     int frame = (port_offset - 1) / 8;
     int shift = (port_offset - 1) % 8;
+
+    IODeviceData data;
+    initIODeviceData(data);
     data_mutex_.lock();
+    memcpy(data.output, output_, sizeof(data.output));
+    if (freshenDeviceDataFromMem(data) == SUCCESS)
+    {
+        memcpy(&dev_values_.DI, &data.input, 4);
+    }
+
     value = (dev_values_.DI[frame] >> shift) & 0x01;
     data_mutex_.unlock();
 
@@ -187,7 +196,16 @@ ErrorCode FstIoDevice::getDoValue(uint32_t port_offset, uint8_t &value)
     
     int frame = (port_offset - 1) / 8;
     int shift = (port_offset - 1) % 8;
+
+    IODeviceData data;
+    initIODeviceData(data);
     data_mutex_.lock();
+    memcpy(data.output, output_, sizeof(data.output));
+    if (freshenDeviceDataFromMem(data) == SUCCESS)
+    {
+        memcpy(&dev_values_.DO, &data.output, 4);
+    }
+
     value = (dev_values_.DO[frame] >> shift) & 0x01;
     data_mutex_.unlock();
 
@@ -205,7 +223,16 @@ ErrorCode FstIoDevice::getRiValue(uint32_t port_offset, uint8_t &value)
     
     int frame = (port_offset - 1) / 8;
     int shift = (port_offset - 1) % 8;
+
+    IODeviceData data;
+    initIODeviceData(data);
     data_mutex_.lock();
+    memcpy(data.output, output_, sizeof(data.output));
+    if (freshenDeviceDataFromMem(data) == SUCCESS)
+    {
+        memcpy(&dev_values_.RI, &data.input[4], 1);
+    }
+
     value = (dev_values_.RI[frame] >> shift) & 0x01;
     data_mutex_.unlock();
 
@@ -223,7 +250,16 @@ ErrorCode FstIoDevice::getRoValue(uint32_t port_offset, uint8_t &value)
     
     int frame = (port_offset - 1) / 8;
     int shift = (port_offset - 1) % 8;
+
+    IODeviceData data;
+    initIODeviceData(data);
     data_mutex_.lock();
+    memcpy(data.output, output_, sizeof(data.output));
+    if (freshenDeviceDataFromMem(data) == SUCCESS)
+    {
+        memcpy(&dev_values_.RO, &data.output[4], 1);
+    }
+
     value = (dev_values_.RO[frame] >> shift) & 0x01;
     data_mutex_.unlock();
 
@@ -259,11 +295,17 @@ ErrorCode FstIoDevice::setDoValue(uint32_t port_offset, uint8_t value)
     int frame = (port_offset - 1) / 8;
     int shift = (port_offset - 1) % 8;
 
+    IODeviceData data;
+    initIODeviceData(data);
     data_mutex_.lock();
     if (value == 0)
         output_[frame] &= ~(0x01 << shift);
     else
         output_[frame] |= 0x01 << shift;
+
+    memcpy(data.output, output_, sizeof(data.output));
+    freshenDeviceDataFromMem(data);
+
     data_mutex_.unlock();
 
     return SUCCESS;
@@ -286,11 +328,17 @@ ErrorCode FstIoDevice::setRoValue(uint32_t port_offset, uint8_t value)
     int frame = (port_offset - 1) / 8;
     int shift = (port_offset - 1) % 8;
 
+    IODeviceData data;
+    initIODeviceData(data);
     data_mutex_.lock();
     if (value == 0)
         output_[frame + 4] &= ~(0x01 << shift);
     else
         output_[frame + 4] |= 0x01 << shift;
+
+    memcpy(data.output, output_, sizeof(data.output));
+    freshenDeviceDataFromMem(data);
+
     data_mutex_.unlock();
 
     return SUCCESS;
@@ -309,17 +357,14 @@ ErrorCode FstIoDevice::updateDeviceData(void)
     initIODeviceData(data);
     data_mutex_.lock();
     memcpy(data.output, output_, sizeof(data.output));
-    data_mutex_.unlock();
 
-    error_code_ = getDeviceDataFromMem(data);
+    error_code_ = freshenDeviceDataFromMem(data);
     if(error_code_ == SUCCESS)
     {
-        data_mutex_.lock();
         memcpy(&dev_values_.DI, &data.input, 4);    // DI contains 4 bytes
         memcpy(&dev_values_.DO, &data.output, 4);
         memcpy(&dev_values_.RI, &data.input[4], 1); // RI contains 1 bytes
         memcpy(&dev_values_.RO, &data.output[4], 1);
-        data_mutex_.unlock();
         setValid(true);
     }
     else if (error_code_ == GET_IO_FAIL)
@@ -330,7 +375,8 @@ ErrorCode FstIoDevice::updateDeviceData(void)
     {
         setValid(false);
     }
-    
+    data_mutex_.unlock();
+
     //only upload error one time.
     if ((pre_code_ != error_code_) && (error_code_ != SUCCESS))
     {
@@ -357,7 +403,7 @@ void FstIoDevice::initIODeviceData(IODeviceData &data)
     }
 }
 
-ErrorCode FstIoDevice::getDeviceDataFromMem(IODeviceData &data)
+ErrorCode FstIoDevice::freshenDeviceDataFromMem(IODeviceData &data)
 {
     if (is_virtual_ == true) {
         data.input[0] = 0x0;

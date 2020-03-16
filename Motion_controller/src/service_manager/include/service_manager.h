@@ -77,13 +77,13 @@ public:
     bool manageResponse(void);
  
     //------------------------------------------------------------
-    // Function:  routineThreadFunc
+    // Function:  runLoop
     // Summary: The main loop to run this process. 
     // In:      None.
     // Out:     None.
     // Return:  None.
     //------------------------------------------------------------
-    void routineThreadFunc();
+    void runLoop(void);
 
     void setExit(void);
     bool isExit(void);
@@ -95,7 +95,7 @@ private:
      
     fst_log::Logger* log_ptr_;
     ServiceManagerParam* param_ptr_;
-    fst_base::ThreadHelp routine_thread_;
+    fst_base::ThreadHelp thread_routine_ptr_;
     int cycle_time_;
     int max_barecore_timeout_count_;
     int heartbeat_with_barecore_count_;
@@ -271,6 +271,6 @@ private:
 };
 } //namespace fst_service_manager
 
-void serviceManagerRoutineThreadFunc(void* arg);
+void* serviceManagerRoutineThreadFunc(void* arg);
 
 #endif //SERVICE_MANAGER_SERVICE_MANAGER_H_

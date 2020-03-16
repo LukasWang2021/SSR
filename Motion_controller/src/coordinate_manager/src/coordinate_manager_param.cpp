@@ -6,11 +6,11 @@
 using namespace fst_ctrl;
 
 CoordinateManagerParam::CoordinateManagerParam():
-    file_path_(COMPONENT_PARAM_FILE_DIR),
     log_level_(fst_log::MSG_LEVEL_ERROR),
     max_name_length_(32),
     max_comment_length_(32),
-    max_number_of_coords_(10)
+    max_number_of_coords_(10),
+    file_path_(COMPONENT_PARAM_FILE_DIR)
 {
     file_path_ += "coordinate_manager.yaml";
 }

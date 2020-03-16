@@ -9,8 +9,8 @@ using namespace fst_ctrl;
 using namespace basic_alg;
 
 ToolManager::ToolManager():
-    log_ptr_(NULL),
-    param_ptr_(NULL)
+    param_ptr_(NULL),
+    log_ptr_(NULL)
 {
     log_ptr_ = new fst_log::Logger();
     param_ptr_ = new ToolManagerParam();
@@ -53,7 +53,7 @@ ErrorCode ToolManager::init()
 
 ErrorCode ToolManager::addTool(ToolInfo& info)
 {
-    if(info.id >= tool_set_.size()
+    if(info.id >= static_cast<int>(tool_set_.size())
         || info.id == 0
         || tool_set_[info.id].is_valid)
     {
@@ -91,7 +91,7 @@ ErrorCode ToolManager::addTool(ToolInfo& info)
 
 ErrorCode ToolManager::deleteTool(int id)
 {
-    if(id >= tool_set_.size()
+    if(id >= static_cast<int>(tool_set_.size())
         || id == 0)
     {
         FST_ERROR("Failed to delete tool %d, invalid tool id", id);
@@ -105,7 +105,7 @@ ErrorCode ToolManager::deleteTool(int id)
     memset(&tool_set_[id].data, 0, sizeof(PoseEuler));
     if(!writeToolInfoToYaml(tool_set_[id]))
     {
-        FST_ERROR("Failed to delete tool %d, write yaml failed", info.id);
+        FST_ERROR("Failed to delete tool %d, write yaml failed", id);
         return TOOL_MANAGER_TOOLINFO_FILE_WRITE_FAILED;
     }
     return SUCCESS;
@@ -113,7 +113,7 @@ ErrorCode ToolManager::deleteTool(int id)
 
 ErrorCode ToolManager::updateTool(ToolInfo& info)
 {
-    if(info.id >= tool_set_.size()
+    if(info.id >= static_cast<int>(tool_set_.size())
         || info.id == 0
         || !tool_set_[info.id].is_valid)
     {
@@ -185,7 +185,7 @@ ErrorCode ToolManager::moveTool(int expect_id, int original_id)
 
 ErrorCode ToolManager::getToolInfoById(int id, ToolInfo& info)
 {
-    if(id >= tool_set_.size()
+    if(id >= static_cast<int>(tool_set_.size())
         || id <= 0)
     {
         FST_ERROR("Failed to get tool %d information, invalid tool id", id);
@@ -248,7 +248,7 @@ bool ToolManager::readAllToolInfoFromYaml(int number_of_tools)
     
     if (tool_info_yaml_help_.loadParamFile(tool_info_file_path_.c_str()))
     {
-        for(unsigned int i = 1; i <= number_of_tools; ++i)
+        for(int i = 1; i <= number_of_tools; ++i)
         {
             std::string tool_info_path;
             tool_info_path = getToolInfoPath(i);

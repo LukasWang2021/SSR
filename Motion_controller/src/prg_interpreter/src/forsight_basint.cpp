@@ -1,6 +1,7 @@
 // Forsight_BASINT.cpp : Defines the entry point for the console application.
 //
 /* A tiny BASIC interpreter */
+#include <sys/syscall.h>
 #include "forsight_basint.h"
 #include "forsight_innercmd.h"
 #include "forsight_innerfunc.h"
@@ -12,6 +13,7 @@
 #include "time.h"
 #ifndef WIN32
 #include "error_code.h"
+#include<sys/mman.h>
 #else
 #include "macro_instr_mgr.h"
 #include <io.h>
@@ -63,14 +65,15 @@
 #define CALLMACRO 30
 #define NOP       31
 
-enum var_inner_type { FORSIGHT_CHAR, FORSIGHT_INT, FORSIGHT_FLOAT };
-
 #define FORSIGHT_RETURN_VALUE   "forsight_return_value"
 #define FORSIGHT_CURRENT_JOINT  "j_pos"
 #define FORSIGHT_CURRENT_POS    "l_pos"
 	
 #define FORSIGHT_REGISTER_ON    "on"
 #define FORSIGHT_REGISTER_OFF   "off"
+
+#define FORSIGHT_REGISTER_TRUE    "true"
+#define FORSIGHT_REGISTER_FALSE   "false"
 
 #define FORSIGHT_TIMER_START    "start"
 #define FORSIGHT_TIMER_STOP     "stop"
@@ -199,7 +202,7 @@ void unary(char, eval_value *r),
 	arith(struct thread_control_block * objThreadCntrolBlock, char o, eval_value *r, eval_value *h);
 
 int load_program(struct thread_control_block * objThreadCntrolBlock, char *p, char *pname);
-void scan_labels(struct thread_control_block * objThreadCntrolBlock, 
+int scan_labels(struct thread_control_block * objThreadCntrolBlock, 
 				SubLabelType type, char * pname);
 int add_label(struct thread_control_block * objThreadCntrolBlock, struct sub_label objLabel);
 char *find_label(struct thread_control_block * objThreadCntrolBlock, char *s);
@@ -214,12 +217,20 @@ void get_args(struct thread_control_block * objThreadCntrolBlock);
 void get_params(struct thread_control_block * objThreadCntrolBlock);
 int  calc_line_from_prog(struct thread_control_block * objThreadCntrolBlock);
 
+bool call_inner_func(struct thread_control_block * objThreadCntrolBlock, eval_value *result);
+
 #ifdef WIN32
 HANDLE    g_basic_interpreter_handle[NUM_THREAD + 1];
 extern MacroInstrMgr  *  g_macro_instr_mgr_ptr; 
 #else
 pthread_t g_basic_interpreter_handle[NUM_THREAD + 1];
-fst_log::Logger * log_ptr_ = NULL;
+fst_log::Logger *      log_ptr_            = NULL;
+ControllerSm*          state_machine_ptr_  = NULL;
+fst_mc::MotionControl* motion_control_ptr_ = NULL;
+RegManager*            reg_manager_ptr_    = NULL;
+IoMapping*             io_mapping_ptr_     = NULL;
+IoManager*             io_manager_ptr_     = NULL;
+fst_hal::ModbusManager* modbus_manager_ptr_ = NULL; 
 #endif
 
 /************************************************* 
@@ -235,12 +246,23 @@ unsigned __stdcall basic_interpreter(void* arg)
 void* basic_interpreter(void* arg)
 #endif
 {
+#ifdef WIN32
+	FST_INFO("Starting call_interpreter and memory will be locked in the Linux platform.");
+#else
+    if (mlockall(MCL_CURRENT|MCL_FUTURE) == -1)     
+	{        
+		FST_ERROR("mlockall failed"); 
+		return MC_FAIL_IN_INIT; 
+	}
+#endif // WIN32
+
 	int iIdx = 0;
 	//  int iRet = 0;
 	struct thread_control_block * objThreadCntrolBlock
 					= (struct thread_control_block*)arg;
 	// Set this state outside according prog_mode
 	// setPrgmState(objThreadCntrolBlock, EXECUTE_R); 
+	FST_WARN("ThreadBasicInterpreter[%d] TID %ld is starting", objThreadCntrolBlock->iThreadIdx, syscall(SYS_gettid));
 	FST_INFO("Enter call_interpreter.");
 	//  if(objThreadCntrolBlock->is_in_macro)
 	//  {
@@ -268,9 +290,8 @@ void* basic_interpreter(void* arg)
 	g_basic_interpreter_handle[iIdx] = NULL; 
 	return NULL;
 #else
-	FST_INFO("Enter pthread_join.");
-	pthread_join(g_basic_interpreter_handle[iIdx], NULL);
-	FST_INFO("Left  pthread_join.");
+    munlockall();
+	FST_WARN("ThreadBasicInterpreter[%d] TID %ld is destroyed.", iIdx, syscall(SYS_gettid));
 	fflush(stdout);
 	g_basic_interpreter_handle[iIdx] = 0;
 	return NULL ;
@@ -344,15 +365,15 @@ int getLinenum(
 	Output: 		NULL
 	Return: 		NULL
 *************************************************/ 
-void setRunningMacroInstr(char* program_name)
-{
-#ifdef WIN32
-  if (g_macro_instr_mgr_ptr)
-  {
-	  g_macro_instr_mgr_ptr->setRunningInMacroInstrList(program_name);
-  }
-#endif
-}
+//	void setRunningMacroInstr(char* program_name)
+//	{
+//#ifdef WIN32
+//	  if (g_macro_instr_mgr_ptr)
+//	  {
+//		  g_macro_instr_mgr_ptr->setRunningInMacroInstrList(program_name);
+//	  }
+//#endif
+//	}
 
 /************************************************* 
 	Function:		resetRunningMacroInstr
@@ -361,15 +382,15 @@ void setRunningMacroInstr(char* program_name)
 	Output: 		NULL
 	Return: 		NULL
 *************************************************/ 
-void resetRunningMacroInstr(char* program_name)
-{
-#ifdef WIN32
-  if (g_macro_instr_mgr_ptr)
-  {
-	  g_macro_instr_mgr_ptr->resetRunningInMacroInstrList(program_name);
-  }
-#endif
-}
+//	void resetRunningMacroInstr(char* program_name)
+//	{
+//#ifdef WIN32
+//	  if (g_macro_instr_mgr_ptr)
+//	  {
+//		  g_macro_instr_mgr_ptr->resetRunningInMacroInstrList(program_name);
+//	  }
+//#endif
+//	}
 	
 /************************************************* 
 	Function:		setLinenum
@@ -381,13 +402,13 @@ void resetRunningMacroInstr(char* program_name)
 *************************************************/ 
 void setLinenum(struct thread_control_block* objThreadCntrolBlock, int iLinenum)
 {
-    FST_INFO("setLinenum : %d at the %dth thread", 
-		iLinenum, objThreadCntrolBlock->iThreadIdx);
 	objThreadCntrolBlock->iLineNum = iLinenum;
 	if(iLinenum < (int)objThreadCntrolBlock->vector_XPath.size())
 	{
-		FST_INFO("setLinenum: setCurLine (%d) at %s", 
-			iLinenum, objThreadCntrolBlock->vector_XPath[iLinenum].c_str());
+		FST_INFO("setLinenum: setCurLine (%d) at %s (%08X) at the %dth thread", 
+			iLinenum, objThreadCntrolBlock->vector_XPath[iLinenum].c_str(), 
+			objThreadCntrolBlock->prog_jmp_line[iLinenum].start_prog_pos, 
+			objThreadCntrolBlock->iThreadIdx);
 		setCurLine(objThreadCntrolBlock, 
 			(char *)objThreadCntrolBlock->vector_XPath[iLinenum].c_str(), iLinenum);
 	}
@@ -431,11 +452,12 @@ void printCurrentLine(struct thread_control_block* objThreadCntrolBlock, int iId
 	{
 		*cLineContentPtr++=*cLineContentProgPtr++;
 	}
-	FST_INFO("\t(0X%08X - 0X%08X)(%d): (%s) at 0X%08X(%d)", 
+	FST_INFO("\t(%08X - %08X) (%d): (%s %s ) at %d", 
 		objThreadCntrolBlock->prog_jmp_line[iIdx].start_prog_pos, 
 		objThreadCntrolBlock->prog_jmp_line[iIdx].end_prog_pos, 
-		objThreadCntrolBlock->iLineNum, cLineContent, 
-		objThreadCntrolBlock->prog, objThreadCntrolBlock->iThreadIdx);
+		objThreadCntrolBlock->iLineNum, objThreadCntrolBlock->token, 
+		cLineContent,
+		objThreadCntrolBlock->iThreadIdx);
 }
 
 /************************************************* 
@@ -452,6 +474,7 @@ void printProgJmpLine(struct thread_control_block* objThreadCntrolBlock)
 	// Scan the labels in the import files
 	proglabelsScan = objThreadCntrolBlock->prog ;
 	iLineNumTemp   = objThreadCntrolBlock->iLineNum ;
+	
 	for(unsigned i=0; i < objThreadCntrolBlock->prog_jmp_line.size(); i++)
 	{
 	    objThreadCntrolBlock->iLineNum = i; 
@@ -471,6 +494,10 @@ checkHomePoseResult check_home_pose(struct thread_control_block* objThreadCntrol
 	updateHomePoseMgr();
 	if(strlen(objThreadCntrolBlock->home_pose_exp) == 0)
 	{
+#ifndef WIN32
+		// redmine/issues/1229
+		serror(objThreadCntrolBlock, 28); /* Home pose not exist */
+#endif
 		return HOME_POSE_WITHIN_CUR_POS ;
 	}
 	memset(home_pose_exp, 0x00, LAB_LEN);
@@ -550,6 +577,7 @@ int call_interpreter(struct thread_control_block* objThreadCntrolBlock, int mode
   // char *t = 0;
 
   objThreadCntrolBlock->ret_value = 0.0 ;
+  objThreadCntrolBlock->home_pose_enabled = true; //default true
 //  objThreadCntrolBlock->stateLineNum = LINENUM_PRODUCED ;
   if(mode == 1)
   {
@@ -607,7 +635,10 @@ int call_interpreter(struct thread_control_block* objThreadCntrolBlock, int mode
 	  
       append_program_prop_mapper(objThreadCntrolBlock, objThreadCntrolBlock->project_name, true);
 	  
-	  if(iMode == INTERPRETER_USER_OP_MODE_AUTO)
+	  if(iMode == INTERPRETER_USER_OP_MODE_AUTO &&
+	     objThreadCntrolBlock->home_pose_enabled &&
+	    (objThreadCntrolBlock->is_marco_launch || 
+		 objThreadCntrolBlock->is_code_launch))
 	  {
 		  checkHomePoseResult checkRet = check_home_pose(objThreadCntrolBlock) ;
 		  if(checkRet == HOME_POSE_NOT_WITHIN_CUR_POS) 
@@ -624,7 +655,11 @@ int call_interpreter(struct thread_control_block* objThreadCntrolBlock, int mode
 	  }
 	  else
 	  {
-	      FST_INFO("get_user_opmode = %d and skip check_home_pose", iMode);
+	      FST_INFO("user option mode %d and home pose enabled %s "
+		           "macro launch %s code launch %s skip check home pose", 
+		  iMode, objThreadCntrolBlock->home_pose_enabled ? "TRUE" : "FALSE", 
+		  objThreadCntrolBlock->is_marco_launch ? "TRUE" : "FALSE", 
+		  objThreadCntrolBlock->is_code_launch ? "TRUE" : "FALSE");
 	  }
 	  
 	  objThreadCntrolBlock->prog = objThreadCntrolBlock->p_buf;
@@ -635,6 +670,7 @@ int call_interpreter(struct thread_control_block* objThreadCntrolBlock, int mode
 	  objThreadCntrolBlock->gosub_tos = 0; /* initialize the GOSUB stack index */
 	  objThreadCntrolBlock->is_abort  = false;
 	  objThreadCntrolBlock->is_paused = false;
+	  objThreadCntrolBlock->instr_cnt = 0;
 	  
 	  get_token(objThreadCntrolBlock);
 	  while(objThreadCntrolBlock->tok == IMPORT)
@@ -650,6 +686,7 @@ int call_interpreter(struct thread_control_block* objThreadCntrolBlock, int mode
 	  objProgLineInfo.type     = END_PROG ;
 	  objThreadCntrolBlock->prog_jmp_line.push_back(objProgLineInfo);
 
+	  // printProgJmpLine(objThreadCntrolBlock);
       memset(cLineContent, 0x00, LINE_CONTENT_LEN);
 	  sprintf(cLineContent, "%s::main", objThreadCntrolBlock->project_name);
       char * loc = find_label(objThreadCntrolBlock, cLineContent); // "main");
@@ -668,9 +705,9 @@ int call_interpreter(struct thread_control_block* objThreadCntrolBlock, int mode
 	  {
 		  get_token(objThreadCntrolBlock);
 	  }
-	  FST_INFO("Execute call_interpreter begin at call_interpreter.");
+	  FST_INFO("--Execute call_interpreter begin at call_interpreter.");
 	  iRet = call_interpreter(objThreadCntrolBlock, 0);
-	  FST_INFO("Execute call_interpreter over at call_interpreter.");
+	  FST_INFO("--Execute call_interpreter over at call_interpreter.");
 	  if(objThreadCntrolBlock->p_buf)
 	  {
 	    FST_INFO("free(objThreadCntrolBlock->p_buf);");
@@ -736,12 +773,19 @@ int call_interpreter(struct thread_control_block* objThreadCntrolBlock, int mode
 	}
 	// Wait Trajectory
 #ifndef WIN32
-    ret = g_objRegManagerInterface->isNextInstructionNeeded();
-    while (ret == false)
-    {
-        usleep(1000);
-    	ret = g_objRegManagerInterface->isNextInstructionNeeded();
-    }
+	FST_INFO("call_interpreter:is_next=%d, is_abort=%d, is_paused=%d", 
+	ret, objThreadCntrolBlock->is_abort, objThreadCntrolBlock->is_paused);
+	
+	do
+	{
+		usleep(1000);
+		ret = motion_control_ptr_->nextMovePermitted();
+	}
+	while(!ret && !objThreadCntrolBlock->is_abort && !objThreadCntrolBlock->is_paused);
+
+	FST_INFO("call_interpreter:is_next=%d, is_abort=%d, is_paused=%d", 
+	ret, objThreadCntrolBlock->is_abort, objThreadCntrolBlock->is_paused);
+
 #endif
   	if((objThreadCntrolBlock->prog_mode == STEP_MODE)
 		&& (isExecuteEmptyLine == 0)
@@ -777,7 +821,7 @@ int call_interpreter(struct thread_control_block* objThreadCntrolBlock, int mode
 			if(objThreadCntrolBlock->is_abort == true)
 			{
 				// setPrgmState(objThreadCntrolBlock, PAUSE_TO_IDLE_T) ;
-		  		FST_INFO("objThreadCntrolBlock->is_abort == true.");
+		  		FST_INFO("objThreadCntrolBlock->is_abort == true %d.", objThreadCntrolBlock->is_abort);
 		        break ; // return 0 ; // NULL ;
 			}
 			// use the iLineNum which had been set in the BACKWARD/FORWARD/JUMP
@@ -846,8 +890,8 @@ int call_interpreter(struct thread_control_block* objThreadCntrolBlock, int mode
 	// Deal PAUSED_R opration had moved to the beginning on 190125 
     /* check for assignment statement */
 	iLinenum = calc_line_from_prog(objThreadCntrolBlock);
-    FST_INFO("objThreadCntrolBlock->token_type = %d at line %d ", 
-    	objThreadCntrolBlock->token_type, iLinenum);
+    FST_INFO("objThreadCntrolBlock->token_type = %d (%d) at line %d ", 
+    	objThreadCntrolBlock->token_type, objThreadCntrolBlock->tok, iLinenum);
 	setLinenum(objThreadCntrolBlock, iLinenum);
     if(objThreadCntrolBlock->token_type==VARIABLE) {
       putback(objThreadCntrolBlock); /* return the var to the input stream */
@@ -859,6 +903,16 @@ int call_interpreter(struct thread_control_block* objThreadCntrolBlock, int mode
 		int iRet = exec_call(objThreadCntrolBlock);
 		if(iRet == END_COMMND_RET)
 			return END_COMMND_RET;
+	}
+	else if(objThreadCntrolBlock->token_type==BUILTINFUNC) /* is BUILTINFUNC */
+	{
+		eval_value result ;
+		// putback(objThreadCntrolBlock); /* return the var to the input stream */
+		bRet = call_inner_func(objThreadCntrolBlock, &result);
+	//	if(bRet == false)
+	//	{
+	//    	serror(objThreadCntrolBlock, 18);
+	//	}
 	}
 	else if(objThreadCntrolBlock->token_type==OUTSIDEFUNC) /* is OUTSIDEFUNC */
 	{
@@ -912,6 +966,8 @@ int call_interpreter(struct thread_control_block* objThreadCntrolBlock, int mode
     }
     else if(objThreadCntrolBlock->token_type==COMMAND) /* is command */
 	{
+	    FST_INFO("objThreadCntrolBlock->token = %d at line %d ", 
+	    	objThreadCntrolBlock->tok, iLinenum);
       switch(objThreadCntrolBlock->tok) {
         case SUB:
 		  // Skip Function declaration by jiaming.lu at 180717
@@ -1074,14 +1130,30 @@ int call_interpreter(struct thread_control_block* objThreadCntrolBlock, int mode
 	Output: 		NULL
 	Return: 		NULL
 *************************************************/ 
-int  jump_prog_from_line(struct thread_control_block * objThreadCntrolBlock, int iNum)
+bool  jump_prog_from_line(struct thread_control_block * objThreadCntrolBlock, int iNum)
 {
-	if(iNum < (int)objThreadCntrolBlock->prog_jmp_line.size())
+	if(iNum > 0)
 	{
-		objThreadCntrolBlock->prog = objThreadCntrolBlock->prog_jmp_line[iNum].start_prog_pos;
-		return iNum ;
+		// iLineNum start from one and prog_jmp_line start from zero.
+		int iJmpLine = iNum - 1;
+		
+		if(iNum < (int)objThreadCntrolBlock->prog_jmp_line.size())
+		{
+			objThreadCntrolBlock->prog = objThreadCntrolBlock->prog_jmp_line[iJmpLine].start_prog_pos;
+			return true ;
+		}
+		else
+		{
+			FST_INFO("jump_prog_from_line out of range iNum = %d", iNum);
+			return false;
+		}
 	}
-	return 0;
+	else
+	{
+		FST_INFO("jump_prog_from_line input illegal iNum = %d", iNum);
+		return false;
+	}
+	return false;
 }
 
 /************************************************* 
@@ -1092,10 +1164,10 @@ int  jump_prog_from_line(struct thread_control_block * objThreadCntrolBlock, int
 *************************************************/ 
 int  calc_line_from_prog(struct thread_control_block * objThreadCntrolBlock)
 {
-	prog_line_info tmpProgLineInfo ;
+    //prog_line_info tmpProgLineInfo ;
 	for(int i = 0 ; i < (int)objThreadCntrolBlock->prog_jmp_line.size() ; i++)
 	{
-		tmpProgLineInfo = objThreadCntrolBlock->prog_jmp_line[i] ;
+		//tmpProgLineInfo = objThreadCntrolBlock->prog_jmp_line[i] ;
 		if( (objThreadCntrolBlock->prog < objThreadCntrolBlock->prog_jmp_line[i].end_prog_pos)
 		  &&(objThreadCntrolBlock->prog >= objThreadCntrolBlock->prog_jmp_line[i].start_prog_pos))
 		{
@@ -1106,7 +1178,7 @@ int  calc_line_from_prog(struct thread_control_block * objThreadCntrolBlock)
 		//   FST_INFO("calc_line_from_prog get %d at (%08X, %08X) ", 
 		//   	    i, objThreadCntrolBlock->prog,
 		//   	    objThreadCntrolBlock->prog_jmp_line[i-1].start_prog_pos);
-		   printCurrentLine(objThreadCntrolBlock, i);
+		   printCurrentLine(objThreadCntrolBlock, i+1);
 		// When I found prog is less than end_prog_pos address of lineN in the first time
 		// We got the right line. we add one for the line_num starts from one .
 		   return i + 1;
@@ -1200,14 +1272,14 @@ int release_array_element(struct thread_control_block * objThreadCntrolBlock)
 	  }
 	  // putback ']'
 	  putback(objThreadCntrolBlock);
-	  return (int)value.getFloatValue() ;
+	  return (int)value.getDoubleValue() ;
 	}
 	get_token(objThreadCntrolBlock);
 	if(objThreadCntrolBlock->token[0] == '['){
-		value.setFloatValue(release_array_element(objThreadCntrolBlock));
+		value.setDoubleValue(release_array_element(objThreadCntrolBlock));
 		// Jump ']'
 		get_token(objThreadCntrolBlock);
-		sprintf(val_name, "%s[%d]", val_name, (int)value.getFloatValue());
+		sprintf(val_name, "%s[%d]", val_name, (int)value.getDoubleValue());
 		value = find_var(objThreadCntrolBlock, val_name);
 		// Jump ']'
 		get_token(objThreadCntrolBlock);
@@ -1215,14 +1287,14 @@ int release_array_element(struct thread_control_block * objThreadCntrolBlock)
 			putback(objThreadCntrolBlock);
 			// Simulate left value
 			objThreadCntrolBlock->token_type = NUMBER ;
-			sprintf(objThreadCntrolBlock->token, "%d", (int)value.getFloatValue());
+			sprintf(objThreadCntrolBlock->token, "%d", (int)value.getDoubleValue());
 			// Calc
 			level3(objThreadCntrolBlock, &value, &boolValue);
 			putback(objThreadCntrolBlock);
 		}
 		// putback ']'
 		putback(objThreadCntrolBlock);
-		return (int)value.getFloatValue();
+		return (int)value.getDoubleValue();
 	}
 	else {
 	  objThreadCntrolBlock->prog = temp_prog;
@@ -1236,7 +1308,7 @@ int release_array_element(struct thread_control_block * objThreadCntrolBlock)
 	  else {
 		// putback ']'
 		putback(objThreadCntrolBlock);
-	    return (int)value.getFloatValue();
+	    return (int)value.getDoubleValue();
 	  }
 	}
 }
@@ -1366,25 +1438,26 @@ void assignment(struct thread_control_block * objThreadCntrolBlock)
 *************************************************/ 
 void print(struct thread_control_block * objThreadCntrolBlock)
 {
+  char cPrintOutput[4096];
   eval_value answer;
   int boolValue;
 
   int len=0, spaces;
   char last_delim;
 
+  memset(cPrintOutput, 0x00, 4096);
   do {
     get_token(objThreadCntrolBlock); /* get next list item */
     if(objThreadCntrolBlock->tok==EOL || objThreadCntrolBlock->tok==FINISHED) break;
     if(objThreadCntrolBlock->token_type==QUOTE) { /* is string */
-      FST_INFO("%s", objThreadCntrolBlock->token);
-      len += strlen(objThreadCntrolBlock->token);
+      len += sprintf(cPrintOutput, "%s %s", cPrintOutput, objThreadCntrolBlock->token);
       get_token(objThreadCntrolBlock);
     }
     else { /* is expression */
       putback(objThreadCntrolBlock);
       get_exp(objThreadCntrolBlock, &answer, &boolValue);
       get_token(objThreadCntrolBlock);
-      len += printf("%d", (int)answer.getFloatValue());
+	  len += sprintf(cPrintOutput, "%s %f", cPrintOutput, answer.getDoubleValue());
     }
     last_delim = *(objThreadCntrolBlock->token);
 
@@ -1393,7 +1466,7 @@ void print(struct thread_control_block * objThreadCntrolBlock)
       spaces = 8 - (len % 8);
       len += spaces; /* add in the tabbing position */
       while(spaces) {
-	  FST_INFO(" ");
+	  sprintf(cPrintOutput, "%s ", cPrintOutput);
         spaces--;
       }
     }
@@ -1404,10 +1477,11 @@ void print(struct thread_control_block * objThreadCntrolBlock)
   			|| *(objThreadCntrolBlock->token)==',');
 
   if(objThreadCntrolBlock->tok==EOL || objThreadCntrolBlock->tok==FINISHED) {
-    if(last_delim != ';' && last_delim!=',') FST_INFO("");
+    if(last_delim != ';' && last_delim!=',') sprintf(cPrintOutput, "%s", cPrintOutput);
   }
   else serror(objThreadCntrolBlock, 0); /* error is not , or ; */
 
+  FST_INFO(cPrintOutput);
 }
 
 /************************************************* 
@@ -1422,7 +1496,7 @@ void print(struct thread_control_block * objThreadCntrolBlock)
 	         		objThreadCntrolBlock->prog_jmp_line
 	Return: 		NULL
 *************************************************/ 
-void scan_labels(struct thread_control_block * objThreadCntrolBlock, 
+int scan_labels(struct thread_control_block * objThreadCntrolBlock, 
 				SubLabelType type, char * pname)
 {
   int bisFindEOL = 0 ;
@@ -1433,6 +1507,19 @@ void scan_labels(struct thread_control_block * objThreadCntrolBlock,
   char *temp;
 
   temp = objThreadCntrolBlock->prog;   /* save pointer to top of program */
+  
+  // Add Fake label to prevent nesting import
+  sprintf(objLabel.name, "%s", pname);
+  objLabel.p = objThreadCntrolBlock->prog_end;
+  if(find_label(objThreadCntrolBlock, objLabel.name) == '\0')
+  {
+     addr = add_label(objThreadCntrolBlock, objLabel);
+  }
+  else
+  {
+	  FST_ERROR("Omitting info: Duplicate sub_label = %s", objLabel.name);
+	  return -1;
+  }
 
   /* if the first token in the file is a label */
   objProgLineInfo.start_prog_pos = objThreadCntrolBlock->prog ;
@@ -1450,7 +1537,14 @@ void scan_labels(struct thread_control_block * objThreadCntrolBlock,
 	objLabel.p = objThreadCntrolBlock->prog;
 	addr = add_label(objThreadCntrolBlock, objLabel);
       if(addr==-1 || addr==-2) {
-          (addr==-1) ?serror(objThreadCntrolBlock, 5):serror(objThreadCntrolBlock, 6);
+          if(addr==-1) 
+		  {
+			  serror(objThreadCntrolBlock, 5);
+		  }
+		  else
+		  {
+			  serror(objThreadCntrolBlock, 6);
+		  }
       }
   }
   else if(objThreadCntrolBlock->token_type==COMMAND) {
@@ -1468,7 +1562,14 @@ void scan_labels(struct thread_control_block * objThreadCntrolBlock,
 		  bisFindEOL = 1 ;
 		  addr = add_label(objThreadCntrolBlock, objLabel);
 		  if(addr==-1 || addr==-2) {
-			  (addr==-1) ?serror(objThreadCntrolBlock, 5):serror(objThreadCntrolBlock, 6);
+			  if(addr==-1)
+			  {
+				  serror(objThreadCntrolBlock, 5);
+			  }
+		      else
+			  {
+				  serror(objThreadCntrolBlock, 6);
+			  }
 		  }
 	  }
   }
@@ -1516,7 +1617,14 @@ void scan_labels(struct thread_control_block * objThreadCntrolBlock,
 
 		  addr = add_label(objThreadCntrolBlock, objLabel);
 		  if(addr==-1 || addr==-2) {
-			  (addr==-1) ?serror(objThreadCntrolBlock, 5):serror(objThreadCntrolBlock, 6);
+			  if(addr==-1) 
+			  {
+				  serror(objThreadCntrolBlock, 5);
+			  }
+			  else
+			  {
+				  serror(objThreadCntrolBlock, 6);
+			  }
 		  }
     }
 	else if(objThreadCntrolBlock->token_type==COMMAND) {
@@ -1532,7 +1640,14 @@ void scan_labels(struct thread_control_block * objThreadCntrolBlock,
 		    bisFindEOL = 1 ;
 	        addr = add_label(objThreadCntrolBlock, objLabel);
 	        if(addr==-1 || addr==-2) {
-	          (addr==-1) ?serror(objThreadCntrolBlock, 5):serror(objThreadCntrolBlock, 6);
+				if(addr==-1)
+				{
+					serror(objThreadCntrolBlock, 5);
+				}
+				else
+				{
+					serror(objThreadCntrolBlock, 6);
+				}
 	        }
 		}
 	}
@@ -1572,6 +1687,8 @@ void scan_labels(struct thread_control_block * objThreadCntrolBlock,
     // iLineNum++ ;
   } while(objThreadCntrolBlock->tok!=FINISHED);
   objThreadCntrolBlock->prog = temp;  /* restore to original */
+
+  return 0;
 }
 
 /************************************************* 
@@ -1611,7 +1728,12 @@ int add_label(struct thread_control_block * objThreadCntrolBlock, struct sub_lab
 		= objThreadCntrolBlock->sub_label_table.begin();
 		it != objThreadCntrolBlock->sub_label_table.end(); ++it)
 	{
-	    if(!strcmp(it->name, objLabel.name))  {
+#ifndef WIN32
+	    if(!strcmp(it->name, objLabel.name))
+#else
+		if(!stricmp(it->name, objLabel.name))
+#endif
+		{
 	        return -2; /* dup */
 	    }
 	}
@@ -1643,8 +1765,8 @@ char *find_label(struct thread_control_block * objThreadCntrolBlock, char *name)
 	   it != objThreadCntrolBlock->sub_label_table.end(); ++it)
 	{
 #ifndef WIN32
-        // case-insensitive.
-	    if(!strcasecmp(it->name, name))  {
+        // case-sensitive.
+	    if(!strcmp(it->name, name))  {
 #else
         // case-insensitive.
 	    if(!stricmp(it->name, name))  {
@@ -1675,7 +1797,12 @@ SubLabelType find_label_by_type(struct thread_control_block * objThreadCntrolBlo
 		= objThreadCntrolBlock->sub_label_table.begin();
 	   it != objThreadCntrolBlock->sub_label_table.end(); ++it)
 	{
-	    if(!strcmp(it->name, name))  {
+#ifndef WIN32
+	    if(!strcmp(it->name, name))
+#else
+	    if(!stricmp(it->name, name))
+#endif
+		{
 	        return it->type;
 	    }
 	}
@@ -1724,7 +1851,7 @@ static int jumpout_one_block_in_loc(struct thread_control_block * objThreadCntro
 			return JUMP_OUT_RANGE ;
 		}
 
-		if(objThreadCntrolBlock->prog > loc)
+		if(objThreadCntrolBlock->prog > objThreadCntrolBlock->prog + strlen(objThreadCntrolBlock->prog))
 		{
 			return JUMP_OUT_RANGE ;
 		}
@@ -1822,7 +1949,7 @@ int calc_conditions(
 		struct thread_control_block * objThreadCntrolBlock)
 {
   eval_value x ;
-  int boolValue = 1; // true - 0; // false
+  int boolValue = EVAL_CMP_TRUE; // true / false
   get_exp(objThreadCntrolBlock, &x, &boolValue); /* get left expression */
 //	return calc_single_condition(objThreadCntrolBlock);
   return boolValue ;
@@ -1842,7 +1969,7 @@ void exec_if(struct thread_control_block * objThreadCntrolBlock)
   int cond;
 
   cond = calc_conditions(objThreadCntrolBlock);
-  x.setFloatValue(cond);
+  x.setDoubleValue(cond);
 
   if(cond) { /* is true so process target of IF */
     get_token(objThreadCntrolBlock);
@@ -1908,42 +2035,70 @@ void exec_if(struct thread_control_block * objThreadCntrolBlock)
 *************************************************/ 
 void exec_else(struct thread_control_block * objThreadCntrolBlock)
 {
-  select_and_cycle_stack if_stack ;
-  int iRet = JUMP_OUT_INIT ;
-  while(1)
-  {
-    get_token(objThreadCntrolBlock);
-	if(objThreadCntrolBlock->tok==IF)
-	{
-	   iRet = jumpout_one_block_in_loc(objThreadCntrolBlock,
-		   objThreadCntrolBlock->prog_end, IF, ENDIF);
-
-	   if(iRet == JUMP_OUT_RANGE)
-	   {
-          FST_ERROR("%s  out range", objThreadCntrolBlock->token);
-		  return;
-	   }
+	int iRet = JUMP_OUT_INIT ;
+	struct select_and_cycle_stack if_stack ;
+	// float x , y;
+	int cond;
+	
+	if_stack = select_and_cycle_pop(objThreadCntrolBlock); /* read the loop info */
+	if(if_stack.itokentype != IF){
+		serror(objThreadCntrolBlock, 4);
+		return;
 	}
-	else if(objThreadCntrolBlock->tok==ELSE)  // Execute else
+	
+	FST_INFO("exec_else select_and_cycle_pop return %f", if_stack.target.getDoubleValue());
+	if(if_stack.target.getDoubleValue() != 0.0)  // if statement is true
 	{
-	    serror(objThreadCntrolBlock, 1); /* not a legal operator */
-		break ;
-    }
-	else if(objThreadCntrolBlock->tok==ELSEIF)  // Execute else
+		cond = 0 ;
+	}
+	else
 	{
-	    serror(objThreadCntrolBlock, 1); /* not a legal operator */
-		break ;
-    }
- 	else if (objThreadCntrolBlock->tok==ENDIF) // Finish if
+		cond = 1 ;
+	}
+	FST_INFO("exec_else cond return %d", cond);
+	
+	if(cond) { /* is true so process target of IF */
+		if_stack.itokentype = IF ;
+		select_and_cycle_push(objThreadCntrolBlock, if_stack);
+	}
+	// else find_eol(); /* find start of next line */
+	else
 	{
- 	    if_stack = select_and_cycle_pop(objThreadCntrolBlock); /* read the loop info */
- 	    if(if_stack.itokentype != IF){
-		   serror(objThreadCntrolBlock, 4);
-		   return;
- 	    }
-		break ;
-    }
-  }
+		while(1)
+		{
+			get_token(objThreadCntrolBlock);
+			if(objThreadCntrolBlock->tok==IF)
+			{
+			   iRet = jumpout_one_block_in_loc(objThreadCntrolBlock,
+				   objThreadCntrolBlock->prog_end, IF, ENDIF);
+
+			   if(iRet == JUMP_OUT_RANGE)
+			   {
+				  FST_ERROR("%s  out range", objThreadCntrolBlock->token);
+				  return;
+			   }
+			}
+			else if(objThreadCntrolBlock->tok==ELSE)  // Execute else
+			{
+				serror(objThreadCntrolBlock, 1); /* not a legal operator */
+				break ;
+			}
+			else if(objThreadCntrolBlock->tok==ELSEIF)  // Execute else
+			{
+				serror(objThreadCntrolBlock, 1); /* not a legal operator */
+				break ;
+			}
+			else if (objThreadCntrolBlock->tok==ENDIF) // Finish if
+			{
+ 			//	if_stack = select_and_cycle_pop(objThreadCntrolBlock); /* read the loop info */
+ 			//	if(if_stack.itokentype != IF){
+			//	   serror(objThreadCntrolBlock, 4);
+			//	   return;
+ 			//	}
+				break ;
+			}
+		}
+	}
 }
 
 /************************************************* 
@@ -1954,6 +2109,7 @@ void exec_else(struct thread_control_block * objThreadCntrolBlock)
 *************************************************/ 
 void exec_elseif(struct thread_control_block * objThreadCntrolBlock)
 {
+  eval_value x ;
   int iRet = JUMP_OUT_INIT ;
   struct select_and_cycle_stack if_stack ;
   // float x , y;
@@ -1965,10 +2121,13 @@ void exec_elseif(struct thread_control_block * objThreadCntrolBlock)
 	return;
   }
 
-  if(if_stack.target.getFloatValue() != 0.0)  // if statement is true
+  if(if_stack.target.getDoubleValue() != 0.0)  // if statement is true
   	cond = 0 ;
   else
-  	cond = calc_conditions(objThreadCntrolBlock);
+  {
+	  cond = calc_conditions(objThreadCntrolBlock);
+      x.setDoubleValue(cond);
+  }
 
   if(cond) { /* is true so process target of IF */
     get_token(objThreadCntrolBlock);
@@ -1981,6 +2140,7 @@ void exec_elseif(struct thread_control_block * objThreadCntrolBlock)
       find_eol(objThreadCntrolBlock);
     }
     if_stack.itokentype = IF ;
+	if_stack.target = x;
     select_and_cycle_push(objThreadCntrolBlock, if_stack);
   }
   // else find_eol(); /* find start of next line */
@@ -2002,6 +2162,7 @@ void exec_elseif(struct thread_control_block * objThreadCntrolBlock)
 		}
 		else if(objThreadCntrolBlock->tok==ELSE)  // Execute else
 		{
+			putback(objThreadCntrolBlock);
 		    if_stack.itokentype = IF ;
             select_and_cycle_push(objThreadCntrolBlock, if_stack);
 			break ;
@@ -2009,6 +2170,7 @@ void exec_elseif(struct thread_control_block * objThreadCntrolBlock)
 		else if(objThreadCntrolBlock->tok==ELSEIF)  // Execute else
 		{
 			putback(objThreadCntrolBlock);
+			select_and_cycle_push(objThreadCntrolBlock, if_stack);
 			break ;
 	    }
 	 	else if (objThreadCntrolBlock->tok==ENDIF) // Finish if
@@ -2062,7 +2224,7 @@ void exec_for(struct thread_control_block * objThreadCntrolBlock)
   /* if loop can execute at least once, push info on stack */
   // if(value>=variables[for_stack.var]) {
   tmp = find_var(objThreadCntrolBlock, for_stack.var);
-  if(value.getFloatValue() >= tmp.getFloatValue()) {
+  if(value.getDoubleValue() >= tmp.getDoubleValue()) {
   	for_stack.itokentype = FOR ;
 	find_eol(objThreadCntrolBlock);
     for_stack.loc = objThreadCntrolBlock->prog;
@@ -2113,12 +2275,12 @@ void exec_next(struct thread_control_block * objThreadCntrolBlock)
   value = find_var(objThreadCntrolBlock, for_stack.var);
   // int iVar = find_var(objThreadCntrolBlock, for_stack.var);
   // iVar++ ;
-  value.increaseFloatValue();
+  value.increaseDoubleValue();
   assign_var(objThreadCntrolBlock, for_stack.var, value); // iVar);
 
   // if(variables[for_stack.var]>for_stack.target) return;  /* all done */
   value = find_var(objThreadCntrolBlock, for_stack.var);
-  if(value.getFloatValue() > for_stack.target.getFloatValue()) 
+  if(value.getDoubleValue() > for_stack.target.getDoubleValue()) 
   {
   	  find_eol(objThreadCntrolBlock);
       return;  /* all done */
@@ -2144,7 +2306,7 @@ void exec_loop(struct thread_control_block * objThreadCntrolBlock)
   // for_stack.var=toupper(*token)-'A'; /* save its index */
   memset(loop_stack.var, 0x00, 80);
   strcpy(loop_stack.var, "loop_var");
-  value.setFloatValue( 1 ) ;
+  value.setDoubleValue( 1 ) ;
   assign_var(objThreadCntrolBlock, loop_stack.var, value) ;
 
   // deal target such like "5"
@@ -2177,11 +2339,11 @@ void exec_endloop(struct thread_control_block * objThreadCntrolBlock)
   value = find_var(objThreadCntrolBlock, loop_stack.var);
   // int iVar = find_var(objThreadCntrolBlock, loop_stack.var);
   // iVar++ ;
-  value.increaseFloatValue();
+  value.increaseDoubleValue();
   assign_var(objThreadCntrolBlock, loop_stack.var, value); // iVar);
   value = find_var(objThreadCntrolBlock, loop_stack.var) ;
   // if(variables[for_stack.var]>for_stack.target) return;  /* all done */
-  if(value.getFloatValue() > loop_stack.target.getFloatValue())
+  if(value.getDoubleValue() > loop_stack.target.getDoubleValue())
   {
   	  find_eol(objThreadCntrolBlock);
       return;  /* all done */
@@ -2324,7 +2486,7 @@ void exec_continue(struct thread_control_block * objThreadCntrolBlock)
 
 	 // if(variables[cycle_stack.var]>cycle_stack.target)
 	 value = find_var(objThreadCntrolBlock, cycle_stack.var);
-     if(value.getFloatValue() > cycle_stack.target.getFloatValue())
+     if(value.getDoubleValue() > cycle_stack.target.getDoubleValue())
 	 {
          while (objThreadCntrolBlock->tok!=NEXT) 
 		 	get_token(objThreadCntrolBlock);
@@ -2370,7 +2532,11 @@ void exec_break(struct thread_control_block * objThreadCntrolBlock)
   {
 	cycle_stack = select_and_cycle_pop(objThreadCntrolBlock); /* read the loop info */
   }
-
+  if(cycle_stack.itokentype == ILLTOK)
+  {
+  	return;
+  }
+      
   // variables[cycle_stack.var]++; /* increment control variable */
   // if(variables[cycle_stack.var]>cycle_stack.target) return;  /* all done */
   // select_and_cycle_push(cycle_stack);  /* otherwise, restore the info */
@@ -2455,7 +2621,7 @@ void exec_case(struct thread_control_block * objThreadCntrolBlock)
   {
 	  serror(objThreadCntrolBlock, 25);
   }
-  // if(x.getFloatValue() == select_stack.target.getFloatValue()) { 
+  // if(x.getDoubleValue() == select_stack.target.getDoubleValue()) { 
   else if(boolValue == EVAL_CMP_TRUE) {
 	 /* is true so process target of CASE */
      select_and_cycle_push(objThreadCntrolBlock, select_stack);  // Use of END SELECt
@@ -2649,7 +2815,7 @@ void input(struct thread_control_block * objThreadCntrolBlock)
   scanf("%d", &i); /* read input */
 
   // variables[var] = i; /* store it */
-  value.setFloatValue(i) ; 
+  value.setDoubleValue(i) ; 
   assign_var(objThreadCntrolBlock, var, value); // i) ;
 }
 
@@ -2662,44 +2828,55 @@ void input(struct thread_control_block * objThreadCntrolBlock)
 *************************************************/ 
 bool call_inner_func(struct thread_control_block * objThreadCntrolBlock, eval_value *result)
 {
+	char cFuncName[LAB_LEN];
     eval_value value;
     int boolValue;
 	int count ;
 	char temp[NUM_OF_PARAMS][LAB_LEN];
 
 	int funcIdx = find_internal_func(objThreadCntrolBlock->token);
+	memset(cFuncName, 0x00, LAB_LEN);
+	strncpy(cFuncName, objThreadCntrolBlock->token, LAB_LEN);
 
-    count = 0;
+    count = PARAM_NUM_ZERO;
     get_token(objThreadCntrolBlock);
 	// Fit for circumstance without parameter
 	if((*(objThreadCntrolBlock->token) == '\r')
 		|| (*(objThreadCntrolBlock->token) == '\n'))
 	{
-		result->setFloatValue(0.0);
+		result->setDoubleValue(0.0);
 		return false;
 	}
     if(*(objThreadCntrolBlock->token) != '(')
     {
 		serror(objThreadCntrolBlock, 2);
-		result->setFloatValue(0.0);
+		result->setDoubleValue(0.0);
 		return false;
 	}
 
     // Process a comma-separated list of values.
     do {
         get_exp(objThreadCntrolBlock, &value, &boolValue);
-		if(value.hasType(TYPE_STRING) == TYPE_STRING)
+		if(value.getIntType() == TYPE_NONE)
+		{
+			get_token(objThreadCntrolBlock);
+			break ;
+		}
+		else if(value.hasType(TYPE_STRING) == TYPE_STRING)
 		{
 			sprintf(temp[count], "%s", value.getStringValue().c_str()); // save temporarily
+    		FST_INFO("We got a string which is '%s'", temp[count]); 
 		}
 		else if( (value.hasType(TYPE_JOINT) == TYPE_JOINT)
 		       ||(value.hasType(TYPE_POSE) ==  TYPE_POSE))
 		{
-			// sprintf(temp[count], "%f", value.getFloatValue()); // save temporarily
+			// sprintf(temp[count], "%f", value.getDoubleValue()); // save temporarily
+    		FST_INFO("We got a unknown type data which is '%s'", temp[count]); 
 		}
 		else // It is number in most times
 		{
-			sprintf(temp[count], "%f", value.getFloatValue()); // save temporarily
+			sprintf(temp[count], "%f", value.getDoubleValue()); // save temporarily
+    		FST_INFO("We got a number which is '%s'", temp[count]); 
 		}
         get_token(objThreadCntrolBlock);
         count++;
@@ -2712,17 +2889,30 @@ bool call_inner_func(struct thread_control_block * objThreadCntrolBlock, eval_va
 		return false;
     }
     // Now, push on local_var_stack in reverse order.
-    if(count == PARAM_NUM_ONE)
+    if(count == PARAM_NUM_ZERO)
+	{
+		return call_internal_func(funcIdx, result);
+    }
+	else if(count == PARAM_NUM_ONE)
 	{
 		return call_internal_func(funcIdx, result, temp[0]);
     }
 	else if(count == PARAM_NUM_TWO)
 	{
+    	FST_INFO("call_internal_func(%d, result, %s, %s)", funcIdx, temp[0], temp[1]); 
 		return call_internal_func(funcIdx, result, temp[0], temp[1]);
     }
 	else if(count == PARAM_NUM_THR)
 	{
 		return call_internal_func(funcIdx, result, temp[0], temp[1], temp[2]);
+    }
+	else if(count == PARAM_NUM_FOUR)
+	{
+		return call_internal_func(funcIdx, result, temp[0], temp[1], temp[2], temp[3]);
+    }
+	else if(count == PARAM_NUM_FIVE)
+	{
+		return call_internal_func(funcIdx, result, temp[0], temp[1], temp[2], temp[3], temp[4]);
     }
 	else 
 	{
@@ -2771,7 +2961,7 @@ void get_args(struct thread_control_block * objThreadCntrolBlock)
     // Process a comma-separated list of values.
     do {
         get_exp(objThreadCntrolBlock, &value, &boolValue);
-        temp[count] = value.getFloatValue(); // save temporarily
+        temp[count] = value.getDoubleValue(); // save temporarily
         get_token(objThreadCntrolBlock);
         count++;
     } while(*(objThreadCntrolBlock->token) == ',');
@@ -2779,7 +2969,7 @@ void get_args(struct thread_control_block * objThreadCntrolBlock)
 
     // Now, push on local_var_stack in reverse order.
     for(; count>=0; count--) {
-        vt.value.setFloatValue(temp[count]);
+        vt.value.setDoubleValue(temp[count]);
         // vt.v_type = FORSIGHT_INT;
         objThreadCntrolBlock->local_var_stack.push_back(vt);
     }
@@ -2860,6 +3050,7 @@ void exec_import(struct thread_control_block * objThreadCntrolBlock)
   char * temp = objLabel.name ;
   memset(objLabel.name, 0x00, LAB_LEN);
   
+  // Save Module name into objLabel.name
   while((*objThreadCntrolBlock->prog != '\r') 
 	  &&(*objThreadCntrolBlock->prog != '\n'))
   {
@@ -2890,10 +3081,11 @@ void exec_import(struct thread_control_block * objThreadCntrolBlock)
   // Scan the labels in the import files
   proglabelsScan = objThreadCntrolBlock->prog ;
   objThreadCntrolBlock->prog = objThreadCntrolBlock->sub_prog[objThreadCntrolBlock->iSubProgNum];
-  scan_labels(objThreadCntrolBlock, OUTSIDE_FUNC, objLabel.name);
-  
-  // merge by order before import subroutine in the subroutine
-  mergeImportXPathToProjectXPath(objThreadCntrolBlock, objLabel.name);
+  if(scan_labels(objThreadCntrolBlock, OUTSIDE_FUNC, objLabel.name) == 0)
+  {
+	// merge by order before import subroutine in the subroutine
+	mergeImportXPathToProjectXPath(objThreadCntrolBlock, objLabel.name);
+  }
   
   // Load import subroutine in the subroutine
   get_token(objThreadCntrolBlock);
@@ -2909,7 +3101,10 @@ void exec_import(struct thread_control_block * objThreadCntrolBlock)
 /*
  *	  addr = add_label(objThreadCntrolBlock, objLabel);
  *    if(addr==-1 || addr==-2) {
- *        (addr==-1) ?serror(objThreadCntrolBlock, 5):serror(objThreadCntrolBlock, 6);
+ *        if(addr==-1)
+			serror(objThreadCntrolBlock, 5);
+		  else
+		    serror(objThreadCntrolBlock, 6);
  *    }
  */
 }
@@ -3010,7 +3205,6 @@ int exec_call(struct thread_control_block * objThreadCntrolBlock, bool isMacro)
   objThreadCntrolBlock->prog = loc;  /* start program running at that loc */
 
   get_params(objThreadCntrolBlock); // load the function's parameters with
-
   append_program_prop_mapper(objThreadCntrolBlock, file_name, false);
   FST_INFO("Execute call_interpreter at exec_call.");
   int iRet = call_interpreter(objThreadCntrolBlock, 0);
@@ -3088,7 +3282,7 @@ void greturn(struct thread_control_block * objThreadCntrolBlock)
 	  }
 	  putback(objThreadCntrolBlock);
 	  get_exp(objThreadCntrolBlock,&ret_value, &boolValue);
-	  objThreadCntrolBlock->ret_value = ret_value.getFloatValue() ;
+	  objThreadCntrolBlock->ret_value = ret_value.getDoubleValue() ;
   }
   objThreadCntrolBlock->prog = progTemp ;
   // We should skip the whole line
@@ -3339,15 +3533,44 @@ int get_token(struct thread_control_block * objThreadCntrolBlock)
     return (objThreadCntrolBlock->token_type=DELIMITER);
   }
 
-  if(*(objThreadCntrolBlock->prog)=='"') { /* quoted string */
-    objThreadCntrolBlock->prog++;
-    while(*(objThreadCntrolBlock->prog) != '"'
-		&& *objThreadCntrolBlock->prog != '\r'
-		&& *objThreadCntrolBlock->prog != '\n') 
-		*temp++=*(objThreadCntrolBlock->prog)++;
+  if(*(objThreadCntrolBlock->prog)=='"') 
+  { /* quoted string */
+    if(*(objThreadCntrolBlock->prog+1) == '"')//support null string
+    {
+        //to avoid conflic between \"\" and "" 
+        *temp++ = '\1'; *temp = '\0';
+        ++objThreadCntrolBlock->prog;
+        ++objThreadCntrolBlock->prog;
+        return(objThreadCntrolBlock->token_type=QUOTE);
+    }
+    ++objThreadCntrolBlock->prog;
+    while(*objThreadCntrolBlock->prog != '\r' 
+          && *objThreadCntrolBlock->prog != '\n') 
+    {
+        if(*(objThreadCntrolBlock->prog) == '\\' &&
+            (*(objThreadCntrolBlock->prog+1) == '"' ||
+            *(objThreadCntrolBlock->prog+1) == '\\'))
+        {//support '"' '\' in quote string
+		    *temp++ = *(objThreadCntrolBlock->prog + 1);//assign '"' or '\'
+            ++objThreadCntrolBlock->prog;
+            ++objThreadCntrolBlock->prog;
+        }
+        else
+        {
+		    *temp++ = *objThreadCntrolBlock->prog++;
+        }
+
+        if(*objThreadCntrolBlock->prog == '"')
+        {
+            break;
+        }
+    }
+
     if(*(objThreadCntrolBlock->prog)=='\r') 
 		serror(objThreadCntrolBlock, 1);
-    objThreadCntrolBlock->prog++;*temp=0;
+
+    objThreadCntrolBlock->prog++;
+    *temp=0;
     return(objThreadCntrolBlock->token_type=QUOTE);
   }
 
@@ -3390,7 +3613,7 @@ int get_token(struct thread_control_block * objThreadCntrolBlock)
 	    	objThreadCntrolBlock->token_type = OUTSIDEFUNC;
     }
 	// Support AND
-    else if(!strcmp(objThreadCntrolBlock->token, STR_AND))
+    else if(!strcasecmp(objThreadCntrolBlock->token, STR_AND))
     {
        memset(objThreadCntrolBlock->token, 0x00, 80);
 	   objThreadCntrolBlock->token[0] = AND;
@@ -3398,7 +3621,7 @@ int get_token(struct thread_control_block * objThreadCntrolBlock)
 	   objThreadCntrolBlock->token_type = DELIMITER;
     }
 	// Support OR
-	else if(!strcmp(objThreadCntrolBlock->token, STR_OR))
+	else if(!strcasecmp(objThreadCntrolBlock->token, STR_OR))
     {
        memset(objThreadCntrolBlock->token, 0x00, 80);
 	   objThreadCntrolBlock->token[0] = OR;
@@ -3406,7 +3629,7 @@ int get_token(struct thread_control_block * objThreadCntrolBlock)
 	   objThreadCntrolBlock->token_type = DELIMITER;
     }
 	// Support XOR
-	else if(!strcmp(objThreadCntrolBlock->token, STR_XOR))
+	else if(!strcasecmp(objThreadCntrolBlock->token, STR_XOR))
     {
        memset(objThreadCntrolBlock->token, 0x00, 80);
 	   objThreadCntrolBlock->token[0] = XOR;
@@ -3435,20 +3658,61 @@ int get_token(struct thread_control_block * objThreadCntrolBlock)
 *************************************************/ 
 void putback(struct thread_control_block * objThreadCntrolBlock)
 {
-
   char *t;
-
-  t = objThreadCntrolBlock->token;
-  for(; *t; t++)
+  
+  if( (strlen(objThreadCntrolBlock->token) == DOUBLE_OPS_LENGTH)
+	  && (objThreadCntrolBlock->token[0] >= LT)
+	  && (objThreadCntrolBlock->token[0] <= XOR))
   {
-	  // Revert \r\n to \n
-	  if(t[0] != '\r')
-	     objThreadCntrolBlock->prog--;
+	  switch (objThreadCntrolBlock->token[0])
+	  {
+	  case LT :  // value < partial_value
+		    objThreadCntrolBlock->prog -= strlen("<");
+	  		break;
+	  case LE :  // value <= partial_value
+		    objThreadCntrolBlock->prog -= strlen("<=");
+	  		break;
+	  case GT :  // value > partial_value
+		    objThreadCntrolBlock->prog -= strlen(">");
+	  		break;
+	  case GE :  // value >= partial_value
+		    objThreadCntrolBlock->prog -= strlen(">=");
+	  		break;
+	  case EQ :  // value == partial_value
+		    objThreadCntrolBlock->prog -= strlen("==");
+	  		break;
+	  case NE :  // value <> partial_value
+		    objThreadCntrolBlock->prog -= strlen("<>");
+	  		break;
+	  case AND:  // value AND partial_value
+		    objThreadCntrolBlock->prog -= strlen("AND");
+	  		break;
+	  case OR :  // value OR  partial_value
+		    objThreadCntrolBlock->prog -= strlen("OR");
+	  		break;
+	  case XOR:  // value XOR  partial_value
+		    objThreadCntrolBlock->prog -= strlen("XOR");
+	  		break;
+	  default :
+		    objThreadCntrolBlock->prog -= 
+				strlen(objThreadCntrolBlock->token);
+	  		break;
+	  }
   }
-  if(objThreadCntrolBlock->token_type == QUOTE)
+  else
   {
-	  objThreadCntrolBlock->prog--; // put back left "
-	  objThreadCntrolBlock->prog--; // put back right "
+	  t = objThreadCntrolBlock->token;
+	  for(; *t; t++)
+	  {
+		  // Revert \r\n to \n
+		  if(t[0] != '\r')
+			  objThreadCntrolBlock->prog--;
+	  }
+	  if(objThreadCntrolBlock->token_type == QUOTE)
+	  {
+		  objThreadCntrolBlock->prog--; // put back left "
+		  objThreadCntrolBlock->prog--; // put back right "
+	  }
   }
   memset(objThreadCntrolBlock->token, 0x00, 80);
 }
@@ -3462,15 +3726,22 @@ void putback(struct thread_control_block * objThreadCntrolBlock)
 int look_up(char *s)
 {
   register int i; // ,j;
-  char *p;
+//   char *p;
 
   /* convert to lowercase */
-  p = s;
-  while(*p){ *p = tolower(*p); p++; }
+//   p = s;
+//   while(*p){ *p = tolower(*p); p++; }
 
   /* see if token is in table */
   for(i=0; *table[i].command; i++)
-      if(!strcmp(table[i].command, s)) return table[i].tok;
+  {
+#ifdef WIN32
+      if(!stricmp(table[i].command, s))
+#else
+	  if(!strcasecmp(table[i].command, s))
+#endif
+		  return table[i].tok;
+  }
   return 0; /* unknown command */
 }
 
@@ -3525,7 +3796,7 @@ int iswhite(char c)
 void level1(struct thread_control_block * objThreadCntrolBlock, eval_value *value, int* boolValue)
 {
     eval_value partial_value;
-    int   another_bool_value = 1; // true
+    int   another_bool_value = EVAL_CMP_TRUE; // FALSE
     char op;
     char relops[] = {
         AND, OR, XOR, 0
@@ -3534,7 +3805,7 @@ void level1(struct thread_control_block * objThreadCntrolBlock, eval_value *valu
     level2(objThreadCntrolBlock, value, boolValue);
 
     op = *(objThreadCntrolBlock->token);
-    if(strchr(relops, op) && op != 0) {
+    while(strchr(relops, op) && op != 0) {
         get_token(objThreadCntrolBlock);
         level2(objThreadCntrolBlock, &partial_value, &another_bool_value);
 
@@ -3549,6 +3820,8 @@ void level1(struct thread_control_block * objThreadCntrolBlock, eval_value *valu
 			    *boolValue = (*boolValue ^ another_bool_value);
 			    break;
         }
+
+        op = *(objThreadCntrolBlock->token);
     }
 }
 
@@ -3578,7 +3851,7 @@ void level2(struct thread_control_block * objThreadCntrolBlock, eval_value *valu
 
         switch(op) { // perform the relational operation
 			case LT:
-				// *boolValue = (value->getFloatValue() < partial_value.getFloatValue());
+				// *boolValue = (value->getDoubleValue() < partial_value.getDoubleValue());
 				*boolValue = value->calcLT(&partial_value);
 				if(*boolValue == EVAL_CMP_ERROR)
 				{
@@ -3586,7 +3859,7 @@ void level2(struct thread_control_block * objThreadCntrolBlock, eval_value *valu
 				}
 			    break;
 			case LE:
-				// *boolValue = (value->getFloatValue() <= partial_value.getFloatValue());
+				// *boolValue = (value->getDoubleValue() <= partial_value.getDoubleValue());
 				*boolValue = value->calcLE(&partial_value);
 				if(*boolValue == EVAL_CMP_ERROR)
 				{
@@ -3594,7 +3867,7 @@ void level2(struct thread_control_block * objThreadCntrolBlock, eval_value *valu
 				}
 			    break;
 			case GT:
-				// *boolValue = (value->getFloatValue() > partial_value.getFloatValue());
+				// *boolValue = (value->getDoubleValue() > partial_value.getDoubleValue());
 				*boolValue = value->calcGT(&partial_value);
 				if(*boolValue == EVAL_CMP_ERROR)
 				{
@@ -3602,7 +3875,7 @@ void level2(struct thread_control_block * objThreadCntrolBlock, eval_value *valu
 				}
 			    break;
 			case GE:
-				// *boolValue = (value->getFloatValue() >= partial_value.getFloatValue());
+				// *boolValue = (value->getDoubleValue() >= partial_value.getDoubleValue());
 				*boolValue = value->calcGE(&partial_value);
 				if(*boolValue == EVAL_CMP_ERROR)
 				{
@@ -3610,7 +3883,7 @@ void level2(struct thread_control_block * objThreadCntrolBlock, eval_value *valu
 				}
 			    break;
 			case EQ:
-			    // *boolValue = (value->getFloatValue() == partial_value.getFloatValue());
+			    // *boolValue = (value->getDoubleValue() == partial_value.getDoubleValue());
 				*boolValue = value->calcEQ(&partial_value);
 				if(*boolValue == EVAL_CMP_ERROR)
 				{
@@ -3618,7 +3891,7 @@ void level2(struct thread_control_block * objThreadCntrolBlock, eval_value *valu
 				}
 			    break;
 			case NE:
-				// *boolValue = (value->getFloatValue() != partial_value.getFloatValue());
+				// *boolValue = (value->getDoubleValue() != partial_value.getDoubleValue());
 				*boolValue = value->calcNE(&partial_value);
 				if(*boolValue == EVAL_CMP_ERROR)
 				{
@@ -3754,6 +4027,7 @@ void level7(struct thread_control_block * objThreadCntrolBlock, eval_value *resu
 void primitive(struct thread_control_block * objThreadCntrolBlock, 
 			   eval_value *result, int* boolValue)
 {
+  bool bRet = true ;
   std::string strValue ;
   char var[80];
   int iRet = 0 ;
@@ -3761,9 +4035,9 @@ void primitive(struct thread_control_block * objThreadCntrolBlock,
   switch(objThreadCntrolBlock->token_type) {
   case INNERCMD:
     // Timer
-	if(strcmp(objThreadCntrolBlock->token, FORSIGHT_TIMER) != 0)
+	if(strcasecmp(objThreadCntrolBlock->token, FORSIGHT_TIMER) != 0)
     {
-		result->setFloatValue(1.0);
+		result->setDoubleValue(1.0);
 		get_token(objThreadCntrolBlock);
 		return;
 	}
@@ -3797,6 +4071,17 @@ void primitive(struct thread_control_block * objThreadCntrolBlock,
 		}
 
 		*result = find_var(objThreadCntrolBlock, var, 1);
+		if(result->hasType(TYPE_DOUBLE) == TYPE_DOUBLE)
+		{
+			if(result->getDoubleValue() != 0.0)
+			{
+				*boolValue = 1.0 ;
+			}
+			else
+			{
+				*boolValue = 0.0 ;
+			}
+		}
 		get_token(objThreadCntrolBlock);
 		// No deal unexist array type element
 		// if(objThreadCntrolBlock->g_variable_error == 0)
@@ -3804,9 +4089,9 @@ void primitive(struct thread_control_block * objThreadCntrolBlock,
 	objThreadCntrolBlock->g_variable_error = 0 ;
     return;
   case NUMBER:
-    result->setFloatValue(atof(objThreadCntrolBlock->token));
+    result->setDoubleValue(atof(objThreadCntrolBlock->token));
 	// Deal single value
-	if(result->getFloatValue() != 0.0)
+	if(result->getDoubleValue() != 0.0)
 	{
 		*boolValue = 1.0 ;
 	}
@@ -3822,25 +4107,38 @@ void primitive(struct thread_control_block * objThreadCntrolBlock,
 	// exec_call(objThreadCntrolBlock);
 	iRet = exec_call(objThreadCntrolBlock);
 	if(iRet == END_COMMND_RET)
-	   result->setFloatValue(0) ;
+	   result->setDoubleValue(0) ;
 	else
-	   result->setFloatValue(objThreadCntrolBlock->ret_value);
+	   result->setDoubleValue(objThreadCntrolBlock->ret_value);
     // objThreadCntrolBlock->prog = progFuncCall;
 	// find_eol(objThreadCntrolBlock);
     get_token(objThreadCntrolBlock);
     return;
   case BUILTINFUNC:
   	// use objThreadCntrolBlock->token
-  	call_inner_func(objThreadCntrolBlock, result);
+  	bRet = call_inner_func(objThreadCntrolBlock, result);
+//	if(bRet == false)
+//	{
+//    	serror(objThreadCntrolBlock, 18);
+//	}
     get_token(objThreadCntrolBlock);
     return;
   case QUOTE:
-  	strValue = std::string(objThreadCntrolBlock->token);
+    if(std::string(objThreadCntrolBlock->token) == "\1")
+        strValue = std::string("");
+    else
+  	    strValue = std::string(objThreadCntrolBlock->token);
+
 	result->setStringValue(strValue);
 	// Save number data
-	result->setFloatValue(atoi(strValue.c_str()));
+	result->setDoubleValue(atof(strValue.c_str()));
     get_token(objThreadCntrolBlock);
     return;
+  case DELIMITER:
+	if(*(objThreadCntrolBlock->token) == ')')
+	{
+		return ;
+	}
   default:
 	FST_ERROR("primitive error :: get_token =  '%s'", objThreadCntrolBlock->token);
     serror(objThreadCntrolBlock, 0);
@@ -3875,7 +4173,7 @@ void arith(struct thread_control_block * objThreadCntrolBlock, char o, eval_valu
       break;
     case '/':
       // r->fValue = (r->fValue)/(h->fValue);
-	  if(h->getFloatValue() == 0.0)
+	  if(h->getDoubleValue() == 0.0)
 	  {
 		 serror(objThreadCntrolBlock, 24);
 	  }
@@ -3884,7 +4182,7 @@ void arith(struct thread_control_block * objThreadCntrolBlock, char o, eval_valu
     case '%':
       // t = (r->fValue)/(h->fValue);
       // r->fValue = r->fValue-(t*(h->fValue));
-	  if(h->getFloatValue() == 0.0)
+	  if(h->getDoubleValue() == 0.0)
 	  {
 		 serror(objThreadCntrolBlock, 24);
 	  }
@@ -3901,7 +4199,7 @@ void arith(struct thread_control_block * objThreadCntrolBlock, char o, eval_valu
       r->calcPower(h);
       break;
     case '@':
-	  if(h->getFloatValue() == 0.0)
+	  if(h->getDoubleValue() == 0.0)
 	  {
 		 serror(objThreadCntrolBlock, 24);
 	  }
@@ -3952,7 +4250,7 @@ void set_var_value(struct thread_control_block * objThreadCntrolBlock,
 	Posture posture = {1, 1, -1, 0};
 	FST_INFO("set_var_value = %s with %04X and %04X", dst_reg_name, 
 		valueSrc.getIntType(), valueDst.getIntType());
-	if(strcmp(dst_reg_name, "p") == 0) // lvalue is P register
+	if(strcasecmp(dst_reg_name, "p") == 0) // lvalue is P register
 	{
 		if (valueSrc.hasType(TYPE_POSE) == TYPE_POSE)
 		{
@@ -3977,7 +4275,7 @@ void assign_global_var(struct thread_control_block * objThreadCntrolBlock, char 
 	// Otherwise, try global vars.
 	for(unsigned i=0; i < objThreadCntrolBlock->global_vars.size(); i++)
 	{
-	    if(!strcmp(objThreadCntrolBlock->global_vars[i].var_name, vname)) {
+	    if(!strcasecmp(objThreadCntrolBlock->global_vars[i].var_name, vname)) {
 	        objThreadCntrolBlock->global_vars[i].value = value;
 	        return;
 	    }
@@ -4016,15 +4314,15 @@ void assign_var(struct thread_control_block * objThreadCntrolBlock, char *vname,
 	}
 
 	// deal "pr;sr;r;mr;uf;tf;pl" except p
-    if(strstr(REGSITER_NAMES, array_name) 
-		&& (strcmp(array_name, "p") != 0) 
-		&& (strcmp(array_name, "r") != 0))
+    if(strcasestr(REGSITER_NAMES, array_name) 
+		&& (strcasecmp(array_name, "p") != 0) 
+		&& (strcasecmp(array_name, "r") != 0))
     {
 		if(strchr(vname, '['))
 		{
-			if(value.hasType(TYPE_FLOAT) == TYPE_FLOAT)
+			if(value.hasType(TYPE_DOUBLE) == TYPE_DOUBLE)
 			{
-				FST_INFO("assign_var vname = %s and value = %f.", vname, value.getFloatValue());
+				FST_INFO("assign_var vname = %s and value = %f.", vname, value.getDoubleValue());
 			}
 			if (value.hasType(TYPE_STRING) == TYPE_STRING)
 			{
@@ -4044,9 +4342,10 @@ void assign_var(struct thread_control_block * objThreadCntrolBlock, char *vname,
 			}
 		}
     }
-	else if(strstr(IO_NAMES, array_name)
-		&&(strlen(array_name) == 2)
-		&&((array_name[1] == 'i') || (array_name[1] == 'o')))
+	else if(strcasestr(IO_NAMES, array_name)
+		&& (strlen(array_name) == 2)
+		&& ((array_name[1] == 'i') || (array_name[1] == 'I') 
+		|| (array_name[1] == 'o') || (array_name[1] == 'O')))
     {
 		if(strchr(vname, '['))
 		{
@@ -4058,7 +4357,7 @@ void assign_var(struct thread_control_block * objThreadCntrolBlock, char *vname,
 			}
 		}
     }
-	else if(strcmp(FORSIGHT_TIMER, array_name) == 0)
+	else if(strcasecmp(FORSIGHT_TIMER, array_name) == 0)
     {
 		if(strchr(vname, '['))
 		{
@@ -4078,7 +4377,7 @@ void assign_var(struct thread_control_block * objThreadCntrolBlock, char *vname,
 		if(strchr(vname, '['))
 		{
 			FST_INFO("assign_external_resource vname = %s and value = (%f).",
-				vname, value.getFloatValue());
+				vname, value.getDoubleValue());
 			int iRet = forgesight_registers_manager_set_resource(
 				objThreadCntrolBlock, vname, keyVar, &value);
 			if(iRet == 0)
@@ -4088,51 +4387,51 @@ void assign_var(struct thread_control_block * objThreadCntrolBlock, char *vname,
 		}
 	}
 
-	if((strcmp(FORSIGHT_TF_NO_POINT, vname) == 0)
-	      ||(strcmp(FORSIGHT_TF_NO, vname) == 0))
+	if((strcasecmp(FORSIGHT_TF_NO_POINT, vname) == 0)
+	      ||(strcasecmp(FORSIGHT_TF_NO, vname) == 0))
     {
-        FST_INFO("set_global_TF vname = %s and value = %f.", vname, value.getFloatValue());
+        FST_INFO("set_global_TF vname = %s and value = %f.", vname, value.getDoubleValue());
 		iLineNum = calc_line_from_prog(objThreadCntrolBlock);
-		set_global_TF(iLineNum, (int)value.getFloatValue(), objThreadCntrolBlock);
+		set_global_TF(iLineNum, (int)value.getDoubleValue(), objThreadCntrolBlock);
 		return ;
     }
-	else if((strcmp(FORSIGHT_UF_NO_POINT, vname) == 0)
-	      ||(strcmp(FORSIGHT_UF_NO, vname) == 0))
+	else if((strcasecmp(FORSIGHT_UF_NO_POINT, vname) == 0)
+	      ||(strcasecmp(FORSIGHT_UF_NO, vname) == 0))
     {
-        FST_INFO("set_global_UF vname = %s and value = %f.", vname, value.getFloatValue());
+        FST_INFO("set_global_UF vname = %s and value = %f.", vname, value.getDoubleValue());
 		iLineNum = calc_line_from_prog(objThreadCntrolBlock);
-		set_global_UF(iLineNum, (int)value.getFloatValue(), objThreadCntrolBlock);
+		set_global_UF(iLineNum, (int)value.getDoubleValue(), objThreadCntrolBlock);
 		return ;
     }
-	else if((strcmp(FORSIGHT_OVC_POINT, vname) == 0)
-	      ||(strcmp(FORSIGHT_OVC, vname) == 0))
+	else if((strcasecmp(FORSIGHT_OVC_POINT, vname) == 0)
+	      ||(strcasecmp(FORSIGHT_OVC, vname) == 0))
     {
-        FST_INFO("set_OVC vname = %s and value = %f.", vname, value.getFloatValue());
+        FST_INFO("set_OVC vname = %s and value = %f.", vname, value.getDoubleValue());
 		iLineNum = calc_line_from_prog(objThreadCntrolBlock);
-		set_OVC(iLineNum, value.getFloatValue(), objThreadCntrolBlock);
+		set_OVC(iLineNum, value.getDoubleValue(), objThreadCntrolBlock);
 		return ;
     }
-	else if((strcmp(FORSIGHT_OAC_POINT, vname) == 0)
-	      ||(strcmp(FORSIGHT_OAC, vname) == 0))
+	else if((strcasecmp(FORSIGHT_OAC_POINT, vname) == 0)
+	      ||(strcasecmp(FORSIGHT_OAC, vname) == 0))
     {
-        FST_INFO("set_OAC vname = %s and value = %f.", vname, value.getFloatValue());
+        FST_INFO("set_OAC vname = %s and value = %f.", vname, value.getDoubleValue());
 		iLineNum = calc_line_from_prog(objThreadCntrolBlock);
-		set_OAC(iLineNum, value.getFloatValue(), objThreadCntrolBlock);
+		set_OAC(iLineNum, value.getDoubleValue(), objThreadCntrolBlock);
 		return ;
     }
 	
 	// P register was saved in the local_var_stack
-	if(strcmp(array_name, "p") == 0) // lvalue is P register
+	if(strcasecmp(array_name, "p") == 0) // lvalue is P register
 	{
 		// Otherwise, try global vars.
 		for(unsigned i=0; i < objThreadCntrolBlock->local_var_stack.size(); i++)
 		{
-			if(!strcmp(objThreadCntrolBlock->local_var_stack[i].var_name, vname)) {
+			if(!strcasecmp(objThreadCntrolBlock->local_var_stack[i].var_name, vname)) {
 				set_var_value(objThreadCntrolBlock, array_name, 
 					objThreadCntrolBlock->local_var_stack[i].value, value);
 				return;
 			}
-			else if(!strcmp(objThreadCntrolBlock->local_var_stack[i].var_name, reg_nomember_name))
+			else if(!strcasecmp(objThreadCntrolBlock->local_var_stack[i].var_name, reg_nomember_name))
 			{
 				int iRet = forgesight_registers_manager_set_point(
 					objThreadCntrolBlock, vname, &value);
@@ -4177,56 +4476,68 @@ eval_value find_var(struct thread_control_block * objThreadCntrolBlock,
 //	  }
 //	  return variables[toupper(*s)-'A'];
 
-	if(!strcmp(vname, FORSIGHT_RETURN_VALUE))
+	if(!strcasecmp(vname, FORSIGHT_RETURN_VALUE))
 	{
-		value.setFloatValue(objThreadCntrolBlock->ret_value);
+		value.setDoubleValue(objThreadCntrolBlock->ret_value);
 		return value ;
 	}
-	else if(!strcmp(vname, FORSIGHT_REGISTER_ON))
+	else if(!strcasecmp(vname, FORSIGHT_REGISTER_ON))
 	{
-		value.setFloatValue(1.0);
+		value.setDoubleValue(1.0);
 		return value ;
 	}
-	else if(!strcmp(vname, FORSIGHT_REGISTER_OFF))
+	else if(!strcasecmp(vname, FORSIGHT_REGISTER_OFF))
 	{
-		value.setFloatValue(0.0);
+		value.setDoubleValue(0.0);
+		return value ;
+	}
+	else if(!strcasecmp(vname, FORSIGHT_REGISTER_TRUE))
+	{
+		value.setDoubleValue(1.0);
+		return value ;
+	}
+	else if(!strcasecmp(vname, FORSIGHT_REGISTER_FALSE))
+	{
+		value.setDoubleValue(0.0);
 		return value ;
 	}
 
-	if(!strcmp(vname, FORSIGHT_CURRENT_JOINT))
+	if(!strcasecmp(vname, FORSIGHT_CURRENT_JOINT))
 	{
 		getMoveCommandDestination(movCmdDst);
 	    value.setJointValue(&movCmdDst.joint_target);
 	    value.setPosture(movCmdDst.posture);
+	    value.setTurn(movCmdDst.turn);
 		
        //	value.setPrRegDataWithJointValue(&movCmdDst.joint_target);
 		return value ;
 	}
-	else if(!strcmp(vname, FORSIGHT_CURRENT_POS))
+	else if(!strcasecmp(vname, FORSIGHT_CURRENT_POS))
 	{
 		getMoveCommandDestination(movCmdDst);
 		value.setPoseValue(&movCmdDst.pose_target);
 	    value.setPosture(movCmdDst.posture);
+	    value.setTurn(movCmdDst.turn);
 		
 	//	value.setPrRegDataWithPoseEulerValue(&movCmdDst.pose_target);
 		return value ;
 	}
-	else if(!strcmp(vname, FORSIGHT_TIMER_START))
+	else if(!strcasecmp(vname, FORSIGHT_TIMER_START))
 	{
-		value.setFloatValue(TIMER_START_VALUE);
+		value.setDoubleValue(TIMER_START_VALUE);
 		return value ;
 	}
-	else if(!strcmp(vname, FORSIGHT_TIMER_STOP))
+	else if(!strcasecmp(vname, FORSIGHT_TIMER_STOP))
 	{
-		value.setFloatValue(TIMER_STOP_VALUE);
+		value.setDoubleValue(TIMER_STOP_VALUE);
 		return value ;
 	}
-	else if(!strcmp(vname, FORSIGHT_TIMER_RESET))
+	else if(!strcasecmp(vname, FORSIGHT_TIMER_RESET))
 	{
-		value.setFloatValue(TIMER_RESET_VALUE);
+		value.setDoubleValue(TIMER_RESET_VALUE);
 		return value ;
 	}
-	else if(!strcmp(vname, FORSIGHT_PULSE))
+	else if(!strcasecmp(vname, FORSIGHT_PULSE))
 	{
 		get_exp(objThreadCntrolBlock, &value, &boolPulseValue);
 		value.setPulse(true);
@@ -4256,9 +4567,9 @@ eval_value find_var(struct thread_control_block * objThreadCntrolBlock,
 
 	// Inner Type
 	// deal "pr;sr;r;mr;uf;tf;pl" except p
-    if(strstr(REGSITER_NAMES, reg_name) 
-		&& (strcmp(reg_name, "p") != 0) 
-		&& (strcmp(reg_name, "r") != 0))
+    if(strcasestr(REGSITER_NAMES, reg_name) 
+		&& (strcasecmp(reg_name, "p") != 0) 
+		&& (strcasecmp(reg_name, "r") != 0))
     {
 		if(strchr(vname, '['))
 		{
@@ -4276,9 +4587,10 @@ eval_value find_var(struct thread_control_block * objThreadCntrolBlock,
 			}
 		}
     }
-	else if(strstr(IO_NAMES, reg_name)
+	else if(strcasestr(IO_NAMES, reg_name)
 		&&(strlen(reg_name) == 2)
-		&&((reg_name[1] == 'i') || (reg_name[1] == 'o')))
+		&&((reg_name[1] == 'i') || (reg_name[1] == 'o')
+		||(reg_name[1] == 'I') || (reg_name[1] == 'O')))
     {
 		if(strchr(vname, '['))
 		{
@@ -4307,7 +4619,7 @@ eval_value find_var(struct thread_control_block * objThreadCntrolBlock,
 		= objThreadCntrolBlock->local_var_stack.rbegin();
 		it != objThreadCntrolBlock->local_var_stack.rend(); ++it)
 	{
-	    if(!strcmp(it->var_name, vname))  {
+	    if(!strcasecmp(it->var_name, vname))  {
 	        return it->value;
         }
 	}
@@ -4317,18 +4629,18 @@ eval_value find_var(struct thread_control_block * objThreadCntrolBlock,
 		= objThreadCntrolBlock->global_vars.rbegin();
 		it != objThreadCntrolBlock->global_vars.rend(); ++it)
 	{
-	    if(!strcmp(it->var_name, vname))  {
-			if(!strcmp(reg_name, FORSIGHT_TIMER))
+	    if(!strcasecmp(it->var_name, vname))  {
+			if(!strcasecmp(reg_name, FORSIGHT_TIMER))
 			{
 				value = it->value ;
-				if(it->value.getFloatValue() == TIMER_START_VALUE)
+				if(it->value.getDoubleValue() == TIMER_START_VALUE)
 				{
-					value.setFloatValue(time(0) - get_timer_start_time(iRegIdx));
+					value.setDoubleValue(time(0) - get_timer_start_time(iRegIdx));
 					return value;
 				}
-				else if(value.getFloatValue() == TIMER_RESET_VALUE)
+				else if(value.getDoubleValue() == TIMER_RESET_VALUE)
 				{
-					value.setFloatValue(time(0) - get_timer_start_time(iRegIdx));
+					value.setDoubleValue(time(0) - get_timer_start_time(iRegIdx));
 					return value;
 				}
 				else
@@ -4344,7 +4656,7 @@ eval_value find_var(struct thread_control_block * objThreadCntrolBlock,
 	}
 		
 	if(strstr(vname, ".") 
-		&& (strcmp(reg_name, "p") == 0))
+		&& (strcasecmp(reg_name, "p") == 0))
 	{
 		if(strchr(vname, '['))
 		{
@@ -4388,7 +4700,7 @@ int erase_var(struct thread_control_block * objThreadCntrolBlock, char *vname)
 		= objThreadCntrolBlock->local_var_stack.begin();
 		it != objThreadCntrolBlock->local_var_stack.end(); ++it)
 	{
-	    if(!strcmp(it->var_name, vname))  {
+	    if(!strcasecmp(it->var_name, vname))  {
 			objThreadCntrolBlock->local_var_stack.erase(it);
 	        return 1;
         }
@@ -4399,7 +4711,7 @@ int erase_var(struct thread_control_block * objThreadCntrolBlock, char *vname)
 		= objThreadCntrolBlock->global_vars.begin();
 		it != objThreadCntrolBlock->global_vars.end(); ++it)
 	{
-	    if(!strcmp(it->var_name, vname))  {
+	    if(!strcasecmp(it->var_name, vname))  {
 			objThreadCntrolBlock->global_vars.erase(it);
 	        return 1;
         }
@@ -4426,11 +4738,22 @@ bool basic_thread_create(int iIdx, void * args)
 	{
 		ret = true;
 	}
-#else
+#else    
+	pthread_attr_t thread_attr;
+	struct sched_param schedule_param;
+
+	pthread_attr_init(&thread_attr);
+	pthread_attr_setschedpolicy(&thread_attr,SCHED_RR);
+	schedule_param.sched_priority = 50;
+	pthread_attr_setschedparam(&thread_attr, &schedule_param); 
+	pthread_attr_setinheritsched(&thread_attr, PTHREAD_EXPLICIT_SCHED); //有这行，设置优先级才会生效
+	
 	if (0 == pthread_create(
-		&(g_basic_interpreter_handle[iIdx]), NULL, basic_interpreter, args))
+		&(g_basic_interpreter_handle[iIdx]), &thread_attr, basic_interpreter, args))
 	{
 		ret = true;
+	    pthread_detach(g_basic_interpreter_handle[iIdx]);
+		FST_WARN("ThreadBasicInterpreter TID is %ld", syscall(SYS_gettid));
 	}
 	else
 	{

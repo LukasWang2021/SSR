@@ -5,8 +5,8 @@
 using namespace basic_alg;
 
 DynamicAlgRTMParam::DynamicAlgRTMParam():
-    file_path_(DYNAMICS_DIR),
-    log_level_(3)  // default is Error Level
+    log_level_(3),  // default is Error Level
+    file_path_(DYNAMICS_DIR)
 {
 }
 

@@ -42,18 +42,9 @@ Matrix44& Matrix44::leftMultiply(const Matrix44& left_matrix)
     return *this;   
 }
 
-void Matrix44::leftMultiply(const Matrix44& left_matrix, Matrix44& result_matrix)
+void Matrix44::leftMultiply(const Matrix44& left_matrix, Matrix44& result_matrix) const
 {
-    if(&result_matrix != this)
-    {
-        multiply(left_matrix, *this, result_matrix);
-    }
-    else
-    {
-        Matrix44 tmp_matrix;
-        multiply(left_matrix, *this, tmp_matrix);
-        *this = tmp_matrix;
-    }
+    multiply(left_matrix, *this, result_matrix);
 }
 
 Matrix44& Matrix44::rightMultiply(const Matrix44& right_matrix)
@@ -64,18 +55,9 @@ Matrix44& Matrix44::rightMultiply(const Matrix44& right_matrix)
     return *this;
 }
 
-void Matrix44::rightMultiply(const Matrix44& right_matrix, Matrix44& result_matrix)
+void Matrix44::rightMultiply(const Matrix44& right_matrix, Matrix44& result_matrix) const
 {
-    if(&result_matrix != this)
-    {
-        multiply(*this, right_matrix, result_matrix);
-    }
-    else
-    {
-        Matrix44 tmp_matrix;
-        multiply(*this, right_matrix, tmp_matrix);
-        *this = tmp_matrix;
-    }
+    multiply(*this, right_matrix, result_matrix);
 }
 
 Matrix44& Matrix44::operator=(const Matrix44& matrix)
@@ -96,7 +78,7 @@ void Matrix44::print(std::string comment) const
     std::cout<<std::endl;
 }
 
-void Matrix44::multiply(const Matrix44& left_matrix, const Matrix44& right_matrix, Matrix44& result_matrix)
+void Matrix44::multiply(const Matrix44& left_matrix, const Matrix44& right_matrix, Matrix44& result_matrix) const
 {
     result_matrix.matrix_[0][0] = left_matrix.matrix_[0][0] * right_matrix.matrix_[0][0] 
                                 + left_matrix.matrix_[0][1] * right_matrix.matrix_[1][0]

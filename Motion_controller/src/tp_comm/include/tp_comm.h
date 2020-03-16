@@ -176,6 +176,8 @@ private:
     void handleRequest0x0000C7A5(int recv_bytes);
     /********rpc/controller/restoreDone, RequestMessageType_Void**********/
     void handleRequest0x000079F5(int recv_bytes);
+    /********rpc/controller/setControllerIp, RequestMessageType_Void**********/
+    void handleRequest0x0000B090(int recv_bytes);
 
     /********tool_manager/addTool, RequestMessageType_ToolInfo**********/
     void handleRequest0x0000A22C(int recv_bytes);
@@ -319,6 +321,12 @@ private:
     void handleRequest0x000016B5(int recv_bytes);
     /********rpc/motion_control/axis_group/getTcpCurrentPose, RequestMessageType_Int32**********/
     void handleRequest0x00003B45(int recv_bytes);
+    /********rpc/motion_control/axis_group/setOfflineTrajectoryFile, RequestMessageType_String**********/
+    void handleRequest0x00011275(int recv_bytes);
+    /********rpc/motion_control/axis_group/PrepareOfflineTrajectory, RequestMessageType_Void**********/
+    void handleRequest0x000051E9(int recv_bytes);
+    /********rpc/motion_control/axis_group/moveOfflineTrajectory, RequestMessageType_Int32List**********/
+    void handleRequest0x0000C4D9(int recv_bytes);
 
 
     /********rpc/interpreter/start, RequestMessageType_String**********/
@@ -643,6 +651,8 @@ private:
     void handleResponse0x0000C7A5(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
     /********rpc/controller/restoreDone, ResponseMessageType_Uint64**********/
     void handleResponse0x000079F5(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/controller/setControllerIp, ResponseMessageType_Uint64**********/
+    void handleResponse0x0000B090(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
 
     /********getRpcTable, ResponseMessageType_RpcTable**********/
     void handleResponse0x00004FA5(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
@@ -789,6 +799,12 @@ private:
     void handleResponse0x000016B5(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
     /********rpc/motion_control/axis_group/getTcpCurrentPose, ResponseMessageType_Uint64_DoubleList(count=6)**********/
     void handleResponse0x00003B45(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/motion_control/axis_group/setOfflineTrajectoryFile, ResponseMessageType_Uint64**********/
+    void handleResponse0x00011275(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/motion_control/axis_group/PrepareOfflineTrajectory, ResponseMessageType_Uint64**********/
+    void handleResponse0x000051E9(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/motion_control/axis_group/moveOfflineTrajectory, ResponseMessageType_Uint64**********/
+    void handleResponse0x0000C4D9(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
 
     /********rpc/interpreter/start, ResponseMessageType_Bool**********/
     void handleResponse0x00006154(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
@@ -1191,4 +1207,4 @@ private:
 }
 #endif
 
-void tpCommRoutineThreadFunc(void* arg);
+void* tpCommRoutineThreadFunc(void* arg);

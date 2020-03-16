@@ -20,7 +20,7 @@ int main(int argc, char** argv)
 {  
     int cmd = 0;
     unsigned long long int ret = 0;
-    int data = 0;
+    unsigned long long int data = 0;
     int count = 0;
     /*
     if (argc != 2){
@@ -79,21 +79,21 @@ int main(int argc, char** argv)
     // --------------------get value.-----------------------//
         ret = autorunSafetyData();
         if (ret == 0){
-            data = getSafety(SAFETY_OUTPUT_FIRSTFRAME, &ret);
+            ret = getSafety((int*)&data, SAFETY_OUTPUT_FIRSTFRAME);
             if (count == 0)
-                printf("Writing data[0] = 0x%x, error = 0x%llx.\n", data, ret);
+                printf("Writing data[0] = 0x%x, error = 0x%llx.\n", *((int*)&data), ret);
 
             //data = getSafety(SAFETY_OUTPUT_SECONDFRAME, &ret);// simulate core1 reset
             //if (count == 0)
             //    printf("Writing data[1] = 0x%x, error = 0x%llx.\n", data, ret);
 
-            data = getSafety(SAFETY_INPUT_FIRSTFRAME, &ret);
+            ret = getSafety((int*)&data, SAFETY_INPUT_FIRSTFRAME);
             if (count == 0)
-                printf("recv data[0] = 0x%x, error = 0x%llx\n", data, ret);
+                printf("recv data[0] = 0x%x, error = 0x%llx\n", *((int*)&data), ret);
 
-            data = getSafety(SAFETY_INPUT_SECONDFRAME, &ret);
+            ret = getSafety((int*)&data, SAFETY_INPUT_SECONDFRAME);
             if (count == 0)
-                printf("recv data[1] = 0x%x, error = 0x%llx\n", data, ret);
+                printf("recv data[1] = 0x%x, error = 0x%llx\n", *((int*)&data), ret);
         }else{
             printf("|---------------autorun error = %llx---------------------|\n", ret);
             break;

@@ -32,7 +32,7 @@ class HrReg:public BaseReg
 {
 public:
     HrReg(RegManagerParam* param_ptr);
-    ~HrReg();
+    virtual ~HrReg();
 
     virtual ErrorCode init();
     virtual ErrorCode addReg(void* data_ptr);

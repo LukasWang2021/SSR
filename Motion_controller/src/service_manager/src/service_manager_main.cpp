@@ -15,7 +15,7 @@ Summary:    dealing with service
 #include <unistd.h>
 #include <signal.h>
 #include <iostream>
-
+#include <sys/syscall.h>
 
 using namespace fst_service_manager;
 using namespace fst_mc;
@@ -23,11 +23,11 @@ using namespace fst_mc;
 ServiceManager::ServiceManager():
     log_ptr_(NULL),
     param_ptr_(NULL),
+    is_exit_(false),
     handle_core_(0),
     loop_count_core_(0),
     dtc_flag_(false),
-    running_sid_ (0),
-    is_exit_(false)
+    running_sid_ (0)
 {
     log_ptr_ = new fst_log::Logger();
     FST_LOG_INIT("ServiceManager");
@@ -36,7 +36,8 @@ ServiceManager::ServiceManager():
 
 ServiceManager::~ServiceManager()
 {
-    routine_thread_.join();
+    thread_routine_ptr_.join();
+
     if(log_ptr_ != NULL){
         delete log_ptr_;
         log_ptr_ = NULL;
@@ -108,12 +109,12 @@ bool ServiceManager::init(void)
 
     channel_flag_ = LOCAL_CHANNEL;
 
-    if(!routine_thread_.run(&serviceManagerRoutineThreadFunc, this, 51))
+    if(!thread_routine_ptr_.run(serviceManagerRoutineThreadFunc, this, 61))
     {
         FST_ERROR("Failed to open service_manager routine thread");
         return false;
     }
-    
+    FST_WARN("ServiceManager TID is %ld", syscall(SYS_gettid));
     return true;
 }
 
@@ -139,7 +140,7 @@ bool ServiceManager::receiveRequest(void)
     ErrorCode result = comm_mcs_.recv(&request, sizeof(request), COMM_DONTWAIT);
     if (result == SUCCESS)
     {
-        FST_INFO("recv controller request success with 0x%X, buff[0-3] = 0x%X", request.req_id, request.req_buff[0]);
+        FST_INFO("recv controller request success with 0x%X", request.req_id);
         if (addRequest(request)) 
         {
             channel_flag_ = MCS_CHANNEL;
@@ -210,8 +211,8 @@ bool ServiceManager::interactBareCore(void)
         return true;
 
     ServiceRequest request = request_fifo_[0];
-    int req_result = false;
-    int res_result = false;
+    bool req_result = false;
+    bool res_result = false;
     int timeout_count = 0;
 
     while (res_result == false)
@@ -279,19 +280,37 @@ bool ServiceManager::manageResponse(void)
 }
 
 //------------------------------------------------------------
-// Function:  routineThreadFunc
+// Function:  runLoop
 // Summary: The main loop to run this process. 
 // In:      None.
 // Out:     None.
 // Return:  None.
 //------------------------------------------------------------
-void ServiceManager::routineThreadFunc(void)
-{ 
+void ServiceManager::runLoop(void)
+{
+    static float duration_1, duration_2;
+    struct timeval start_time, middle_time, end_time;
+
+    gettimeofday(&start_time, NULL);
     receiveRequest();
     interactBareCore();
     manageResponse();
+    gettimeofday(&middle_time, NULL);
     usleep(cycle_time_);
+    gettimeofday(&end_time, NULL);
 
+    duration_1 = (float)(middle_time.tv_sec - start_time.tv_sec) + (float)(middle_time.tv_usec - start_time.tv_usec) / 1000000;
+    duration_2 = (float)(end_time.tv_sec - middle_time.tv_sec) + (float)(end_time.tv_usec - middle_time.tv_usec) / 1000000;
+
+    if (duration_1 > 0.15)
+    {
+        FST_ERROR("service task first stage duration over limit: %.6f", duration_1);
+    }
+
+    if (duration_2 > 0.01)
+    {
+        FST_ERROR("service task second stage duration over limit: %.6f", duration_2);
+    }
 }
 
 void ServiceManager::setExit(void)
@@ -303,25 +322,30 @@ bool ServiceManager::isExit(void)
     return is_exit_;
 }
 
-void serviceManagerRoutineThreadFunc(void* arg)
+void* serviceManagerRoutineThreadFunc(void* arg)
 {
     if (mlockall(MCL_CURRENT|MCL_FUTURE) == -1) 
     {
         std::cout<<"service_manager routine thread mlockall failed"<<std::endl;
-        return; 
+        return NULL; 
     }
     unsigned char dummy[128];
     memset(dummy, 0, 128);
 
     std::cout<<"service_manager routine thread running"<<std::endl;
+
+    fst_log::Logger* log_ptr_ = new fst_log::Logger();
+    FST_LOG_INIT("ThreadServiceManager");
+    FST_WARN("ThreadServiceManager TID is %ld", syscall(SYS_gettid));
+
     fst_service_manager::ServiceManager* service_manager = static_cast<fst_service_manager::ServiceManager*>(arg);
     while(!service_manager->isExit())
     {
-        service_manager->routineThreadFunc();
+        service_manager->runLoop();
     }
     std::cout<<"service_manager routine thread exit"<<std::endl;
+    return NULL; 
 }
-
 
 fst_service_manager::ServiceManager* g_service_manager_ptr_ = NULL;
 
@@ -329,7 +353,6 @@ void serviceManagerOnExit(int dunno)
 {
     g_service_manager_ptr_->setExit();
 }
-
 
 int main(int argc, char** argv)
 {

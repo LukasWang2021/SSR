@@ -38,7 +38,7 @@ public:
     unsigned long long int openServer();
     void closeServer();
 
-    void anybusManagerThreadFunc();
+    void* anybusManagerThreadFunc();
     bool isRunning();
 
 private:
@@ -61,4 +61,4 @@ private:
 
 #endif
 
-void anybusManagerRoutineThreadFunc(void* arg);
+void* anybusManagerRoutineThreadFunc(void* arg);

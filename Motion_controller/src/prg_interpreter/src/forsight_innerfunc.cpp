@@ -1,4 +1,7 @@
 // #include "stdafx.h"
+#ifdef WIN32
+#pragma warning(disable : 4786)
+#endif
 #include "stdio.h"
 #include "string.h"
 #include "setjmp.h"
@@ -8,106 +11,106 @@
 #include "forsight_innerfunc.h"
 #include <algorithm> 
 
-#define RAD2DEG(x) ((x)*180./PI)  // Convert radians to angles
-#define DEG2RAD(x) ((x)*PI/180.)  // Convert angle to radians
-
-//        A Èı½Çº¯Êı
+//        A ä¸‰è§’å‡½æ•°
 //    01. double sin (double);
 //    02. double cos (double);
 //    03. double tan (double);
-//        B ·´Èı½Çº¯Êı
+//        B åä¸‰è§’å‡½æ•°
 //    04. double asin (double);
 //    05. double acos (double);
 //    06. double atan (double);
 //    07. double atan2 (double, double);
-//        C Ë«ÇúÈı½Çº¯Êı
+//        C åŒæ›²ä¸‰è§’å‡½æ•°
 //    08. double sinh (double);
 //    09. double cosh (double);
 //    10. double tanh (double);
-//        D Ö¸ÊıÓë¶ÔÊı
+//        D Ö¸æŒ‡æ•°ä¸å¯¹æ•°
 //    11. double exp (double);
 //    12. double pow (double, double);
 //    13. double sqrt (double);
 //    14. double log (double);
 //    15. double log10 (double);
-//        E È¡Õû
+//        E å–æ•´
 //    16. double ceil (double);
 //    17. double floor (double);
-//        F ¾ø¶ÔÖµ
+//        F ç»å¯¹å€¼
 //    18. double fabs (double);
-//        G ±ê×¼»¯¸¡µãÊı
+//        G æ ‡å‡†åŒ–æµ®ç‚¹æ•°
 //    19. double frexp (double f, int *p);
 //    20. double ldexp (double x, int p);
-//        H È¡ÕûÓëÈ¡Óà
+//        H å–æ•´ä¸å–ä½™
 //    21. double modf (double, double*);
 //    22. double fmod (double, double);
-bool call_sin  (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird);
-bool call_cos  (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird);
-bool call_tan  (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird);
-bool call_asin (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird);
-bool call_acos (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird);
-bool call_atan (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird);
-bool call_atan2(eval_value *result, const char * valFirst,const char * valSecond,const char * valThird);
-bool call_sinh (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird);
-bool call_cosh (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird);
-bool call_tanh (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird);
-bool call_exp  (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird);
-bool call_pow  (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird);
-bool call_sqrt (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird);
-bool call_log  (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird);
-bool call_log10(eval_value *result, const char * valFirst,const char * valSecond,const char * valThird);
-bool call_ceil (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird);
-bool call_floor(eval_value *result, const char * valFirst,const char * valSecond,const char * valThird);
-bool call_fabs (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird);
-// bool call_frexp(char * valFirst, char * valSecond, char * valThird);
-bool call_ldexp(eval_value *result, const char * valFirst,const char * valSecond,const char * valThird);
-bool call_modf (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird);
-bool call_fmod (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird);
-bool call_hypot(eval_value *result, const char * valFirst,const char * valSecond,const char * valThird);
-bool call_gcd  (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird);
-bool call_lcm  (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird);
+bool call_rand (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird, const char * valFourth, const char * valFiveth);
+bool call_sin  (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird, const char * valFourth, const char * valFiveth);
+bool call_cos  (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird, const char * valFourth, const char * valFiveth);
+bool call_tan  (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird, const char * valFourth, const char * valFiveth);
+bool call_asin (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird, const char * valFourth, const char * valFiveth);
+bool call_acos (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird, const char * valFourth, const char * valFiveth);
+bool call_atan (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird, const char * valFourth, const char * valFiveth);
+bool call_atan2(eval_value *result, const char * valFirst,const char * valSecond,const char * valThird, const char * valFourth, const char * valFiveth);
+bool call_sinh (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird, const char * valFourth, const char * valFiveth);
+bool call_cosh (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird, const char * valFourth, const char * valFiveth);
+bool call_tanh (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird, const char * valFourth, const char * valFiveth);
+bool call_exp  (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird, const char * valFourth, const char * valFiveth);
+bool call_pow  (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird, const char * valFourth, const char * valFiveth);
+bool call_sqrt (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird, const char * valFourth, const char * valFiveth);
+bool call_log  (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird, const char * valFourth, const char * valFiveth);
+bool call_log10(eval_value *result, const char * valFirst,const char * valSecond,const char * valThird, const char * valFourth, const char * valFiveth);
+bool call_ceil (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird, const char * valFourth, const char * valFiveth);
+bool call_floor(eval_value *result, const char * valFirst,const char * valSecond,const char * valThird, const char * valFourth, const char * valFiveth);
+bool call_fabs (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird, const char * valFourth, const char * valFiveth);
+// bool call_frexp(char * valFirst, char * valSecond, char * valThird, const char * valFourth, const char * valFiveth);
+bool call_ldexp(eval_value *result, const char * valFirst,const char * valSecond,const char * valThird, const char * valFourth, const char * valFiveth);
+bool call_modf (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird, const char * valFourth, const char * valFiveth);
+bool call_fmod (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird, const char * valFourth, const char * valFiveth);
+bool call_hypot(eval_value *result, const char * valFirst,const char * valSecond,const char * valThird, const char * valFourth, const char * valFiveth);
+bool call_gcd  (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird, const char * valFourth, const char * valFiveth);
+bool call_lcm  (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird, const char * valFourth, const char * valFiveth);
 // Convert function
-bool call_degrees(eval_value *result, const char * valFirst,const char * valSecond,const char * valThird);
-bool call_radians(eval_value *result, const char * valFirst,const char * valSecond,const char * valThird);
+bool call_degrees(eval_value *result, const char * valFirst,const char * valSecond,const char * valThird, const char * valFourth, const char * valFiveth);
+bool call_radians(eval_value *result, const char * valFirst,const char * valSecond,const char * valThird, const char * valFourth, const char * valFiveth);
 // Year/Month/Day function
-bool call_isleapyear(eval_value *result, const char * valFirst,const char * valSecond,const char * valThird);
-bool call_getmaxday(eval_value *result, const char * valFirst,const char * valSecond,const char * valThird);
-bool call_getdays(eval_value *result, const char * valFirst,const char * valSecond,const char * valThird);
-//        I ×Ö·û´®²Ù×÷º¯Êı
+bool call_isleapyear(eval_value *result, const char * valFirst,const char * valSecond,const char * valThird, const char * valFourth, const char * valFiveth);
+bool call_getmaxday(eval_value *result, const char * valFirst,const char * valSecond,const char * valThird, const char * valFourth, const char * valFiveth);
+bool call_getdays(eval_value *result, const char * valFirst,const char * valSecond,const char * valThird, const char * valFourth, const char * valFiveth);
+//        I å­—ç¬¦ä¸²æ“ä½œå‡½æ•°
 //    23. strlen  (char *);
 //    24. findstr (char *, char *);
 //    25. substr  (char *, char *, char *);
-bool call_strlen     (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird);
-bool call_findstr    (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird);
-bool call_substr     (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird);
+bool call_strlen     (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird, const char * valFourth, const char * valFiveth);
+bool call_findstr    (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird, const char * valFourth, const char * valFiveth);
+bool call_substr     (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird, const char * valFourth, const char * valFiveth);
 //    26. replace    (char *, char *, char *); // 12212, 12, 21 ->  21212 
 //    27. replaceall (char *, char *, char *); // 12212, 12, 21 ->  21221 
-bool call_replace    (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird);
-bool call_replaceall (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird);
+bool call_replace    (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird, const char * valFourth, const char * valFiveth);
+bool call_replaceall (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird, const char * valFourth, const char * valFiveth);
 //    28. replacealliteration (char *, char *, char *);  // 12212, 12, 21 ->  22211
 bool call_replaceall_iteration
-					 (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird);
+					 (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird, const char * valFourth, const char * valFiveth);
 //    28. lower  (char *);  
 //    28. upper  (char *);  
 //    28. revert (char *);  
-bool call_lower      (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird);
-bool call_upper      (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird);
-bool call_revert     (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird);
+bool call_lower      (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird, const char * valFourth, const char * valFiveth);
+bool call_upper      (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird, const char * valFourth, const char * valFiveth);
+bool call_revert     (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird, const char * valFourth, const char * valFiveth);
 
 // String convert function of <stdlib.h>
-bool call_atoi     (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird);
-bool call_atof     (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird);
-bool call_itoa     (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird);
-bool call_ftoa     (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird);
-// bool call_gcvt     (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird);
+bool call_atoi     (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird, const char * valFourth, const char * valFiveth);
+bool call_atof     (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird, const char * valFourth, const char * valFiveth);
+bool call_itoa     (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird, const char * valFourth, const char * valFiveth);
+bool call_ftoa     (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird, const char * valFourth, const char * valFiveth);
+// bool call_gcvt     (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird, const char * valFourth, const char * valFiveth);
 
 // This structure links a library function name   
 // with a pointer to that function.   
 struct intern_func_type {   
     char *f_name; // function name
     int param_num ;
-    bool (*p)(eval_value *, const char* , const char* = NULL, const char* = NULL);   // pointer to the function   
+    bool (*p)(eval_value *, const char* = NULL, const char* = NULL, const char* = NULL, 
+		                                  const char* = NULL, const char* = NULL);   // pointer to the function   
 } intern_func[] = {   
+	(char *)"rand",       0, call_rand ,
 	(char *)"sin",        1, call_sin  ,
 	(char *)"cos",        1, call_cos  ,
 	(char *)"tan",        1, call_tan  ,
@@ -132,7 +135,7 @@ struct intern_func_type {
 	(char *)"abs",        1, call_fabs ,
 //  (char *)"frexp",      2, call_frexp,
 	(char *)"ldexp",      2, call_ldexp,
-	(char *)"modf",       2, call_modf ,
+	(char *)"modf",       1, call_modf ,
 	(char *)"fmod",       2, call_fmod ,
 	(char *)"hypot",      2, call_hypot,
 	(char *)"gcd",        2, call_gcd,
@@ -142,8 +145,8 @@ struct intern_func_type {
 	(char *)"radians",    1, call_radians,
     // Convert function
 	(char *)"isleapyear", 1, call_isleapyear,
-	(char *)"getmaxday",  1, call_getmaxday,
-	(char *)"getdays",    1, call_getdays,
+	(char *)"getmaxday",  2, call_getmaxday,
+	(char *)"getdays",    3, call_getdays,
 	// String function
 	(char *)"strlen",     1, call_strlen ,
 	(char *)"findstr",    2, call_findstr ,
@@ -168,9 +171,18 @@ int find_internal_func(char *s)
 {   
     int i;
     for(i=0; intern_func[i].f_name[0]; i++) {
-        if(!strcmp(intern_func[i].f_name, s))  return i;   
+        if(!strcasecmp(intern_func[i].f_name, s))  return i;   
     }   
     return -1;   
+}   
+
+int get_internal_func_count()   
+{   
+    int i;
+    for(i=0; intern_func[i].f_name[0]; i++) {
+        ;   
+    }   
+    return i;   
 }   
 
 int get_func_params_num(int iIdx)   
@@ -181,183 +193,292 @@ int get_func_params_num(int iIdx)
 	    return -1;
 }
 
-bool call_internal_func(int index, eval_value *result, char * valFirst, char * valSecond, char * valThird)   
+bool call_internal_func(int index, eval_value *result, 
+	char * valFirst, char * valSecond, char * valThird, 
+	char * valFourth, char * valFiveth)   
 {   
+	bool bRet = false ;
     // int i; 
     if(index >= 0)
 	{
 		if(intern_func[index].p != NULL)
 		{
-			(*intern_func[index].p)(result, valFirst, valSecond, valThird);
-			return true;
+			bRet = (*intern_func[index].p)(result, valFirst, valSecond, valThird, valFourth, valFiveth);
+			return bRet;
 		}
 	}
 	return false ;
 }
 
-bool call_sin  (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird)
+bool call_rand (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird, 
+				const char * valFourth, const char * valFiveth)
 {
-	double val = atof(valFirst);
-	result->setFloatValue(sin(val));
+	result->setDoubleValue((float)rand());
     return true ;
 }
 
-bool call_cos  (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird)
+bool call_sin  (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird, 
+	 const char * valFourth, const char * valFiveth)
 {
-	double val = atof(valFirst);
-	result->setFloatValue(cos(val));
-    return true ;
+	if(valFirst)
+	{
+		double val = atof(valFirst);
+		result->setDoubleValue(sin(val));
+    	return true ;
+	}
+	return false;
 }
 
-bool call_tan  (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird)
+bool call_cos  (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird, 
+	 const char * valFourth, const char * valFiveth)
 {
-	double val = atof(valFirst);
-	result->setFloatValue(tan(val));
-    return true ;
+	if(valFirst)
+	{
+		double val = atof(valFirst);
+		result->setDoubleValue(cos(val));
+    	return true ;
+	}
+	return false;
 }
 
-bool call_asin (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird)
+bool call_tan  (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird, 
+	 const char * valFourth, const char * valFiveth)
 {
-	double val = atof(valFirst);
-	result->setFloatValue(asin(val));
-    return true ;
+	if(valFirst)
+	{
+		double val = atof(valFirst);
+		result->setDoubleValue(tan(val));
+    	return true ;
+	}
+	return false;
 }
 
-bool call_acos (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird)
+bool call_asin (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird, 
+	 const char * valFourth, const char * valFiveth)
 {
-	double val = atof(valFirst);
-	result->setFloatValue(acos(val));
-    return true ;
+	if(valFirst)
+	{
+		double val = atof(valFirst);
+		result->setDoubleValue(asin(val));
+    	return true ;
+	}
+	return false;
 }
 
-bool call_atan (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird)
+bool call_acos (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird, 
+	 const char * valFourth, const char * valFiveth)
 {
-	double val = atof(valFirst);
-	result->setFloatValue(atan(val));
-    return true ;
+	if(valFirst)
+	{
+		double val = atof(valFirst);
+		result->setDoubleValue(acos(val));
+    	return true ;
+	}
+	return false;
 }
 
-bool call_atan2(eval_value *result, const char * valFirst,const char * valSecond,const char * valThird)
+bool call_atan (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird, 
+	 const char * valFourth, const char * valFiveth)
 {
-	double val = atof(valFirst);
-	double valTwo = atof(valSecond);
-	result->setFloatValue(atan2(val, valTwo));
-    return true ;
+	if(valFirst)
+	{
+		double val = atof(valFirst);
+		result->setDoubleValue(atan(val));
+    	return true ;
+	}
+	return false;
 }
 
-bool call_sinh (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird)
+bool call_atan2(eval_value *result, const char * valFirst,const char * valSecond,const char * valThird, 
+	 const char * valFourth, const char * valFiveth)
 {
-	double val = atof(valFirst);
-	result->setFloatValue(sinh(val));
-    return true ;
+	if(valFirst && valSecond)
+	{
+		double val = atof(valFirst);
+		double valTwo = atof(valSecond);
+		result->setDoubleValue(atan2(val, valTwo));
+    	return true ;
+	}
+	return false;
 }
 
-bool call_cosh (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird)
+bool call_sinh (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird, 
+	 const char * valFourth, const char * valFiveth)
 {
-	double val = atof(valFirst);
-	result->setFloatValue(cosh(val));
-    return true ;
+	if(valFirst)
+	{
+		double val = atof(valFirst);
+		result->setDoubleValue(sinh(val));
+    	return true ;
+	}
+	return false;
 }
 
-bool call_tanh (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird)
+bool call_cosh (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird, 
+	 const char * valFourth, const char * valFiveth)
 {
-	double val = atof(valFirst);
-	result->setFloatValue(tanh(val));
-    return true ;
+	if(valFirst)
+	{
+		double val = atof(valFirst);
+		result->setDoubleValue(cosh(val));
+    	return true ;
+	}
+	return false;
 }
 
-bool call_exp  (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird)
+bool call_tanh (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird, 
+	 const char * valFourth, const char * valFiveth)
 {
-	double val = atof(valFirst);
-	result->setFloatValue(exp(val));
-    return true ;
+	if(valFirst)
+	{
+		double val = atof(valFirst);
+		result->setDoubleValue(tanh(val));
+    	return true ;
+	}
+	return false;
 }
 
-bool call_pow  (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird)
+bool call_exp  (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird, const char * valFourth, const char * valFiveth)
 {
-	double val = atof(valFirst);
-	int   valTwo = atoi(valSecond);
-	result->setFloatValue(pow(val, valTwo));
-    return true ;
+	if(valFirst)
+	{
+		double val = atof(valFirst);
+		result->setDoubleValue(exp(val));
+    	return true ;
+	}
+	return false;
 }
 
-bool call_sqrt (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird)
+bool call_pow  (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird, const char * valFourth, const char * valFiveth)
 {
-	double val = atof(valFirst);
-	result->setFloatValue(sqrt(val));
-    return true ;
+	if(valFirst && valSecond)
+	{
+		double val = atof(valFirst);
+		int   valTwo = atoi(valSecond);
+		result->setDoubleValue(pow(val, valTwo));
+    	return true ;
+	}
+	return false;
 }
 
-bool call_log  (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird)
+bool call_sqrt (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird, const char * valFourth, const char * valFiveth)
 {
-	double val = atof(valFirst);
-	result->setFloatValue(log(val));
-    return true ;
+	if(valFirst)
+	{
+		double val = atof(valFirst);
+		result->setDoubleValue(sqrt(val));
+    	return true ;
+	}
+	return false;
 }
 
-bool call_log10(eval_value *result, const char * valFirst,const char * valSecond,const char * valThird)
+bool call_log  (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird, const char * valFourth, const char * valFiveth)
 {
-	double val = atof(valFirst);
-	result->setFloatValue(log10(val));
-    return true ;
+	if(valFirst)
+	{
+		double val = atof(valFirst);
+		result->setDoubleValue(log(val));
+    	return true ;
+	}
+	return false;
 }
 
-bool call_ceil (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird)
+bool call_log10(eval_value *result, const char * valFirst,const char * valSecond,const char * valThird, const char * valFourth, const char * valFiveth)
 {
-	double val = atof(valFirst);
-	result->setFloatValue(ceil(val));
-    return true ;
+	if(valFirst)
+	{
+		double val = atof(valFirst);
+		result->setDoubleValue(log10(val));
+    	return true ;
+	}
+	return false;
 }
 
-bool call_floor(eval_value *result, const char * valFirst,const char * valSecond,const char * valThird)
+bool call_ceil (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird, const char * valFourth, const char * valFiveth)
 {
-	double val = atof(valFirst);
-	result->setFloatValue(floor(val));
-    return true ;
+	if(valFirst)
+	{
+		double val = atof(valFirst);
+		result->setDoubleValue(ceil(val));
+    	return true ;
+	}
+	return false;
 }
 
-bool call_fabs (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird)
+bool call_floor(eval_value *result, const char * valFirst,const char * valSecond,const char * valThird, const char * valFourth, const char * valFiveth)
 {
-	double val = atof(valFirst);
-	result->setFloatValue(fabs(val));
-    return true ;
+	if(valFirst)
+	{
+		double val = atof(valFirst);
+		result->setDoubleValue(floor(val));
+    	return true ;
+	}
+	return false;
 }
 
-bool call_ldexp (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird)
+bool call_fabs (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird, const char * valFourth, const char * valFiveth)
 {
-	double val = atof(valFirst);
-	int    valTwo = atoi(valSecond);
-	result->setFloatValue(ldexp(val, valTwo));
-    return true ;
+	if(valFirst)
+	{
+		double val = atof(valFirst);
+		result->setDoubleValue(fabs(val));
+    	return true ;
+	}
+	return false;
 }
 
-// ·µ»Ø²ÎÊıµÄĞ¡Êı²¿·Ö, ÕûÊı²¿·Ö²»»Ø´«¡£
-bool call_modf (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird)
+bool call_ldexp (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird, const char * valFourth, const char * valFiveth)
 {
-	double val = atof(valFirst);
-	double valTwo ;
-	result->setFloatValue(modf(val, &valTwo));
-    return true ;
+	if(valFirst && valSecond)
+	{
+		double val = atof(valFirst);
+		int    valTwo = atoi(valSecond);
+		result->setDoubleValue(ldexp(val, valTwo));
+    	return true ;
+	}
+	return false;
 }
 
-bool call_fmod (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird)
+// è¿”å›å‚æ•°çš„å°æ•°éƒ¨åˆ†, æ•´æ•°éƒ¨åˆ†ä¸å›ä¼ ã€‚
+bool call_modf (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird, const char * valFourth, const char * valFiveth)
 {
-	double val = atof(valFirst);
-	double valTwo = atof(valSecond);
-	result->setFloatValue(fmod(val, valTwo));
-    return true ;
+	if(valFirst)
+	{
+		double val = atof(valFirst);
+		double valTwo ;
+		result->setDoubleValue(modf(val, &valTwo));
+    	return true ;
+	}
+	return false;
 }
 
-bool call_hypot(eval_value *result, const char * valFirst,const char * valSecond,const char * valThird)
+bool call_fmod (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird, const char * valFourth, const char * valFiveth)
 {
-	double val = atof(valFirst);
-	double valTwo = atof(valSecond);
-	result->setFloatValue(hypot(val, valTwo));
-    return true ;
+	if(valFirst && valSecond)
+	{
+		double val = atof(valFirst);
+		double valTwo = atof(valSecond);
+		result->setDoubleValue(fmod(val, valTwo));
+    	return true ;
+	}
+	return false;
+}
+
+bool call_hypot(eval_value *result, const char * valFirst,const char * valSecond,const char * valThird, const char * valFourth, const char * valFiveth)
+{
+	if(valFirst && valSecond)
+	{
+		double val = atof(valFirst);
+		double valTwo = atof(valSecond);
+		result->setDoubleValue(hypot(val, valTwo));
+    	return true ;
+	}
+	return false;
 }
 
 int Stein_GCD(int x, int y)
 {
+	x = fabs(x), y= fabs(y);
     if (x == 0) return y;
     if (y == 0) return x;
     if (x % 2 == 0 && y % 2 == 0)
@@ -370,52 +491,72 @@ int Stein_GCD(int x, int y)
         return Stein_GCD(min(x, y), fabs(x - y));
 }
 
-bool call_gcd(eval_value *result, const char * valFirst,const char * valSecond,const char * valThird)
+bool call_gcd(eval_value *result, const char * valFirst,const char * valSecond,const char * valThird, const char * valFourth, const char * valFiveth)
 {
-	double val = atof(valFirst);
-	double valTwo = atof(valSecond);
-	result->setFloatValue(Stein_GCD((int)val, (int)valTwo));
-    return true ;
+	if(valFirst && valSecond)
+	{
+		double val = atof(valFirst);
+		double valTwo = atof(valSecond);
+		result->setDoubleValue(Stein_GCD((int)val, (int)valTwo));
+    	return true ;
+	}
+	return false;
 }
 
-bool call_lcm(eval_value *result, const char * valFirst,const char * valSecond,const char * valThird)
+bool call_lcm(eval_value *result, const char * valFirst,const char * valSecond,const char * valThird, const char * valFourth, const char * valFiveth)
 {
-	int iLcm = 0 ;
-	double val = atof(valFirst);
-	double valTwo = atof(valSecond);
-	iLcm = (int)val * (int)valTwo /(int)Stein_GCD((int)val, (int)valTwo);
-	result->setFloatValue(iLcm);
-    return true ;
+	if(valFirst && valSecond)
+	{
+		int iLcm = 0 ;
+		double val = atof(valFirst);
+		double valTwo = atof(valSecond);
+		iLcm = (int)val * (int)valTwo /(int)Stein_GCD((int)val, (int)valTwo);
+		result->setDoubleValue(iLcm);
+    	return true ;
+	}
+	return false;
 }
 
-bool call_degrees(eval_value *result, const char * valFirst,const char * valSecond,const char * valThird)
+bool call_degrees(eval_value *result, const char * valFirst,const char * valSecond,const char * valThird, const char * valFourth, const char * valFiveth)
 {
-	double val = atof(valFirst);
-	result->setFloatValue(RAD2DEG(val));
-    return true ;
+	if(valFirst)
+	{
+		double val = atof(valFirst);
+		result->setDoubleValue(RAD2DEG(val));
+    	return true ;
+	}
+	return false;
 }
 
-bool call_radians(eval_value *result, const char * valFirst,const char * valSecond,const char * valThird)
+bool call_radians(eval_value *result, const char * valFirst,const char * valSecond,const char * valThird, const char * valFourth, const char * valFiveth)
 {
-	double val = atof(valFirst);
-	result->setFloatValue(DEG2RAD(val));
-    return true ;
-}
+	if(valFirst)
+	{
+		double val = atof(valFirst);
+		result->setDoubleValue(DEG2RAD(val));
+    	return true ;
+	}
+	return false;
+}  
 
-//ÅĞ¶ÏÄ³Ò»Äê·İÊÇ·ñÊÇÈòÄê
+//åˆ¤æ–­æŸä¸€å¹´ä»½æ˜¯å¦æ˜¯é—°å¹´
 int IsLeapYear(int year)
 {
 	return (((year % 400 == 0) || (year % 4 == 0)) && (year % 100 != 0));
 }
 
-bool call_isleapyear(eval_value *result, const char * valFirst,const char * valSecond,const char * valThird)
+bool call_isleapyear(eval_value *result, const char * valFirst,const char * valSecond,const char * valThird, const char * valFourth, const char * valFiveth)
 {
-	double val = atof(valFirst);
-	result->setFloatValue(IsLeapYear((int)val));
-    return true ;
+	if(valFirst)
+	{
+		double val = atof(valFirst);
+		result->setDoubleValue(IsLeapYear((int)val));
+    	return true ;
+	}
+	return false;
 }
 
-//»ñµÃÄ³Äê¡¢Ä³ÔÂµÄ×î´óÌìÊı
+//è·å¾—æŸå¹´ã€æŸæœˆçš„æœ€å¤§å¤©æ•°
 int GetMaxDay(int year,int month)
 {
 	switch(month)
@@ -439,80 +580,104 @@ int GetMaxDay(int year,int month)
 	}
 }
 
-bool call_getmaxday(eval_value *result, const char * valFirst,const char * valSecond,const char * valThird)
+bool call_getmaxday(eval_value *result, const char * valFirst,const char * valSecond,const char * valThird, const char * valFourth, const char * valFiveth)
 {
-	double val = atof(valFirst);
-	double valTwo = atof(valSecond);
-	result->setFloatValue(GetMaxDay((int)val, (int)valTwo));
-    return true ;
+	if(valFirst && valSecond)
+	{
+		double val = atof(valFirst);
+		double valTwo = atof(valSecond);
+		result->setDoubleValue(GetMaxDay((int)val, (int)valTwo));
+    	return true ;
+	}
+	return false;
 }
 
-//ÊäÈëÄ³ÄêÄ³ÔÂÄ³ÈÕ£¬ÅĞ¶ÏÕâÒ»ÌìÊÇÕâÒ»ÄêµÄµÚ¼¸Ìì£¿ 
+//è¾“å…¥æŸå¹´æŸæœˆæŸæ—¥ï¼Œåˆ¤æ–­è¿™ä¸€å¤©æ˜¯è¿™ä¸€å¹´çš„ç¬¬å‡ å¤©ï¼Ÿ 
 /*  
-³ÌĞò·ÖÎö£ºÒÔ3ÔÂ5ÈÕÎªÀı£¬Ó¦¸ÃÏÈ°ÑÇ°Á½¸öÔÂµÄ¼ÓÆğÀ´£¬È»ºóÔÙ¼ÓÉÏ5Ìì¼´±¾ÄêµÄµÚ¼¸Ìì£¬ÌØÊâ 
-Çé¿ö£¬ÈòÄêÇÒÊäÈëÔÂ·İ´óÓÚ3Ê±Ğè¿¼ÂÇ¶à¼ÓÒ»Ìì¡£
+ç¨‹åºåˆ†æï¼šä»¥3æœˆ5æ—¥ä¸ºä¾‹ï¼Œåº”è¯¥å…ˆæŠŠå‰ä¸¤ä¸ªæœˆçš„åŠ èµ·æ¥ï¼Œç„¶åå†åŠ ä¸Š5å¤©å³æœ¬å¹´çš„ç¬¬å‡ å¤©ï¼Œç‰¹æ®Š 
+æƒ…å†µï¼Œé—°å¹´ä¸”è¾“å…¥æœˆä»½å¤§äº3æ—¶éœ€è€ƒè™‘å¤šåŠ ä¸€å¤©ã€‚
 */
 int GetDays(int year,int month,int day)
 {
 	int sum = 0;
 	int i;
-	for(i = 1; i < month; i++)      //½«Ç°¼¸¸öÔÂÌìÊıÏà¼Ó
+	for(i = 1; i < month; i++)      //å°†å‰å‡ ä¸ªæœˆå¤©æ•°ç›¸åŠ 
 		sum += GetMaxDay(year,month);
-	sum = sum + day;  //¼ÓÉÏ±¾ÔÂµÄÌìÊı£¬¾ÍÊÇ×ÜÌìÊı
+	sum = sum + day;   //åŠ ä¸Šæœ¬æœˆçš„å¤©æ•°ï¼Œå°±æ˜¯æ€»å¤©æ•°
 	return sum;
 }
 
-bool call_getdays(eval_value *result, const char * valFirst,const char * valSecond,const char * valThird)
+bool call_getdays(eval_value *result, const char * valFirst,const char * valSecond,const char * valThird, const char * valFourth, const char * valFiveth)
 {
-	double val = atof(valFirst);
-	double valTwo = atof(valSecond);
-	double valThr = atof(valThird);
-	result->setFloatValue(GetDays((int)val, (int)valTwo, (int)valThr));
-    return true ;
+	if(valFirst && valSecond && valThird)
+	{
+		double val = atof(valFirst);
+		double valTwo = atof(valSecond);
+		double valThr = atof(valThird);
+		result->setDoubleValue(GetDays((int)val, (int)valTwo, (int)valThr));
+    	return true ;
+	}
+	return false;
 }
 
 bool call_strlen (eval_value *result, const char * valFirst, 
-						const char * valSecond, const char * valThird)
+						const char * valSecond, const char * valThird, const char * valFourth, const char * valFiveth)
 {
-	result->setFloatValue(strlen(valFirst));
-	FST_INFO("result = %f", result->getFloatValue());
-    return true ;
+	if(valFirst)
+	{
+		result->setDoubleValue(strlen(valFirst));
+	//	FST_INFO("result = %f", result->getDoubleValue());
+    	return true ;
+	}
+	return false;
 }
 
 bool call_findstr (eval_value *result, const char * valFirst, 
-						const char * valSecond, const char * valThird)
+						const char * valSecond, const char * valThird, const char * valFourth, const char * valFiveth)
 {
-    char * strRet = strstr(valFirst, valSecond);
-	if(strRet == NULL)
+	if(valFirst && valSecond)
 	{
-		result->setFloatValue(-1.0);
-		return false ;
+	    char * strRet = strstr(valFirst, valSecond);
+		if(strRet == NULL)
+		{
+			FST_INFO("call_findstr use strstr('%s', '%s')", valFirst, valSecond);
+			result->setDoubleValue(-1.0);
+			return false ;
+		}
+		else 
+		{
+			result->setDoubleValue((int)(strRet - valFirst));
+			FST_INFO("result = %f", result->getDoubleValue());
+			return true ;
+		}
 	}
-	else 
-	{
-		result->setFloatValue((int)(strRet - valFirst));
-		FST_INFO("result = %f", result->getFloatValue());
-		return true ;
-	}
+	return false;
 }
 
 bool call_substr (eval_value *result, const char * valFirst, 
-						const char * valSecond, const char * valThird)
+						const char * valSecond, const char * valThird, const char * valFourth, const char * valFiveth)
 {
-	string strVal = string(valFirst);
-	int    valTwo = (int)atof(valSecond);
-	int    valThr = (int)atof(valThird);
-    string strRet = strVal.substr(valTwo, valThr);
-	if(strRet.length() == 0)
+	if(valFirst && valSecond && valThird)
 	{
-		return false ;
+		string strVal = string(valFirst);
+		int    valTwo = (int)atof(valSecond);
+		int    valThr = (int)atof(valThird);
+		if((valTwo > 0) && (valThr > 0))
+		{
+		    string strRet = strVal.substr(valTwo, valThr);
+			if(strRet.length() == 0)
+			{
+				return false ;
+			}
+			else 
+			{
+				result->setStringValue(strRet);
+			//	FST_INFO("result = %s", result->getStringValue().c_str());
+				return true ;
+			}
+		}
 	}
-	else 
-	{
-		result->setStringValue(strRet);
-		FST_INFO("result = %s", result->getStringValue().c_str());
-		return true ;
-	}
+	return false;
 }
 
 // replace helper starts
@@ -551,112 +716,156 @@ string& replace_all_distinct(string& str,const string& old_value,const string& n
 // replace helper ends
 
 bool call_replace (eval_value *result, const char * valFirst, 
-						const char * valSecond, const char * valThird)
+						const char * valSecond, const char * valThird, const char * valFourth, const char * valFiveth)
 {
-	string strVal = string(valFirst);
-	string strTwo = string(valSecond);  // (int)atof(valSecond);
-	string strThr = string(valThird);  // (int)atof(valThird);
+	if(valFirst && valSecond && valThird)
+	{
+		string strVal = string(valFirst);
+		string strTwo = string(valSecond);  // (int)atof(valSecond);
+		string strThr = string(valThird);  // (int)atof(valThird);
 
-    string strRet = replace(strVal, strTwo, strThr);
-	if(strRet == strVal)
-	{
-		result->setStringValue(strRet);
-		return false ;
+	    string strRet = replace(strVal, strTwo, strThr);
+		if(strRet == strVal)
+		{
+			result->setStringValue(strRet);
+			return false ;
+		}
+		else 
+		{
+			result->setStringValue(strRet);
+			return true ;
+		}
 	}
-	else 
+	return false;
+}
+
+bool call_replaceall (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird, const char * valFourth, const char * valFiveth)
+{
+	if(valFirst && valSecond && valThird)
 	{
+		string strVal = string(valFirst);
+		string strTwo = string(valSecond);  // (int)atof(valSecond);
+		string strThr = string(valThird);  // (int)atof(valThird);
+		
+	    string strRet = replace_all_distinct(strVal, strTwo, strThr);
+		if(strRet == strVal)
+		{
+			result->setStringValue(strRet);
+			return false ;
+		}
+		else 
+		{
+			result->setStringValue(strRet);
+			return true ;
+		}
+	}
+	return false;
+}
+
+bool call_replaceall_iteration (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird, const char * valFourth, const char * valFiveth)
+{
+	if(valFirst && valSecond && valThird)
+	{
+		string strVal = string(valFirst);
+		string strTwo = string(valSecond);  // (int)atof(valSecond);
+		string strThr = string(valThird);  // (int)atof(valThird);
+		
+	    string strRet = replace_all_no_distinct(strVal, strTwo, strThr);
+		if(strRet == strVal)
+		{
+			result->setStringValue(strRet);
+			return false ;
+		}
+		else 
+		{
+			result->setStringValue(strRet);
+			return true ;
+		}
+	}
+	return false;
+}
+
+bool call_lower(eval_value *result, const char * valFirst,const char * valSecond,const char * valThird, const char * valFourth, const char * valFiveth)
+{
+	if(valFirst)
+	{
+		string strRet = string(valFirst);
+	    transform(strRet.begin(), strRet.end(), strRet.begin(), ::tolower);  
 		result->setStringValue(strRet);
 		return true ;
 	}
+	return false;
 }
 
-bool call_replaceall (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird)
+bool call_upper      (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird, const char * valFourth, const char * valFiveth)
 {
-	string strVal = string(valFirst);
-	string strTwo = string(valSecond);  // (int)atof(valSecond);
-	string strThr = string(valThird);  // (int)atof(valThird);
-	
-    string strRet = replace_all_distinct(strVal, strTwo, strThr);
-	if(strRet == strVal)
+	if(valFirst)
 	{
-		result->setStringValue(strRet);
-		return false ;
-	}
-	else 
-	{
+		string strRet = string(valFirst);
+	    transform(strRet.begin(), strRet.end(), strRet.begin(), ::toupper);  
 		result->setStringValue(strRet);
 		return true ;
 	}
+	return false;
 }
-
-bool call_replaceall_iteration (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird)
+bool call_revert     (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird, const char * valFourth, const char * valFiveth)
 {
-	string strVal = string(valFirst);
-	string strTwo = string(valSecond);  // (int)atof(valSecond);
-	string strThr = string(valThird);  // (int)atof(valThird);
-	
-    string strRet = replace_all_no_distinct(strVal, strTwo, strThr);
-	if(strRet == strVal)
+	if(valFirst)
 	{
-		result->setStringValue(strRet);
-		return false ;
-	}
-	else 
-	{
+		string strRet = string(valFirst);
+		reverse(strRet.begin(),strRet.end());
 		result->setStringValue(strRet);
 		return true ;
 	}
+	return false;
 }
 
-bool call_lower(eval_value *result, const char * valFirst,const char * valSecond,const char * valThird)
+bool call_atoi     (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird, const char * valFourth, const char * valFiveth)
 {
-	string strRet = string(valFirst);
-    transform(strRet.begin(), strRet.end(), strRet.begin(), ::tolower);  
-	result->setStringValue(strRet);
-	return true ;
+	if(valFirst)
+	{
+		int val = atoi(valFirst);
+		result->setDoubleValue((float)val);
+	    return true ;
+	}
+	return false;
 }
 
-bool call_upper      (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird)
+bool call_atof     (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird, const char * valFourth, const char * valFiveth)
 {
-	string strRet = string(valFirst);
-    transform(strRet.begin(), strRet.end(), strRet.begin(), ::toupper);  
-	result->setStringValue(strRet);
-	return true ;
-}
-bool call_revert     (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird)
-{
-	string strRet = string(valFirst);
-	reverse(strRet.begin(),strRet.end());
-	result->setStringValue(strRet);
-	return true ;
+	if(valFirst)
+	{
+		double val = atof(valFirst);
+		result->setDoubleValue(val);
+	    return true ;
+	}
+	return false;
 }
 
-bool call_atoi     (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird)
+bool call_itoa     (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird, const char * valFourth, const char * valFiveth)
 {
-	int val = atoi(valFirst);
-	result->setFloatValue((float)val);
-    return true ;
+	if(valFirst)
+	{
+		char cString[128];
+		memset(cString, 0x00, 128);
+		sprintf(cString, "%d", atoi(valFirst));
+
+		string strRet = cString;
+		result->setStringValue(strRet);
+		return true ;
+	}
+	return false;
 }
 
-bool call_atof     (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird)
+bool call_ftoa     (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird, const char * valFourth, const char * valFiveth)
 {
-	double val = atof(valFirst);
-	result->setFloatValue(val);
-    return true ;
-}
-
-bool call_itoa     (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird)
-{
-	string strRet = string(valFirst);
-	result->setStringValue(strRet);
-	return true ;
-}
-
-bool call_ftoa     (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird)
-{
-	string strRet = string(valFirst);
-	result->setStringValue(strRet);
-	return true ;
+	if(valFirst)
+	{
+		string strRet = string(valFirst);
+		result->setStringValue(strRet);
+		return true ;
+	}
+	return false;
 }
 
 

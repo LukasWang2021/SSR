@@ -4,6 +4,7 @@
 #include "base_reg.h"
 #include "parameter_manager/parameter_manager_param_group.h"
 #include "reg_manager_param.h"
+#include "common_log.h"
 
 namespace fst_ctrl
 {
@@ -25,7 +26,7 @@ class SrReg:public BaseReg
 {
 public:
     SrReg(RegManagerParam* param_ptr);
-    ~SrReg();
+    virtual ~SrReg();
 
     virtual ErrorCode init();
     virtual ErrorCode addReg(void* data_ptr);
@@ -42,6 +43,7 @@ private:
     std::string file_path_;
     fst_parameter::ParamGroup yaml_help_;
     std::vector<std::string> data_list_;
+    fst_log::Logger* log_ptr_;
 
     SrReg();
     bool createYaml();

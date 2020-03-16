@@ -92,16 +92,16 @@ int main(int argc, char* argv[])
     cout << "Reply : msg.data.group_id = " << recv_msg.data.group_id << endl;
     cout << "Reply : msg.data.pos_type = " << recv_msg.data.pos_type << endl;
     cout << "Reply : msg.data.pos.data_count = " << recv_msg.data.pos.data_count << endl;
-    cout << "Reply : msg.data.posture.data_count = " << recv_msg.data.posture.data_count << endl;
+    cout << "Reply : msg.data.posture.turn_cycle.data_count = " << recv_msg.data.posture.turn_cycle.data_count << endl;
 
-    for (int i = 0; i != recv_msg.data.pos.data_count; ++i)
+    for (size_t i = 0; i != recv_msg.data.pos.data_count; ++i)
     {
         cout << "Reply : msg.data.pos.data[" << i << "] = " << recv_msg.data.pos.data[i] << endl;
     }
 
-    for (int i = 0; i != recv_msg.data.posture.data_count; ++i)
+    for (size_t i = 0; i != recv_msg.data.posture.turn_cycle.data_count; ++i)
     {
-        cout << "Reply : msg.data.posture.data[" << i << "] = " << recv_msg.data.posture.data[i] << endl;
+        cout << "Reply : msg.data.posture.turn_cycle.data[" << i << "] = " << recv_msg.data.posture.turn_cycle.data[i] << endl;
     }
 
     usleep(200000);

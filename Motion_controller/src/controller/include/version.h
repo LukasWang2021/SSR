@@ -1,3 +1,4 @@
+/*
 #ifndef CONTROLLER_VERSION_H_
 #define CONTROLLER_VERSION_H_ 
 
@@ -13,4 +14,4 @@ int get_ver_minor();
 
 int get_ver_rev();
 
-#endif /*CONTROLLER_VERSION_H_ */  
+#endif *//*CONTROLLER_VERSION_H_ */  

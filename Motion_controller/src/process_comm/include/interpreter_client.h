@@ -57,6 +57,9 @@ public:
     ErrorCode getUserOpMode(int &mode);
     ErrorCode setDoPulse(uint32_t port_offset, double time);
     ErrorCode setRoPulse(uint32_t port_offset, double time);
+
+    ErrorCode getPosture(basic_alg::Posture &posture);
+    ErrorCode getTurn(basic_alg::Turn &turn);
     
 private:
     fst_log::Logger* log_ptr_;

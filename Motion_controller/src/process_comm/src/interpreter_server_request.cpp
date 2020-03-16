@@ -17,7 +17,7 @@ void InterpreterServer::handleRequestStart()
     if(response_data_ptr == NULL)
     {
         FST_ERROR("handleRequest: can't allocate memory for response_data");
-        delete[] request_data_ptr;
+        delete request_data_ptr;
         return;
     }
     copyRecvBufferToRequestData(request_data_ptr, 256);

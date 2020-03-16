@@ -36,6 +36,10 @@ set(catkin_INCLUDE_DIRS
     ${depend_PATH_INC}/nvram/include
     ${depend_PATH_INC}/fst_spi/include
     ${depend_PATH_INC}/kinematics_alg/include
+    ${depend_PATH_INC}/trajectory_planner/include
+    ${depend_PATH_INC}/joint_constraint/include
+    ${depend_PATH_INC}/fst_safety_device/include
+    
 )
 
 catkin_package(
@@ -47,6 +51,7 @@ catkin_package(
     DEPENDS nvram 
     DEPENDS fst_spi 
     DEPENDS kinematics_alg
+    DEPENDS joint_constraint
 )
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -g -Wno-unused-but-set-variable -Wno-unused-local-typedefs -O0 -fpermissive -DPB_FIELD_32BIT -DSIMMULATION -DPRINT")
@@ -71,6 +76,7 @@ target_link_libraries(process_comm
     fst_io_device 
     error_monitor
     kinematics_alg
+    joint_constraint
 )
 
 install(TARGETS process_comm 

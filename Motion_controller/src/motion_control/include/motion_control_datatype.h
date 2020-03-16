@@ -20,21 +20,14 @@ namespace fst_mc
 typedef unsigned int Tick;
 typedef double  MotionTime;
 
-#define PATH_CACHE_SIZE         1024
-#define TRAJECTORY_CACHE_SIZE   128
-
 
 struct JointState
 {
 	basic_alg::Joint angle;
 	basic_alg::Joint omega;
 	basic_alg::Joint alpha;
-};
-
-struct JointConstraint  // 关节限位
-{
-    basic_alg::Joint upper;    // 上限
-    basic_alg::Joint lower;    // 下限
+    basic_alg::Joint jerk;
+    basic_alg::Joint torque;
 };
 
 struct PoseAndPosture
@@ -113,29 +106,10 @@ struct MotionTarget     // 用于move指令的数据结构
     TargetPoint via;      // moveC时用作中间一个辅助点
 };
 
-struct PathBlock    // 路径点的数据结构
+struct TrajectoryPoint  // 差值得到的轨迹点
 {
-    PointType       point_type;     // 路径点所属的区段, 路径点或者过渡点
-    CoordinateType  coord_type;     // 路径点的类型，关节类型或者笛卡尔类型
-
-    basic_alg::PoseQuaternion   pose;   // 路径点的笛卡尔空间位姿表示
-    basic_alg::Joint            joint;  // 路径点的关节空间表示
-};
-
-struct PathCache    // 路径缓存
-{
-    MotionInfo  target;                 // 运动指令的目标
-    int         smooth_in_index;        // 如果上一条指令带平滑，index指示了过度路径切入本条路径的位置，否则index应为-1，在过渡段的最后一个点
-    int         smooth_out_index;       // 如果本条指令带平滑，index指示了由本条路径切出到过度路径的位置，否则index应为-1，在路径上的最后一个点
-    size_t      cache_length;           // 路径缓存中的有效路径点数
-    PathBlock   cache[PATH_CACHE_SIZE]; // 由一系列连续有序的路径点构成的路径
-};
-
-struct PathCacheList    // 路径缓存链表
-{
-    int             id;                     // 运动指令的ID/行号
-    PathCacheList*  next_ptr;               // 下一个路径缓存所在的地址，用于构成路径缓存链表
-    PathCache       path_cache;
+    JointState state;
+    PointLevel level;  // 轨迹点位置，起始点、中间点或者结束点
 };
 
 struct AxisCoeff        // 一个轴轨迹的表达式
@@ -143,49 +117,6 @@ struct AxisCoeff        // 一个轴轨迹的表达式
     int     reserve[4]; // 保留
     double  data[10];  // 表达式，根据算法实现进行细化
 };
-
-struct TrajectoryBlock  // 一段时间内的轨迹
-{
-    int         index_in_path_cache;    // 轨迹段末尾位置对应在路径缓存中的索引, 当轨迹段末尾点在路径中没有对应的路径点时此处应填-1
-    MotionTime  duration;               // 轨迹段block在时间轴上的延续长度，在本段轨迹上的差值时间：0 ～ duration
-    MotionTime  time_from_start;        // 从运动起始到block起始之间的时间
-    AxisCoeff   axis[NUM_OF_JOINT];     // 各个轴的表达式
-};
-
-struct TrajectoryCache      // 轨迹缓存
-{
-    int                 smooth_out_index;               // 如果本条指令带平滑，index指示了由本条路径切出到过度路径的位置，否则index应为-1
-    PathCache*          path_cache_ptr;                 // 轨迹对应的路径缓存地址
-    size_t              cache_length;                   // 轨迹缓存中的有效轨迹段数
-    TrajectoryBlock     cache[TRAJECTORY_CACHE_SIZE];   // 由一系列连续有序的轨迹段构成的轨迹
-};
-
-struct TrajectoryCacheList  // 轨迹缓存链表
-{
-    size_t                  pick_index;
-    MotionTime              pick_from_block;
-    MotionTime              time_from_start;                // 从运动起始到本条指令起始之间的时间
-    TrajectoryCacheList*    next_ptr;                       // 下一个轨迹缓存所在的地址，用于构成轨迹缓存链表
-    TrajectoryCache         trajectory_cache;
-};
-
-struct TrajectorySegment
-{
-    MotionTime  time_from_start;     // 从运动起始到本段segment起点之间的时间
-    MotionTime  time_from_block;     // 从block开始到本段segment起始之间的时间
-    MotionTime  duration;               // 本段segment的持续时间
-    AxisCoeff   axis[NUM_OF_JOINT];     // 各个轴的表达式
-};
-
-struct TrajectoryPoint  // 差值得到的轨迹点
-{
-    basic_alg::Joint pos;               // 轨迹点的位置
-    basic_alg::JointVelocity vel;       // 轨迹点的速度
-    basic_alg::JointAcceleration acc;   // 轨迹点的加速度
-    basic_alg::JointTorque torque;      // 轨迹点的力矩
-    PointLevel  level;  // 轨迹点位置，起始点、中间点或者结束点
-};
-
 
 
 class GroupDirection        // 手动示教模式下各轴运动方向
@@ -211,22 +142,7 @@ struct ManualAxisBlock
     AxisCoeff coeff[7];
 };
 
-struct ManualTrajectory     // 手动示教模式下的运动轨迹
-{
-    ManualMode      mode;           // 手动示教的模式，步进、连续或者到目标点
-    ManualFrame     frame;          // 手动示教的坐标系，关节空间、基座坐标系、用户坐标系、世界坐标系、工具坐标系
-    ManualDirection direction[NUM_OF_JOINT];   // 手动示教的各轴方向
 
-    basic_alg::Joint    joint_start;        // 示教运动的开始关节位置
-    basic_alg::Joint    joint_ending;       // 示教运动的结束关节位置
-
-    basic_alg::PoseEuler    cart_start;         // 示教运动的开始笛卡尔位姿
-    basic_alg::PoseEuler    cart_ending;        // 示教运动结束始笛卡尔位姿
-    basic_alg::PoseEuler    auxiliary_coord;    // 辅助坐标系
-
-    MotionTime ending_time;
-    ManualAxisBlock axis[NUM_OF_JOINT];
-};
 
 }
 

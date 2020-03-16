@@ -9,6 +9,7 @@
 #include <sstream>
 #include "basic_alg_datatype.h"
 #include "basic_constants.h"
+#include "forsight_inter_control.h"
 
 
 using namespace fst_ctrl;
@@ -38,20 +39,22 @@ ControllerSm::ControllerSm():
     ctrl_reset_count_(0),
     robot_state_timeout_count_(100000),
     valid_state_(false),
-    program_code_(0),
+    is_continuous_manual_move_timeout_(false),
+    is_unknown_user_op_mode_exist_(false),
+    is_instruction_available_(false),
+    is_interpreter_cmd_error_(false),
     interpreter_warning_code_(0),
     error_level_(0),
     ui_servo_enable_(false),
     uo_cmd_enable_(false),
-    is_continuous_manual_move_timeout_(false),
-    is_unknown_user_op_mode_exist_(false),
-    is_instruction_available_(false),
+    program_code_(0),
     is_pause_call_(false)
 {
     memset(&last_continuous_manual_move_rpc_time_, 0, sizeof(struct timeval));
     memset(&last_unknown_user_op_mode_time_, 0, sizeof(struct timeval));
     memset(&instruction_, 0, sizeof(Instruction));
     memset(&is_error_exist_, 0, sizeof(ErrorLevelFlag));
+    memset(&pre_error_, 0, sizeof(ErrorLevelFlag));
 }
 
 ControllerSm::~ControllerSm()
@@ -130,7 +133,7 @@ RunningState ControllerSm::getRunningState()
     return running_state_;
 }
 
-fst_ctrl::InterpreterState ControllerSm::getInterpreterState()
+InterpreterState ControllerSm::getInterpreterState()
 {
     return interpreter_state_;
 }
@@ -203,6 +206,12 @@ ErrorCode ControllerSm::checkOffsetState()
                 log_str.append(std::to_string(i+1));
                 recordLog(ZERO_OFFSET_DEVIATE, log_str);
             }
+            else if(offset_state[i] == OFFSET_INVALID)
+            {
+                std::string log_str("");
+                log_str.append(std::to_string(i+1));
+                recordLog(ZERO_OFFSET_INVALID, log_str);
+            }
         }
     
         if(calib_state == MOTION_FORBIDDEN)
@@ -221,7 +230,12 @@ ErrorCode ControllerSm::callEstop()
         || ctrl_state_ == CTRL_INIT)
     {
         safety_device_ptr_->setDOType0Stop(1);
-        controller_client_ptr_->abort();
+		
+        // controller_client_ptr_->abort();
+        InterpreterControl intprt_ctrl ;
+		intprt_ctrl.cmd = fst_base::INTERPRETER_SERVER_CMD_ABORT ;
+        parseCtrlComand(intprt_ctrl, "");
+		
         motion_control_ptr_->stopGroup();
         motion_control_ptr_->abortMove();
         recordLog("Controller transfer to ANY_TO_ESTOP by rpc-callEstop");
@@ -245,18 +259,37 @@ ErrorCode ControllerSm::callReset()
     {
         is_unknown_user_op_mode_exist_ = false;
         is_error_exist_.data = false;
+        
         ErrorMonitor::instance()->clear();
-        clearInstruction();
-        ErrorCode error_code = checkOffsetState();
-        if(error_code != SUCCESS)
+        clearInstruction(); 
+        // ErrorCode error_code = checkOffsetState();
+        // if(error_code != SUCCESS)
+        // {
+        // 	// controller_client_ptr_->abort();
+        //     InterpreterControl intprt_ctrl ;
+		// 	intprt_ctrl.cmd = fst_base::INTERPRETER_SERVER_CMD_ABORT ;
+        //     parseCtrlComand(intprt_ctrl, "");
+			
+        //     motion_control_ptr_->stopGroup();
+        //     motion_control_ptr_->abortMove();
+        //     recordLog("Controller transfer to ANY_TO_ESTOP for offset failure when reset");
+        //     ctrl_state_ = CTRL_ANY_TO_ESTOP;
+        //     return error_code;
+        // }
+
+        if(motion_control_ptr_->getCalibrateState() == MOTION_FORBIDDEN)
         {
-            controller_client_ptr_->abort();
+            InterpreterControl intprt_ctrl ;
+			intprt_ctrl.cmd = fst_base::INTERPRETER_SERVER_CMD_ABORT ;
+            parseCtrlComand(intprt_ctrl, "");
+			
             motion_control_ptr_->stopGroup();
             motion_control_ptr_->abortMove();
             recordLog("Controller transfer to ANY_TO_ESTOP for offset failure when reset");
             ctrl_state_ = CTRL_ANY_TO_ESTOP;
-            return error_code;
+            return CONTROLLER_OFFSET_NEED_CALIBRATE;
         }
+
 
         //check safety_board status
         safety_device_ptr_->reset();
@@ -264,7 +297,7 @@ ErrorCode ControllerSm::callReset()
         {
             return CONTROLLER_SAFETY_NOT_READY;
         }
-        error_code = safety_device_ptr_->checkDeadmanNormal();
+        ErrorCode error_code = safety_device_ptr_->checkDeadmanNormal();
         if (error_code != SUCCESS)
         {
             return SAFETY_BOARD_DEADMAN_NORMAL_INFO;
@@ -288,8 +321,7 @@ ErrorCode ControllerSm::callReset()
             }
         }
 
-        recordLog("Controller transfer to ESTOP_TO_ENGAGED by rpc-callReset");
-        //ErrorMonitor::instance()->add(INFO_RESET_SUCCESS);//delete
+        recordLog("Controller transfer to ESTOP_TO_ENGAGED by callReset");
         ctrl_state_ = CTRL_ESTOP_TO_ENGAGED;  
         usleep(10000);//reset safety_board bit before sending RESET to bare_core.
         motion_control_ptr_->resetGroup();  
@@ -297,6 +329,12 @@ ErrorCode ControllerSm::callReset()
 
         setUoFaultOff();//UO[3]=off
         return SUCCESS;  
+    }
+    else if(ctrl_state_ == CTRL_ENGAGED)
+    {
+        clearPreError();
+        setUoFaultOff();//UO[3]=off
+        return SUCCESS;
     }
     return CONTROLLER_INVALID_OPERATION_RESET;
 }
@@ -360,14 +398,21 @@ void ControllerSm::getNewInstruction(Instruction* data_ptr)
 
 bool ControllerSm::isNextInstructionNeeded()
 {
+    // fixed execution bug: 当前指令执行出错，控制器线程还未及时切换状态机，
+    //解释器线程可能成功执行下一条指令 
+    if(is_interpreter_cmd_error_)
+        return false;
+
     if(!is_instruction_available_)
     {
         if(instruction_.type == MOTION)
         {
+            FST_INFO("instruction type MOTION check next move permission");
             return motion_control_ptr_->nextMovePermitted();
         }
         else
         {
+            FST_INFO("instruction type %d", instruction_.type);
             return true;
         }
     }
@@ -375,6 +420,11 @@ bool ControllerSm::isNextInstructionNeeded()
     {
         return false;
     }
+}
+
+void ControllerSm::clearInterpreterCmdErr()
+{
+    is_interpreter_cmd_error_ = false;
 }
 
 fst_hal::UserOpMode* ControllerSm::getUserOpModePtr()
@@ -387,7 +437,7 @@ fst_ctrl::RunningState* ControllerSm::getRunningStatePtr()
     return &running_state_;
 }
 
-fst_ctrl::InterpreterState* ControllerSm::getInterpreterStatePtr()
+InterpreterState* ControllerSm::getInterpreterStatePtr()
 {
     return &interpreter_state_;
 }
@@ -415,14 +465,16 @@ int* ControllerSm::getSafetyAlarmPtr()
 
 void ControllerSm::processInterpreter()
 {
-    interpreter_state_ = (fst_ctrl::InterpreterState)controller_client_ptr_->getInterpreterPublishPtr()->status;
-    std::string name = controller_client_ptr_->getInterpreterPublishPtr()->program_name;
+    // interpreter_state_ = (InterpreterState)controller_client_ptr_->getInterpreterPublishPtr()->status;
+	interpreter_state_ = getInterpreterPublishPtr()->status;
+    // std::string name = controller_client_ptr_->getInterpreterPublishPtr()->program_name;
+	std::string name = getInterpreterPublishPtr()->program_name;
     if (strcasecmp(name.c_str(), "") != 0)
     {
         program_name_ = name;
     }
 
-    // to help alg. Sometimes pause is not executed by one time call.
+    // to fixe alg, sometimes pause is not executed by one time call.
     static int loop_count_for_pause = 0;
     if (is_pause_call_ == true)
     {
@@ -434,67 +486,68 @@ void ControllerSm::processInterpreter()
         }
     }
 
-    if(interpreter_state_ == INTERPRETER_EXECUTE)
-    {
-        if(is_instruction_available_)
-        {
-            ErrorCode error_code = SUCCESS;
-            switch(instruction_.type)
-            {
-                case MOTION:
-                {//FST_ERROR("---Instruction Motion");
-                    //limit the MoveJ/MoveL velocity under slowly manual mode.
-                    if (user_op_mode_ == USER_OP_MODE_SLOWLY_MANUAL)
-                    {
-                        if (instruction_.target.type == MOTION_JOINT)
-                        {
-                            if (instruction_.target.vel > param_ptr_->max_limited_manual_vel_joint_)
-                            {
-                                instruction_.target.vel = param_ptr_->max_limited_manual_vel_joint_;
-                            } 
-                        }
-                        else if (instruction_.target.type == MOTION_LINE  || instruction_.target.type == MOTION_CIRCLE)
-                        {
-                            if (instruction_.target.vel > param_ptr_->max_limited_manual_vel_cart_)
-                            {
-                                instruction_.target.vel = param_ptr_->max_limited_manual_vel_cart_;
-                            }
-                        }
-                    }
-                    error_code = motion_control_ptr_->autoMove(0, instruction_.target);
-                    break;
-                }
-                case SET_UF:
-                {//FST_ERROR("---Instruction SetUF");
-                    error_code = motion_control_ptr_->setUserFrame(instruction_.current_uf);
-                    break;
-                }
-                case SET_TF:
-                {//FST_ERROR("---Instruction SetTf");
-                    error_code = motion_control_ptr_->setToolFrame(instruction_.current_tf);
-                    break;
-                }
-                case SET_OVC:
-                {//FST_ERROR("---Instruction SetOvc");
-                    error_code = motion_control_ptr_->setGlobalVelRatio(instruction_.current_ovc);
-                    break;
-                }
-                case SET_OAC:
-                {//FST_ERROR("---Instruction SetOac");
-                    error_code = motion_control_ptr_->setGlobalAccRatio(instruction_.current_oac);
-                    break;
-                }
-                default:
-                    ;
-            }
-            
-            if(error_code != SUCCESS)
-            {
-                ErrorMonitor::instance()->add(error_code);
-            }
-            is_instruction_available_ = false;
-        }
-    }    
+    // if(interpreter_state_ == INTERPRETER_EXECUTE)
+    // {
+    //     if(is_instruction_available_)
+    //     {
+    //         ErrorCode error_code = SUCCESS;
+    //         switch(instruction_.type)
+    //         {
+    //             case MOTION:
+    //             {//FST_ERROR("---Instruction Motion");
+    //                 //limit the MoveJ/MoveL velocity under slowly manual mode.
+    //                 if (user_op_mode_ == USER_OP_MODE_SLOWLY_MANUAL)
+    //                 {
+    //                     if (instruction_.target.type == MOTION_JOINT)
+    //                     {
+    //                         if (instruction_.target.vel > param_ptr_->max_limited_manual_vel_joint_)
+    //                         {
+    //                             instruction_.target.vel = param_ptr_->max_limited_manual_vel_joint_;
+    //                         } 
+    //                     }
+    //                     else if (instruction_.target.type == MOTION_LINE  || instruction_.target.type == MOTION_CIRCLE)
+    //                     {
+    //                         if (instruction_.target.vel > param_ptr_->max_limited_manual_vel_cart_)
+    //                         {
+    //                             instruction_.target.vel = param_ptr_->max_limited_manual_vel_cart_;
+    //                         }
+    //                     }
+    //                 }
+    //                 error_code = motion_control_ptr_->autoMove(0, instruction_.target);
+    //                 break;
+    //             }
+    //             case SET_UF:
+    //             {//FST_ERROR("---Instruction SetUF");
+    //                 error_code = motion_control_ptr_->setUserFrame(instruction_.current_uf);
+    //                 break;
+    //             }
+    //             case SET_TF:
+    //             {//FST_ERROR("---Instruction SetTf");
+    //                 error_code = motion_control_ptr_->setToolFrame(instruction_.current_tf);
+    //                 break;
+    //             }
+    //             case SET_OVC:
+    //             {//FST_ERROR("---Instruction SetOvc");
+    //                 error_code = motion_control_ptr_->setGlobalVelRatio(instruction_.current_ovc);
+    //                 break;
+    //             }
+    //             case SET_OAC:
+    //             {//FST_ERROR("---Instruction SetOac");
+    //                 error_code = motion_control_ptr_->setGlobalAccRatio(instruction_.current_oac);
+    //                 break;
+    //             }
+    //             default:
+    //                 ;
+    //         }
+
+    //         if(error_code != SUCCESS)
+    //         {
+    //             ErrorMonitor::instance()->add(error_code);
+    //             is_interpreter_cmd_error_ = true;
+    //         }
+    //         is_instruction_available_ = false;
+    //     }
+    // }    
 }
 
 void ControllerSm::processSafety()
@@ -504,7 +557,7 @@ void ControllerSm::processSafety()
     {
         struct timeval current_time;
         gettimeofday(&current_time, NULL);
-        user_op_mode_ = safety_device_ptr_->getDITPUserMode();
+        user_op_mode_ = (UserOpMode)safety_device_ptr_->getDITPUserMode();
         if(!is_unknown_user_op_mode_exist_
             && user_op_mode_ == USER_OP_MODE_NONE
             && last_unknown_user_op_mode_time_.tv_sec != 0)
@@ -554,7 +607,7 @@ void ControllerSm::processSafety()
             if (safety_debug_code != 0 && safety_debug_code != pre_debug_code)
             {
                 char safety_debug_string[16] = "";
-                sprintf(safety_debug_string, "0x%lx", safety_debug_code);
+                sprintf(safety_debug_string, "0x%x", safety_debug_code);
                 recordLog(SAFETY_BOARD_DEBUG_ERROR, safety_debug_string);  
             }
             pre_debug_code = safety_debug_code;
@@ -629,12 +682,27 @@ void ControllerSm::processError()
     ErrorCode error_code;
     while(ErrorMonitor::instance()->pop(error_code))
     {
-        recordLog(error_code);
+        //proccess safety_board debug errors
+        if((error_code & 0xFFFFFFFFFFFF0000) == SAFETY_BOARD_DEBUG_ERROR)
+        {
+            int debug_code = error_code & 0xFFFF;
+            if (debug_code != 0)
+            {
+                char debug_string[8] = "";
+                sprintf(debug_string, "%x", debug_code);
+                recordLog(SAFETY_BOARD_DEBUG_ERROR, debug_string);  
+            }
+        }
+        else
+        {
+            recordLog(error_code);
+        }
     }
 }
 
 void ControllerSm::transferServoState()
 {
+    static int count = 0;
     servo_state_ = motion_control_ptr_->getServoState();
     //UO[5]Servo_Status is off if servo_off
     if(servo_state_ == SERVO_DISABLE)
@@ -657,13 +725,35 @@ void ControllerSm::transferServoState()
         {
             motion_control_ptr_->clearGroup();
         }
+        //RobotCtrlCmd cmd = ABORT_CMD;
+        //XXsetCtrlCmd(&cmd, 0);
+        
+        //is_error_exist_ will handle below.
+        // //controller_client_ptr_->abort();
+        // InterpreterControl intprt_ctrl ;
+		// intprt_ctrl.cmd = fst_base::INTERPRETER_SERVER_CMD_ABORT ;
+        // parseCtrlComand(intprt_ctrl, "");
+		
+        //motion_control_ptr_->stopGroup();
+        //motion_control_ptr_->abortMove();
         recordLog("Servo state is abnormal");
+        count++;
+        if (count > (robot_state_timeout_count_/10))
+        {
+            count = 0;
+            ErrorMonitor::instance()->add(CONTROLLER_DECTECT_SERVO_ABNORMAL);
+        }
+        //ctrl_state_ = CTRL_ANY_TO_ESTOP;
     }      
+    else
+    {
+        count = 0;
+    }
 }
 
 void ControllerSm::transferCtrlState()
 {
-    static ErrorLevelFlag pre_error;
+    //static ErrorLevelFlag pre_error;
     switch(ctrl_state_)
     {
         case CTRL_ANY_TO_ESTOP:
@@ -682,7 +772,7 @@ void ControllerSm::transferCtrlState()
                 && servo_state_ == SERVO_IDLE
                 && !is_error_exist_.data)
             {
-                pre_error.data = false;
+                pre_error_.data = false;
                 recordLog("Controller transfer from ESTOP_TO_ENGAGED to ENGAGED");
                 ctrl_state_ = CTRL_ENGAGED;
             }
@@ -702,20 +792,20 @@ void ControllerSm::transferCtrlState()
             }
             break;
         case CTRL_ENGAGED:
-            if(is_error_exist_.data && pre_error.data != is_error_exist_.data)
+            if(is_error_exist_.data && pre_error_.data != is_error_exist_.data)
             {
                 doStopAction();
-                pre_error.data = is_error_exist_.data;
+                pre_error_.data = is_error_exist_.data;
             }
             break;
         case CTRL_INIT:
             ctrl_state_ = CTRL_ESTOP;
             break;
         case CTRL_ESTOP:
-            if(pre_error.data != is_error_exist_.data)
+            if(pre_error_.data != is_error_exist_.data)
             {
                 doStopAction();
-                pre_error.data = is_error_exist_.data;
+                pre_error_.data = is_error_exist_.data;
             }
             break;
         default:
@@ -728,7 +818,7 @@ void ControllerSm::transferRobotState()
     switch(robot_state_)
     {
         case ROBOT_IDLE_TO_RUNNING:
-            if(is_error_exist_.data)
+            if(is_error_exist_.data)//ignore pause and stop
             {
                 recordLog("Robot transfer from IDLE_TO_RUNNING to RUNNING_TO_IDLE for error");
                 robot_state_ = ROBOT_RUNNING_TO_IDLE;
@@ -799,7 +889,7 @@ void ControllerSm::shutdown()
 	// flushshutdown = fsync();
 
 	// sent a message outside to shutdown
-    sleep(10);
+    sleep(10);   
 	int fdshutdown;
 	fdshutdown = open("/dev/mem", O_RDWR);
 	if (fdshutdown == -1)
@@ -813,7 +903,7 @@ void ControllerSm::shutdown()
 	ptrshutdown = mmap(NULL, SHUTDOWN_LEN, PROT_READ|PROT_WRITE, MAP_SHARED, fdshutdown, SHUTDOWN_BASE);
 	if (ptrshutdown == MAP_FAILED)
 	{
-		printf("The shutdown-message cann't be sent. mmap = %d\n", (void *)ptrshutdown);
+		printf("The shutdown-message cann't be sent. mmap = %p\n", (void *)ptrshutdown);
 	}
 	else
 	{
@@ -827,7 +917,6 @@ void ControllerSm::shutdown()
 
 void ControllerSm::processMacroLaunching()
 {
-    int enable_macro_launching = false;
     if (user_op_mode_ == USER_OP_MODE_AUTO
         && interpreter_state_ == INTERPRETER_IDLE
         && ctrl_state_ == CTRL_ENGAGED
@@ -853,6 +942,7 @@ void ControllerSm::processModbusClientList()
     }
 }
 
+
 void ControllerSm::setPauseFlag(bool enable)
 {
     is_pause_call_ = enable;
@@ -869,11 +959,16 @@ void ControllerSm::callPause(void)
     if (err == SUCCESS)
     {
         is_pause_call_ = false;
-        controller_client_ptr_->pause(); 
+        // controller_client_ptr_->pause(); 
+		InterpreterControl intprt_ctrl ;
+		intprt_ctrl.cmd = fst_base::INTERPRETER_SERVER_CMD_PAUSE ;
+		parseCtrlComand(intprt_ctrl, "");
+		
         setUoPausedOn();//UO[2]=on
         setUoProgramRunOff();//UO[4]=off
     }
 }
+
 
 long long ControllerSm::computeTimeElapse(struct timeval &current_time, struct timeval &last_time)
 {
@@ -930,6 +1025,12 @@ void ControllerSm::clearInstruction()
     memset(&instruction_, 0, sizeof(Instruction));
 }
 
+void ControllerSm::clearPreError()
+{
+    is_error_exist_.data = false;
+    pre_error_.data = false;
+    return;
+}
 //set error level flag
 void ControllerSm::setErrorLevelFlag(ErrorCode error_code)
 {
@@ -968,19 +1069,27 @@ void ControllerSm::doStopAction(void)
     FST_WARN("Going to doStopAction\n");
     if (is_error_exist_.level.system == 1 || is_error_exist_.level.servo2 == 1 || is_error_exist_.level.abort == 1)
     {
-        controller_client_ptr_->abort();
+        // controller_client_ptr_->abort();
+        InterpreterControl intprt_ctrl ;
+		intprt_ctrl.cmd = fst_base::INTERPRETER_SERVER_CMD_ABORT ;
+        parseCtrlComand(intprt_ctrl, "");
+		
         motion_control_ptr_->stopGroup();
         motion_control_ptr_->abortMove();
-        recordLog("Controller transfer to CTRL_ANY_TO_ESTOP");
+        recordLog("Controller to CTRL_ANY_TO_ESTOP");
         FST_WARN("doStopAction:prg-abort, mc-stop/abort\n");
         ctrl_state_ = CTRL_ANY_TO_ESTOP;
     }
     else if(is_error_exist_.level.servo1 == 1 || is_error_exist_.level.stop == 1)
     {
-        controller_client_ptr_->pause();
+        // controller_client_ptr_->pause();
+		InterpreterControl intprt_ctrl ;
+		intprt_ctrl.cmd = fst_base::INTERPRETER_SERVER_CMD_PAUSE ;
+		parseCtrlComand(intprt_ctrl, "");
+		
         motion_control_ptr_->stopGroup();
         motion_control_ptr_->abortMove();
-        recordLog("Controller transfer to CTRL_ANY_TO_ESTOP");
+        recordLog("Controller to CTRL_ANY_TO_ESTOP");
         FST_WARN("doStopAction:prg-pause, mc-stop/abort\n");
         ctrl_state_ = CTRL_ANY_TO_ESTOP;
     }
@@ -989,7 +1098,11 @@ void ControllerSm::doStopAction(void)
         ErrorCode err = motion_control_ptr_->pauseMove();
         if (err == SUCCESS)
         {
-            controller_client_ptr_->pause();
+            // controller_client_ptr_->pause();
+			InterpreterControl intprt_ctrl ;
+			intprt_ctrl.cmd = fst_base::INTERPRETER_SERVER_CMD_PAUSE ;
+			parseCtrlComand(intprt_ctrl, "");
+		
             setUoPausedOn();
             setUoProgramRunOff();
         }
@@ -999,6 +1112,7 @@ void ControllerSm::doStopAction(void)
         }
     }
 }
+
 
 void ControllerSm::setSafetyStop(ErrorCode error_code)
 {
@@ -1029,14 +1143,19 @@ void ControllerSm::recordLog(std::string log_str)
 
 void ControllerSm::recordLog(ErrorCode error_code)
 {
+    if (error_code == INFO_RESET_SUCCESS)
+    {
+        ServerAlarmApi::GetInstance()->sendOneAlarm(error_code);
+        return;
+    }
     std::stringstream stream;
     stream<<"Log_Code: 0x"<<std::hex<<error_code;
     int level = ErrorMonitor::instance()->getErrorLevel(error_code);
-    if (level >= 3)
+    if (level > ERROR_INFO)
     {
         FST_ERROR(stream.str().c_str());
     }
-    else
+    else if (level <= ERROR_INFO)
     {
         FST_WARN(stream.str().c_str());
     }
@@ -1052,11 +1171,11 @@ void ControllerSm::recordLog(ErrorCode error_code, std::string log_str)
     std::stringstream stream;
     stream<<"Log_Code: 0x"<<std::hex<<error_code<<" : "<<log_str;
     int level = ErrorMonitor::instance()->getErrorLevel(error_code);
-    if (level >= 3)
+    if (level > ERROR_INFO)
     {
         FST_ERROR(stream.str().c_str());
     }
-    else
+    else if (level <= ERROR_INFO)
     {
         FST_WARN(stream.str().c_str());
     }

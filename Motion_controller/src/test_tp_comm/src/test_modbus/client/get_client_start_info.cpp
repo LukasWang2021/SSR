@@ -84,10 +84,10 @@ int main(int argc, char** argv)
         return -1;
     }
 
-    printf("Reply : msg.header.time_stamp = %d\n", recv_msg.header.time_stamp);
-    printf("Reply : msg.header.error_code = 0x%x\n", recv_msg.header.error_code);
+    printf("Reply : msg.header.time_stamp = %lld\n", recv_msg.header.time_stamp);
+    printf("Reply : msg.header.error_code = 0x%llx\n", recv_msg.header.error_code);
     printf("Reply : msg.property.authority = %d\n", recv_msg.property.authority);
-    printf("Reply : msg.error_code.data = 0x%x\n", recv_msg.error_code.data);
+    printf("Reply : msg.error_code.data = 0x%llx\n", recv_msg.error_code.data);
 
     if (recv_msg.error_code.data != 0)
     {

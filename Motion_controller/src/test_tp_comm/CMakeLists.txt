@@ -164,6 +164,11 @@ target_link_libraries(test_controller_set_system_time ${catkin_LIBRARIES} ${PROT
 install(TARGETS test_controller_set_system_time RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/controller)
 
 ######### for test client #########
+add_executable(test_controller_set_controller_ip  ${SRC_LIST}  src/test_controller/test_controller_set_controller_ip.cpp)
+target_link_libraries(test_controller_set_controller_ip ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
+install(TARGETS test_controller_set_controller_ip RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/controller)
+
+######### for test client #########
 add_executable(backup_done  ${SRC_LIST}  src/test_controller/test_controller_backup_done.cpp)
 target_link_libraries(backup_done ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
 install(TARGETS backup_done RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/controller)
@@ -487,6 +492,21 @@ install(TARGETS tool_get RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/m
 add_executable(tool_set ${SRC_LIST} src/test_motion_control/axis_group/tool_set.cpp)
 target_link_libraries(tool_set ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
 install(TARGETS tool_set RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/motion_control/axis_group)
+
+######### for test motion control #########
+add_executable(trajectory_file_offline_set ${SRC_LIST} src/test_motion_control/axis_group/trajectory_file_offline_set.cpp)
+target_link_libraries(trajectory_file_offline_set ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
+install(TARGETS trajectory_file_offline_set RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/motion_control/axis_group)
+
+######### for test motion control #########
+add_executable(trajectory_offline_move ${SRC_LIST} src/test_motion_control/axis_group/trajectory_offline_move.cpp)
+target_link_libraries(trajectory_offline_move ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
+install(TARGETS trajectory_offline_move RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/motion_control/axis_group)
+
+######### for test motion control #########
+add_executable(trajectory_offline_prepare ${SRC_LIST} src/test_motion_control/axis_group/trajectory_offline_prepare.cpp)
+target_link_libraries(trajectory_offline_prepare ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
+install(TARGETS trajectory_offline_prepare RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/motion_control/axis_group)
 
 ######### for test motion control #########
 add_executable(convert_joint_to_cart ${SRC_LIST} src/test_motion_control/axis_group/convert_joint_to_cart.cpp)

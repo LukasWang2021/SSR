@@ -25,7 +25,7 @@ void ControllerIpc::handleIpcIsNextInstructionNeeded(void* request_data_ptr, voi
 
 void ControllerIpc::handleIpcGetJoint(void* request_data_ptr, void* response_data_ptr)
 {
-    int* rq_data_ptr = static_cast<int*>(request_data_ptr);
+    //int* rq_data_ptr = static_cast<int*>(request_data_ptr);
     Joint* rs_data_ptr = static_cast<Joint*>(response_data_ptr);
 
     *rs_data_ptr = motion_control_ptr_->getServoJoint();
@@ -33,7 +33,7 @@ void ControllerIpc::handleIpcGetJoint(void* request_data_ptr, void* response_dat
 
 void ControllerIpc::handleIpcGetCart(void* request_data_ptr, void* response_data_ptr)
 {
-    int* rq_data_ptr = static_cast<int*>(request_data_ptr);
+    //int* rq_data_ptr = static_cast<int*>(request_data_ptr);
     PoseEuler* rs_data_ptr = static_cast<PoseEuler*>(response_data_ptr);
 
     *rs_data_ptr = motion_control_ptr_->getCurrentPose();
@@ -83,6 +83,22 @@ void ControllerIpc::handleIpcJointToCart(void* request_data_ptr, void* response_
         pos.euler_.c_ = DBL_MAX;
     }
     *rs_data_ptr = pos;
+}
+
+void ControllerIpc::handleIpcGetPosture(void* request_data_ptr, void* response_data_ptr)
+{
+    Posture* rs_data_ptr = static_cast<Posture*>(response_data_ptr);
+    
+    Joint joint = motion_control_ptr_->getServoJoint();
+    *rs_data_ptr = motion_control_ptr_->getPostureFromJoint(joint);
+}
+
+void ControllerIpc::handleIpcGetTurn(void* request_data_ptr, void* response_data_ptr)
+{
+    Turn* rs_data_ptr = static_cast<Turn*>(response_data_ptr);
+    
+    Joint joint = motion_control_ptr_->getServoJoint();
+    *rs_data_ptr = motion_control_ptr_->getTurnFromJoint(joint);
 }
 
 

@@ -6,12 +6,12 @@
 using namespace fst_comm;
 
 TpCommManagerParam::TpCommManagerParam():
-    file_path_(COMPONENT_PARAM_FILE_DIR),
     log_level_(fst_log::MSG_LEVEL_ERROR),
     cycle_time_(10000),
     recv_buffer_size_(65536),
     send_buffer_size_(65535),
-    rpc_list_max_size_(10)
+    rpc_list_max_size_(10),
+    file_path_(COMPONENT_PARAM_FILE_DIR)
 {
     file_path_ += "tp_comm.yaml";
 }

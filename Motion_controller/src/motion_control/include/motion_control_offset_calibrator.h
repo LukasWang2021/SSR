@@ -32,12 +32,20 @@ enum OffsetState
     OFFSET_NORMAL,          // 零位正常
     OFFSET_DEVIATE,         // 零位偏移
     OFFSET_LOST,            // 零位丢失
+    OFFSET_INVALID,         // 无效值
 };
 
 enum OffsetMask
 {
     OFFSET_UNMASK,          // 未屏蔽零位错误，零位校验时对该轴零位进行检查
     OFFSET_MASKED,          // 屏蔽零位错误，零位校验时不对该轴进行检查
+};
+
+enum EncoderCommunication
+{
+    NORMAL,
+    UNNORMAL,
+    RECOVERY,     
 };
 
 static const int NEED_SAVE = 1;
@@ -151,7 +159,7 @@ class Calibrator
     // 输出：  None
     // 返回：  None
     //------------------------------------------------------------------------------
-    void setOffset(size_t index, double offset);
+    ErrorCode setOffset(size_t index, double offset);
 
     //------------------------------------------------------------------------------
     // 方法：  setOffset
@@ -160,7 +168,7 @@ class Calibrator
     // 输出：  None
     // 返回：  None
     //------------------------------------------------------------------------------
-    void setOffset(const double *offset);
+    ErrorCode setOffset(const double *offset);
 
     //------------------------------------------------------------------------------
     // 方法：  getOffset
@@ -255,7 +263,8 @@ class Calibrator
 
 //***************************************************************************************************************************//
   private:
-    void checkOffset(basic_alg::Joint curr_jnt, basic_alg::Joint last_jnt, OffsetState *offset_stat);
+    void checkOffset(basic_alg::Joint curr_jnt, basic_alg::Joint last_jnt, OffsetState *offset_stat, const uint32_t (&encoder_state)[NUM_OF_JOINT]);
+    void checkCalibrateState(void);
     double calculateOffset(double current_offset, double current_joint, double target_joint);
     double calculateOffsetEasy(double gear_ratio, double ref_offset, unsigned int ref_encoder, unsigned int cur_encoder);
     ErrorCode sendConfigData(int id, const std::vector<int> &data);
@@ -293,6 +302,9 @@ class Calibrator
     size_t joint_num_;
     BareCoreInterface *bare_core_ptr_;
     fst_log::Logger *log_ptr_;
+
+    bool b_check_flag_; //check offset flag
+    int i_com_flag_[NUM_OF_JOINT]; // encoder communication flag
 };
 
 

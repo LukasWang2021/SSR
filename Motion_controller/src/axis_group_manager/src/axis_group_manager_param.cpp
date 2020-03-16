@@ -5,8 +5,8 @@
 using namespace fst_mc;
 
 AxisGroupManagerParam::AxisGroupManagerParam():
-    file_path_(COMPONENT_PARAM_FILE_DIR),
-    log_level_(3)
+    log_level_(3),
+    file_path_(COMPONENT_PARAM_FILE_DIR)
 {
     file_path_ += "axis_group_manager.yaml";
 }

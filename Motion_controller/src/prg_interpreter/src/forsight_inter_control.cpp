@@ -2,7 +2,6 @@
 #pragma warning(disable : 4786)
 #endif
 #include<libxml/parser.h>
-
 #include "forsight_inter_control.h"
 #include "forsight_innercmd.h"
 #include "forsight_io_controller.h"
@@ -15,6 +14,7 @@
 #ifndef WIN32
 #include "reg_manager/reg_manager_interface_wrapper.h"
 using namespace fst_ctrl ;
+using namespace fst_base;
 #else
 #include "forsight_io_mapping.h"
 #include "forsight_launch_code_startup.h"
@@ -95,6 +95,8 @@ void getMoveCommandDestination(MoveCommandDestination& movCmdDst)
 #endif 
 	  forgesight_registers_manager_get_joint(movCmdDst.joint_target);
 	  forgesight_registers_manager_get_cart(movCmdDst.pose_target);
+	  forgesight_registers_manager_get_posture(movCmdDst.posture);
+	  forgesight_registers_manager_get_turn(movCmdDst.turn);
 #ifndef WIN32
 	  FST_INFO("getMoveCommandDestination: Forward movej to TYPE_PR:(%f, %f, %f, %f, %f, %f) ", 
 		  movCmdDst.joint_target.j1_, movCmdDst.joint_target.j2_, 
@@ -120,6 +122,12 @@ void resetProgramNameAndLineNum(struct thread_control_block * objThdCtrlBlockPtr
 	setProgramName(objThdCtrlBlockPtr, (char *)""); 
 }
 
+#ifndef WIN32
+InterpreterPublish* getInterpreterPublishPtr()
+{
+	return &g_interpreter_publish ;
+}
+#endif
 /************************************************* 
 	Function:		getProgramName
 	Description:	get running Program Name
@@ -300,7 +308,8 @@ void setWarning(long long int warn)
 #endif  
 {
 #ifndef WIN32
-	g_objInterpreterServer->sendEvent(INTERPRETER_EVENT_TYPE_ERROR, &warn);
+	// g_objInterpreterServer->sendEvent(INTERPRETER_EVENT_TYPE_ERROR, &warn);
+	fst_base::ErrorMonitor::instance()->add(warn);
 #endif  
 }
 
@@ -313,7 +322,8 @@ void setWarning(long long int warn)
 void setMessage(int warn)
 {
 #ifndef WIN32
-	g_objInterpreterServer->sendEvent(INTERPRETER_EVENT_TYPE_MESSAGE, &warn);
+	// g_objInterpreterServer->sendEvent(INTERPRETER_EVENT_TYPE_MESSAGE, &warn);
+	fst_base::ErrorMonitor::instance()->add(warn);
 #endif  
 }
 
@@ -326,77 +336,41 @@ void setMessage(int warn)
 *************************************************/ 
 bool setInstruction(struct thread_control_block * objThdCtrlBlockPtr, Instruction * instruction)
 {
-    bool ret = true;
-//    int iLineNum = 0;
-	// We had eaten MOV* as token. 
-    if (objThdCtrlBlockPtr->is_abort)
-    {
-        return false;
-    }
+    bool ret = false;
 
-#ifndef WIN32
+	FST_INFO("is_next=%d, is_abort=%d, is_paused=%d", 
+	ret, objThdCtrlBlockPtr->is_abort, objThdCtrlBlockPtr->is_paused);
     do
-    {
-		if (instruction->is_additional == false)
-		{
-	     	FST_INFO("setInstruction:: instr.target.cnt = %f .", instruction->target.cnt);
-			ret = g_objRegManagerInterface->setInstruction(instruction);
-		}
-		else
-		{
-	     	FST_INFO("setInstruction:: instr.target.cnt = %f .", instruction->target.cnt);
-			ret = g_objRegManagerInterface->setInstruction(instruction);
-		}
-		
-	    if (ret)
-	    {
-//	        if (is_backward)
-//	        {
-//	            is_backward = false;
-//		        //    iLineNum--;
-//		        //    setCurLine(iLineNum);
-//	        }
-	        //else
-	        //{
-	        //    iLineNum++;
-	        //    setCurLine(iLineNum);
-	        //}   
-			//	iLineNum = calc_line_from_prog(objThdCtrlBlockPtr);
-			//  FST_INFO("set line in setInstruction");
-	        //    setLinenum(objThdCtrlBlockPtr, iLineNum);
-
-	        if (objThdCtrlBlockPtr->prog_mode == STEP_MODE)
-	        {
-			    FST_INFO("In STEP_MODE, it seems that it does not need to wait");
-	            // setPrgmState(objThreadCntrolBlock, INTERPRETER_EXECUTE_TO_PAUSE);   //wait until this Instruction end
-            }
-	    }
+	{
         usleep(1000);
-     //   if (count++ > 500)
-     //       return false;
-    }while(!ret);
-	
-    ret = g_objRegManagerInterface->isNextInstructionNeeded();
-    FST_INFO("wait ctrl_status.is_permitted == false");
-    while (ret == false)
-    {
-        usleep(1000);
-    	ret = g_objRegManagerInterface->isNextInstructionNeeded();
+    	ret = motion_control_ptr_->nextMovePermitted();
     }
-    FST_INFO("ctrl_status.is_permitted == true");
-#endif
+	while(ret == false && !objThdCtrlBlockPtr->is_abort && !objThdCtrlBlockPtr->is_paused);
+    FST_INFO("is_next=%d, is_abort=%d, is_paused=%d", 
+	ret, objThdCtrlBlockPtr->is_abort, objThdCtrlBlockPtr->is_paused);
 
-    return true;
+	if(ret == true && !objThdCtrlBlockPtr->is_abort && !objThdCtrlBlockPtr->is_paused)
+	{
+		instruction->user_op_mode = state_machine_ptr_->getUserOpMode();
+		FST_INFO("Instruction:count %d, target.cnt = %f, use_op_mode = %d, instr_type = %d", 
+		++(objThdCtrlBlockPtr->instr_cnt), instruction->target.cnt, instruction->user_op_mode, instruction->type);
+		motion_control_ptr_->autoMove(*instruction);//set instruction
+	}
+
+	return true;
 }
 	
 void dealCodeStart(int program_code)
 {
 	struct thread_control_block * objThdCtrlBlockPtr ;
+	if(g_launch_code_mgr_ptr == NULL)
+		return ;
+	
 	g_launch_code_mgr_ptr->updateAll();
 	std::string program_name = g_launch_code_mgr_ptr->getProgramByCode(program_code);
 	if(program_name != "")
 	{
-        FST_INFO("start run %s ...", program_name.c_str());
+        FST_INFO("start run %s code number %d...", program_name.c_str(), program_code);
 		if(strcmp(getProgramName(), program_name.c_str()) == 0)
         {
         	FST_INFO("Duplicate to trigger and omit it while %s is executing ...", program_name.c_str());
@@ -407,6 +381,9 @@ void dealCodeStart(int program_code)
 	    objThdCtrlBlockPtr = getThreadControlBlock();
 		if(objThdCtrlBlockPtr == NULL) return ;
 		// Clear last lineNum
+		objThdCtrlBlockPtr->is_paused = false;
+		objThdCtrlBlockPtr->is_abort = false;
+		objThdCtrlBlockPtr->is_code_launch = true;
 		setCurLine(objThdCtrlBlockPtr, (char *)"", 0);
 		
 //      objThdCtrlBlockPtr->prog_mode   = FULL_MODE;
@@ -523,7 +500,7 @@ void waitInterpreterStateToPaused(
 	Input:			requestDataPtr         - Command parameters
 	Return: 		NULL
 *************************************************/ 
-void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr) 
+void parseCtrlComand(InterpreterControl intprt_ctrl, const char * requestDataPtr) 
 	// (struct thread_control_block * objThdCtrlBlockPtr)
 {
 //	InterpreterState interpreterState  = IDLE_R;
@@ -537,8 +514,11 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
 //	UserOpMode userOpMode ;
 	int        program_code ;
     thread_control_block * objThdCtrlBlockPtr = NULL;
-
-	g_launch_code_mgr_ptr->updateAll();
+	AutoMode autoMode = intprt_ctrl.autoMode;
+	if(g_launch_code_mgr_ptr)
+	{
+		g_launch_code_mgr_ptr->updateAll();
+	}
 #ifndef WIN32
 //	RegMap reg ;
 //	IOPathInfo  dioPathInfo ;
@@ -575,6 +555,15 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
 		    // objThdCtrlBlockPtr = &g_thread_control_block[getCurrentThreadSeq()];
 		    objThdCtrlBlockPtr = getThreadControlBlock();
 			if(objThdCtrlBlockPtr == NULL) break ;
+
+			autoMode == MACRO_TRIGGER_U ? \
+			objThdCtrlBlockPtr->is_marco_launch = true :
+			objThdCtrlBlockPtr->is_marco_launch = false;
+
+			autoMode == LAUNCH_CODE_U ? \
+			objThdCtrlBlockPtr->is_code_launch = true : \
+			objThdCtrlBlockPtr->is_code_launch = false;
+
 			// Clear last lineNum
 			setCurLine(objThdCtrlBlockPtr, (char *)"", 0);
 			
@@ -584,6 +573,10 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
 			{
 			   strcpy(intprt_ctrl.start_ctrl, "lineno_test_2");
 			}
+			//clear error to avoid isNextInstructionNeeded infinity loop
+			// state_machine_ptr_->clearInterpreterCmdErr();
+			motion_control_ptr_->clearErrorFlag();
+			objThdCtrlBlockPtr->is_paused = false;
             startFile(objThdCtrlBlockPtr, 
 				intprt_ctrl.start_ctrl, getCurrentThreadSeq());
             setPrgmState(objThdCtrlBlockPtr, INTERPRETER_PAUSED);
@@ -615,6 +608,14 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
 		    // objThdCtrlBlockPtr = &g_thread_control_block[getCurrentThreadSeq()];
 		    objThdCtrlBlockPtr = getThreadControlBlock();
 			if(objThdCtrlBlockPtr == NULL) break ;
+
+			autoMode == MACRO_TRIGGER_U ? \
+			objThdCtrlBlockPtr->is_marco_launch = true :
+			objThdCtrlBlockPtr->is_marco_launch = false;
+
+			autoMode == LAUNCH_CODE_U ? \
+			objThdCtrlBlockPtr->is_code_launch = true : \
+			objThdCtrlBlockPtr->is_code_launch = false;
 			// Clear last lineNum
 			setCurLine(objThdCtrlBlockPtr, (char *)"", 0);
 			
@@ -626,6 +627,11 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
 			{
 			   strcpy(intprt_ctrl.start_ctrl, "lineno_test_2");
 			}
+			//clear error to avoid isNextInstructionNeeded infinity loop
+			// state_machine_ptr_->clearInterpreterCmdErr();
+			state_machine_ptr_->clearPreError();
+			motion_control_ptr_->clearErrorFlag();
+			objThdCtrlBlockPtr->is_paused = false;
 			startFile(objThdCtrlBlockPtr, 
 				intprt_ctrl.start_ctrl, getCurrentThreadSeq());
             setPrgmState(objThdCtrlBlockPtr, INTERPRETER_EXECUTE);
@@ -647,18 +653,18 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
 				FST_ERROR("Can not JUMP macro ");
 				break;
 			}
-			if(objThdCtrlBlockPtr->is_paused == true)
-			{
-            	FST_ERROR("Can not JUMP in calling Pause ");
-           		break;
-			}
+//			if(objThdCtrlBlockPtr->is_paused == true)
+//			{
+//           	FST_ERROR("Can not JUMP in calling Pause ");
+//         		break;
+//			}
 			if(getPrgmState() == INTERPRETER_EXECUTE)
 			{
             	FST_ERROR("Can not JUMP in EXECUTE_R ");
            		break;
 			}
-            FST_INFO("jump to line:%s", intprt_ctrl.jump_line);
 			iLineNum = getLineNumFromXPathVector(objThdCtrlBlockPtr, intprt_ctrl.jump_line);
+            FST_INFO("jump to line:%s return %d", intprt_ctrl.jump_line, iLineNum);
 			if(iLineNum > 0)
             {
             	setLinenum(objThdCtrlBlockPtr, iLineNum);
@@ -689,21 +695,23 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
 				FST_ERROR("Can not FORWARD macro ");
 				break;
 			}
-			if(objThdCtrlBlockPtr->is_paused == true)
-			{
-            	FST_ERROR("Can not FORWARD in calling Pause ");
-           		break;
-			}
+//			if(objThdCtrlBlockPtr->is_paused == true)
+//			{
+//            	FST_ERROR("Can not FORWARD in calling Pause ");
+//           		break;
+//			}
 			if(getPrgmState() == INTERPRETER_EXECUTE)
 			{
-            	FST_ERROR("Can not FORWARD in EXECUTE_R ");
+            	FST_WARN("Can not FORWARD in EXECUTE_R ");
+				//setWarning();
            		break;
 			}
 	        // Checking prog_mode on 190125 
 			if(objThdCtrlBlockPtr->prog_mode != STEP_MODE)
 			{
-            	FST_ERROR("Can not FORWARD in other mode ");
-           		break;
+            //	FST_ERROR("Can not FORWARD in other mode ");
+            	FST_INFO("Using FORWARD would switch mode ");
+  			    setProgMode(objThdCtrlBlockPtr, STEP_MODE);
 			}
 			
             // objThdCtrlBlockPtr->prog_mode = STEP_MODE ;
@@ -712,8 +720,11 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
 			iLineNum = calc_line_from_prog(objThdCtrlBlockPtr);
             setLinenum(objThdCtrlBlockPtr, iLineNum);
             FST_INFO("step forward to %d ", iLineNum);
+			objThdCtrlBlockPtr->is_paused = false;
             setPrgmState(objThdCtrlBlockPtr, INTERPRETER_EXECUTE);
-
+			// state_machine_ptr_->clearInterpreterCmdErr();
+			state_machine_ptr_->clearPreError();
+			motion_control_ptr_->clearErrorFlag();
 			// Controller use the PrgmState and LineNum to check to execute 
 //            FST_INFO("Enter waitInterpreterStateToPaused %d ", iLineNum);
 //            waitInterpreterStateToPaused(objThdCtrlBlockPtr);
@@ -737,11 +748,11 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
 				FST_ERROR("Can not BACKWARD macro ");
 				break;
 			}
-			if(objThdCtrlBlockPtr->is_paused == true)
-			{
-            	FST_ERROR("Can not BACKWARD in calling Pause ");
-           		break;
-			}
+//			if(objThdCtrlBlockPtr->is_paused == true)
+//			{
+//            	FST_ERROR("Can not BACKWARD in calling Pause ");
+//         		break;
+//			}
 			if(getPrgmState() == INTERPRETER_EXECUTE)
 			{
             	FST_ERROR("Can not BACKWARD in EXECUTE_R ");
@@ -750,28 +761,44 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
 	        // Checking prog_mode on 190125 
 			if(objThdCtrlBlockPtr->prog_mode != STEP_MODE)
 			{
-            	FST_ERROR("Can not BACKWARD in other mode ");
-           		break;
+            //	FST_ERROR("Can not BACKWARD in other mode ");
+            	FST_INFO("Using BACKWARD would switch mode ");
+  			    setProgMode(objThdCtrlBlockPtr, STEP_MODE);
+           	//	break;
 			}
 			// Revert checking condition on 190125
 			// if(lastCmd == fst_base::INTERPRETER_SERVER_CMD_FORWARD)
+			
+			iLineNum = getLinenum(objThdCtrlBlockPtr);
 			if(lastCmd != fst_base::INTERPRETER_SERVER_CMD_BACKWARD)
 			{
 			    // In this circumstance, 
-			    // we need not call calc_line_from_prog to get the next FORWARD line.
+			    // we need not call calc_line_from_prog to get the next BACKWARD line.
 				// Just execute last statemant
-			    iLineNum = getLinenum(objThdCtrlBlockPtr);
+			    //iLineNum = getLinenum(objThdCtrlBlockPtr);
 				// SWitch prog_mode and execute_direction on 190125
                 // objThdCtrlBlockPtr->prog_mode = STEP_MODE ;
 			    objThdCtrlBlockPtr->execute_direction = EXECUTE_BACKWARD ;
 			
-				if((objThdCtrlBlockPtr->prog_jmp_line[iLineNum - 1].type == LOGIC_TOK)
-				 ||(objThdCtrlBlockPtr->prog_jmp_line[iLineNum - 1].type == END_TOK))
+				//if((objThdCtrlBlockPtr->prog_jmp_line[iLineNum - 1].type == LOGIC_TOK)
+				// ||(objThdCtrlBlockPtr->prog_jmp_line[iLineNum - 1].type == END_TOK))
+				 
+				if(objThdCtrlBlockPtr->prog_jmp_line[iLineNum - 1].type != MOTION)
 				{
-            		FST_ERROR("Can not BACKWARD to %d(%d).",
-						iLineNum, objThdCtrlBlockPtr->prog_jmp_line[iLineNum].type);
-				    setWarning(INFO_INTERPRETER_BACK_TO_LOGIC) ;
-					break ;
+					if(objThdCtrlBlockPtr->prog_jmp_line[iLineNum - 1].type == LOGIC_TOK)
+			        {
+						FST_WARN("Can not BACKWARD to %d(%d).",
+							iLineNum, objThdCtrlBlockPtr->prog_jmp_line[iLineNum].type);
+						setWarning(INFO_INTERPRETER_BACK_TO_LOGIC) ;
+						break ;
+					}
+					else
+		        	{
+						setLinenum(objThdCtrlBlockPtr, iLineNum);
+						FST_INFO("BACKWARD to %d(%d) ignored.",
+							iLineNum, objThdCtrlBlockPtr->prog_jmp_line[iLineNum].type);
+						break;
+					}
 				}
 				// In fact, It does nothing
 				// iLineNum-- ;
@@ -784,10 +811,10 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
             // setPrgmState(objThdCtrlBlockPtr, INTERPRETER_EXECUTE);  
 			// In this circumstance, 
 			// We had jmp to the right line, we should use the iLineNum.
-            iLineNum = getLinenum(objThdCtrlBlockPtr);
+            //iLineNum = getLinenum(objThdCtrlBlockPtr);
             if (iLineNum < PROGRAM_START_LINE_NUM)
             {
-            	FST_ERROR("Can not BACKWARD out of program ");
+            	FST_WARN("Can not BACKWARD at the begining of program ");
   				setWarning(INFO_INTERPRETER_BACK_TO_BEGIN) ; 
                 break;
             }
@@ -800,16 +827,36 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
 			// set_prog_from_line(objThdCtrlBlockPtr, iLineNum);
 			iLineNum-- ;
 			
-			if((objThdCtrlBlockPtr->prog_jmp_line[iLineNum - 1].type == LOGIC_TOK)
-			 ||(objThdCtrlBlockPtr->prog_jmp_line[iLineNum - 1].type == END_TOK))
+			if(objThdCtrlBlockPtr->prog_jmp_line[iLineNum - 1].type != MOTION)
 			{
-				FST_ERROR("Can not BACKWARD to %d(%d).",
-					iLineNum, objThdCtrlBlockPtr->prog_jmp_line[iLineNum].type);
-				break ;
+				if(objThdCtrlBlockPtr->prog_jmp_line[iLineNum - 1].type == LOGIC_TOK)
+				{
+					FST_WARN("Can not BACKWARD to %d(%d).",
+						iLineNum, objThdCtrlBlockPtr->prog_jmp_line[iLineNum].type);
+					setWarning(INFO_INTERPRETER_BACK_TO_LOGIC) ;
+					break ;
+				}
+				else
+				{
+					setLinenum(objThdCtrlBlockPtr, iLineNum);
+					FST_WARN("BACKWARD to %d(%d) ignored.",
+						iLineNum, objThdCtrlBlockPtr->prog_jmp_line[iLineNum].type);
+					break;
+				}
 			}
+			//if((objThdCtrlBlockPtr->prog_jmp_line[iLineNum - 1].type == LOGIC_TOK)
+			// ||(objThdCtrlBlockPtr->prog_jmp_line[iLineNum - 1].type == END_TOK))
+			//{
+			//	FST_ERROR("Can not BACKWARD to %d(%d).",
+			//		iLineNum, objThdCtrlBlockPtr->prog_jmp_line[iLineNum].type);
+			//	break ;
+			//}
 		    setLinenum(objThdCtrlBlockPtr, iLineNum);
+			objThdCtrlBlockPtr->is_paused = false;
             setPrgmState(objThdCtrlBlockPtr, INTERPRETER_EXECUTE);
-
+			// state_machine_ptr_->clearInterpreterCmdErr();
+			state_machine_ptr_->clearPreError();
+			motion_control_ptr_->clearErrorFlag();
 			// Controller use the PrgmState and LineNum to check to execute 
 //            FST_INFO("Enter waitInterpreterStateToPaused %d ", iLineNum);
 //			waitInterpreterStateToPaused(objThdCtrlBlockPtr);
@@ -825,11 +872,27 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
 	            FST_INFO("continue move..");
 				// Not Change program mode  
 				// objThdCtrlBlockPtr->prog_mode = FULL_MODE;
-	            setPrgmState(objThdCtrlBlockPtr, INTERPRETER_EXECUTE);
+	            
+				// fixed execution bug: when motion paused by error(s) interpreter can go on next instruction while it is not permitted 
+				int iLineNum = calc_line_from_prog(objThdCtrlBlockPtr);
+                //if JUMP execute the jump line
+				if(lastCmd != fst_base::INTERPRETER_SERVER_CMD_JUMP)
+					iLineNum = iLineNum -1;
+				setLinenum(objThdCtrlBlockPtr, iLineNum);
+				jump_prog_from_line(objThdCtrlBlockPtr, iLineNum);
+				state_machine_ptr_->clearPreError();
+				// state_machine_ptr_->clearInterpreterCmdErr();
+				// ErrorMonitor::instance()->clear();
+				motion_control_ptr_->clearErrorFlag();
+				objThdCtrlBlockPtr->is_paused = false;
+
+				setPrgmState(objThdCtrlBlockPtr, INTERPRETER_EXECUTE);
   			    setProgMode(objThdCtrlBlockPtr, FULL_MODE);
 			}
 			else
+	        {
 			    setWarning(FAIL_INTERPRETER_NOT_IN_PAUSE);
+			}
             break;
         case fst_base::INTERPRETER_SERVER_CMD_PAUSE:
 			if(getCurrentThreadSeq() < 0) break ;
@@ -853,6 +916,7 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
 //            {
 //                objThdCtrlBlockPtr->prog_mode = STEP_MODE ;
 //            }
+			objThdCtrlBlockPtr->is_paused = true;//add to fix can not JUMP in wait
             setPrgmState(objThdCtrlBlockPtr, INTERPRETER_PAUSED); 
   			setProgMode(objThdCtrlBlockPtr, STEP_MODE);
             break;
@@ -864,7 +928,11 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
 			if(objThdCtrlBlockPtr == NULL) break ;
 			
   			FST_INFO("set abort motion flag.");
+			objThdCtrlBlockPtr->is_paused = false;
 	        objThdCtrlBlockPtr->is_abort = true;
+			// state_machine_ptr_->clearInterpreterCmdErr();
+			state_machine_ptr_->clearPreError();
+			motion_control_ptr_->clearErrorFlag();
             // Restore program pointer
   			// FST_INFO("reset prog position.");
             // objThdCtrlBlockPtr->prog = objThdCtrlBlockPtr->p_buf ;
@@ -886,11 +954,16 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
 			// setProgramName(objThdCtrlBlockPtr, (char *)""); 
             break;
         case fst_base::INTERPRETER_SERVER_CMD_CODE_START:
-			memcpy(&intprt_ctrl.program_code, requestDataPtr, sizeof(AutoMode));
+			//memcpy(&intprt_ctrl.program_code, requestDataPtr, sizeof(AutoMode));
+			intprt_ctrl.program_code = atoi(requestDataPtr);
+			FST_INFO("recive program code %d", intprt_ctrl.program_code);
 			// intprt_ctrl.RegMap.
-			program_code = intprt_ctrl.program_code ;
+			//program_code = intprt_ctrl.program_code ;
 			// Move to Controller
-			dealCodeStart(program_code);
+			// state_machine_ptr_->clearInterpreterCmdErr();
+			state_machine_ptr_->clearPreError();
+			motion_control_ptr_->clearErrorFlag();
+			dealCodeStart(intprt_ctrl.program_code);
             break;
         default:
             break;
@@ -1020,7 +1093,8 @@ bool forgesight_find_external_resource(char *vname, key_variable& keyVar)
 	for(unsigned i=0; i < g_vecKeyVariables.size(); i++)
 	{
 	//	FST_INFO("forgesight_find_external_resource: %s .", g_vecKeyVariables[i].key_name);
-		if(!strcmp(g_vecKeyVariables[i].key_name, vname)) {
+	// ignore lower and upper case
+		if(!strcasecmp(g_vecKeyVariables[i].key_name, vname)) {
 			keyVar = g_vecKeyVariables[i] ;
 			return true;
 		}
@@ -1052,11 +1126,15 @@ bool forgesight_find_external_resource_by_xmlname(
 
 void updateHomePoseMgr()
 {
-	g_home_pose_mgr_ptr->updateAll();
+	if(g_home_pose_mgr_ptr)
+		g_home_pose_mgr_ptr->updateAll();
 }
 
 checkHomePoseResult checkSingleHomePoseByCurrentJoint(int idx, Joint currentJoint)
 {
+	if(g_home_pose_mgr_ptr == NULL)
+		return HOME_POSE_NONE;
+	
 	Joint joint      = g_home_pose_mgr_ptr->homePoseList[idx].joint ;
 	Joint jointFloat = g_home_pose_mgr_ptr->homePoseList[idx].jointFloat ;
 	
@@ -1098,8 +1176,13 @@ checkHomePoseResult checkSingleHomePoseByCurrentJoint(int idx, Joint currentJoin
 *************************************************/ 
 void uninitInterpreter()
 {
-	delete g_launch_code_mgr_ptr;
-	delete g_home_pose_mgr_ptr;
+	if(g_launch_code_mgr_ptr)
+		delete g_launch_code_mgr_ptr;
+	g_launch_code_mgr_ptr = NULL ;
+	
+	if(g_home_pose_mgr_ptr)
+		delete g_home_pose_mgr_ptr;
+	g_home_pose_mgr_ptr = NULL ;
 	xmlCleanupParser();
 }
 

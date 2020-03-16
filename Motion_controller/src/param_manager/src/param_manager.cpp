@@ -25,43 +25,80 @@ using namespace fst_parameter;
 #define USER_PARAM_NAME_15 "condition wait timeout"
 
 #define MANU_PARAM_NAME_1 "trajectory fifo size"
-#define MANU_PARAM_NAME_2 "duration of segment in trajectory fifo"
-#define MANU_PARAM_NAME_3 "cartesian accuracy factor"
-#define MANU_PARAM_NAME_4 "joint accuracy factor"
-#define MANU_PARAM_NAME_5 "trajectory piece max number"
-#define MANU_PARAM_NAME_6 "cartesian path interval"
-#define MANU_PARAM_NAME_7 "joint path interval"
-#define MANU_PARAM_NAME_8 "orientation path interval"
-#define MANU_PARAM_NAME_9 "orientation interpolation valve"
-#define MANU_PARAM_NAME_10 "smooth conservative acceleration"
-#define MANU_PARAM_NAME_11 "start time factor"
-#define MANU_PARAM_NAME_12 "stop time factor"
-#define MANU_PARAM_NAME_13 "switch of dynamics"
-#define MANU_PARAM_NAME_14 "max cartesian accerleration"
-#define MANU_PARAM_NAME_15 "axis1 - switch of friction compensation"
-#define MANU_PARAM_NAME_16 "axis1 - switch of acceleration feedforward"
-#define MANU_PARAM_NAME_17 "axis1 - switch of gravity compensation"
-#define MANU_PARAM_NAME_18 "axis1 - switch of velocity compensation"
-#define MANU_PARAM_NAME_19 "axis2 - switch of friction compensation"
-#define MANU_PARAM_NAME_20 "axis2 - switch of acceleration feedforward"
-#define MANU_PARAM_NAME_21 "axis2 - switch of gravity compensation"
-#define MANU_PARAM_NAME_22 "axis2 - switch of velocity compensation"
-#define MANU_PARAM_NAME_23 "axis3 - switch of friction compensation"
-#define MANU_PARAM_NAME_24 "axis3 - switch of acceleration feedforward"
-#define MANU_PARAM_NAME_25 "axis3 - switch of gravity compensation"
-#define MANU_PARAM_NAME_26 "axis3 - switch of velocity compensation"
-#define MANU_PARAM_NAME_27 "axis4 - switch of friction compensation"
-#define MANU_PARAM_NAME_28 "axis4 - switch of acceleration feedforward"
-#define MANU_PARAM_NAME_29 "axis4 - switch of gravity compensation"
-#define MANU_PARAM_NAME_30 "axis4 - switch of velocity compensation"
-#define MANU_PARAM_NAME_31 "axis5 - switch of friction compensation"
-#define MANU_PARAM_NAME_32 "axis5 - switch of acceleration feedforward"
-#define MANU_PARAM_NAME_33 "axis5 - switch of gravity compensation"
-#define MANU_PARAM_NAME_34 "axis5 - switch of velocity compensation"
-#define MANU_PARAM_NAME_35 "axis6 - switch of friction compensation"
-#define MANU_PARAM_NAME_36 "axis6 - switch of acceleration feedforward"
-#define MANU_PARAM_NAME_37 "axis6 - switch of gravity compensation"
-#define MANU_PARAM_NAME_38 "axis6 - switch of velocity compensation"
+#define MANU_PARAM_NAME_2 "trajectory fifo limit size"
+#define MANU_PARAM_NAME_3 "axis1 - switch of friction compensation"
+#define MANU_PARAM_NAME_4 "axis1 - switch of acceleration feedforward"
+#define MANU_PARAM_NAME_5 "axis1 - switch of gravity compensation"
+#define MANU_PARAM_NAME_6 "axis1 - switch of velocity compensation"
+#define MANU_PARAM_NAME_7 "axis2 - switch of friction compensation"
+#define MANU_PARAM_NAME_8 "axis2 - switch of acceleration feedforward"
+#define MANU_PARAM_NAME_9 "axis2 - switch of gravity compensation"
+#define MANU_PARAM_NAME_10 "axis2 - switch of velocity compensation"
+#define MANU_PARAM_NAME_11 "axis3 - switch of friction compensation"
+#define MANU_PARAM_NAME_12 "axis3 - switch of acceleration feedforward"
+#define MANU_PARAM_NAME_13 "axis3 - switch of gravity compensation"
+#define MANU_PARAM_NAME_14 "axis3 - switch of velocity compensation"
+#define MANU_PARAM_NAME_15 "axis4 - switch of friction compensation"
+#define MANU_PARAM_NAME_16 "axis4 - switch of acceleration feedforward"
+#define MANU_PARAM_NAME_17 "axis4 - switch of gravity compensation"
+#define MANU_PARAM_NAME_18 "axis4 - switch of velocity compensation"
+#define MANU_PARAM_NAME_19 "axis5 - switch of friction compensation"
+#define MANU_PARAM_NAME_20 "axis5 - switch of acceleration feedforward"
+#define MANU_PARAM_NAME_21 "axis5 - switch of gravity compensation"
+#define MANU_PARAM_NAME_22 "axis5 - switch of velocity compensation"
+#define MANU_PARAM_NAME_23 "axis6 - switch of friction compensation"
+#define MANU_PARAM_NAME_24 "axis6 - switch of acceleration feedforward"
+#define MANU_PARAM_NAME_25 "axis6 - switch of gravity compensation"
+#define MANU_PARAM_NAME_26 "axis6 - switch of velocity compensation"
+#define MANU_PARAM_NAME_27 "max jerk num"
+#define MANU_PARAM_NAME_28 "inverse dynamics check"
+#define MANU_PARAM_NAME_29 "adjust acc by vel"
+#define MANU_PARAM_NAME_30 "axis1 - torque max"
+#define MANU_PARAM_NAME_31 "axis2 - torque max"
+#define MANU_PARAM_NAME_32 "axis3 - torque max"
+#define MANU_PARAM_NAME_33 "axis4 - torque max"
+#define MANU_PARAM_NAME_34 "axis5 - torque max"
+#define MANU_PARAM_NAME_35 "axis6 - torque max"
+#define MANU_PARAM_NAME_36 "axis1 - omega max"
+#define MANU_PARAM_NAME_37 "axis2 - omega max"
+#define MANU_PARAM_NAME_38 "axis3 - omega max"
+#define MANU_PARAM_NAME_39 "axis4 - omega max"
+#define MANU_PARAM_NAME_40 "axis5 - omega max"
+#define MANU_PARAM_NAME_41 "axis6 - omega max"
+#define MANU_PARAM_NAME_42 "axis1 - alpha max"
+#define MANU_PARAM_NAME_43 "axis2 - alpha max"
+#define MANU_PARAM_NAME_44 "axis3 - alpha max"
+#define MANU_PARAM_NAME_45 "axis4 - alpha max"
+#define MANU_PARAM_NAME_46 "axis5 - alpha max"
+#define MANU_PARAM_NAME_47 "axis6 - alpha max"
+#define MANU_PARAM_NAME_48 "axis1 - beta max acc"
+#define MANU_PARAM_NAME_49 "axis2 - beta max acc"
+#define MANU_PARAM_NAME_50 "axis3 - beta max acc"
+#define MANU_PARAM_NAME_51 "axis4 - beta max acc"
+#define MANU_PARAM_NAME_52 "axis5 - beta max acc"
+#define MANU_PARAM_NAME_53 "axis6 - beta max acc"
+#define MANU_PARAM_NAME_54 "axis1 - beta max running"
+#define MANU_PARAM_NAME_55 "axis2 - beta max running"
+#define MANU_PARAM_NAME_56 "axis3 - beta max running"
+#define MANU_PARAM_NAME_57 "axis4 - beta max running"
+#define MANU_PARAM_NAME_58 "axis5 - beta max running"
+#define MANU_PARAM_NAME_59 "axis6 - beta max running"
+#define MANU_PARAM_NAME_60 "axis1 - beta max dec"
+#define MANU_PARAM_NAME_61 "axis2 - beta max dec"
+#define MANU_PARAM_NAME_62 "axis3 - beta max dec"
+#define MANU_PARAM_NAME_63 "axis4 - beta max dec"
+#define MANU_PARAM_NAME_64 "axis5 - beta max dec"
+#define MANU_PARAM_NAME_65 "axis6 - beta max dec"
+#define MANU_PARAM_NAME_66 "cart position vel max"
+#define MANU_PARAM_NAME_67 "cart position acc max"
+#define MANU_PARAM_NAME_68 "cart position jerk max acc"
+#define MANU_PARAM_NAME_69 "cart position jerk max dec"
+#define MANU_PARAM_NAME_70 "cart position jerk max running"
+#define MANU_PARAM_NAME_71 "cart quaternion vel max"
+#define MANU_PARAM_NAME_72 "cart quaternion acc max"
+#define MANU_PARAM_NAME_73 "cart quaternion jerk max acc"
+#define MANU_PARAM_NAME_74 "cart quaternion jerk max dec"
+#define MANU_PARAM_NAME_75 "cart quaternion jerk max running"
 
 #define USER_PARAM_DATA_1 "stable_with_fine/threshold"
 #define USER_PARAM_DATA_2 "stable_with_fine/cycle"
@@ -79,28 +116,37 @@ using namespace fst_parameter;
 #define USER_PARAM_DATA_14 "manual_mode_DO"
 #define USER_PARAM_DATA_15 "wait_time/time_out"
 
-#define MANU_PARAM_DATA_1 "trajectory_fifo_size"
-#define MANU_PARAM_DATA_2 "duration_of_segment_in_trajectory_fifo"
-#define MANU_PARAM_DATA_3 "accuracy_cartesian_factor"
-#define MANU_PARAM_DATA_4 "accuracy_joint_factor"
-#define MANU_PARAM_DATA_5 "max_traj_points_num"
-#define MANU_PARAM_DATA_6 "path_interval"
-#define MANU_PARAM_DATA_7 "joint_interval"
-#define MANU_PARAM_DATA_8 "angle_interval"
-#define MANU_PARAM_DATA_9 "angle_valve"
-#define MANU_PARAM_DATA_10 "conservative_acc"
-#define MANU_PARAM_DATA_11 "time_factor_first"
-#define MANU_PARAM_DATA_12 "time_factor_last"
-#define MANU_PARAM_DATA_13 "is_fake_dynamics"
-#define MANU_PARAM_DATA_14 "max_cartesian_acc"
+#define MANU_PARAM_DATA_1 "trajectory_fifo/fifo_size"
+#define MANU_PARAM_DATA_2 "trajectory_fifo/lower_limit"
 #define MANU_PARAM_DATA_SERVO "servo/stored_param"
+#define MANU_PARAM_DATA_27 "max_jerk_num"
+#define MANU_PARAM_DATA_28 "inverse_dynamics_check"
+#define MANU_PARAM_DATA_29 "adjust_acc_by_vel"
+#define MANU_PARAM_DATA_30 "joint/torque_max"
+#define MANU_PARAM_DATA_36 "joint/omega_max"
+#define MANU_PARAM_DATA_42 "joint/alpha_max"
+#define MANU_PARAM_DATA_48 "joint/beta_max_acc"
+#define MANU_PARAM_DATA_54 "joint/beta_max_running"
+#define MANU_PARAM_DATA_60 "joint/beta_max_dec"
+#define MANU_PARAM_DATA_66 "cart/position/vel_max"
+#define MANU_PARAM_DATA_67 "cart/position/acc_max"
+#define MANU_PARAM_DATA_68 "cart/position/jerk_max_acc"
+#define MANU_PARAM_DATA_69 "cart/position/jerk_max_dec"
+#define MANU_PARAM_DATA_70 "cart/position/jerk_max_running"
+#define MANU_PARAM_DATA_71 "cart/quaternion/vel_max"
+#define MANU_PARAM_DATA_72 "cart/quaternion/acc_max"
+#define MANU_PARAM_DATA_73 "cart/quaternion/jerk_max_acc"
+#define MANU_PARAM_DATA_74 "cart/quaternion/jerk_max_dec"
+#define MANU_PARAM_DATA_75 "cart/quaternion/jerk_max_running"
+
 
 #define FILE_BASE_GROUP (std::string(AXIS_GROUP_DIR) + "base_group.yaml")
 #define FILE_REG_MANAGER (std::string(COMPONENT_PARAM_FILE_DIR) + "reg_manager.yaml")
 #define FILE_COORDINATE_MANAGER (std::string(COMPONENT_PARAM_FILE_DIR) + "coordinate_manager.yaml")
 #define FILE_TOOL_MANAGER (std::string(COMPONENT_PARAM_FILE_DIR) + "tool_manager.yaml")
 #define FILE_IO_MAPPING (std::string(COMPONENT_PARAM_FILE_DIR) + "io_mapping.yaml")
-#define FILE_SEGMENT_ALG (std::string(COMPONENT_PARAM_FILE_DIR) + "segment_alg.yaml")
+#define FILE_ALGORITHM_CONFIG (std::string(ALGORITHM_DIR) + "config.yaml")
+#define FILE_ALGORITHM_CONSTRAINT (std::string(ALGORITHM_DIR) + "constraint.yaml")
 #define FILE_SERVO_PARAM (std::string(SERVO_DIR) + "servo_param.yaml")
 #define FILE_CONTROLLER (std::string(COMPONENT_PARAM_FILE_DIR) + "controller.yaml")
 #define FILE_FST_SAFETY_DEVICE (std::string(COMPONENT_PARAM_FILE_DIR) + "fst_safety_device.yaml")
@@ -148,11 +194,11 @@ ErrorCode ParamManager::init()
     memcpy(param_info.data, &data_int, sizeof(int));
     manu_param_list_.push_back(param_info);
 
-    if(!yaml_help_.getParam(MANU_PARAM_DATA_2, data_double)) return PARAM_MANAGER_INIT_FAILED;
+    if(!yaml_help_.getParam(MANU_PARAM_DATA_2, data_int)) return PARAM_MANAGER_INIT_FAILED;
     strcpy(param_info.name, MANU_PARAM_NAME_2);
-    param_info.type = PARAM_INFO_DOUBLE;
-    memcpy(param_info.data, &data_double, sizeof(double));
-    manu_param_list_.push_back(param_info);    
+    param_info.type = PARAM_INFO_INT;
+    memcpy(param_info.data, &data_int, sizeof(int));
+    manu_param_list_.push_back(param_info);   
 
     // user param
     if(!yaml_help_.loadParamFile(FILE_REG_MANAGER)) return PARAM_MANAGER_INIT_FAILED;
@@ -248,229 +294,465 @@ ErrorCode ParamManager::init()
     user_param_list_.push_back(param_info); 
 
     // manu param
-    if(!yaml_help_.loadParamFile(FILE_SEGMENT_ALG)) return PARAM_MANAGER_INIT_FAILED;
-    
-    if(!yaml_help_.getParam(MANU_PARAM_DATA_3, data_int)) return PARAM_MANAGER_INIT_FAILED;
-    strcpy(param_info.name, MANU_PARAM_NAME_3);
-    param_info.type = PARAM_INFO_INT;
-    memcpy(param_info.data, &data_int, sizeof(int));
-    manu_param_list_.push_back(param_info); 
-
-    if(!yaml_help_.getParam(MANU_PARAM_DATA_4, data_int)) return PARAM_MANAGER_INIT_FAILED;
-    strcpy(param_info.name, MANU_PARAM_NAME_4);
-    param_info.type = PARAM_INFO_INT;
-    memcpy(param_info.data, &data_int, sizeof(int));
-    manu_param_list_.push_back(param_info); 
-
-    if(!yaml_help_.getParam(MANU_PARAM_DATA_5, data_int)) return PARAM_MANAGER_INIT_FAILED;
-    strcpy(param_info.name, MANU_PARAM_NAME_5);
-    param_info.type = PARAM_INFO_INT;
-    memcpy(param_info.data, &data_int, sizeof(int));
-    manu_param_list_.push_back(param_info); 
-
-    if(!yaml_help_.getParam(MANU_PARAM_DATA_6, data_double)) return PARAM_MANAGER_INIT_FAILED;
-    strcpy(param_info.name, MANU_PARAM_NAME_6);
-    param_info.type = PARAM_INFO_DOUBLE;
-    memcpy(param_info.data, &data_double, sizeof(double));
-    manu_param_list_.push_back(param_info); 
-
-    if(!yaml_help_.getParam(MANU_PARAM_DATA_7, data_double)) return PARAM_MANAGER_INIT_FAILED;
-    strcpy(param_info.name, MANU_PARAM_NAME_7);
-    param_info.type = PARAM_INFO_DOUBLE;
-    memcpy(param_info.data, &data_double, sizeof(double));
-    manu_param_list_.push_back(param_info); 
-
-    if(!yaml_help_.getParam(MANU_PARAM_DATA_8, data_double)) return PARAM_MANAGER_INIT_FAILED;
-    strcpy(param_info.name, MANU_PARAM_NAME_8);
-    param_info.type = PARAM_INFO_DOUBLE;
-    memcpy(param_info.data, &data_double, sizeof(double));
-    manu_param_list_.push_back(param_info);     
-
-    if(!yaml_help_.getParam(MANU_PARAM_DATA_9, data_double)) return PARAM_MANAGER_INIT_FAILED;
-    strcpy(param_info.name, MANU_PARAM_NAME_9);
-    param_info.type = PARAM_INFO_DOUBLE;
-    memcpy(param_info.data, &data_double, sizeof(double));
-    manu_param_list_.push_back(param_info); 
-
-    if(!yaml_help_.getParam(MANU_PARAM_DATA_10, data_double)) return PARAM_MANAGER_INIT_FAILED;
-    strcpy(param_info.name, MANU_PARAM_NAME_10);
-    param_info.type = PARAM_INFO_DOUBLE;
-    memcpy(param_info.data, &data_double, sizeof(double));
-    manu_param_list_.push_back(param_info);     
-
-    if(!yaml_help_.getParam(MANU_PARAM_DATA_11, data_double)) return PARAM_MANAGER_INIT_FAILED;
-    strcpy(param_info.name, MANU_PARAM_NAME_11);
-    param_info.type = PARAM_INFO_DOUBLE;
-    memcpy(param_info.data, &data_double, sizeof(double));
-    manu_param_list_.push_back(param_info); 
-
-    if(!yaml_help_.getParam(MANU_PARAM_DATA_12, data_double)) return PARAM_MANAGER_INIT_FAILED;
-    strcpy(param_info.name, MANU_PARAM_NAME_12);
-    param_info.type = PARAM_INFO_DOUBLE;
-    memcpy(param_info.data, &data_double, sizeof(double));
-    manu_param_list_.push_back(param_info); 
-
-    if(!yaml_help_.getParam(MANU_PARAM_DATA_13, data_bool)) return PARAM_MANAGER_INIT_FAILED;
-    strcpy(param_info.name, MANU_PARAM_NAME_13);
-    param_info.type = PARAM_INFO_BOOL;
-    memcpy(param_info.data, &data_bool, sizeof(bool));
-    manu_param_list_.push_back(param_info);    
-
-    if(!yaml_help_.getParam(MANU_PARAM_DATA_14, data_double)) return PARAM_MANAGER_INIT_FAILED;
-    strcpy(param_info.name, MANU_PARAM_NAME_14);
-    param_info.type = PARAM_INFO_DOUBLE;
-    memcpy(param_info.data, &data_double, sizeof(double));
-    manu_param_list_.push_back(param_info); 
-
     if(!yaml_help_.loadParamFile(FILE_SERVO_PARAM)) return PARAM_MANAGER_INIT_FAILED;
     fst_parameter::ParamValue servo_data;
     if(!yaml_help_.getParam(MANU_PARAM_DATA_SERVO, servo_data)) return PARAM_MANAGER_INIT_FAILED;
 
     int data;
 
-    strcpy(param_info.name, MANU_PARAM_NAME_15);
+    strcpy(param_info.name, MANU_PARAM_NAME_3);
     param_info.type = PARAM_INFO_INT;
     data = (int)servo_data[93];
     memcpy(param_info.data, &data, sizeof(int));
     manu_param_list_.push_back(param_info);
 
-    strcpy(param_info.name, MANU_PARAM_NAME_16);
+    strcpy(param_info.name, MANU_PARAM_NAME_4);
     param_info.type = PARAM_INFO_INT;
     data = (int)servo_data[96];
     memcpy(param_info.data, &data, sizeof(int));
     manu_param_list_.push_back(param_info);
 
-    strcpy(param_info.name, MANU_PARAM_NAME_17);
+    strcpy(param_info.name, MANU_PARAM_NAME_5);
     param_info.type = PARAM_INFO_INT;
     data = (int)servo_data[98];
     memcpy(param_info.data, &data, sizeof(int));
     manu_param_list_.push_back(param_info); 
 
-    strcpy(param_info.name, MANU_PARAM_NAME_18);
+    strcpy(param_info.name, MANU_PARAM_NAME_6);
     param_info.type = PARAM_INFO_INT;
     data = (int)servo_data[132];
     memcpy(param_info.data, &data, sizeof(int));
     manu_param_list_.push_back(param_info);
     
-    strcpy(param_info.name, MANU_PARAM_NAME_19);
+    strcpy(param_info.name, MANU_PARAM_NAME_7);
     param_info.type = PARAM_INFO_INT;
     data = (int)servo_data[285];
     memcpy(param_info.data, &data, sizeof(int));
     manu_param_list_.push_back(param_info);
 
-    strcpy(param_info.name, MANU_PARAM_NAME_20);
+    strcpy(param_info.name, MANU_PARAM_NAME_8);
     param_info.type = PARAM_INFO_INT;
     data = (int)servo_data[288];
     memcpy(param_info.data, &data, sizeof(int));
     manu_param_list_.push_back(param_info);
 
-    strcpy(param_info.name, MANU_PARAM_NAME_21);
+    strcpy(param_info.name, MANU_PARAM_NAME_9);
     param_info.type = PARAM_INFO_INT;
     data = (int)servo_data[290];
     memcpy(param_info.data, &data, sizeof(int));
     manu_param_list_.push_back(param_info); 
 
-    strcpy(param_info.name, MANU_PARAM_NAME_22);
+    strcpy(param_info.name, MANU_PARAM_NAME_10);
     param_info.type = PARAM_INFO_INT;
     data = (int)servo_data[324];
     memcpy(param_info.data, &data, sizeof(int));
     manu_param_list_.push_back(param_info);
 
-    strcpy(param_info.name, MANU_PARAM_NAME_23);
+    strcpy(param_info.name, MANU_PARAM_NAME_11);
     param_info.type = PARAM_INFO_INT;
     data = (int)servo_data[477];
     memcpy(param_info.data, &data, sizeof(int));
     manu_param_list_.push_back(param_info);
 
-    strcpy(param_info.name, MANU_PARAM_NAME_24);
+    strcpy(param_info.name, MANU_PARAM_NAME_12);
     param_info.type = PARAM_INFO_INT;
     data = (int)servo_data[480];
     memcpy(param_info.data, &data, sizeof(int));
     manu_param_list_.push_back(param_info);
 
-    strcpy(param_info.name, MANU_PARAM_NAME_25);
+    strcpy(param_info.name, MANU_PARAM_NAME_13);
     param_info.type = PARAM_INFO_INT;
     data = (int)servo_data[482];
     memcpy(param_info.data, &data, sizeof(int));
     manu_param_list_.push_back(param_info); 
 
-    strcpy(param_info.name, MANU_PARAM_NAME_26);
+    strcpy(param_info.name, MANU_PARAM_NAME_14);
     param_info.type = PARAM_INFO_INT;
     data = (int)servo_data[516];
     memcpy(param_info.data, &data, sizeof(int));
     manu_param_list_.push_back(param_info);
 
-    strcpy(param_info.name, MANU_PARAM_NAME_27);
+    strcpy(param_info.name, MANU_PARAM_NAME_15);
     param_info.type = PARAM_INFO_INT;
     data = (int)servo_data[669];
     memcpy(param_info.data, &data, sizeof(int));
     manu_param_list_.push_back(param_info);
 
-    strcpy(param_info.name, MANU_PARAM_NAME_28);
+    strcpy(param_info.name, MANU_PARAM_NAME_16);
     param_info.type = PARAM_INFO_INT;
     data = (int)servo_data[672];
     memcpy(param_info.data, &data, sizeof(int));
     manu_param_list_.push_back(param_info);
 
-    strcpy(param_info.name, MANU_PARAM_NAME_29);
+    strcpy(param_info.name, MANU_PARAM_NAME_17);
     param_info.type = PARAM_INFO_INT;
     data = (int)servo_data[674];
     memcpy(param_info.data, &data, sizeof(int));
     manu_param_list_.push_back(param_info); 
 
-    strcpy(param_info.name, MANU_PARAM_NAME_30);
+    strcpy(param_info.name, MANU_PARAM_NAME_18);
     param_info.type = PARAM_INFO_INT;
     data = (int)servo_data[708];
     memcpy(param_info.data, &data, sizeof(int));
     manu_param_list_.push_back(param_info);   
 
-    strcpy(param_info.name, MANU_PARAM_NAME_31);
+    strcpy(param_info.name, MANU_PARAM_NAME_19);
     param_info.type = PARAM_INFO_INT;
     data = (int)servo_data[861];
     memcpy(param_info.data, &data, sizeof(int));
     manu_param_list_.push_back(param_info);
 
-    strcpy(param_info.name, MANU_PARAM_NAME_32);
+    strcpy(param_info.name, MANU_PARAM_NAME_20);
     param_info.type = PARAM_INFO_INT;
     data = (int)servo_data[864];
     memcpy(param_info.data, &data, sizeof(int));
     manu_param_list_.push_back(param_info);
 
-    strcpy(param_info.name, MANU_PARAM_NAME_33);
+    strcpy(param_info.name, MANU_PARAM_NAME_21);
     param_info.type = PARAM_INFO_INT;
     data = (int)servo_data[866];
     memcpy(param_info.data, &data, sizeof(int));
     manu_param_list_.push_back(param_info); 
 
-    strcpy(param_info.name, MANU_PARAM_NAME_34);
+    strcpy(param_info.name, MANU_PARAM_NAME_22);
     param_info.type = PARAM_INFO_INT;
     data = (int)servo_data[900];
     memcpy(param_info.data, &data, sizeof(int));
     manu_param_list_.push_back(param_info);      
 
-    strcpy(param_info.name, MANU_PARAM_NAME_35);
+    strcpy(param_info.name, MANU_PARAM_NAME_23);
     param_info.type = PARAM_INFO_INT;
     data = (int)servo_data[1053];
     memcpy(param_info.data, &data, sizeof(int));
     manu_param_list_.push_back(param_info);
 
-    strcpy(param_info.name, MANU_PARAM_NAME_36);
+    strcpy(param_info.name, MANU_PARAM_NAME_24);
     param_info.type = PARAM_INFO_INT;
     data = (int)servo_data[1056];
     memcpy(param_info.data, &data, sizeof(int));
     manu_param_list_.push_back(param_info);
 
-    strcpy(param_info.name, MANU_PARAM_NAME_37);
+    strcpy(param_info.name, MANU_PARAM_NAME_25);
     param_info.type = PARAM_INFO_INT;
     data = (int)servo_data[1058];
     memcpy(param_info.data, &data, sizeof(int));
     manu_param_list_.push_back(param_info); 
 
-    strcpy(param_info.name, MANU_PARAM_NAME_38);
+    strcpy(param_info.name, MANU_PARAM_NAME_26);
     param_info.type = PARAM_INFO_INT;
     data = (int)servo_data[1092];
     memcpy(param_info.data, &data, sizeof(int));
     manu_param_list_.push_back(param_info);
+
+    if(!yaml_help_.loadParamFile(FILE_ALGORITHM_CONFIG)) return PARAM_MANAGER_INIT_FAILED;
+    
+    if(!yaml_help_.getParam(MANU_PARAM_DATA_27, data_int)) return PARAM_MANAGER_INIT_FAILED;
+    strcpy(param_info.name, MANU_PARAM_NAME_27);
+    param_info.type = PARAM_INFO_INT;
+    memcpy(param_info.data, &data_int, sizeof(int));
+    manu_param_list_.push_back(param_info); 
+
+    if(!yaml_help_.getParam(MANU_PARAM_DATA_28, data_bool)) return PARAM_MANAGER_INIT_FAILED;
+    strcpy(param_info.name, MANU_PARAM_NAME_28);
+    param_info.type = PARAM_INFO_BOOL;
+    memcpy(param_info.data, &data_bool, sizeof(bool));
+    manu_param_list_.push_back(param_info); 
+
+    if(!yaml_help_.getParam(MANU_PARAM_DATA_29, data_bool)) return PARAM_MANAGER_INIT_FAILED;
+    strcpy(param_info.name, MANU_PARAM_NAME_29);
+    param_info.type = PARAM_INFO_BOOL;
+    memcpy(param_info.data, &data_bool, sizeof(bool));
+    manu_param_list_.push_back(param_info); 
+
+    if(!yaml_help_.loadParamFile(FILE_ALGORITHM_CONSTRAINT)) return PARAM_MANAGER_INIT_FAILED;
+    fst_parameter::ParamValue array_data;    
+    if(!yaml_help_.getParam(MANU_PARAM_DATA_30, array_data)) return PARAM_MANAGER_INIT_FAILED;
+
+    strcpy(param_info.name, MANU_PARAM_NAME_30);
+    param_info.type = PARAM_INFO_DOUBLE;
+    data_double = (double)array_data[0];
+    memcpy(param_info.data, &data_double, sizeof(double));
+    manu_param_list_.push_back(param_info);
+
+    strcpy(param_info.name, MANU_PARAM_NAME_31);
+    param_info.type = PARAM_INFO_DOUBLE;
+    data_double = (double)array_data[1];
+    memcpy(param_info.data, &data_double, sizeof(double));
+    manu_param_list_.push_back(param_info);
+
+    strcpy(param_info.name, MANU_PARAM_NAME_32);
+    param_info.type = PARAM_INFO_DOUBLE;
+    data_double = (double)array_data[2];
+    memcpy(param_info.data, &data_double, sizeof(double));
+    manu_param_list_.push_back(param_info);
+
+    strcpy(param_info.name, MANU_PARAM_NAME_33);
+    param_info.type = PARAM_INFO_DOUBLE;
+    data_double = (double)array_data[3];
+    memcpy(param_info.data, &data_double, sizeof(double));
+    manu_param_list_.push_back(param_info);
+
+    strcpy(param_info.name, MANU_PARAM_NAME_34);
+    param_info.type = PARAM_INFO_DOUBLE;
+    data_double = (double)array_data[4];
+    memcpy(param_info.data, &data_double, sizeof(double));
+    manu_param_list_.push_back(param_info);
+
+    strcpy(param_info.name, MANU_PARAM_NAME_35);
+    param_info.type = PARAM_INFO_DOUBLE;
+    data_double = (double)array_data[5];
+    memcpy(param_info.data, &data_double, sizeof(double));
+    manu_param_list_.push_back(param_info);
+
+    if(!yaml_help_.getParam(MANU_PARAM_DATA_36, array_data)) return PARAM_MANAGER_INIT_FAILED;
+
+    strcpy(param_info.name, MANU_PARAM_NAME_36);
+    param_info.type = PARAM_INFO_DOUBLE;
+    data_double = (double)array_data[0];
+    memcpy(param_info.data, &data_double, sizeof(double));
+    manu_param_list_.push_back(param_info);
+
+    strcpy(param_info.name, MANU_PARAM_NAME_37);
+    param_info.type = PARAM_INFO_DOUBLE;
+    data_double = (double)array_data[1];
+    memcpy(param_info.data, &data_double, sizeof(double));
+    manu_param_list_.push_back(param_info);
+
+    strcpy(param_info.name, MANU_PARAM_NAME_38);
+    param_info.type = PARAM_INFO_DOUBLE;
+    data_double = (double)array_data[2];
+    memcpy(param_info.data, &data_double, sizeof(double));
+    manu_param_list_.push_back(param_info);
+
+    strcpy(param_info.name, MANU_PARAM_NAME_39);
+    param_info.type = PARAM_INFO_DOUBLE;
+    data_double = (double)array_data[3];
+    memcpy(param_info.data, &data_double, sizeof(double));
+    manu_param_list_.push_back(param_info);
+
+    strcpy(param_info.name, MANU_PARAM_NAME_40);
+    param_info.type = PARAM_INFO_DOUBLE;
+    data_double = (double)array_data[4];
+    memcpy(param_info.data, &data_double, sizeof(double));
+    manu_param_list_.push_back(param_info);
+
+    strcpy(param_info.name, MANU_PARAM_NAME_41);
+    param_info.type = PARAM_INFO_DOUBLE;
+    data_double = (double)array_data[5];
+    memcpy(param_info.data, &data_double, sizeof(double));
+    manu_param_list_.push_back(param_info);
+
+    if(!yaml_help_.getParam(MANU_PARAM_DATA_42, array_data)) return PARAM_MANAGER_INIT_FAILED;
+
+    strcpy(param_info.name, MANU_PARAM_NAME_42);
+    param_info.type = PARAM_INFO_DOUBLE;
+    data_double = (double)array_data[0];
+    memcpy(param_info.data, &data_double, sizeof(double));
+    manu_param_list_.push_back(param_info);
+
+    strcpy(param_info.name, MANU_PARAM_NAME_43);
+    param_info.type = PARAM_INFO_DOUBLE;
+    data_double = (double)array_data[1];
+    memcpy(param_info.data, &data_double, sizeof(double));
+    manu_param_list_.push_back(param_info);
+
+    strcpy(param_info.name, MANU_PARAM_NAME_44);
+    param_info.type = PARAM_INFO_DOUBLE;
+    data_double = (double)array_data[2];
+    memcpy(param_info.data, &data_double, sizeof(double));
+    manu_param_list_.push_back(param_info);
+
+    strcpy(param_info.name, MANU_PARAM_NAME_45);
+    param_info.type = PARAM_INFO_DOUBLE;
+    data_double = (double)array_data[3];
+    memcpy(param_info.data, &data_double, sizeof(double));
+    manu_param_list_.push_back(param_info);
+
+    strcpy(param_info.name, MANU_PARAM_NAME_46);
+    param_info.type = PARAM_INFO_DOUBLE;
+    data_double = (double)array_data[4];
+    memcpy(param_info.data, &data_double, sizeof(double));
+    manu_param_list_.push_back(param_info);
+
+    strcpy(param_info.name, MANU_PARAM_NAME_47);
+    param_info.type = PARAM_INFO_DOUBLE;
+    data_double = (double)array_data[5];
+    memcpy(param_info.data, &data_double, sizeof(double));
+    manu_param_list_.push_back(param_info);
+
+    if(!yaml_help_.getParam(MANU_PARAM_DATA_48, array_data)) return PARAM_MANAGER_INIT_FAILED;
+
+    strcpy(param_info.name, MANU_PARAM_NAME_48);
+    param_info.type = PARAM_INFO_DOUBLE;
+    data_double = (double)array_data[0];
+    memcpy(param_info.data, &data_double, sizeof(double));
+    manu_param_list_.push_back(param_info);
+
+    strcpy(param_info.name, MANU_PARAM_NAME_49);
+    param_info.type = PARAM_INFO_DOUBLE;
+    data_double = (double)array_data[1];
+    memcpy(param_info.data, &data_double, sizeof(double));
+    manu_param_list_.push_back(param_info);
+
+    strcpy(param_info.name, MANU_PARAM_NAME_50);
+    param_info.type = PARAM_INFO_DOUBLE;
+    data_double = (double)array_data[2];
+    memcpy(param_info.data, &data_double, sizeof(double));
+    manu_param_list_.push_back(param_info);
+
+    strcpy(param_info.name, MANU_PARAM_NAME_51);
+    param_info.type = PARAM_INFO_DOUBLE;
+    data_double = (double)array_data[3];
+    memcpy(param_info.data, &data_double, sizeof(double));
+    manu_param_list_.push_back(param_info);
+
+    strcpy(param_info.name, MANU_PARAM_NAME_52);
+    param_info.type = PARAM_INFO_DOUBLE;
+    data_double = (double)array_data[4];
+    memcpy(param_info.data, &data_double, sizeof(double));
+    manu_param_list_.push_back(param_info);
+
+    strcpy(param_info.name, MANU_PARAM_NAME_53);
+    param_info.type = PARAM_INFO_DOUBLE;
+    data_double = (double)array_data[5];
+    memcpy(param_info.data, &data_double, sizeof(double));
+    manu_param_list_.push_back(param_info);
+
+    if(!yaml_help_.getParam(MANU_PARAM_DATA_54, array_data)) return PARAM_MANAGER_INIT_FAILED;
+
+    strcpy(param_info.name, MANU_PARAM_NAME_54);
+    param_info.type = PARAM_INFO_DOUBLE;
+    data_double = (double)array_data[0];
+    memcpy(param_info.data, &data_double, sizeof(double));
+    manu_param_list_.push_back(param_info);
+
+    strcpy(param_info.name, MANU_PARAM_NAME_55);
+    param_info.type = PARAM_INFO_DOUBLE;
+    data_double = (double)array_data[1];
+    memcpy(param_info.data, &data_double, sizeof(double));
+    manu_param_list_.push_back(param_info);
+
+    strcpy(param_info.name, MANU_PARAM_NAME_56);
+    param_info.type = PARAM_INFO_DOUBLE;
+    data_double = (double)array_data[2];
+    memcpy(param_info.data, &data_double, sizeof(double));
+    manu_param_list_.push_back(param_info);
+
+    strcpy(param_info.name, MANU_PARAM_NAME_57);
+    param_info.type = PARAM_INFO_DOUBLE;
+    data_double = (double)array_data[3];
+    memcpy(param_info.data, &data_double, sizeof(double));
+    manu_param_list_.push_back(param_info);
+
+    strcpy(param_info.name, MANU_PARAM_NAME_58);
+    param_info.type = PARAM_INFO_DOUBLE;
+    data_double = (double)array_data[4];
+    memcpy(param_info.data, &data_double, sizeof(double));
+    manu_param_list_.push_back(param_info);
+
+    strcpy(param_info.name, MANU_PARAM_NAME_59);
+    param_info.type = PARAM_INFO_DOUBLE;
+    data_double = (double)array_data[5];
+    memcpy(param_info.data, &data_double, sizeof(double));
+    manu_param_list_.push_back(param_info);
+    
+    if(!yaml_help_.getParam(MANU_PARAM_DATA_60, array_data)) return PARAM_MANAGER_INIT_FAILED;
+
+    strcpy(param_info.name, MANU_PARAM_NAME_60);
+    param_info.type = PARAM_INFO_DOUBLE;
+    data_double = (double)array_data[0];
+    memcpy(param_info.data, &data_double, sizeof(double));
+    manu_param_list_.push_back(param_info);
+
+    strcpy(param_info.name, MANU_PARAM_NAME_61);
+    param_info.type = PARAM_INFO_DOUBLE;
+    data_double = (double)array_data[1];
+    memcpy(param_info.data, &data_double, sizeof(double));
+    manu_param_list_.push_back(param_info);
+
+    strcpy(param_info.name, MANU_PARAM_NAME_62);
+    param_info.type = PARAM_INFO_DOUBLE;
+    data_double = (double)array_data[2];
+    memcpy(param_info.data, &data_double, sizeof(double));
+    manu_param_list_.push_back(param_info);
+
+    strcpy(param_info.name, MANU_PARAM_NAME_63);
+    param_info.type = PARAM_INFO_DOUBLE;
+    data_double = (double)array_data[3];
+    memcpy(param_info.data, &data_double, sizeof(double));
+    manu_param_list_.push_back(param_info);
+
+    strcpy(param_info.name, MANU_PARAM_NAME_64);
+    param_info.type = PARAM_INFO_DOUBLE;
+    data_double = (double)array_data[4];
+    memcpy(param_info.data, &data_double, sizeof(double));
+    manu_param_list_.push_back(param_info);
+
+    strcpy(param_info.name, MANU_PARAM_NAME_65);
+    param_info.type = PARAM_INFO_DOUBLE;
+    data_double = (double)array_data[5];
+    memcpy(param_info.data, &data_double, sizeof(double));
+    manu_param_list_.push_back(param_info);
+
+    if(!yaml_help_.getParam(MANU_PARAM_DATA_66, data_double)) return PARAM_MANAGER_INIT_FAILED;
+    strcpy(param_info.name, MANU_PARAM_NAME_66);
+    param_info.type = PARAM_INFO_DOUBLE;
+    memcpy(param_info.data, &data_double, sizeof(double));
+    manu_param_list_.push_back(param_info); 
+
+    if(!yaml_help_.getParam(MANU_PARAM_DATA_67, data_double)) return PARAM_MANAGER_INIT_FAILED;
+    strcpy(param_info.name, MANU_PARAM_NAME_67);
+    param_info.type = PARAM_INFO_DOUBLE;
+    memcpy(param_info.data, &data_double, sizeof(double));
+    manu_param_list_.push_back(param_info); 
+
+    if(!yaml_help_.getParam(MANU_PARAM_DATA_68, data_double)) return PARAM_MANAGER_INIT_FAILED;
+    strcpy(param_info.name, MANU_PARAM_NAME_68);
+    param_info.type = PARAM_INFO_DOUBLE;
+    memcpy(param_info.data, &data_double, sizeof(double));
+    manu_param_list_.push_back(param_info); 
+
+    if(!yaml_help_.getParam(MANU_PARAM_DATA_69, data_double)) return PARAM_MANAGER_INIT_FAILED;
+    strcpy(param_info.name, MANU_PARAM_NAME_69);
+    param_info.type = PARAM_INFO_DOUBLE;
+    memcpy(param_info.data, &data_double, sizeof(double));
+    manu_param_list_.push_back(param_info); 
+
+    if(!yaml_help_.getParam(MANU_PARAM_DATA_70, data_double)) return PARAM_MANAGER_INIT_FAILED;
+    strcpy(param_info.name, MANU_PARAM_NAME_70);
+    param_info.type = PARAM_INFO_DOUBLE;
+    memcpy(param_info.data, &data_double, sizeof(double));
+    manu_param_list_.push_back(param_info); 
+
+    if(!yaml_help_.getParam(MANU_PARAM_DATA_71, data_double)) return PARAM_MANAGER_INIT_FAILED;
+    strcpy(param_info.name, MANU_PARAM_NAME_71);
+    param_info.type = PARAM_INFO_DOUBLE;
+    memcpy(param_info.data, &data_double, sizeof(double));
+    manu_param_list_.push_back(param_info); 
+
+    if(!yaml_help_.getParam(MANU_PARAM_DATA_72, data_double)) return PARAM_MANAGER_INIT_FAILED;
+    strcpy(param_info.name, MANU_PARAM_NAME_72);
+    param_info.type = PARAM_INFO_DOUBLE;
+    memcpy(param_info.data, &data_double, sizeof(double));
+    manu_param_list_.push_back(param_info); 
+
+    if(!yaml_help_.getParam(MANU_PARAM_DATA_73, data_double)) return PARAM_MANAGER_INIT_FAILED;
+    strcpy(param_info.name, MANU_PARAM_NAME_73);
+    param_info.type = PARAM_INFO_DOUBLE;
+    memcpy(param_info.data, &data_double, sizeof(double));
+    manu_param_list_.push_back(param_info); 
+
+    if(!yaml_help_.getParam(MANU_PARAM_DATA_74, data_double)) return PARAM_MANAGER_INIT_FAILED;
+    strcpy(param_info.name, MANU_PARAM_NAME_74);
+    param_info.type = PARAM_INFO_DOUBLE;
+    memcpy(param_info.data, &data_double, sizeof(double));
+    manu_param_list_.push_back(param_info); 
+
+    if(!yaml_help_.getParam(MANU_PARAM_DATA_75, data_double)) return PARAM_MANAGER_INIT_FAILED;
+    strcpy(param_info.name, MANU_PARAM_NAME_75);
+    param_info.type = PARAM_INFO_DOUBLE;
+    memcpy(param_info.data, &data_double, sizeof(double));
+    manu_param_list_.push_back(param_info); 
 
     return SUCCESS;
 }
@@ -511,164 +793,21 @@ ErrorCode ParamManager::setParamInfo(ParamGroup_e param_group, ParamInfo_t& para
             }
             if(strcmp(param_info.name, MANU_PARAM_NAME_2) == 0)
             {
-                data_double = *((double*)param_info.data);
+                data_int = *((int*)param_info.data);
                 if(!yaml_help_.loadParamFile(FILE_BASE_GROUP)
-                    || !yaml_help_.setParam(MANU_PARAM_DATA_2, data_double)
+                    || !yaml_help_.setParam(MANU_PARAM_DATA_2, data_int)
                     || !yaml_help_.dumpParamFile(FILE_BASE_GROUP)) 
                 {
                     return PARAM_MANAGER_SET_PARAM_FAILED;
                 }
-                memcpy(manu_param_list_[1].data, &data_double, sizeof(double));
-                return SUCCESS;
-            }    
-            if(strcmp(param_info.name, MANU_PARAM_NAME_3) == 0)
-            {
-                data_int = *((int*)param_info.data);
-                if(!yaml_help_.loadParamFile(FILE_SEGMENT_ALG)
-                    || !yaml_help_.setParam(MANU_PARAM_DATA_3, data_int)
-                    || !yaml_help_.dumpParamFile(FILE_SEGMENT_ALG)) 
-                {
-                    return PARAM_MANAGER_SET_PARAM_FAILED;
-                }
-                memcpy(manu_param_list_[2].data, &data_int, sizeof(int));
+                memcpy(manu_param_list_[1].data, &data_int, sizeof(int));
                 return SUCCESS;
             }
-            if(strcmp(param_info.name, MANU_PARAM_NAME_4) == 0)
-            {
-                data_int = *((int*)param_info.data);
-                if(!yaml_help_.loadParamFile(FILE_SEGMENT_ALG)
-                    || !yaml_help_.setParam(MANU_PARAM_DATA_4, data_int)
-                    || !yaml_help_.dumpParamFile(FILE_SEGMENT_ALG)) 
-                {
-                    return PARAM_MANAGER_SET_PARAM_FAILED;
-                }
-                memcpy(manu_param_list_[3].data, &data_int, sizeof(int));
-                return SUCCESS;
-            }
-            if(strcmp(param_info.name, MANU_PARAM_NAME_5) == 0)
-            {
-                data_int = *((int*)param_info.data);
-                if(!yaml_help_.loadParamFile(FILE_SEGMENT_ALG)
-                    || !yaml_help_.setParam(MANU_PARAM_DATA_5, data_int)
-                    || !yaml_help_.dumpParamFile(FILE_SEGMENT_ALG)) 
-                {
-                    return PARAM_MANAGER_SET_PARAM_FAILED;
-                }
-                memcpy(manu_param_list_[4].data, &data_int, sizeof(int));
-                return SUCCESS;
-            }
-            if(strcmp(param_info.name, MANU_PARAM_NAME_6) == 0)
-            {
-                data_double = *((double*)param_info.data);
-                if(!yaml_help_.loadParamFile(FILE_SEGMENT_ALG)
-                    || !yaml_help_.setParam(MANU_PARAM_DATA_6, data_double)
-                    || !yaml_help_.dumpParamFile(FILE_SEGMENT_ALG)) 
-                {
-                    return PARAM_MANAGER_SET_PARAM_FAILED;
-                }
-                memcpy(manu_param_list_[5].data, &data_double, sizeof(double));
-                return SUCCESS;
-            }
-            if(strcmp(param_info.name, MANU_PARAM_NAME_7) == 0)
-            {
-                data_double = *((double*)param_info.data);
-                if(!yaml_help_.loadParamFile(FILE_SEGMENT_ALG)
-                    || !yaml_help_.setParam(MANU_PARAM_DATA_7, data_double)
-                    || !yaml_help_.dumpParamFile(FILE_SEGMENT_ALG)) 
-                {
-                    return PARAM_MANAGER_SET_PARAM_FAILED;
-                }
-                memcpy(manu_param_list_[6].data, &data_double, sizeof(double));
-                return SUCCESS;
-            }
-            if(strcmp(param_info.name, MANU_PARAM_NAME_8) == 0)
-            {
-                data_double = *((double*)param_info.data);
-                if(!yaml_help_.loadParamFile(FILE_SEGMENT_ALG)
-                    || !yaml_help_.setParam(MANU_PARAM_DATA_8, data_double)
-                    || !yaml_help_.dumpParamFile(FILE_SEGMENT_ALG)) 
-                {
-                    return PARAM_MANAGER_SET_PARAM_FAILED;
-                }
-                memcpy(manu_param_list_[7].data, &data_double, sizeof(double));
-                return SUCCESS;
-            }
-            if(strcmp(param_info.name, MANU_PARAM_NAME_9) == 0)
-            {
-                data_double = *((double*)param_info.data);
-                if(!yaml_help_.loadParamFile(FILE_SEGMENT_ALG)
-                    || !yaml_help_.setParam(MANU_PARAM_DATA_9, data_double)
-                    || !yaml_help_.dumpParamFile(FILE_SEGMENT_ALG)) 
-                {
-                    return PARAM_MANAGER_SET_PARAM_FAILED;
-                }
-                memcpy(manu_param_list_[8].data, &data_double, sizeof(double));
-                return SUCCESS;
-            }
-            if(strcmp(param_info.name, MANU_PARAM_NAME_10) == 0)
-            {
-                data_double = *((double*)param_info.data);
-                if(!yaml_help_.loadParamFile(FILE_SEGMENT_ALG)
-                    || !yaml_help_.setParam(MANU_PARAM_DATA_10, data_double)
-                    || !yaml_help_.dumpParamFile(FILE_SEGMENT_ALG)) 
-                {
-                    return PARAM_MANAGER_SET_PARAM_FAILED;
-                }
-                memcpy(manu_param_list_[9].data, &data_double, sizeof(double));
-                return SUCCESS;
-            }
-            if(strcmp(param_info.name, MANU_PARAM_NAME_11) == 0)
-            {
-                data_double = *((double*)param_info.data);
-                if(!yaml_help_.loadParamFile(FILE_SEGMENT_ALG)
-                    || !yaml_help_.setParam(MANU_PARAM_DATA_11, data_double)
-                    || !yaml_help_.dumpParamFile(FILE_SEGMENT_ALG)) 
-                {
-                    return PARAM_MANAGER_SET_PARAM_FAILED;
-                }
-                memcpy(manu_param_list_[10].data, &data_double, sizeof(double));
-                return SUCCESS;
-            }
-            if(strcmp(param_info.name, MANU_PARAM_NAME_12) == 0)
-            {
-                data_double = *((double*)param_info.data);
-                if(!yaml_help_.loadParamFile(FILE_SEGMENT_ALG)
-                    || !yaml_help_.setParam(MANU_PARAM_DATA_12, data_double)
-                    || !yaml_help_.dumpParamFile(FILE_SEGMENT_ALG)) 
-                {
-                    return PARAM_MANAGER_SET_PARAM_FAILED;
-                }
-                memcpy(manu_param_list_[11].data, &data_double, sizeof(double));
-                return SUCCESS;
-            }
-            if(strcmp(param_info.name, MANU_PARAM_NAME_13) == 0)
-            {
-                data_bool = *((bool*)param_info.data);
-                if(!yaml_help_.loadParamFile(FILE_SEGMENT_ALG)
-                    || !yaml_help_.setParam(MANU_PARAM_DATA_13, data_bool)
-                    || !yaml_help_.dumpParamFile(FILE_SEGMENT_ALG)) 
-                {
-                    return PARAM_MANAGER_SET_PARAM_FAILED;
-                }
-                memcpy(manu_param_list_[12].data, &data_bool, sizeof(bool));
-                return SUCCESS;
-            }
-            if(strcmp(param_info.name, MANU_PARAM_NAME_14) == 0)
-            {
-                data_double = *((double*)param_info.data);
-                if(!yaml_help_.loadParamFile(FILE_SEGMENT_ALG)
-                    || !yaml_help_.setParam(MANU_PARAM_DATA_14, data_double)
-                    || !yaml_help_.dumpParamFile(FILE_SEGMENT_ALG)) 
-                {
-                    return PARAM_MANAGER_SET_PARAM_FAILED;
-                }
-                memcpy(manu_param_list_[13].data, &data_double, sizeof(double));
-                return SUCCESS;
-            }
-            
+
             fst_parameter::ParamValue servo_data;
+            fst_parameter::ParamValue array_data;
             // servo param - axis1
-            if(strcmp(param_info.name, MANU_PARAM_NAME_15) == 0)
+            if(strcmp(param_info.name, MANU_PARAM_NAME_3) == 0)
             {
                 data_int = *((int*)param_info.data);
                 if(!yaml_help_.loadParamFile(FILE_SERVO_PARAM)
@@ -679,6 +818,249 @@ ErrorCode ParamManager::setParamInfo(ParamGroup_e param_group, ParamInfo_t& para
                 else
                 {
                     servo_data[93] = data_int;                    
+                }
+                if(!yaml_help_.setParam(MANU_PARAM_DATA_SERVO, servo_data)
+                    || !yaml_help_.dumpParamFile(FILE_SERVO_PARAM))
+                {
+                    return PARAM_MANAGER_SET_PARAM_FAILED;
+                }
+                memcpy(manu_param_list_[2].data, &data_int, sizeof(int));
+                return SUCCESS;
+            }
+            if(strcmp(param_info.name, MANU_PARAM_NAME_4) == 0)
+            {
+                data_int = *((int*)param_info.data);
+                if(!yaml_help_.loadParamFile(FILE_SERVO_PARAM)
+                    || !yaml_help_.getParam(MANU_PARAM_DATA_SERVO, servo_data))
+                {
+                    return PARAM_MANAGER_SET_PARAM_FAILED;                    
+                }
+                else
+                {
+                    servo_data[96] = data_int;                    
+                }
+                if(!yaml_help_.setParam(MANU_PARAM_DATA_SERVO, servo_data)
+                    || !yaml_help_.dumpParamFile(FILE_SERVO_PARAM))
+                {
+                    return PARAM_MANAGER_SET_PARAM_FAILED;
+                }
+                memcpy(manu_param_list_[3].data, &data_int, sizeof(int));
+                return SUCCESS;
+            }  
+            if(strcmp(param_info.name, MANU_PARAM_NAME_5) == 0)
+            {
+                data_int = *((int*)param_info.data);
+                if(!yaml_help_.loadParamFile(FILE_SERVO_PARAM)
+                    || !yaml_help_.getParam(MANU_PARAM_DATA_SERVO, servo_data))
+                {
+                    return PARAM_MANAGER_SET_PARAM_FAILED;                    
+                }
+                else
+                {
+                    servo_data[98] = data_int;                    
+                }
+                if(!yaml_help_.setParam(MANU_PARAM_DATA_SERVO, servo_data)
+                    || !yaml_help_.dumpParamFile(FILE_SERVO_PARAM))
+                {
+                    return PARAM_MANAGER_SET_PARAM_FAILED;
+                }
+                memcpy(manu_param_list_[4].data, &data_int, sizeof(int));
+                return SUCCESS;
+            }
+            if(strcmp(param_info.name, MANU_PARAM_NAME_6) == 0)
+            {
+                data_int = *((int*)param_info.data);
+                if(!yaml_help_.loadParamFile(FILE_SERVO_PARAM)
+                    || !yaml_help_.getParam(MANU_PARAM_DATA_SERVO, servo_data))
+                {
+                    return PARAM_MANAGER_SET_PARAM_FAILED;                    
+                }
+                else
+                {
+                    servo_data[132] = data_int;                    
+                }
+                if(!yaml_help_.setParam(MANU_PARAM_DATA_SERVO, servo_data)
+                    || !yaml_help_.dumpParamFile(FILE_SERVO_PARAM))
+                {
+                    return PARAM_MANAGER_SET_PARAM_FAILED;
+                }
+                memcpy(manu_param_list_[5].data, &data_int, sizeof(int));
+                return SUCCESS;
+            }
+            // servo param - axis2
+            if(strcmp(param_info.name, MANU_PARAM_NAME_7) == 0)
+            {
+                data_int = *((int*)param_info.data);
+                if(!yaml_help_.loadParamFile(FILE_SERVO_PARAM)
+                    || !yaml_help_.getParam(MANU_PARAM_DATA_SERVO, servo_data))
+                {
+                    return PARAM_MANAGER_SET_PARAM_FAILED;                    
+                }
+                else
+                {
+                    servo_data[285] = data_int;                    
+                }
+                if(!yaml_help_.setParam(MANU_PARAM_DATA_SERVO, servo_data)
+                    || !yaml_help_.dumpParamFile(FILE_SERVO_PARAM))
+                {
+                    return PARAM_MANAGER_SET_PARAM_FAILED;
+                }
+                memcpy(manu_param_list_[6].data, &data_int, sizeof(int));
+                return SUCCESS;
+            }
+            if(strcmp(param_info.name, MANU_PARAM_NAME_8) == 0)
+            {
+                data_int = *((int*)param_info.data);
+                if(!yaml_help_.loadParamFile(FILE_SERVO_PARAM)
+                    || !yaml_help_.getParam(MANU_PARAM_DATA_SERVO, servo_data))
+                {
+                    return PARAM_MANAGER_SET_PARAM_FAILED;                    
+                }
+                else
+                {
+                    servo_data[288] = data_int;                    
+                }
+                if(!yaml_help_.setParam(MANU_PARAM_DATA_SERVO, servo_data)
+                    || !yaml_help_.dumpParamFile(FILE_SERVO_PARAM))
+                {
+                    return PARAM_MANAGER_SET_PARAM_FAILED;
+                }
+                memcpy(manu_param_list_[7].data, &data_int, sizeof(int));
+                return SUCCESS;
+            }  
+            if(strcmp(param_info.name, MANU_PARAM_NAME_9) == 0)
+            {
+                data_int = *((int*)param_info.data);
+                if(!yaml_help_.loadParamFile(FILE_SERVO_PARAM)
+                    || !yaml_help_.getParam(MANU_PARAM_DATA_SERVO, servo_data))
+                {
+                    return PARAM_MANAGER_SET_PARAM_FAILED;                    
+                }
+                else
+                {
+                    servo_data[290] = data_int;                    
+                }
+                if(!yaml_help_.setParam(MANU_PARAM_DATA_SERVO, servo_data)
+                    || !yaml_help_.dumpParamFile(FILE_SERVO_PARAM))
+                {
+                    return PARAM_MANAGER_SET_PARAM_FAILED;
+                }
+                memcpy(manu_param_list_[8].data, &data_int, sizeof(int));
+                return SUCCESS;
+            }
+            if(strcmp(param_info.name, MANU_PARAM_NAME_10) == 0)
+            {
+                data_int = *((int*)param_info.data);
+                if(!yaml_help_.loadParamFile(FILE_SERVO_PARAM)
+                    || !yaml_help_.getParam(MANU_PARAM_DATA_SERVO, servo_data))
+                {
+                    return PARAM_MANAGER_SET_PARAM_FAILED;                    
+                }
+                else
+                {
+                    servo_data[324] = data_int;                    
+                }
+                if(!yaml_help_.setParam(MANU_PARAM_DATA_SERVO, servo_data)
+                    || !yaml_help_.dumpParamFile(FILE_SERVO_PARAM))
+                {
+                    return PARAM_MANAGER_SET_PARAM_FAILED;
+                }
+                memcpy(manu_param_list_[9].data, &data_int, sizeof(int));
+                return SUCCESS;
+            }
+            // servo param - axis3
+            if(strcmp(param_info.name, MANU_PARAM_NAME_11) == 0)
+            {
+                data_int = *((int*)param_info.data);
+                if(!yaml_help_.loadParamFile(FILE_SERVO_PARAM)
+                    || !yaml_help_.getParam(MANU_PARAM_DATA_SERVO, servo_data))
+                {
+                    return PARAM_MANAGER_SET_PARAM_FAILED;                    
+                }
+                else
+                {
+                    servo_data[477] = data_int;                    
+                }
+                if(!yaml_help_.setParam(MANU_PARAM_DATA_SERVO, servo_data)
+                    || !yaml_help_.dumpParamFile(FILE_SERVO_PARAM))
+                {
+                    return PARAM_MANAGER_SET_PARAM_FAILED;
+                }
+                memcpy(manu_param_list_[10].data, &data_int, sizeof(int));
+                return SUCCESS;
+            }
+            if(strcmp(param_info.name, MANU_PARAM_NAME_12) == 0)
+            {
+                data_int = *((int*)param_info.data);
+                if(!yaml_help_.loadParamFile(FILE_SERVO_PARAM)
+                    || !yaml_help_.getParam(MANU_PARAM_DATA_SERVO, servo_data))
+                {
+                    return PARAM_MANAGER_SET_PARAM_FAILED;                    
+                }
+                else
+                {
+                    servo_data[480] = data_int;                    
+                }
+                if(!yaml_help_.setParam(MANU_PARAM_DATA_SERVO, servo_data)
+                    || !yaml_help_.dumpParamFile(FILE_SERVO_PARAM))
+                {
+                    return PARAM_MANAGER_SET_PARAM_FAILED;
+                }
+                memcpy(manu_param_list_[11].data, &data_int, sizeof(int));
+                return SUCCESS;
+            }  
+            if(strcmp(param_info.name, MANU_PARAM_NAME_13) == 0)
+            {
+                data_int = *((int*)param_info.data);
+                if(!yaml_help_.loadParamFile(FILE_SERVO_PARAM)
+                    || !yaml_help_.getParam(MANU_PARAM_DATA_SERVO, servo_data))
+                {
+                    return PARAM_MANAGER_SET_PARAM_FAILED;                    
+                }
+                else
+                {
+                    servo_data[482] = data_int;                    
+                }
+                if(!yaml_help_.setParam(MANU_PARAM_DATA_SERVO, servo_data)
+                    || !yaml_help_.dumpParamFile(FILE_SERVO_PARAM))
+                {
+                    return PARAM_MANAGER_SET_PARAM_FAILED;
+                }
+                memcpy(manu_param_list_[12].data, &data_int, sizeof(int));
+                return SUCCESS;
+            }
+            if(strcmp(param_info.name, MANU_PARAM_NAME_14) == 0)
+            {
+                data_int = *((int*)param_info.data);
+                if(!yaml_help_.loadParamFile(FILE_SERVO_PARAM)
+                    || !yaml_help_.getParam(MANU_PARAM_DATA_SERVO, servo_data))
+                {
+                    return PARAM_MANAGER_SET_PARAM_FAILED;                    
+                }
+                else
+                {
+                    servo_data[516] = data_int;                    
+                }
+                if(!yaml_help_.setParam(MANU_PARAM_DATA_SERVO, servo_data)
+                    || !yaml_help_.dumpParamFile(FILE_SERVO_PARAM))
+                {
+                    return PARAM_MANAGER_SET_PARAM_FAILED;
+                }
+                memcpy(manu_param_list_[13].data, &data_int, sizeof(int));
+                return SUCCESS;
+            }
+            // servo param - axis4
+            if(strcmp(param_info.name, MANU_PARAM_NAME_15) == 0)
+            {
+                data_int = *((int*)param_info.data);
+                if(!yaml_help_.loadParamFile(FILE_SERVO_PARAM)
+                    || !yaml_help_.getParam(MANU_PARAM_DATA_SERVO, servo_data))
+                {
+                    return PARAM_MANAGER_SET_PARAM_FAILED;                    
+                }
+                else
+                {
+                    servo_data[669] = data_int;                    
                 }
                 if(!yaml_help_.setParam(MANU_PARAM_DATA_SERVO, servo_data)
                     || !yaml_help_.dumpParamFile(FILE_SERVO_PARAM))
@@ -698,7 +1080,7 @@ ErrorCode ParamManager::setParamInfo(ParamGroup_e param_group, ParamInfo_t& para
                 }
                 else
                 {
-                    servo_data[96] = data_int;                    
+                    servo_data[672] = data_int;                    
                 }
                 if(!yaml_help_.setParam(MANU_PARAM_DATA_SERVO, servo_data)
                     || !yaml_help_.dumpParamFile(FILE_SERVO_PARAM))
@@ -718,7 +1100,7 @@ ErrorCode ParamManager::setParamInfo(ParamGroup_e param_group, ParamInfo_t& para
                 }
                 else
                 {
-                    servo_data[98] = data_int;                    
+                    servo_data[674] = data_int;                    
                 }
                 if(!yaml_help_.setParam(MANU_PARAM_DATA_SERVO, servo_data)
                     || !yaml_help_.dumpParamFile(FILE_SERVO_PARAM))
@@ -738,7 +1120,7 @@ ErrorCode ParamManager::setParamInfo(ParamGroup_e param_group, ParamInfo_t& para
                 }
                 else
                 {
-                    servo_data[132] = data_int;                    
+                    servo_data[708] = data_int;                    
                 }
                 if(!yaml_help_.setParam(MANU_PARAM_DATA_SERVO, servo_data)
                     || !yaml_help_.dumpParamFile(FILE_SERVO_PARAM))
@@ -748,7 +1130,7 @@ ErrorCode ParamManager::setParamInfo(ParamGroup_e param_group, ParamInfo_t& para
                 memcpy(manu_param_list_[17].data, &data_int, sizeof(int));
                 return SUCCESS;
             }
-            // servo param - axis2
+            // servo param - axis5
             if(strcmp(param_info.name, MANU_PARAM_NAME_19) == 0)
             {
                 data_int = *((int*)param_info.data);
@@ -759,7 +1141,7 @@ ErrorCode ParamManager::setParamInfo(ParamGroup_e param_group, ParamInfo_t& para
                 }
                 else
                 {
-                    servo_data[285] = data_int;                    
+                    servo_data[861] = data_int;                    
                 }
                 if(!yaml_help_.setParam(MANU_PARAM_DATA_SERVO, servo_data)
                     || !yaml_help_.dumpParamFile(FILE_SERVO_PARAM))
@@ -779,7 +1161,7 @@ ErrorCode ParamManager::setParamInfo(ParamGroup_e param_group, ParamInfo_t& para
                 }
                 else
                 {
-                    servo_data[288] = data_int;                    
+                    servo_data[864] = data_int;                    
                 }
                 if(!yaml_help_.setParam(MANU_PARAM_DATA_SERVO, servo_data)
                     || !yaml_help_.dumpParamFile(FILE_SERVO_PARAM))
@@ -799,7 +1181,7 @@ ErrorCode ParamManager::setParamInfo(ParamGroup_e param_group, ParamInfo_t& para
                 }
                 else
                 {
-                    servo_data[290] = data_int;                    
+                    servo_data[866] = data_int;                    
                 }
                 if(!yaml_help_.setParam(MANU_PARAM_DATA_SERVO, servo_data)
                     || !yaml_help_.dumpParamFile(FILE_SERVO_PARAM))
@@ -819,7 +1201,7 @@ ErrorCode ParamManager::setParamInfo(ParamGroup_e param_group, ParamInfo_t& para
                 }
                 else
                 {
-                    servo_data[324] = data_int;                    
+                    servo_data[900] = data_int;                    
                 }
                 if(!yaml_help_.setParam(MANU_PARAM_DATA_SERVO, servo_data)
                     || !yaml_help_.dumpParamFile(FILE_SERVO_PARAM))
@@ -829,7 +1211,7 @@ ErrorCode ParamManager::setParamInfo(ParamGroup_e param_group, ParamInfo_t& para
                 memcpy(manu_param_list_[21].data, &data_int, sizeof(int));
                 return SUCCESS;
             }
-            // servo param - axis3
+            // servo param - axis6
             if(strcmp(param_info.name, MANU_PARAM_NAME_23) == 0)
             {
                 data_int = *((int*)param_info.data);
@@ -840,7 +1222,7 @@ ErrorCode ParamManager::setParamInfo(ParamGroup_e param_group, ParamInfo_t& para
                 }
                 else
                 {
-                    servo_data[477] = data_int;                    
+                    servo_data[1053] = data_int;                    
                 }
                 if(!yaml_help_.setParam(MANU_PARAM_DATA_SERVO, servo_data)
                     || !yaml_help_.dumpParamFile(FILE_SERVO_PARAM))
@@ -860,7 +1242,7 @@ ErrorCode ParamManager::setParamInfo(ParamGroup_e param_group, ParamInfo_t& para
                 }
                 else
                 {
-                    servo_data[480] = data_int;                    
+                    servo_data[1056] = data_int;                    
                 }
                 if(!yaml_help_.setParam(MANU_PARAM_DATA_SERVO, servo_data)
                     || !yaml_help_.dumpParamFile(FILE_SERVO_PARAM))
@@ -880,7 +1262,7 @@ ErrorCode ParamManager::setParamInfo(ParamGroup_e param_group, ParamInfo_t& para
                 }
                 else
                 {
-                    servo_data[482] = data_int;                    
+                    servo_data[1058] = data_int;                    
                 }
                 if(!yaml_help_.setParam(MANU_PARAM_DATA_SERVO, servo_data)
                     || !yaml_help_.dumpParamFile(FILE_SERVO_PARAM))
@@ -900,7 +1282,7 @@ ErrorCode ParamManager::setParamInfo(ParamGroup_e param_group, ParamInfo_t& para
                 }
                 else
                 {
-                    servo_data[516] = data_int;                    
+                    servo_data[1092] = data_int;                    
                 }
                 if(!yaml_help_.setParam(MANU_PARAM_DATA_SERVO, servo_data)
                     || !yaml_help_.dumpParamFile(FILE_SERVO_PARAM))
@@ -910,250 +1292,883 @@ ErrorCode ParamManager::setParamInfo(ParamGroup_e param_group, ParamInfo_t& para
                 memcpy(manu_param_list_[25].data, &data_int, sizeof(int));
                 return SUCCESS;
             }
-            // servo param - axis4
+            // algorithm config
             if(strcmp(param_info.name, MANU_PARAM_NAME_27) == 0)
             {
                 data_int = *((int*)param_info.data);
-                if(!yaml_help_.loadParamFile(FILE_SERVO_PARAM)
-                    || !yaml_help_.getParam(MANU_PARAM_DATA_SERVO, servo_data))
-                {
-                    return PARAM_MANAGER_SET_PARAM_FAILED;                    
-                }
-                else
-                {
-                    servo_data[669] = data_int;                    
-                }
-                if(!yaml_help_.setParam(MANU_PARAM_DATA_SERVO, servo_data)
-                    || !yaml_help_.dumpParamFile(FILE_SERVO_PARAM))
+                if(!yaml_help_.loadParamFile(FILE_ALGORITHM_CONFIG)
+                    || !yaml_help_.setParam(MANU_PARAM_DATA_27, data_int)
+                    || !yaml_help_.dumpParamFile(FILE_ALGORITHM_CONFIG)) 
                 {
                     return PARAM_MANAGER_SET_PARAM_FAILED;
                 }
                 memcpy(manu_param_list_[26].data, &data_int, sizeof(int));
                 return SUCCESS;
-            }
+            }            
             if(strcmp(param_info.name, MANU_PARAM_NAME_28) == 0)
             {
-                data_int = *((int*)param_info.data);
-                if(!yaml_help_.loadParamFile(FILE_SERVO_PARAM)
-                    || !yaml_help_.getParam(MANU_PARAM_DATA_SERVO, servo_data))
-                {
-                    return PARAM_MANAGER_SET_PARAM_FAILED;                    
-                }
-                else
-                {
-                    servo_data[672] = data_int;                    
-                }
-                if(!yaml_help_.setParam(MANU_PARAM_DATA_SERVO, servo_data)
-                    || !yaml_help_.dumpParamFile(FILE_SERVO_PARAM))
+                data_bool = *((bool*)param_info.data);
+                if(!yaml_help_.loadParamFile(FILE_ALGORITHM_CONFIG)
+                    || !yaml_help_.setParam(MANU_PARAM_DATA_28, data_bool)
+                    || !yaml_help_.dumpParamFile(FILE_ALGORITHM_CONFIG)) 
                 {
                     return PARAM_MANAGER_SET_PARAM_FAILED;
                 }
-                memcpy(manu_param_list_[27].data, &data_int, sizeof(int));
+                memcpy(manu_param_list_[27].data, &data_bool, sizeof(bool));
                 return SUCCESS;
-            }  
+            } 
             if(strcmp(param_info.name, MANU_PARAM_NAME_29) == 0)
             {
-                data_int = *((int*)param_info.data);
-                if(!yaml_help_.loadParamFile(FILE_SERVO_PARAM)
-                    || !yaml_help_.getParam(MANU_PARAM_DATA_SERVO, servo_data))
-                {
-                    return PARAM_MANAGER_SET_PARAM_FAILED;                    
-                }
-                else
-                {
-                    servo_data[674] = data_int;                    
-                }
-                if(!yaml_help_.setParam(MANU_PARAM_DATA_SERVO, servo_data)
-                    || !yaml_help_.dumpParamFile(FILE_SERVO_PARAM))
+                data_bool = *((bool*)param_info.data);
+                if(!yaml_help_.loadParamFile(FILE_ALGORITHM_CONFIG)
+                    || !yaml_help_.setParam(MANU_PARAM_DATA_29, data_bool)
+                    || !yaml_help_.dumpParamFile(FILE_ALGORITHM_CONFIG)) 
                 {
                     return PARAM_MANAGER_SET_PARAM_FAILED;
                 }
-                memcpy(manu_param_list_[28].data, &data_int, sizeof(int));
+                memcpy(manu_param_list_[28].data, &data_bool, sizeof(bool));
                 return SUCCESS;
-            }
+            }            
             if(strcmp(param_info.name, MANU_PARAM_NAME_30) == 0)
             {
-                data_int = *((int*)param_info.data);
-                if(!yaml_help_.loadParamFile(FILE_SERVO_PARAM)
-                    || !yaml_help_.getParam(MANU_PARAM_DATA_SERVO, servo_data))
+                data_double = *((double*)param_info.data);
+                if(!yaml_help_.loadParamFile(FILE_ALGORITHM_CONSTRAINT)
+                    || !yaml_help_.getParam(MANU_PARAM_DATA_30, array_data))
                 {
                     return PARAM_MANAGER_SET_PARAM_FAILED;                    
                 }
                 else
                 {
-                    servo_data[708] = data_int;                    
+                    array_data[0] = data_double;                    
                 }
-                if(!yaml_help_.setParam(MANU_PARAM_DATA_SERVO, servo_data)
-                    || !yaml_help_.dumpParamFile(FILE_SERVO_PARAM))
+                if(!yaml_help_.setParam(MANU_PARAM_DATA_30, array_data)
+                    || !yaml_help_.dumpParamFile(FILE_ALGORITHM_CONSTRAINT))
                 {
                     return PARAM_MANAGER_SET_PARAM_FAILED;
                 }
-                memcpy(manu_param_list_[29].data, &data_int, sizeof(int));
+                memcpy(manu_param_list_[29].data, &data_double, sizeof(double));
                 return SUCCESS;
             }
-            // servo param - axis5
             if(strcmp(param_info.name, MANU_PARAM_NAME_31) == 0)
             {
-                data_int = *((int*)param_info.data);
-                if(!yaml_help_.loadParamFile(FILE_SERVO_PARAM)
-                    || !yaml_help_.getParam(MANU_PARAM_DATA_SERVO, servo_data))
+                data_double = *((double*)param_info.data);
+                if(!yaml_help_.loadParamFile(FILE_ALGORITHM_CONSTRAINT)
+                    || !yaml_help_.getParam(MANU_PARAM_DATA_30, array_data))
                 {
                     return PARAM_MANAGER_SET_PARAM_FAILED;                    
                 }
                 else
                 {
-                    servo_data[861] = data_int;                    
+                    array_data[1] = data_double;                    
                 }
-                if(!yaml_help_.setParam(MANU_PARAM_DATA_SERVO, servo_data)
-                    || !yaml_help_.dumpParamFile(FILE_SERVO_PARAM))
+                if(!yaml_help_.setParam(MANU_PARAM_DATA_30, array_data)
+                    || !yaml_help_.dumpParamFile(FILE_ALGORITHM_CONSTRAINT))
                 {
                     return PARAM_MANAGER_SET_PARAM_FAILED;
                 }
-                memcpy(manu_param_list_[30].data, &data_int, sizeof(int));
+                memcpy(manu_param_list_[30].data, &data_double, sizeof(double));
                 return SUCCESS;
             }
             if(strcmp(param_info.name, MANU_PARAM_NAME_32) == 0)
             {
-                data_int = *((int*)param_info.data);
-                if(!yaml_help_.loadParamFile(FILE_SERVO_PARAM)
-                    || !yaml_help_.getParam(MANU_PARAM_DATA_SERVO, servo_data))
+                data_double = *((double*)param_info.data);
+                if(!yaml_help_.loadParamFile(FILE_ALGORITHM_CONSTRAINT)
+                    || !yaml_help_.getParam(MANU_PARAM_DATA_30, array_data))
                 {
                     return PARAM_MANAGER_SET_PARAM_FAILED;                    
                 }
                 else
                 {
-                    servo_data[864] = data_int;                    
+                    array_data[2] = data_double;                    
                 }
-                if(!yaml_help_.setParam(MANU_PARAM_DATA_SERVO, servo_data)
-                    || !yaml_help_.dumpParamFile(FILE_SERVO_PARAM))
+                if(!yaml_help_.setParam(MANU_PARAM_DATA_30, array_data)
+                    || !yaml_help_.dumpParamFile(FILE_ALGORITHM_CONSTRAINT))
                 {
                     return PARAM_MANAGER_SET_PARAM_FAILED;
                 }
-                memcpy(manu_param_list_[31].data, &data_int, sizeof(int));
+                memcpy(manu_param_list_[31].data, &data_double, sizeof(double));
                 return SUCCESS;
-            }  
+            }
             if(strcmp(param_info.name, MANU_PARAM_NAME_33) == 0)
             {
-                data_int = *((int*)param_info.data);
-                if(!yaml_help_.loadParamFile(FILE_SERVO_PARAM)
-                    || !yaml_help_.getParam(MANU_PARAM_DATA_SERVO, servo_data))
+                data_double = *((double*)param_info.data);
+                if(!yaml_help_.loadParamFile(FILE_ALGORITHM_CONSTRAINT)
+                    || !yaml_help_.getParam(MANU_PARAM_DATA_30, array_data))
                 {
                     return PARAM_MANAGER_SET_PARAM_FAILED;                    
                 }
                 else
                 {
-                    servo_data[866] = data_int;                    
+                    array_data[3] = data_double;                    
                 }
-                if(!yaml_help_.setParam(MANU_PARAM_DATA_SERVO, servo_data)
-                    || !yaml_help_.dumpParamFile(FILE_SERVO_PARAM))
+                if(!yaml_help_.setParam(MANU_PARAM_DATA_30, array_data)
+                    || !yaml_help_.dumpParamFile(FILE_ALGORITHM_CONSTRAINT))
                 {
                     return PARAM_MANAGER_SET_PARAM_FAILED;
                 }
-                memcpy(manu_param_list_[32].data, &data_int, sizeof(int));
+                memcpy(manu_param_list_[32].data, &data_double, sizeof(double));
                 return SUCCESS;
             }
             if(strcmp(param_info.name, MANU_PARAM_NAME_34) == 0)
             {
-                data_int = *((int*)param_info.data);
-                if(!yaml_help_.loadParamFile(FILE_SERVO_PARAM)
-                    || !yaml_help_.getParam(MANU_PARAM_DATA_SERVO, servo_data))
+                data_double = *((double*)param_info.data);
+                if(!yaml_help_.loadParamFile(FILE_ALGORITHM_CONSTRAINT)
+                    || !yaml_help_.getParam(MANU_PARAM_DATA_30, array_data))
                 {
                     return PARAM_MANAGER_SET_PARAM_FAILED;                    
                 }
                 else
                 {
-                    servo_data[900] = data_int;                    
+                    array_data[4] = data_double;                    
                 }
-                if(!yaml_help_.setParam(MANU_PARAM_DATA_SERVO, servo_data)
-                    || !yaml_help_.dumpParamFile(FILE_SERVO_PARAM))
+                if(!yaml_help_.setParam(MANU_PARAM_DATA_30, array_data)
+                    || !yaml_help_.dumpParamFile(FILE_ALGORITHM_CONSTRAINT))
                 {
                     return PARAM_MANAGER_SET_PARAM_FAILED;
                 }
-                memcpy(manu_param_list_[33].data, &data_int, sizeof(int));
+                memcpy(manu_param_list_[33].data, &data_double, sizeof(double));
                 return SUCCESS;
             }
-            // servo param - axis6
             if(strcmp(param_info.name, MANU_PARAM_NAME_35) == 0)
             {
-                data_int = *((int*)param_info.data);
-                if(!yaml_help_.loadParamFile(FILE_SERVO_PARAM)
-                    || !yaml_help_.getParam(MANU_PARAM_DATA_SERVO, servo_data))
+                data_double = *((double*)param_info.data);
+                if(!yaml_help_.loadParamFile(FILE_ALGORITHM_CONSTRAINT)
+                    || !yaml_help_.getParam(MANU_PARAM_DATA_30, array_data))
                 {
                     return PARAM_MANAGER_SET_PARAM_FAILED;                    
                 }
                 else
                 {
-                    servo_data[1053] = data_int;                    
+                    array_data[5] = data_double;                    
                 }
-                if(!yaml_help_.setParam(MANU_PARAM_DATA_SERVO, servo_data)
-                    || !yaml_help_.dumpParamFile(FILE_SERVO_PARAM))
+                if(!yaml_help_.setParam(MANU_PARAM_DATA_30, array_data)
+                    || !yaml_help_.dumpParamFile(FILE_ALGORITHM_CONSTRAINT))
                 {
                     return PARAM_MANAGER_SET_PARAM_FAILED;
                 }
-                memcpy(manu_param_list_[34].data, &data_int, sizeof(int));
+                memcpy(manu_param_list_[34].data, &data_double, sizeof(double));
                 return SUCCESS;
             }
             if(strcmp(param_info.name, MANU_PARAM_NAME_36) == 0)
             {
-                data_int = *((int*)param_info.data);
-                if(!yaml_help_.loadParamFile(FILE_SERVO_PARAM)
-                    || !yaml_help_.getParam(MANU_PARAM_DATA_SERVO, servo_data))
+                data_double = *((double*)param_info.data);
+                if(!yaml_help_.loadParamFile(FILE_ALGORITHM_CONSTRAINT)
+                    || !yaml_help_.getParam(MANU_PARAM_DATA_36, array_data))
                 {
                     return PARAM_MANAGER_SET_PARAM_FAILED;                    
                 }
                 else
                 {
-                    servo_data[1056] = data_int;                    
+                    array_data[0] = data_double;                    
                 }
-                if(!yaml_help_.setParam(MANU_PARAM_DATA_SERVO, servo_data)
-                    || !yaml_help_.dumpParamFile(FILE_SERVO_PARAM))
+                if(!yaml_help_.setParam(MANU_PARAM_DATA_36, array_data)
+                    || !yaml_help_.dumpParamFile(FILE_ALGORITHM_CONSTRAINT))
                 {
                     return PARAM_MANAGER_SET_PARAM_FAILED;
                 }
-                memcpy(manu_param_list_[35].data, &data_int, sizeof(int));
+                memcpy(manu_param_list_[35].data, &data_double, sizeof(double));
                 return SUCCESS;
-            }  
+            }
             if(strcmp(param_info.name, MANU_PARAM_NAME_37) == 0)
             {
-                data_int = *((int*)param_info.data);
-                if(!yaml_help_.loadParamFile(FILE_SERVO_PARAM)
-                    || !yaml_help_.getParam(MANU_PARAM_DATA_SERVO, servo_data))
+                data_double = *((double*)param_info.data);
+                if(!yaml_help_.loadParamFile(FILE_ALGORITHM_CONSTRAINT)
+                    || !yaml_help_.getParam(MANU_PARAM_DATA_36, array_data))
                 {
                     return PARAM_MANAGER_SET_PARAM_FAILED;                    
                 }
                 else
                 {
-                    servo_data[1058] = data_int;                    
+                    array_data[1] = data_double;                    
                 }
-                if(!yaml_help_.setParam(MANU_PARAM_DATA_SERVO, servo_data)
-                    || !yaml_help_.dumpParamFile(FILE_SERVO_PARAM))
+                if(!yaml_help_.setParam(MANU_PARAM_DATA_36, array_data)
+                    || !yaml_help_.dumpParamFile(FILE_ALGORITHM_CONSTRAINT))
                 {
                     return PARAM_MANAGER_SET_PARAM_FAILED;
                 }
-                memcpy(manu_param_list_[36].data, &data_int, sizeof(int));
+                memcpy(manu_param_list_[36].data, &data_double, sizeof(double));
                 return SUCCESS;
             }
             if(strcmp(param_info.name, MANU_PARAM_NAME_38) == 0)
             {
-                data_int = *((int*)param_info.data);
-                if(!yaml_help_.loadParamFile(FILE_SERVO_PARAM)
-                    || !yaml_help_.getParam(MANU_PARAM_DATA_SERVO, servo_data))
+                data_double = *((double*)param_info.data);
+                if(!yaml_help_.loadParamFile(FILE_ALGORITHM_CONSTRAINT)
+                    || !yaml_help_.getParam(MANU_PARAM_DATA_36, array_data))
                 {
                     return PARAM_MANAGER_SET_PARAM_FAILED;                    
                 }
                 else
                 {
-                    servo_data[1092] = data_int;                    
+                    array_data[2] = data_double;                    
                 }
-                if(!yaml_help_.setParam(MANU_PARAM_DATA_SERVO, servo_data)
-                    || !yaml_help_.dumpParamFile(FILE_SERVO_PARAM))
+                if(!yaml_help_.setParam(MANU_PARAM_DATA_36, array_data)
+                    || !yaml_help_.dumpParamFile(FILE_ALGORITHM_CONSTRAINT))
                 {
                     return PARAM_MANAGER_SET_PARAM_FAILED;
                 }
-                memcpy(manu_param_list_[37].data, &data_int, sizeof(int));
+                memcpy(manu_param_list_[37].data, &data_double, sizeof(double));
                 return SUCCESS;
             }
-            
+            if(strcmp(param_info.name, MANU_PARAM_NAME_39) == 0)
+            {
+                data_double = *((double*)param_info.data);
+                if(!yaml_help_.loadParamFile(FILE_ALGORITHM_CONSTRAINT)
+                    || !yaml_help_.getParam(MANU_PARAM_DATA_36, array_data))
+                {
+                    return PARAM_MANAGER_SET_PARAM_FAILED;                    
+                }
+                else
+                {
+                    array_data[3] = data_double;                    
+                }
+                if(!yaml_help_.setParam(MANU_PARAM_DATA_36, array_data)
+                    || !yaml_help_.dumpParamFile(FILE_ALGORITHM_CONSTRAINT))
+                {
+                    return PARAM_MANAGER_SET_PARAM_FAILED;
+                }
+                memcpy(manu_param_list_[38].data, &data_double, sizeof(double));
+                return SUCCESS;
+            }
+            if(strcmp(param_info.name, MANU_PARAM_NAME_40) == 0)
+            {
+                data_double = *((double*)param_info.data);
+                if(!yaml_help_.loadParamFile(FILE_ALGORITHM_CONSTRAINT)
+                    || !yaml_help_.getParam(MANU_PARAM_DATA_36, array_data))
+                {
+                    return PARAM_MANAGER_SET_PARAM_FAILED;                    
+                }
+                else
+                {
+                    array_data[4] = data_double;                    
+                }
+                if(!yaml_help_.setParam(MANU_PARAM_DATA_36, array_data)
+                    || !yaml_help_.dumpParamFile(FILE_ALGORITHM_CONSTRAINT))
+                {
+                    return PARAM_MANAGER_SET_PARAM_FAILED;
+                }
+                memcpy(manu_param_list_[39].data, &data_double, sizeof(double));
+                return SUCCESS;
+            }
+            if(strcmp(param_info.name, MANU_PARAM_NAME_41) == 0)
+            {
+                data_double = *((double*)param_info.data);
+                if(!yaml_help_.loadParamFile(FILE_ALGORITHM_CONSTRAINT)
+                    || !yaml_help_.getParam(MANU_PARAM_DATA_36, array_data))
+                {
+                    return PARAM_MANAGER_SET_PARAM_FAILED;                    
+                }
+                else
+                {
+                    array_data[5] = data_double;                    
+                }
+                if(!yaml_help_.setParam(MANU_PARAM_DATA_36, array_data)
+                    || !yaml_help_.dumpParamFile(FILE_ALGORITHM_CONSTRAINT))
+                {
+                    return PARAM_MANAGER_SET_PARAM_FAILED;
+                }
+                memcpy(manu_param_list_[40].data, &data_double, sizeof(double));
+                return SUCCESS;
+            }
+            if(strcmp(param_info.name, MANU_PARAM_NAME_42) == 0)
+            {
+                data_double = *((double*)param_info.data);
+                if(!yaml_help_.loadParamFile(FILE_ALGORITHM_CONSTRAINT)
+                    || !yaml_help_.getParam(MANU_PARAM_DATA_42, array_data))
+                {
+                    return PARAM_MANAGER_SET_PARAM_FAILED;                    
+                }
+                else
+                {
+                    array_data[0] = data_double;                    
+                }
+                if(!yaml_help_.setParam(MANU_PARAM_DATA_42, array_data)
+                    || !yaml_help_.dumpParamFile(FILE_ALGORITHM_CONSTRAINT))
+                {
+                    return PARAM_MANAGER_SET_PARAM_FAILED;
+                }
+                memcpy(manu_param_list_[41].data, &data_double, sizeof(double));
+                return SUCCESS;
+            }
+            if(strcmp(param_info.name, MANU_PARAM_NAME_43) == 0)
+            {
+                data_double = *((double*)param_info.data);
+                if(!yaml_help_.loadParamFile(FILE_ALGORITHM_CONSTRAINT)
+                    || !yaml_help_.getParam(MANU_PARAM_DATA_42, array_data))
+                {
+                    return PARAM_MANAGER_SET_PARAM_FAILED;                    
+                }
+                else
+                {
+                    array_data[1] = data_double;                    
+                }
+                if(!yaml_help_.setParam(MANU_PARAM_DATA_42, array_data)
+                    || !yaml_help_.dumpParamFile(FILE_ALGORITHM_CONSTRAINT))
+                {
+                    return PARAM_MANAGER_SET_PARAM_FAILED;
+                }
+                memcpy(manu_param_list_[42].data, &data_double, sizeof(double));
+                return SUCCESS;
+            }
+            if(strcmp(param_info.name, MANU_PARAM_NAME_44) == 0)
+            {
+                data_double = *((double*)param_info.data);
+                if(!yaml_help_.loadParamFile(FILE_ALGORITHM_CONSTRAINT)
+                    || !yaml_help_.getParam(MANU_PARAM_DATA_42, array_data))
+                {
+                    return PARAM_MANAGER_SET_PARAM_FAILED;                    
+                }
+                else
+                {
+                    array_data[2] = data_double;                    
+                }
+                if(!yaml_help_.setParam(MANU_PARAM_DATA_42, array_data)
+                    || !yaml_help_.dumpParamFile(FILE_ALGORITHM_CONSTRAINT))
+                {
+                    return PARAM_MANAGER_SET_PARAM_FAILED;
+                }
+                memcpy(manu_param_list_[43].data, &data_double, sizeof(double));
+                return SUCCESS;
+            }
+            if(strcmp(param_info.name, MANU_PARAM_NAME_45) == 0)
+            {
+                data_double = *((double*)param_info.data);
+                if(!yaml_help_.loadParamFile(FILE_ALGORITHM_CONSTRAINT)
+                    || !yaml_help_.getParam(MANU_PARAM_DATA_42, array_data))
+                {
+                    return PARAM_MANAGER_SET_PARAM_FAILED;                    
+                }
+                else
+                {
+                    array_data[3] = data_double;                    
+                }
+                if(!yaml_help_.setParam(MANU_PARAM_DATA_42, array_data)
+                    || !yaml_help_.dumpParamFile(FILE_ALGORITHM_CONSTRAINT))
+                {
+                    return PARAM_MANAGER_SET_PARAM_FAILED;
+                }
+                memcpy(manu_param_list_[44].data, &data_double, sizeof(double));
+                return SUCCESS;
+            }
+            if(strcmp(param_info.name, MANU_PARAM_NAME_46) == 0)
+            {
+                data_double = *((double*)param_info.data);
+                if(!yaml_help_.loadParamFile(FILE_ALGORITHM_CONSTRAINT)
+                    || !yaml_help_.getParam(MANU_PARAM_DATA_42, array_data))
+                {
+                    return PARAM_MANAGER_SET_PARAM_FAILED;                    
+                }
+                else
+                {
+                    array_data[4] = data_double;                    
+                }
+                if(!yaml_help_.setParam(MANU_PARAM_DATA_42, array_data)
+                    || !yaml_help_.dumpParamFile(FILE_ALGORITHM_CONSTRAINT))
+                {
+                    return PARAM_MANAGER_SET_PARAM_FAILED;
+                }
+                memcpy(manu_param_list_[45].data, &data_double, sizeof(double));
+                return SUCCESS;
+            }
+            if(strcmp(param_info.name, MANU_PARAM_NAME_47) == 0)
+            {
+                data_double = *((double*)param_info.data);
+                if(!yaml_help_.loadParamFile(FILE_ALGORITHM_CONSTRAINT)
+                    || !yaml_help_.getParam(MANU_PARAM_DATA_42, array_data))
+                {
+                    return PARAM_MANAGER_SET_PARAM_FAILED;                    
+                }
+                else
+                {
+                    array_data[5] = data_double;                    
+                }
+                if(!yaml_help_.setParam(MANU_PARAM_DATA_42, array_data)
+                    || !yaml_help_.dumpParamFile(FILE_ALGORITHM_CONSTRAINT))
+                {
+                    return PARAM_MANAGER_SET_PARAM_FAILED;
+                }
+                memcpy(manu_param_list_[46].data, &data_double, sizeof(double));
+                return SUCCESS;
+            }
+            if(strcmp(param_info.name, MANU_PARAM_NAME_48) == 0)
+            {
+                data_double = *((double*)param_info.data);
+                if(!yaml_help_.loadParamFile(FILE_ALGORITHM_CONSTRAINT)
+                    || !yaml_help_.getParam(MANU_PARAM_DATA_48, array_data))
+                {
+                    return PARAM_MANAGER_SET_PARAM_FAILED;                    
+                }
+                else
+                {
+                    array_data[0] = data_double;                    
+                }
+                if(!yaml_help_.setParam(MANU_PARAM_DATA_48, array_data)
+                    || !yaml_help_.dumpParamFile(FILE_ALGORITHM_CONSTRAINT))
+                {
+                    return PARAM_MANAGER_SET_PARAM_FAILED;
+                }
+                memcpy(manu_param_list_[47].data, &data_double, sizeof(double));
+                return SUCCESS;
+            }
+            if(strcmp(param_info.name, MANU_PARAM_NAME_49) == 0)
+            {
+                data_double = *((double*)param_info.data);
+                if(!yaml_help_.loadParamFile(FILE_ALGORITHM_CONSTRAINT)
+                    || !yaml_help_.getParam(MANU_PARAM_DATA_48, array_data))
+                {
+                    return PARAM_MANAGER_SET_PARAM_FAILED;                    
+                }
+                else
+                {
+                    array_data[1] = data_double;                    
+                }
+                if(!yaml_help_.setParam(MANU_PARAM_DATA_48, array_data)
+                    || !yaml_help_.dumpParamFile(FILE_ALGORITHM_CONSTRAINT))
+                {
+                    return PARAM_MANAGER_SET_PARAM_FAILED;
+                }
+                memcpy(manu_param_list_[48].data, &data_double, sizeof(double));
+                return SUCCESS;
+            }
+            if(strcmp(param_info.name, MANU_PARAM_NAME_50) == 0)
+            {
+                data_double = *((double*)param_info.data);
+                if(!yaml_help_.loadParamFile(FILE_ALGORITHM_CONSTRAINT)
+                    || !yaml_help_.getParam(MANU_PARAM_DATA_48, array_data))
+                {
+                    return PARAM_MANAGER_SET_PARAM_FAILED;                    
+                }
+                else
+                {
+                    array_data[2] = data_double;                    
+                }
+                if(!yaml_help_.setParam(MANU_PARAM_DATA_48, array_data)
+                    || !yaml_help_.dumpParamFile(FILE_ALGORITHM_CONSTRAINT))
+                {
+                    return PARAM_MANAGER_SET_PARAM_FAILED;
+                }
+                memcpy(manu_param_list_[49].data, &data_double, sizeof(double));
+                return SUCCESS;
+            }
+            if(strcmp(param_info.name, MANU_PARAM_NAME_51) == 0)
+            {
+                data_double = *((double*)param_info.data);
+                if(!yaml_help_.loadParamFile(FILE_ALGORITHM_CONSTRAINT)
+                    || !yaml_help_.getParam(MANU_PARAM_DATA_48, array_data))
+                {
+                    return PARAM_MANAGER_SET_PARAM_FAILED;                    
+                }
+                else
+                {
+                    array_data[3] = data_double;                    
+                }
+                if(!yaml_help_.setParam(MANU_PARAM_DATA_48, array_data)
+                    || !yaml_help_.dumpParamFile(FILE_ALGORITHM_CONSTRAINT))
+                {
+                    return PARAM_MANAGER_SET_PARAM_FAILED;
+                }
+                memcpy(manu_param_list_[50].data, &data_double, sizeof(double));
+                return SUCCESS;
+            }
+            if(strcmp(param_info.name, MANU_PARAM_NAME_52) == 0)
+            {
+                data_double = *((double*)param_info.data);
+                if(!yaml_help_.loadParamFile(FILE_ALGORITHM_CONSTRAINT)
+                    || !yaml_help_.getParam(MANU_PARAM_DATA_48, array_data))
+                {
+                    return PARAM_MANAGER_SET_PARAM_FAILED;                    
+                }
+                else
+                {
+                    array_data[4] = data_double;                    
+                }
+                if(!yaml_help_.setParam(MANU_PARAM_DATA_48, array_data)
+                    || !yaml_help_.dumpParamFile(FILE_ALGORITHM_CONSTRAINT))
+                {
+                    return PARAM_MANAGER_SET_PARAM_FAILED;
+                }
+                memcpy(manu_param_list_[51].data, &data_double, sizeof(double));
+                return SUCCESS;
+            }
+            if(strcmp(param_info.name, MANU_PARAM_NAME_53) == 0)
+            {
+                data_double = *((double*)param_info.data);
+                if(!yaml_help_.loadParamFile(FILE_ALGORITHM_CONSTRAINT)
+                    || !yaml_help_.getParam(MANU_PARAM_DATA_48, array_data))
+                {
+                    return PARAM_MANAGER_SET_PARAM_FAILED;                    
+                }
+                else
+                {
+                    array_data[5] = data_double;                    
+                }
+                if(!yaml_help_.setParam(MANU_PARAM_DATA_48, array_data)
+                    || !yaml_help_.dumpParamFile(FILE_ALGORITHM_CONSTRAINT))
+                {
+                    return PARAM_MANAGER_SET_PARAM_FAILED;
+                }
+                memcpy(manu_param_list_[52].data, &data_double, sizeof(double));
+                return SUCCESS;
+            }
+            if(strcmp(param_info.name, MANU_PARAM_NAME_54) == 0)
+            {
+                data_double = *((double*)param_info.data);
+                if(!yaml_help_.loadParamFile(FILE_ALGORITHM_CONSTRAINT)
+                    || !yaml_help_.getParam(MANU_PARAM_DATA_54, array_data))
+                {
+                    return PARAM_MANAGER_SET_PARAM_FAILED;                    
+                }
+                else
+                {
+                    array_data[0] = data_double;                    
+                }
+                if(!yaml_help_.setParam(MANU_PARAM_DATA_54, array_data)
+                    || !yaml_help_.dumpParamFile(FILE_ALGORITHM_CONSTRAINT))
+                {
+                    return PARAM_MANAGER_SET_PARAM_FAILED;
+                }
+                memcpy(manu_param_list_[53].data, &data_double, sizeof(double));
+                return SUCCESS;
+            }
+            if(strcmp(param_info.name, MANU_PARAM_NAME_55) == 0)
+            {
+                data_double = *((double*)param_info.data);
+                if(!yaml_help_.loadParamFile(FILE_ALGORITHM_CONSTRAINT)
+                    || !yaml_help_.getParam(MANU_PARAM_DATA_54, array_data))
+                {
+                    return PARAM_MANAGER_SET_PARAM_FAILED;                    
+                }
+                else
+                {
+                    array_data[1] = data_double;                    
+                }
+                if(!yaml_help_.setParam(MANU_PARAM_DATA_54, array_data)
+                    || !yaml_help_.dumpParamFile(FILE_ALGORITHM_CONSTRAINT))
+                {
+                    return PARAM_MANAGER_SET_PARAM_FAILED;
+                }
+                memcpy(manu_param_list_[54].data, &data_double, sizeof(double));
+                return SUCCESS;
+            }
+            if(strcmp(param_info.name, MANU_PARAM_NAME_56) == 0)
+            {
+                data_double = *((double*)param_info.data);
+                if(!yaml_help_.loadParamFile(FILE_ALGORITHM_CONSTRAINT)
+                    || !yaml_help_.getParam(MANU_PARAM_DATA_54, array_data))
+                {
+                    return PARAM_MANAGER_SET_PARAM_FAILED;                    
+                }
+                else
+                {
+                    array_data[2] = data_double;                    
+                }
+                if(!yaml_help_.setParam(MANU_PARAM_DATA_54, array_data)
+                    || !yaml_help_.dumpParamFile(FILE_ALGORITHM_CONSTRAINT))
+                {
+                    return PARAM_MANAGER_SET_PARAM_FAILED;
+                }
+                memcpy(manu_param_list_[55].data, &data_double, sizeof(double));
+                return SUCCESS;
+            }
+            if(strcmp(param_info.name, MANU_PARAM_NAME_57) == 0)
+            {
+                data_double = *((double*)param_info.data);
+                if(!yaml_help_.loadParamFile(FILE_ALGORITHM_CONSTRAINT)
+                    || !yaml_help_.getParam(MANU_PARAM_DATA_54, array_data))
+                {
+                    return PARAM_MANAGER_SET_PARAM_FAILED;                    
+                }
+                else
+                {
+                    array_data[3] = data_double;                    
+                }
+                if(!yaml_help_.setParam(MANU_PARAM_DATA_54, array_data)
+                    || !yaml_help_.dumpParamFile(FILE_ALGORITHM_CONSTRAINT))
+                {
+                    return PARAM_MANAGER_SET_PARAM_FAILED;
+                }
+                memcpy(manu_param_list_[56].data, &data_double, sizeof(double));
+                return SUCCESS;
+            }
+            if(strcmp(param_info.name, MANU_PARAM_NAME_58) == 0)
+            {
+                data_double = *((double*)param_info.data);
+                if(!yaml_help_.loadParamFile(FILE_ALGORITHM_CONSTRAINT)
+                    || !yaml_help_.getParam(MANU_PARAM_DATA_54, array_data))
+                {
+                    return PARAM_MANAGER_SET_PARAM_FAILED;                    
+                }
+                else
+                {
+                    array_data[4] = data_double;                    
+                }
+                if(!yaml_help_.setParam(MANU_PARAM_DATA_54, array_data)
+                    || !yaml_help_.dumpParamFile(FILE_ALGORITHM_CONSTRAINT))
+                {
+                    return PARAM_MANAGER_SET_PARAM_FAILED;
+                }
+                memcpy(manu_param_list_[57].data, &data_double, sizeof(double));
+                return SUCCESS;
+            }
+            if(strcmp(param_info.name, MANU_PARAM_NAME_59) == 0)
+            {
+                data_double = *((double*)param_info.data);
+                if(!yaml_help_.loadParamFile(FILE_ALGORITHM_CONSTRAINT)
+                    || !yaml_help_.getParam(MANU_PARAM_DATA_54, array_data))
+                {
+                    return PARAM_MANAGER_SET_PARAM_FAILED;                    
+                }
+                else
+                {
+                    array_data[5] = data_double;                    
+                }
+                if(!yaml_help_.setParam(MANU_PARAM_DATA_54, array_data)
+                    || !yaml_help_.dumpParamFile(FILE_ALGORITHM_CONSTRAINT))
+                {
+                    return PARAM_MANAGER_SET_PARAM_FAILED;
+                }
+                memcpy(manu_param_list_[58].data, &data_double, sizeof(double));
+                return SUCCESS;
+            }
+            if(strcmp(param_info.name, MANU_PARAM_NAME_60) == 0)
+            {
+                data_double = *((double*)param_info.data);
+                if(!yaml_help_.loadParamFile(FILE_ALGORITHM_CONSTRAINT)
+                    || !yaml_help_.getParam(MANU_PARAM_DATA_60, array_data))
+                {
+                    return PARAM_MANAGER_SET_PARAM_FAILED;                    
+                }
+                else
+                {
+                    array_data[0] = data_double;                    
+                }
+                if(!yaml_help_.setParam(MANU_PARAM_DATA_60, array_data)
+                    || !yaml_help_.dumpParamFile(FILE_ALGORITHM_CONSTRAINT))
+                {
+                    return PARAM_MANAGER_SET_PARAM_FAILED;
+                }
+                memcpy(manu_param_list_[59].data, &data_double, sizeof(double));
+                return SUCCESS;
+            }
+            if(strcmp(param_info.name, MANU_PARAM_NAME_61) == 0)
+            {
+                data_double = *((double*)param_info.data);
+                if(!yaml_help_.loadParamFile(FILE_ALGORITHM_CONSTRAINT)
+                    || !yaml_help_.getParam(MANU_PARAM_DATA_60, array_data))
+                {
+                    return PARAM_MANAGER_SET_PARAM_FAILED;                    
+                }
+                else
+                {
+                    array_data[1] = data_double;                    
+                }
+                if(!yaml_help_.setParam(MANU_PARAM_DATA_60, array_data)
+                    || !yaml_help_.dumpParamFile(FILE_ALGORITHM_CONSTRAINT))
+                {
+                    return PARAM_MANAGER_SET_PARAM_FAILED;
+                }
+                memcpy(manu_param_list_[60].data, &data_double, sizeof(double));
+                return SUCCESS;
+            }
+            if(strcmp(param_info.name, MANU_PARAM_NAME_62) == 0)
+            {
+                data_double = *((double*)param_info.data);
+                if(!yaml_help_.loadParamFile(FILE_ALGORITHM_CONSTRAINT)
+                    || !yaml_help_.getParam(MANU_PARAM_DATA_60, array_data))
+                {
+                    return PARAM_MANAGER_SET_PARAM_FAILED;                    
+                }
+                else
+                {
+                    array_data[2] = data_double;                    
+                }
+                if(!yaml_help_.setParam(MANU_PARAM_DATA_60, array_data)
+                    || !yaml_help_.dumpParamFile(FILE_ALGORITHM_CONSTRAINT))
+                {
+                    return PARAM_MANAGER_SET_PARAM_FAILED;
+                }
+                memcpy(manu_param_list_[61].data, &data_double, sizeof(double));
+                return SUCCESS;
+            }
+            if(strcmp(param_info.name, MANU_PARAM_NAME_63) == 0)
+            {
+                data_double = *((double*)param_info.data);
+                if(!yaml_help_.loadParamFile(FILE_ALGORITHM_CONSTRAINT)
+                    || !yaml_help_.getParam(MANU_PARAM_DATA_60, array_data))
+                {
+                    return PARAM_MANAGER_SET_PARAM_FAILED;                    
+                }
+                else
+                {
+                    array_data[3] = data_double;                    
+                }
+                if(!yaml_help_.setParam(MANU_PARAM_DATA_60, array_data)
+                    || !yaml_help_.dumpParamFile(FILE_ALGORITHM_CONSTRAINT))
+                {
+                    return PARAM_MANAGER_SET_PARAM_FAILED;
+                }
+                memcpy(manu_param_list_[62].data, &data_double, sizeof(double));
+                return SUCCESS;
+            }
+            if(strcmp(param_info.name, MANU_PARAM_NAME_64) == 0)
+            {
+                data_double = *((double*)param_info.data);
+                if(!yaml_help_.loadParamFile(FILE_ALGORITHM_CONSTRAINT)
+                    || !yaml_help_.getParam(MANU_PARAM_DATA_60, array_data))
+                {
+                    return PARAM_MANAGER_SET_PARAM_FAILED;                    
+                }
+                else
+                {
+                    array_data[4] = data_double;                    
+                }
+                if(!yaml_help_.setParam(MANU_PARAM_DATA_60, array_data)
+                    || !yaml_help_.dumpParamFile(FILE_ALGORITHM_CONSTRAINT))
+                {
+                    return PARAM_MANAGER_SET_PARAM_FAILED;
+                }
+                memcpy(manu_param_list_[63].data, &data_double, sizeof(double));
+                return SUCCESS;
+            }
+            if(strcmp(param_info.name, MANU_PARAM_NAME_65) == 0)
+            {
+                data_double = *((double*)param_info.data);
+                if(!yaml_help_.loadParamFile(FILE_ALGORITHM_CONSTRAINT)
+                    || !yaml_help_.getParam(MANU_PARAM_DATA_60, array_data))
+                {
+                    return PARAM_MANAGER_SET_PARAM_FAILED;                    
+                }
+                else
+                {
+                    array_data[5] = data_double;                    
+                }
+                if(!yaml_help_.setParam(MANU_PARAM_DATA_60, array_data)
+                    || !yaml_help_.dumpParamFile(FILE_ALGORITHM_CONSTRAINT))
+                {
+                    return PARAM_MANAGER_SET_PARAM_FAILED;
+                }
+                memcpy(manu_param_list_[64].data, &data_double, sizeof(double));
+                return SUCCESS;
+            }
+            if(strcmp(param_info.name, MANU_PARAM_NAME_66) == 0)
+            {
+                data_double = *((double*)param_info.data);
+                if(!yaml_help_.loadParamFile(FILE_ALGORITHM_CONSTRAINT)
+                    || !yaml_help_.setParam(MANU_PARAM_DATA_66, data_int)
+                    || !yaml_help_.dumpParamFile(FILE_ALGORITHM_CONSTRAINT)) 
+                {
+                    return PARAM_MANAGER_SET_PARAM_FAILED;
+                }
+                memcpy(manu_param_list_[65].data, &data_double, sizeof(double));
+                return SUCCESS;
+            }
+            if(strcmp(param_info.name, MANU_PARAM_NAME_67) == 0)
+            {
+                data_double = *((double*)param_info.data);
+                if(!yaml_help_.loadParamFile(FILE_ALGORITHM_CONSTRAINT)
+                    || !yaml_help_.setParam(MANU_PARAM_DATA_67, data_int)
+                    || !yaml_help_.dumpParamFile(FILE_ALGORITHM_CONSTRAINT)) 
+                {
+                    return PARAM_MANAGER_SET_PARAM_FAILED;
+                }
+                memcpy(manu_param_list_[66].data, &data_double, sizeof(double));
+                return SUCCESS;
+            }
+            if(strcmp(param_info.name, MANU_PARAM_NAME_68) == 0)
+            {
+                data_double = *((double*)param_info.data);
+                if(!yaml_help_.loadParamFile(FILE_ALGORITHM_CONSTRAINT)
+                    || !yaml_help_.setParam(MANU_PARAM_DATA_68, data_int)
+                    || !yaml_help_.dumpParamFile(FILE_ALGORITHM_CONSTRAINT)) 
+                {
+                    return PARAM_MANAGER_SET_PARAM_FAILED;
+                }
+                memcpy(manu_param_list_[67].data, &data_double, sizeof(double));
+                return SUCCESS;
+            }
+            if(strcmp(param_info.name, MANU_PARAM_NAME_69) == 0)
+            {
+                data_double = *((double*)param_info.data);
+                if(!yaml_help_.loadParamFile(FILE_ALGORITHM_CONSTRAINT)
+                    || !yaml_help_.setParam(MANU_PARAM_DATA_69, data_int)
+                    || !yaml_help_.dumpParamFile(FILE_ALGORITHM_CONSTRAINT)) 
+                {
+                    return PARAM_MANAGER_SET_PARAM_FAILED;
+                }
+                memcpy(manu_param_list_[68].data, &data_double, sizeof(double));
+                return SUCCESS;
+            }
+            if(strcmp(param_info.name, MANU_PARAM_NAME_70) == 0)
+            {
+                data_double = *((double*)param_info.data);
+                if(!yaml_help_.loadParamFile(FILE_ALGORITHM_CONSTRAINT)
+                    || !yaml_help_.setParam(MANU_PARAM_DATA_70, data_int)
+                    || !yaml_help_.dumpParamFile(FILE_ALGORITHM_CONSTRAINT)) 
+                {
+                    return PARAM_MANAGER_SET_PARAM_FAILED;
+                }
+                memcpy(manu_param_list_[69].data, &data_double, sizeof(double));
+                return SUCCESS;
+            }
+            if(strcmp(param_info.name, MANU_PARAM_NAME_71) == 0)
+            {
+                data_double = *((double*)param_info.data);
+                if(!yaml_help_.loadParamFile(FILE_ALGORITHM_CONSTRAINT)
+                    || !yaml_help_.setParam(MANU_PARAM_DATA_71, data_int)
+                    || !yaml_help_.dumpParamFile(FILE_ALGORITHM_CONSTRAINT)) 
+                {
+                    return PARAM_MANAGER_SET_PARAM_FAILED;
+                }
+                memcpy(manu_param_list_[70].data, &data_double, sizeof(double));
+                return SUCCESS;
+            }
+            if(strcmp(param_info.name, MANU_PARAM_NAME_72) == 0)
+            {
+                data_double = *((double*)param_info.data);
+                if(!yaml_help_.loadParamFile(FILE_ALGORITHM_CONSTRAINT)
+                    || !yaml_help_.setParam(MANU_PARAM_DATA_72, data_int)
+                    || !yaml_help_.dumpParamFile(FILE_ALGORITHM_CONSTRAINT)) 
+                {
+                    return PARAM_MANAGER_SET_PARAM_FAILED;
+                }
+                memcpy(manu_param_list_[71].data, &data_double, sizeof(double));
+                return SUCCESS;
+            }
+            if(strcmp(param_info.name, MANU_PARAM_NAME_73) == 0)
+            {
+                data_double = *((double*)param_info.data);
+                if(!yaml_help_.loadParamFile(FILE_ALGORITHM_CONSTRAINT)
+                    || !yaml_help_.setParam(MANU_PARAM_DATA_73, data_int)
+                    || !yaml_help_.dumpParamFile(FILE_ALGORITHM_CONSTRAINT)) 
+                {
+                    return PARAM_MANAGER_SET_PARAM_FAILED;
+                }
+                memcpy(manu_param_list_[72].data, &data_double, sizeof(double));
+                return SUCCESS;
+            }
+            if(strcmp(param_info.name, MANU_PARAM_NAME_74) == 0)
+            {
+                data_double = *((double*)param_info.data);
+                if(!yaml_help_.loadParamFile(FILE_ALGORITHM_CONSTRAINT)
+                    || !yaml_help_.setParam(MANU_PARAM_DATA_74, data_int)
+                    || !yaml_help_.dumpParamFile(FILE_ALGORITHM_CONSTRAINT)) 
+                {
+                    return PARAM_MANAGER_SET_PARAM_FAILED;
+                }
+                memcpy(manu_param_list_[73].data, &data_double, sizeof(double));
+                return SUCCESS;
+            }
+            if(strcmp(param_info.name, MANU_PARAM_NAME_75) == 0)
+            {
+                data_double = *((double*)param_info.data);
+                if(!yaml_help_.loadParamFile(FILE_ALGORITHM_CONSTRAINT)
+                    || !yaml_help_.setParam(MANU_PARAM_DATA_75, data_int)
+                    || !yaml_help_.dumpParamFile(FILE_ALGORITHM_CONSTRAINT)) 
+                {
+                    return PARAM_MANAGER_SET_PARAM_FAILED;
+                }
+                memcpy(manu_param_list_[74].data, &data_double, sizeof(double));
+                return SUCCESS;
+            }
             return PARAM_MANAGER_SET_PARAM_FAILED;
         }   
         case PARAM_GROUP_USER:
@@ -1348,11 +2363,10 @@ ErrorCode ParamManager::setParamInfo(ParamGroup_e param_group, ParamInfo_t& para
 
 void ParamManager::printParamInfoList(ParamGroup_e param_group)
 {
-    int i;
     switch(param_group)
     {
         case PARAM_GROUP_MANU:
-            for(i = 0; i < manu_param_list_.size(); ++i)
+            for(uint32_t i = 0; i < manu_param_list_.size(); ++i)
             {
                 std::cout<<manu_param_list_[i].name;
                 switch(manu_param_list_[i].type)
@@ -1370,7 +2384,7 @@ void ParamManager::printParamInfoList(ParamGroup_e param_group)
             }
             break;
         case PARAM_GROUP_USER:
-             for(i = 0; i < user_param_list_.size(); ++i)
+             for(uint32_t i = 0; i < user_param_list_.size(); ++i)
             {
                 std::cout<<user_param_list_[i].name;
                 switch(user_param_list_[i].type)

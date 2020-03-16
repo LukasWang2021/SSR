@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 2.8.3)
 project(program_launching)
 
 find_package(catkin REQUIRED COMPONENTS
+        controller 
         base_device
         parameter_manager
         log_manager
@@ -12,6 +13,8 @@ find_package(catkin REQUIRED COMPONENTS
         modbus_manager
         kinematics_alg
         dynamic_alg
+        prg_interpreter
+        trajectory_planner
         )
 
 if(catkin_CROSS)
@@ -28,20 +31,44 @@ endif()
 
 set(catkin_INCLUDE_DIRS
     ${catkin_INCLUDE_DIRS}
+    ${depend_PATH_INC}/controller/include
+    ${depend_PATH_INC}/middleware_to_mem/include
+    ${depend_PATH_INC}/parameter_manager/include
+    ${depend_PATH_INC}/log_manager/include
+    ${depend_PATH_INC}/service_manager/include
+    ${depend_PATH_INC}/prg_interpreter/include
+    ${depend_PATH_INC}/protos/include 
+    ${depend_PATH_INC}/tp_comm/include 
+    ${depend_PATH_INC}/thread_help/include 
+    ${depend_PATH_INC}/common/
+    ${depend_PATH_INC}/tool_manager/include 
+    ${depend_PATH_INC}/coordinate_manager/include 
+    ${depend_PATH_INC}/reg_manager/include 
+    ${depend_PATH_INC}/device_manager/include 
+    ${depend_PATH_INC}/xml_help/include 
+    ${depend_PATH_INC}/base_device/include
+    ${depend_PATH_INC}/error_monitor/include 
+    ${depend_PATH_INC}/motion_control/include
+    ${depend_PATH_INC}/axis_group_manager/include
+    ${depend_PATH_INC}/base_axis_group/include
+    ${depend_PATH_INC}/log_service/include
+    ${depend_PATH_INC}/basic_alg/include 
+    ${depend_PATH_INC}/kinematics_alg/include 
+    ${depend_PATH_INC}/transformation/include 
     ${depend_PATH_INC}/base_device/include
     ${depend_PATH_INC}/io_mapping/include
     ${depend_PATH_INC}/io_manager/include
     ${depend_PATH_INC}/common
-    ${depend_PATH_INC}/parameter_manager/include
-    ${depend_PATH_INC}/log_manager/include
     ${depend_PATH_INC}/xml_help/include 
-    ${depend_PATH_INC}/error_monitor/include
     ${depend_PATH_INC}/process_comm/include
     ${depend_PATH_INC}/prg_interpreter/include
     ${depend_PATH_INC}/motion_control/include
     ${depend_PATH_INC}/thread_help/include
     ${depend_PATH_INC}/reg_manager/include
     ${depend_PATH_INC}/modbus_manager/include
+    ${depend_PATH_INC}/fst_safety_device/include 
+    ${depend_PATH_INC}/io_mapping/include 
+    ${depend_PATH_INC}/io_manager/include 
     ${depend_PATH_INC}/fst_io_device/include
     ${depend_PATH_INC}/virtual_io_device/include
     ${depend_PATH_INC}/device_manager/include
@@ -51,6 +78,8 @@ set(catkin_INCLUDE_DIRS
     ${depend_PATH_INC}/fst_spi/include
     ${depend_PATH_INC}/kinematics_alg/include
     ${depend_PATH_INC}/dynamic_alg/include
+    ${depend_PATH_INC}/trajectory_planner/include
+    ${depend_PATH_INC}/joint_constraint/include
     )
 
 catkin_package(
@@ -70,6 +99,8 @@ catkin_package(
     DEPENDS nvram 
     DEPENDS fst_spi 
     DEPENDS kinematics_alg 
+    DEPENDS trajectory_planner
+    DEPENDS joint_constraint
 )
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -g -Wno-unused-but-set-variable -Wno-unused-local-typedefs -O0 -fpermissive -DPB_FIELD_32BIT -DSIMMULATION -DPRINT")
@@ -100,28 +131,14 @@ target_link_libraries(program_launching
         io_manager
         basic_alg
         kinematics_alg
+        prg_interpreter
+        trajectory_planner
+        joint_constraint
         )
-
-add_executable(macro_test
-    test/macro_test.cpp
-)
-
-target_link_libraries(macro_test
-    ${catkin_LIBRARIES}
-    program_launching
-    io_mapping
-    io_manager
-    process_comm
-    base_device
-)
 
 install(TARGETS program_launching
         LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         )
-
-install(TARGETS	macro_test
-    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
 
 install(FILES config/program_launching.yaml
         DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/runtime/component_param/

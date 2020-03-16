@@ -38,8 +38,9 @@ typedef struct _MacroConfigInfo
 typedef enum
 {
     PROGRAM_LOCAL_TRIGGER = 1,
-    PROGRAM_LAUNCH_CODE_SELECT = 2,
+    PROGRAM_LAUNCH_CODE_FULL = 2,
     PROGRAM_MACRO_TRIGGER = 3,
+    PROGRAM_LAUNCH_CODE_SIMPLE = 4,
 }ProgramLaunchMode;
 
 typedef struct _EnableLaunchInfo

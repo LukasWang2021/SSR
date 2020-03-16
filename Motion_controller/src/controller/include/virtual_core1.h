@@ -53,7 +53,7 @@ private:
 
 }
 
-void virtualCore1ThreadFunc(void* arg);
+void* virtualCore1ThreadFunc(void* arg);
 
 
 #endif

@@ -84,10 +84,10 @@ int main()
         return -1;
     }
 
-    printf("Reply : msg.data.data_count = %s\n", msg.data.data_count);
-    for (int i = 0; i != msg.data.data_count; ++i)
+    printf("Reply : msg.data.data_count = %d\n", msg.data.data_count);
+    for (size_t i = 0; i != msg.data.data_count; ++i)
     {
-        printf("msg.data.data[%d] = 0x%x\n", i, msg.data.data[i]);
+        printf("msg.data.data[%d] = 0x%llx\n", i, msg.data.data[i]);
     }
 
     usleep(200000);

@@ -14,13 +14,22 @@ using namespace fst_parameter;
 
 SrReg::SrReg(RegManagerParam* param_ptr):
     BaseReg(REG_TYPE_SR, param_ptr->sr_reg_number_), 
-        param_ptr_(param_ptr), file_path_(param_ptr->reg_info_dir_)
+    param_ptr_(param_ptr), 
+    file_path_(param_ptr->reg_info_dir_),
+    log_ptr_(NULL)
 {
+    log_ptr_ = new fst_log::Logger();
+    FST_LOG_INIT("SrRegister");
     file_path_ += param_ptr_->sr_reg_file_name_;
 }
 
 SrReg::~SrReg()
 {
+    if(log_ptr_ != NULL)
+    {
+        delete log_ptr_;
+        log_ptr_ = NULL;
+    }
 
 }
 
@@ -38,6 +47,7 @@ ErrorCode SrReg::init()
 
     if(!readAllRegDataFromYaml())
     {
+		FST_ERROR("SrReg::init readAllRegDataFromYaml failed");
         return REG_MANAGER_LOAD_SR_FAILED;
     }
     
@@ -53,14 +63,16 @@ ErrorCode SrReg::addReg(void* data_ptr)
 
     SrRegData* reg_ptr = reinterpret_cast<SrRegData*>(data_ptr);
     if(!isAddInputValid(reg_ptr->id)
-        || reg_ptr->value.size() > param_ptr_->sr_value_limit_)
+        || reg_ptr->value.size() > static_cast<uint32_t>(param_ptr_->sr_value_limit_))
     {
+		FST_ERROR("SrReg::addReg isAddInputValid(reg_ptr->id = %d)", reg_ptr->id);
         return REG_MANAGER_INVALID_ARG;
     }
     BaseRegData reg_data;
     packAddRegData(reg_data, reg_ptr->id, reg_ptr->name, reg_ptr->comment);
     if(!setRegList(reg_data))
     {
+		FST_ERROR("SrReg::addReg setRegList failed");
         return REG_MANAGER_INVALID_ARG;
     }
     if(reg_ptr->value.size() == 0)
@@ -73,6 +85,7 @@ ErrorCode SrReg::addReg(void* data_ptr)
     }
     if(!writeRegDataToYaml(reg_data, data_list_[reg_data.id]))
     {
+		FST_ERROR("SrReg::addReg writeRegDataToYaml failed");
         return REG_MANAGER_REG_FILE_WRITE_FAILED;
     }
     return SUCCESS;
@@ -82,6 +95,7 @@ ErrorCode SrReg::deleteReg(int id)
 {
     if(!isDeleteInputValid(id))
     {
+		FST_ERROR("SrReg::deleteReg isDeleteInputValid failed");
         return REG_MANAGER_INVALID_ARG;
     }
 
@@ -94,6 +108,7 @@ ErrorCode SrReg::deleteReg(int id)
     data_list_[id] = std::string("default");
     if(!writeRegDataToYaml(reg_data, data_list_[id]))
     {
+		FST_ERROR("SrReg::deleteReg writeRegDataToYaml failed");
         return REG_MANAGER_REG_FILE_WRITE_FAILED;
     }
     return SUCCESS;
@@ -103,6 +118,7 @@ ErrorCode SrReg::getReg(int id, void* data_ptr)
 {
     if(!isGetInputValid(id))
     {
+		FST_ERROR("SrReg::getReg isGetInputValid failed");
         return REG_MANAGER_INVALID_ARG;
     }
 
@@ -110,12 +126,14 @@ ErrorCode SrReg::getReg(int id, void* data_ptr)
     BaseRegData reg_data;
     if(!getRegList(id, reg_data))
     {
+		FST_ERROR("SrReg::getReg getRegList failed");
         return REG_MANAGER_INVALID_ARG;
     }
     reg_ptr->id = reg_data.id;
     reg_ptr->name = reg_data.name;
     reg_ptr->comment = reg_data.comment;
     reg_ptr->value = data_list_[id];
+    
     return SUCCESS;
 }
 
@@ -123,13 +141,15 @@ ErrorCode SrReg::updateReg(void* data_ptr)
 {
     if(data_ptr == NULL)
     {
+		FST_ERROR("SrReg::updateReg data_ptr == NULL");
         return REG_MANAGER_INVALID_ARG;
     }
 
     SrRegData* reg_ptr = reinterpret_cast<SrRegData*>(data_ptr);
     if(!isUpdateInputValid(reg_ptr->id)
-        || reg_ptr->value.size() > param_ptr_->sr_value_limit_)
+        || static_cast<int>(reg_ptr->value.size()) > param_ptr_->sr_value_limit_)
     {
+		FST_ERROR("SrReg::updateReg isUpdateInputValid(reg_ptr->id = %d) failed ", reg_ptr->id);
         return REG_MANAGER_INVALID_ARG;
     }
         
@@ -137,6 +157,7 @@ ErrorCode SrReg::updateReg(void* data_ptr)
     packSetRegData(reg_data, reg_ptr->id, reg_ptr->name, reg_ptr->comment);
     if(!setRegList(reg_data))
     {
+		FST_ERROR("SrReg::updateReg setRegList failed");
         return REG_MANAGER_INVALID_ARG;
     }
     if(reg_ptr->value.size() == 0)
@@ -149,6 +170,7 @@ ErrorCode SrReg::updateReg(void* data_ptr)
     }
     if(!writeRegDataToYaml(reg_data, data_list_[reg_data.id]))
     {
+		FST_ERROR("SrReg::updateReg writeRegDataToYaml failed");
         return REG_MANAGER_INVALID_ARG;
     }
     return SUCCESS;
@@ -158,6 +180,7 @@ ErrorCode SrReg::moveReg(int expect_id, int original_id)
 {
     if(!isMoveInputValid(expect_id, original_id))
     {
+		FST_ERROR("SrReg::moveReg isMoveInputValid failed");
         return REG_MANAGER_INVALID_ARG;
     }
 
@@ -166,11 +189,13 @@ ErrorCode SrReg::moveReg(int expect_id, int original_id)
     error_code = getReg(original_id, (void*)&data);
     if(error_code != SUCCESS)
     {
+		FST_ERROR("SrReg::moveReg getReg failed");
         return error_code;
     }
     error_code = deleteReg(original_id);
     if(error_code != SUCCESS)
     {
+		FST_ERROR("SrReg::moveReg deleteReg failed");
         return error_code;
     }
     data.id = expect_id;
@@ -191,6 +216,7 @@ bool SrReg::updateRegValue(SrRegDataIpc* data_ptr)
 {
     if(data_ptr == NULL)
     {
+		FST_ERROR("SrReg::updateRegValue data_ptr == NULL");
         return false;
     }
 
@@ -198,12 +224,14 @@ bool SrReg::updateRegValue(SrRegDataIpc* data_ptr)
     if(!isUpdateInputValid(data_ptr->id)
         || str_size >= param_ptr_->sr_value_limit_)
     {
+		FST_INFO("return false :: isUpdateInputValid() = %d\n", data_ptr->id);
         return false;
     }
         
     BaseRegData* reg_data_ptr = getBaseRegDataById(data_ptr->id);
     if(reg_data_ptr == NULL)
     {
+		FST_ERROR("SrReg::updateRegValue reg_data_ptr == NULL");
         return false;
     }
     if(str_size == 0)
@@ -248,7 +276,7 @@ bool SrReg::createYaml()
     fd.close();
     
     yaml_help_.loadParamFile(file_path_.c_str());
-    for(int i = 1; i < data_list_.size(); ++i)
+    for(int i = 1; i < static_cast<int>(data_list_.size()); ++i)
     {
         std::string reg_path = getRegPath(i);
         yaml_help_.setParam(reg_path + "/id", i);
@@ -263,21 +291,21 @@ bool SrReg::createYaml()
 bool SrReg::readAllRegDataFromYaml()
 {
     yaml_help_.loadParamFile(file_path_.c_str());
-    for(int i = 1; i < data_list_.size(); ++i)
+    for(int i = 1; i < static_cast<int>(data_list_.size()); ++i)
     {
         std::string reg_path = getRegPath(i);
         BaseRegData base_data;
-        std::string name, comment;
+        // std::string name, comment;
         yaml_help_.getParam(reg_path + "/id", base_data.id);
         yaml_help_.getParam(reg_path + "/is_valid", base_data.is_valid);
-        yaml_help_.getParam(reg_path + "/name", name);
-        yaml_help_.getParam(reg_path + "/comment", comment);
+        yaml_help_.getParam(reg_path + "/name", base_data.name);
+        yaml_help_.getParam(reg_path + "/comment", base_data.comment);
         base_data.is_changed = true;
         if(!setRegList(base_data))
         {
             return false;
         }
-        yaml_help_.getParam(reg_path + "/value", data_list_[i]);        
+        yaml_help_.getParam(reg_path + "/value", data_list_[i]);
     }
     return true;
 }
@@ -295,7 +323,7 @@ bool SrReg::writeRegDataToYaml(const BaseRegData& base_data, const std::string& 
     }
     else
     {
-        yaml_help_.setParam(reg_path + "/value", data);
+        yaml_help_.setParam(reg_path + "/value", '"'+data+'"');
     }
     return yaml_help_.dumpParamFile(file_path_.c_str());
 }

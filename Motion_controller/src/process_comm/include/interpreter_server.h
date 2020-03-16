@@ -113,7 +113,7 @@ private:
 
 }
 
-void interpreterServerThreadFunc(void* arg);
+void* interpreterServerThreadFunc(void* arg);
 
 #endif
 

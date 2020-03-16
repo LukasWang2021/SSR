@@ -77,9 +77,9 @@ int main(int argc, char* argv[])
         return -1;
     }
 
-    ResponseMessageType_Uint64_Int32List recv_msg;
+    ResponseMessageType_Uint64_Posture recv_msg;
     unsigned int recv_hash = 0;
-    if (!test.decodeResponseMessageType(recv_hash, (void*)&recv_msg, ResponseMessageType_Uint64_Int32List_fields, buf, buf_size))
+    if (!test.decodeResponseMessageType(recv_hash, (void*)&recv_msg, ResponseMessageType_Uint64_Posture_fields, buf, buf_size))
     {
         cout << "Reply : recv msg decode failed" << endl;
         return -1;
@@ -95,11 +95,15 @@ int main(int argc, char* argv[])
     cout << "Reply : recv_msg.header.error_code = " << recv_msg.header.error_code << endl;
     cout << "Reply : recv_msg.property.authority = " << recv_msg.property.authority << endl;
     cout << "Reply : recv_msg.error_code = " << recv_msg.error_code.data << endl;
-    cout << "Reply : recv_msg.data.data_count = " << recv_msg.data.data_count << endl;
+    cout << "Reply : recv_msg.data.wrist_flip = " << recv_msg.data.wrist_flip << endl;
+    cout << "Reply : recv_msg.data.arm_up_down = " << recv_msg.data.arm_up_down << endl;
+    cout << "Reply : recv_msg.data.arm_back_front = " << recv_msg.data.arm_back_front << endl;
+    cout << "Reply : recv_msg.data.arm_left_right = " << recv_msg.data.arm_left_right << endl;
+    cout << "Reply : recv_msg.data.turn_cycle.data_count = " << recv_msg.data.turn_cycle.data_count << endl;
 
-    for (int i = 0; i != recv_msg.data.data_count; ++i)
+    for (size_t i = 0; i != recv_msg.data.turn_cycle.data_count; ++i)
     {
-        cout << "Reply : recv_msg.data.data[i]" << recv_msg.data.data[i] << endl;
+        cout << "Reply : recv_msg.data.turn_cycle.data[]=" << recv_msg.data.turn_cycle.data[i] << endl;
     }
 
     usleep(200000);

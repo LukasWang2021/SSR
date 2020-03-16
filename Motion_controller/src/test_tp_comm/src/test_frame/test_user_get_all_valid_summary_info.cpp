@@ -79,7 +79,7 @@ int main()
     cout << "Reply : msg.error_code = " << recv_msg.error_code.data << endl;
     cout << "Reply : msg.data.user_coord_summary_count = " << recv_msg.data.user_coord_summary_count << endl;
 
-    for (int i = 0; i != recv_msg.data.user_coord_summary_count; ++i)
+    for (size_t i = 0; i != recv_msg.data.user_coord_summary_count; ++i)
     {
         cout << "Reply : msg.data.user_coord_summary[" << i << "].id = " << recv_msg.data.user_coord_summary[i].id << endl;
         cout << "Reply : msg.data.user_coord_summary[" << i << "].name = " << recv_msg.data.user_coord_summary[i].name << endl;

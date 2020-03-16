@@ -13,17 +13,17 @@ find_package(catkin REQUIRED COMPONENTS
     coordinate_manager
     tool_manager 
     basic_alg
-    path_traj_alg
     dynamic_alg
     xml_help
     error_monitor
     thread_help
     kinematics_alg
     transformation
-    path_traj_alg
     nvram
     fst_spi
     dynamic_alg
+    trajectory_planner
+    joint_constraint
 )
 
 if(catkin_CROSS)
@@ -53,18 +53,20 @@ set(catkin_INCLUDE_DIRS
     ${depend_PATH_INC}/base_axis_group/include
     ${depend_PATH_INC}/coordinate_manager/include
     ${depend_PATH_INC}/tool_manager/include 
-    ${depend_PATH_INC}/basic_alg/include 
-    ${depend_PATH_INC}/path_traj_alg/include 
+    ${depend_PATH_INC}/basic_alg/include
     ${depend_PATH_INC}/dynamic_alg/include 
     ${depend_PATH_INC}/xml_help/include
     ${depend_PATH_INC}/error_monitor/include
     ${depend_PATH_INC}/thread_help/include
     ${depend_PATH_INC}/kinematics_alg/include
-    ${depend_PATH_INC}/path_traj_alg/include
     ${depend_PATH_INC}/transformation/include
     ${depend_PATH_INC}/nvram/include
     ${depend_PATH_INC}/fst_spi/include
     ${depend_PATH_INC}/dynamic_alg/include
+    ${depend_PATH_INC}/trajectory_planner/include
+    ${depend_PATH_INC}/joint_constraint/include
+    ${depend_PATH_INC}/prg_interpreter/include
+    ${depend_PATH_INC}/fst_safety_device/include   
 )
 
 catkin_package(
@@ -88,6 +90,8 @@ catkin_package(
     DEPENDS nvram
     DEPENDS fst_spi
     DEPENDS dynamic_alg
+    DEPENDS trajectory_planner
+    DEPENDS joint_constraint
 )
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -g -Wno-unused-but-set-variable -Wno-unused-local-typedefs -lrt -O0 -fpermissive -DPB_FIELD_32BIT -DSIMMULATION -DPRINT")
@@ -103,11 +107,11 @@ add_library(motion_control
     src/motion_control_param.cpp
     src/motion_control_arm_group.cpp
     src/motion_control_base_group.cpp
+    src/motion_control_state_machine.cpp
+    src/motion_control_offline_trajectory.cpp
     src/motion_control_manual_teach.cpp
     src/motion_control_core_interface.cpp
     src/motion_control_offset_calibrator.cpp
-    src/motion_control_constraint.cpp
-    src/motion_control_traj_fifo.cpp
     src/motion_control_ros_basic.cpp
 )
 
@@ -136,10 +140,11 @@ target_link_libraries(motion_control
     thread_help
     kinematics_alg
     transformation
-    path_traj_alg
     nvram
     fst_spi
     dynamic_alg
+    trajectory_planner
+    joint_constraint
 )
 
 target_link_libraries(manual_test

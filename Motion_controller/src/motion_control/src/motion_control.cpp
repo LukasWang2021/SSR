@@ -5,12 +5,14 @@
 #include <sys/mman.h>
 #include <string.h>
 #include <fstream>
+#include <sys/syscall.h>
 #include <motion_control_ros_basic.h>
 #include <motion_control.h>
 #include <tool_manager.h>
 #include <coordinate_manager.h>
 #include "../../coordinate_manager/include/coordinate_manager.h"
 #include "../../tool_manager/include/tool_manager.h"
+
 
 
 using namespace std;
@@ -23,19 +25,28 @@ using namespace fst_ctrl;
 
 
 
-static void runRealTimeTask(void *mc)
+static void* runRealTimeTask(void *mc)
 {
     ((MotionControl*)mc)->ringRealTimeTask();
+    return NULL;
 }
 
-static void runPriorityTask(void *mc)
+static void* runPriorityTask(void *mc)
 {
     ((MotionControl*)mc)->ringPriorityTask();
+    return NULL;
 }
 
-static void runCommonTask(void *mc)
+static void* runPlannerTask(void *mc)
+{
+    ((MotionControl*)mc)->ringPlannerTask();
+    return NULL;
+}
+
+static void* runCommonTask(void *mc)
 {
     ((MotionControl*)mc)->ringCommonTask();
+    return NULL;
 }
 
 void MotionControl::ringCommonTask(void)
@@ -45,6 +56,7 @@ void MotionControl::ringCommonTask(void)
     memset(&servo_joint, 0, sizeof(servo_joint));
 
     FST_WARN("Common task start.");
+    FST_WARN("ThreadMotionControlCommon TID is %ld", syscall(SYS_gettid));
 
     while (common_thread_running_)
     {
@@ -57,7 +69,7 @@ void MotionControl::ringCommonTask(void)
             if (ros_publish_cnt >= param_ptr_->cycle_per_publish_)
             {
                 ros_publish_cnt = 0;
-                group_ptr_->getLatestJoint(servo_joint);
+                servo_joint = group_ptr_->getLatestJoint();
                 ros_basic_ptr_->pubJointState(servo_joint);
             }
         }
@@ -110,13 +122,14 @@ void MotionControl::ringRealTimeTask(void)
     if (mlockall(MCL_CURRENT|MCL_FUTURE) == -1) 
     {
         FST_ERROR("mlockall failed");
-        return MC_FAIL_IN_INIT; 
+        return; 
     }
 
     //Pre-fault our stack
     stack_prefault();
 
     FST_WARN("Realtime task start.");
+    FST_WARN("ThreadMotionControlRealtime TID is %ld", syscall(SYS_gettid));
 
     while (realtime_thread_running_)
     {
@@ -200,6 +213,7 @@ void MotionControl::ringPriorityTask(void)
     */
 
     FST_WARN("Priority task start.");
+    FST_WARN("ThreadMotionControlPriority TID is %ld", syscall(SYS_gettid));
 
     while (priority_thread_running_)
     {
@@ -255,6 +269,90 @@ void MotionControl::ringPriorityTask(void)
     */
 }
 
+void MotionControl::ringPlannerTask(void)
+{
+    FST_WARN("Planner task start.");
+    FST_WARN("ThreadMotionControlPriority TID is %ld", syscall(SYS_gettid));
+
+    while (planner_thread_running_)
+    {
+        GroupState state = group_ptr_->getGroupState();
+        pthread_mutex_lock(&instruction_mutex_);
+
+        if (state != STANDBY && state != STANDBY_TO_AUTO && state != AUTO && state != AUTO_TO_STANDBY)
+        {
+            if (!instruction_fifo_.empty())
+            {
+                FST_WARN("Group is not in standby or auto state: 0x%x", state);
+                FST_WARN("Instruction list size: %d, clear instruction list", instruction_fifo_.size());
+                while (!instruction_fifo_.empty()) instruction_fifo_.pop();
+            }
+        }
+        
+        if (!instruction_fifo_.empty() && group_ptr_->nextMovePermitted())
+        {
+            ErrorCode err = SUCCESS;
+            Instruction instruction = instruction_fifo_.front();
+            instruction_fifo_.pop();
+            instructions_handle_counter_ ++;
+
+            if (instruction.type == MOTION)
+            {
+                if (instruction.user_op_mode == USER_OP_MODE_SLOWLY_MANUAL)
+                {
+                    if (instruction.target.type == MOTION_JOINT)
+                    {
+                        instruction.target.vel = instruction.target.vel > 0.322886 ? 0.322886 : instruction.target.vel;
+                    }
+                    else if (instruction.target.type == MOTION_LINE || instruction.target.type == MOTION_CIRCLE)
+                    {
+                        instruction.target.vel = instruction.target.vel > 250 ? 250 : instruction.target.vel;
+                    }
+                }
+
+                err = autoMove(instruction.target);
+            }
+            else if (instruction.type == SET_UF)
+            {
+                err = setUserFrame(instruction.current_uf);
+            }
+            else if (instruction.type == SET_TF)
+            {
+                err = setToolFrame(instruction.current_tf);
+            }
+            else if (instruction.type == SET_OVC)
+            {
+                err = group_ptr_->setGlobalVelRatio(instruction.current_ovc);
+            }
+            else if (instruction.type == SET_OAC)
+            {
+                err = group_ptr_->setGlobalAccRatio(instruction.current_oac);
+            }
+            else
+            {
+                FST_ERROR("Invalid instruction type: %d", instruction.type);
+                err = INVALID_PARAMETER;
+            }
+
+            if (err != SUCCESS)
+            {
+                if (((err >> 32) & 0xFFFF) > 2)
+                {
+                    motion_error_flag_ = true;
+                }
+                
+                error_monitor_ptr_->add(err);
+            }
+        }
+
+        pthread_mutex_unlock(&instruction_mutex_);
+        usleep(param_ptr_->planner_cycle_time_ * 1000);
+    }
+
+    FST_INFO("Received instruction: %d, handled instruction: %d, instruction list size: %d", instructions_recv_counter_, instructions_handle_counter_, instruction_fifo_.size());
+    FST_WARN("Planner task quit.");
+}
+
 
 MotionControl::MotionControl()
 {
@@ -267,20 +365,26 @@ MotionControl::MotionControl()
     param_ptr_ = NULL;
 
     common_thread_running_ = false;
+    planner_thread_running_ = false;
     priority_thread_running_ = false;
     realtime_thread_running_ = false;
 
     ros_basic_ptr_ = NULL;
+    motion_error_flag_ = false;
+    instructions_recv_counter_ = 0;
+    instructions_handle_counter_ = 0;
 }
 
 MotionControl::~MotionControl()
 {
     realtime_thread_running_ = false;
     priority_thread_running_ = false;
+    planner_thread_running_ = false;
     common_thread_running_ = false;
 
     realtime_thread_.join();
     priority_thread_.join();
+    planner_thread_.join();
     common_thread_.join();
 
     if (group_ptr_ != NULL)     {delete group_ptr_; group_ptr_ = NULL;};
@@ -304,6 +408,12 @@ ErrorCode MotionControl::init(fst_hal::DeviceManager* device_manager_ptr, AxisGr
     if (!log_ptr_->initLogger("MotionControl"))
     {
         FST_ERROR("Lost communication with log server, init MotionControl abort.");
+        return MC_INTERNAL_FAULT;
+    }
+
+    if (pthread_mutex_init(&instruction_mutex_, NULL) != 0)
+    {
+        FST_ERROR("Fail to initialize motion mutex.");
         return MC_INTERNAL_FAULT;
     }
 
@@ -370,7 +480,7 @@ ErrorCode MotionControl::init(fst_hal::DeviceManager* device_manager_ptr, AxisGr
     {
         realtime_thread_running_ = true;
 
-        if (realtime_thread_.run(&runRealTimeTask, this, 80))
+        if (realtime_thread_.run(runRealTimeTask, this, 80))
         {
             FST_INFO("Startup real-time task success.");
         }
@@ -381,9 +491,10 @@ ErrorCode MotionControl::init(fst_hal::DeviceManager* device_manager_ptr, AxisGr
             return MC_INTERNAL_FAULT;
         }
 
+        usleep(50 * 1000);
         priority_thread_running_ = true;
 
-        if (priority_thread_.run(&runPriorityTask, this, 70))
+        if (priority_thread_.run(runPriorityTask, this, 70))
         {
             FST_INFO("Startup priority task success.");
         }
@@ -395,9 +506,23 @@ ErrorCode MotionControl::init(fst_hal::DeviceManager* device_manager_ptr, AxisGr
         }
 
         usleep(50 * 1000);
+        planner_thread_running_ = true;
+
+        if (planner_thread_.run(runPlannerTask, this, 60))
+        {
+            FST_INFO("Startup planner task success.");
+        }
+        else
+        {
+            FST_ERROR("Fail to create planner task.");
+            planner_thread_running_ = false;
+            return MC_INTERNAL_FAULT;
+        }
+
+        usleep(50 * 1000);
         common_thread_running_ = true;
 
-        if (common_thread_.run(&runCommonTask, this, 40))
+        if (common_thread_.run(runCommonTask, this, 40))
         {
             FST_INFO("Startup common task success.");
         }
@@ -566,18 +691,72 @@ ErrorCode MotionControl::doGotoPointManualMove(const PoseAndPosture &pose, int u
     return group_ptr_->manualMoveToPoint(point);
 }
 
-ErrorCode MotionControl::doGotoPointManualMove(const PoseEuler &pose)
-{
-    // To delete
-    return SUCCESS;
-}
-
 ErrorCode MotionControl::manualStop(void)
 {
     return group_ptr_->manualStop();
 }
 
-ErrorCode MotionControl::autoMove(int id, const MotionTarget &target)
+ErrorCode MotionControl::setOfflineTrajectory(const std::string &offline_trajectory)
+{
+    string trajectory_file = "/root/robot_data/trajectory/";
+    trajectory_file += offline_trajectory;
+    return group_ptr_->setOfflineTrajectory(trajectory_file);
+}
+
+ErrorCode MotionControl::prepairOfflineTrajectory(void)
+{
+    if (group_ptr_->getGroupState() != STANDBY)
+    {
+        FST_ERROR("Fail to prepair offline trajectory, state = 0x%x", group_ptr_->getGroupState());
+        return INVALID_SEQUENCE;
+    }
+
+    Joint start_joint = group_ptr_->getStartJointOfOfflineTrajectory();
+    Joint current_joint = group_ptr_->getLatestJoint();
+
+    if (start_joint.isEqual(current_joint, MINIMUM_E6))
+    {
+        return SUCCESS;
+    }
+
+    return doGotoPointManualMove(start_joint);
+}
+
+ErrorCode MotionControl::moveOfflineTrajectory(void)
+{
+    return group_ptr_->moveOfflineTrajectory();
+}
+
+void MotionControl::clearErrorFlag(void)
+{
+    motion_error_flag_ = false;
+}
+
+ErrorCode MotionControl::autoMove(const Instruction &instruction)
+{
+    GroupState state = group_ptr_->getGroupState();
+
+    if (state != STANDBY && state != STANDBY_TO_AUTO && state != AUTO)
+    {
+        FST_ERROR("Cannot autoMove in current state: 0x%x", state);
+        return INVALID_SEQUENCE;
+    }
+
+    pthread_mutex_lock(&instruction_mutex_);
+    instruction_fifo_.push(instruction);
+    instructions_recv_counter_ ++;
+    FST_INFO("New instruction receieved, add to instruction list, list-size: %d, total-received: %d", instruction_fifo_.size(), instructions_recv_counter_);
+
+    if (instruction_fifo_.size() > 1)
+    {
+        FST_WARN("Instruction fifo size larger than normal, it is a trouble.");
+    }
+
+    pthread_mutex_unlock(&instruction_mutex_);
+    return SUCCESS;
+}
+
+ErrorCode MotionControl::autoMove(const MotionTarget &target)
 {
     FST_INFO("MotionControl::autoMove motion-type: %d, smooth-type: %d", target.type, target.smooth_type);
     FST_INFO("vel: %.6f, acc: %.6f, cnt: %.6f, tool-frame: %d, user-frame: %d", target.vel, target.acc, target.cnt, target.tool_frame_id, target.user_frame_id);
@@ -701,7 +880,12 @@ ErrorCode MotionControl::autoMove(int id, const MotionTarget &target)
         }
     }
 
-    return group_ptr_->autoMove(id, motion_info);
+    char buffer[LOG_TEXT_SIZE];
+    const PoseEuler &target_pose = motion_info.target.pose.pose;
+    FST_INFO("Target-pose: %.4f, %.4f, %.4f - %.4f, %.4f, %.4f", target_pose.point_.x_, target_pose.point_.y_, target_pose.point_.z_, target_pose.euler_.a_, target_pose.euler_.b_, target_pose.euler_.c_);
+    FST_INFO("Target-turn: %d, %d, %d, %d, %d, %d", motion_info.target.pose.turn.j1, motion_info.target.pose.turn.j2, motion_info.target.pose.turn.j3, motion_info.target.pose.turn.j4, motion_info.target.pose.turn.j5, motion_info.target.pose.turn.j6);
+    FST_INFO("Target-joint: %s", group_ptr_->printDBLine(&motion_info.target.joint.j1_, buffer, LOG_TEXT_SIZE));
+    return group_ptr_->autoMove(motion_info);
 }
 
 ErrorCode MotionControl::offsetPoint(const Joint &offset_joint, IntactPoint &point)
@@ -713,8 +897,8 @@ ErrorCode MotionControl::offsetPoint(const Joint &offset_joint, IntactPoint &poi
     point.pose.posture = kinematics_ptr->getPostureByJoint(point.joint);
     PoseEuler fcp_in_base, tcp_in_base;
     kinematics_ptr->doFK(point.joint, fcp_in_base);
-    group_ptr_->getTransformationPtr()->convertFcpToTcp(fcp_in_base, point.tool_frame, tcp_in_base);
-    group_ptr_->getTransformationPtr()->convertPoseFromBaseToUser(tcp_in_base, point.user_frame, point.pose.pose);
+    transformation_ptr->convertFcpToTcp(fcp_in_base, point.tool_frame, tcp_in_base);
+    transformation_ptr->convertPoseFromBaseToUser(tcp_in_base, point.user_frame, point.pose.pose);
     return SUCCESS;
 }
 
@@ -919,17 +1103,38 @@ ErrorCode MotionControl::restartMove(void)
 
 bool MotionControl::nextMovePermitted(void)
 {
-    return group_ptr_->nextMovePermitted();
+    pthread_mutex_lock(&instruction_mutex_);
+    
+    if (!instruction_fifo_.empty())
+    {
+        pthread_mutex_unlock(&instruction_mutex_);
+        return false;
+    }
+
+    if (motion_error_flag_)
+    {
+        pthread_mutex_unlock(&instruction_mutex_);
+        return false;
+    }
+
+    if (!group_ptr_->nextMovePermitted())
+    {
+        pthread_mutex_unlock(&instruction_mutex_);
+        return false;
+    }
+
+    pthread_mutex_unlock(&instruction_mutex_);
+    return true;
 }
 
-void MotionControl::setOffset(size_t index, double offset)
+ErrorCode MotionControl::setOffset(size_t index, double offset)
 {
-    group_ptr_->getCalibratorPtr()->setOffset(index, offset);
+    return group_ptr_->getCalibratorPtr()->setOffset(index, offset);
 }
 
-void MotionControl::setOffset(const double (&offset)[NUM_OF_JOINT])
+ErrorCode MotionControl::setOffset(const double (&offset)[NUM_OF_JOINT])
 {
-    group_ptr_->getCalibratorPtr()->setOffset(offset);
+    return group_ptr_->getCalibratorPtr()->setOffset(offset);
 }
 
 void MotionControl::getOffset(double (&offset)[NUM_OF_JOINT])
@@ -966,8 +1171,6 @@ ErrorCode MotionControl::saveOffset(void)
 
     if (err == SUCCESS)
     {
-        size_t length = 0;
-        size_t index[NUM_OF_JOINT];
         OffsetMask mask[NUM_OF_JOINT];
         group_ptr_->getCalibratorPtr()->getOffsetMask(mask);
 
@@ -975,11 +1178,10 @@ ErrorCode MotionControl::saveOffset(void)
         {
             if (mask[i] == OFFSET_UNMASK)
             {
-                index[length++] = i;
+                group_ptr_->getSoftConstraintPtr()->resetMask(i);
             }
         }
 
-        group_ptr_->getSoftConstraintPtr()->resetMask(index, length);
         return SUCCESS;
     }
     else
@@ -1009,8 +1211,6 @@ ErrorCode MotionControl::maskOffsetLostError(void)
 
     if (err == SUCCESS)
     {
-        size_t length = 0;
-        size_t index[NUM_OF_JOINT];
         OffsetMask mask[NUM_OF_JOINT];
         group_ptr_->getCalibratorPtr()->getOffsetMask(mask);
 
@@ -1018,11 +1218,10 @@ ErrorCode MotionControl::maskOffsetLostError(void)
         {
             if (mask[i] == OFFSET_MASKED)
             {
-                index[length++] = i;
+                group_ptr_->getSoftConstraintPtr()->setMask(i);
             }
         }
 
-        group_ptr_->getSoftConstraintPtr()->setMask(index, length);
         return SUCCESS;
     }
     else
@@ -1143,11 +1342,15 @@ ErrorCode MotionControl::stopGroup(void)
 
 ErrorCode MotionControl::resetGroup(void)
 {
+    motion_error_flag_ = false;
     return group_ptr_->resetGroup();
 }
 
 ErrorCode MotionControl::clearGroup(void)
 {
+    pthread_mutex_lock(&instruction_mutex_);
+    while (!instruction_fifo_.empty()) instruction_fifo_.pop();
+    pthread_mutex_unlock(&instruction_mutex_);
     return group_ptr_->clearGroup();
 }
 
@@ -1367,11 +1570,6 @@ void MotionControl::getCurrentPose(PoseEuler &pose)
 Joint MotionControl::getServoJoint(void)
 {
     return group_ptr_->getLatestJoint();
-}
-
-void MotionControl::getServoJoint(Joint &joint)
-{
-    group_ptr_->getLatestJoint(joint);
 }
 
 ErrorCode MotionControl::setGlobalVelRatio(double ratio)

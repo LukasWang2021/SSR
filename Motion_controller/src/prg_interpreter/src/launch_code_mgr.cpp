@@ -58,13 +58,13 @@ int LaunchCodeMgr::parseLaunchCode(char * data)
 			printf("cJSON_True"); break;
 		case cJSON_Number:		
 			{
-				if(strcmp(child->string, "launchCode") == 0)
+				if(strcasecmp(child->string, "launchCode") == 0)
 				{
 					iRet = (int)child->valuedouble ;
 					cJSON_Delete(json);
 					return iRet;
 				}
-				else if(strcmp(child->string, "codeNumber") == 0)
+				else if(strcasecmp(child->string, "codeNumber") == 0)
 				{
 					iRet = (int)child->valuedouble ;
 					cJSON_Delete(json);
@@ -135,7 +135,7 @@ int LaunchCodeMgr::readFileList(char *basePath)
 			strExtPtr = strrchr(ptr->d_name, '.');
 			if(strExtPtr)
 			{
-				if(strcmp(strExtPtr, ".json") == 0)
+				if(strcasecmp(strExtPtr, ".json") == 0)
 				{
 		            memset(base,'\0',sizeof(base));
 		            strcpy(base,basePath);

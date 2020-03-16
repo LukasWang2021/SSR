@@ -229,7 +229,7 @@ void TpComm::handleRequest0x0000C244(int recv_bytes)
 void TpComm::handleRequest0x00010C05(int recv_bytes)
 {
     // create object for request and response package
-    RequestMessageType_Int32_DoubleList *request_data_ptr = new RequestMessageType_Int32_DoubleList;
+    RequestMessageType_Int32_UFTF_PoseAndPosture *request_data_ptr = new RequestMessageType_Int32_UFTF_PoseAndPosture;
     if (request_data_ptr == NULL)
     {
         ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
@@ -246,7 +246,7 @@ void TpComm::handleRequest0x00010C05(int recv_bytes)
     }
 
     handleRequestPackage(0x00010C05, (void *)request_data_ptr, (void *)response_data_ptr,
-                         recv_bytes, RequestMessageType_Int32_DoubleList_fields, -1);
+                         recv_bytes, RequestMessageType_Int32_UFTF_PoseAndPosture_fields, -1);
 }
 
 //"/rpc/motion_control/axis_group/doGotoJointPointManualMove"
@@ -589,7 +589,7 @@ void TpComm::handleRequest0x0001581C(int recv_bytes)
 void TpComm::handleRequest0x00010FD4(int recv_bytes)
 {
     // create object for request and response package
-    RequestMessageType_Int32List_DoubleList *request_data_ptr = new RequestMessageType_Int32List_DoubleList;
+    RequestMessageType_Int32_UFTF_PoseAndPosture *request_data_ptr = new RequestMessageType_Int32_UFTF_PoseAndPosture;
     if (request_data_ptr == NULL)
     {
         ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
@@ -606,7 +606,7 @@ void TpComm::handleRequest0x00010FD4(int recv_bytes)
     }
 
     handleRequestPackage(0x00010FD4, (void *)request_data_ptr, (void *)response_data_ptr,
-                         recv_bytes, RequestMessageType_Int32List_DoubleList_fields, -1);
+                         recv_bytes, RequestMessageType_Int32_UFTF_PoseAndPosture_fields, -1);
 }
 
 //"/rpc/motion_control/axis_group/convertJointToCart",
@@ -620,7 +620,7 @@ void TpComm::handleRequest0x0000B6D4(int recv_bytes)
         FST_ERROR("handleRequest: can't allocate memory for request_data");
         return;
     }
-    ResponseMessageType_Uint64_DoubleList *response_data_ptr = new ResponseMessageType_Uint64_DoubleList;
+    ResponseMessageType_Uint64_PoseAndPosture *response_data_ptr = new ResponseMessageType_Uint64_PoseAndPosture;
     if (response_data_ptr == NULL)
     {
         ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
@@ -1339,7 +1339,7 @@ void TpComm::handleRequest0x0000EC64(int recv_bytes)
         FST_ERROR("handleRequest: can't allocate memory for request_data");
         return;
     }
-    ResponseMessageType_Uint64_Int32List *response_data_ptr = new ResponseMessageType_Uint64_Int32List;
+    ResponseMessageType_Uint64_Posture *response_data_ptr = new ResponseMessageType_Uint64_Posture;
     if (response_data_ptr == NULL)
     {
         ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
@@ -1447,3 +1447,74 @@ void TpComm::handleRequest0x00003B45(int recv_bytes)
                          recv_bytes, RequestMessageType_Int32List_fields, -1);
 }
 
+//"/rpc/motion_control/axis_group/setOfflineTrajectoryFile"
+void TpComm::handleRequest0x00011275(int recv_bytes)
+{
+    // create object for request and response package
+    RequestMessageType_String *request_data_ptr = new RequestMessageType_String;
+    if (request_data_ptr == NULL)
+    {
+        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
+        FST_ERROR("handleRequest: can't allocate memory for request_data");
+        return;
+    }
+    ResponseMessageType_Uint64* response_data_ptr = new ResponseMessageType_Uint64;
+    if (response_data_ptr == NULL)
+    {
+        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
+        FST_ERROR("handleRequest: can't allocate memory for response_data");
+        delete request_data_ptr;
+        return;
+    }
+
+    handleRequestPackage(0x00011275, (void *)request_data_ptr, (void *)response_data_ptr,
+                         recv_bytes, RequestMessageType_String_fields, -1);
+}
+
+//"/rpc/motion_control/axis_group/PrepareOfflineTrajectory"
+void TpComm::handleRequest0x000051E9(int recv_bytes)
+{
+    // create object for request and response package
+    RequestMessageType_Void *request_data_ptr = new RequestMessageType_Void;
+    if (request_data_ptr == NULL)
+    {
+        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
+        FST_ERROR("handleRequest: can't allocate memory for request_data");
+        return;
+    }
+    ResponseMessageType_Uint64* response_data_ptr = new ResponseMessageType_Uint64;
+    if (response_data_ptr == NULL)
+    {
+        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
+        FST_ERROR("handleRequest: can't allocate memory for response_data");
+        delete request_data_ptr;
+        return;
+    }
+
+    handleRequestPackage(0x000051E9, (void *)request_data_ptr, (void *)response_data_ptr,
+                         recv_bytes, RequestMessageType_Void_fields, -1);
+}
+
+//"/rpc/motion_control/axis_group/moveOfflineTrajectory"
+void TpComm::handleRequest0x0000C4D9(int recv_bytes)
+{
+    // create object for request and response package
+    RequestMessageType_Void *request_data_ptr = new RequestMessageType_Void;
+    if (request_data_ptr == NULL)
+    {
+        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
+        FST_ERROR("handleRequest: can't allocate memory for request_data");
+        return;
+    }
+    ResponseMessageType_Uint64* response_data_ptr = new ResponseMessageType_Uint64;
+    if (response_data_ptr == NULL)
+    {
+        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
+        FST_ERROR("handleRequest: can't allocate memory for response_data");
+        delete request_data_ptr;
+        return;
+    }
+
+    handleRequestPackage(0x0000C4D9, (void *)request_data_ptr, (void *)response_data_ptr,
+                         recv_bytes, RequestMessageType_Void_fields, -1);
+}

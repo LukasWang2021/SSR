@@ -6,7 +6,6 @@
 using namespace fst_ctrl;
 
 ControllerParam::ControllerParam():
-    file_path_(COMPONENT_PARAM_FILE_DIR),
     log_level_(fst_log::MSG_LEVEL_ERROR),  // default is Error Level
     routine_cycle_time_(100000),
     heartbeat_cycle_time_(0),
@@ -27,7 +26,8 @@ ControllerParam::ControllerParam():
     max_limited_manual_vel_cart_(0),
     max_limited_manual_vel_joint_(0),
     loop_count_(0),
-    enable_set_vel_in_auto_(false)
+    enable_set_vel_in_auto_(false),
+    file_path_(COMPONENT_PARAM_FILE_DIR)
 {
     file_path_ += "controller.yaml";
 }
@@ -60,7 +60,8 @@ bool ControllerParam::loadParam()
         || !yaml_help_.getParam("max_limited_manual_vel_cart", max_limited_manual_vel_cart_)
         || !yaml_help_.getParam("max_limited_manual_vel_joint", max_limited_manual_vel_joint_)
         || !yaml_help_.getParam("loop_count", loop_count_)
-        || !yaml_help_.getParam("enable_set_vel_in_auto", enable_set_vel_in_auto_))
+        || !yaml_help_.getParam("enable_set_vel_in_auto", enable_set_vel_in_auto_)
+        || !yaml_help_.getParam("hp_joints", hp_joints_))
     {
         return false;
     }
@@ -93,6 +94,7 @@ bool ControllerParam::saveParam()
         || !yaml_help_.setParam("max_limited_manual_vel_joint", max_limited_manual_vel_joint_)
         || !yaml_help_.setParam("loop_count", loop_count_)
         || !yaml_help_.setParam("enable_set_vel_in_auto", enable_set_vel_in_auto_)
+        || !yaml_help_.setParam("hp_joints", hp_joints_)
         || !yaml_help_.dumpParamFile(file_path_.c_str()))
     {
         return false;

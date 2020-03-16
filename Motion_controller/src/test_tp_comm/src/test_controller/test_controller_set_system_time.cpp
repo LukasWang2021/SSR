@@ -47,7 +47,7 @@ int main(int argc, char* argv[])
     msg.header.time_stamp = 122;
     msg.property.authority = Comm_Authority_TP;
     msg.data.data = atol(argv[1]);
-    printf("time = %ld\n", msg.data.data);
+    printf("time = %lld\n", msg.data.data);
 
     if (!test.generateRequestMessageType(hash_value, (void*)&msg, RequestMessageType_Uint64_fields, buf, buf_size))
     {

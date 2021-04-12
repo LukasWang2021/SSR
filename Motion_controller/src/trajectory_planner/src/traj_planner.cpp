@@ -409,6 +409,7 @@ ErrorCode TrajectoryPlanner::planLineTrajectory(double vel_ratio, double acc_rat
 	double vel_ratio_adjusted = 1.0;
 
 	line_planner_.planTrajectory(start_pose, target_pose, vel, vel_ratio_adjusted, acc_ratio_adjusted, jerk_ratio);
+	//校核关节位置是否超限
 	ErrorCode err = checkTrajectory();
 
 	if (err != SUCCESS)
@@ -584,7 +585,7 @@ ErrorCode TrajectoryPlanner::planCircleTrajectory(double vel_ratio, double acc_r
 	bool alternative_trajectory = false;
 
 	circle_planner_.planTrajectory(start_pose, via_pose, target_pose, vel, 1.0, acc_ratio_adjusted, jerk_ratio);
-
+	//校核关节位置是否超限
 	if (checkTrajectory() != SUCCESS)
 	{
 		LogProducer::info("Trajectory","Plan alternative trajectory");

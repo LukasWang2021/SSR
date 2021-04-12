@@ -169,6 +169,7 @@ ErrorCode SmoothPlanner::planTrajectory(TrajectoryPlanner& prev_planner, Traject
 {
 	prev_planner_ptr_ = &prev_planner;
 	next_planner_ptr_ = &next_planner;
+	//找到圆滑持续时间的初始值
 	double smooth_in_time = next_planner_ptr_->getSmoothInTime(smooth_distance);
 	double smooth_out_time = prev_planner_ptr_->getSmoothOutTime(smooth_distance);
 	double smooth_in_duration = smooth_in_time;
@@ -180,7 +181,7 @@ ErrorCode SmoothPlanner::planTrajectory(TrajectoryPlanner& prev_planner, Traject
 	via_joint_ = prev_planner_ptr_->getMotionInfo().target.joint;
 	Joint reference = via_joint_;
 	Joint limit_omega = {0, 0, 0, 0, 0, 0, 0, 0, 0};
-	
+	//找到圆滑运动中各轴的最大转速
 	for (uint32_t i = 0; i <= segment_num_; i++)
 	{
 		double sample_time = smooth_out_time + sample_step_time * i;
@@ -246,7 +247,7 @@ ErrorCode SmoothPlanner::planTrajectory(TrajectoryPlanner& prev_planner, Traject
 	uint32_t point_num = segment_num_ + 1;
 	
 	reference = via_joint_;
-
+    //根据限制，计算圆滑实际的持续时间
 	while (smooth_duration + MINIMUM_E6 > sample_step_time)
 	{
 		//FST_INFO("smooth_duration:%.6f, point_num:%u", smooth_duration, point_num);
@@ -264,13 +265,12 @@ ErrorCode SmoothPlanner::planTrajectory(TrajectoryPlanner& prev_planner, Traject
 				check_pass = false;
 				break;
 			}
-			/*
+
 			if (!checkOmega(check_state.omega, limit_omega))
 			{
 				check_pass = false;
 				break;
 			}
-			*/
 
 			if (!checkTorque(*(Joint*)(&torque)))
 			{

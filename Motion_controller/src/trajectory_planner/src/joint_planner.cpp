@@ -80,9 +80,9 @@ void JointPlanner::planTrajectory(const Joint &start, const Joint &end, double v
     end_ = end;
 
     double dif_pos[NUM_OF_JOINT], lim_vel[NUM_OF_JOINT], lim_acc[NUM_OF_JOINT], lim_jerk[3][NUM_OF_JOINT];
-    
+    //速度加速度加加速度归一化处理
     for (uint32_t j = 0; j < joint_num_; j++)
-    {
+    {  
         dif_pos[j] = fabs(end_[j] - start_[j]);
         lim_vel[j] = vel_limit_[j] * vel / dif_pos[j];
         // lim_vel[j] = vel_limit_[j] / dif_pos[j];

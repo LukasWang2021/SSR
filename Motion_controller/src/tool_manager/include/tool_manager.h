@@ -3,11 +3,12 @@
 
 
 #include "tool_manager_param.h"
-#include "common_log.h"
 #include <string>
 #include <vector>
+#include "common_error_code.h"
 #include "basic_alg_datatype.h"
-#include "parameter_manager/parameter_manager_param_group.h"
+#include "yaml_help.h"
+#include "log_manager_producer.h"
 
 
 namespace fst_ctrl
@@ -47,10 +48,10 @@ public:
 
 private:
     ToolManagerParam* param_ptr_;
-    fst_log::Logger* log_ptr_;
     std::vector<ToolInfo> tool_set_;
-    fst_parameter::ParamGroup tool_info_yaml_help_;
+    base_space::YamlHelp tool_info_yaml_help_;
     std::string tool_info_file_path_;
+    std::string tool_info_file_path_modified_;
 
     void packDummyToolInfo(ToolInfo& info);
     std::string getToolInfoPath(int tool_id);

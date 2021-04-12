@@ -27,11 +27,12 @@ ThreeJerkDSCurvePlanner::ThreeJerkDSCurvePlanner(void)
 
 	t_stop_ = 0.0;
 	is_stop_success_ = false;
+	vel_ratio_ = 0.0;
 }
 ThreeJerkDSCurvePlanner::~ThreeJerkDSCurvePlanner(void)
 {
 }
-void ThreeJerkDSCurvePlanner::planDSCurve(double q0, double q1, double vmax, double amax, double* jmax)
+void ThreeJerkDSCurvePlanner::planDSCurve(double q0, double q1, double vmax, double amax, double* jmax, double v_ratio)
 {
 	is_stop_success_ = false;
 
@@ -55,7 +56,7 @@ void ThreeJerkDSCurvePlanner::planDSCurve(double q0, double q1, double vmax, dou
 
 	double t1, t2, t3, t4, t5, t6, t7;
 	double v1, v2, v3, v4, v5, v6, v7;
-	double a1, a5, a6;
+	double a1, a2, a5, a6;
 	double sa, sb, s5, s6, s7;
 	double s = q1 - q0;
 
@@ -137,6 +138,15 @@ void ThreeJerkDSCurvePlanner::planDSCurve(double q0, double q1, double vmax, dou
 			sa = j1_*t1*t1*t1;
 		}
 
+		//qj 20200527 begin
+		v1 = 0.5 * j1_ * t1 * t1;
+		a1 = j1_ * t1;
+		v2 = v1 + a1 * t2;
+		a2 = a1;
+	    v3 = v2 + a2 * t1 - 0.5 * j1_ * t1 * t1;
+		v4 = v3;
+		//qj 20200527 end
+
 		t6 = (vmax - 0.5 * j3_ * pow(t7, 2) - 0.5 * j2_ * pow(t5, 2)) / amax;
 
 		s7 = 1.0 / 6.0 * j3_ * pow(t7, 3);
@@ -149,7 +159,7 @@ void ThreeJerkDSCurvePlanner::planDSCurve(double q0, double q1, double vmax, dou
 		{
 			s6 = 0.5 * j3_ * t7 * t7 * t6 + 0.5 * j3_ * t7 * t6 * t6;
 			v5 = v6 + amax * t6;
-			v4 = v5 + 0.5 * j2_ * t5 * t5;
+			// v4 = v5 + 0.5 * j2_ * t5 * t5; // to do...?
 			s5 = v4 * t5 - 1.0 / 6.0 * j2_ * pow(t5, 3);
 		}
 		else 
@@ -159,7 +169,8 @@ void ThreeJerkDSCurvePlanner::planDSCurve(double q0, double q1, double vmax, dou
 			t5 = sqrt(vmax / (0.5 * pow(j2_, 2) / j3_ + 0.5 * j2_));
 			t7 = j2_ / j3_ * t5;
 			v5 = v6;
-			v4 = v5 + 0.5 * j2_ * pow(t5, 2);
+			// v4 = v5 + 0.5 * j2_ * pow(t5, 2); // to do...??
+			s7 = 1.0 / 6.0 * j3_ * t7 * t7 * t7;
 			s5 = v4 * t5 - 1.0 / 6.0 * j2_ * pow(t5, 3);
 		}
 		sb = s7 + s6 + s5;
@@ -181,6 +192,15 @@ void ThreeJerkDSCurvePlanner::planDSCurve(double q0, double q1, double vmax, dou
 				sa = j1_ * pow(t1, 3);
 			}
 
+			//qj 20200527 begin
+			v1 = 0.5 * j1_ * t1 * t1;
+			a1 = j1_ * t1;
+			v2 = v1 + a1 * t2;
+			a2 = a1;
+			v3 = v2 + a2 * t1 - 0.5 * j1_ * t1 * t1;
+			v4 = v3;
+			//qj 20200527 end
+
 			t6 = (vmax - 0.5 * j3_ * pow(t7, 2) - 0.5 * j2_* pow(t5, 2)) / amax;
 
 			s7 = 1.0 / 6.0 * j3_ * pow(t7, 3);
@@ -193,7 +213,7 @@ void ThreeJerkDSCurvePlanner::planDSCurve(double q0, double q1, double vmax, dou
 			{
 				s6 = 0.5 * j3_ * t7 * t7 * t6 + 0.5 * j3_ * t7 * t6 * t6;
 				v5 = v6 + amax * t6;
-				v4 = v5 + 0.5 * j2_ * t5 * t5;
+				// v4 = v5 + 0.5 * j2_ * t5 * t5;
 				s5 = v4 * t5 - 1.0 / 6.0 * j2_ * pow(t5, 3);
 			}
 			else 
@@ -203,7 +223,8 @@ void ThreeJerkDSCurvePlanner::planDSCurve(double q0, double q1, double vmax, dou
 				t5 = sqrt(vmax / (0.5 * pow(j2_, 2) / j3_ + 0.5 * j2_));
 				t7 = j2_ / j3_ *t5;
 				v5 = v6;
-				v4 = v5 + 0.5 * j2_ * pow(t5, 2);
+				// v4 = v5 + 0.5 * j2_ * pow(t5, 2);
+				s7 = 1.0 / 6.0 * j3_ * t7 * t7 * t7;
 				s5 = v4 * t5 - 1.0 / 6.0 * j2_ * pow(t5, 3);
 			}
 			sb = s7 + s6 + s5;
@@ -286,23 +307,59 @@ void ThreeJerkDSCurvePlanner::planDSCurve(double q0, double q1, double vmax, dou
 		s_[5] = 0;
 	s_[6] = 1.0 / 6.0 * j3_ *pow(t7, 3);
 
+	rescaleTrajectoryVelocity(v_ratio, t1, t2, t3, t4, t5, t6, t7);
+}
+
+void ThreeJerkDSCurvePlanner::rescaleTrajectoryVelocity(double vel_ratio, double t1, double t2, double t3, double t4, double t5, double t6, double t7)
+{
 	// advance acc and dec
-	double ap0, av0, aa0, ap1, av1, aa1;
+	double ap0, av0, aa0, ap1, av1, aa1, t_delta;
 	sampleOriginDSCurve(0, ap0, av0, aa0);
 	sampleOriginDSCurve(t1, ap1, av1, aa1);
-	getSepticSpline(ap0, av0, aa0, 0, ap1, av1, aa1, 0, t1, coeff_inc_acc_);
+	av0 *= vel_ratio;
+	av1 *= vel_ratio;
+	aa0 = aa0 * vel_ratio * vel_ratio;
+	aa1 = aa1 *  vel_ratio * vel_ratio;
+	t_delta = t1 / vel_ratio;
+	getSepticSpline(ap0, av0, aa0, 0, ap1, av1, aa1, 0, t_delta, coeff_inc_acc_);
 	
 	sampleOriginDSCurve(t1 + t2, ap0, av0, aa0);
 	sampleOriginDSCurve(t1 + t2 + t3, ap1, av1, aa1);
-	getSepticSpline(ap0, av0, aa0, 0, ap1, av1, aa1, 0, t3, coeff_dec_acc_);
+	av0 *= vel_ratio;
+	av1 *= vel_ratio;
+	aa0 = aa0 * vel_ratio * vel_ratio;
+	aa1 = aa1 *  vel_ratio * vel_ratio;
+	t_delta = t3 / vel_ratio;
+	getSepticSpline(ap0, av0, aa0, 0, ap1, av1, aa1, 0, t_delta, coeff_dec_acc_);
 	
 	sampleOriginDSCurve(t1 + t2 + t3 + t4, ap0, av0, aa0);
 	sampleOriginDSCurve(t1 + t2 + t3 + t4 + t5, ap1, av1, aa1);
-	getSepticSpline(ap0, av0, aa0, 0, ap1, av1, aa1, 0, t5, coeff_inc_dec_);
+	av0 *= vel_ratio;
+	av1 *= vel_ratio;
+	aa0 = aa0 * vel_ratio * vel_ratio;
+	aa1 = aa1 *  vel_ratio * vel_ratio;
+	t_delta = t5 / vel_ratio;
+	getSepticSpline(ap0, av0, aa0, 0, ap1, av1, aa1, 0, t_delta, coeff_inc_dec_);
 	
 	sampleOriginDSCurve(t1 + t2 + t3 + t4 + t5 + t6, ap0, av0, aa0);
 	sampleOriginDSCurve(t_total_, ap1, av1, aa1);
-	getSepticSpline(ap0, av0, aa0, 0, ap1, av1, aa1, 0, t7, coeff_dec_dec_);
+	av0 *= vel_ratio;
+	av1 *= vel_ratio;
+	aa0 = aa0 * vel_ratio * vel_ratio;
+	aa1 = aa1 *  vel_ratio * vel_ratio;
+	t_delta = t7 / vel_ratio;
+	getSepticSpline(ap0, av0, aa0, 0, ap1, av1, aa1, 0, t_delta, coeff_dec_dec_);
+
+	t_[0] /= vel_ratio;
+	t_[1] /= vel_ratio;
+	t_[2] /= vel_ratio;
+	t_[3] /= vel_ratio;
+	t_[4] /= vel_ratio;
+	t_[5] /= vel_ratio;
+	t_[6] /= vel_ratio;
+	t_total_ = t_total_ / vel_ratio;
+
+	vel_ratio_ = vel_ratio;
 }
 
 void ThreeJerkDSCurvePlanner::sampleDSCurve(double t, double &p, double &v, double &a)
@@ -340,6 +397,7 @@ void ThreeJerkDSCurvePlanner::sampleFineDSCurve(double t, double &p, double &v, 
 	}
 
 	t_ptr = t - t_base;
+	double t_ptr_temp = t_ptr * vel_ratio_;
 
 	switch (i)
 	{
@@ -354,10 +412,13 @@ void ThreeJerkDSCurvePlanner::sampleFineDSCurve(double t, double &p, double &v, 
 	break;
 	case 1:
 	{
-		s_total += (v_[0] * t_ptr + 0.5 * amax_ * pow(t_ptr, 2));
+		s_total += (v_[0] * t_ptr_temp + 0.5 * amax_ * pow(t_ptr_temp, 2));
 		a = a_[1];
-		v = v_[0] + a*t_ptr;
+		v = v_[0] + a * t_ptr_temp;
 		p = q0_ + s_total;
+
+		v *= vel_ratio_;
+		a = a * vel_ratio_ * vel_ratio_;
 	}
 	break;
 	case 2:
@@ -371,10 +432,13 @@ void ThreeJerkDSCurvePlanner::sampleFineDSCurve(double t, double &p, double &v, 
 	break;
 	case 3:
 	{
-		s_total += (v_[2] * t_ptr);
+		s_total += (v_[2] * t_ptr_temp);
 		a = 0;
 		v = v_[2];
 		p = q0_ + s_total;
+
+		v *= vel_ratio_;
+		a = a * vel_ratio_ * vel_ratio_;
 	}
 	break;
 	case 4:
@@ -388,10 +452,13 @@ void ThreeJerkDSCurvePlanner::sampleFineDSCurve(double t, double &p, double &v, 
 	break;
 	case 5:
 	{
-		s_total += (v_[4] * t_ptr - 0.5 * amax_ * pow(t_ptr, 2));
+		s_total += (v_[4] * t_ptr_temp - 0.5 * amax_ * pow(t_ptr_temp, 2));
 		a = a_[4];
-		v = v_[4] + a * t_ptr;
+		v = v_[4] + a * t_ptr_temp;
 		p = q0_ + s_total;
+
+		v *= vel_ratio_;
+		a = a * vel_ratio_ * vel_ratio_;
 	}
 	break;
 	case 6:
@@ -548,7 +615,7 @@ double ThreeJerkDSCurvePlanner::getSegmentEndingTime(DSSetment segment)
 
 void ThreeJerkDSCurvePlanner::planStopDSCurve(double t)
 {
-	if (t_total_ < t)
+	if (is_stop_success_ || t_total_ < t)
 	{
 		return;
 	}

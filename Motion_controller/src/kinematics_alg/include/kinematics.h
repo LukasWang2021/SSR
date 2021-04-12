@@ -5,6 +5,7 @@
 #include "pose_euler.h"
 #include "pose_quaternion.h"
 #include "trans_matrix.h"
+#include "basic_alg_datatype.h"
 
 namespace basic_alg
 {
@@ -72,6 +73,7 @@ public:
     virtual Joint getGeometryJointByJoint(const Joint& joint) = 0;
     virtual Joint getJointByGeometryJointAndTurn(const Joint& joint, const Turn& turn) = 0;
     virtual Joint getJointByGeometryJointAndRefJointAndTurn(const Joint& geom_joint, const Joint& ref_joint, const Turn& turn) = 0;
+    virtual bool nearSingularPosition(const Joint& joint) = 0;
 };
 
 }

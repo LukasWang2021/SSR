@@ -1,8 +1,7 @@
 #ifndef TOOL_MANAGER_PARAM_H
 #define TOOL_MANAGER_PARAM_H
 
-
-#include "parameter_manager/parameter_manager_param_group.h"
+#include "yaml_help.h"
 #include <string>
 
 namespace fst_ctrl
@@ -24,7 +23,7 @@ public:
     std::string tool_info_file_name_;   // file name under TOOL_DIR
 
 private:
-    fst_parameter::ParamGroup yaml_help_;
+    base_space::YamlHelp yaml_help_;
     std::string file_path_;
 };
 

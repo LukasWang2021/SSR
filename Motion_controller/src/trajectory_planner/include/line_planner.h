@@ -19,8 +19,8 @@ public:
 	bool initPlanner(uint32_t joint_num, uint32_t jerk_num);
 	void setLimit(double vel_limit_position, double acc_limit_position, double *jerk_limit_position, 
 				  double vel_limit_orientation, double acc_limit_orientation, double *jerk_limit_orientation);
-	void planTrajectory(const basic_alg::PoseQuaternion &start, const basic_alg::PoseQuaternion &end, double vel, double acc, double jerk);
-	void planAlternativeTrajectory(const basic_alg::PoseQuaternion &start, const basic_alg::PoseQuaternion &end, double vel, double acc, double jerk);
+	void planTrajectory(const basic_alg::PoseQuaternion &start, const basic_alg::PoseQuaternion &end, double vel, double vel_ratio, double acc_ratio, double jerk_ratio);
+	void planAlternativeTrajectory(const basic_alg::PoseQuaternion &start, const basic_alg::PoseQuaternion &end, double vel, double vel_ratio, double acc_ratio, double jerk_ratio);
 	void planStopTrajectory(double stop_time);
 	void sampleTrajectory(double t, basic_alg::PoseQuaternion &sample);
 	void sampleNormalTrajectory(double t, double &u, double &v, double &a);

@@ -1,8 +1,0 @@
-<launch>
-
-  <node name="controller" pkg="controller" type="controller" 
-               respawn="false" output="screen"
-               launch-prefix="valgrind --leak-check=full">
-  </node>
-
-</launch>

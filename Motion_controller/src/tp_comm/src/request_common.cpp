@@ -1,12 +1,13 @@
 #include <pb_encode.h>
 #include <pb_decode.h>
 #include <pb_common.h>
-#include "error_monitor.h"
-#include "error_code.h"
+
+#include "common_error_code.h"
 #include "tp_comm.h"
 
-using namespace fst_base;
-using namespace fst_comm;
+using namespace base_space;
+using namespace user_space;
+using namespace log_space;
 using namespace std;
 
 // get rpc table
@@ -17,24 +18,24 @@ void TpComm::handleRequest0x00004FA5(int recv_bytes)
 
     if(request_data_ptr == NULL)
     {
-        recordLog(TP_COMM_LOG, TP_COMM_MEMORY_OPERATION_FAILED, "/rpc/tp_comm/getRpcTable");
-        FST_ERROR("Can't allocate memory for request_data");
+        ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
+        LogProducer::error("rpc", "/rpc/tp_comm/getRpcTable: Can't allocate memory for request_data");
         return;
     }
 
     ResponseMessageType_Uint64_RpcTable* response_data_ptr = new ResponseMessageType_Uint64_RpcTable;
     if(response_data_ptr == NULL)
     {
-        recordLog(TP_COMM_LOG, TP_COMM_MEMORY_OPERATION_FAILED, "/rpc/tp_comm/getRpcTable");
-        FST_ERROR("Can't allocate memory for response_data");
+        ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
+        LogProducer::error("rpc", "/rpc/tp_comm/getRpcTable: Can't allocate memory for response_data");
         delete request_data_ptr;
         return;
     }
 
     if(!decodeRequestPackage(RequestMessageType_Void_fields, (void*)request_data_ptr, recv_bytes))
     {
-        recordLog(TP_COMM_LOG, TP_COMM_DECODE_FAILED, "/rpc/tp_comm/getRpcTable");
-        FST_ERROR("Decode data failed");
+        ErrorQueue::instance().push(TP_COMM_DECODE_FAILED);
+        LogProducer::error("rpc", "/rpc/tp_comm/getRpcTable: Decode data failed");
         return ;
     }
 
@@ -43,7 +44,6 @@ void TpComm::handleRequest0x00004FA5(int recv_bytes)
     {
         initResponsePackage(request_data_ptr, response_data_ptr, -1);    
         response_data_ptr->error_code.data = SUCCESS;
-        recordLog(TP_COMM_LOG, SUCCESS, "/rpc/tp_comm/getRpcTable");
 
         int element_index = 0;
         for (std::vector<RpcService>::iterator iter = rpc_table_.begin(); iter != rpc_table_.end(); iter++)
@@ -72,7 +72,8 @@ void TpComm::handleRequest0x00004FA5(int recv_bytes)
     }
     else
     {
-        recordLog(TP_COMM_LOG, TP_COMM_AUTHORITY_CHECK_FAILED, "/rpc/tp_comm/getRpcTable");
+        ErrorQueue::instance().push(TP_COMM_AUTHORITY_CHECK_FAILED);
+        LogProducer::error("rpc", "/rpc/tp_comm/getRpcTable: Authority check failed");
         initCommFailedResponsePackage(request_data_ptr, response_data_ptr);
     }
 
@@ -94,24 +95,24 @@ void TpComm::handleRequest0x000147A5(int recv_bytes)
 
     if(request_data_ptr == NULL)
     {
-        recordLog(TP_COMM_LOG, TP_COMM_MEMORY_OPERATION_FAILED, "/rpc/tp_comm/getPublishTable");
-        FST_ERROR("Can't allocate memory for request_data");
+        ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
+        LogProducer::error("rpc", "/rpc/tp_comm/getPublishTable: Can't allocate memory for request_data");
         return;
     }
 
     ResponseMessageType_Uint64_PublishTable* response_data_ptr = new ResponseMessageType_Uint64_PublishTable;
     if(response_data_ptr == NULL)
     {
-        recordLog(TP_COMM_LOG, TP_COMM_MEMORY_OPERATION_FAILED, "/rpc/tp_comm/getPublishTable");
-        FST_ERROR("Can't allocate memory for response_data");
+        ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
+        LogProducer::error("rpc", "/rpc/tp_comm/getPublishTable: Can't allocate memory for response_data");
         delete request_data_ptr;
         return;
     }
 
     if(!decodeRequestPackage(RequestMessageType_Void_fields, (void*)request_data_ptr, recv_bytes))
     {
-        recordLog(TP_COMM_LOG, TP_COMM_DECODE_FAILED, "/rpc/tp_comm/getPublishTable");
-        FST_ERROR("Decode data failed");
+        ErrorQueue::instance().push(TP_COMM_DECODE_FAILED);
+        LogProducer::error("rpc", "/rpc/tp_comm/getPublishTable: Decode data failed");
         return ;
     }
 
@@ -120,7 +121,6 @@ void TpComm::handleRequest0x000147A5(int recv_bytes)
     {
         initResponsePackage(request_data_ptr, response_data_ptr, -1);
         response_data_ptr->error_code.data = SUCCESS;
-        recordLog(TP_COMM_LOG, SUCCESS, "/rpc/tp_comm/getPublishTable");
 
         int element_index = 0;
         for (std::vector<PublishService>::iterator iter = publish_element_table_.begin(); iter != publish_element_table_.end(); iter++)
@@ -141,7 +141,8 @@ void TpComm::handleRequest0x000147A5(int recv_bytes)
     }
     else
     {
-        recordLog(TP_COMM_LOG, TP_COMM_AUTHORITY_CHECK_FAILED, "/rpc/tp_comm/getPublishTable");
+        ErrorQueue::instance().push(TP_COMM_AUTHORITY_CHECK_FAILED);
+        LogProducer::error("rpc", "/rpc/tp_comm/getPublishTable: Authority check failed");
         initCommFailedResponsePackage(request_data_ptr, response_data_ptr);
     }
 
@@ -162,14 +163,14 @@ void TpComm::handleRequestNonexistentHash(int hash, int recv_bytes)
 
     if(request_data_ptr == NULL)
     {
-        FST_ERROR("Can't allocate memory for request_data");
+        LogProducer::error("rpc", "nonexistent rpc: Can't allocate memory for request_data\n");
         return;
     }
 
     ResponseMessageType_Void* response_data_ptr = new ResponseMessageType_Void;
     if(response_data_ptr == NULL)
     {
-        FST_ERROR("Can't allocate memory for response_data");
+        LogProducer::error("rpc", "nonexistent rpc: Can't allocate memory for response_data\n");
         delete request_data_ptr;
         return;
     }

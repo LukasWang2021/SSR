@@ -3,7 +3,7 @@
 
 
 #include "kinematics.h"
-#include "parameter_manager/parameter_manager_param_group.h"
+#include "yaml_help.h"
 #include <string>
 
 namespace basic_alg
@@ -48,7 +48,8 @@ public:
     virtual Joint getGeometryJointByJoint(const Joint& joint);
     /*get joint by geometry joint and turn*/
     virtual Joint getJointByGeometryJointAndTurn(const Joint& geom_joint, const Turn& turn);
-    virtual Joint getJointByGeometryJointAndRefJointAndTurn(const Joint& geom_joint, const Joint& ref_joint, const Turn& turn);    
+    virtual Joint getJointByGeometryJointAndRefJointAndTurn(const Joint& geom_joint, const Joint& ref_joint, const Turn& turn);
+    virtual bool nearSingularPosition(const Joint& joint);
 private:
     KinematicsRTM();
     inline void scaleResultJoint(double& angle);
@@ -61,7 +62,7 @@ private:
     TransMatrix matrix_base_;
     TransMatrix matrix_base_inv_;
     int flip_;
-    fst_parameter::ParamGroup param_;
+    base_space::YamlHelp param_;
     bool is_valid_;
     std::string file_path_;
 };

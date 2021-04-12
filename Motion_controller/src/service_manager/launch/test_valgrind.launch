@@ -1,8 +1,0 @@
-<launch>
-
-  <node name="service_manager" pkg="service_manager" type="service_manager" 
-               respawn="false" output="screen"
-               launch-prefix="valgrind --leak-check=full --track-origins=yes">
-  </node>
-
-</launch>

@@ -1,34 +1,37 @@
 #include "dynamic_alg_rtm.h"
+#include "common_file_path.h"
 #include <math.h>
 #include <basic_alg_datatype.h>
 #include <basic_constants.h>
 #include <sys/time.h>
 #include <string.h>
 #include <iostream>
+#include "log_manager_producer.h"
 
+using namespace log_space;
 
 namespace basic_alg
 {
 
 DynamicAlgRTM::DynamicAlgRTM():
     param_ptr_(NULL),
-    log_ptr_(NULL),
+    type_file_path_(DYNAMICS_DIR),
     is_valid_(false),
+    log_level_(0),
     current_payload_id_(0),
-    acc_scale_factor_(1.0)
+    acc_scale_factor_(1.0),
+    param_0kg_scope_(0),
+    param_1kg_scope_(1),
+    param_3p5kg_scope_(3.5),
+    param_7kg_scope_(7),
+    param_index_(0)
 {
-    log_ptr_ = new fst_log::Logger();
     param_ptr_ = new DynamicAlgRTMParam();
-    payload_ptr_ = new DynamicAlgPayload(log_ptr_);
-    FST_LOG_INIT("dynamic_alg_rtm");
+    payload_ptr_ = new DynamicAlgPayload();
 }
 
 DynamicAlgRTM::~DynamicAlgRTM()
 {
-    if(log_ptr_ != NULL){
-        delete log_ptr_;
-        log_ptr_ = NULL;
-    }
     if(param_ptr_ != NULL){
         delete param_ptr_;
         param_ptr_ = NULL;
@@ -42,45 +45,65 @@ DynamicAlgRTM::~DynamicAlgRTM()
 bool DynamicAlgRTM::initDynamicAlg(std::string file_path)
 {
     if(!param_ptr_->loadParam()){
-        FST_ERROR("Failed to load dynamic_alg_rtm component parameters");
+        LogProducer::error("Dynamics","Failed to load dynamic_alg_rtm component parameters");
         is_valid_ = false;
         return false;
-    } else {
-	FST_LOG_SET_LEVEL((fst_log::MessageLevel)param_ptr_->log_level_);
+    } 
+
+    type_file_path_ += "dynamic_alg_rtm_type.yaml";
+    if (!type_param_.loadParamFile(type_file_path_.c_str())
+        || !type_param_.getParam("log_level", log_level_)
+        || !type_param_.getParam("current_payload_id", current_payload_id_)
+        || !type_param_.getParam("acc_scale_factor", acc_scale_factor_)
+        || !type_param_.getParam("param_file_name", param_file_name_)
+        || !type_param_.getParam("param_0kg_scope", param_0kg_scope_)
+        || !type_param_.getParam("param_1kg_scope", param_1kg_scope_)
+        || !type_param_.getParam("param_3p5kg_scope", param_3p5kg_scope_)
+        || !type_param_.getParam("param_7kg_scope", param_7kg_scope_))
+    {
+        LogProducer::error("Dynamics","Failed to load dynamic_alg_rtm_type.yaml");
+        is_valid_ = false;
+        return false;
+    }
+    
+    if (acc_scale_factor_ > 1.0 || acc_scale_factor_ < 0)
+    {
+        acc_scale_factor_ = 1.0;
     }
 
+    LogProducer::info("Dynamics","dynamic loading id = %d, file name = %s",  current_payload_id_, param_file_name_.c_str());
 
-    file_path_ = file_path + "arm_dh.yaml";
-    if (param_.loadParamFile(file_path_))
+    dh_file_path_ = file_path + "arm_dh.yaml";
+    if (dh_param_.loadParamFile(dh_file_path_))
     {
-        if (param_.getParam("base_dh/d", base_dh_.d) &&
-            param_.getParam("base_dh/a", base_dh_.a) &&
-            param_.getParam("base_dh/alpha", base_dh_.alpha) &&
-            param_.getParam("base_dh/offset", base_dh_.offset) &&
-            param_.getParam("arm_dh/axis-0/d", arm_dh_[0].d) &&
-            param_.getParam("arm_dh/axis-0/a", arm_dh_[0].a) &&
-            param_.getParam("arm_dh/axis-0/alpha", arm_dh_[0].alpha) &&
-            param_.getParam("arm_dh/axis-0/offset", arm_dh_[0].offset) &&
-            param_.getParam("arm_dh/axis-1/d", arm_dh_[1].d) &&
-            param_.getParam("arm_dh/axis-1/a", arm_dh_[1].a) &&
-            param_.getParam("arm_dh/axis-1/alpha", arm_dh_[1].alpha) &&
-            param_.getParam("arm_dh/axis-1/offset", arm_dh_[1].offset) &&
-            param_.getParam("arm_dh/axis-2/d", arm_dh_[2].d) &&
-            param_.getParam("arm_dh/axis-2/a", arm_dh_[2].a) &&
-            param_.getParam("arm_dh/axis-2/alpha", arm_dh_[2].alpha) &&
-            param_.getParam("arm_dh/axis-2/offset", arm_dh_[2].offset) &&
-            param_.getParam("arm_dh/axis-3/d", arm_dh_[3].d) &&
-            param_.getParam("arm_dh/axis-3/a", arm_dh_[3].a) &&
-            param_.getParam("arm_dh/axis-3/alpha", arm_dh_[3].alpha) &&
-            param_.getParam("arm_dh/axis-3/offset", arm_dh_[3].offset) &&
-            param_.getParam("arm_dh/axis-4/d", arm_dh_[4].d) &&
-            param_.getParam("arm_dh/axis-4/a", arm_dh_[4].a) &&
-            param_.getParam("arm_dh/axis-4/alpha", arm_dh_[4].alpha) &&
-            param_.getParam("arm_dh/axis-4/offset", arm_dh_[4].offset) &&
-            param_.getParam("arm_dh/axis-5/d", arm_dh_[5].d) &&
-            param_.getParam("arm_dh/axis-5/a", arm_dh_[5].a) &&
-            param_.getParam("arm_dh/axis-5/alpha", arm_dh_[5].alpha) &&
-            param_.getParam("arm_dh/axis-5/offset", arm_dh_[5].offset))
+        if (dh_param_.getParam("base_dh/d", base_dh_.d) &&
+            dh_param_.getParam("base_dh/a", base_dh_.a) &&
+            dh_param_.getParam("base_dh/alpha", base_dh_.alpha) &&
+            dh_param_.getParam("base_dh/offset", base_dh_.offset) &&
+            dh_param_.getParam("arm_dh/axis-0/d", arm_dh_[0].d) &&
+            dh_param_.getParam("arm_dh/axis-0/a", arm_dh_[0].a) &&
+            dh_param_.getParam("arm_dh/axis-0/alpha", arm_dh_[0].alpha) &&
+            dh_param_.getParam("arm_dh/axis-0/offset", arm_dh_[0].offset) &&
+            dh_param_.getParam("arm_dh/axis-1/d", arm_dh_[1].d) &&
+            dh_param_.getParam("arm_dh/axis-1/a", arm_dh_[1].a) &&
+            dh_param_.getParam("arm_dh/axis-1/alpha", arm_dh_[1].alpha) &&
+            dh_param_.getParam("arm_dh/axis-1/offset", arm_dh_[1].offset) &&
+            dh_param_.getParam("arm_dh/axis-2/d", arm_dh_[2].d) &&
+            dh_param_.getParam("arm_dh/axis-2/a", arm_dh_[2].a) &&
+            dh_param_.getParam("arm_dh/axis-2/alpha", arm_dh_[2].alpha) &&
+            dh_param_.getParam("arm_dh/axis-2/offset", arm_dh_[2].offset) &&
+            dh_param_.getParam("arm_dh/axis-3/d", arm_dh_[3].d) &&
+            dh_param_.getParam("arm_dh/axis-3/a", arm_dh_[3].a) &&
+            dh_param_.getParam("arm_dh/axis-3/alpha", arm_dh_[3].alpha) &&
+            dh_param_.getParam("arm_dh/axis-3/offset", arm_dh_[3].offset) &&
+            dh_param_.getParam("arm_dh/axis-4/d", arm_dh_[4].d) &&
+            dh_param_.getParam("arm_dh/axis-4/a", arm_dh_[4].a) &&
+            dh_param_.getParam("arm_dh/axis-4/alpha", arm_dh_[4].alpha) &&
+            dh_param_.getParam("arm_dh/axis-4/offset", arm_dh_[4].offset) &&
+            dh_param_.getParam("arm_dh/axis-5/d", arm_dh_[5].d) &&
+            dh_param_.getParam("arm_dh/axis-5/a", arm_dh_[5].a) &&
+            dh_param_.getParam("arm_dh/axis-5/alpha", arm_dh_[5].alpha) &&
+            dh_param_.getParam("arm_dh/axis-5/offset", arm_dh_[5].offset))
         {
             //TransMatrix matrix_base(base_dh_.d, base_dh_.a, base_dh_.alpha, base_dh_.offset);//delete
             //a2 = matrix_base.trans_vector_.x_/1000;//delete
@@ -93,35 +116,27 @@ bool DynamicAlgRTM::initDynamicAlg(std::string file_path)
         }
         else
         {
-            FST_ERROR("Failed to load dynamic_alg_rtm DH parameters");
+            LogProducer::error("Dynamics","Failed to load dynamic_alg_rtm DH parameters");
             is_valid_ = false;
             return false;
         }
     }
     else
     {
-        FST_ERROR("Failed to load dynamic_alg_rtm DH file");
+        LogProducer::error("Dynamics","Failed to load dynamic_alg_rtm DH file");
         is_valid_ = false;
         return false;
     }  
-
-    if (param_ptr_->number_of_links_ < LINKS)
-    {
-        FST_ERROR("The parameters(number_of_links) in dynamic_alg_rtm is invalid");
-        is_valid_ = false;
-        return false;
-    }
 
     if (payload_ptr_->init() ==  false)
     {
         return false;
     }
 
-    //setting payload
+    //setting payload to be 7kg by default.
     m_load = lcx_load = lcy_load = lcz_load = Ixx_load = Iyy_load = Izz_load = Ixy_load = Ixz_load = Iyz_load = 0;
     PayloadInfo info;
     memset(&info, 0, sizeof(info));
-    current_payload_id_ = param_ptr_->current_payload_id_;
     ErrorCode err = payload_ptr_->getPayloadInfoById(current_payload_id_, info);
     if (err == SUCCESS && info.is_valid)
     {
@@ -132,14 +147,22 @@ bool DynamicAlgRTM::initDynamicAlg(std::string file_path)
         Ixx_load = info.Ixx_load;
         Iyy_load = info.Iyy_load;
         Izz_load = info.Izz_load;
+        LogProducer::info("Dynamics","init payload=%lf, %lf,  %lf,  %lf,  %lf,  %lf,  %lf", m_load,lcx_load,lcy_load,lcz_load,Ixx_load,Iyy_load,Izz_load);
+    }
+    else
+    {
+        current_payload_id_ = 0;
+        m_load = 7.0;
     }
 
-    computePaiElementInverseDynamics();
+    updatePaiByPayload(m_load);
 
-    acc_scale_factor_ = param_ptr_->acc_scale_factor_;
-    if (acc_scale_factor_ >= 1.0 || acc_scale_factor_ < 0)
+    if (!type_param_.setParam("current_payload_id", current_payload_id_)
+        || !type_param_.setParam("param_file_name", param_file_name_.c_str())
+        || !type_param_.dumpParamFile(type_file_path_.c_str()))     
     {
-        acc_scale_factor_ = 1.0;
+        LogProducer::error("Dynamics","Failed to save dynamic_alg_rtm_type.yaml");
+        return DYNAMIC_PAYLOAD_UPDATE_PARAM_FAILED;
     }
     
     return true;
@@ -241,7 +264,7 @@ bool DynamicAlgRTM::getAccMax(const Joint& joint, const JointVelocity& vel, Join
     //bool ret = getMatrixInverse(M, LINKS, M_inverse);//伴随矩阵法,4ms,deprecated by LU.
     if (ret == false)
     {
-        FST_ERROR("Failed to compute direct dynamics to get acceleration for invalid inverse M.");
+        LogProducer::error("Dynamics","Failed to compute direct dynamics to get acceleration for invalid inverse M.");
         return false;
     }
 
@@ -399,7 +422,7 @@ bool DynamicAlgRTM::getAccDirectDynamics(const Joint& joint, const JointVelocity
     //bool ret = getMatrixInverse(M, LINKS, M_inverse);//伴随矩阵法,4ms,deprecated by LU.
     if (ret == false)
     {
-        FST_ERROR("Failed to compute direct dynamics to get acceleration for invalid inverse M.");
+        LogProducer::error("Dynamics","Failed to compute direct dynamics to get acceleration for invalid inverse M.");
         return false;
     }
 
@@ -518,6 +541,8 @@ ErrorCode DynamicAlgRTM::setPayload(int id)
     ErrorCode err = payload_ptr_->getPayloadInfoById(id, info);
     if (err == SUCCESS && info.is_valid)
     {
+        updatePaiByPayload(info.m_load);
+
         m_load = info.m_load;
         lcx_load = info.lcx_load;
         lcy_load = info.lcy_load;
@@ -527,12 +552,18 @@ ErrorCode DynamicAlgRTM::setPayload(int id)
         Izz_load = info.Izz_load;
 
         current_payload_id_ = id;
-        param_ptr_->current_payload_id_ = current_payload_id_;
-        if(!param_ptr_->saveParam()){
-            FST_ERROR("Failed to save dynamic_alg_rtm component parameters");
+        if (!type_param_.setParam("current_payload_id", current_payload_id_)
+            || !type_param_.setParam("param_file_name", param_file_name_.c_str())
+            || !type_param_.dumpParamFile(type_file_path_.c_str()))     
+        {
+            LogProducer::error("Dynamics","Failed to save dynamic_alg_rtm_type.yaml");
+            return DYNAMIC_PAYLOAD_UPDATE_PARAM_FAILED;
         }
+
+        LogProducer::info("Dynamics","set dynamic_alg_rtm parameters success");
+        return SUCCESS;
     }
-    return err;
+    return DYNAMIC_PAYLOAD_UPDATE_PARAM_FAILED;
 }
 
 void DynamicAlgRTM::getPayload(int &id)
@@ -547,6 +578,11 @@ ErrorCode DynamicAlgRTM::addPayload(const PayloadInfo& info)
 
 ErrorCode DynamicAlgRTM::deletePayload(int id)
 {
+    if (id == current_payload_id_)
+    {
+        LogProducer::warn("Dynamics","The deleted payload(%d) can not be current activated payload(%d)", id, current_payload_id_);
+        return DYNAMIC_PAYLOAD_INVALID_ARG;
+    }
     return payload_ptr_->deletePayload(id);
 }
 
@@ -557,6 +593,11 @@ ErrorCode DynamicAlgRTM::updatePayload(const PayloadInfo& info)
 
 ErrorCode DynamicAlgRTM::movePayload(int expect_id, int original_id)
 {
+    if (original_id == current_payload_id_)
+    {
+        LogProducer::warn("Dynamics","The moved payload(%d) can not be current activated payload(%d)", original_id, current_payload_id_);
+        return DYNAMIC_PAYLOAD_INVALID_ARG;
+    }
     return payload_ptr_->movePayload(expect_id, original_id);
 }
 
@@ -576,66 +617,93 @@ void DynamicAlgRTM::getAllValidPayloadSummaryInfo(std::vector<PayloadSummaryInfo
 }
 //end payload related
 
-void DynamicAlgRTM::computePaiElementInverseDynamics()
+void DynamicAlgRTM::updatePaiByPayload(double payload)
 {
+    LogProducer::info("Dynamics","updatePaiByPayload() payload = %lf kg", payload);
+    if (payload <= param_0kg_scope_)
+    {
+        param_file_name_ = DYNAMIC_PARAM_0KG_FILE;
+        param_index_ = PARAM_0KG;
+    }
+    else if(payload > param_0kg_scope_ && payload <= param_1kg_scope_)
+    {
+        param_file_name_ = DYNAMIC_PARAM_1KG_FILE;
+        param_index_ = PARAM_1KG;
+    }
+    else if(payload > param_1kg_scope_ && payload <= param_3p5kg_scope_)
+    {
+        param_file_name_ = DYNAMIC_PARAM_3p5KG_FILE;
+        param_index_ = PARAM_3p5KG;
+    }
+    else if(payload > param_3p5kg_scope_ && payload <= param_7kg_scope_)
+    {
+        param_file_name_ = DYNAMIC_PARAM_7KG_FILE;
+        param_index_ = PARAM_7KG;
+    }
+    else
+    {
+        param_file_name_ = DYNAMIC_PARAM_7KG_FILE;
+        param_index_ = PARAM_7KG;
+    }
+
     
-    ZZR1 = param_ptr_->ZZR1;
-    FS1 = param_ptr_->FS1;
-    FV1 = param_ptr_->FV1;
+    ZZR1 = param_ptr_->ZZR1[param_index_]; LogProducer::info("Dynamics","ZZR1=%lf", ZZR1);
+    FS1 = param_ptr_->FS1[param_index_]; LogProducer::info("Dynamics","FS1=%lf", FS1);
+    FV1 = param_ptr_->FV1[param_index_]; LogProducer::info("Dynamics","FV1=%lf", FV1);
 
-    XXR2 = param_ptr_->XXR2;
-    XY2 = param_ptr_->XY2;
-    XZR2  = param_ptr_->XZR2;
-    YZ2 = param_ptr_->YZ2;
-    ZZR2 = param_ptr_->ZZR2;
-    MXR2 = param_ptr_->MXR2;
-    MY2  = param_ptr_->MY2;
-    FS2 = param_ptr_->FS2;
-    FV2 = param_ptr_->FV2;
+    XXR2 = param_ptr_->XXR2[param_index_]; //LogProducer::info("Dynamics","XXR2=%lf", XXR2);
+    XY2 = param_ptr_->XY2[param_index_]; //LogProducer::info("Dynamics","XY2=%lf", XY2);
+    XZR2  = param_ptr_->XZR2[param_index_]; //LogProducer::info("Dynamics","XZR2=%lf", XZR2);
+    YZ2 = param_ptr_->YZ2[param_index_]; //LogProducer::info("Dynamics","YZ2=%lf", YZ2);
+    ZZR2 = param_ptr_->ZZR2[param_index_]; //LogProducer::info("Dynamics","ZZR2=%lf", ZZR2);
+    MXR2 = param_ptr_->MXR2[param_index_]; //LogProducer::info("Dynamics","MXR2=%lf", MXR2);
+    MY2  = param_ptr_->MY2[param_index_]; //LogProducer::info("Dynamics","MY2=%lf", MY2);
+    FS2 = param_ptr_->FS2[param_index_]; //LogProducer::info("Dynamics","FS2=%lf", FS2);
+    FV2 = param_ptr_->FV2[param_index_]; //LogProducer::info("Dynamics","FV2=%lf", FV2);
 
-    XXR3 = param_ptr_->XXR3;
-    XYR3 = param_ptr_->XYR3;
-    XZ3 = param_ptr_->XZ3;
-    YZ3 = param_ptr_->YZ3;
-    ZZR3 = param_ptr_->ZZR3; 
-    MXR3 = param_ptr_->MXR3;
-    MYR3 = param_ptr_->MYR3; 
-    Im3 = param_ptr_->Im3; 
-    FS3 = param_ptr_->FS3; 
-    FV3 = param_ptr_->FV3;
+    XXR3 = param_ptr_->XXR3[param_index_]; //LogProducer::info("Dynamics","XXR3=%lf", XXR3);
+    XYR3 = param_ptr_->XYR3[param_index_]; //LogProducer::info("Dynamics","XYR3=%lf", XYR3);
+    XZ3 = param_ptr_->XZ3[param_index_]; //LogProducer::info("Dynamics","XZ3=%lf", XZ3);
+    YZ3 = param_ptr_->YZ3[param_index_]; //LogProducer::info("Dynamics","YZ3=%lf", YZ3);
+    ZZR3 = param_ptr_->ZZR3[param_index_]; //LogProducer::info("Dynamics","ZZR3=%lf", ZZR3);
+    MXR3 = param_ptr_->MXR3[param_index_]; //LogProducer::info("Dynamics","MXR3=%lf", MXR3);
+    MYR3 = param_ptr_->MYR3[param_index_]; //LogProducer::info("Dynamics","MYR3=%lf", MYR3);
+    Im3 = param_ptr_->Im3[param_index_]; //LogProducer::info("Dynamics","Im3=%lf", Im3);
+    FS3 = param_ptr_->FS3[param_index_]; //LogProducer::info("Dynamics","FS3=%lf", FS3);
+    FV3 = param_ptr_->FV3[param_index_]; //LogProducer::info("Dynamics","FV3=%lf", FV3);
 
-    XXR4 = param_ptr_->XXR4; 
-    XY4 = param_ptr_->XY4; 
-    XZ4 = param_ptr_->XZ4; 
-    YZ4 = param_ptr_->YZ4; 
-    ZZR4 = param_ptr_->ZZR4; 
-    MX4 = param_ptr_->MX4; 
-    MYR4 = param_ptr_->MYR4; 
-    Im4 = param_ptr_->Im4; 
-    FS4 = param_ptr_->FS4; 
-    FV4 = param_ptr_->FV4; 
+    XXR4 = param_ptr_->XXR4[param_index_]; //LogProducer::info("Dynamics","XXR4=%lf", XXR4);
+    XY4 = param_ptr_->XY4[param_index_]; //LogProducer::info("Dynamics","XY4=%lf", XY4);
+    XZ4 = param_ptr_->XZ4[param_index_]; //LogProducer::info("Dynamics","XZ4=%lf", XZ4);
+    YZ4 = param_ptr_->YZ4[param_index_]; //LogProducer::info("Dynamics","YZ4=%lf", YZ4);
+    ZZR4 = param_ptr_->ZZR4[param_index_]; //LogProducer::info("Dynamics","ZZR4=%lf", ZZR4);
+    MX4 = param_ptr_->MX4[param_index_]; //LogProducer::info("Dynamics","MX4=%lf", MX4);
+    MYR4 = param_ptr_->MYR4[param_index_]; //LogProducer::info("Dynamics","MYR4=%lf", MYR4);
+    Im4 = param_ptr_->Im4[param_index_]; //LogProducer::info("Dynamics","Im4=%lf", Im4);
+    FS4 = param_ptr_->FS4[param_index_]; //LogProducer::info("Dynamics","FS4=%lf", FS4);
+    FV4 = param_ptr_->FV4[param_index_]; //LogProducer::info("Dynamics","FV4=%lf", FV4);
 
-    XXR5 = param_ptr_->XXR5; 
-    XY5 = param_ptr_->XY5; 
-    XZ5 = param_ptr_->XZ5;
-    YZ5 = param_ptr_->YZ5; 
-    ZZR5 = param_ptr_->ZZR5; 
-    MX5 = param_ptr_->MX5; 
-    MYR5 = param_ptr_->MYR5; 
-    Im5 = param_ptr_->Im5; 
-    FS5 = param_ptr_->FS5; 
-    FV5 = param_ptr_->FV5;
+    XXR5 = param_ptr_->XXR5[param_index_]; //LogProducer::info("Dynamics","XXR5=%lf", XXR5);
+    XY5 = param_ptr_->XY5[param_index_]; //LogProducer::info("Dynamics","XY5=%lf", XY5);
+    XZ5 = param_ptr_->XZ5[param_index_]; //LogProducer::info("Dynamics","XZ5=%lf", XZ5);
+    YZ5 = param_ptr_->YZ5[param_index_]; //LogProducer::info("Dynamics","YZ5=%lf", YZ5);
+    ZZR5 = param_ptr_->ZZR5[param_index_]; //LogProducer::info("Dynamics","ZZR5=%lf", ZZR5);
+    MX5 = param_ptr_->MX5[param_index_]; //LogProducer::info("Dynamics","MX5=%lf", MX5);
+    MYR5 = param_ptr_->MYR5[param_index_]; //LogProducer::info("Dynamics","MYR5=%lf", MYR5);
+    Im5 = param_ptr_->Im5[param_index_]; //LogProducer::info("Dynamics","Im5=%lf", Im5);
+    FS5 = param_ptr_->FS5[param_index_]; //LogProducer::info("Dynamics","FS5=%lf", FS5);
+    FV5 = param_ptr_->FV5[param_index_]; //LogProducer::info("Dynamics","FV5=%lf", FV5);
 
-    XXR6 = param_ptr_->XXR6; 
-    XY6 = param_ptr_->XY6; 
-    XZ6 = param_ptr_->XZ6; 
-    YZ6 = param_ptr_->YZ6; 
-    ZZ6 = param_ptr_->ZZ6; 
-    MX6 = param_ptr_->MX6; 
-    MY6 = param_ptr_->MY6; 
-    Im6 = param_ptr_->Im6; 
-    FS6 = param_ptr_->FS6; 
-    FV6 = param_ptr_->FV6;
+    XXR6 = param_ptr_->XXR6[param_index_]; //LogProducer::info("Dynamics","XXR6=%lf", XXR6);
+    XY6 = param_ptr_->XY6[param_index_]; //LogProducer::info("Dynamics","XY6=%lf", XY6);
+    XZ6 = param_ptr_->XZ6[param_index_]; //LogProducer::info("Dynamics","XZ6=%lf", XZ6);
+    YZ6 = param_ptr_->YZ6[param_index_]; //LogProducer::info("Dynamics","YZ6=%lf", YZ6);
+    ZZ6 = param_ptr_->ZZ6[param_index_]; //LogProducer::info("Dynamics","ZZ6=%lf", ZZ6);
+    MX6 = param_ptr_->MX6[param_index_]; //LogProducer::info("Dynamics","MX6=%lf", MX6);
+    MY6 = param_ptr_->MY6[param_index_]; //LogProducer::info("Dynamics","MY6=%lf", MY6);
+    Im6 = param_ptr_->Im6[param_index_]; //LogProducer::info("Dynamics","Im6=%lf", Im6);
+    FS6 = param_ptr_->FS6[param_index_]; //LogProducer::info("Dynamics","FS6=%lf", FS6);
+    FV6 = param_ptr_->FV6[param_index_]; //LogProducer::info("Dynamics","FV6=%lf", FV6);
     
 }
 
@@ -1528,44 +1596,44 @@ void DynamicAlgRTM::getTorqueFromCurve(const JointVelocity& vel, JointTorque &to
 {
     //Joint 1 motor is 750w.
     double velocity = vel.v1_;
-    double ratio = param_ptr_->gear_ratio_[0];
-    double motor_torq = param_ptr_->motor_torque_[0];
-    int motor_power = param_ptr_->motor_power_[0];
+    double ratio = param_ptr_->gear_ratio_[param_index_][0];
+    double motor_torq = param_ptr_->motor_torque_[param_index_][0];
+    int motor_power = param_ptr_->motor_power_[param_index_][0];
     getSingleTorqueFromCurve(motor_power, velocity, ratio, motor_torq, torque.t1_);
 
     //Joint 2 motor is 600w.
     velocity = vel.v2_;
-    ratio = param_ptr_->gear_ratio_[1];
-    motor_torq = param_ptr_->motor_torque_[1];
-    motor_power = param_ptr_->motor_power_[1];
+    ratio = param_ptr_->gear_ratio_[param_index_][1];
+    motor_torq = param_ptr_->motor_torque_[param_index_][1];
+    motor_power = param_ptr_->motor_power_[param_index_][1];
     getSingleTorqueFromCurve(motor_power, velocity, ratio, motor_torq, torque.t2_);
 
     //Joint 3 motor is 400w or 600w.
     velocity = vel.v3_;
-    ratio = param_ptr_->gear_ratio_[2];
-    motor_torq = param_ptr_->motor_torque_[2];
-    motor_power = param_ptr_->motor_power_[2];
+    ratio = param_ptr_->gear_ratio_[param_index_][2];
+    motor_torq = param_ptr_->motor_torque_[param_index_][2];
+    motor_power = param_ptr_->motor_power_[param_index_][2];
     getSingleTorqueFromCurve(motor_power, velocity, ratio, motor_torq, torque.t3_);
 
     //Joint 4 motor is 200w.
     velocity = vel.v4_;
-    ratio = param_ptr_->gear_ratio_[3];
-    motor_torq = param_ptr_->motor_torque_[3];
-    motor_power = param_ptr_->motor_power_[3];
+    ratio = param_ptr_->gear_ratio_[param_index_][3];
+    motor_torq = param_ptr_->motor_torque_[param_index_][3];
+    motor_power = param_ptr_->motor_power_[param_index_][3];
     getSingleTorqueFromCurve(motor_power, velocity, ratio, motor_torq, torque.t4_);
 
     //Joint 5 motor is 100w.
     velocity = vel.v5_;
-    ratio = param_ptr_->gear_ratio_[4];
-    motor_torq = param_ptr_->motor_torque_[4];
-    motor_power = param_ptr_->motor_power_[4];
+    ratio = param_ptr_->gear_ratio_[param_index_][4];
+    motor_torq = param_ptr_->motor_torque_[param_index_][4];
+    motor_power = param_ptr_->motor_power_[param_index_][4];
     getSingleTorqueFromCurve(motor_power, velocity, ratio, motor_torq, torque.t5_);
 
     //Joint 6 motor is 100w.
     velocity = vel.v6_;
-    ratio = param_ptr_->gear_ratio_[5];
-    motor_torq = param_ptr_->motor_torque_[5];
-    motor_power = param_ptr_->motor_power_[5];
+    ratio = param_ptr_->gear_ratio_[param_index_][5];
+    motor_torq = param_ptr_->motor_torque_[param_index_][5];
+    motor_power = param_ptr_->motor_power_[param_index_][5];
     getSingleTorqueFromCurve(motor_power, velocity, ratio, motor_torq, torque.t6_);
 
 }

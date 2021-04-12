@@ -4,50 +4,41 @@
 #include <unistd.h>
 #include <fstream>
 #include <sstream>
-#include "error_code.h"
-
+#include "common_file_path.h"
+#include "copy_file.h"
 
 using namespace std;
 using namespace fst_ctrl;
-using namespace fst_parameter;
+using namespace rtm_nvram;
+using namespace log_space;
 
 
-SrReg::SrReg(RegManagerParam* param_ptr):
+SrReg::SrReg(RegManagerParam* param_ptr, NvramHandler* nvram_ptr):
     BaseReg(REG_TYPE_SR, param_ptr->sr_reg_number_), 
     param_ptr_(param_ptr), 
-    file_path_(param_ptr->reg_info_dir_),
-    log_ptr_(NULL)
+    nvram_ptr_(nvram_ptr),
+    file_path_(REG_DIR),
+    file_path_modified_(REG_DIR_MODIFIED)
 {
-    log_ptr_ = new fst_log::Logger();
-    FST_LOG_INIT("SrRegister");
     file_path_ += param_ptr_->sr_reg_file_name_;
+    file_path_modified_ += param_ptr_->sr_reg_file_name_;
 }
 
 SrReg::~SrReg()
 {
-    if(log_ptr_ != NULL)
-    {
-        delete log_ptr_;
-        log_ptr_ = NULL;
-    }
-
 }
 
 ErrorCode SrReg::init()
 {
-    data_list_.resize(getListSize());    // id=0 is not used, id start from 1
-
-    /*if(access(file_path_.c_str(), 0) != 0)
+    if (!copyFile(file_path_.c_str(), file_path_modified_.c_str()))
     {
-        if(!createYaml())
-        {
-            return false;
-        }
-    }*/
+        LogProducer::error("reg_manager", "Fail to copy %s to %s", file_path_.c_str(), file_path_modified_.c_str());
+        return REG_MANAGER_LOAD_SR_FAILED;
+    }
 
-    if(!readAllRegDataFromYaml())
+    if (!readAllRegDataFromYaml())
     {
-		FST_ERROR("SrReg::init readAllRegDataFromYaml failed");
+		LogProducer::error("reg_manager", "Fail to load sr from yaml");
         return REG_MANAGER_LOAD_SR_FAILED;
     }
     
@@ -56,284 +47,245 @@ ErrorCode SrReg::init()
 
 ErrorCode SrReg::addReg(void* data_ptr)
 {
-    if(data_ptr == NULL)
+    if (data_ptr == NULL)
     {
+        LogProducer::error("reg_manager", "addReg: input sr ptr = NULL");
         return REG_MANAGER_INVALID_ARG;
     }
 
     SrRegData* reg_ptr = reinterpret_cast<SrRegData*>(data_ptr);
-    if(!isAddInputValid(reg_ptr->id)
-        || reg_ptr->value.size() > static_cast<uint32_t>(param_ptr_->sr_value_limit_))
+    if (!isAddInputValid(reg_ptr->id) || static_cast<int>(strlen(reg_ptr->value.value)) > param_ptr_->sr_value_limit_)
     {
-		FST_ERROR("SrReg::addReg isAddInputValid(reg_ptr->id = %d)", reg_ptr->id);
+		LogProducer::error("reg_manager", "addReg: input sr id = %d or string invalid)", reg_ptr->id);
         return REG_MANAGER_INVALID_ARG;
     }
+
     BaseRegData reg_data;
     packAddRegData(reg_data, reg_ptr->id, reg_ptr->name, reg_ptr->comment);
-    if(!setRegList(reg_data))
+
+    if (!setRegList(reg_data))
     {
-		FST_ERROR("SrReg::addReg setRegList failed");
+		LogProducer::error("reg_manager", "addReg: fail to set sr list");
         return REG_MANAGER_INVALID_ARG;
     }
-    if(reg_ptr->value.size() == 0)
+
+    if (!writeRegDataToYaml(reg_data))
     {
-        data_list_[reg_data.id] = std::string("default");
-    }
-    else
-    {
-        data_list_[reg_data.id] = reg_ptr->value;
-    }
-    if(!writeRegDataToYaml(reg_data, data_list_[reg_data.id]))
-    {
-		FST_ERROR("SrReg::addReg writeRegDataToYaml failed");
+		LogProducer::error("reg_manager", "addReg: fail to dump sr to yaml");
         return REG_MANAGER_REG_FILE_WRITE_FAILED;
     }
-    return SUCCESS;
+
+    reg_ptr->value.value[STRING_REG_MAX_LENGTH - 1] = '\0';
+    return nvram_ptr_->writeNvram(SR_START_ADDR + sizeof(SrValue) * reg_ptr->id, (uint8_t*)reg_ptr->value.value, sizeof(SrValue)) ? SUCCESS : REG_MANAGER_OPERATE_NVRAM_FAILED;
 }
 
 ErrorCode SrReg::deleteReg(int id)
 {
-    if(!isDeleteInputValid(id))
+    if (!isDeleteInputValid(id))
     {
-		FST_ERROR("SrReg::deleteReg isDeleteInputValid failed");
+		LogProducer::error("reg_manager", "deleteReg: input sr id = %d invalid", id);
         return REG_MANAGER_INVALID_ARG;
     }
 
     BaseRegData reg_data;
     packDeleteRegData(reg_data, id);
-    if(!setRegList(reg_data))
+
+    if (!setRegList(reg_data))
     {
+        LogProducer::error("reg_manager", "deleteReg: fail to dump sr to yaml");
         return REG_MANAGER_INVALID_ARG;
     }
-    data_list_[id] = std::string("default");
-    if(!writeRegDataToYaml(reg_data, data_list_[id]))
+
+    if (!writeRegDataToYaml(reg_data))
     {
-		FST_ERROR("SrReg::deleteReg writeRegDataToYaml failed");
+		LogProducer::error("reg_manager", "deleteReg: fail to dump sr to yaml");
         return REG_MANAGER_REG_FILE_WRITE_FAILED;
     }
-    return SUCCESS;
+
+    SrValue sr_value;
+    memset(&sr_value, 0, sizeof(sr_value));
+    return nvram_ptr_->writeNvram(SR_START_ADDR + sizeof(SrValue) * id, (uint8_t*)sr_value.value, sizeof(SrValue)) ? SUCCESS : REG_MANAGER_OPERATE_NVRAM_FAILED;
 }
 
 ErrorCode SrReg::getReg(int id, void* data_ptr)
 {
-    if(!isGetInputValid(id))
+    if (!isGetInputValid(id))
     {
-		FST_ERROR("SrReg::getReg isGetInputValid failed");
+		LogProducer::error("reg_manager", "getReg: input sr id = %d invalid", id);
         return REG_MANAGER_INVALID_ARG;
     }
 
     SrRegData* reg_ptr = reinterpret_cast<SrRegData*>(data_ptr);
     BaseRegData reg_data;
-    if(!getRegList(id, reg_data))
+
+    if (!getRegList(id, reg_data))
     {
-		FST_ERROR("SrReg::getReg getRegList failed");
+		LogProducer::error("reg_manager", "getReg: fail to get sr list");
         return REG_MANAGER_INVALID_ARG;
     }
+
+    SrValue sr_value;
+    memset(&sr_value, 0, sizeof(sr_value));
+    nvram_ptr_->readNvram(SR_START_ADDR + sizeof(SrValue) * id, (uint8_t*)sr_value.value, sizeof(SrValue));
     reg_ptr->id = reg_data.id;
     reg_ptr->name = reg_data.name;
     reg_ptr->comment = reg_data.comment;
-    reg_ptr->value = data_list_[id];
-    
+    reg_ptr->value = sr_value;
     return SUCCESS;
 }
 
 ErrorCode SrReg::updateReg(void* data_ptr)
 {
-    if(data_ptr == NULL)
+    if (data_ptr == NULL)
     {
-		FST_ERROR("SrReg::updateReg data_ptr == NULL");
+		LogProducer::error("reg_manager", "updateReg: input sr ptr = NULL");
         return REG_MANAGER_INVALID_ARG;
     }
 
     SrRegData* reg_ptr = reinterpret_cast<SrRegData*>(data_ptr);
-    if(!isUpdateInputValid(reg_ptr->id)
-        || static_cast<int>(reg_ptr->value.size()) > param_ptr_->sr_value_limit_)
+    if (!isUpdateInputValid(reg_ptr->id) || static_cast<int>(strlen(reg_ptr->value.value)) > param_ptr_->sr_value_limit_)
     {
-		FST_ERROR("SrReg::updateReg isUpdateInputValid(reg_ptr->id = %d) failed ", reg_ptr->id);
+        LogProducer::error("reg_manager", "updateReg: input sr id = %d or data invalid", reg_ptr->id);
         return REG_MANAGER_INVALID_ARG;
     }
         
     BaseRegData reg_data;
     packSetRegData(reg_data, reg_ptr->id, reg_ptr->name, reg_ptr->comment);
-    if(!setRegList(reg_data))
+
+    if (!setRegList(reg_data))
     {
-		FST_ERROR("SrReg::updateReg setRegList failed");
+		LogProducer::error("reg_manager", "updateReg: fail to set sr list");
         return REG_MANAGER_INVALID_ARG;
     }
-    if(reg_ptr->value.size() == 0)
+
+    if (!writeRegDataToYaml(reg_data))
     {
-        data_list_[reg_data.id] = std::string("default");
-    }
-    else
-    {
-        data_list_[reg_data.id] = reg_ptr->value;
-    }
-    if(!writeRegDataToYaml(reg_data, data_list_[reg_data.id]))
-    {
-		FST_ERROR("SrReg::updateReg writeRegDataToYaml failed");
+		LogProducer::error("reg_manager", "updateReg: fail to dump sr to yaml");
         return REG_MANAGER_INVALID_ARG;
     }
-    return SUCCESS;
+    
+    reg_ptr->value.value[STRING_REG_MAX_LENGTH - 1] = '\0';
+    return nvram_ptr_->writeNvram(SR_START_ADDR + sizeof(SrValue) * reg_ptr->id, (uint8_t*)reg_ptr->value.value, sizeof(SrValue)) ? SUCCESS : REG_MANAGER_OPERATE_NVRAM_FAILED;
 }
 
 ErrorCode SrReg::moveReg(int expect_id, int original_id)
 {
-    if(!isMoveInputValid(expect_id, original_id))
+    if (!isMoveInputValid(expect_id, original_id))
     {
-		FST_ERROR("SrReg::moveReg isMoveInputValid failed");
+		LogProducer::error("reg_manager", "moveReg: input sr expect_id = %d original_id = %d invalid", expect_id, original_id);
         return REG_MANAGER_INVALID_ARG;
     }
 
     SrRegData data;
-    ErrorCode error_code;
-    error_code = getReg(original_id, (void*)&data);
-    if(error_code != SUCCESS)
+    ErrorCode error_code = getReg(original_id, (void*)&data);
+
+    if (error_code != SUCCESS)
     {
-		FST_ERROR("SrReg::moveReg getReg failed");
         return error_code;
     }
+
     error_code = deleteReg(original_id);
-    if(error_code != SUCCESS)
+
+    if (error_code != SUCCESS)
     {
-		FST_ERROR("SrReg::moveReg deleteReg failed");
         return error_code;
     }
+
     data.id = expect_id;
     return addReg((void*)&data);
 }
 
-void* SrReg::getRegValueById(int id)
+bool SrReg::getRegValueById(int id, SrValue& sr_value)
 {
-    if(!isRegValid(id))
+    if (!isRegValid(id))
     {
-        return NULL;
+        LogProducer::error("reg_manager", "getRegValueById: input sr id = %d invalid", id);
+        return false;
     }
-    
-    return (void*)data_list_[id].c_str();
+
+    return nvram_ptr_->readNvram(SR_START_ADDR + sizeof(SrValue) * id, (uint8_t*)sr_value.value, sizeof(SrValue));
 }
 
 bool SrReg::updateRegValue(SrRegDataIpc* data_ptr)
 {
-    if(data_ptr == NULL)
+    if (data_ptr == NULL)
     {
-		FST_ERROR("SrReg::updateRegValue data_ptr == NULL");
+		LogProducer::error("reg_manager", "updateRegValue: input sr ptr = NULL");
         return false;
     }
 
-    int str_size = strlen(data_ptr->value);
-    if(!isUpdateInputValid(data_ptr->id)
-        || str_size >= param_ptr_->sr_value_limit_)
+    if (!isUpdateInputValid(data_ptr->id) || static_cast<int>(strlen(data_ptr->value.value)) > param_ptr_->sr_value_limit_)
     {
-		FST_INFO("return false :: isUpdateInputValid() = %d\n", data_ptr->id);
+        LogProducer::error("reg_manager", "updateRegValue: input sr id = %d or invalid", data_ptr->id);
         return false;
     }
-        
-    BaseRegData* reg_data_ptr = getBaseRegDataById(data_ptr->id);
-    if(reg_data_ptr == NULL)
-    {
-		FST_ERROR("SrReg::updateRegValue reg_data_ptr == NULL");
-        return false;
-    }
-    if(str_size == 0)
-    {
-        data_list_[data_ptr->id] = std::string("default");
-    }
-    else
-    {
-        data_list_[data_ptr->id] = data_ptr->value;
-    }
-    return writeRegDataToYaml(*reg_data_ptr, data_list_[data_ptr->id]);
+
+    data_ptr->value.value[STRING_REG_MAX_LENGTH - 1] = '\0';
+    return nvram_ptr_->writeNvram(SR_START_ADDR + sizeof(SrValue) * data_ptr->id, (uint8_t*)data_ptr->value.value, sizeof(SrValue));
 }
 
 bool SrReg::getRegValue(int id, SrRegDataIpc* data_ptr)
 {
-    if(!isGetInputValid(id)
-        || data_list_[id].size() >= 256)
+    if (!isGetInputValid(id))
     {
+        LogProducer::error("reg_manager", "getRegValue: input sr id = %d invalid", id);
         return false;
     }
     
+    SrValue sr_value;
+    nvram_ptr_->readNvram(SR_START_ADDR + sizeof(SrValue) * id, (uint8_t*)sr_value.value, sizeof(SrValue));
+
+    if (sr_value.value[STRING_REG_MAX_LENGTH - 1] != '\0') sr_value.value[STRING_REG_MAX_LENGTH - 1] = '\0';
     data_ptr->id = id;
-    memcpy(data_ptr->value, data_list_[id].c_str(), data_list_[id].size());
-    data_ptr->value[data_list_[id].size()] = 0;
+    data_ptr->value = sr_value;
     return true;
 }
 
-SrReg::SrReg():
-    BaseReg(REG_TYPE_INVALID, 0)
+SrReg::SrReg(): BaseReg(REG_TYPE_INVALID, 0)
 {
-
-}
-
-bool SrReg::createYaml()
-{
-    std::ofstream fd;
-    fd.open(file_path_.c_str(), std::ios::out);
-    if(!fd.is_open())
-    {
-        return false;
-    }
-    fd.close();
-    
-    yaml_help_.loadParamFile(file_path_.c_str());
-    for(int i = 1; i < static_cast<int>(data_list_.size()); ++i)
-    {
-        std::string reg_path = getRegPath(i);
-        yaml_help_.setParam(reg_path + "/id", i);
-        yaml_help_.setParam(reg_path + "/is_valid", false);
-        yaml_help_.setParam(reg_path + "/name", std::string("default"));
-        yaml_help_.setParam(reg_path + "/comment", std::string("default"));
-        yaml_help_.setParam(reg_path + "/value", std::string("default"));
-    }
-    return yaml_help_.dumpParamFile(file_path_.c_str());
 }
 
 bool SrReg::readAllRegDataFromYaml()
 {
-    yaml_help_.loadParamFile(file_path_.c_str());
-    for(int i = 1; i < static_cast<int>(data_list_.size()); ++i)
+    yaml_help_.loadParamFile(file_path_modified_.c_str());
+    uint32_t length = reg_list_.size();
+
+    for (uint32_t i = 1; i < length; ++i)
     {
-        std::string reg_path = getRegPath(i);
+        string reg_path = getRegPath(i);
         BaseRegData base_data;
-        // std::string name, comment;
         yaml_help_.getParam(reg_path + "/id", base_data.id);
         yaml_help_.getParam(reg_path + "/is_valid", base_data.is_valid);
         yaml_help_.getParam(reg_path + "/name", base_data.name);
         yaml_help_.getParam(reg_path + "/comment", base_data.comment);
         base_data.is_changed = true;
-        if(!setRegList(base_data))
+
+        if (!setRegList(base_data))
         {
+            LogProducer::error("reg_manager", "readAllRegDataFromYaml: fail to set sr list %d", i);
             return false;
         }
-        yaml_help_.getParam(reg_path + "/value", data_list_[i]);
     }
+
     return true;
 }
 
-bool SrReg::writeRegDataToYaml(const BaseRegData& base_data, const std::string& data)
+bool SrReg::writeRegDataToYaml(const BaseRegData& base_data)
 {
-    std::string reg_path = getRegPath(base_data.id);
+    string reg_path = getRegPath(base_data.id);
     yaml_help_.setParam(reg_path + "/id", base_data.id);
     yaml_help_.setParam(reg_path + "/is_valid", base_data.is_valid);
     yaml_help_.setParam(reg_path + "/name", base_data.name);
     yaml_help_.setParam(reg_path + "/comment", base_data.comment);
-    if(data.size() == 0)
-    {
-        yaml_help_.setParam(reg_path + "/value", std::string("default"));
-    }
-    else
-    {
-        yaml_help_.setParam(reg_path + "/value", '"'+data+'"');
-    }
-    return yaml_help_.dumpParamFile(file_path_.c_str());
+    return yaml_help_.dumpParamFile(file_path_modified_.c_str());
 }
 
-std::string SrReg::getRegPath(int reg_id)
+string SrReg::getRegPath(int reg_id)
 {
-    std::string id_str;
-    std::stringstream stream;
+    string id_str;
+    stringstream stream;
     stream << reg_id;
     stream >> id_str;
-    return (std::string("SR") + id_str);
+    return (string("SR") + id_str);
 }
 

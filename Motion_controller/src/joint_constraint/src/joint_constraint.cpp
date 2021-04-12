@@ -127,26 +127,29 @@ const Joint& Constraint::lower(void) const
     return constraint_.lower;
 }
 
-bool Constraint::isJointInConstraint(const Joint &joint) const
+bool Constraint::isJointInConstraint(const Joint &joint, double value) const
 {
     for (uint32_t i = 0; i < joint_num_; i++)
     {
-        if (mask_[i] == CONSTRAINT_UNMASK && (joint[i] < constraint_.lower[i] || joint[i] > constraint_.upper[i]))
+        if (mask_[i] == CONSTRAINT_UNMASK)
         {
-            return false;
+            if (!((joint[i] > constraint_.lower[i] - value) && (joint[i] < constraint_.upper[i] + value)))
+            {
+                return false;
+            }
         }
     }
 
     return true;
 }
 
-bool Constraint::isCoverConstaint(const Constraint &constraint) const
+bool Constraint::isCoverConstaint(const Constraint &constraint, double value) const
 {
     if (constraint.getNumberOfJoint() == joint_num_)
     {
         for (uint32_t i = 0; i < joint_num_; i++)
         {
-            if (constraint.lower()[i] < constraint_.lower[i]  || constraint.upper()[i] > constraint_.upper[i])
+            if (!((constraint.lower()[i] > constraint_.lower[i] - value) && (constraint.upper()[i] < constraint_.upper[i] + value)))
             {
                 return false;
             }
@@ -160,11 +163,11 @@ bool Constraint::isCoverConstaint(const Constraint &constraint) const
     }
 }
 
-bool Constraint::isCoverConstaint(const JointConstraint &constraint) const
+bool Constraint::isCoverConstaint(const JointConstraint &constraint, double value) const
 {
     for (uint32_t i = 0; i < joint_num_; i++)
     {
-        if (constraint.lower[i] < constraint_.lower[i]  || constraint.upper[i] > constraint_.upper[i])
+        if (!((constraint.lower[i] > constraint_.lower[i] - value) && (constraint.upper[i] < constraint_.upper[i] + value)))
         {
             return false;
         }
@@ -174,13 +177,13 @@ bool Constraint::isCoverConstaint(const JointConstraint &constraint) const
 }
 
 
-bool Constraint::isCoveredByConstaint(const Constraint &constraint) const
+bool Constraint::isCoveredByConstaint(const Constraint &constraint, double value) const
 {
     if (constraint.getNumberOfJoint() == joint_num_)
     {
         for (uint32_t i = 0; i < joint_num_; i++)
         {
-            if (constraint_.lower[i] < constraint.lower()[i] || constraint_.upper[i] > constraint.upper()[i])
+            if (!((constraint_.lower[i] > constraint.lower()[i] - value) && (constraint_.upper[i] < constraint.upper()[i] + value)))
             {
                 return false;
             }
@@ -194,11 +197,11 @@ bool Constraint::isCoveredByConstaint(const Constraint &constraint) const
     }
 }
 
-bool Constraint::isCoveredByConstaint(const JointConstraint &constraint) const
+bool Constraint::isCoveredByConstaint(const JointConstraint &constraint, double value) const
 {
     for (uint32_t i = 0; i < joint_num_; i++)
     {
-        if (constraint_.lower[i] < constraint.lower[i] || constraint_.upper[i] > constraint.upper[i])
+        if (!((constraint_.lower[i] > constraint.lower[i] - value) && (constraint_.upper[i] < constraint.upper[i] + value)))
         {
             return false;
         }

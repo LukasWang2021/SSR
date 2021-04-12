@@ -31,6 +31,7 @@ SingleJerkDSCurvePlanner::SingleJerkDSCurvePlanner(void)
 	p_stop_ = 0.0;
 	v_stop_ = 0.0; 
 	a_stop_ = 0.0;
+	vel_ratio_ = 0.0;
 
 	t_stop_ = 0.0;
 	is_stop_success_ = false;
@@ -41,7 +42,7 @@ SingleJerkDSCurvePlanner::~SingleJerkDSCurvePlanner(void)
 {
 
 }
-void SingleJerkDSCurvePlanner::planDSCurve(double q0, double q1, double vmax, double amax, double* jmax)
+void SingleJerkDSCurvePlanner::planDSCurve(double q0, double q1, double vmax, double amax, double* jmax, double v_ratio)
 {
 	is_stop_success_ = false;
 	/* Ta : acceleration period
@@ -133,28 +134,60 @@ void SingleJerkDSCurvePlanner::planDSCurve(double q0, double q1, double vmax, do
 	j_min_ = sign * j_min;
 	t_total_ = Ta_ + Tv_ + Td_;
 
+	rescaleTrajectoryVelocity(v_ratio);
+}
+
+void SingleJerkDSCurvePlanner::rescaleTrajectoryVelocity(double vel_ratio)
+{
 	// advance acc and dec
-	double p0, v0, a0, p1, v1, a1;
+	double p0, v0, a0, p1, v1, a1, t_delta;
 	sampleOriginDSCurve(0, p0, v0, a0);
 	sampleOriginDSCurve(Tj1_, p1, v1, a1);
-	getSepticSpline(p0, v0, a0, 0, p1, v1, a1, 0, Tj1_, coeff_inc_acc_);
+	v0 *= vel_ratio;
+	v1 *= vel_ratio;
+	a0 = a0 * vel_ratio * vel_ratio;
+	a1 = a1 *  vel_ratio * vel_ratio;
+	t_delta = Tj1_ / vel_ratio;
+	getSepticSpline(p0, v0, a0, 0, p1, v1, a1, 0, t_delta, coeff_inc_acc_);
 	
 	sampleOriginDSCurve(Ta_ - Tj1_, p0, v0, a0);
 	sampleOriginDSCurve(Ta_, p1, v1, a1);
-	getSepticSpline(p0, v0, a0, 0, p1, v1, a1, 0, Tj1_, coeff_dec_acc_);
+	v0 *= vel_ratio;
+	v1 *= vel_ratio;
+	a0 = a0 * vel_ratio * vel_ratio;
+	a1 = a1 *  vel_ratio * vel_ratio;
+	getSepticSpline(p0, v0, a0, 0, p1, v1, a1, 0, t_delta, coeff_dec_acc_);
 	
 	sampleOriginDSCurve(Ta_ + Tv_, p0, v0, a0);
 	sampleOriginDSCurve(Ta_ + Tv_ + Tj2_, p1, v1, a1);
-	getSepticSpline(p0, v0, a0, 0, p1, v1, a1, 0, Tj2_, coeff_inc_dec_);
+	v0 *= vel_ratio;
+	v1 *= vel_ratio;
+	a0 = a0 * vel_ratio * vel_ratio;
+	a1 = a1 *  vel_ratio * vel_ratio;
+	t_delta = Tj2_ / vel_ratio;
+	getSepticSpline(p0, v0, a0, 0, p1, v1, a1, 0, t_delta, coeff_inc_dec_);
 	
 	sampleOriginDSCurve(t_total_ - Tj2_, p0, v0, a0);
 	sampleOriginDSCurve(t_total_, p1, v1, a1);
-	getSepticSpline(p0, v0, a0, 0, p1, v1, a1, 0, Tj2_, coeff_dec_dec_);
+	v0 *= vel_ratio;
+	v1 *= vel_ratio;
+	a0 = a0 * vel_ratio * vel_ratio;
+	a1 = a1 *  vel_ratio * vel_ratio;
+	getSepticSpline(p0, v0, a0, 0, p1, v1, a1, 0, t_delta, coeff_dec_dec_);
+
+	Ta_ /= vel_ratio;
+	Tv_ /= vel_ratio;
+	Td_ /= vel_ratio;
+	Tj1_ /= vel_ratio;
+	Tj2_ /= vel_ratio;
+	t_total_ /= vel_ratio;
+
+	vel_ratio_ = vel_ratio;
 }
 
 void SingleJerkDSCurvePlanner::planStopDSCurve(double t)
 {
-	if (t_total_ < t)
+	if (is_stop_success_ || t_total_ < t)
 	{
 		return;
 	}
@@ -263,9 +296,14 @@ void SingleJerkDSCurvePlanner::sampleFineDSCurve(double t, double &p, double &v,
     }
     else if (t < Ta_ - Tj1_)
     {
-        p = q_0_ + v_0_ * t + (a_lima_ / 6) * (3 * pow(t, 2) - 3 * Tj1_ * t + pow(Tj1_, 2));
-        v = v_0_ + a_lima_ * (t - Tj1_ / 2);
+		double t_temp = t * vel_ratio_;
+		double Tj1_temp = Tj1_ * vel_ratio_;
+        p = q_0_ + v_0_ * t_temp + (a_lima_ / 6) * (3 * pow(t_temp, 2) - 3 * Tj1_temp * t_temp + pow(Tj1_temp, 2));
+        v = v_0_ + a_lima_ * (t_temp - Tj1_temp / 2);
         a = a_lima_;
+
+		v *= vel_ratio_;
+		a = a * vel_ratio_ * vel_ratio_;
     }
     else if (t < Ta_)
     {
@@ -278,9 +316,15 @@ void SingleJerkDSCurvePlanner::sampleFineDSCurve(double t, double &p, double &v,
     }
     else if (t < Ta_ + Tv_)
     {
-        p = q_0_ + (vlim_ + v_0_) * (Ta_ / 2) + vlim_ * (t - Ta_);
+		double t_temp = t * vel_ratio_;
+		double Ta_temp = Ta_ * vel_ratio_;
+
+        p = q_0_ + (vlim_ + v_0_) * (Ta_temp / 2) + vlim_ * (t_temp - Ta_temp);
         v = vlim_;
         a = 0;
+
+		v *= vel_ratio_;
+		a = a * vel_ratio_ * vel_ratio_;
     }
     else if (t < t_total_ - Td_ + Tj2_)
     {
@@ -293,9 +337,18 @@ void SingleJerkDSCurvePlanner::sampleFineDSCurve(double t, double &p, double &v,
     }
     else if (t < t_total_ - Tj2_)
     {
-        p = q_1_ - (vlim_ + v_1_) * (Td_ / 2) + vlim_ * (t - t_total_ + Td_) + (a_limd_ / 6) * (3 * pow(t - t_total_ + Td_, 2) - 3 * Tj2_ * (t - t_total_ + Td_) + pow(Tj2_, 2));
-        v = vlim_ + a_limd_ * (t - t_total_ + Td_ - Tj2_ / 2);
+		double t_temp = t * vel_ratio_;
+		double Td_temp = Td_ * vel_ratio_;
+		double Tj2_temp = Tj2_ * vel_ratio_;
+		double t_total_temp = t_total_ * vel_ratio_;
+
+        p = q_1_ - (vlim_ + v_1_) * (Td_temp / 2) + vlim_ * (t_temp - t_total_temp + Td_temp) + 
+			(a_limd_ / 6) * (3 * pow(t_temp - t_total_temp + Td_temp, 2) - 3 * Tj2_temp * (t_temp - t_total_temp + Td_temp) + pow(Tj2_temp, 2));
+        v = vlim_ + a_limd_ * (t_temp - t_total_temp + Td_temp - Tj2_temp / 2);
         a = a_limd_;
+
+		v *= vel_ratio_;
+		a = a * vel_ratio_ * vel_ratio_;
     }
     else if (t < t_total_)
     {

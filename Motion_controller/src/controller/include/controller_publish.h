@@ -1,70 +1,134 @@
 #ifndef CONTROLLER_PUBLISH_H
 #define CONTROLLER_PUBLISH_H
 
-#include "controller_param.h"
-#include "common_log.h"
-#include "virtual_core1.h"
-#include "tp_comm.h"
-#include "controller_sm.h"
-#include "motion_control.h"
-#include "reg_manager.h"
-#include "process_comm.h"
-#include "io_mapping.h" 
-#include "fst_safety_device.h"
-#include "base_device.h"
+/**
+ * @file controller_publish.h
+ * @brief The file is the header file of class "ControllerPublish".
+ * @author Feng.Wu
+ */
+
+#include <stddef.h>
+#include <string>
 #include <vector>
 #include <list>
+#include "common_datatype.h"
+#include "protoc.h"
+#include "tp_comm.h"
+#include "log_manager_producer.h"
+#include "system/core_comm_system.h"
+#include "system/servo_cpu_comm_base.h"
+#include "axis.h"
+#include "io_1000.h"
+#include "io_analog.h"
 
-namespace fst_ctrl
+/**
+ * @brief user_space includes the user level implementation.
+ */
+namespace user_space
 {
+
+/**
+ * @brief ControllerPublish deals with the publishing.
+ * @details 
+ */
 class ControllerPublish
 {
 public:
+    /**
+     * @brief Constructor of the class.
+     */
     ControllerPublish();
+    /**
+     * @brief Destructor of the class. 
+     */  
     ~ControllerPublish();
 
-    void init(fst_log::Logger* log_ptr, ControllerParam* param_ptr, VirtualCore1* virtual_core1_ptr, fst_comm::TpComm* tp_comm_ptr,
-                    ControllerSm* state_machine_ptr, fst_mc::MotionControl* motion_control_ptr, RegManager* reg_manager_ptr,
-                    fst_base::ControllerClient* controller_client_ptr,
-                    fst_ctrl::IoMapping* io_mapping_ptr, fst_hal::DeviceManager* device_manager_ptr, 
-                    fst_hal::IoManager* io_manager_ptr);//feng add mapping
+    /**
+     * @brief Initialization.
+     * @details
+     * @param [in] tp_comm_ptr The pointer of the communication with the upper computer.
+     * @param [in] cpu_comm_ptr The pointer to communicate with the other cpu.
+     * @param [in] axis_ptr The pointer of all the axes.
+     * @param [in] group_ptr The pointer of all the groups.
+     * @return void.
+     */
+    void init(user_space::TpComm* tp_comm_ptr, servo_comm_space::ServoCpuCommBase* cpu_comm_ptr, 
+        axis_space::Axis* axis_ptr[AXIS_NUM], hal_space::Io1000* io_dev_ptr, hal_space::IoAnalog* io_analog_ptr);
 
+    /**
+     * @brief Gets the pointer of the publishing value.
+     * @details
+     * @return The pointer of the value.
+     */
     typedef void* (ControllerPublish::*HandlePublishFuncPtr)(void);
+
+    /**
+     * @brief Update the publishing value.
+     * @details
+     * @return void.
+     */
     typedef void (ControllerPublish::*HandleUpdateFuncPtr)(void);
+
+    /**
+     * @brief Gets the pointer of a function by hash value.
+     * @details
+     * @param [in] hash The hash value.
+     * @return The pointer of a function.
+     */
     HandlePublishFuncPtr getPublishHandlerByHash(unsigned int hash);
+
+    /**
+     * @brief Gets the pointer of a function by hash value.
+     * @details
+     * @param [in] hash The hash value.
+     * @return The pointer of a function.
+     */
     HandleUpdateFuncPtr getUpdateHandlerByHash(unsigned int hash);
+
+    /**
+     * @brief Add the pointer of the update function to a list.
+     * @details
+     * @param [in] func_ptr The pointer of the update function.
+     * @return void.
+     */
     void addTaskToUpdateList(HandleUpdateFuncPtr func_ptr);
+
+    /**
+     * @brief Delete the update function by hash.
+     * @details
+     * @param [in] publish_element_list The list of the publish function.
+     * @return void.
+     */
+	void deleteTaskFromUpdateList(std::vector<user_space::TpPublishElement>& publish_element_list);
+
+    /**
+     * @brief Decrease the count of the publish element.
+     * @details
+     * @param [in] func_ptr The pointer of the update function.
+     * @return void.
+     */
     void unrefUpdateListElement(HandleUpdateFuncPtr func_ptr);
+
+    /**
+     * @brief Clean the publishing update list.
+     * @details
+     * @return void.
+     */
     void cleanUpdateList();
-    void deleteTaskFromUpdateList(std::vector<fst_comm::TpPublishElement>& publish_element_list);
-
-    void* getRegPublishDataPtr(RegType reg_type, int reg_index);
-    void* addTaskToRegUpdateList(RegType reg_type, int reg_index);
-    void unrefRegUpdateListElement(RegType reg_type, int reg_index);
-    void cleanRegUpdateList();
-    void deleteTaskFromRegUpdateList(std::vector<fst_comm::TpPublishElement>& publish_element_list);
-
-    void* addTaskToIoUpdateList(uint32_t port_type, uint32_t port_offset);//feng add for io publish
-    void deleteTaskFromIoUpdateList(std::vector<fst_comm::TpPublishElement>& publish_element_list);
-    void unrefIoUpdateListElement(uint32_t port_type, uint32_t port_offset);
-    void cleanIoUpdateList();
-
+    
+    /**
+     * @brief Update the publishing element data.
+     * @details It should be cyclically called by Controller.
+     * @return void.
+     */    
     void processPublish();
     
 private:
-    fst_log::Logger* log_ptr_;
-    ControllerParam* param_ptr_;
-    VirtualCore1* virtual_core1_ptr_;
-    fst_comm::TpComm* tp_comm_ptr_;
-    ControllerSm* state_machine_ptr_;
-    fst_mc::MotionControl* motion_control_ptr_;
-    RegManager* reg_manager_ptr_;
-    fst_base::ControllerClient* controller_client_ptr_;
-    fst_ctrl::IoMapping* io_mapping_ptr_; //feng add for mapping.
-    fst_hal::DeviceManager* device_manager_ptr_;
-    fst_hal::FstSafetyDevice* safety_device_ptr_;
-    fst_hal::IoManager* io_manager_ptr_;
-    fst_hal::ModbusManager* modbus_manager_ptr_;
+    user_space::TpComm* tp_comm_ptr_; 
+    servo_comm_space::ServoCpuCommBase* cpu_comm_ptr_;
+    axis_space::Axis* axis_ptr_[AXIS_NUM];
+    hal_space::Io1000* io_dev_ptr_;
+    hal_space::IoAnalog* io_analog_ptr_;
 
     enum {HASH_BYTE_SIZE = 4,};
     enum {QUICK_SEARCH_TABLE_SIZE = 128,};
@@ -84,94 +148,29 @@ private:
         int ref_count;
     }PublishUpdate;
     std::list<PublishUpdate> update_list_;
-    
-    // publish data, mutex protected    
-    MessageType_Int32_DoubleList joint_feedback_;
-    MessageType_Int32_DoubleList tcp_world_cartesian_;
-    MessageType_Int32_DoubleList tcp_base_cartesian_;
-    MessageType_Int32_DoubleList tcp_current_cartesian_;
-    MessageType_Int32List current_coordinate_;
-    MessageType_Int32List current_tool_;
-    MessageType_Double global_vel_ratio_;
-    MessageType_Double global_acc_ratio_;
-    MessageType_String_Int32 program_status_;
-    MessageType_StringList tp_program_status_;
-    MessageType_Uint32 safety_board_status_;
-    MessageType_IoBoardStatusList io_board_status_; 
-    MessageType_ModbusClientCtrlStatusList modbus_client_ctrl_status_;
 
-    typedef struct
-    {
-        RegType reg_type;
-        int reg_index;
-        MessageType_PrValue pr_value;
-        MessageType_HrValue hr_value;
-        MessageType_MrValue mr_value;
-        MessageType_SrValue sr_value;
-        MessageType_RValue r_value;
-        int ref_count;
-    }RegPublishUpdate;
-    std::list<RegPublishUpdate> reg_update_list_;
-
-    //feng add for addIoTopic
-    typedef struct
-    {
-        //int device_index;
-        //char address;
-        uint32_t port_type;
-        uint32_t port_offset;
-        MessageType_Uint32 value;
-        bool is_valid;
-        int ref_count;
-    }IoPublishUpdate;
-    std::list<IoPublishUpdate> io_update_list_;
-
+    MessageType_AxisFeedbackList axis_fdb_;
+    MessageType_ServoFeedbackList servo1001_servo_fdb_;
+    MessageType_Uint32List servo1001_cpu_fdb_;
+    MessageType_Uint32List io_digital_fdb_;
+    MessageType_Uint32List io_analog_fdb_;
 
     void initPublishTable();
     void initPublishQuickSearchTable();
+
+    //get publish element ptr
+    void* getAxisFdbPtr();
+    void* getServo1001ServoFdbPtr();
+    void* getServo1001CpuFdbPtr();
+    void* getIODigitalFdbPtr();
+    void* getIOAnalogFdbPtr();
     
-
-    // get publish element ptr
-    void* getUserOpModePtr();
-    void* getRunningStatePtr();
-    void* getInterpreterStatePtr();
-    void* getRobotStatePtr();
-    void* getCtrlStatePtr();
-    void* getServoStatePtr();
-    void* getSafetyAlarmPtr();
-    void* getAxisGroupJointFeedbackPtr();
-    void* getAxisGroupTcpWorldCartesianPtr();
-    void* getAxisGroupTcpBaseCartesianPtr();
-    void* getAxisGroupTcpCurrentCartesianPtr();
-    void* getAxisGroupCurrentCoordinatePtr();
-    void* getAxisGroupCurrentToolPtr();
-    void* getGlobalVelRatioPtr();
-    void* getGlobalAccRatioPtr();
-    void* getProgramStatusPtr();
-    void* getTpProgramStatusPtr();
-    void* getSafetyBoardStatusPtr();
-    void* getIoBoardStatusPtr();
-    void* getModbusClientCtrlStatusPtr();
-
     // update publish element
-    void updateAxisGroupJointFeedback();
-    void updateAxisGroupTcpWorldCartesian();
-    void updateAxisGroupTcpBaseCartesian();
-    void updateAxisGroupTcpCurrentCartesian();
-    void updateAxisGroupCurrentCoordinate();
-    void updateAxisGroupCurrentTool();
-    void updateGlobalVelRatio();
-    void updateGlobalAccRatio();
-    void updateProgramStatus();
-    void updateTpProgramStatus();
-    void updateSafetyBoardStatus();
-    void updateIoBoardStatus();
-    void updateModbusClientCtrlStatus();
-    // update reg publish
-    void updateReg();
-
-    // update io publish
-    void updateIo();
+    void updateAxisFdb();
+    void updateServo1001ServoFdb();
+    void updateServo1001CpuFdb();
+    void updateIODigitalFdb();
+    void updateIOAnalogFdb();
 };
 
 }

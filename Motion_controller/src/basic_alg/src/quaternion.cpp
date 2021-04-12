@@ -34,6 +34,16 @@ bool Quaternion::isEqual(const Quaternion& quaternion, double valve) const
     }
 }
 
+bool Quaternion::isEquivalent(const Euler& euler, double valve) const
+{
+    return fabs(getIncludedAngle(euler)) < valve;
+}
+
+bool Quaternion::isEquivalent(const Quaternion& quaternion, double valve) const
+{
+    return fabs(getIncludedAngle(quaternion)) < valve;
+}
+
 void Quaternion::reverse()
 {
     x_ = -x_;
@@ -76,6 +86,13 @@ void Quaternion::convertToRotationMatrix(RotationMatrix& matrix) const
     matrix.matrix_[2][0] = zx - wy;  // r[2][0] = 2*(zx-wy)
     matrix.matrix_[2][1] = wx + yz;  // r[2][1] = 2*(wx+yz)
     matrix.matrix_[2][2] = 1 - 2 * (xx + yy); // r[2][2] = 2*(w^2+z^2)-1
+}
+
+double Quaternion::getIncludedAngle(const Euler& euler) const
+{
+    Quaternion quaternion;
+    euler.convertToQuaternion(quaternion);
+    return getIncludedAngle(quaternion);
 }
 
 double Quaternion::getIncludedAngle(const Quaternion& quaternion) const

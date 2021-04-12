@@ -1473,29 +1473,69 @@ static inline void sampleSepticSpline(double t, const double (&coeff)[8], double
 
 static inline  void sampleSlerpInterpolationQuaternion(const Quaternion &start, const Quaternion end, double ratio, double orientation_angle, Quaternion &result)
 {
+    Quaternion alternative_end;
+    alternative_end = end;
+
+    double dot_product = start.x_*end.x_ + start.y_*end.y_ + start.z_*end.z_ + start.w_*end.w_;
+    if (dot_product < 0)
+    {
+        alternative_end.x_ = -end.x_;
+        alternative_end.y_ = -end.y_;
+        alternative_end.z_ = -end.z_;
+        alternative_end.w_ = -end.w_;
+    }
+
     if (orientation_angle < 0.001)
     {
         // ��̬�н�С��0.1rad,��̬���Բ�ֵ
-        result.w_ = (1 - ratio) * start.w_ + ratio * end.w_;
-        result.x_ = (1 - ratio) * start.x_ + ratio * end.x_;
-        result.y_ = (1 - ratio) * start.y_ + ratio * end.y_;
-        result.z_ = (1 - ratio) * start.z_ + ratio * end.z_;
+        result.w_ = (1 - ratio) * start.w_ + ratio * alternative_end.w_;
+        result.x_ = (1 - ratio) * start.x_ + ratio * alternative_end.x_;
+        result.y_ = (1 - ratio) * start.y_ + ratio * alternative_end.y_;
+        result.z_ = (1 - ratio) * start.z_ + ratio * alternative_end.z_;
     }
     else
     {
         // ��̬�нǴ���0.1rad,��̬������ֵ
-        result.w_ = (sin((1 - ratio) * orientation_angle) * start.w_ + sin(ratio * orientation_angle) * end.w_) / sin(orientation_angle);
-        result.x_ = (sin((1 - ratio) * orientation_angle) * start.x_ + sin(ratio * orientation_angle) * end.x_) / sin(orientation_angle);
-        result.y_ = (sin((1 - ratio) * orientation_angle) * start.y_ + sin(ratio * orientation_angle) * end.y_) / sin(orientation_angle);
-        result.z_ = (sin((1 - ratio) * orientation_angle) * start.z_ + sin(ratio * orientation_angle) * end.z_) / sin(orientation_angle);
+        result.w_ = (sin((1 - ratio) * orientation_angle) * start.w_ + sin(ratio * orientation_angle) * alternative_end.w_) / sin(orientation_angle);
+        result.x_ = (sin((1 - ratio) * orientation_angle) * start.x_ + sin(ratio * orientation_angle) * alternative_end.x_) / sin(orientation_angle);
+        result.y_ = (sin((1 - ratio) * orientation_angle) * start.y_ + sin(ratio * orientation_angle) * alternative_end.y_) / sin(orientation_angle);
+        result.z_ = (sin((1 - ratio) * orientation_angle) * start.z_ + sin(ratio * orientation_angle) * alternative_end.z_) / sin(orientation_angle);
     }
+}
+
+inline bool binarySearch(double* datas, int length, double target, int& data_index)
+{
+	if (length <= 0) return false;
+    if (length == 1 && target < datas[0])
+    {		
+        data_index = 0;		
+        return true;	
+    }
+	int left = 0;	
+    int right = length - 1;	
+    int mid = 0;	
+    while (left <= right)	
+    {		
+        mid = (right + left) / 2;		
+
+        if (datas[mid - 1] < target && target < datas[mid])		
+        {			
+            data_index = mid;			
+            return true;		
+        }
+		else if (datas[mid] < target)		
+        {			
+            left = mid + 1;		
+        }
+		else if (target < datas[mid - 1])		
+        {			
+            right = mid - 1;	
+    	}	
+    }	
+	return false;
 }
 
 }
 #endif
-
-
-
-
 
 

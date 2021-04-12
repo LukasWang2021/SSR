@@ -1,64 +1,73 @@
 #ifndef DEVICE_VERSION_H
 #define DEVICE_VERSION_H
 
+/**
+ * @file device_version.h
+ * @brief The file is the header file of class "DeviceVersion".
+ * @author Feng.Wu
+ */
 
-#include "parameter_manager/parameter_manager_param_group.h"
-#include "motion_control.h"
-#include "io_manager.h"
-#include "fst_safety_device.h"
+#include <map>
 
-namespace fst_ctrl
+/**
+ * @brief user_space includes the user level implementation.
+ */
+namespace user_space
 {
+
+/**
+ * @brief DeviceVersion gets the version number of the controller.
+ * @details 
+ */
 class DeviceVersion
 {
 public:
+    /**
+     * @brief Constructor of the class.
+     */
     DeviceVersion();
+    /**
+     * @brief Destructor of the class. 
+     */  
     ~DeviceVersion();
 
-    void init(fst_log::Logger* log_ptr, fst_mc::MotionControl* motion_control_ptr,
-        fst_hal::IoManager* io_manager_ptr, fst_hal::FstSafetyDevice* safety_device_ptr);
-    
-    //controller version
+    /**
+     * @brief Initialization.
+     * @details
+     * @return void.
+     */
+    void init(void);
+
+    /**
+     * @brief Get the major version of the controller.
+     * @details
+     * @return Major Version
+     */
+    int getControllerMajorVersion(void);
+
+    /**
+     * @brief Get the minor version of the controller.
+     * @details
+     * @return Minor Version
+     */
+    int getControllerMinorVersion(void);
+
+    /**
+     * @brief Get the string of the controller version.
+     * @details
+     * @return The string of the full version
+     */
     std::string getControllerVersion(void);
 
-    //get all device version
+    /**
+     * @brief Get the version strings of all the devices.
+     * @details
+     * @return A list of the device name and version string.
+     */
     std::map<std::string, std::string> getDeviceVersionList(void);
-
-    //servo control bin
-    void getServoControlVersion(std::string &name, std::string &version);
-
-    //hand off & Uboot version
-    void getHandOffVersion(std::string &name, std::string &version);
-    void getUbootVersion(std::string &name, std::string &version);
-
-    //rbf version
-    void getRbfVersion(std::string &name, std::string &version);
-
-    //servo param version
-    void getServoParamVersion(std::string &name, std::string &version);
-
-    //safety board software version
-    void getSafetyBoardVersion(std::string &name, std::string &version);
-
-    //io board software version
-    std::map<std::string, std::string> getIoBoardVersion(void);
     
 
 private:
-    fst_parameter::ParamGroup yaml_help_;
-    fst_log::Logger* log_ptr_;
-    std::string file_path_;
-    
-    fst_mc::MotionControl* motion_control_ptr_;
-    fst_hal::FstSafetyDevice* safety_device_ptr_;
-    fst_hal::IoManager* io_manager_ptr_;
-
-    int *hand_off_ptr_;                            //for version
-    int *rbf_ptr_;                                 //for version
-    static const unsigned int HAND_OFF_ADDR   = 0x38800000; //for version
-    static const unsigned int RBF_ADDR        = 0xFF210000;//0xc0010000;//0xff210000; //for version
-    static const int HAND_OFF_LENGTH = 0x08;       //for version of handoff and U-Boot
-    static const int RBF_LENGTH      = 0x04;       //for version
 
 };
 

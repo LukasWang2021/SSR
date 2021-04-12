@@ -1,0 +1,177 @@
+name: axis_application_1001
+param_model_id: 
+    operation_value: 1001
+    default_value: 1001
+    upper_limit_value: 0 
+    lower_limit_value: 0
+    unit: NULL
+    attr: 1
+    validity: 0
+model_class: 
+    operation_value: 0
+    default_value: 0
+    upper_limit_value: 2 
+    lower_limit_value: 0
+    unit: NULL
+    attr: 1
+    validity: 0
+model_gear_ratio_numerator: 
+    operation_value: 10
+    default_value: 10
+    upper_limit_value: 1000 
+    lower_limit_value: 1
+    unit: NULL
+    attr: 1
+    validity: 0
+model_gear_ratio_denominator: 
+    operation_value: 1
+    default_value: 1
+    upper_limit_value: 1000 
+    lower_limit_value: 1
+    unit: NULL
+    attr: 1
+    validity: 0
+model_pitch: 
+    operation_value: 0
+    default_value: 0
+    upper_limit_value: 0 
+    lower_limit_value: 0
+    unit: 0.001mm
+    attr: 1
+    validity: 0
+model_linear_range: 
+    operation_value: 0
+    default_value: 0
+    upper_limit_value: 0 
+    lower_limit_value: 0
+    unit: 0.001mm
+    attr: 1
+    validity: 0
+model_direction: 
+    operation_value: 1
+    default_value: 1
+    upper_limit_value: 1 
+    lower_limit_value: 0
+    unit: NULL
+    attr: 3
+    validity: 1
+model_hw_limit_enable: 
+    operation_value: 1
+    default_value: 1
+    upper_limit_value: 1 
+    lower_limit_value: 0
+    unit: NULL
+    attr: 3
+    validity: 1
+model_hw_positive_limit: 
+    operation_value: 18000
+    default_value: 18000
+    upper_limit_value: 0 
+    lower_limit_value: 0
+    unit: pulse
+    attr: 3
+    validity: 1
+model_hw_negative_limit: 
+    operation_value: -18000
+    default_value: -18000
+    upper_limit_value: 0 
+    lower_limit_value: 0
+    unit: pulse
+    attr: 3
+    validity: 1
+encoder_pulse_per_revolution: 
+    operation_value: 8388608
+    default_value: 8388608
+    upper_limit_value: 10000000 
+    lower_limit_value: 1
+    unit: NULL
+    attr: 1
+    validity: 0
+motor_rated_torque:
+    operation_value: 64
+    default_value: 64
+    upper_limit_value: 100000
+    lower_limit_value: 0
+    unit: 0.01N*m
+    attr: 1
+    validity: 0
+app_max_vel: 
+    operation_value: 5
+    default_value: 5
+    upper_limit_value: 1000000000 
+    lower_limit_value: 0
+    unit: rps
+    attr: 3
+    validity: 3
+app_acc_time: 
+    operation_value: 100
+    default_value: 100
+    upper_limit_value: 100000 
+    lower_limit_value: 0
+    unit: ms
+    attr: 3
+    validity: 3
+app_dec_time: 
+    operation_value: 100
+    default_value: 100
+    upper_limit_value: 100000 
+    lower_limit_value: 0
+    unit: ms
+    attr: 3
+    validity: 3
+app_home_high_speed: 
+    operation_value: 5
+    default_value: 5
+    upper_limit_value: 1000000000 
+    lower_limit_value: 0
+    unit: rps
+    attr: 3
+    validity: 3
+app_home_low_speed: 
+    operation_value: 5
+    default_value: 5
+    upper_limit_value: 1000000000 
+    lower_limit_value: 0
+    unit: rps
+    attr: 3
+    validity: 3
+app_home_acc_time: 
+    operation_value: 500
+    default_value: 500
+    upper_limit_value: 100000 
+    lower_limit_value: 0
+    unit: ms
+    attr: 3
+    validity: 3
+app_sf_limit_enable: 
+    operation_value: 1
+    default_value: 1
+    upper_limit_value: 1 
+    lower_limit_value: 0
+    unit: NULL
+    attr: 3
+    validity: 3
+app_sf_positive_limit: 
+    operation_value: 18000
+    default_value: 18000
+    upper_limit_value: 0
+    lower_limit_value: 0
+    unit: pulse
+    attr: 3
+    validity: 3
+app_sf_negative_limit:
+    operation_value: -18000
+    default_value: -18000
+    upper_limit_value: 0
+    lower_limit_value: 0
+    unit: pulse
+    attr: 3
+    validity: 3
+app_home_position:
+    operation_value: -500
+    default_value: -500
+    upper_limit_value: 0
+    lower_limit_value: 0
+    unit: pulse
+    attr: 3
+    validity: 3

@@ -2,30 +2,38 @@
 #define SR_REG_H
 
 #include "base_reg.h"
-#include "parameter_manager/parameter_manager_param_group.h"
 #include "reg_manager_param.h"
-#include "common_log.h"
+#include "nvram_handler.h"
+#include "yaml_help.h"
+#include "log_manager_producer.h"
+
+#define STRING_REG_MAX_LENGTH 256
 
 namespace fst_ctrl
 {
 typedef struct
 {
+	char value[STRING_REG_MAX_LENGTH];
+}SrValue;
+
+typedef struct
+{
     int id;
     std::string name;
     std::string comment;
-    std::string value;
+    SrValue value;
 }SrRegData;
 
 typedef struct
 {
     int id;
-    char value[256];
+    SrValue value;
 }SrRegDataIpc;
 
 class SrReg:public BaseReg
 {
 public:
-    SrReg(RegManagerParam* param_ptr);
+    SrReg(RegManagerParam* param_ptr, rtm_nvram::NvramHandler* nvram_ptr);
     virtual ~SrReg();
 
     virtual ErrorCode init();
@@ -34,21 +42,20 @@ public:
     virtual ErrorCode getReg(int id, void* data_ptr);
     virtual ErrorCode updateReg(void* data_ptr);
     virtual ErrorCode moveReg(int expect_id, int original_id);
-    void* getRegValueById(int id);
+    bool getRegValueById(int id, SrValue& sr_value);
     bool updateRegValue(SrRegDataIpc* data_ptr);
     bool getRegValue(int id, SrRegDataIpc* data_ptr);
     
 private:
     RegManagerParam* param_ptr_;
+    rtm_nvram::NvramHandler* nvram_ptr_;
     std::string file_path_;
-    fst_parameter::ParamGroup yaml_help_;
-    std::vector<std::string> data_list_;
-    fst_log::Logger* log_ptr_;
+    std::string file_path_modified_;
+    base_space::YamlHelp yaml_help_;
 
     SrReg();
-    bool createYaml();
     bool readAllRegDataFromYaml();
-    bool writeRegDataToYaml(const BaseRegData& base_data, const std::string& data);
+    bool writeRegDataToYaml(const BaseRegData& base_data);
     std::string getRegPath(int reg_id);
 };
 

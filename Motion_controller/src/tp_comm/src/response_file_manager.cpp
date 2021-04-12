@@ -1,7 +1,7 @@
 #include "tp_comm.h"
 
-using namespace fst_comm;
-
+using namespace user_space;
+using namespace log_space;
 using namespace std;
 
 //"/rpc/file_manager/readFile"
@@ -9,7 +9,7 @@ void TpComm::handleResponse0x0000A545(std::vector<TpRequestResponse>::iterator& 
 {
     if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_Bytes_fields, task->response_data_ptr, send_buffer_size))
     {
-        FST_ERROR("handleResponse: failed to encode response package");// send
+        LogProducer::error("rpc", "handleResponse: failed to encode response package");
     }
     if(task->request_data_ptr != NULL)
     {
@@ -26,7 +26,7 @@ void TpComm::handleResponse0x00010D95(std::vector<TpRequestResponse>::iterator& 
 {
     if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_fields, task->response_data_ptr, send_buffer_size))
     {
-        FST_ERROR("handleResponse: failed to encode response package");// send
+        LogProducer::error("rpc", "handleResponse: failed to encode response package");
     }
     if(task->request_data_ptr != NULL)
     {

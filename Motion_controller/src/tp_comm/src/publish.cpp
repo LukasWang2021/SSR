@@ -1,183 +1,50 @@
 #include "tp_comm.h"
 
-using namespace fst_comm;
+using namespace user_space;
 using namespace std;
+using namespace log_space;
 
-// UserOpMode, MessageType_Int32
-void TpComm::handlePublishElement0x00015255(Comm_Publish& package, int element_index, TpPublishElement& list_element)
-{
-    if(!encodePublishElement(package.element[element_index].data, MessageType_Int32_fields, list_element.data_ptr))
+/********publish/axes_feedback, MessageType_AxisFeedbackList(count=14)**********/   
+void TpComm::handlePublishElement0x0001715B(Comm_Publish& package, int element_index, TpPublishElement& list_element)
+{ 
+    if(!encodePublishElement(package.element[element_index].data, MessageType_AxisFeedbackList_fields, list_element.data_ptr))
     {
-        FST_ERROR("handlePublishElement0x00015255: failed to encode UserOpMode");
+        LogProducer::error("publish", "handlePublishElement0x0001715B: failed to encode");
     }
 }
 
-//RunningStatus, MessageType_Int32
-void TpComm::handlePublishElement0x00001F33(Comm_Publish& package, int element_index, TpPublishElement& list_element)
+/********publish/servo1000/servos_feedback, MessageType_ServoFeedbackList(count=14)**********/
+void TpComm::handlePublishElement0x0001128B(Comm_Publish& package, int element_index, TpPublishElement& list_element)
 {
-    if(!encodePublishElement(package.element[element_index].data, MessageType_Int32_fields, list_element.data_ptr))
+    if(!encodePublishElement(package.element[element_index].data, MessageType_Servo1000ServoFeedbackList_fields, list_element.data_ptr))
     {
-        FST_ERROR("handlePublishElement0x00001F33: failed to encode RunningStatus");
+        LogProducer::error("publish", "handlePublishElement0x0000128B: failed to encode");
     }
 }
 
-//InterpreterStatus, MessageType_Int32
-void TpComm::handlePublishElement0x00003203(Comm_Publish& package, int element_index, TpPublishElement& list_element)
+/********publish/servo1000/cpu_feedback, MessageType_Uint32List(count=15)**********/ 
+void TpComm::handlePublishElement0x00012FFB(Comm_Publish& package, int element_index, TpPublishElement& list_element)
 {
-    if(!encodePublishElement(package.element[element_index].data, MessageType_Int32_fields, list_element.data_ptr))
+    if(!encodePublishElement(package.element[element_index].data, MessageType_Uint32List_fields, list_element.data_ptr))
     {
-        FST_ERROR("handlePublishElement0x00003203: failed to encode InterpreterStatus");
+        LogProducer::error("publish", "handlePublishElement0x00012FCB: failed to encode");
     }
 }
 
-// RobotStatus, MessageType_Int32
-void TpComm::handlePublishElement0x00012943(Comm_Publish& package, int element_index, TpPublishElement& list_element)
+/********publish/io1000/io_feedback, MessageType_Uint32List(count=4)**********/	
+void TpComm::handlePublishElement0x00013C8B(Comm_Publish& package, int element_index, TpPublishElement& list_element)
 {
-    if(!encodePublishElement(package.element[element_index].data, MessageType_Int32_fields, list_element.data_ptr))
+    if(!encodePublishElement(package.element[element_index].data, MessageType_Uint32List_fields, list_element.data_ptr))
     {
-        FST_ERROR("handlePublishElement0x00012943: failed to encode RobotStatus");
+        LogProducer::error("publish", "handlePublishElement0x00013C8B: failed to encode");
     }
 }
 
-// CtrlStatus, MessageType_Int32
-void TpComm::handlePublishElement0x0000E8E3(Comm_Publish& package, int element_index, TpPublishElement& list_element)
+/********publish/ioAnalog/io_analog_feedback, MessageType_Uint32List(count=12)**********/
+void TpComm::handlePublishElement0x00007C5B(Comm_Publish& package, int element_index, TpPublishElement& list_element)
 {
-    if(!encodePublishElement(package.element[element_index].data, MessageType_Int32_fields, list_element.data_ptr))
+    if(!encodePublishElement(package.element[element_index].data, MessageType_Uint32List_fields, list_element.data_ptr))
     {
-        FST_ERROR("handlePublishElement0x0000E8E3: failed to encode CtrlStatus");
-    }
-}
-
-//ServoStatus, MessageType_Int32
-void TpComm::handlePublishElement0x00002053(Comm_Publish& package, int element_index, TpPublishElement& list_element)
-{
-    if(!encodePublishElement(package.element[element_index].data, MessageType_Int32_fields, list_element.data_ptr))
-    {
-        FST_ERROR("handlePublishElement0x00002053: failed to encode ServoStatus");
-    }
-}
-
-//SafetyAlarm, MessageType_Int32
-void TpComm::handlePublishElement0x0000D0AD(Comm_Publish& package, int element_index, TpPublishElement& list_element)
-{
-    if(!encodePublishElement(package.element[element_index].data, MessageType_Int32_fields, list_element.data_ptr))
-    {
-        FST_ERROR("handlePublishElement0x0000D0AD: failed to encode SafetyAlarm");
-    }
-}
-
-//"/publish/motion_control/axis_group/feedback/joints"
-void TpComm::handlePublishElement0x000161F3(Comm_Publish& package, int element_index, TpPublishElement& list_element)
-{
-    if(!encodePublishElement(package.element[element_index].data, MessageType_Int32_DoubleList_fields, list_element.data_ptr))
-    {
-        FST_ERROR("handlePublishElement0x000161F3: failed to encode motion_control axis_group feedback joints");
-    }
-}
-
-//"/publish/motion_control/axis_group/feedback/tcp_world_cartesian"
-void TpComm::handlePublishElement0x00009D8E(Comm_Publish& package, int element_index, TpPublishElement& list_element)
-{
-    if(!encodePublishElement(package.element[element_index].data, MessageType_Int32_DoubleList_fields, list_element.data_ptr))
-    {
-        FST_ERROR("handlePublishElementRegR: failed to encode");
-    }
-}
-
-//"/publish/motion_control/axis_group/feedback/tcp_base_cartesian"
-void TpComm::handlePublishElement0x00002D5E(Comm_Publish& package, int element_index, TpPublishElement& list_element)
-{
-    if(!encodePublishElement(package.element[element_index].data, MessageType_Int32_DoubleList_fields, list_element.data_ptr))
-    {
-        FST_ERROR("handlePublishElement0x00002D5E: failed to encode");
-    }
-}
-
-//"/publish/motion_control/axis_group/feedback/tcp_current_cartesian"
-void TpComm::handlePublishElement0x0000352E(Comm_Publish& package, int element_index, TpPublishElement& list_element)
-{
-    if(!encodePublishElement(package.element[element_index].data, MessageType_Int32_DoubleList_fields, list_element.data_ptr))
-    {
-        FST_ERROR("handlePublishElement0x0000352E: failed to encode");
-    }
-}
-
-//"/publish/motion_control/axis_group/current_coordinate"
-void TpComm::handlePublishElement0x00012C55(Comm_Publish& package, int element_index, TpPublishElement& list_element)
-{
-    if(!encodePublishElement(package.element[element_index].data, MessageType_Int32List_fields, list_element.data_ptr))
-    {
-        FST_ERROR("handlePublishElement0x00012C55: failed to encode");
-    }
-}
-
-//"/publish/motion_control/axis_group/current_tool"
-void TpComm::handlePublishElement0x00004BEC(Comm_Publish& package, int element_index, TpPublishElement& list_element)
-{
-    if(!encodePublishElement(package.element[element_index].data, MessageType_Int32List_fields, list_element.data_ptr))
-    {
-        FST_ERROR("handlePublishElement0x00004BEC: failed to encode");
-    }
-}
-
-//"/publish/motion_control/global_vel_ratio",	0x00012A4F,	"MessageType_Double",
-void TpComm::handlePublishElement0x00012A4F(Comm_Publish& package, int element_index, TpPublishElement& list_element)
-{
-    if(!encodePublishElement(package.element[element_index].data, MessageType_Double_fields, list_element.data_ptr))
-    {
-        FST_ERROR("handlePublishElement0x00012A4F: failed to encode");
-    }
-}
-
-//"/publish/motion_control/global_acc_ratio",	0x0001517F,	"MessageType_Double",
-void TpComm::handlePublishElement0x0001517F(Comm_Publish& package, int element_index, TpPublishElement& list_element)
-{
-    if(!encodePublishElement(package.element[element_index].data, MessageType_Double_fields, list_element.data_ptr))
-    {
-        FST_ERROR("handlePublishElement0x0001517F: failed to encode");
-    }
-}
-
-//"/publish/interpreter/program_status"
-void TpComm::handlePublishElement0x00001AF3(Comm_Publish& package, int element_index, TpPublishElement& list_element)
-{
-    if(!encodePublishElement(package.element[element_index].data, MessageType_String_Int32_fields, list_element.data_ptr))
-    {
-        FST_ERROR("handlePublishElement0x00001AF3: failed to encode");
-    }
-}
-
-//"/publish/interpreter/tp_program_status"
-void TpComm::handlePublishElement0x000042B3(Comm_Publish& package, int element_index, TpPublishElement& list_element)
-{
-    if(!encodePublishElement(package.element[element_index].data, MessageType_StringList_fields, list_element.data_ptr))
-    {
-        FST_ERROR("handlePublishElement0x000042B3: failed to encode");
-    }
-}
-
-//"/publish/controller/safety_board_status"
-void TpComm::handlePublishElement0x000123C3(Comm_Publish& package, int element_index, TpPublishElement& list_element)
-{
-    if(!encodePublishElement(package.element[element_index].data, MessageType_Uint32_fields, list_element.data_ptr))
-    {
-        FST_ERROR("handlePublishElement0x000123C3: failed to encode");
-    }
-}
-
-//"/publish/controller/io_board_status"
-void TpComm::handlePublishElement0x00006D93(Comm_Publish& package, int element_index, TpPublishElement& list_element)
-{
-    if(!encodePublishElement(package.element[element_index].data, MessageType_IoBoardStatusList_fields, list_element.data_ptr))
-    {
-        FST_ERROR("handlePublishElement0x00006D93: failed to encode");
-    }
-}
-
-void TpComm::handlePublishElement0x00011843(Comm_Publish& package, int element_index, TpPublishElement& list_element)
-{
-    if(!encodePublishElement(package.element[element_index].data, MessageType_ModbusClientCtrlStatusList_fields, list_element.data_ptr))
-    {
-        FST_ERROR("handlePublishElement0x00006D93: failed to encode");
+        LogProducer::error("publish", "handlePublishElement0x00007C5B: failed to encode");
     }
 }

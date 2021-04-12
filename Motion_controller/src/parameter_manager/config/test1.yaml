@@ -1,9 +1,0 @@
-family_b:
-  age: 20
-  name: Dave
-family_a:
-  parents:
-    - John
-    - Jane
-  name: Tom
-  num: 15

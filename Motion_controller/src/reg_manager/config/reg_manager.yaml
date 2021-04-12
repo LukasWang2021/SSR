@@ -15,5 +15,7 @@ hr_value_limit: 99999999.999
 mr_value_limit: 99999999 
 sr_value_limit: 255
 r_value_limit: 99999999.999 
-use_nvram: 1
+name_length_limit: 32
+comment_length_limit: 128
+sr_value_length_limit: 254
 #END

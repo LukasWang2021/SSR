@@ -2,7 +2,6 @@
 #include <iostream>
 #include <math.h>
 
-
 using namespace std;
 using namespace basic_alg;
 
@@ -998,5 +997,26 @@ inline double KinematicsRTM::getMostCloseJoint(double joint1, double joint2, dou
     {
         return joint1;
     }
+}
+
+bool KinematicsRTM::nearSingularPosition(const Joint &joint)
+{
+    if (fabs(joint.j5_) < 0.04363323)  // 5轴位于±2.5°范围内
+    {
+        return true;
+    }
+
+    if (fabs(joint.j3_ - 1.47112767) < 0.04363323) // 3轴在以84.28940686°为中心的±2.5°范围内
+    {
+        return true;
+    }
+
+    if (fabs(sin(joint.j2_) * 350 + sin(joint.j2_ + joint.j3_) * 35 - cos(joint.j2_ + joint.j3_) * 350 - 30) < 30)
+    {
+        // 碗部距1轴轴线距离30mm之内
+        return true;
+    }
+
+    return false;
 }
 

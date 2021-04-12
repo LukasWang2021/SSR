@@ -1,13 +1,12 @@
 #include "reg_manager_param.h"
 #include "common_file_path.h"
-#include "common_log.h"
 #include <string>
 
 
 using namespace fst_ctrl;
 
 RegManagerParam::RegManagerParam():
-    log_level_(fst_log::MSG_LEVEL_ERROR),
+    log_level_(0),
     file_path_(COMPONENT_PARAM_FILE_DIR)
 {
     file_path_ += "reg_manager.yaml";
@@ -38,7 +37,9 @@ bool RegManagerParam::loadParam()
         || !yaml_help_.getParam("mr_value_limit", mr_value_limit_)
         || !yaml_help_.getParam("sr_value_limit", sr_value_limit_)
         || !yaml_help_.getParam("r_value_limit", r_value_limit_)
-        || !yaml_help_.getParam("use_nvram", use_nvram_))
+        || !yaml_help_.getParam("name_length_limit", name_length_limit_)
+        || !yaml_help_.getParam("comment_length_limit", comment_length_limit_)
+        || !yaml_help_.getParam("sr_value_length_limit", sr_value_length_limit_))
     {
         return false;
     }

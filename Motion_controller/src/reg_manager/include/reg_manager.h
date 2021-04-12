@@ -4,7 +4,7 @@
 
 #include "reg_manager_param.h"
 #include "basic_alg_datatype.h"
-#include "common_log.h"
+#include "nvram_handler.h"
 #include "base_reg.h"
 #include "pr_reg.h"
 #include "hr_reg.h"
@@ -13,6 +13,7 @@
 #include "r_reg.h"
 #include <string>
 #include <memory.h>
+#include "log_manager_producer.h"
 
 namespace fst_ctrl
 {
@@ -69,11 +70,11 @@ public:
     std::vector<BaseRegSummary> getRRegValidList(int start_id, int size);    
 
     // rpc call
-    void* getPrRegValueById(int id);
-    void* getHrRegValueById(int id);
-    void* getMrRegValueById(int id);
-    void* getSrRegValueById(int id);
-    void* getRRegValueById(int id);
+    bool getPrRegValueById(int id, PrValue& pr_value);
+    bool getHrRegValueById(int id, HrValue& hr_value);
+    bool getMrRegValueById(int id, MrValue& mr_value);
+    bool getSrRegValueById(int id, SrValue& sr_value);
+    bool getRRegValueById(int id, RValue& r_value);
 
     // ipc call
     bool updatePrRegPos(PrRegDataIpc* data_ptr);
@@ -86,14 +87,18 @@ public:
     bool getMrRegValue(int id, MrRegDataIpc* data_ptr);
     bool getSrRegValue(int id, SrRegDataIpc* data_ptr);
     bool getRRegValue(int id, RRegDataIpc* data_ptr);
+
+    size_t getNameLengthLimit();
+    size_t getCommentLengthLimit();
+    size_t getSrValueLengthLimit();
+
+    ErrorCode backupNvram();
+    ErrorCode restoreNvram();
     
 private:
     RegManagerParam* param_ptr_;
-    fst_log::Logger* log_ptr_;
+    rtm_nvram::NvramHandler* nvram_ptr_;
     BaseReg* reg_ptr_[REG_TYPE_MAX];
-	
-	Nvram nvram_obj_ ;
-    int use_nvram_;
 };
 
 }

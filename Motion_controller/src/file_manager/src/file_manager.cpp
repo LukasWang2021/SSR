@@ -1,18 +1,9 @@
-/**********************************************
-Copyright © 2016 Foresight-Robotics Ltd. All rights reserved.
-File:       file_manager.cpp
-Author:     Feng.Wu
-Create:     12-Dec-2018
-Modify:     12-Dec-2018
-Summary:    dealing with files
-**********************************************/
-
 #include "file_manager.h"
 #include <string.h>
-#include <stdio.h>
+#include <iostream>
 
 using namespace std;
-using namespace fst_base;
+using namespace base_space;
 
 FileManager::FileManager()
 {
@@ -32,7 +23,7 @@ ErrorCode FileManager::readFileStream(uint8_t* &ptr, long &length, const char* f
     FILE *fp = fopen(file_path, "rb");
     if (fp == NULL)
     {
-        printf("Open file failed when reading: %s\n", file_path);
+        std::cout<<"Open file failed when reading: "<<file_path<<std::endl;
         return FILE_MANAGER_READ_FILE_FAILED;
     }
   
@@ -54,13 +45,12 @@ ErrorCode FileManager::writeFileStream(void* ptr, long length, const char* file_
     FILE *fp = fopen(file_path, "wb");
     if (fp == NULL)
     {
-        printf("Open file failed when writing: %s\n", file_path);
+        std::cout<<"Open file failed when writing: "<<file_path<<std::endl;
         return FILE_MANAGER_WRITE_FILE_FAILED;
     }
-
-    fwrite(ptr, length, 1, fp);
-    
+    fwrite(ptr, length, 1, fp);    
     fflush(fp);
+    
     fclose(fp);
     return SUCCESS;
 }

@@ -1,11 +1,25 @@
 #ifndef DYNAMIC_ALG_RTM_PARAM_H
 #define DYNAMIC_ALG_RTM_PARAM_H
 
+#include "yaml_help.h"
 
-#include "parameter_manager/parameter_manager_param_group.h"
+#define DYNAMIC_PARAM_0KG_FILE "dynamic_alg_rtm_0kg.yaml"
+#define DYNAMIC_PARAM_1KG_FILE "dynamic_alg_rtm_1kg.yaml"
+#define DYNAMIC_PARAM_3p5KG_FILE "dynamic_alg_rtm_3.5kg.yaml"
+#define DYNAMIC_PARAM_7KG_FILE "dynamic_alg_rtm_7kg.yaml"
 
 namespace basic_alg
 {
+
+typedef enum
+{
+    PARAM_0KG   = 0,
+    PARAM_1KG   = 1,
+    PARAM_3p5KG = 2,
+    PARAM_7KG   = 3,
+    PARAM_MAX   = 4,
+}DynParam;
+
 class DynamicAlgRTMParam
 {
 public:
@@ -16,25 +30,23 @@ public:
     bool saveParam();
 
     // param to load & save
-    int log_level_;
-    int number_of_links_;
-    int current_payload_id_;
-    double acc_scale_factor_;
-    std::vector<int> motor_power_;
-    std::vector<double> motor_torque_;
-    std::vector<double> gear_ratio_;
-    std::vector<double> max_torque_;
-    double ZZR1, FS1, FV1, XXR2, XY2, XZR2, YZ2, ZZR2, MXR2, MY2, FS2, FV2, XXR3, XYR3, XZ3, YZ3, ZZR3, MXR3, MYR3, Im3, FS3, FV3,
-           XXR4, XY4, XZ4, YZ4, ZZR4, MX4, MYR4, Im4, FS4, FV4, XXR5, XY5, XZ5, YZ5, ZZR5, MX5, MYR5, Im5, FS5, FV5,
-           XXR6, XY6, XZ6, YZ6, ZZ6, MX6, MY6, Im6, FS6, FV6;//puma, 52 parameters.
+    std::vector<int> motor_power_[PARAM_MAX];
+    std::vector<double> motor_torque_[PARAM_MAX];
+    std::vector<double> gear_ratio_[PARAM_MAX];
+    double ZZR1[PARAM_MAX], FS1[PARAM_MAX], FV1[PARAM_MAX], 
+           XXR2[PARAM_MAX], XY2[PARAM_MAX], XZR2[PARAM_MAX], YZ2[PARAM_MAX], ZZR2[PARAM_MAX], MXR2[PARAM_MAX], MY2[PARAM_MAX], FS2[PARAM_MAX], FV2[PARAM_MAX], 
+           XXR3[PARAM_MAX], XYR3[PARAM_MAX], XZ3[PARAM_MAX], YZ3[PARAM_MAX], ZZR3[PARAM_MAX], MXR3[PARAM_MAX], MYR3[PARAM_MAX], Im3[PARAM_MAX], FS3[PARAM_MAX], FV3[PARAM_MAX],
+           XXR4[PARAM_MAX], XY4[PARAM_MAX], XZ4[PARAM_MAX], YZ4[PARAM_MAX], ZZR4[PARAM_MAX], MX4[PARAM_MAX], MYR4[PARAM_MAX], Im4[PARAM_MAX], FS4[PARAM_MAX], FV4[PARAM_MAX], 
+           XXR5[PARAM_MAX], XY5[PARAM_MAX], XZ5[PARAM_MAX], YZ5[PARAM_MAX], ZZR5[PARAM_MAX], MX5[PARAM_MAX], MYR5[PARAM_MAX], Im5[PARAM_MAX], FS5[PARAM_MAX], FV5[PARAM_MAX],
+           XXR6[PARAM_MAX], XY6[PARAM_MAX], XZ6[PARAM_MAX], YZ6[PARAM_MAX], ZZ6[PARAM_MAX], MX6[PARAM_MAX], MY6[PARAM_MAX], Im6[PARAM_MAX], FS6[PARAM_MAX], FV6[PARAM_MAX];//puma, 52 parameters.
 
 private:
-    fst_parameter::ParamGroup yaml_type_;
-    std::string type_file_path_;
-    std::string type_file_name_;
-    
-    fst_parameter::ParamGroup yaml_help_;
+    base_space::YamlHelp yaml_help_;
     std::string file_path_;
+    std::string file_path_0kg_param_;
+    std::string file_path_1kg_param_;
+    std::string file_path_3p5kg_param_;
+    std::string file_path_7kg_param_;
 };
 
 }

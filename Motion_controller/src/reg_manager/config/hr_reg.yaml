@@ -1,241 +1,51 @@
 HR1:
     id: 1
-    is_valid: true
-    name: default
-    comment: default
-    group_id: -1
-    joint_pos1: 0.0
-    joint_pos2: 0.0 
-    joint_pos3: 0.0 
-    joint_pos4: 0.0 
-    joint_pos5: 0.0 
-    joint_pos6: 0.0 
-    joint_pos7: 0.0 
-    joint_pos8: 0.0 
-    joint_pos9: 0.0 
-    diff_pos1: 0.0
-    diff_pos2: 0.0 
-    diff_pos3: 0.0 
-    diff_pos4: 0.0 
-    diff_pos5: 0.0 
-    diff_pos6: 0.0 
-    diff_pos7: 0.0 
-    diff_pos8: 0.0 
-    diff_pos9: 0.0 
+    is_valid: false
+    name: ""
+    comment: ""
 HR2:
     id: 2
-    is_valid: true
-    name: default
-    comment: default
-    group_id: -1
-    joint_pos1: 0.0
-    joint_pos2: 0.0 
-    joint_pos3: 0.0 
-    joint_pos4: 0.0 
-    joint_pos5: 0.0 
-    joint_pos6: 0.0 
-    joint_pos7: 0.0 
-    joint_pos8: 0.0 
-    joint_pos9: 0.0 
-    diff_pos1: 0.0
-    diff_pos2: 0.0 
-    diff_pos3: 0.0 
-    diff_pos4: 0.0 
-    diff_pos5: 0.0 
-    diff_pos6: 0.0 
-    diff_pos7: 0.0 
-    diff_pos8: 0.0 
-    diff_pos9: 0.0 
+    is_valid: false
+    name: ""
+    comment: ""
 HR3:
     id: 3
     is_valid: false
-    name: default
-    comment: default
-    group_id: -1
-    joint_pos1: 0.0
-    joint_pos2: 0.0 
-    joint_pos3: 0.0 
-    joint_pos4: 0.0 
-    joint_pos5: 0.0 
-    joint_pos6: 0.0 
-    joint_pos7: 0.0 
-    joint_pos8: 0.0 
-    joint_pos9: 0.0 
-    diff_pos1: 0.0
-    diff_pos2: 0.0 
-    diff_pos3: 0.0 
-    diff_pos4: 0.0 
-    diff_pos5: 0.0 
-    diff_pos6: 0.0 
-    diff_pos7: 0.0 
-    diff_pos8: 0.0 
-    diff_pos9: 0.0 
+    name: ""
+    comment: ""
 HR4:
     id: 4
     is_valid: false
-    name: default
-    comment: default
-    group_id: -1
-    joint_pos1: 0.0
-    joint_pos2: 0.0 
-    joint_pos3: 0.0 
-    joint_pos4: 0.0 
-    joint_pos5: 0.0 
-    joint_pos6: 0.0 
-    joint_pos7: 0.0 
-    joint_pos8: 0.0 
-    joint_pos9: 0.0 
-    diff_pos1: 0.0
-    diff_pos2: 0.0 
-    diff_pos3: 0.0 
-    diff_pos4: 0.0 
-    diff_pos5: 0.0 
-    diff_pos6: 0.0 
-    diff_pos7: 0.0 
-    diff_pos8: 0.0 
-    diff_pos9: 0.0 
+    name: ""
+    comment: ""
 HR5:
     id: 5
     is_valid: false
-    name: default
-    comment: default
-    group_id: -1
-    joint_pos1: 0.0
-    joint_pos2: 0.0 
-    joint_pos3: 0.0 
-    joint_pos4: 0.0 
-    joint_pos5: 0.0 
-    joint_pos6: 0.0 
-    joint_pos7: 0.0 
-    joint_pos8: 0.0 
-    joint_pos9: 0.0 
-    diff_pos1: 0.0
-    diff_pos2: 0.0 
-    diff_pos3: 0.0 
-    diff_pos4: 0.0 
-    diff_pos5: 0.0 
-    diff_pos6: 0.0 
-    diff_pos7: 0.0 
-    diff_pos8: 0.0 
-    diff_pos9: 0.0 
+    name: ""
+    comment: ""
 HR6:
     id: 6
     is_valid: false
-    name: default
-    comment: default
-    group_id: -1
-    joint_pos1: 0.0
-    joint_pos2: 0.0 
-    joint_pos3: 0.0 
-    joint_pos4: 0.0 
-    joint_pos5: 0.0 
-    joint_pos6: 0.0 
-    joint_pos7: 0.0 
-    joint_pos8: 0.0 
-    joint_pos9: 0.0 
-    diff_pos1: 0.0
-    diff_pos2: 0.0 
-    diff_pos3: 0.0 
-    diff_pos4: 0.0 
-    diff_pos5: 0.0 
-    diff_pos6: 0.0 
-    diff_pos7: 0.0 
-    diff_pos8: 0.0 
-    diff_pos9: 0.0 
+    name: ""
+    comment: ""
 HR7:
     id: 7
     is_valid: false
-    name: default
-    comment: default
-    group_id: -1
-    joint_pos1: 0.0
-    joint_pos2: 0.0 
-    joint_pos3: 0.0 
-    joint_pos4: 0.0 
-    joint_pos5: 0.0 
-    joint_pos6: 0.0 
-    joint_pos7: 0.0 
-    joint_pos8: 0.0 
-    joint_pos9: 0.0 
-    diff_pos1: 0.0
-    diff_pos2: 0.0 
-    diff_pos3: 0.0 
-    diff_pos4: 0.0 
-    diff_pos5: 0.0 
-    diff_pos6: 0.0 
-    diff_pos7: 0.0 
-    diff_pos8: 0.0 
-    diff_pos9: 0.0 
+    name: ""
+    comment: ""
 HR8:
     id: 8
     is_valid: false
-    name: default
-    comment: default
-    group_id: -1
-    joint_pos1: 0.0
-    joint_pos2: 0.0 
-    joint_pos3: 0.0 
-    joint_pos4: 0.0 
-    joint_pos5: 0.0 
-    joint_pos6: 0.0 
-    joint_pos7: 0.0 
-    joint_pos8: 0.0 
-    joint_pos9: 0.0 
-    diff_pos1: 0.0
-    diff_pos2: 0.0 
-    diff_pos3: 0.0 
-    diff_pos4: 0.0 
-    diff_pos5: 0.0 
-    diff_pos6: 0.0 
-    diff_pos7: 0.0 
-    diff_pos8: 0.0 
-    diff_pos9: 0.0 
+    name: ""
+    comment: ""
 HR9:
     id: 9
     is_valid: false
-    name: default
-    comment: default
-    group_id: -1
-    joint_pos1: 0.0
-    joint_pos2: 0.0 
-    joint_pos3: 0.0 
-    joint_pos4: 0.0 
-    joint_pos5: 0.0 
-    joint_pos6: 0.0 
-    joint_pos7: 0.0 
-    joint_pos8: 0.0 
-    joint_pos9: 0.0 
-    diff_pos1: 0.0
-    diff_pos2: 0.0 
-    diff_pos3: 0.0 
-    diff_pos4: 0.0 
-    diff_pos5: 0.0 
-    diff_pos6: 0.0 
-    diff_pos7: 0.0 
-    diff_pos8: 0.0 
-    diff_pos9: 0.0 
+    name: ""
+    comment: ""
 HR10:
     id: 10
     is_valid: false
-    name: default
-    comment: default
-    group_id: -1
-    joint_pos1: 0.0
-    joint_pos2: 0.0 
-    joint_pos3: 0.0 
-    joint_pos4: 0.0 
-    joint_pos5: 0.0 
-    joint_pos6: 0.0 
-    joint_pos7: 0.0 
-    joint_pos8: 0.0 
-    joint_pos9: 0.0 
-    diff_pos1: 0.0
-    diff_pos2: 0.0 
-    diff_pos3: 0.0 
-    diff_pos4: 0.0 
-    diff_pos5: 0.0 
-    diff_pos6: 0.0 
-    diff_pos7: 0.0 
-    diff_pos8: 0.0 
-    diff_pos9: 0.0 
+    name: ""
+    comment: ""
 #END

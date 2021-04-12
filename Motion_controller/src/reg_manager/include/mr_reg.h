@@ -2,37 +2,36 @@
 #define MR_REG_H
 
 #include "base_reg.h"
-#include "parameter_manager/parameter_manager_param_group.h"
 #include "reg_manager_param.h"
-#include "common_log.h"
+#include "nvram_handler.h"
+#include "yaml_help.h"
+#include "log_manager_producer.h"
 
 namespace fst_ctrl
 {
 typedef struct
 {
-	int id;
 	int value;
-	char cs[2];
-}NVRamMrRegData;
+}MrValue;
 
 typedef struct
 {
     int id;
     std::string name;
     std::string comment;
-    int value;
+    MrValue value;
 }MrRegData;
 
 typedef struct
 {
     int id;
-    int value;
+    MrValue value;
 }MrRegDataIpc;
 
 class MrReg:public BaseReg
 {
 public:
-    MrReg(RegManagerParam* param_ptr);
+    MrReg(RegManagerParam* param_ptr, rtm_nvram::NvramHandler* nvram_ptr);
     virtual ~MrReg();
 
     virtual ErrorCode init();
@@ -41,24 +40,20 @@ public:
     virtual ErrorCode getReg(int id, void* data_ptr);
     virtual ErrorCode updateReg(void* data_ptr);
     virtual ErrorCode moveReg(int expect_id, int original_id);
-    void* getRegValueById(int id);
+    bool getRegValueById(int id, MrValue& mr_value);
     bool updateRegValue(MrRegDataIpc* data_ptr);
     bool getRegValue(int id, MrRegDataIpc* data_ptr);
     
 private:
     RegManagerParam* param_ptr_;
+    rtm_nvram::NvramHandler* nvram_ptr_;
     std::string file_path_;
-    fst_parameter::ParamGroup yaml_help_;
-    std::vector<int> data_list_;
-    fst_log::Logger* log_ptr_;
-
-	Nvram nvram_obj_ ;
-    int use_nvram_;
+    std::string file_path_modified_;
+    base_space::YamlHelp yaml_help_;
 
     MrReg();
-    bool createYaml();
     bool readAllRegDataFromYaml();
-    bool writeRegDataToYaml(const BaseRegData& base_data, const int& data);
+    bool writeRegDataToYaml(const BaseRegData& base_data);
     std::string getRegPath(int reg_id);
 };
 

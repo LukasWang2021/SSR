@@ -1,6 +1,11 @@
 #ifndef LOCAL_IP_HPP
 #define LOCAL_IP_HPP
 
+/**
+ * @file local_ip.h
+ * @brief The file includes the method of acquiring local ip address.
+ * @author zhengyu.shen
+ */
 #include <unistd.h>
 #include <string>
 #include <string.h>
@@ -10,13 +15,21 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 
-using namespace std;
-
-namespace fst_ip
+/**
+ * @brief base_space includes all foundational definitions and realizations.
+ */
+namespace base_space
 {
+/**
+ * @brief LocalIP provides a way to get local ip address.
+ */
 class LocalIP
 {
 public:
+    /**
+     * @brief Constructor of the class.
+     * @details Try get local ip address when constructing.
+     */    
     LocalIP()
     {
         int fd = socket(AF_INET, SOCK_DGRAM, 0);
@@ -33,16 +46,21 @@ public:
     
         ip_ = inet_ntoa(((struct sockaddr_in*) & ifr.ifr_addr)->sin_addr);
     }
-
+    /**
+     * @brief Destructor of the class.
+     */
     ~LocalIP(){}
-
-    string get()
+    /**
+     * @brief Get the local ip address in string format.
+     * @return Local ip address.
+     */
+    std::string get()
     {
         return ip_;
     }
 
 private:
-    string ip_;
+    std::string ip_;    /**< Ip address.*/
 };
 }
 #endif

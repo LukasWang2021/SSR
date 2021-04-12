@@ -1,51 +1,89 @@
 #include "controller.h"
-#include "error_monitor.h"
+#include "system/core_comm_system.h"
+#include "common/core_comm_servo_datatype.h"
 #include <unistd.h>
 #include <iostream>
-#include "serverAlarmApi.h"
-#include "fst_safety_device.h"
-#include <sstream>
-#include <sys/syscall.h>
 
-using namespace fst_ctrl;
-using namespace fst_base;
-using namespace fst_comm;
-using namespace fst_hal;
 using namespace std;
-using namespace fst_mc;
+using namespace user_space;
+using namespace core_comm_space;
+using namespace servo_comm_space;
+using namespace log_space;
+using namespace base_space;
+using namespace system_model_space;
+using namespace hal_space;
 
 Controller* Controller::instance_ = NULL;
+uint32_t* g_isr_ptr_ = NULL;
 
 Controller::Controller():
-    log_ptr_(NULL),
-    param_ptr_(NULL),
-    process_comm_ptr_(NULL),
-    is_exit_(false)
-{
-    log_ptr_ = new fst_log::Logger();
-    param_ptr_ = new ControllerParam();
-    FST_LOG_INIT("Controller");
-    FST_LOG_SET_LEVEL((fst_log::MessageLevel)param_ptr_->log_level_);
+    is_exit_(false),
+    servo_1001_ptr_(NULL),
+    cpu_comm_ptr_(NULL),
+    io_digital_dev_ptr_(NULL),
+    io_analog_dev_ptr_(NULL)
+{    
+    for(size_t i = 0; i < AXIS_NUM; ++i)
+    {
+        servo_comm_ptr_[i] = NULL;
+        axis_ptr_[i] = NULL;
+    }
+
+    config_ptr_ = new ControllerConfig();
 }
 
 
 Controller::~Controller()
 {
+    rt_thread_.join();
     routine_thread_.join();
-    heartbeat_thread_.join();
-    ServerAlarmApi::GetInstance()->clearUp();
-    
-    if(log_ptr_ != NULL)
+
+    if (servo_1001_ptr_ != NULL)
     {
-        delete log_ptr_;
-        log_ptr_ = NULL;
+        delete servo_1001_ptr_;
+        servo_1001_ptr_ = NULL;
     }
-    
-    if(param_ptr_ != NULL)
+   
+    for(size_t i = 0; i < AXIS_NUM; ++i)
     {
-        delete param_ptr_;
-        param_ptr_ = NULL;
-    }    
+        if (axis_ptr_[i] != NULL)
+        {
+            size_t dot_pos = axes_config_[i].actuator.servo.find_first_of('.');
+            if(dot_pos != std::string::npos)
+            {
+                std::string name_str = axes_config_[i].actuator.servo.substr(0, dot_pos);
+                if(name_str.compare("servo_1000") == 0)
+                {
+                    axis_space::Axis1000* axis_ptr = static_cast<axis_space::Axis1000*>(axis_ptr_[i]);
+                    delete axis_ptr;
+                    axis_ptr_[i] = NULL;
+                }
+                else if (name_str.compare("servo_1001") == 0)
+                {
+                    axis_space::Axis1001* axis_ptr = static_cast<axis_space::Axis1001*>(axis_ptr_[i]);
+                    delete axis_ptr;
+                    axis_ptr_[i] = NULL;
+                }
+            }
+        }
+    }
+
+    if(config_ptr_ != NULL)
+    {
+        delete config_ptr_;
+        config_ptr_ = NULL;
+    }
+
+    if(io_digital_dev_ptr_ != NULL)
+    {
+        delete io_digital_dev_ptr_;
+        io_digital_dev_ptr_ = NULL;
+    }
+    if(io_analog_dev_ptr_ != NULL)
+    {
+        delete io_analog_dev_ptr_;
+        io_analog_dev_ptr_ = NULL;
+    }
 }
 
 Controller* Controller::getInstance()
@@ -58,206 +96,85 @@ Controller* Controller::getInstance()
 }
 
 ErrorCode Controller::init()
-{
-    FST_INFO("Controller::init()");
-    if(!param_ptr_->loadParam())
-    {
-        recordLog(CONTROLLER_LOAD_PARAM_FAILED, "Failed to load controller component parameters");
-        return CONTROLLER_LOAD_PARAM_FAILED;
-    } 
-    FST_LOG_SET_LEVEL((fst_log::MessageLevel)param_ptr_->log_level_);   
+{   
+    uint32_t isr = 0;
+    log_manager_.init("controller", &isr);
+    ErrorCode error_code = bootUp();
+    if(SUCCESS != error_code)
+        return error_code;
+
+    /********************init self components***********************************/
+    io_digital_dev_ptr_ = new hal_space::Io1000();
+    io_digital_dev_ptr_->init(config_ptr_->dio_exist_);
+    dev_ptr_list.push_back(io_digital_dev_ptr_);
+
+    io_analog_dev_ptr_ = new hal_space::IoAnalog();
+    io_analog_dev_ptr_->init(config_ptr_->aio_exist_);
+    dev_ptr_list.push_back(io_analog_dev_ptr_);
     
-    ServerAlarmApi::GetInstance()->setEnable(param_ptr_->enable_log_service_);
-    recordLog("Controller initialization start");
-    
-    virtual_core1_.init(log_ptr_, param_ptr_);
-
-    ErrorCode error_code;
-    error_code = device_manager_.init();
-    if(error_code != SUCCESS)
+    for (size_t i = 0; i < axes_config_.size(); ++i)
     {
-        recordLog(CONTROLLER_INIT_OBJECT_FAILED, error_code, "Controller device manager initialization failed");
-        return CONTROLLER_INIT_OBJECT_FAILED;
-    }
-
-    error_code = tool_manager_.init();
-    if(error_code != SUCCESS)
-    {
-        recordLog(CONTROLLER_INIT_OBJECT_FAILED, error_code, "Controller tool manager initialization failed");
-        return CONTROLLER_INIT_OBJECT_FAILED;
-    }
-
-    error_code = coordinate_manager_.init();
-    if(error_code != SUCCESS)
-    {
-        recordLog(CONTROLLER_INIT_OBJECT_FAILED, error_code, "Controller coordinate manager initialization failed");
-        return CONTROLLER_INIT_OBJECT_FAILED;
-    }
-
-    error_code = reg_manager_.init();
-    if(error_code != SUCCESS)
-    {
-        recordLog(CONTROLLER_INIT_OBJECT_FAILED, error_code, "Controller reg manager initialization failed");
-        return CONTROLLER_INIT_OBJECT_FAILED;
-    }
-
-    process_comm_ptr_ = ProcessComm::getInstance();
-    error_code = ProcessComm::getInitErrorCode();
-    if(error_code != SUCCESS)
-    {
-        recordLog(CONTROLLER_INIT_OBJECT_FAILED, error_code, "Controller process comm initialization failed");
-        return CONTROLLER_INIT_OBJECT_FAILED;
-    }
-
-    error_code = process_comm_ptr_->getControllerServerPtr()->init();
-    if(error_code != SUCCESS)
-    {
-        recordLog(CONTROLLER_INIT_OBJECT_FAILED, error_code, "Controller process comm server initialization failed");
-        return CONTROLLER_INIT_OBJECT_FAILED;
-    }
-
-    error_code = process_comm_ptr_->getControllerClientPtr()->init(process_comm_ptr_->getControllerServerPtr());
-    if(error_code != SUCCESS)
-    {
-        recordLog(CONTROLLER_INIT_OBJECT_FAILED, error_code, "Controller process comm client(controller) initialization failed");
-        return CONTROLLER_INIT_OBJECT_FAILED;
-    }
-
-    error_code = process_comm_ptr_->getHeartbeatClientPtr()->init();
-    if(error_code != SUCCESS)
-    {
-        recordLog(CONTROLLER_INIT_OBJECT_FAILED, error_code, "Controller process comm heartbeat client initialization failed");
-        return CONTROLLER_INIT_OBJECT_FAILED;
-    }
-
-    error_code = process_comm_ptr_->getControllerServerPtr()->open();
-    if(error_code != SUCCESS)
-    {
-        recordLog(CONTROLLER_INIT_OBJECT_FAILED, error_code, "Controller process comm server(controller) initialization failed");
-        return CONTROLLER_INIT_OBJECT_FAILED;
-    }
-
-    error_code = io_manager_.init(&device_manager_);
-    if(error_code != SUCCESS)
-    {
-        recordLog(CONTROLLER_INIT_OBJECT_FAILED, error_code, "Controller IO mananger initialization failed");
-        return CONTROLLER_INIT_OBJECT_FAILED;
-    }
-
-    error_code = io_mapping_.init(&io_manager_);
-    if(error_code != SUCCESS)
-    {
-        recordLog(CONTROLLER_INIT_OBJECT_FAILED, error_code, "Controller IO mapping initialization failed");
-        return CONTROLLER_INIT_OBJECT_FAILED;
-    }
-
-    //use macro to launch program
-    program_launching_.init(&io_mapping_, process_comm_ptr_->getControllerClientPtr());
-
-    error_code = system_manager_.init();
-    if(error_code != SUCCESS)
-    {
-        recordLog(CONTROLLER_INIT_OBJECT_FAILED, error_code, "Controller system manager initialization failed");
-        return CONTROLLER_INIT_OBJECT_FAILED;
-    }
-
-    FST_INFO("init param_manager_");
-    error_code = param_manager_.init();
-    if(error_code != SUCCESS)
-    {
-        recordLog(CONTROLLER_INIT_OBJECT_FAILED, error_code, "Controller param manager initialization failed");
-        return CONTROLLER_INIT_OBJECT_FAILED;
-    }
-
-    FST_INFO("init state_machine_");
-    state_machine_.init(log_ptr_, param_ptr_, &motion_control_, &virtual_core1_, 
-                        process_comm_ptr_->getControllerClientPtr(), &device_manager_, &io_mapping_, &program_launching_);
-    ipc_.init(log_ptr_, param_ptr_, process_comm_ptr_->getControllerServerPtr(), 
-                process_comm_ptr_->getControllerClientPtr(), &reg_manager_, &state_machine_, &device_manager_, 
-                &io_mapping_, &motion_control_, &io_manager_);
-    rpc_.init(log_ptr_, param_ptr_, &publish_, &virtual_core1_, &tp_comm_, &state_machine_, 
-        &tool_manager_, &coordinate_manager_, &reg_manager_, &device_manager_, &motion_control_,
-        process_comm_ptr_->getControllerClientPtr(), &io_mapping_, &io_manager_,&program_launching_, &file_manager_,
-        &system_manager_, &param_manager_);
-    publish_.init(log_ptr_, param_ptr_, &virtual_core1_, &tp_comm_, &state_machine_, &motion_control_, &reg_manager_,
-                    process_comm_ptr_->getControllerClientPtr(), &io_mapping_, &device_manager_, &io_manager_);
-
-    FST_INFO("init motion_control_");
-    error_code = motion_control_.init(&device_manager_, NULL, &coordinate_manager_, &tool_manager_, ErrorMonitor::instance());
-    if(error_code != SUCCESS)
-    {
-        recordLog(CONTROLLER_INIT_OBJECT_FAILED, error_code, "Controller motion control initialization failed");
-        return CONTROLLER_INIT_OBJECT_FAILED;
-    }
-
-    // wait state mathine of motion control start work 
-    usleep(100 * 1000);
-    FST_INFO("init check offset");
-    error_code = state_machine_.checkOffsetState();
-    if(error_code != SUCCESS)
-    {
-        FST_ERROR("controller init check offset failed");
-    }  
-	
-    // get the modbus_manager_ptr from device_manager.
-    std::vector<fst_hal::DeviceInfo> device_list = device_manager_.getDeviceList();
-    for(unsigned int i = 0; i < device_list.size(); ++i)
-    {
-        if (device_list[i].type == DEVICE_TYPE_MODBUS)
+        axis_model_ptr_[i] = model_manager_.getAxisModel(axes_config_[i].axis_id);
+        
+        size_t dot_pos = axes_config_[i].actuator.servo.find_first_of('.');
+        if(dot_pos != std::string::npos)
         {
-            BaseDevice* device_ptr = device_manager_.getDevicePtrByDeviceIndex(device_list[i].index);
-            if(device_ptr == NULL || modbus_manager_ptr_ != NULL) break;
-            modbus_manager_ptr_ = static_cast<ModbusManager*>(device_ptr);
-        } 
+            std::string name_str = axes_config_[i].actuator.servo.substr(0, dot_pos);
+            if(name_str.compare("servo_1000") == 0)
+            {
+                LogProducer::info("main", "Controller new axis[%d]: pmsm", axes_config_[i].axis_id);
+                axis_ptr_[i] = new axis_space::Axis1000(axes_config_[i].axis_id);
+            }
+            else if (name_str.compare("servo_1001") == 0)
+            {
+                LogProducer::info("main", "Controller new axis[%d]: stepper", axes_config_[i].axis_id);
+                axis_ptr_[i] = new axis_space::Axis1001(axes_config_[i].axis_id);
+            }
+            else
+            {
+                LogProducer::error("main", "Controller new axis[%d] failed", axes_config_[i].axis_id);
+                return CONTROLLER_INIT_FAILED;
+            }
+        }
+        //download servo parameters
+        if (!downloadServoParams(i))
+            return CONTROLLER_INIT_FAILED;
+        
+        cpu_comm_ptr_ = servo_1001_ptr_->getCpuCommPtr();
+        assert(cpu_comm_ptr_ != NULL);
+        bool ret = axis_ptr_[i]->init(cpu_comm_ptr_, servo_comm_ptr_[i], axis_model_ptr_[i], &(axes_config_[i]));
+        if (!ret)
+        {
+            LogProducer::error("main", "Controller axis[%d] initialization failed", axes_config_[i].axis_id);
+            return ret;
+        }
+    }
+   
+    //setting ISR as soon
+    int32_t size = 0;
+    g_isr_ptr_ = (uint32_t*)axis_ptr_[0]->rtmReadAxisFdbPdoPtr(&size);
+
+	error_code = tp_comm_.init();
+    if(error_code != SUCCESS)
+    {
+        LogProducer::error("main", "Controller TP comm initialization failed");
+        return error_code;
     }
 
-    if(!heartbeat_thread_.run(&heartbeatThreadFunc, this, param_ptr_->heartbeat_thread_priority_))
+	publish_.init(&tp_comm_, cpu_comm_ptr_, axis_ptr_, io_digital_dev_ptr_, io_analog_dev_ptr_);
+	rpc_.init(&tp_comm_, &publish_, cpu_comm_ptr_, servo_comm_ptr_, axis_ptr_, axis_model_ptr_, &file_manager_, io_digital_dev_ptr_, io_analog_dev_ptr_);
+
+    if(!routine_thread_.run(&controllerRoutineThreadFunc, this, config_ptr_->routine_thread_priority_))
     {
-        recordLog(CONTROLLER_CREATE_ROUTINE_THREAD_FAILED, "Controller heartbeat thread failed to create routine thread");
         return CONTROLLER_CREATE_ROUTINE_THREAD_FAILED;
-    }
+    } 
 
-	prgRoutine(&state_machine_, 
-					&motion_control_, 
-					&reg_manager_, 
-					 &io_mapping_, &io_manager_, 
-					  modbus_manager_ptr_);
-		
-    if(!routine_thread_.run(&controllerRoutineThreadFunc, this, param_ptr_->routine_thread_priority_))
+    if(!rt_thread_.run(&controllerRealTimeThreadFunc, this, config_ptr_->realtime_thread_priority_))
     {
-        recordLog(CONTROLLER_CREATE_HEARTBEAT_THREAD_FAILED, "Controller rountine thread failed to create heartbeat thread");
-        return CONTROLLER_CREATE_HEARTBEAT_THREAD_FAILED;
-    }
+        return CONTROLLER_CREATE_RT_THREAD_FAILED;
+    }    
 
-//    if(!prg_thread_.run(&prgThreadFunc, this, param_ptr_->prg_thread_priority_))
-//    {
-//        recordLog(CONTROLLER_CREATE_PRG_THREAD_FAILED, "Controller rountine thread failed to create prg thread");
-//        return CONTROLLER_CREATE_PRG_THREAD_FAILED;
-//    }
-
-	InterpreterControl intprt_ctrl ;
-	intprt_ctrl.cmd = fst_base::INTERPRETER_SERVER_CMD_LOAD ;
-	parseCtrlComand(intprt_ctrl, ""); 
-
-
-    FST_INFO("init tp_comm_");
-    error_code = tp_comm_.init();
-    if(error_code != SUCCESS)
-    {
-        recordLog(CONTROLLER_INIT_OBJECT_FAILED, error_code, "Controller TP comm initialization failed");
-        return CONTROLLER_INIT_OBJECT_FAILED;
-    }
-
-    error_code = tp_comm_.open();
-    if(error_code != SUCCESS)
-    {
-        recordLog(CONTROLLER_INIT_OBJECT_FAILED, error_code, "Controller TP comm open initialization failed");
-        return CONTROLLER_INIT_OBJECT_FAILED;
-    }
-
-    state_machine_.setState(true);
-    isOkLed();
-    recordLog("Controller initialization success");
+    LogProducer::warn("main", "Controller init success");
     return SUCCESS;
 }
 
@@ -273,110 +190,276 @@ void Controller::setExit()
 
 void Controller::runRoutineThreadFunc()
 {
-    state_machine_.processStateMachine();
+    usleep(config_ptr_->routine_cycle_time_);
+	publish_.processPublish();
+    processDevice();
+    uploadErrorCode();
+}
+
+void Controller::runRtThreadFunc()
+{
+    usleep(config_ptr_->realtime_cycle_time_);
+ 
+    axis_ptr_[13]->processFdbPdoCurrent(&fdb_current_time_stamp_);
+    axis_ptr_[0]->processFdbPdoSync(fdb_current_time_stamp_);
+    axis_ptr_[1]->processFdbPdoSync(fdb_current_time_stamp_);
+    axis_ptr_[2]->processFdbPdoSync(fdb_current_time_stamp_);
+    axis_ptr_[3]->processFdbPdoSync(fdb_current_time_stamp_);
+    axis_ptr_[4]->processFdbPdoSync(fdb_current_time_stamp_);
+    axis_ptr_[5]->processFdbPdoSync(fdb_current_time_stamp_);
+    axis_ptr_[6]->processFdbPdoSync(fdb_current_time_stamp_);
+    axis_ptr_[7]->processFdbPdoSync(fdb_current_time_stamp_);
+    axis_ptr_[8]->processFdbPdoSync(fdb_current_time_stamp_);
+    axis_ptr_[9]->processFdbPdoSync(fdb_current_time_stamp_);
+    axis_ptr_[10]->processFdbPdoSync(fdb_current_time_stamp_);
+    axis_ptr_[11]->processFdbPdoSync(fdb_current_time_stamp_);
+    axis_ptr_[12]->processFdbPdoSync(fdb_current_time_stamp_);
+
+    for (size_t i = 0; i < AXIS_NUM; ++i)
+    {
+        axis_ptr_[i]->processStateMachine();
+    }
     rpc_.processRpc();
-    ipc_.processIpc();
-    publish_.processPublish();
-    usleep(param_ptr_->routine_cycle_time_);
 }
 
-void Controller::runHeartbeatThreadFunc()
+
+ErrorCode Controller::bootUp(void)
 {
-    usleep(param_ptr_->heartbeat_cycle_time_);
-    process_comm_ptr_->getHeartbeatClientPtr()->sendHeartbeat();
+    //load self parameters
+    if(!config_ptr_->load()){
+        LogProducer::error("main", "Failed to load controller config files");
+		return CONTROLLER_INIT_FAILED;
+    }
+    LogProducer::setLoggingLevel((MessageLevel)config_ptr_->log_level_);
+
+    //loading configuration by model_manager
+    bool ret = model_manager_.init();
+    if(!ret)
+    {
+        LogProducer::error("main", "Controller model manager initialization failed");
+        return CONTROLLER_INIT_FAILED;
+    }
+    if(!model_manager_.load())
+    {
+        LogProducer::error("main", "Controller model manager load failed");
+        return CONTROLLER_INIT_FAILED;
+    }
+    AxesConfig* axes_config_ptr = model_manager_.getAxesConfig();
+    if (!axes_config_ptr->load())
+    {
+        LogProducer::error("main", "Controller axes config load failed");
+        return CONTROLLER_INIT_FAILED;
+    }
+    axes_config_ = axes_config_ptr->getRef();
+
+    //boot up
+    ErrorCode error_code;
+    error_code = core_comm_system_.initAsMaster();
+    if(error_code != SUCCESS)
+    {
+        return error_code;
+    }
+
+    error_code = core_comm_system_.bootAsMaster();
+    if(error_code != SUCCESS)
+    {
+        return error_code;
+    }   
+
+    while(true)
+    {
+        if(core_comm_system_.isAllSlaveBooted())
+        {
+            break;
+        }
+        LogProducer::info("main", "wait all slaves booted");
+        sleep(1);
+    }
+
+    // get configuration
+    size_t from_block_number, to_block_number;
+    CommBlockData_t* from_block_ptr = core_comm_system_.getFromCommBlockDataPtrList(from_block_number);
+    CommBlockData_t* to_block_ptr = core_comm_system_.getToCommBlockDataPtrList(to_block_number);
+
+    // init servo1001
+    servo_1001_ptr_ = new servo_comm_space::Servo1001(1, 2);
+    assert(servo_1001_ptr_ != NULL);
+    
+    if(servo_1001_ptr_->initServoCpuComm(from_block_ptr, from_block_number, to_block_ptr, to_block_number))
+    {
+        LogProducer::info("main", "servo_1001_ptr_ initServoCpuComm success");
+    }
+    else
+    {
+        LogProducer::error("main", "servo_1001_ptr_ initServoCpuComm failed");
+        return CONTROLLER_INIT_FAILED;
+    }
+    
+    // init non pdo communication channel
+    if(servo_1001_ptr_->prepareInit2PreOp(from_block_ptr, from_block_number, to_block_ptr, to_block_number))
+    {
+        LogProducer::info("main", "servo_1001_ptr_ prepareInit2PreOp success");
+    }
+    else
+    {
+        LogProducer::error("main", "servo_1001_ptr_ prepareInit2PreOp failed");
+        return CONTROLLER_INIT_FAILED;
+    }
+
+    // wait all servo trans to preop
+    while(!servo_1001_ptr_->isAllServosInExpectedCommState(CORE_COMM_STATE_PREOP))
+    {
+        sleep(1);
+    }
+
+    // get servo_comm pointers
+    for(size_t i = 0; i < axes_config_.size(); ++i)
+    {
+        servo_comm_ptr_[i] = servo_1001_ptr_->getServoCommPtr(axes_config_[i].servo_id);
+        assert(servo_comm_ptr_[i] != NULL);
+    }
+
+    // set all opeartion_mode for all servos
+    for(size_t i = 0; i < axes_config_.size(); ++i)
+    {
+        if(servo_comm_ptr_[i]->doServoCmdWriteParameter(SERVO_PARAM_OP_MODE, (int32_t)SERVO_OP_MODE_PROFILE_POSITION_MODE) != SUCCESS)
+        {
+            LogProducer::error("main", "servo_comm_ptr[%d] write op_mode failed", i);
+            return CONTROLLER_INIT_FAILED;
+        }
+    }
+
+    // connect fdb pdo channel to self
+    if(servo_1001_ptr_->preparePreOp2SafeOp(to_block_ptr, to_block_number))
+    {
+        LogProducer::info("main", "servo_1001_ptr_ preparePreOp2SafeOp success");
+    }
+    else
+    {
+        LogProducer::error("main", "servo_1001_ptr_ preparePreOp2SafeOp failed");
+        return CONTROLLER_INIT_FAILED;
+    }
+
+    // transfer all servos to SAFEOP
+    if(!servo_1001_ptr_->doServoCmdTransCommState(CORE_COMM_STATE_SAFEOP))
+    {
+        LogProducer::error("main", "servo_1001_ptr trans state to safeop failed");
+        return CONTROLLER_INIT_FAILED;
+    }
+    
+    // wait all servo trans to safeop
+    while(!servo_1001_ptr_->isAllServosInExpectedCommState(CORE_COMM_STATE_SAFEOP))
+    {
+        sleep(1);
+    }
+
+    // transfer all servos to OP
+    if(!servo_1001_ptr_->doServoCmdTransCommState(CORE_COMM_STATE_OP))
+    {
+        LogProducer::error("main", "servo_1001_ptr trans state to op failed");
+        return CONTROLLER_INIT_FAILED;
+    }
+    
+    // wait all servo trans to op
+    while(!servo_1001_ptr_->isAllServosInExpectedCommState(CORE_COMM_STATE_OP))
+    {
+        sleep(1);
+    }
+    return SUCCESS;
 }
 
-void Controller::recordLog(std::string log_str)
+void Controller::uploadErrorCode(void)
 {
-    std::stringstream stream;
-    stream<<"Log_Code: 0x"<<std::hex<<CONTROLLER_LOG<<" : "<<log_str;
-    FST_INFO(stream.str().c_str());
-
-    ServerAlarmApi::GetInstance()->sendOneAlarm(CONTROLLER_LOG, log_str);
+    TpEventMsg event;
+    event.type = 0;
+    event.to_id = 0;
+    while (ErrorQueue::instance().pop(event.event_data))
+    {
+        tp_comm_.sendEvent(event);
+        LogProducer::error("Upload", "Error: 0x%llx", event.event_data);
+    }
 }
 
-void Controller::recordLog(ErrorCode error_code, std::string log_str)
+void Controller::processDevice(void)
 {
-    std::stringstream stream;
-    stream<<"Log_Code: 0x"<<std::hex<<error_code<<" : "<<log_str;
-    FST_ERROR(stream.str().c_str());
-    state_machine_.setSafetyStop(error_code);
-
-    ServerAlarmApi::GetInstance()->sendOneAlarm(error_code, log_str);
+    ErrorCode ret = 0;
+    for(vector<BaseDevice*>::iterator iter = dev_ptr_list.begin(); iter != dev_ptr_list.end(); iter++)
+    {
+        ret = (*iter)->updateStatus();
+        if (ret != SUCCESS)
+        {
+            ErrorQueue::instance().push(ret);
+        }
+    }
 }
 
-void Controller::recordLog(ErrorCode major_error_code, ErrorCode minor_error_code, std::string log_str)
+bool Controller::downloadServoParams(int32_t axis_id)
 {
-    std::stringstream ss;
-    ss << log_str <<": 0x";
-    ss << std::hex << minor_error_code;
-    std::string str = ss.str();
+    BufferAppData2001_t params;
+    memset(&params, 0, sizeof(BufferAppData2001_t));
+    int32_t value = 0;
+    for(size_t i = 0; i < SERVO_PARAM_BUFFER_SIZE; ++i)
+    {
+        if (axis_model_ptr_[axis_id]->actuator.servo_ptr->get(i, &value))
+        {
+            params.param[i] = value;
+        }
+        else
+        {
+            LogProducer::error("main", "Controller axis[%d] get servo parameter[%d] failed", axis_id, i);
+            return false;
+        }
+    }
 
-    ss<<"Log_Code: 0x"<<std::hex<<major_error_code<<" : "<<str;
-    FST_ERROR(ss.str().c_str());
-    state_machine_.setSafetyStop(major_error_code);
-
-    ServerAlarmApi::GetInstance()->sendOneAlarm(major_error_code, str);
+    int32_t* sync_ack_ptr = NULL;
+    if (servo_comm_ptr_[axis_id]->downloadServoParameters(&params))
+    {
+        servo_comm_ptr_[axis_id]->triggerServoCmdDownloadParameters(&sync_ack_ptr);
+        int32_t count = 0;
+        while(!servo_comm_ptr_[axis_id]->isServoAsyncServiceFinish(sync_ack_ptr) && (count <= 100))
+        {
+            usleep(10000);
+            count++;
+        }
+        if (count > 100)
+        {
+            LogProducer::error("main", "Controller axis[%d] download servo parameter timeout", axis_id);
+            return false;
+        }
+    }
+    else
+    {
+        LogProducer::error("main", "Controller axis[%d] download servo parameter failed", axis_id);
+        return false;
+    }
+    LogProducer::info("main", "Controller axis[%d] download servo parameter success", axis_id);
+    return true;
 }
 
 void* controllerRoutineThreadFunc(void* arg)
 {
-    std::cout<<"controller routine thread running"<<std::endl;
-
-    fst_log::Logger* log_ptr_ = new fst_log::Logger();
-    FST_LOG_INIT("ThreadRoutine");
-    FST_WARN("ThreadRoutine TID is %ld", syscall(SYS_gettid));
-
     Controller* controller_ptr = static_cast<Controller*>(arg);
+    log_space::LogProducer log_manager;
+    log_manager.init("controller_routine", g_isr_ptr_);
     while(!controller_ptr->isExit())
     {
         controller_ptr->runRoutineThreadFunc();
     }
-    delete log_ptr_;
-    std::cout<<"controller routine thread exit"<<std::endl;
+    std::cout<<"controller_rountine exit"<<std::endl;
     return NULL;
 }
 
-void* heartbeatThreadFunc(void* arg)
+
+void* controllerRealTimeThreadFunc(void* arg)
 {
-    std::cout<<"heartbeat thread running"<<std::endl;
-
-    fst_log::Logger* log_ptr_ = new fst_log::Logger();
-    FST_LOG_INIT("ThreadHeartbeat");
-    FST_WARN("ThreadHeartbeat TID is %ld", syscall(SYS_gettid));
-
     Controller* controller_ptr = static_cast<Controller*>(arg);
+    log_space::LogProducer log_manager;
+    log_manager.init("controller_RT", g_isr_ptr_);
     while(!controller_ptr->isExit())
     {
-        controller_ptr->runHeartbeatThreadFunc();
+        controller_ptr->runRtThreadFunc();
     }
-    delete log_ptr_;
-    std::cout<<"heartbeat thread exit"<<std::endl;
+    std::cout<<"controller_RT exit"<<std::endl;
     return NULL;
 }
 
-void Controller::isOkLed()
-{
-	// sent a message outside to hint the controller ok
-	int fd_ok_led;
-	fd_ok_led = open("/dev/mem", O_RDWR);
-	if (fd_ok_led == -1)
-		printf("The _ok_led-message cann't be sent. fd = %d\n", fd_ok_led);
-	enum msg_ok_led {
-		OK_LED_BASE = 0xff300000,
-		OK_LED_OFFSET = 0x0020,
-		OK_LED_LEN = 0x1000,
-	};
-	void *ptr_ok_led;
-	ptr_ok_led = mmap(NULL, OK_LED_LEN, PROT_READ|PROT_WRITE, MAP_SHARED, fd_ok_led, OK_LED_BASE);
-	if (ptr_ok_led == MAP_FAILED)
-	{
-		printf("The ok_led-message cann't be sent. mmap = %p\n", (void *)ptr_ok_led);
-	}
-	else
-	{
-		uint32_t *p_ok_led;
-		p_ok_led = (uint32_t *)((uint8_t*)ptr_ok_led + 0x0020);
-		*p_ok_led |= (1 << 2);
-	}
-}

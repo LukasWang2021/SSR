@@ -1,33 +1,24 @@
 #include "controller_rpc.h"
+#include <sstream>
+#include <string>
 
-using namespace fst_ctrl;
-using namespace fst_log;
-using namespace fst_base;
-using namespace fst_hal;
-using namespace fst_comm;
-using namespace fst_mc;
+using namespace user_space;
+using namespace base_space;
+using namespace std;
 
 
 ControllerRpc::ControllerRpc():
-    log_ptr_(NULL),
-    param_ptr_(NULL),
-    virtual_core1_ptr_(NULL),
     tp_comm_ptr_(NULL),
-    state_machine_ptr_(NULL),
-    tool_manager_ptr_(NULL),
-    coordinate_manager_ptr_(NULL),
-    reg_manager_ptr_(NULL),
-    device_manager_ptr_(NULL),
-    motion_control_ptr_(NULL),
-    controller_client_ptr_(NULL),
-    io_mapping_ptr_(NULL),   
-    modbus_manager_ptr_(NULL),
-    program_launching_(NULL),
+    publish_ptr_(NULL),
+    cpu_comm_ptr_(NULL),
+    servo_comm_ptr_(NULL),
     file_manager_ptr_(NULL),
-    system_manager_ptr_(NULL),
-    param_manager_ptr_(NULL)
+    sync_ack_ptr_(NULL)
 {
-
+    for(size_t i = 0; i < AXIS_NUM; ++i)
+    {
+        axis_ptr_[i] = NULL;
+    }
 }
 
 ControllerRpc::~ControllerRpc()
@@ -35,58 +26,27 @@ ControllerRpc::~ControllerRpc()
 
 }
 
-void ControllerRpc::init(fst_log::Logger* log_ptr, ControllerParam* param_ptr, ControllerPublish* publish_ptr, VirtualCore1* virtual_core1_ptr, 
-                    fst_comm::TpComm* tp_comm_ptr, ControllerSm* state_machine_ptr, ToolManager* tool_manager_ptr, 
-                    CoordinateManager* coordinate_manager_ptr, RegManager* reg_manager_ptr, fst_hal::DeviceManager* device_manager_ptr, 
-                    fst_mc::MotionControl* motion_control_ptr, fst_base::ControllerClient* controller_client_ptr,
-                    IoMapping* io_mapping_ptr,fst_hal::IoManager* io_manager_ptr, ProgramLaunching* program_launching, 
-                    fst_base::FileManager* file_manager, fst_ctrl::SystemManager* system_manager, fst_mc::ParamManager* param_manager)
+void ControllerRpc::init(TpComm* tp_comm_ptr, ControllerPublish* publish_ptr, servo_comm_space::ServoCpuCommBase* cpu_comm_ptr,
+        servo_comm_space::ServoCommBase* servo_comm_ptr[], axis_space::Axis* axis_ptr[AXIS_NUM],
+        system_model_space::AxisModel_t* axis_model_ptr[AXIS_NUM], 
+        base_space::FileManager* file_manager_ptr, 
+        hal_space::Io1000* io_dev_ptr, hal_space::IoAnalog* io_analog_ptr)
 {
-    log_ptr_ = log_ptr;
-    param_ptr_ = param_ptr;
-    publish_ptr_ = publish_ptr;
-    virtual_core1_ptr_ = virtual_core1_ptr;
     tp_comm_ptr_ = tp_comm_ptr;
-    state_machine_ptr_ = state_machine_ptr;
-    tool_manager_ptr_ = tool_manager_ptr;
-    coordinate_manager_ptr_ = coordinate_manager_ptr;
-    reg_manager_ptr_ = reg_manager_ptr;
-    device_manager_ptr_ = device_manager_ptr;
-    motion_control_ptr_ = motion_control_ptr;
-    controller_client_ptr_ = controller_client_ptr;
-    io_mapping_ptr_ = io_mapping_ptr;
-    io_manager_ptr_ = io_manager_ptr;//for info list
-    program_launching_ = program_launching;
-    file_manager_ptr_ = file_manager;
-    system_manager_ptr_ = system_manager;
-    param_manager_ptr_ = param_manager;
-
-    // get the modbus_manager_ptr from device_manager.
-    std::vector<fst_hal::DeviceInfo> device_list = device_manager_ptr_->getDeviceList();
-    for(unsigned int i = 0; i < device_list.size(); ++i)
+	publish_ptr_ = publish_ptr;
+    cpu_comm_ptr_ = cpu_comm_ptr;
+    servo_comm_ptr_ = servo_comm_ptr;
+    for(size_t i = 0; i < AXIS_NUM; ++i)
     {
-        if (device_list[i].type == DEVICE_TYPE_MODBUS)
-        {
-            BaseDevice* device_ptr = device_manager_ptr_->getDevicePtrByDeviceIndex(device_list[i].index);
-            if(device_ptr == NULL || modbus_manager_ptr_ != NULL) break;
-            modbus_manager_ptr_ = static_cast<ModbusManager*>(device_ptr);
-        } 
-        else if(device_list[i].type == DEVICE_TYPE_FST_SAFETY)// get the safety device ptr.
-        {
-            BaseDevice* device_ptr = device_manager_ptr_->getDevicePtrByDeviceIndex(device_list[i].index);
-            if(device_ptr == NULL || safety_device_ptr_ != NULL) break;
-            safety_device_ptr_ = static_cast<FstSafetyDevice*>(device_ptr);
-        }
+        axis_ptr_[i] = axis_ptr[i];
+        axis_model_ptr_[i] = axis_model_ptr[i];
     }
 
-    device_version_.init(log_ptr_, motion_control_ptr_, io_manager_ptr_, safety_device_ptr_);
+    file_manager_ptr_ = file_manager_ptr;
+    io_dev_ptr_ = io_dev_ptr;
+    io_analog_ptr_ = io_analog_ptr;
 
-    if (modbus_manager_ptr_ != NULL)
-    {
-        ErrorCode error_code = modbus_manager_ptr_->initDevices();
-        if (error_code != SUCCESS)
-            ErrorMonitor::instance()->add(error_code);
-    }
+    device_version_.init();
 
     initRpcTable();
     initRpcQuickSearchTable();
@@ -142,18 +102,13 @@ void ControllerRpc::recordLog(ErrorCode log_code, ErrorCode error_code, std::str
     {
         log_str += " success";
         stream<<"Log_Code: 0x"<<std::hex<<log_code<<" : "<<log_str;
-        FST_INFO(stream.str().c_str());
-
-        ServerAlarmApi::GetInstance()->sendOneAlarm(log_code, log_str);
+        std::cout<<stream.str().c_str()<<std::endl;
     }
     else
     {
         log_str += " failed";
         stream<<"Log_Code: 0x"<<std::hex<<error_code<<" : "<<log_str;
-        FST_ERROR(stream.str().c_str());
-        state_machine_ptr_->setSafetyStop(error_code);
-
-        ServerAlarmApi::GetInstance()->sendOneAlarm(log_code, log_str);
+        std::cout<<stream.str().c_str()<<std::endl;
     }    
 }
 

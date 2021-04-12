@@ -18,6 +18,11 @@ bool PoseQuaternion::isEqual(const PoseQuaternion& pose_quaternion, double valve
     }
 }
 
+bool PoseQuaternion::isEquivalent(const PoseQuaternion& pose_quaternion, double valve) const
+{
+    return point_.isEqual(pose_quaternion.point_, valve) && quaternion_.isEquivalent(pose_quaternion.quaternion_, valve);
+}
+
 void PoseQuaternion::convertToPoseEuler(PoseEuler& pose_euler) const
 {
     pose_euler.point_ = point_;

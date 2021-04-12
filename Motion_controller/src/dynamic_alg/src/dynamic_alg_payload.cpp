@@ -1,16 +1,17 @@
 #include "dynamic_alg_payload.h"
 #include "common_file_path.h"
-#include "error_code.h"
+#include "common_error_code.h"
+#include "log_manager_producer.h"
 #include <cstring>
 #include <sstream>
 
 using namespace basic_alg;
+using namespace log_space;
 
-DynamicAlgPayload::DynamicAlgPayload(fst_log::Logger *logger):
+DynamicAlgPayload::DynamicAlgPayload():
     file_path_(DYNAMICS_DIR),
     max_number_of_payloads_(10)
 {
-    log_ptr_ = logger;
     file_path_ += "dynamic_payload_info.yaml";
 }
 
@@ -22,7 +23,7 @@ bool DynamicAlgPayload::init()
 {
     if(!readAllPayloadInfoFromYaml())
     {
-        FST_ERROR("Failed to load dynamic_payload_info");
+        LogProducer::error("Dynamics","Failed to load dynamic_payload_info");
         return false;
     }
     return true;
@@ -206,9 +207,9 @@ void DynamicAlgPayload::packDummyPayloadInfo(PayloadInfo& info)
 {
     info.id = 0;
     info.is_valid = true;
-    memcpy(info.comment, "No payload", strlen("No payload") + 1);
+    memcpy(info.comment, "Default", strlen("Default") + 1);
     
-    info.m_load = 0;
+    info.m_load = 7.0;
     info.lcx_load = 0;
     info.lcy_load = 0;
     info.lcz_load = 0;
@@ -250,7 +251,7 @@ bool DynamicAlgPayload::readAllPayloadInfoFromYaml(void)
             std::string str_temp = "";
             yaml_help_.getParam(payload_info_path + "/comment", str_temp);
             memcpy(info.comment, str_temp.c_str(), str_temp.size());
-            info.comment[255] = 0;
+            info.comment[str_temp.size()] = '\0';
             yaml_help_.getParam(payload_info_path + "/m_load", info.m_load);
             yaml_help_.getParam(payload_info_path + "/lcx_load", info.lcx_load);
             yaml_help_.getParam(payload_info_path + "/lcy_load", info.lcy_load);
@@ -264,7 +265,7 @@ bool DynamicAlgPayload::readAllPayloadInfoFromYaml(void)
     }
     else
     {
-        FST_ERROR("lost config file: %s", file_path_.c_str());
+        LogProducer::error("Dynamics","lost config file: %s", file_path_.c_str());
 	    return false;
     }
 }

@@ -34,6 +34,13 @@ void Matrix33::eye(void)
     matrix_[2][0] = 0; matrix_[2][1] = 0; matrix_[2][2] = 1;
 }
 
+double Matrix33::determ(void) const
+{
+    return matrix_[0][0] * (matrix_[1][1] * matrix_[2][2] - matrix_[1][2] * matrix_[2][1]) - 
+           matrix_[0][1] * (matrix_[1][0] * matrix_[2][2] - matrix_[1][2] * matrix_[2][0]) + 
+           matrix_[0][2] * (matrix_[1][0] * matrix_[2][1] - matrix_[2][0] * matrix_[1][1]);
+}
+
 Matrix33& Matrix33::leftMultiply(const Matrix33& left_matrix)
 {
     Matrix33 tmp_matrix;
@@ -115,5 +122,43 @@ void Matrix33::multiply(const Matrix33& left_matrix, const Matrix33& right_matri
     result_matrix.matrix_[2][2] = left_matrix.matrix_[2][0] * right_matrix.matrix_[0][2] 
                                 + left_matrix.matrix_[2][1] * right_matrix.matrix_[1][2]
                                 + left_matrix.matrix_[2][2] * right_matrix.matrix_[2][2];                                 
+}
+
+bool Matrix33::inverse(double valve)
+{
+    return inverse(*this, valve);
+}
+
+bool Matrix33::inverse(Matrix33& result_matrix, double valve) const
+{
+    double det = determ();
+
+    if(det < valve)
+    {
+        return false;
+    }
+
+    double a00 = matrix_[1][1] * matrix_[2][2] - matrix_[1][2] * matrix_[2][1];
+    double a01 = matrix_[1][0] * matrix_[2][2] - matrix_[1][2] * matrix_[2][0];
+    double a02 = matrix_[1][0] * matrix_[2][1] - matrix_[1][1] * matrix_[2][0];
+
+    double a10 = matrix_[0][1] * matrix_[2][2] - matrix_[0][2] * matrix_[2][1];
+    double a11 = matrix_[0][0] * matrix_[2][2] - matrix_[0][2] * matrix_[2][0];
+    double a12 = matrix_[0][0] * matrix_[2][1] - matrix_[0][1] * matrix_[2][0];
+    
+    double a20 = matrix_[0][1] * matrix_[1][2] - matrix_[0][2] * matrix_[1][1];
+    double a21 = matrix_[0][0] * matrix_[1][2] - matrix_[0][2] * matrix_[1][0];
+    double a22 = matrix_[0][0] * matrix_[1][1] - matrix_[0][1] * matrix_[1][0]; 
+
+    result_matrix.matrix_[0][0] =  a00 / det;
+    result_matrix.matrix_[0][1] = -a10 / det;
+    result_matrix.matrix_[0][2] =  a20 / det;
+    result_matrix.matrix_[1][0] = -a01 / det;
+    result_matrix.matrix_[1][1] =  a11 / det;
+    result_matrix.matrix_[1][2] = -a21 / det;
+    result_matrix.matrix_[2][0] =  a02 / det;
+    result_matrix.matrix_[2][1] = -a12 / det;
+    result_matrix.matrix_[2][2] =  a22 / det;
+    return true;
 }
 

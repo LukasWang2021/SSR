@@ -1,10 +1,9 @@
 #include "thread_help.h"
 
 
-using namespace fst_base;
+using namespace base_space;
 
-ThreadHelp::ThreadHelp():
-    pid_(0)
+ThreadHelp::ThreadHelp()
 {
 
 }
@@ -28,7 +27,7 @@ bool ThreadHelp::run(threadFunc func_ptr, void* data, int priority)
     pthread_attr_init(&attr);  
     pthread_attr_setschedpolicy(&attr, SCHED_RR);  
     param.sched_priority = priority;  
-    pthread_attr_setschedparam(&attr,   &param);  
+    pthread_attr_setschedparam(&attr,   &param);
     pthread_attr_setinheritsched(&attr, PTHREAD_EXPLICIT_SCHED);
     pthread_create(&pid_, &attr, func_ptr, data);  
     pthread_attr_destroy(&attr);
@@ -39,6 +38,11 @@ bool ThreadHelp::run(threadFunc func_ptr, void* data, int priority)
 void ThreadHelp::join()
 {
     pthread_join(pid_, NULL);
+}
+
+void ThreadHelp::detach()
+{
+    pthread_detach(pid_);
 }
 
 

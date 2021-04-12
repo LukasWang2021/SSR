@@ -10,7 +10,7 @@ public:
 	TwoJerkDSCurvePlanner(void);
 	~TwoJerkDSCurvePlanner(void);
 	virtual void planStopDSCurve(double t);
-	virtual void planDSCurve(double q0, double q1, double vmax, double amax, double* jmax);
+	virtual void planDSCurve(double q0, double q1, double vmax, double amax, double* jmax, double v_ratio);
 	virtual void sampleDSCurve(double t, double &p, double &v, double &a);
 	virtual void outputDSCurve(double time_step, const char *file_name);
 	virtual double getDuration(void);
@@ -38,9 +38,11 @@ private:
 	double v_stop_;
 	double a_stop_;
 	bool is_stop_success_;
+	double vel_ratio_;
 
 	void sampleFineDSCurve(double t, double &p, double &v, double &a);
 	void sampleOriginDSCurve(double t, double &p, double &v, double &a);
+	void rescaleTrajectoryVelocity(double vel_ratio, double t1, double t2, double t3, double t4, double t5, double t6, double t7);
 };
 
 #endif

@@ -2,7 +2,7 @@
 #define REG_MANAGER_PARAM_H
 
 
-#include "parameter_manager/parameter_manager_param_group.h"
+#include "yaml_help.h"
 #include <string>
 
 namespace fst_ctrl
@@ -34,10 +34,12 @@ public:
     int mr_value_limit_;
     int sr_value_limit_;    // size in byte
     double r_value_limit_;
-    int use_nvram_;
+    int name_length_limit_;
+    int comment_length_limit_;
+    int sr_value_length_limit_;
     
 private:
-    fst_parameter::ParamGroup yaml_help_;
+    base_space::YamlHelp yaml_help_;
     std::string file_path_;
 };
 

@@ -1,8 +1,7 @@
 #ifndef COORDINATE_MANAGER_PARAM_H
 #define COORDINATE_MANAGER_PARAM_H
 
-
-#include "parameter_manager/parameter_manager_param_group.h"
+#include "yaml_help.h"
 #include <string>
 
 
@@ -25,7 +24,7 @@ public:
     std::string coord_info_file_name_;   // file name under COORD_DIR
 
 private:
-    fst_parameter::ParamGroup yaml_help_;
+    base_space::YamlHelp yaml_help_;
     std::string file_path_;
 };
 

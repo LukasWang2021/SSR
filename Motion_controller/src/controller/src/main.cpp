@@ -2,10 +2,10 @@
 #include <unistd.h>
 #include <iostream>
 #include <signal.h>
-#include "error_code.h"
+#include "common_error_code.h"
 
 using namespace std;
-using namespace fst_ctrl;
+using namespace user_space;
 
 Controller* g_controller_ptr_ = NULL;
 

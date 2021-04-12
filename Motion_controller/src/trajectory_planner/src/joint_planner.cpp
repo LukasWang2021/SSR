@@ -74,7 +74,7 @@ void JointPlanner::setLimit(const Joint &vel_limit, const Joint &acc_limit, cons
 }
 
 
-void JointPlanner::planTrajectory(const Joint &start, const Joint &end, double vel, double acc, double jerk)
+void JointPlanner::planTrajectory(const Joint &start, const Joint &end, double vel, double vel_ratio, double acc_ratio, double jerk_ratio)
 {
     start_ = start;
     end_ = end;
@@ -85,14 +85,15 @@ void JointPlanner::planTrajectory(const Joint &start, const Joint &end, double v
     {
         dif_pos[j] = fabs(end_[j] - start_[j]);
         lim_vel[j] = vel_limit_[j] * vel / dif_pos[j];
-        lim_acc[j] = acc_limit_[j] * acc / dif_pos[j];
+        // lim_vel[j] = vel_limit_[j] / dif_pos[j];
+        lim_acc[j] = acc_limit_[j] * acc_ratio / dif_pos[j];
     }
     
     for (uint32_t i = 0; i != jerk_num_; ++i)
     {
         for (uint32_t j = 0; j != joint_num_; ++j)
         {
-            lim_jerk[i][j] = jerk_limit_[i][j] * jerk / dif_pos[j];
+            lim_jerk[i][j] = jerk_limit_[i][j] * jerk_ratio / dif_pos[j];
         }
     }
     
@@ -105,7 +106,7 @@ void JointPlanner::planTrajectory(const Joint &start, const Joint &end, double v
         max_jerk[i] = minInArray(lim_jerk[i], joint_num_);
     }
     
-    ds_curve_->planDSCurve(0, 1, max_vel, max_acc, max_jerk);
+    ds_curve_->planDSCurve(0, 1, max_vel, max_acc, max_jerk, vel_ratio);
 }
 
 void JointPlanner::sampleTrajectory(double t, JointState &sample)

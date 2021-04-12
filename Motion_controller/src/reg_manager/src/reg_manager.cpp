@@ -1,23 +1,22 @@
 #include "reg_manager.h"
-#include "error_code.h"
+#include "common_file_path.h"
 #include <unistd.h>
+#include <fstream>
 
+using namespace std;
 using namespace fst_ctrl;
-
+using namespace rtm_nvram;
+using namespace log_space;
 
 RegManager::RegManager():
-    param_ptr_(NULL),
-    log_ptr_(NULL),
-    nvram_obj_(NVRAM_AREA_LENGTH)
+    param_ptr_(NULL)
 {
-    log_ptr_ = new fst_log::Logger();
     param_ptr_ = new RegManagerParam();
+    nvram_ptr_ = new NvramHandler();
     for(int i=0; i < REG_TYPE_MAX; ++i)
     {
         reg_ptr_[i] = NULL;
     }
-    FST_LOG_INIT("RegManager");
-    FST_LOG_SET_LEVEL((fst_log::MessageLevel)param_ptr_->log_level_);
 }
 
 RegManager::~RegManager()
@@ -30,11 +29,13 @@ RegManager::~RegManager()
             reg_ptr_[i] = NULL;
         }
     }
-    if(log_ptr_ != NULL)
+
+    if(nvram_ptr_ != NULL)
     {
-        delete log_ptr_;
-        log_ptr_ = NULL;
+        delete nvram_ptr_;
+        nvram_ptr_ = NULL;
     }
+
     if(param_ptr_ != NULL)
     {
         delete param_ptr_;
@@ -42,148 +43,89 @@ RegManager::~RegManager()
     }
 }
 
-void RegManager::initNVRam()
-{
-    bool bWriteSync = false ;
-	char mr_buf[sizeof(NVRamMrRegData)];
-	char r_buf[sizeof(NVRamRRegData)];
-	//char pr_buf[sizeof(NVRamPrRegData)];
-	
-	uint32_t pWriteAddr = NVRAM_HEAD ;
-	uint32_t uiWrite = NVRAM_Magic_NUM;
-	
-    FST_INFO("RegManager::initNVRam write = %08X at %08X", uiWrite, NVRAM_HEAD);
-	bWriteSync = nvram_obj_.writeSync((uint8_t*)&uiWrite, NVRAM_HEAD, sizeof(uint32_t));
-	while(bWriteSync == false)
-	{
-    	FST_ERROR("writeSync NVRAM_HEAD failed");
-		bWriteSync = nvram_obj_.writeSync((uint8_t*)&uiWrite, NVRAM_HEAD, sizeof(uint32_t));
-		usleep(10000);
-	}
-	usleep(30000);
-	uiWrite = 0 ;
-    FST_INFO("RegManager::initNVRam reset to = %08X", uiWrite);
-	nvram_obj_.read((uint8_t*)&uiWrite, NVRAM_HEAD, sizeof(uint32_t));
-	if(uiWrite != NVRAM_Magic_NUM)
-	{
-		FST_INFO("RegManager::initNVRam read NG = %08X", uiWrite);
-		return ;
-	}
-	
-	uiWrite = NVRAM_VERSION;
-	pWriteAddr += sizeof(uint32_t);
-	nvram_obj_.write((uint8_t*)&uiWrite, pWriteAddr, sizeof(uint32_t));
-	usleep(30000);
-
-    FST_INFO("RegManager::initNVRam Starting 30% ...... ");
-	memset(mr_buf, 0x00, sizeof(NVRamMrRegData));
-	for(int i =0; i < NVRAM_MR_NUM; i++)
-	{
-		bWriteSync = nvram_obj_.writeSync((uint8_t*)mr_buf, pWriteAddr, sizeof(NVRamMrRegData));
-		while(bWriteSync == false)
-		{
-	    	FST_ERROR("writeSync NVRamMrRegData failed");
-			bWriteSync = nvram_obj_.writeSync((uint8_t*)mr_buf, pWriteAddr, sizeof(NVRamMrRegData));
-			usleep(10000);
-		}
-		usleep(10000);
-		pWriteAddr += sizeof(NVRamMrRegData);
-	}
-	
-    FST_INFO("RegManager::initNVRam Starting 60% ...... ");
-	memset(r_buf, 0x00, sizeof(NVRamRRegData));
-	for(int i =0; i < NVRAM_R_NUM; i++)
-	{
-		bWriteSync = nvram_obj_.writeSync((uint8_t*)r_buf, pWriteAddr, sizeof(NVRamRRegData));
-		while(bWriteSync == false)
-		{
-	    	FST_ERROR("writeSync NVRamRRegData failed");
-			bWriteSync = nvram_obj_.writeSync((uint8_t*)mr_buf, pWriteAddr, sizeof(NVRamMrRegData));
-			usleep(10000);
-		}
-		usleep(10000);
-		pWriteAddr += sizeof(NVRamRRegData);
-	}
-	
-    FST_INFO("RegManager::initNVRam Starting 100% ...... ");
-//  These code would crash the data at NVRAM_HEAD
-//	memset(pr_buf, 0x00, sizeof(NVRamPrRegData));
-//	for(int i =0; i < NVRAM_PR_NUM; i++)
-//	{
-//		nvram_obj_.writeSync((uint8_t*)pr_buf, pWriteAddr, sizeof(NVRamPrRegData));
-//		usleep(10000);
-//		pWriteAddr += sizeof(NVRamPrRegData);
-//	}
-//    FST_INFO("RegManager::initNVRam Starting 100% ...... ");
-	
-	uiWrite = 0 ;
-    FST_INFO("RegManager::initNVRam NVRamPrRegData reset to = %08X", uiWrite);
-	nvram_obj_.read((uint8_t*)&uiWrite, NVRAM_HEAD, sizeof(unsigned int));
-    FST_INFO("RegManager::initNVRam read = %08X at %08X", uiWrite, pWriteAddr);
-}
-
 ErrorCode RegManager::init()
 {
-	unsigned int uiMagic ;
-    if(!param_ptr_->loadParam())
+    if (!param_ptr_->loadParam())
     {
-        FST_ERROR("Failed to load reg manager component parameters");
         return REG_MANAGER_LOAD_PARAM_FAILED;
-    } 
-    FST_LOG_SET_LEVEL((fst_log::MessageLevel)param_ptr_->log_level_);   
+    }
 
-    use_nvram_ = param_ptr_->use_nvram_;
-	FST_INFO("RegManager::init use_nvram_ = %d", use_nvram_);
-	if(use_nvram_ == REG_USE_NVRAM)
-	{
-		ErrCode error = nvram_obj_.openNvram();
-		FST_INFO("RegManager::init nvram_obj_.openNvram = %08X", error);
-		if(error == FST_NVRAM_OK)
-		{
-			error = nvram_obj_.isNvramReady();
-			if(error == FST_NVRAM_OK)
-			{
-				uint32_t pReadAddr = NVRAM_HEAD ;
-				ErrCode error = nvram_obj_.read(
-					(uint8_t*)&uiMagic, pReadAddr, sizeof(uint32_t));
-			    FST_INFO("RegManager::init nvram_obj_.read = %08X at %08X return %08X",
-					uiMagic, pReadAddr, error);
-				if(NVRAM_Magic_NUM != uiMagic)
-				{
-					initNVRam();
-			    	FST_INFO("RegManager::init initNVRam = %08X", uiMagic);
-			    //    return REG_MANAGER_LOAD_NVRAM_FAILED;
-				}
-			}
-		}
-	}
-	FST_INFO("RegManager::init param_ptr_->use_nvram_ = %d", param_ptr_->use_nvram_);
+    bool res = nvram_ptr_->init();
 
-    reg_ptr_[REG_TYPE_PR] = new PrReg(param_ptr_);
-    reg_ptr_[REG_TYPE_HR] = new HrReg(param_ptr_);
-    reg_ptr_[REG_TYPE_SR] = new SrReg(param_ptr_);
-    reg_ptr_[REG_TYPE_MR] = new MrReg(param_ptr_);
-    reg_ptr_[REG_TYPE_R] = new RReg(param_ptr_);
-
-    ErrorCode error_code;
-    for(int i = 0; i < REG_TYPE_MAX; ++i)
+    if (!res)
     {
-        if(reg_ptr_[i] != NULL)
+        LogProducer::error("reg_manager", "Fail to inti nvram handler");
+        return REG_MANAGER_INIT_OBJECT_FAILED;
+    }
+
+    reg_ptr_[REG_TYPE_PR] = new PrReg(param_ptr_, nvram_ptr_);
+    reg_ptr_[REG_TYPE_HR] = new HrReg(param_ptr_, nvram_ptr_);
+    reg_ptr_[REG_TYPE_SR] = new SrReg(param_ptr_, nvram_ptr_);
+    reg_ptr_[REG_TYPE_MR] = new MrReg(param_ptr_, nvram_ptr_);
+    reg_ptr_[REG_TYPE_R] = new RReg(param_ptr_, nvram_ptr_);
+
+    for (int i = 0; i < REG_TYPE_MAX; ++i)
+    {
+        if (reg_ptr_[i] != NULL)
         {
-            error_code = reg_ptr_[i]->init();
-            if(error_code != SUCCESS)
+            ErrorCode error_code = reg_ptr_[i]->init();
+            
+            if (error_code != SUCCESS)
             {
- 				FST_INFO("RegManager::init[%d] error_code = %08X", i, error_code);
+ 				LogProducer::error("reg_manager", "RegManager::init[%d] error_code = 0x%llx", i, error_code);
                 return error_code;
             }
         }
         else
         {
-			FST_INFO("RegManager::init REG_MANAGER_INIT_OBJECT_FAILED");
+			LogProducer::error("reg_manager", "RegManager::init REG_MANAGER_INIT_OBJECT_FAILED");
             return REG_MANAGER_INIT_OBJECT_FAILED;
         }
     }
+
     return SUCCESS;
+}
+
+size_t RegManager::getNameLengthLimit()
+{
+    return param_ptr_->name_length_limit_;
+}
+size_t RegManager::getCommentLengthLimit()
+{
+    return param_ptr_->comment_length_limit_;
+}
+size_t RegManager::getSrValueLengthLimit()
+{
+    return param_ptr_->sr_value_length_limit_;
+}
+
+ErrorCode RegManager::backupNvram()
+{
+    string backup_file = NVRAM_DIR;
+    backup_file = backup_file + "nvram.backup";
+    ofstream output_handler(backup_file, ios::binary);
+    uint8_t data[PR_DATA_SIZE + HR_DATA_SIZE + SR_DATA_SIZE + MR_DATA_SIZE + R_DATA_SIZE];
+
+    if (!nvram_ptr_->readNvram(0, data, sizeof(data)))
+    {
+        return REG_MANAGER_OPERATE_NVRAM_FAILED;
+    }
+
+    output_handler.write(reinterpret_cast<char*>(data), sizeof(data));
+    output_handler.flush();
+    output_handler.close();
+    return SUCCESS;
+}
+
+ErrorCode RegManager::restoreNvram()
+{
+    string backup_file = NVRAM_DIR;
+    backup_file = backup_file + "nvram.backup";
+    ifstream input_handler(backup_file, ios::binary);
+    uint8_t data[PR_DATA_SIZE + HR_DATA_SIZE + SR_DATA_SIZE + MR_DATA_SIZE + R_DATA_SIZE];
+    input_handler.read(reinterpret_cast<char*>(data), sizeof(data));
+    input_handler.close();
+    return nvram_ptr_->writeNvram(0, data, sizeof(data)) ? SUCCESS : REG_MANAGER_OPERATE_NVRAM_FAILED;
 }
 
 bool RegManager::isRegValid(RegType reg_type, int reg_index)
@@ -374,88 +316,93 @@ std::vector<BaseRegSummary> RegManager::getRRegValidList(int start_id, int size)
     return reg_ptr_[REG_TYPE_R]->getValidList(start_id, size);
 }
 
-void* RegManager::getPrRegValueById(int id)
+bool RegManager::getPrRegValueById(int id, PrValue& pr_value)
 {
-    return reg_ptr_[REG_TYPE_PR]->getRegValueById(id);
+    PrReg* reg_ptr = dynamic_cast<PrReg*>(reg_ptr_[REG_TYPE_PR]);
+    return reg_ptr->getRegValueById(id, pr_value);
 }
 
-void* RegManager::getHrRegValueById(int id)
+bool RegManager::getHrRegValueById(int id, HrValue& hr_value)
 {
-    return reg_ptr_[REG_TYPE_HR]->getRegValueById(id);
+    HrReg* reg_ptr = dynamic_cast<HrReg*>(reg_ptr_[REG_TYPE_HR]);
+    return reg_ptr->getRegValueById(id, hr_value);
 }
 
-void* RegManager::getMrRegValueById(int id)
+bool RegManager::getMrRegValueById(int id, MrValue& mr_value)
 {
-    return reg_ptr_[REG_TYPE_MR]->getRegValueById(id);
+    MrReg* reg_ptr = dynamic_cast<MrReg*>(reg_ptr_[REG_TYPE_MR]);
+    return reg_ptr->getRegValueById(id, mr_value);
 }
 
-void* RegManager::getSrRegValueById(int id)
+bool RegManager::getSrRegValueById(int id, SrValue& sr_value)
 {
-    return reg_ptr_[REG_TYPE_SR]->getRegValueById(id);
+    SrReg* reg_ptr = dynamic_cast<SrReg*>(reg_ptr_[REG_TYPE_SR]);
+    return reg_ptr->getRegValueById(id, sr_value);
 }
 
-void* RegManager::getRRegValueById(int id)
+bool RegManager::getRRegValueById(int id, RValue& r_value)
 {
-    return reg_ptr_[REG_TYPE_R]->getRegValueById(id);
+    RReg* reg_ptr = dynamic_cast<RReg*>(reg_ptr_[REG_TYPE_R]);
+    return reg_ptr->getRegValueById(id, r_value);
 }
 
 bool RegManager::updatePrRegPos(PrRegDataIpc* data_ptr)
 {
-    PrReg* reg_ptr = static_cast<PrReg*>(reg_ptr_[REG_TYPE_PR]);
+    PrReg* reg_ptr = dynamic_cast<PrReg*>(reg_ptr_[REG_TYPE_PR]);
     return reg_ptr->updateRegPos(data_ptr);
 }
 
 bool RegManager::updateHrRegJointPos(HrRegDataIpc* data_ptr)
 {
-    HrReg* reg_ptr = static_cast<HrReg*>(reg_ptr_[REG_TYPE_HR]);
+    HrReg* reg_ptr = dynamic_cast<HrReg*>(reg_ptr_[REG_TYPE_HR]);
     return reg_ptr->updateRegJointPos(data_ptr);
 }
 
 bool RegManager::updateMrRegValue(MrRegDataIpc* data_ptr)
 {
-    MrReg* reg_ptr = static_cast<MrReg*>(reg_ptr_[REG_TYPE_MR]);
+    MrReg* reg_ptr = dynamic_cast<MrReg*>(reg_ptr_[REG_TYPE_MR]);
     return reg_ptr->updateRegValue(data_ptr);
 }
 
 bool RegManager::updateSrRegValue(SrRegDataIpc* data_ptr)
 {
-    SrReg* reg_ptr = static_cast<SrReg*>(reg_ptr_[REG_TYPE_SR]);
+    SrReg* reg_ptr = dynamic_cast<SrReg*>(reg_ptr_[REG_TYPE_SR]);
     return reg_ptr->updateRegValue(data_ptr);
 }
 
 bool RegManager::updateRRegValue(RRegDataIpc* data_ptr)
 {
-    RReg* reg_ptr = static_cast<RReg*>(reg_ptr_[REG_TYPE_R]);
+    RReg* reg_ptr = dynamic_cast<RReg*>(reg_ptr_[REG_TYPE_R]);
     return reg_ptr->updateRegValue(data_ptr);
 }
 
 bool RegManager::getPrRegPos(int id, PrRegDataIpc* data_ptr)
 {
-    PrReg* reg_ptr = static_cast<PrReg*>(reg_ptr_[REG_TYPE_PR]);
+    PrReg* reg_ptr = dynamic_cast<PrReg*>(reg_ptr_[REG_TYPE_PR]);
     return reg_ptr->getRegPos(id, data_ptr);
 }
 
 bool RegManager::getHrRegJointPos(int id, HrRegDataIpc* data_ptr)
 {
-    HrReg* reg_ptr = static_cast<HrReg*>(reg_ptr_[REG_TYPE_HR]);
+    HrReg* reg_ptr = dynamic_cast<HrReg*>(reg_ptr_[REG_TYPE_HR]);
     return reg_ptr->getRegJointPos(id, data_ptr);
 }
 
 bool RegManager::getMrRegValue(int id, MrRegDataIpc* data_ptr)
 {
-    MrReg* reg_ptr = static_cast<MrReg*>(reg_ptr_[REG_TYPE_MR]);
+    MrReg* reg_ptr = dynamic_cast<MrReg*>(reg_ptr_[REG_TYPE_MR]);
     return reg_ptr->getRegValue(id, data_ptr);
 }
 
 bool RegManager::getSrRegValue(int id, SrRegDataIpc* data_ptr)
 {
-    SrReg* reg_ptr = static_cast<SrReg*>(reg_ptr_[REG_TYPE_SR]);
+    SrReg* reg_ptr = dynamic_cast<SrReg*>(reg_ptr_[REG_TYPE_SR]);
     return reg_ptr->getRegValue(id, data_ptr);
 }
 
 bool RegManager::getRRegValue(int id, RRegDataIpc* data_ptr)
 {
-    RReg* reg_ptr = static_cast<RReg*>(reg_ptr_[REG_TYPE_R]);
+    RReg* reg_ptr = dynamic_cast<RReg*>(reg_ptr_[REG_TYPE_R]);
     return reg_ptr->getRegValue(id, data_ptr);
 }
 

@@ -5,26 +5,8 @@
 #include <vector>
 #include <string>
 #include "basic_alg_datatype.h"
-#include "error_code.h"
+#include "common_error_code.h"
 
-#include "nvram.h"
-
-#define REG_NOT_USE_NVRAM        0
-#define REG_USE_NVRAM            1
-
-#define NVRAM_HEAD           0x0130
-#define NVRAM_MR_AREA        0x0140
-#define NVRAM_R_AREA         0x4000
-#define NVRAM_PR_AREA        0xA000
-
-#define NVRAM_AREA_LENGTH    (0xEFAF - 0x130)
-#define NVRAM_Magic_NUM      0xBEADBEAD
-#define NVRAM_VERSION        0x01
-
-
-#define NVRAM_MR_NUM      	 1500
-#define NVRAM_R_NUM          1500
-#define NVRAM_PR_NUM         200
 
 namespace fst_ctrl
 {
@@ -38,6 +20,24 @@ typedef enum
     REG_TYPE_MAX = 5,
     REG_TYPE_INVALID = 6,
 }RegType;
+
+typedef enum
+{
+    PR_DATA_SIZE = 0x5000,
+    HR_DATA_SIZE = 0x1000,
+    SR_DATA_SIZE = 0x13000,
+    MR_DATA_SIZE = 0x1000,
+    R_DATA_SIZE = 0x3000,
+}RegNvramDataSize;
+
+typedef enum
+{
+    PR_START_ADDR = 0x0,
+    HR_START_ADDR = PR_START_ADDR + PR_DATA_SIZE,
+    SR_START_ADDR = HR_START_ADDR + HR_DATA_SIZE,
+    MR_START_ADDR = SR_START_ADDR + SR_DATA_SIZE,
+    R_START_ADDR = MR_START_ADDR + MR_DATA_SIZE,
+}RegNvramAddress;
 
 
 typedef struct
@@ -68,7 +68,6 @@ public:
     virtual ErrorCode getReg(int id, void* data_ptr) = 0;
     virtual ErrorCode updateReg(void* data_ptr) = 0;
     virtual ErrorCode moveReg(int expect_id, int original_id) = 0;
-    virtual void* getRegValueById(int id) = 0;
     std::vector<BaseRegSummary> getChangedList(int start_id, int size);
     std::vector<BaseRegSummary> getValidList(int start_id, int size);
     bool isRegValid(int id);
@@ -93,7 +92,7 @@ public:
     void packDeleteRegData(BaseRegData& data, int id);
     void packSetRegData(BaseRegData& data, int id, std::string name, std::string comment);
     
-private:
+protected:
     BaseReg();
     RegType type_;
     std::vector<BaseRegData> reg_list_;

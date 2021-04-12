@@ -1,148 +1,63 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(dynamic_alg)
 
-find_package(catkin REQUIRED COMPONENTS
-)
-
-if(catkin_CROSS)
-	set(catkin_INCLUDE_DIRS ${catkin_INCLUDE_DIRS_CROSS})
-    set(catkin_LIBRARIES ${catkin_LIBRARYS_CROSS})
-	set(CMAKE_CXX_FLAGS "-DCROSS_PLATFORM")
-	set(CMAKE_C_FLAGS "-DCROSS_PLATFORM")
-    message(STATUS "ARM-Cross")
-else()
-	set(catkin_INCLUDE_DIRS ${catkin_INCLUDE_DIRS_x86})
-    set(catkin_LIBRARIES ${catkin_LIBRARYS_x86})
-    message(STATUS "x86-64")
-endif()
-
-set(catkin_INCLUDE_DIRS
-    ${catkin_INCLUDE_DIRS}
-    ${depend_PATH_INC}/common
-    ${depend_PATH_INC}/basic_alg/include
-    ${depend_PATH_INC}/parameter_manager/include
-    ${depend_PATH_INC}/log_manager/include
-    ${depend_PATH_INC}/kinematics_alg/include
-)
-
-catkin_package(
-    INCLUDE_DIRS include
-    LIBRARIES dynamic_alg
-    DEPENDS basic_alg
-    DEPENDS parameter_manager
-    DEPENDS log_manager
-)
-
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -g -Wno-unused-but-set-variable -Wno-unused-local-typedefs -O0 -fpermissive -DPB_FIELD_32BIT -DSIMMULATION -DPRINT")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0 -D PB_FIELD_32BIT -D_GLIBCXX_USE_CXX11_ABI=0")
 
 include_directories(
   include
-  ${catkin_INCLUDE_DIRS}
+  ../common
+  ../yaml_help/include
+  ../log_manager/include
+  ../basic_alg/include
+  ../kinematics_alg/include
+  ${rtm_INCLUDE_DIRS}
 )
 
 aux_source_directory(src BASE_SRCS)
 
-add_library(dynamic_alg
+add_library(dynamic_alg SHARED
     ${BASE_SRCS}
 )
 
 target_link_libraries(dynamic_alg
-    ${catkin_LIBRARIES}
+    ${rtm_LIBRARIES}
+    yaml_help
+    log_manager_producer
     basic_alg
-    parameter_manager
-    logger
 )
 
-install(TARGETS dynamic_alg
-    LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+
+install(FILES ./config/dynamic_payload_info.yaml
+    DESTINATION ${CONFIG_FILE_OUTPUT_PATH}/robot/dynamics/
 )
 
-add_executable(test_inverse
-    test/test_inverse.cpp
+install(FILES ./config/dynamic_alg_rtm_type.yaml
+    DESTINATION ${CONFIG_FILE_OUTPUT_PATH}/robot/dynamics/
 )
 
-target_link_libraries(test_inverse
-    ${catkin_LIBRARIES}
-    dynamic_alg
+install(FILES ./config/dynamic_alg_rtm_0kg.yaml
+    DESTINATION ${CONFIG_FILE_OUTPUT_PATH}/robot/dynamics/
 )
 
-install(TARGETS	test_inverse
-    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+install(FILES ./config/dynamic_alg_rtm_1kg.yaml
+    DESTINATION ${CONFIG_FILE_OUTPUT_PATH}/robot/dynamics/
 )
 
-add_executable(test_inverse_time
-    test/test_inverse_time.cpp
+install(FILES config/dynamic_alg_rtm_3.5kg.yaml
+    DESTINATION ${CONFIG_FILE_OUTPUT_PATH}/robot/dynamics/
 )
 
-target_link_libraries(test_inverse_time
-    ${catkin_LIBRARIES}
-    dynamic_alg
+install(FILES config/dynamic_alg_rtm_3.5kg_custom.yaml
+    DESTINATION ${CONFIG_FILE_OUTPUT_PATH}/robot/dynamics/
 )
 
-install(TARGETS	test_inverse_time
-    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+install(FILES config/dynamic_alg_rtm_7kg.yaml
+    DESTINATION ${CONFIG_FILE_OUTPUT_PATH}/robot/dynamics/
 )
 
-add_executable(test_direct_time
-    test/test_direct_time.cpp
+install(FILES config/dynamic_alg_rtm_7kg_custom.yaml
+    DESTINATION ${CONFIG_FILE_OUTPUT_PATH}/robot/dynamics/
 )
 
-target_link_libraries(test_direct_time
-    ${catkin_LIBRARIES}
-    dynamic_alg
-)
-
-install(TARGETS	test_direct_time
-    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
-
-add_executable(test_scale_compare
-    test/test_scale_compare.cpp
-)
-
-target_link_libraries(test_scale_compare
-    ${catkin_LIBRARIES}
-    dynamic_alg
-)
-
-install(TARGETS	test_scale_compare
-    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
-
-install(FILES config/dynamic_payload_info.yaml
-    DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/runtime/dynamics/
-)
-
-install(FILES config/dynamic_alg_rtm_type.yaml
-    DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/runtime/dynamics/
-)
-
-install(FILES config/dynamic_alg_rtm_0kg_A2.yaml
-    DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/runtime/dynamics/
-)
-
-install(FILES config/dynamic_alg_rtm_1.0kg_A2.yaml
-    DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/runtime/dynamics/
-)
-
-install(FILES config/dynamic_alg_rtm_3.5kg_A2.yaml
-    DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/runtime/dynamics/
-)
-
-install(FILES config/dynamic_alg_rtm_3.5kg_A6.yaml
-    DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/runtime/dynamics/
-)
-
-install(FILES config/dynamic_alg_rtm_7kg_A3.yaml
-    DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/runtime/dynamics/
-)
-
-install(FILES config/dynamic_alg_rtm_7kg_A6.yaml
-    DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/runtime/dynamics/
-)
-
-install(DIRECTORY config
-    DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-)
 

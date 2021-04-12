@@ -1,7 +1,7 @@
 #ifndef DYNAMICS_H
 #define DYNAMICS_H
 
-#include "error_code.h"
+#include "common_error_code.h"
 #include "basic_alg_datatype.h"
 #include "dynamic_alg_payload.h"
 

@@ -19,7 +19,7 @@ class DSCurvePlanner
 {
 public:
 	virtual ~DSCurvePlanner(void) {}
-	virtual void planDSCurve(double p0, double p1, double vmax, double amax, double* jmax) = 0;
+	virtual void planDSCurve(double p0, double p1, double vmax, double amax, double* jmax, double vel_ratio) = 0;
 	virtual void planStopDSCurve(double t) = 0;
 	virtual void sampleDSCurve(double t, double &p, double &v, double &a) = 0;
 	virtual void outputDSCurve(double time_step, const char *file_name) = 0;
@@ -27,4 +27,4 @@ public:
 	virtual double getSegmentEndingTime(DSSetment segment) = 0;
 };
 
-#endif // !DSCurvePlanner
+#endif // !DSCurvePlanners

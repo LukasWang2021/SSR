@@ -1,104 +1,30 @@
 #include "controller_publish.h"
 
-using namespace fst_ctrl;
+using namespace user_space;
 
 
-void* ControllerPublish::getUserOpModePtr()
+void* ControllerPublish::getAxisFdbPtr()
 {
-    return (void*)state_machine_ptr_->getUserOpModePtr();
+    return (void*)&axis_fdb_;
 }
 
-void* ControllerPublish::getRunningStatePtr()
+void* ControllerPublish::getServo1001ServoFdbPtr()
 {
-    return (void*)state_machine_ptr_->getRunningStatePtr();
+    return (void*)&servo1001_servo_fdb_;
 }
 
-void* ControllerPublish::getInterpreterStatePtr()
+void* ControllerPublish::getServo1001CpuFdbPtr()
 {
-    return (void*)state_machine_ptr_->getInterpreterStatePtr();
+    return (void*)&servo1001_cpu_fdb_;
 }
 
-void* ControllerPublish::getRobotStatePtr()
+void* ControllerPublish::getIODigitalFdbPtr()
 {
-    return (void*)state_machine_ptr_->getRobotStatePtr();
+    return (void*)&io_digital_fdb_;
 }
 
-void* ControllerPublish::getCtrlStatePtr()
+void* ControllerPublish::getIOAnalogFdbPtr()
 {
-    return (void*)state_machine_ptr_->getCtrlStatePtr();
+    return (void*)&io_analog_fdb_;
 }
 
-void* ControllerPublish::getServoStatePtr()
-{
-    return (void*)state_machine_ptr_->getServoStatePtr();
-}
-
-void* ControllerPublish::getSafetyAlarmPtr()
-{
-    return (void*)state_machine_ptr_->getSafetyAlarmPtr();
-}
-
-void* ControllerPublish::getAxisGroupJointFeedbackPtr()
-{
-    return (void*)&joint_feedback_;
-}
-
-void* ControllerPublish::getAxisGroupTcpWorldCartesianPtr()
-{
-    return (void*)&tcp_world_cartesian_;
-}
-
-void* ControllerPublish::getAxisGroupTcpBaseCartesianPtr()
-{
-    return (void*)&tcp_base_cartesian_;
-}
-
-void* ControllerPublish::getAxisGroupTcpCurrentCartesianPtr()
-{
-    return (void*)&tcp_current_cartesian_;
-}
-
-void* ControllerPublish::getAxisGroupCurrentCoordinatePtr()
-{
-    return (void*)&current_coordinate_;
-}
-
-void* ControllerPublish::getAxisGroupCurrentToolPtr()
-{
-    return (void*)&current_tool_;
-}
-
-void* ControllerPublish::getGlobalVelRatioPtr()
-{
-    return (void*)&global_vel_ratio_;
-}
-
-void* ControllerPublish::getGlobalAccRatioPtr()
-{
-    return (void*)&global_acc_ratio_;
-}
-
-void* ControllerPublish::getProgramStatusPtr()
-{
-    return (void*)&program_status_;
-}
-
-void* ControllerPublish::getTpProgramStatusPtr()
-{
-    return (void*)&tp_program_status_;
-}
-
-void* ControllerPublish::getSafetyBoardStatusPtr()
-{
-    return (void*)&safety_board_status_;
-}
-
-void* ControllerPublish::getIoBoardStatusPtr()
-{
-    return (void*)&io_board_status_;
-}
-
-void* ControllerPublish::getModbusClientCtrlStatusPtr()
-{
-    return (void*)&modbus_client_ctrl_status_;
-}

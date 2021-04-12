@@ -1,12 +1,11 @@
 #include "coordinate_manager_param.h"
 #include "common_file_path.h"
-#include "common_log.h"
 #include <string>
 
 using namespace fst_ctrl;
 
 CoordinateManagerParam::CoordinateManagerParam():
-    log_level_(fst_log::MSG_LEVEL_ERROR),
+    log_level_(0),
     max_name_length_(32),
     max_comment_length_(32),
     max_number_of_coords_(10),

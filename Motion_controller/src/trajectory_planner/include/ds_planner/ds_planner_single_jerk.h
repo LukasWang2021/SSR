@@ -11,7 +11,7 @@ public:
 	SingleJerkDSCurvePlanner(void);
 	~SingleJerkDSCurvePlanner(void);
 	virtual void planStopDSCurve(double t);
-	virtual void planDSCurve(double q0, double q1, double vmax, double amax, double* jmax);
+	virtual void planDSCurve(double q0, double q1, double vmax, double amax, double* jmax, double v_ratio);
 	virtual void sampleDSCurve(double t, double &p, double &v, double &a);
 	virtual void outputDSCurve(double time_step, const char *file_name);
 	virtual double getDuration(void);
@@ -35,6 +35,7 @@ private:
 	double j_max_;
 	double j_min_;
 	double t_total_;
+	double vel_ratio_;
 	double coeff_inc_acc_[8];
 	double coeff_dec_acc_[8];
 	double coeff_inc_dec_[8];
@@ -50,6 +51,7 @@ private:
 
 	void sampleFineDSCurve(double t, double &p, double &v, double &a);
 	void sampleOriginDSCurve(double t, double &p, double &v, double &a);
+	void rescaleTrajectoryVelocity(double vel_ratio);
 };
 
 

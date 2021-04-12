@@ -21,6 +21,30 @@ bool Euler::isEqual(const Euler& euler, double valve) const
     }
 }
 
+bool Euler::isEquivalent(const Euler& euler, double valve) const
+{
+    return fabs(getIncludedAngle(euler)) < valve;
+}
+
+bool Euler::isEquivalent(const Quaternion& quaternion, double valve) const
+{
+    return fabs(getIncludedAngle(quaternion)) < valve;
+}
+
+double Euler::getIncludedAngle(const Euler& euler) const
+{
+    Quaternion quaternion;
+    euler.convertToQuaternion(quaternion);
+    return getIncludedAngle(quaternion);
+}
+
+double Euler::getIncludedAngle(const Quaternion& quaternion) const
+{
+    Quaternion quaternion_this;
+    convertToQuaternion(quaternion_this);
+    return quaternion_this.getIncludedAngle(quaternion);
+}
+
 void Euler::convertToQuaternion(Quaternion& quaternion) const
 {
     RotationMatrix matrix;

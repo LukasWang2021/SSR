@@ -80,7 +80,9 @@ void CirclePlanner::setLimit(double vel_limit_position, double acc_limit_positio
 	memcpy(limit_jerk_orientation_, jerk_limit_orientation, sizeof(limit_jerk_orientation_));
 }
 
-void CirclePlanner::planTrajectory(const PoseQuaternion &start, const PoseQuaternion &via, const PoseQuaternion &end, double vel, double acc, double jerk)
+void CirclePlanner::planTrajectory(const PoseQuaternion &start, const PoseQuaternion &via, const PoseQuaternion &end, 
+	//double vel, double acc, double jerk)
+	double vel, double vel_ratio, double acc_ratio, double jerk_ratio)
 {
 	Point ab = via.point_ - start.point_;
 	Point ac = end.point_ - start.point_;
@@ -137,13 +139,15 @@ void CirclePlanner::planTrajectory(const PoseQuaternion &start, const PoseQuater
 
 	double distance = position_angle_ * radius_;
 	double lim_cart_vel = limit_vel_position_ * vel / distance;
-	double lim_cart_acc = limit_acc_position_ * acc / distance;
+	// double lim_cart_vel = limit_vel_position_ / distance;
+	double lim_cart_acc = limit_acc_position_ * acc_ratio / distance;
 
 	start_ = start;
 	via_ = via;
 	end_ = end;
 	orientation_angle_ = end_.quaternion_.getIncludedAngle(start_.quaternion_);
 
+#if 0
 	if (orientation_angle_ > M_PI / 2)
 	{
 		end_.quaternion_.w_ = -end_.quaternion_.w_;
@@ -152,23 +156,111 @@ void CirclePlanner::planTrajectory(const PoseQuaternion &start, const PoseQuater
 		end_.quaternion_.z_ = -end_.quaternion_.z_;
 		orientation_angle_ = end_.quaternion_.getIncludedAngle(start_.quaternion_);
 	}
-
+#endif
 	double lim_orientation_vel = limit_vel_orientation_ * vel / orientation_angle_;
-	double lim_orientation_acc = limit_acc_orientation_ * acc / orientation_angle_;
+	double lim_orientation_acc = limit_acc_orientation_ * acc_ratio / orientation_angle_;
 	double max_jerk[MAX_JERK_NUM];
 	double max_pos_jerk;
 	double max_ori_jerk;
 
     for (uint32_t i = 0; i < jerk_num_; ++i)
     {
-        max_pos_jerk = limit_jerk_position_[i] * jerk / distance;
-		max_ori_jerk = limit_jerk_orientation_[i] * jerk / orientation_angle_;
+        max_pos_jerk = limit_jerk_position_[i] * jerk_ratio / distance;
+		max_ori_jerk = limit_jerk_orientation_[i] * jerk_ratio / orientation_angle_;
 		max_jerk[i] = max_pos_jerk < max_ori_jerk ? max_pos_jerk : max_ori_jerk;
     }
 
 	double max_vel = lim_cart_vel < lim_orientation_vel ? lim_cart_vel : lim_orientation_vel;
 	double max_acc = lim_cart_acc < lim_orientation_acc ? lim_cart_acc : lim_orientation_acc;
-	ds_curve_->planDSCurve(0, 1, max_vel, max_acc, max_jerk);
+	ds_curve_->planDSCurve(0, 1, max_vel, max_acc, max_jerk, vel_ratio);
+}
+
+void CirclePlanner::planAlternativeTrajectory(const basic_alg::PoseQuaternion &start, const basic_alg::PoseQuaternion &via, const basic_alg::PoseQuaternion &end, 
+	double vel, double vel_ratio, double acc_ratio, double jerk_ratio)
+{
+	Point ab = via.point_ - start.point_;
+	Point ac = end.point_ - start.point_;
+	double labab = ab.x_ * ab.x_ + ab.y_ * ab.y_ + ab.z_ * ab.z_;
+	double lacac = ac.x_ * ac.x_ + ac.y_ * ac.y_ + ac.z_ * ac.z_;
+	double labac = ab.x_ * ac.x_ + ab.y_ * ac.y_ + ab.z_ * ac.z_;
+	double u = (labac * lacac - lacac * labab) / (labab * lacac - labac * labac) / 2;
+	double v = (labac * labab - labab * lacac) / (labab * lacac - labac * labac) / 2;
+	Point oa = ab * u + ac * v;
+	Point center = start.point_ - oa;
+	Point ob = via.point_ - center;
+	Point oc = end.point_ - center;
+	trans_matrix_.trans_vector_ = center;
+	double vector_oa[3] = {oa.x_, oa.y_, oa.z_};
+	double vector_ob[3] = {ob.x_, ob.y_, ob.z_};
+	//double vector_oc[3] = {oc.x_, oc.y_, oc.z_};
+	double unit_vector_z[3];
+	crossProduct(vector_oa, vector_ob, unit_vector_z);
+	mulScalar2Vector(1 / norm(unit_vector_z), unit_vector_z);
+	double norm_oa = norm(vector_oa);
+	//double norm_ob = norm(vector_ob);
+	//double norm_oc = norm(vector_oc);
+	double unit_vector_x[3] = {vector_oa[0] / norm_oa, vector_oa[1] / norm_oa, vector_oa[2] / norm_oa};
+	double unit_vector_y[3];
+	crossProduct(unit_vector_z, unit_vector_x, unit_vector_y);
+	trans_matrix_.rotation_matrix_.matrix_[0][0] = unit_vector_x[0];
+	trans_matrix_.rotation_matrix_.matrix_[0][1] = unit_vector_y[0];
+	trans_matrix_.rotation_matrix_.matrix_[0][2] = unit_vector_z[0];
+	trans_matrix_.rotation_matrix_.matrix_[1][0] = unit_vector_x[1];
+	trans_matrix_.rotation_matrix_.matrix_[1][1] = unit_vector_y[1];
+	trans_matrix_.rotation_matrix_.matrix_[1][2] = unit_vector_z[1];
+	trans_matrix_.rotation_matrix_.matrix_[2][0] = unit_vector_x[2];
+	trans_matrix_.rotation_matrix_.matrix_[2][1] = unit_vector_y[2];
+	trans_matrix_.rotation_matrix_.matrix_[2][2] = unit_vector_z[2];
+	trans_matrix_inverse_= trans_matrix_;
+	trans_matrix_inverse_.inverse();
+	TransMatrix trans_matrix;
+	start.convertToTransMatrix(trans_matrix);
+	trans_matrix.leftMultiply(trans_matrix_inverse_);
+	Point qa = trans_matrix.trans_vector_;
+	via.convertToTransMatrix(trans_matrix);
+	trans_matrix.leftMultiply(trans_matrix_inverse_);
+	Point qb = trans_matrix.trans_vector_;
+	end.convertToTransMatrix(trans_matrix);
+	trans_matrix.leftMultiply(trans_matrix_inverse_);
+	Point qc = trans_matrix.trans_vector_;
+	theta1_ = atan2(qb.y_, qb.x_);
+	theta2_ = atan2(qc.y_, qc.x_);
+	assert(theta1_ > 0);
+	theta2_ = theta2_ < 0 ? theta2_ + M_PI * 2 : theta2_;
+	rotate_direction_ = theta1_ < theta2_ ? 1 : -1;
+	position_angle_ = rotate_direction_ > 0 ? theta2_ : M_PI * 2 - theta2_;
+	radius_ = norm_oa;
+
+	double distance = position_angle_ * radius_;
+	double lim_cart_vel = limit_vel_position_ * vel / distance;
+	double lim_cart_acc = limit_acc_position_ * acc_ratio / distance;
+
+	start_ = start;
+	via_ = via;
+	end_ = end;
+	end_.quaternion_.x_ = -end.quaternion_.x_;
+	end_.quaternion_.y_ = -end.quaternion_.y_;
+	end_.quaternion_.z_ = -end.quaternion_.z_;
+	end_.quaternion_.w_ = -end.quaternion_.w_;
+
+	orientation_angle_ = end_.quaternion_.getIncludedAngle(start_.quaternion_);
+
+	double lim_orientation_vel = limit_vel_orientation_ * vel / orientation_angle_;
+	double lim_orientation_acc = limit_acc_orientation_ * acc_ratio / orientation_angle_;
+	double max_jerk[MAX_JERK_NUM];
+	double max_pos_jerk;
+	double max_ori_jerk;
+
+    for (uint32_t i = 0; i < jerk_num_; ++i)
+    {
+        max_pos_jerk = limit_jerk_position_[i] * jerk_ratio / distance;
+		max_ori_jerk = limit_jerk_orientation_[i] * jerk_ratio / orientation_angle_;
+		max_jerk[i] = max_pos_jerk < max_ori_jerk ? max_pos_jerk : max_ori_jerk;
+    }
+
+	double max_vel = lim_cart_vel < lim_orientation_vel ? lim_cart_vel : lim_orientation_vel;
+	double max_acc = lim_cart_acc < lim_orientation_acc ? lim_cart_acc : lim_orientation_acc;
+	ds_curve_->planDSCurve(0, 1, max_vel, max_acc, max_jerk, vel_ratio);
 }
 
 void CirclePlanner::sampleTrajectory(double t, basic_alg::PoseQuaternion &sample)
@@ -178,7 +270,7 @@ void CirclePlanner::sampleTrajectory(double t, basic_alg::PoseQuaternion &sample
 
 	// 圆心角差值,位置差值
 	TransMatrix trans;
-	double theta = p * position_angle_;
+	double theta = p * position_angle_ * rotate_direction_;
 	trans.trans_vector_.x_ = radius_ * cos(theta);
 	trans.trans_vector_.y_ = radius_ * sin(theta);
 	trans.trans_vector_.z_ = 0;
@@ -210,7 +302,7 @@ void CirclePlanner::sampleTrajectory(double t, double &sample_position_vel, basi
 
 	// 圆心角差值,位置差值
 	TransMatrix trans;
-	double theta = p * position_angle_;
+	double theta = p * position_angle_ * rotate_direction_;
 	trans.trans_vector_.x_ = radius_ * cos(theta);
 	trans.trans_vector_.y_ = radius_ * sin(theta);
 	trans.trans_vector_.z_ = 0;

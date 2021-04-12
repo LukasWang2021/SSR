@@ -16,10 +16,10 @@ BaseReg::~BaseReg()
 
 }
 
-std::vector<BaseRegSummary> BaseReg::getChangedList(int start_id, int size)
+vector<BaseRegSummary> BaseReg::getChangedList(int start_id, int size)
 {
     BaseRegSummary summary;
-    std::vector<BaseRegSummary> list;
+    vector<BaseRegSummary> list;
     uint32_t end_id = static_cast<uint32_t>(start_id + size);
     start_id = (start_id <= 0 ? 1 : start_id);
     end_id = (end_id < reg_list_.size() ? end_id : reg_list_.size());
@@ -37,10 +37,10 @@ std::vector<BaseRegSummary> BaseReg::getChangedList(int start_id, int size)
     return list;
 }
 
-std::vector<BaseRegSummary> BaseReg::getValidList(int start_id, int size)
+vector<BaseRegSummary> BaseReg::getValidList(int start_id, int size)
 {
     BaseRegSummary summary;
-    std::vector<BaseRegSummary> list;
+    vector<BaseRegSummary> list;
     uint32_t end_id = static_cast<uint32_t>(start_id + size);
     start_id = (start_id <= 0 ? 1 : start_id);
     end_id = (end_id < reg_list_.size() ? end_id : reg_list_.size());
@@ -73,7 +73,7 @@ bool BaseReg::isRegValid(int id)
 
 BaseRegData* BaseReg::getBaseRegDataById(int id)
 {
-    if (id <= 0) return false;
+    if (id <= 0) return NULL;
     uint32_t uid = static_cast<uint32_t>(id);
 
     if(uid >= reg_list_.size())
@@ -127,7 +127,7 @@ bool BaseReg::setValid(int id, bool is_valid)
     }
 }
 
-bool BaseReg::setName(int id, std::string name)
+bool BaseReg::setName(int id, string name)
 {
     if (id <= 0) return false;
     uint32_t uid = static_cast<uint32_t>(id);
@@ -138,21 +138,14 @@ bool BaseReg::setName(int id, std::string name)
     }
     else
     {
-        if(name.size() == 0)
-        {
-            reg_list_[uid].name = std::string("default");
-        }
-        else
-        {
-            reg_list_[uid].name = name;
-        }
+        reg_list_[uid].name = name;
         return true;
     }
 }
 
-std::string BaseReg::getName(int id)
+string BaseReg::getName(int id)
 {
-    if (id <= 0) return false;
+    if (id <= 0) return NULL;
     uint32_t uid = static_cast<uint32_t>(id);
 
     if(uid >= reg_list_.size())
@@ -165,7 +158,7 @@ std::string BaseReg::getName(int id)
     }
 }
 
-bool BaseReg::setComment(int id, std::string comment)
+bool BaseReg::setComment(int id, string comment)
 {
     if (id <= 0) return false;
     uint32_t uid = static_cast<uint32_t>(id);
@@ -176,26 +169,19 @@ bool BaseReg::setComment(int id, std::string comment)
     }
     else
     {
-        if(comment.size() == 0)
-        {
-            reg_list_[uid].comment = std::string("default");
-        }
-        else
-        {
-            reg_list_[uid].comment = comment;
-        }
+        reg_list_[uid].comment = comment;
         return true;
     }
 }
 
-std::string BaseReg::getComment(int id)
+string BaseReg::getComment(int id)
 {
-    if (id <= 0) return std::string("");
+    if (id <= 0) return string("");
     uint32_t uid = static_cast<uint32_t>(id);
 
     if(uid >= reg_list_.size())
     {
-        return std::string("");
+        return string("");
     }
     else
     {
@@ -211,25 +197,7 @@ bool BaseReg::setRegList(BaseRegData& data)
     }
     else
     {
-        reg_list_[data.id].id = data.id;
-        reg_list_[data.id].is_valid = data.is_valid;
-        reg_list_[data.id].is_changed = data.is_changed;
-        if(data.name.size() == 0)
-        {
-            reg_list_[data.id].name = std::string("default");
-        }
-        else
-        {
-            reg_list_[data.id].name = data.name;
-        }
-        if(data.comment.size() == 0)
-        {
-            reg_list_[data.id].comment = std::string("default");
-        }
-        else
-        {
-            reg_list_[data.id].comment = data.comment;
-        }
+        reg_list_[data.id] = data;
         return true;
     }
 }
@@ -242,11 +210,7 @@ bool BaseReg::getRegList(int id, BaseRegData& data)
     }
     else
     {
-        data.id = reg_list_[id].id;
-        data.is_valid = reg_list_[id].is_valid;
-        data.is_changed = reg_list_[id].is_changed;
-        data.name = reg_list_[id].name;
-        data.comment = reg_list_[id].comment;
+        data = reg_list_[id];
         return true;
     }
 }
@@ -310,27 +274,13 @@ bool BaseReg::isMoveInputValid(int expect_id, int original_id)
     }
 }
 
-void BaseReg::packAddRegData(BaseRegData& data, int id, std::string name, std::string comment)
+void BaseReg::packAddRegData(BaseRegData& data, int id, string name, string comment)
 {
     data.id = id;
     data.is_valid = true;
     data.is_changed = true;
-    if(name.size() == 0)
-    {
-        data.name = std::string("default");
-    }
-    else
-    {
-        data.name = name;
-    }
-    if(comment.size() == 0)
-    {
-        data.comment = std::string("default");
-    }
-    else 
-    {
-        data.comment = comment;
-    }
+    data.name = name;
+    data.comment = comment;
 }
 
 void BaseReg::packDeleteRegData(BaseRegData& data, int id)
@@ -338,11 +288,11 @@ void BaseReg::packDeleteRegData(BaseRegData& data, int id)
     data.id = id;
     data.is_valid = false;
     data.is_changed = true;
-    data.name = std::string("default");
-    data.comment = std::string("default");
+    data.name = "";
+    data.comment = "";
 }
 
-void BaseReg::packSetRegData(BaseRegData& data, int id, std::string name, std::string comment)
+void BaseReg::packSetRegData(BaseRegData& data, int id, string name, string comment)
 {
     packAddRegData(data, id, name, comment);
 }

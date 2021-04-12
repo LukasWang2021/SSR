@@ -1,10 +1,10 @@
 #ifndef DYNAMIC_ALG_PAYLOAD_H
 #define DYNAMIC_ALG_PAYLOAD_H
 
-#include "common_log.h"
 #include <string>
 #include <vector>
-#include "parameter_manager/parameter_manager_param_group.h"
+#include "common_error_code.h"
+#include "yaml_help.h"
 
 namespace basic_alg
 {
@@ -32,7 +32,7 @@ typedef struct
 class DynamicAlgPayload
 {
 public:
-    DynamicAlgPayload(fst_log::Logger *logger);
+    DynamicAlgPayload();
     ~DynamicAlgPayload();
 
     bool init();
@@ -46,9 +46,8 @@ public:
     void getAllValidPayloadSummaryInfo(std::vector<PayloadSummaryInfo>& info_list);
 
 private:
-    fst_log::Logger* log_ptr_;
     std::vector<PayloadInfo> payload_set_;
-    fst_parameter::ParamGroup yaml_help_;
+    base_space::YamlHelp yaml_help_;
     std::string file_path_;
     int log_level_;
     int max_number_of_payloads_;

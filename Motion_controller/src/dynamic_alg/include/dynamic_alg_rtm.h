@@ -1,11 +1,10 @@
 #ifndef DYNAMIC_ALG_RTM_H
 #define DYNAMIC_ALG_RTM_H
 
-#include "axis_group_model.h"
+//#include "axis_group_model.h"
 #include "dynamic_alg.h"
 #include "dynamic_alg_rtm_param.h"
-#include "common_log.h"
-#include "parameter_manager/parameter_manager_param_group.h"
+#include "yaml_help.h"
 #include "kinematics_rtm.h"
 
 
@@ -47,8 +46,7 @@ public:
 
 private:
 
-    void computePaiElementInverseDynamics(DynamicAlgParam* dynamics_alg_param_ptr, size_t link_num);
-    void computePaiElementInverseDynamics(void);
+    void updatePaiByPayload(double payload);
     void computeMExpression(const Joint& joint, double m[LINKS][LINKS]);
     void computeCExpression(const Joint& joint, const JointVelocity& vel, double c[LINKS][LINKS]);
     void computeGExpression(const Joint& joint, double g[LINKS]);
@@ -72,13 +70,21 @@ private:
     DH base_dh_;
     DH arm_dh_[6];
     DynamicAlgRTMParam* param_ptr_;
-    fst_log::Logger* log_ptr_;
-    fst_parameter::ParamGroup param_;
     DynamicAlgPayload* payload_ptr_;
-    std::string file_path_;
+    base_space::YamlHelp dh_param_;
+    std::string dh_file_path_;
+    base_space::YamlHelp type_param_;
+    std::string type_file_path_;
     bool is_valid_;
+    int log_level_;
     int current_payload_id_;
     double acc_scale_factor_;
+    std::string param_file_name_;
+    double param_0kg_scope_;
+    double param_1kg_scope_;
+    double param_3p5kg_scope_;
+    double param_7kg_scope_;
+    size_t param_index_;
 
     //input values.
     double q1, q2, q3, q4, q5, q6, q7, q8, q9;

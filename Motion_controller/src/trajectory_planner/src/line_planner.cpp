@@ -76,12 +76,13 @@ void LinePlanner::setLimit(double vel_limit_position, double acc_limit_position,
 	memcpy(limit_jerk_orientation_, jerk_limit_orientation, sizeof(limit_jerk_orientation_));
 }
 
-void LinePlanner::planTrajectory(const PoseQuaternion &start, const PoseQuaternion &end, double vel, double acc, double jerk)
+void LinePlanner::planTrajectory(const PoseQuaternion &start, const PoseQuaternion &end, 
+	// double vel, double acc, double jerk)
+	double vel, double vel_ratio, double acc_ratio, double jerk_ratio)
 {
 	double distance = getDistance(end.point_, start.point_);
 	double lim_cart_vel = limit_vel_position_ * vel / distance;
-	double lim_cart_acc = limit_acc_position_ * acc / distance;
-	//double lim_cart_jerk = limit_jerk_position_ / distance;
+	double lim_cart_acc = limit_acc_position_ * acc_ratio / distance;
 
 	start_ = start;
 	end_ = end;
@@ -89,8 +90,7 @@ void LinePlanner::planTrajectory(const PoseQuaternion &start, const PoseQuaterni
 	double angle = end_.quaternion_.getIncludedAngle(start_.quaternion_);
 	orientation_angle_ = angle;
 	double lim_orientation_vel = limit_vel_orientation_ * vel / angle;
-	double lim_orientation_acc = limit_acc_orientation_ * acc / angle;
-	//double lim_orientation_jerk = limit_jerk_orientation_ / angle;
+	double lim_orientation_acc = limit_acc_orientation_ * acc_ratio / angle;
 
 	double max_jerk[MAX_JERK_NUM];
 	double max_pos_jerk[MAX_JERK_NUM];
@@ -98,25 +98,24 @@ void LinePlanner::planTrajectory(const PoseQuaternion &start, const PoseQuaterni
 
     for (uint32_t i = 0; i < jerk_num_; ++i)
     {
-        max_pos_jerk[i] = limit_jerk_position_[i] * jerk / distance;
-		max_ori_jerk[i] = limit_jerk_orientation_[i] * jerk / angle;
+        max_pos_jerk[i] = limit_jerk_position_[i] * jerk_ratio / distance;
+		max_ori_jerk[i] = limit_jerk_orientation_[i] * jerk_ratio / angle;
 		max_jerk[i] = max_pos_jerk[i] < max_ori_jerk[i] ? max_pos_jerk[i] : max_ori_jerk[i];
     }
 
 	double max_vel = lim_cart_vel < lim_orientation_vel ? lim_cart_vel : lim_orientation_vel;
 	double max_acc = lim_cart_acc < lim_orientation_acc ? lim_cart_acc : lim_orientation_acc;
-	//double max_jerk = lim_cart_jerk < lim_orientation_jerk ? lim_cart_jerk : lim_orientation_jerk;
 
-	ds_curve_->planDSCurve(0, 1, max_vel, max_acc, max_jerk);
+	ds_curve_->planDSCurve(0, 1, max_vel, max_acc, max_jerk, vel_ratio);
 }
 
-
-void LinePlanner::planAlternativeTrajectory(const PoseQuaternion &start, const PoseQuaternion &end, double vel, double acc, double jerk)
+void LinePlanner::planAlternativeTrajectory(const PoseQuaternion &start, const PoseQuaternion &end, 
+	// double vel, double acc, double jerk)
+	double vel, double vel_ratio, double acc_ratio, double jerk_ratio)
 {
 	double distance = getDistance(end.point_, start.point_);
 	double lim_cart_vel = limit_vel_position_ * vel / distance;
-	double lim_cart_acc = limit_acc_position_ * acc / distance;
-	//double lim_cart_jerk = limit_jerk_position_ / distance;
+	double lim_cart_acc = limit_acc_position_ * acc_ratio / distance;
 
 	start_ = start;
 	end_ = end;
@@ -128,8 +127,7 @@ void LinePlanner::planAlternativeTrajectory(const PoseQuaternion &start, const P
 	double angle = end_.quaternion_.getIncludedAngle(start_.quaternion_);
 	orientation_angle_ = angle;
 	double lim_orientation_vel = limit_vel_orientation_ * vel / angle;
-	double lim_orientation_acc = limit_acc_orientation_ * acc / angle;
-	//double lim_orientation_jerk = limit_jerk_orientation_ / angle;
+	double lim_orientation_acc = limit_acc_orientation_ * acc_ratio / angle;
 
 	double max_jerk[MAX_JERK_NUM];
 	double max_pos_jerk[MAX_JERK_NUM];
@@ -137,16 +135,15 @@ void LinePlanner::planAlternativeTrajectory(const PoseQuaternion &start, const P
 
     for (uint32_t i = 0; i < jerk_num_; ++i)
     {
-        max_pos_jerk[i] = limit_jerk_position_[i] * jerk / distance;
-		max_ori_jerk[i] = limit_jerk_orientation_[i] * jerk / angle;
+        max_pos_jerk[i] = limit_jerk_position_[i] * jerk_ratio / distance;
+		max_ori_jerk[i] = limit_jerk_orientation_[i] * jerk_ratio / angle;
 		max_jerk[i] = max_pos_jerk[i] < max_ori_jerk[i] ? max_pos_jerk[i] : max_ori_jerk[i];
     }
 
 	double max_vel = lim_cart_vel < lim_orientation_vel ? lim_cart_vel : lim_orientation_vel;
 	double max_acc = lim_cart_acc < lim_orientation_acc ? lim_cart_acc : lim_orientation_acc;
-	//double max_jerk = lim_cart_jerk < lim_orientation_jerk ? lim_cart_jerk : lim_orientation_jerk;
 
-	ds_curve_->planDSCurve(0, 1, max_vel, max_acc, max_jerk);
+	ds_curve_->planDSCurve(0, 1, max_vel, max_acc, max_jerk, vel_ratio);
 }
 
 void LinePlanner::sampleNormalTrajectory(double t, double &u, double &v, double &a)

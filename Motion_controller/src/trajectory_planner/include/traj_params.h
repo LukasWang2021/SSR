@@ -3,7 +3,7 @@
 
 #include <string>
 #include <joint.h>
-#include <parameter_manager/parameter_manager_param_group.h>
+#include "yaml_help.h"
 #include <ds_planner/ds_planner.h>
 
 
@@ -23,7 +23,9 @@ public:
 
     double position_vel_max_;
     double position_acc_max_;
+    double position_acc_max_swift_;
     double position_jerk_max_[MAX_JERK_NUM];
+    double position_jerk_max_swift_[MAX_JERK_NUM];
 
     double quaternion_vel_max_;
     double quaternion_acc_max_;
@@ -34,14 +36,14 @@ public:
     int max_jerk_num_;
     bool dynamics_check_;
     bool adjust_acc_by_vel_;
- 
+
     bool loadConstraint();
     bool saveConstraint();
     bool loadConfig();
 
 private:
     uint32_t joint_num_;
-    fst_parameter::ParamGroup yaml_help_;
+    base_space::YamlHelp yaml_help_;
     std::string constraint_file_path_;
     std::string config_file_path_;
 

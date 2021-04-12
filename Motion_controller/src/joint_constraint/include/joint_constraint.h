@@ -47,11 +47,11 @@ class Constraint
     const basic_alg::Joint& upper(void) const;
     const basic_alg::Joint& lower(void) const;
 
-    bool isJointInConstraint(const basic_alg::Joint &joint) const;
-    bool isCoverConstaint(const Constraint &constraint) const;
-    bool isCoverConstaint(const JointConstraint &constraint) const;
-    bool isCoveredByConstaint(const Constraint &constraint) const;
-    bool isCoveredByConstaint(const JointConstraint &constraint) const;
+    bool isJointInConstraint(const basic_alg::Joint &joint, double value = MINIMUM_E6) const;
+    bool isCoverConstaint(const Constraint &constraint, double value = MINIMUM_E6) const;
+    bool isCoverConstaint(const JointConstraint &constraint, double value = MINIMUM_E6) const;
+    bool isCoveredByConstaint(const Constraint &constraint, double value = MINIMUM_E6) const;
+    bool isCoveredByConstaint(const JointConstraint &constraint, double value = MINIMUM_E6) const;
 
     uint32_t getNumberOfJoint(void) const;
 

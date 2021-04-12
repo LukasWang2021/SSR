@@ -51,7 +51,6 @@ public:
     int routine_thread_priority_;   /**< The priority of the routine thread.*/
     int realtime_thread_priority_;  /**< The priority of the realtime thread.*/
     bool dio_exist_;
-    bool aio_exist_;
 
 private:
     base_space::YamlHelp yaml_help_;

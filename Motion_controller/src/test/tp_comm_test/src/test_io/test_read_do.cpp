@@ -24,6 +24,12 @@ using namespace std;
 
 int main(int argc, char* argv[])
 {
+    if (argc <= 1)
+    {
+        printf("One more parameter is needed: DO_offset\n");
+        return -1;
+    }
+
     TpCommTest test;
     if (!test.initRpcSocket())
     {
@@ -34,21 +40,15 @@ int main(int argc, char* argv[])
     uint8_t buf[MAX_REQ_BUFFER_SIZE];
     int buf_size = MAX_REQ_BUFFER_SIZE;
 
-    unsigned int hash_value = 0x000050E3;
-
-    RequestMessageType_Topic msg = RequestMessageType_Topic_init_default;
+    unsigned int hash_value = 0x000185AF;
+ 
+    RequestMessageType_Int32 msg;
     msg.header.time_stamp = 122;
-    msg.property.authority = Comm_Authority_TP_SIMMULATOR;
-    msg.data.topic_hash = 0x12345678;
-    msg.data.time_min = 100;
-    msg.data.time_max = 100;
-    msg.data.element_hash_list_count = 4;
-    msg.data.element_hash_list[0] = 0x0001715B;
-    msg.data.element_hash_list[1] = 0x0001128B;
-    msg.data.element_hash_list[2] = 0x00012FFB;
-    msg.data.element_hash_list[3] = 0x00013C8B;
+    msg.property.authority = Comm_Authority_TP_SIMMULATOR;  
+    msg.data.data = atoi(argv[1]);
+    printf("msg.data.data = %d\n", msg.data.data);  
 
-    if (!test.generateRequestMessageType(hash_value, (void*)&msg, RequestMessageType_Topic_fields, buf, buf_size))
+    if (!test.generateRequestMessageType(hash_value, (void*)&msg, RequestMessageType_Int32_fields, buf, buf_size))
     {
         cout << "Request : encode buf failed" << endl;
         return -1;
@@ -67,9 +67,9 @@ int main(int argc, char* argv[])
         return -1;
     }
 
-    ResponseMessageType_Uint64 recv_msg;
+    ResponseMessageType_Uint64_Int32 recv_msg;
     unsigned int recv_hash = 0;
-    if (!test.decodeResponseMessageType(recv_hash, (void*)&recv_msg, ResponseMessageType_Uint64_fields, buf, buf_size))
+    if (!test.decodeResponseMessageType(recv_hash, (void*)&recv_msg, ResponseMessageType_Uint64_Int32_fields, buf, buf_size))
     {
         cout << "Reply : recv msg decode failed" << endl;
         return -1;
@@ -84,7 +84,8 @@ int main(int argc, char* argv[])
     cout << "Reply : msg.header.package_left = " << recv_msg.header.package_left << endl;
     cout << "Reply : msg.header.error_code = " << recv_msg.header.error_code << endl;
     cout << "Reply : msg.property.authority = " << recv_msg.property.authority << endl;
-	cout << "Reply : msg.error_code = " <<std::hex<< recv_msg.data.data << endl;
+    cout << "Reply : msg.error_code = " << recv_msg.error_code.data << endl;
+    cout << "Reply : msg.data.data = " << recv_msg.data.data << endl;
 
     usleep(200000);
 

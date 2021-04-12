@@ -19,7 +19,6 @@
 #include "system/servo_cpu_comm_base.h"
 #include "axis.h"
 #include "io_1000.h"
-#include "io_analog.h"
 
 /**
  * @brief user_space includes the user level implementation.
@@ -53,7 +52,7 @@ public:
      * @return void.
      */
     void init(user_space::TpComm* tp_comm_ptr, servo_comm_space::ServoCpuCommBase* cpu_comm_ptr, 
-        axis_space::Axis* axis_ptr[AXIS_NUM], hal_space::Io1000* io_dev_ptr, hal_space::IoAnalog* io_analog_ptr);
+        axis_space::Axis* axis_ptr[AXIS_NUM], hal_space::Io1000* io_dev_ptr);
 
     /**
      * @brief Gets the pointer of the publishing value.
@@ -128,7 +127,6 @@ private:
     servo_comm_space::ServoCpuCommBase* cpu_comm_ptr_;
     axis_space::Axis* axis_ptr_[AXIS_NUM];
     hal_space::Io1000* io_dev_ptr_;
-    hal_space::IoAnalog* io_analog_ptr_;
 
     enum {HASH_BYTE_SIZE = 4,};
     enum {QUICK_SEARCH_TABLE_SIZE = 128,};
@@ -153,7 +151,6 @@ private:
     MessageType_ServoFeedbackList servo1001_servo_fdb_;
     MessageType_Uint32List servo1001_cpu_fdb_;
     MessageType_Uint32List io_digital_fdb_;
-    MessageType_Uint32List io_analog_fdb_;
 
     void initPublishTable();
     void initPublishQuickSearchTable();
@@ -163,14 +160,12 @@ private:
     void* getServo1001ServoFdbPtr();
     void* getServo1001CpuFdbPtr();
     void* getIODigitalFdbPtr();
-    void* getIOAnalogFdbPtr();
     
     // update publish element
     void updateAxisFdb();
     void updateServo1001ServoFdb();
     void updateServo1001CpuFdb();
     void updateIODigitalFdb();
-    void updateIOAnalogFdb();
 };
 
 }

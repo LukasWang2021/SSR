@@ -23,8 +23,3 @@ void* ControllerPublish::getIODigitalFdbPtr()
     return (void*)&io_digital_fdb_;
 }
 
-void* ControllerPublish::getIOAnalogFdbPtr()
-{
-    return (void*)&io_analog_fdb_;
-}
-

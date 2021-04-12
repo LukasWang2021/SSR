@@ -19,7 +19,7 @@ ControllerPublish::~ControllerPublish()
 }
 
 void ControllerPublish::init(user_space::TpComm* tp_comm_ptr, servo_comm_space::ServoCpuCommBase* cpu_comm_ptr, 
-        axis_space::Axis* axis_ptr[AXIS_NUM], hal_space::Io1000* io_dev_ptr, hal_space::IoAnalog* io_analog_ptr)
+        axis_space::Axis* axis_ptr[AXIS_NUM], hal_space::Io1000* io_dev_ptr)
 {
     tp_comm_ptr_ = tp_comm_ptr; 
     cpu_comm_ptr_ = cpu_comm_ptr;
@@ -28,7 +28,6 @@ void ControllerPublish::init(user_space::TpComm* tp_comm_ptr, servo_comm_space::
         axis_ptr_[i] = axis_ptr[i];
     }
     io_dev_ptr_ = io_dev_ptr;
-    io_analog_ptr_ = io_analog_ptr;
 
     initPublishTable();
     initPublishQuickSearchTable();

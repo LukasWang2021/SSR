@@ -79,15 +79,3 @@ void ControllerPublish::updateIODigitalFdb()
         }
     }
 }
-
-void ControllerPublish::updateIOAnalogFdb()
-{
-    io_analog_fdb_.data_count = IO_AIO_MAX_SIZE;
-    int16_t value[IO_AIO_MAX_SIZE] = {0}; 
-    for (uint32_t i = 0; i < io_analog_fdb_.data_count; ++i)
-    {
-        io_analog_ptr_->readAIO(0, i, value[i]);
-        io_analog_fdb_.data[i] = value[i];
-        
-    }
-}

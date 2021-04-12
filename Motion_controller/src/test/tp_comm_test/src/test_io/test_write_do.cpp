@@ -24,6 +24,17 @@ using namespace std;
 
 int main(int argc, char* argv[])
 {
+    if (argc <= 1)
+    {
+        printf("Two parameter is needed: DO_offset and value\n");
+        return -1;
+    }
+    if (argc == 2)
+    {
+        printf("One more parameter is needed: DO_value\n");
+        return -1;
+    }
+
     TpCommTest test;
     if (!test.initRpcSocket())
     {
@@ -34,21 +45,18 @@ int main(int argc, char* argv[])
     uint8_t buf[MAX_REQ_BUFFER_SIZE];
     int buf_size = MAX_REQ_BUFFER_SIZE;
 
-    unsigned int hash_value = 0x000050E3;
-
-    RequestMessageType_Topic msg = RequestMessageType_Topic_init_default;
+    unsigned int hash_value = 0x00000C1F;
+ 
+    RequestMessageType_Int32List msg;
     msg.header.time_stamp = 122;
-    msg.property.authority = Comm_Authority_TP_SIMMULATOR;
-    msg.data.topic_hash = 0x12345678;
-    msg.data.time_min = 100;
-    msg.data.time_max = 100;
-    msg.data.element_hash_list_count = 4;
-    msg.data.element_hash_list[0] = 0x0001715B;
-    msg.data.element_hash_list[1] = 0x0001128B;
-    msg.data.element_hash_list[2] = 0x00012FFB;
-    msg.data.element_hash_list[3] = 0x00013C8B;
+    msg.property.authority = Comm_Authority_TP_SIMMULATOR;  
+    msg.data.data_count = 2;
+    printf("msg.data.data_count = %d\n", msg.data.data_count);
+    msg.data.data[0] = atoi(argv[1]);
+    msg.data.data[1] = atoi(argv[2]);
+    printf("msg.data.data[%d] = %d\n", msg.data.data[0], msg.data.data[1]);  
 
-    if (!test.generateRequestMessageType(hash_value, (void*)&msg, RequestMessageType_Topic_fields, buf, buf_size))
+    if (!test.generateRequestMessageType(hash_value, (void*)&msg, RequestMessageType_Int32List_fields, buf, buf_size))
     {
         cout << "Request : encode buf failed" << endl;
         return -1;
@@ -84,7 +92,7 @@ int main(int argc, char* argv[])
     cout << "Reply : msg.header.package_left = " << recv_msg.header.package_left << endl;
     cout << "Reply : msg.header.error_code = " << recv_msg.header.error_code << endl;
     cout << "Reply : msg.property.authority = " << recv_msg.property.authority << endl;
-	cout << "Reply : msg.error_code = " <<std::hex<< recv_msg.data.data << endl;
+    cout << "Reply : msg.data.data = " << recv_msg.data.data << endl;
 
     usleep(200000);
 

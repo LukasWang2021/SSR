@@ -146,25 +146,7 @@ int main()
                     }
                     break;
                 }
-                case 0x00007C5B://"/publish/ioAnalog/io_analog_feedback"
-                {
-                    MessageType_Uint32List fdb;
-                    if(!test.decodeMessageType(msg.element[i].data.bytes, msg.element[i].data.size, 
-                        (void*)&fdb, MessageType_Uint32List_fields))
-                    {
-                        printf("Sub : parse data msg failed !!\n");
-                    }
-                    else 
-                    {
-                        printf("Sub : /publish/ioAnalog/io_analog_feedback, hash = 0x%x, count=%d\n", msg.element[i].hash, fdb.data_count);
-                        for (size_t i = 0; i < fdb.data_count; ++i)
-                        {
-                            printf("%d, ", fdb.data[i]);
-                        }
-                        printf("\n");
-                    }
-                    break;
-                }
+                
                 default:
                 {
                     printf("unknow hash\n");

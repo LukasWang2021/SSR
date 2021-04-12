@@ -94,9 +94,6 @@ void ControllerRpc::initRpcTable()
     rpc_service =	{	"/rpc/io/readDI",	0x000185A9,	&ControllerRpc::handleRpc0x000185A9	};	rpc_table_.push_back(rpc_service);
     rpc_service =	{	"/rpc/io/readDO",	0x000185AF,	&ControllerRpc::handleRpc0x000185AF	};	rpc_table_.push_back(rpc_service);
     rpc_service =	{	"/rpc/io/writeDO",	0x00000C1F,	&ControllerRpc::handleRpc0x00000C1F	};	rpc_table_.push_back(rpc_service);
-    rpc_service =	{	"/rpc/io/readAI",	0x00018679,	&ControllerRpc::handleRpc0x00018679	};	rpc_table_.push_back(rpc_service);
-    rpc_service =	{	"/rpc/io/readAO",	0x0001867F,	&ControllerRpc::handleRpc0x0001867F	};	rpc_table_.push_back(rpc_service);
-    rpc_service =	{	"/rpc/io/writeAO",	0x00000C4F,	&ControllerRpc::handleRpc0x00000C4F	};	rpc_table_.push_back(rpc_service);
-
+    
 }
 

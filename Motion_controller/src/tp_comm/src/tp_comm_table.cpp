@@ -93,10 +93,7 @@ void TpComm::initRpcTable()
     rpc_service =	{	"/rpc/io/readDI",	0x000185A9,	"RequestMessageType.Int32",	"ResponseMessageType.Uint64_Int32",	&TpComm::handleRequest0x000185A9,	&TpComm::handleResponse0x000185A9,	Comm_Authority_TP_SIMMULATOR,	};	 rpc_table_.push_back(rpc_service);
     rpc_service =	{	"/rpc/io/readDO",	0x000185AF,	"RequestMessageType.Int32",	"ResponseMessageType.Uint64_Int32",	&TpComm::handleRequest0x000185AF,	&TpComm::handleResponse0x000185AF,	Comm_Authority_TP_SIMMULATOR,	};	 rpc_table_.push_back(rpc_service);
     rpc_service =	{	"/rpc/io/writeDO",	0x00000C1F,	"RequestMessageType.Int32List(count=2)",	"ResponseMessageType.Uint64",	&TpComm::handleRequest0x00000C1F,	&TpComm::handleResponse0x00000C1F,	Comm_Authority_TP_SIMMULATOR,	};	 rpc_table_.push_back(rpc_service);
-    rpc_service =	{	"/rpc/io/readAI",	0x00018679,	"RequestMessageType.Int32",	"ResponseMessageType.Uint64_Int32",	&TpComm::handleRequest0x00018679,	&TpComm::handleResponse0x00018679,	Comm_Authority_TP_SIMMULATOR,	};	 rpc_table_.push_back(rpc_service);
-    rpc_service =	{	"/rpc/io/readAO",	0x0001867F,	"RequestMessageType.Int32",	"ResponseMessageType.Uint64_Int32",	&TpComm::handleRequest0x0001867F,	&TpComm::handleResponse0x0001867F,	Comm_Authority_TP_SIMMULATOR,	};	 rpc_table_.push_back(rpc_service);
-    rpc_service =	{	"/rpc/io/writeAO",	0x00000C4F,	"RequestMessageType.Int32List(count=2)",	"ResponseMessageType.Uint64",	&TpComm::handleRequest0x00000C4F,	&TpComm::handleResponse0x00000C4F,	Comm_Authority_TP_SIMMULATOR,	};	 rpc_table_.push_back(rpc_service);
-
+    
 }
 
 
@@ -108,6 +105,5 @@ void TpComm::initPublishElementTable()
     publish_service =   {   "/publish/servo1001/servos_feedback",    0x0001128B, "MessageType.ServoFeedbackList(count=14)",   &TpComm::handlePublishElement0x0001128B,    Comm_Authority_TP_SIMMULATOR,   };  publish_element_table_.push_back(publish_service); 
     publish_service =   {   "/publish/servo1001/cpu_feedback",  0x00012FFB, "MessageType.Uint32List(count=15)",  &TpComm::handlePublishElement0x00012FFB,    Comm_Authority_TP_SIMMULATOR,   };  publish_element_table_.push_back(publish_service); 
     publish_service =   {   "/publish/io1000/io_feedback",  0x00013C8B, "MessageType.Uint32List(count=4)",  &TpComm::handlePublishElement0x00013C8B,    Comm_Authority_TP_SIMMULATOR,   };  publish_element_table_.push_back(publish_service); 
-    publish_service =	{	"/publish/ioAnalog/io_analog_feedback",	0x00007C5B,	"MessageType.Uint32List(count=12)",	&TpComm::handlePublishElement0x00007C5B,	Comm_Authority_TP_SIMMULATOR,	};	publish_element_table_.push_back(publish_service); 
-
+    
 }

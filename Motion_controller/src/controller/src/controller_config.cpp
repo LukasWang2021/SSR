@@ -12,7 +12,6 @@ ControllerConfig::ControllerConfig():
     routine_thread_priority_(50),
     realtime_thread_priority_(80),
     dio_exist_(false),
-    aio_exist_(false),
     file_path_(COMPONENT_PARAM_FILE_DIR)
 {
     file_path_ += string("controller.yaml");
@@ -30,8 +29,7 @@ bool ControllerConfig::load()
         || !yaml_help_.getParam("realtime_cycle_time", realtime_cycle_time_)
         || !yaml_help_.getParam("routine_thread_priority", routine_thread_priority_)
         || !yaml_help_.getParam("realtime_thread_priority", realtime_thread_priority_)
-        || !yaml_help_.getParam("dio_exist", dio_exist_)
-        || !yaml_help_.getParam("aio_exist", aio_exist_))
+        || !yaml_help_.getParam("dio_exist", dio_exist_))
     {
         return false;
     }
@@ -49,7 +47,6 @@ bool ControllerConfig::save()
         || !yaml_help_.setParam("routine_thread_priority", routine_thread_priority_)
         || !yaml_help_.setParam("realtime_thread_priority", realtime_thread_priority_)
         || !yaml_help_.setParam("dio_exist", dio_exist_)
-        || !yaml_help_.setParam("aio_exist", aio_exist_)
         || !yaml_help_.dumpParamFile(file_path_.c_str()))
     {
         return false;

@@ -3,7 +3,7 @@ project(controller)
 
 #set(controller_MAIN_VERSION 1) #uncommemt if release version
 set(VERSION_MAJOR 0)
-set(VERSION_MINOR 2)
+set(VERSION_MINOR 1)
 set(VERSION_PATCH 0)
 set(VERSION_COMMIT \"ffffffff\") #from gitlab commit number.
 string(TIMESTAMP BUILD_DATE \"%Y%m%d\")
@@ -42,7 +42,6 @@ include_directories(
     ../axis1000/include
     ../axis1001/include
     ../io_1000/include
-    ../io_analog/include
     ${PROJECT_BINARY_DIR}
 	${rtm_INCLUDE_DIRS}
 )
@@ -75,7 +74,6 @@ target_link_libraries(controller
     axis1001
     base_device
     io_1000
-    io_analog
 )
 install(FILES ./config/controller.yaml 
     DESTINATION ${CONFIG_FILE_OUTPUT_PATH}/component/

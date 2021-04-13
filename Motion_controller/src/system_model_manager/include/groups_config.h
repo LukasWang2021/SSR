@@ -24,10 +24,7 @@ typedef struct
     std::vector<int32_t> axis_id;   /**< Node value in path /GroupsConfig/GroupConfig/AxesId.*/
     std::string root_dir;           /**< Node value in path /GroupsConfig/GroupConfig/RootDir.*/
     std::string kinematics;         /**< Node value in path /GroupsConfig/GroupConfig/Kinematics.*/
-    std::string dynamics;           /**< Node value in path /GroupsConfig/GroupConfig/Dynamics.*/
     std::string application;        /**< Node value in path /GroupsConfig/GroupConfig/Application.*/
-    std::vector<std::string> algorithm;         /**< Node value in path /GroupsConfig/GroupConfig/Algorithms.*/
-    std::vector<std::string> default_algorithm; /**< Node value in path /GroupsConfig/GroupConfig/DefaultAlgorithms.*/
 }GroupConfig_t;
 /**
  * @brief Defines the class to parsing groups_config.xml.

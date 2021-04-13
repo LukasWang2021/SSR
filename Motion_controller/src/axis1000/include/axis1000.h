@@ -58,8 +58,6 @@ class Axis1000 : public Axis
      */
     virtual ErrorCode mcPower(bool enable);
 
-    virtual void convertVelocityForApp(double &velocity, double &acc, double &dec, double &jerk);
-
     /**
      * @brief Push a Function Block to the queue.
      * @details The function block might comes from RPC or program text.

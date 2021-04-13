@@ -206,8 +206,7 @@ ErrorCode Axis::mcWriteParamter(int32_t param_index, int32_t param_value)
 
 ErrorCode Axis::mcMoveAbsolute(double position, double velocity, double acc, double dec, double jerk)
 {
-    LogProducer::debug("Axis", "mcMoveAbsolute called:pos=%.1lf, vel=%.1lf percent, acc=%.1lf ms, dec=%.1lf ms, jerk=%.1lf rps", position, velocity, acc, dec, jerk);
-    convertVelocityForApp(velocity, acc, dec, jerk);
+    LogProducer::debug("Axis", "Axis[%d] mcMoveAbsolute called:pos=%lf rad, vel=%lf rad/s, acc=%lf rad/s^2, dec=%lf rad/s^2, jerk=%lf rad/s^3", id_, position, velocity, acc, dec, jerk);
     AxisStatus_e axis_status = sm_.getAxisStatus();  
     if (axis_status == AXIS_STATUS_STANDSTILL || axis_status == AXIS_STATUS_CONTINUOUS_MOTION 
 		|| axis_status == AXIS_STATUS_SYNCHRONIZED_MOTION || axis_status == AXIS_STATUS_DISCRETE_MOTION)
@@ -239,8 +238,7 @@ ErrorCode Axis::mcMoveAbsolute(double position, double velocity, double acc, dou
 
 ErrorCode Axis::mcMoveRelative(double position, double velocity, double acc, double dec, double jerk)
 {
-    LogProducer::debug("Axis", "mcMoveRelative called:pos=%.1lf, vel=%.1lf percent, acc=%.1lf ms, dec=%.1lf ms, jerk=%.1lf rps", position, velocity, acc, dec, jerk);
-    convertVelocityForApp(velocity, acc, dec, jerk);
+    LogProducer::debug("Axis", "Axis[%d] mcMoveRelative called:pos=%lf rad, vel=%lf rad/s, acc=%lf rad/s^2, dec=%lf rad/s^2, jerk=%lf rad/s^3", id_, position, velocity, acc, dec, jerk);
     AxisStatus_e axis_status = sm_.getAxisStatus();  
     if (axis_status == AXIS_STATUS_STANDSTILL || axis_status == AXIS_STATUS_CONTINUOUS_MOTION 
 		|| axis_status == AXIS_STATUS_SYNCHRONIZED_MOTION || axis_status == AXIS_STATUS_DISCRETE_MOTION)
@@ -272,8 +270,7 @@ ErrorCode Axis::mcMoveRelative(double position, double velocity, double acc, dou
 
 ErrorCode Axis::mcMoveVelocity(double velocity, double acc, double dec, double jerk, AxisDirection_e direction)
 {
-    LogProducer::debug("Axis", "Axis[%d] mcMoveVelocity called:vel=%.1lf percent, acc=%.1lf ms, dec=%.1lf ms, jerk=%.1lf rps, dir=%d", id_, velocity, acc,dec, jerk, direction);
-    convertVelocityForApp(velocity, acc, dec, jerk);
+    LogProducer::debug("Axis", "Axis[%d] mcMoveVelocity called:vel=%lf rad/s, acc=%lf rad/s^2, dec=%lf rad/s^2, jerk=%lf rad/s^3, dir=%d", id_, velocity, acc,dec, jerk, direction);
     AxisStatus_e axis_status = sm_.getAxisStatus();  
     if (axis_status == AXIS_STATUS_STANDSTILL || axis_status == AXIS_STATUS_CONTINUOUS_MOTION 
 		|| axis_status == AXIS_STATUS_SYNCHRONIZED_MOTION || axis_status == AXIS_STATUS_DISCRETE_MOTION)

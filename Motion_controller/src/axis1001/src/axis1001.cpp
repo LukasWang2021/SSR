@@ -73,17 +73,6 @@ ErrorCode Axis1001::mcPower(bool enable)
 	return SUCCESS;
 }
 
-void Axis1001::convertVelocityForApp(double &velocity, double &acc, double &dec, double &jerk)
-{
-	if (velocity < 0) velocity = 0;
-	if (velocity > 100) velocity = 100;
-	velocity = (velocity / 100) * max_vel_;
-	if (acc == 0) acc = 100;
-	if (dec == 0) dec = 100;
-	acc = velocity * 1000 / acc;
-	dec = velocity * 1000 / dec;
-}
-
 bool Axis1001::pushBackFB(void* fb_ptr)
 {
     return false;

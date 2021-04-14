@@ -16,14 +16,7 @@ Group::Group(int32_t id):
 
 Group::~Group(void)
 {
-    for(size_t i = 0; i < support_alg_list_.size(); ++i)
-    {
-        if (support_alg_list_[i] != NULL)
-        {
-            delete support_alg_list_[i];
-        }
-    }
-    support_alg_list_.clear();
+
 }
 
 bool Group::init(servo_comm_space::ServoCpuCommBase* cpu_comm_ptr, system_model_space::GroupModel_t* db_ptr,
@@ -50,65 +43,13 @@ bool Group::init(servo_comm_space::ServoCpuCommBase* cpu_comm_ptr, system_model_
 		return false;
     }
 
-    // new all the supported algorithms
-    /*TODO delete for (size_t i = 0; i < group_config_ptr_->algorithm.size(); ++i)
-    {
-        std::string name = group_config_ptr_->algorithm[i];
-        AlgorithmBase* alg_ptr;
-        if(name.compare("group_algorithm_1000.trapezoidal") == 0)
-        {
-            alg_ptr = new GroupAlgorithm1000();
-            if (alg_ptr != NULL && alg_ptr->syncModel(db_ptr_))
-            {
-                support_alg_list_.push_back(alg_ptr);
-                LogProducer::info("Group", "Group[%d] supported algorithm <%s> init success", id_, name.c_str());
-            }
-            else
-            {
-                LogProducer::error("Group","Group[%d] failed to allocate algorithm <%s>", id_, name.c_str());
-                return false;
-            }
-        }
-    }
-    if (group_config_ptr_->algorithm.size() != support_alg_list_.size())
-    {
-        LogProducer::error("Group","Group[%d] failed to init all supported algorithms", id_);
-        return false;
-    }
-
-    // init current_alg_list    
-    for (size_t i = 0; i < group_config_ptr_->default_algorithm.size(); ++i)
-    {
-        for (size_t j = 0; j < group_config_ptr_->algorithm.size(); ++j)
-        {
-            std::string name = group_config_ptr_->algorithm[j];
-            if (group_config_ptr_->default_algorithm[i].compare(name) == 0)
-            {
-                current_alg_list_.push_back(support_alg_list_[j]);    
-                LogProducer::info("ScaraAGroup", "Group[%d] default algorithm using <%s>", getID(), name.c_str());
-            }
-        }
-    }
-    if (group_config_ptr_->default_algorithm.size() != current_alg_list_.size())
-    {
-        LogProducer::error("ScaraAGroup","Group[%d] failed to init all default algorithms", getID());
-        return false;
-    }*/
-    
     LogProducer::warn("Group", "Group[%d] init success", id_);
 	return true;	
 }
 
 bool Group::reloadAlgorithms(void)
 {
-    for(size_t i = 0; i < support_alg_list_.size(); ++i)
-    {
-        if (!support_alg_list_[i]->syncModel(db_ptr_))
-        {
-            LogProducer::error("Group","Group[%d] failed to sync algorithms", id_);
-            return false;
-        }
-    }
+
     return true;
 }
 

@@ -54,7 +54,8 @@ bool ModelBase::load()
             || !yaml_help_.getParam(param_map_[i].param_name + "/unit", unit))
         {
             return false;
-        }       
+        }
+        //printf("param name=%s, value=%d\n",param_map_[i].param_name.c_str(), param_ptr_[param_map_[i].param_index].operation_value);       
         formatUnitStr2Char(unit, param_ptr_[param_map_[i].param_index].unit);
     }
     return true;

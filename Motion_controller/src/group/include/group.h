@@ -351,8 +351,6 @@ class Group {
     virtual void clearBQ() = 0;
 
   protected:
-    std::vector<base_space::AlgorithmBase*> support_alg_list_; /**< The list of the pointers of the supported algorithms.*/
-    std::vector<base_space::AlgorithmBase*> current_alg_list_; /**< The list of the pointers of the current algorithms.*/
     servo_comm_space::ServoCpuCommBase* cpu_comm_ptr_;         /**< The pointer to communicate with the other cpu.*/
     system_model_space::GroupConfig_t* group_config_ptr_;      /**< The pointer of the configuration of the group.*/
     system_model_space::GroupModel_t* db_ptr_;                 /**< The pointer of the parameters of the group model.*/

@@ -148,6 +148,8 @@ typedef unsigned long long int ErrorCode;
 #define MC_MANUAL_FRAME_ERROR (unsigned long long int)0x0001000400A90FA3    /* 运控手动示教坐标系错误 */
 #define MC_PAUSE_FAILED (unsigned long long int)0x0001000700A90BBE    /* 规划器规划减速暂停轨迹失败 */
 #define MC_RESUME_FAILED (unsigned long long int)0x0001000700A90BBF    /* 规划器规划加速恢复轨迹失败 */
+#define MC_LOAD_PARAM_FAILED (unsigned long long int)0x0001000700A90BC0
+#define MC_SET_PARAM_FAILED (unsigned long long int)0x0001000700A90BC1
 
 #define DYNAMIC_PAYLOAD_INVALID_ARG (unsigned long long int)0x0001000200B40001    /* Dynamic模块的payload传入非法参数 */
 #define DYNAMIC_PAYLOAD_INFO_FILE_WRITE_FAILED (unsigned long long int)0x0001000200B40002    /* Dynamic模块的payload数值写入文件失败 */

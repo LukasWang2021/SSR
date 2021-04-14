@@ -58,6 +58,8 @@ public:
     bool getParam(const std::string& key, std::vector<int>& value);
     bool getParam(const std::string& key, std::vector<double>& value);
     bool getParam(const std::string& key, std::vector<std::string>& value);
+    bool getParam(const std::string& key, int* value, size_t size);
+    bool getParam(const std::string& key, double* value, size_t size);
     /**
      * @brief Set parameter value by key string.
      * @param [in] key Key string.

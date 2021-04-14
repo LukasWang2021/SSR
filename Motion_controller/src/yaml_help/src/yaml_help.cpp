@@ -305,6 +305,34 @@ bool YamlHelp::getParam(const std::string& key, std::vector<std::string>& value)
         return false;
     }
 }
+
+bool YamlHelp::getParam(const std::string& key, int* value, size_t size)
+{    
+    vector<int> tmp;
+
+    if (getParam(key, tmp))
+    {
+        if (tmp.size() < size) size = tmp.size();
+        for (size_t i = 0; i < size; i++) value[i] = tmp[i];
+        return true;
+    }
+
+    return false;
+}
+
+bool YamlHelp::getParam(const std::string& key, double* value, size_t size)
+{
+    vector<double> tmp;
+
+    if (getParam(key, tmp))
+    {
+        if (tmp.size() < size) size = tmp.size();
+        for (size_t i = 0; i < size; i++) value[i] = tmp[i];
+        return true;
+    }
+    return false;
+}
+
    
 bool YamlHelp::setParam(const std::string& key, const bool& value)
 {

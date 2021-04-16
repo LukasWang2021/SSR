@@ -2,15 +2,9 @@
 #define MOTION_CONTROL_H
 
 #include <queue>
-//TODO#include <common_log.h>
-//TODO#include <device_manager.h>
-//TODO#include <axis_group_manager.h>
 #include <coordinate_manager.h>
 #include <tool_manager.h>
-//TODO#include <error_monitor.h>
-//TODO#include <error_code.h>
 #include <thread_help.h>
-#include <motion_control_ros_basic.h>
 #include <motion_control_datatype.h>
 #include <motion_control_param.h>
 #include <motion_control_arm_group.h>

@@ -31,7 +31,6 @@ ErrorCode ArmGroup::initGroup(CoordinateManager *coordinate_manager_ptr, ToolMan
 {
     vel_ratio_ = 0.1;
     acc_ratio_ = 1.0;
-    //acc_ratio_ = 0.0625;
     cycle_time_ = 0.001;
     id_ = 1;
 
@@ -54,15 +53,213 @@ ErrorCode ArmGroup::initGroup(CoordinateManager *coordinate_manager_ptr, ToolMan
         return MC_INTERNAL_FAULT;
     }
 
+    // 初始化运动学模块
+    LogProducer::info("mc_arm_group","Initializing kinematics of ArmGroup ...");
+    string path = AXIS_GROUP_DIR;
+    kinematics_ptr_ = new KinematicsRTM(path);
+
+    if (kinematics_ptr_ == NULL || !kinematics_ptr_->isValid())
+    {
+        LogProducer::error("mc_arm_group","Fail to create kinematics for this Group.");
+        return MC_INTERNAL_FAULT;
+    }
+
+    // 初始化动力学模块
+    LogProducer::info("mc_arm_group","Initializing dynamics of ArmGroup ...");
+    dynamics_ptr_ = new DynamicAlgRTM();
+
+    if (dynamics_ptr_ == NULL)
+    {
+        LogProducer::error("mc_arm_group","Fail to create dynamics for ArmGroup.");
+        return MC_INTERNAL_FAULT;
+    }
+
+    if (!dynamics_ptr_->initDynamicAlg(path))
+    {
+        LogProducer::error("mc_arm_group","Fail to init dynamics for ArmGroup.");
+        return MC_FAIL_IN_INIT;
+    }
+
+    // 加载限位文件参数
+    ErrorCode result = LoadConstraintParameters(path);
+    if (result != SUCCESS) return result;
+
+    // 加载motion_control参数设置
+    result = LoadBaseGroupParameters(path);
+    if (result != SUCCESS) return result;
+
+    // 加载arm group文件参数
+    result = LoadArmGroupParameters(path);
+    if (result != SUCCESS) return result;
+
+    // 初始化轨迹缓存
+    trajectory_a_.prev = &trajectory_b_;
+    trajectory_a_.next = &trajectory_b_;
+    trajectory_b_.prev = &trajectory_a_;
+    trajectory_b_.next = &trajectory_a_;
+    trajectory_a_.valid = false;
+    trajectory_b_.valid = false;
+    
+    if (!planner_for_check_.initPlanner(JOINT_OF_ARM, cycle_time_, kinematics_ptr_, dynamics_ptr_, &soft_constraint_) ||
+        !trajectory_a_.trajectory.initPlanner(JOINT_OF_ARM, cycle_time_, kinematics_ptr_, dynamics_ptr_, &soft_constraint_) ||
+        !trajectory_b_.trajectory.initPlanner(JOINT_OF_ARM, cycle_time_, kinematics_ptr_, dynamics_ptr_, &soft_constraint_))
+    {
+        LogProducer::error("mc_arm_group","Fail to initialize trajectory planner.");
+        return MC_FAIL_IN_INIT;
+    }
+
+    uint32_t jerk_num;
+    Joint omega_limit, alpha_limit, beta_limit[MAX_JERK_NUM];
+    trajectory_a_.trajectory.getTrajectoryLimit(omega_limit, alpha_limit, beta_limit, jerk_num);
+    trajectory_a_.smooth.initPlanner(JOINT_OF_ARM, cycle_time_, kinematics_ptr_, dynamics_ptr_, &soft_constraint_);
+    trajectory_b_.smooth.initPlanner(JOINT_OF_ARM, cycle_time_, kinematics_ptr_, dynamics_ptr_, &soft_constraint_);
+    // trajectory_a_.smooth.setLimit(2000, 10000, 100000, 1, 10, 100);
+    // trajectory_b_.smooth.setLimit(2000, 10000, 100000, 1, 10, 100);
+
+    plan_traj_ptr_ = &trajectory_a_;
+    pick_traj_ptr_ = &trajectory_a_;
+
+    joint_planner_.initPlanner(JOINT_OF_ARM, 1);
+    joint_planner_.setLimit(omega_limit, alpha_limit, beta_limit);
+
+    //初始化暂停恢复轨迹规划模块
+    if(!pause_resume_planner_.initPausePlanner(JOINT_OF_ARM))
+    {
+        LogProducer::error("mc_arm_group","Fail to initialize Pause trajectory planner.");
+        return MC_FAIL_IN_INIT;
+    }
+
+    // 初始化裸核通信句柄
+    LogProducer::info("mc_arm_group","Initializing interface to bare core ...");
+
+    if (!bare_core_.initInterface(JOINT_OF_ARM))
+    {
+        LogProducer::error("mc_arm_group","Fail to create communication with bare core.");
+        return MC_FAIL_IN_INIT;
+    }
+
+    // 下发伺服参数
+    ErrorCode err = downloadServoParam("/root/install/share/configuration/machine/servo_param.yaml");
+    if (err != SUCCESS)
+    {
+        LogProducer::error("mc_arm_group","Fail to download servo parameter");
+        return err;
+    }
+
+    // 初始化零位校验模块
+    LogProducer::info("mc_arm_group","Initializing calibrator of ArmGroup ...");
+    err = calibrator_.initCalibrator(JOINT_OF_ARM, &bare_core_);
+
+    if (err != SUCCESS)
+    {
+        LogProducer::error("mc_arm_group","Fail to initialize calibrator, code = 0x%llx", err);
+        return err;
+    }
+
+    // 如果某些轴的零位错误被屏蔽，必须同时屏蔽这些轴的软限位校验
+    OffsetMask mask[NUM_OF_JOINT] = {OFFSET_UNMASK};
+    calibrator_.getOffsetMask(mask);
+
+    for (size_t i = 0; i < JOINT_OF_ARM; i++)
+    {
+        if (mask[i] == OFFSET_MASKED)
+        {
+            soft_constraint_.setMask(i);
+        }
+    }
+
+    // 初始化坐标变换模块
+    if (!transformation_.init(kinematics_ptr_))
+    {
+        LogProducer::error("mc_arm_group","Fail to init transformation for ArmGroup.");
+        return MC_INTERNAL_FAULT;
+    }
+
+    // 初始化手动示教模块
+    LogProducer::info("mc_arm_group","Initializing manual teach of ArmGroup ...");
+    err = manual_teach_.init(kinematics_ptr_, dynamics_ptr_, &soft_constraint_, path + "arm_manual_teach.yaml");
+
+    if (err != SUCCESS)
+    {
+        LogProducer::error("mc_arm_group","Fail to initialize manual teach, code = 0x%llx", err);
+        return err;
+    }
+
+    manual_teach_.setGlobalVelRatio(vel_ratio_);
+    manual_teach_.setGlobalAccRatio(acc_ratio_);
+
+    if (getServoState() == SERVO_IDLE) updateStartJoint();
+
+    LogProducer::info("mc_arm_group","ArmGroup init success.");
+    return SUCCESS;
+}
+
+
+char* ArmGroup::getModelName(char *buffer, size_t length)
+{
+    snprintf(buffer, length, "RTM-P7A");
+    return buffer;
+}
+
+
+size_t ArmGroup::getNumberOfJoint(void)
+{
+    return JOINT_OF_ARM;
+}
+
+
+bool ArmGroup::isPostureMatch(const basic_alg::Posture &posture_1, const basic_alg::Posture &posture_2)
+{
+    return (posture_1.arm == posture_2.arm) && (posture_1.elbow == posture_2.elbow) && (posture_1.wrist == posture_2.wrist);
+}
+
+
+char* ArmGroup::printDBLine(const int *data, char *buffer, size_t length)
+{
+    size_t len = 0;
+
+    for (size_t i = 0; i < JOINT_OF_ARM; i++)
+    {
+        len += snprintf(buffer + len, length - len, "%d ", data[i]);
+
+        if (len >= length)
+        {
+            break;
+        }
+    }
+
+    return buffer;
+}
+
+char* ArmGroup::printDBLine(const double *data, char *buffer, size_t length)
+{
+    size_t len = 0;
+
+    for (size_t i = 0; i < JOINT_OF_ARM; i++)
+    {
+        len += snprintf(buffer + len, length - len, "%.6f ", data[i]);
+        //len += snprintf(buffer + len, length - len, "%.9f ", data[i]);
+        //len += snprintf(buffer + len, length - len, "%.12f ", data[i]);
+
+        if (len >= length)
+        {
+            break;
+        }
+    }
+
+    return buffer;
+}
+
+ErrorCode ArmGroup::LoadConstraintParameters(std::string dir_path)
+{
     base_space::YamlHelp hard_constraint_param;
     vector<double> upper;
     vector<double> lower;
-    string path = AXIS_GROUP_DIR;
 
     // 加载硬限位
     LogProducer::info("mc_arm_group","Loading hard constraints ...");
 
-    if (hard_constraint_param.loadParamFile(path + "hard_constraint.yaml") &&
+    if (hard_constraint_param.loadParamFile(dir_path + "hard_constraint.yaml") &&
         hard_constraint_param.getParam("hard_constraint/upper", upper) &&
         hard_constraint_param.getParam("hard_constraint/lower", lower))
     {
@@ -88,7 +285,7 @@ ErrorCode ArmGroup::initGroup(CoordinateManager *coordinate_manager_ptr, ToolMan
     lower.clear();
 
     base_space::YamlHelp firm_constraint_param;
-    if (firm_constraint_param.loadParamFile(path + "firm_constraint.yaml") &&
+    if (firm_constraint_param.loadParamFile(dir_path + "firm_constraint.yaml") &&
         firm_constraint_param.getParam("firm_constraint/upper", upper) &&
         firm_constraint_param.getParam("firm_constraint/lower", lower))
     {
@@ -114,7 +311,7 @@ ErrorCode ArmGroup::initGroup(CoordinateManager *coordinate_manager_ptr, ToolMan
     lower.clear();
 
     base_space::YamlHelp soft_constraint_param;
-    if (soft_constraint_param.loadParamFile(path + "soft_constraint.yaml") &&
+    if (soft_constraint_param.loadParamFile(dir_path + "soft_constraint.yaml") &&
         soft_constraint_param.getParam("soft_constraint/upper", upper) &&
         soft_constraint_param.getParam("soft_constraint/lower", lower))
     {
@@ -142,36 +339,14 @@ ErrorCode ArmGroup::initGroup(CoordinateManager *coordinate_manager_ptr, ToolMan
     LogProducer::info("mc_arm_group","  soft-upper: %s", printDBLine(&soft_constraint_.upper()[0], buffer, LOG_TEXT_SIZE));
     LogProducer::info("mc_arm_group","  firm-upper: %s", printDBLine(&firm_constraint_.upper()[0], buffer, LOG_TEXT_SIZE));
     LogProducer::info("mc_arm_group","  hard-upper: %s", printDBLine(&hard_constraint_.upper()[0], buffer, LOG_TEXT_SIZE));
+    return SUCCESS;
+}
 
-    // 初始化运动学模块
-    LogProducer::info("mc_arm_group","Initializing kinematics of ArmGroup ...");
-    kinematics_ptr_ = new KinematicsRTM(path);
-
-    if (kinematics_ptr_ == NULL || !kinematics_ptr_->isValid())
-    {
-        LogProducer::error("mc_arm_group","Fail to create kinematics for this Group.");
-        return MC_INTERNAL_FAULT;
-    }
-
-    // 初始化动力学模块
-    LogProducer::info("mc_arm_group","Initializing dynamics of ArmGroup ...");
-    dynamics_ptr_ = new DynamicAlgRTM();
-
-    if (dynamics_ptr_ == NULL)
-    {
-        LogProducer::error("mc_arm_group","Fail to create dynamics for ArmGroup.");
-        return MC_INTERNAL_FAULT;
-    }
-
-    if (!dynamics_ptr_->initDynamicAlg(path))
-    {
-        LogProducer::error("mc_arm_group","Fail to init dynamics for ArmGroup.");
-        return MC_FAIL_IN_INIT;
-    }
-
+ErrorCode ArmGroup::LoadBaseGroupParameters(std::string dir_path)
+{
     // 加载motion_control参数设置
     base_space::YamlHelp base_group_param;
-    if (!base_group_param.loadParamFile(path + "base_group.yaml"))
+    if (!base_group_param.loadParamFile(dir_path + "base_group.yaml"))
     {
         LogProducer::error("mc_arm_group","Fail loading motion configuration from config file");
         return MC_LOAD_PARAM_FAILED;
@@ -215,7 +390,6 @@ ErrorCode ArmGroup::initGroup(CoordinateManager *coordinate_manager_ptr, ToolMan
 
     traj_fifo_lower_limit_ = traj_fifo_config;
     LogProducer::info("mc_arm_group","Trajectory FIFO lower limit size = %d", traj_fifo_lower_limit_);
-    LogProducer::info("mc_arm_group","Success.");
 
     if (!base_group_param.getParam("trajectory_fifo/manual_fifo_size", traj_fifo_config))
     {
@@ -230,47 +404,7 @@ ErrorCode ArmGroup::initGroup(CoordinateManager *coordinate_manager_ptr, ToolMan
         LogProducer::error("mc_arm_group","Fail to initialize manual trajectory FIFO.");
         return MC_INTERNAL_FAULT;
     }
-
-    LogProducer::info("mc_arm_group","Success.");
-
-    // 初始化轨迹缓存
-    trajectory_a_.prev = &trajectory_b_;
-    trajectory_a_.next = &trajectory_b_;
-    trajectory_b_.prev = &trajectory_a_;
-    trajectory_b_.next = &trajectory_a_;
-    trajectory_a_.valid = false;
-    trajectory_b_.valid = false;
-    
-    if (!planner_for_check_.initPlanner(JOINT_OF_ARM, cycle_time_, kinematics_ptr_, dynamics_ptr_, &soft_constraint_) ||
-        !trajectory_a_.trajectory.initPlanner(JOINT_OF_ARM, cycle_time_, kinematics_ptr_, dynamics_ptr_, &soft_constraint_) ||
-        !trajectory_b_.trajectory.initPlanner(JOINT_OF_ARM, cycle_time_, kinematics_ptr_, dynamics_ptr_, &soft_constraint_))
-    {
-        LogProducer::error("mc_arm_group","Fail to initialize trajectory planner.");
-        return MC_FAIL_IN_INIT;
-    }
-
-    uint32_t jerk_num;
-    Joint omega_limit, alpha_limit, beta_limit[MAX_JERK_NUM];
-    trajectory_a_.trajectory.getTrajectoryLimit(omega_limit, alpha_limit, beta_limit, jerk_num);
-    trajectory_a_.smooth.initPlanner(JOINT_OF_ARM, cycle_time_, kinematics_ptr_, dynamics_ptr_, &soft_constraint_);
-    trajectory_b_.smooth.initPlanner(JOINT_OF_ARM, cycle_time_, kinematics_ptr_, dynamics_ptr_, &soft_constraint_);
-    // trajectory_a_.smooth.setLimit(2000, 10000, 100000, 1, 10, 100);
-    // trajectory_b_.smooth.setLimit(2000, 10000, 100000, 1, 10, 100);
-
-    plan_traj_ptr_ = &trajectory_a_;
-    pick_traj_ptr_ = &trajectory_a_;
-
-    joint_planner_.initPlanner(JOINT_OF_ARM, 1);
-    joint_planner_.setLimit(omega_limit, alpha_limit, beta_limit);
-
-    //初始化暂停恢复轨迹规划模块
-    if(!pause_resume_planner_.initPausePlanner(JOINT_OF_ARM))
-    {
-        LogProducer::error("mc_arm_group","Fail to initialize Pause trajectory planner.");
-        return MC_FAIL_IN_INIT;
-    }
-
-    // 从配置文件加载Fine指令的稳定周期和稳定门限
+        // 从配置文件加载Fine指令的稳定周期和稳定门限
     int     stable_times;
     double  stable_threshold;
 
@@ -441,23 +575,6 @@ ErrorCode ArmGroup::initGroup(CoordinateManager *coordinate_manager_ptr, ToolMan
 
     memcpy(&joint_tracking_accuracy_.j1_, tracking_accuracy, sizeof(tracking_accuracy));
 
-    // 初始化裸核通信句柄
-    LogProducer::info("mc_arm_group","Initializing interface to bare core ...");
-
-    if (!bare_core_.initInterface(JOINT_OF_ARM))
-    {
-        LogProducer::error("mc_arm_group","Fail to create communication with bare core.");
-        return MC_FAIL_IN_INIT;
-    }
-
-    // 下发伺服参数
-    ErrorCode err = downloadServoParam("/root/install/share/configuration/machine/servo_param.yaml");
-    if (err != SUCCESS)
-    {
-        LogProducer::error("mc_arm_group","Fail to download servo parameter");
-        return err;
-    }
-
     // 下发速度滤波器参数
     vector<double> data_front, data_back;
     double weight_current;
@@ -515,52 +632,14 @@ ErrorCode ArmGroup::initGroup(CoordinateManager *coordinate_manager_ptr, ToolMan
         LogProducer::info("mc_arm_group","Setup omega filter success");
     }
 
-    // 初始化零位校验模块
-    LogProducer::info("mc_arm_group","Initializing calibrator of ArmGroup ...");
-    err = calibrator_.initCalibrator(JOINT_OF_ARM, &bare_core_);
-
-    if (err != SUCCESS)
-    {
-        LogProducer::error("mc_arm_group","Fail to initialize calibrator, code = 0x%llx", err);
-        return err;
-    }
-
-    // 如果某些轴的零位错误被屏蔽，必须同时屏蔽这些轴的软限位校验
-    OffsetMask mask[NUM_OF_JOINT] = {OFFSET_UNMASK};
-    calibrator_.getOffsetMask(mask);
-
-    for (size_t i = 0; i < JOINT_OF_ARM; i++)
-    {
-        if (mask[i] == OFFSET_MASKED)
-        {
-            soft_constraint_.setMask(i);
-        }
-    }
-
-    // 初始化坐标变换模块
-    if (!transformation_.init(kinematics_ptr_))
-    {
-        LogProducer::error("mc_arm_group","Fail to init transformation for ArmGroup.");
-        return MC_INTERNAL_FAULT;
-    }
-
-    // 初始化手动示教模块
-    LogProducer::info("mc_arm_group","Initializing manual teach of ArmGroup ...");
-    err = manual_teach_.init(kinematics_ptr_, dynamics_ptr_, &soft_constraint_, path + "arm_manual_teach.yaml");
-
-    if (err != SUCCESS)
-    {
-        LogProducer::error("mc_arm_group","Fail to initialize manual teach, code = 0x%llx", err);
-        return err;
-    }
-
-    manual_teach_.setGlobalVelRatio(vel_ratio_);
-    manual_teach_.setGlobalAccRatio(acc_ratio_);
-
-    double omega[JOINT_OF_ARM] = {0};
-    
+    LogProducer::info("mc_arm_group","LoadBaseGrouParameters Success.");
+    return SUCCESS;
+}
+ErrorCode ArmGroup::LoadArmGroupParameters(std::string dir_path)
+{
     base_space::YamlHelp arm_group_param;
-    if (!arm_group_param.loadParamFile(path + "arm_group.yaml"))
+    double omega[JOINT_OF_ARM] = {0};
+    if (!arm_group_param.loadParamFile(dir_path + "arm_group.yaml"))
     {
         LogProducer::error("mc_arm_group","Fail to load config file of arm group");
         return MC_LOAD_PARAM_FAILED;
@@ -571,7 +650,7 @@ ErrorCode ArmGroup::initGroup(CoordinateManager *coordinate_manager_ptr, ToolMan
         LogProducer::error("mc_arm_group","Fail to load max velocity of each axis");
         return MC_LOAD_PARAM_FAILED;
     }
-    
+    char buffer[LOG_TEXT_SIZE];
     LogProducer::info("mc_arm_group","Max velocity of each axis: %s", printDBLine(omega, buffer, LOG_TEXT_SIZE));
 
     int types[JOINT_OF_ARM] = {0};
@@ -588,69 +667,8 @@ ErrorCode ArmGroup::initGroup(CoordinateManager *coordinate_manager_ptr, ToolMan
     }
 
     LogProducer::info("mc_arm_group","Types of each axis: %s", printDBLine(types, buffer, LOG_TEXT_SIZE));
-    if (getServoState() == SERVO_IDLE) updateStartJoint();
-    LogProducer::warn("mc_arm_group","ArmGroup init success.");
     return SUCCESS;
 }
-
-
-char* ArmGroup::getModelName(char *buffer, size_t length)
-{
-    snprintf(buffer, length, "RTM-P7A");
-    return buffer;
-}
-
-
-size_t ArmGroup::getNumberOfJoint(void)
-{
-    return JOINT_OF_ARM;
-}
-
-
-bool ArmGroup::isPostureMatch(const basic_alg::Posture &posture_1, const basic_alg::Posture &posture_2)
-{
-    return (posture_1.arm == posture_2.arm) && (posture_1.elbow == posture_2.elbow) && (posture_1.wrist == posture_2.wrist);
-}
-
-
-char* ArmGroup::printDBLine(const int *data, char *buffer, size_t length)
-{
-    size_t len = 0;
-
-    for (size_t i = 0; i < JOINT_OF_ARM; i++)
-    {
-        len += snprintf(buffer + len, length - len, "%d ", data[i]);
-
-        if (len >= length)
-        {
-            break;
-        }
-    }
-
-    return buffer;
-}
-
-char* ArmGroup::printDBLine(const double *data, char *buffer, size_t length)
-{
-    size_t len = 0;
-
-    for (size_t i = 0; i < JOINT_OF_ARM; i++)
-    {
-        len += snprintf(buffer + len, length - len, "%.6f ", data[i]);
-        //len += snprintf(buffer + len, length - len, "%.9f ", data[i]);
-        //len += snprintf(buffer + len, length - len, "%.12f ", data[i]);
-
-        if (len >= length)
-        {
-            break;
-        }
-    }
-
-    return buffer;
-}
-
-
-
 
 
 }

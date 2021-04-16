@@ -12,9 +12,9 @@
 #include <sys/mman.h>
 #include <string.h>
 #include <fstream>
-#include<sys/types.h>
-#include<sys/stat.h>
-#include<fcntl.h> 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h> 
 
 #include <unistd.h>
 #include <pthread.h>

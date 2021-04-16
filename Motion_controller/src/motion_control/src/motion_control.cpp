@@ -6,11 +6,10 @@
 #include <string.h>
 #include <fstream>
 #include <sys/syscall.h>
+#include <sys/time.h>
 #include <motion_control.h>
 #include <tool_manager.h>
 #include <coordinate_manager.h>
-#include "../../coordinate_manager/include/coordinate_manager.h"
-#include "../../tool_manager/include/tool_manager.h"
 #include "error_queue.h"
 
 using namespace std;

@@ -8,15 +8,8 @@ include_directories(
     include
     ../common
     ../log_manager/include
-    #${depend_PATH_INC}/middleware_to_mem/include
-    #${depend_PATH_INC}/service_manager/include
     ../yaml_help/include/
     ../base_device/include 
-    #${depend_PATH_INC}/fst_axis_device/include 
-    #${depend_PATH_INC}/virtual_axis_device/include
-    #${depend_PATH_INC}/device_manager/include 
-    #${depend_PATH_INC}/axis_group_manager/include 
-    #${depend_PATH_INC}/base_axis_group/include
     ../coordinate_manager/include
     ../tool_manager/include 
     ../basic_alg/include
@@ -30,8 +23,6 @@ include_directories(
     ../rtm_spi/include
     ../trajectory_planner/include
     ../joint_constraint/include
-    #${depend_PATH_INC}/prg_interpreter/include
-    #${depend_PATH_INC}/fst_safety_device/include
     ${rtm_INCLUDE_DIRS}
 )
 
@@ -45,19 +36,6 @@ add_library(motion_control SHARED
     src/motion_control_manual_teach.cpp
     src/motion_control_core_interface.cpp
     src/motion_control_offset_calibrator.cpp
-    #src/motion_control_ros_basic.cpp
-)
-
-add_executable(manual_test
-    src/manual_test.cpp
-)
-
-add_executable(output_trajectory
-    src/output_trajectory.cpp
-)
-
-add_executable(print_trajectory
-    src/print_trajectory.cpp
 )
 
 target_link_libraries(motion_control
@@ -65,20 +43,11 @@ target_link_libraries(motion_control
     yaml_help
     log_manager_producer
     base_device
-    #fst_axis_device 
-    #virtual_axis_device 
-    #device_manager 
-    #axis_group_manager 
-    #base_axis_group
     coordinate_manager
     tool_manager
     basic_alg 
     dynamic_alg 
     xml_help 
-    #comm_interface
-    #core_interface
-    #logger
-    #parameter_manager
     error_queue
     thread_help
     kinematics_alg
@@ -87,21 +56,6 @@ target_link_libraries(motion_control
     dynamic_alg
     trajectory_planner
     joint_constraint
-)
-
-target_link_libraries(manual_test
-    ${rtm_LIBRARIES}
-    motion_control
-)
-
-target_link_libraries(output_trajectory
-    ${rtm_LIBRARIES}
-    motion_control
-)
-
-target_link_libraries(print_trajectory
-    ${rtm_LIBRARIES}
-    motion_control
 )
 
 install(FILES ./config/motion_control.yaml 

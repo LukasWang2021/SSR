@@ -31,6 +31,9 @@ class ArmGroup : public BaseGroup
   private:
     inline char* printDBLine(const int *data, char *buffer, size_t length);
     inline char* printDBLine(const double *data, char *buffer, size_t length);
+    ErrorCode LoadConstraintParameters(std::string dir_path);
+    ErrorCode LoadBaseGroupParameters(std::string dir_path);
+    ErrorCode LoadArmGroupParameters(std::string dir_path);
 };
 
 }

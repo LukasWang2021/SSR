@@ -13,10 +13,6 @@
 #define IO_DO_MAX_SIZE          40          /**< The maximum number of DO.*/
 #define IO_STATUS_OFFSET        0x70
 
-#define STEPPER_DI_BASE_ADDRESS 0x40080000
-#define STEPPER_DI_SEQ_START    57
-#define STEPPER_DI_OFFSET       0x64
-
 typedef struct
 {
 	uint32_t comm_err:1;                 /**< Enable flag, 0 is enable; 1 is disable.*/

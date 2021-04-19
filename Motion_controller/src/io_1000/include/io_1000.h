@@ -120,11 +120,6 @@ class Io1000: public BaseDevice{
     uint32_t* io_status_ptr_;
     bool is_real_;            /**< True indicates operating on the real device while false means no checking device.*/
     ErrorCode pre_err_io_;
-    ErrorCode pre_err_stepper_;
-
-    Device_t stepper_dev_;
-    uint32_t* stepper_ptr_;
-    uint32_t* stepper_status_ptr_;
 
     ErrorCode readStepperDiBit(uint32_t offset, uint8_t &value);
     bool openDevice(std::string device_path, uint32_t base_address, size_t byte_size, Device_t& device);

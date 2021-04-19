@@ -1,4 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <GroupsConfig>
+    <GroupConfig>
+		<GroupId>0</GroupId>
+		<AxesId>
+			<AxisId>0</AxisId>
+			<AxisId>1</AxisId>
+			<AxisId>2</AxisId>
+			<AxisId>3</AxisId>
+            <AxisId>4</AxisId>
+            <AxisId>5</AxisId>
+		</AxesId>	
+		<RootDir>/root/install/runtime/system_model/group/group0</RootDir>
+		<Kinematics>group_kinematics_1000.SSR</Kinematics>
+		<Application>group_application_1000.SSR</Application>	
+	</GroupConfig>
 </GroupsConfig>
 

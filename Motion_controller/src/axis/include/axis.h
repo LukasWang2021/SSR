@@ -476,8 +476,6 @@ class Axis {
 	        
     std::mutex ctrl_pdo_mutex_;
     std::mutex fdb_pdo_mutex_;
-
-    virtual void convertVelocityForApp(double &velocity, double &acc, double &dec, double &jerk) = 0;
 };
 }
 #endif

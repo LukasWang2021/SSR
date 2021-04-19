@@ -2,9 +2,7 @@
 #include "axis_application_db.h"
 #include "servo_db.h"
 #include "group_kinematics_db.h"
-#include "group_dynamics_db.h"
 #include "group_application_db.h"
-#include "group_algorithm_db.h"
 #include "log_manager_producer.h"
 
 using namespace system_model_space;
@@ -43,27 +41,12 @@ SystemModelManager::~SystemModelManager()
             delete group_it->second.kinematics_ptr;
             group_it->second.kinematics_ptr = NULL;
         }
-        if(group_it->second.dynamics_ptr != NULL)
-        {
-            delete group_it->second.dynamics_ptr;
-            group_it->second.dynamics_ptr = NULL;
-        }
         if(group_it->second.application_ptr != NULL)
         {
             delete group_it->second.application_ptr;
             group_it->second.application_ptr = NULL;
         }        
         group_it->second.axis_set.clear();
-        std::map<std::string, ModelBase*>::iterator algorithm_it;
-        for(algorithm_it = group_it->second.algorithm_set.begin(); algorithm_it != group_it->second.algorithm_set.end(); algorithm_it++)
-        {
-            if(algorithm_it->second != NULL)
-            {
-                delete algorithm_it->second;
-                algorithm_it->second = NULL;
-            }
-        }        
-        group_it->second.algorithm_set.clear();
     }
     group_model_set_.clear();
 
@@ -147,14 +130,7 @@ bool SystemModelManager::load()
             LogProducer::error("SystemModel", "Loading %s failed.", servo_model_file_path.c_str());
             return false;
         }
-        // sync power/encoder/motor to servo
-        /*if(!axis_model.actuator.servo_ptr->syncPowerToServo(axis_model.actuator.power_ptr)
-            || !axis_model.actuator.servo_ptr->syncEncoderToServo(axis_model.actuator.encoder_ptr)
-            || !axis_model.actuator.servo_ptr->syncMotorToServo(axis_model.actuator.motor_ptr))
-        {
-            LogProducer::error("SystemModel", "synchronize to servo failed.");
-            return false;
-        }*/
+
         axis_model_set_.insert(std::pair<int32_t, AxisModel_t>(axis_config_ref[i].axis_id, axis_model));
     }
     // load group info
@@ -169,25 +145,8 @@ bool SystemModelManager::load()
         if(group_model.kinematics_ptr == NULL
             || !group_model.kinematics_ptr->load())
         {
-            LogProducer::error("SystemModel", "Loading %s failed.", group_kinematics_file_path.c_str());
+            LogProducer::error("SystemModel", "Loading kinematics %s failed.", group_kinematics_file_path.c_str());
             return false;
-        }
-        // group dynamics
-        if(group_config_ref[i].dynamics.compare("NULL") != 0)
-        {
-            std::string group_dynamics_file_path;
-            group_dynamics_file_path.append(group_config_ref[i].root_dir).append("/").append(group_config_ref[i].dynamics).append(".yaml");
-            group_model.dynamics_ptr = GroupDynamicsDb::newModel(group_config_ref[i].dynamics, group_dynamics_file_path);
-            if(group_model.dynamics_ptr == NULL
-                || !group_model.dynamics_ptr->load())
-            {
-                LogProducer::error("SystemModel", "Loading %s failed.", group_dynamics_file_path.c_str());
-                return false;
-            }
-        }
-        else
-        {
-            group_model.dynamics_ptr = NULL;
         }
         // group application
         std::string group_application_file_path;
@@ -196,7 +155,7 @@ bool SystemModelManager::load()
         if(group_model.application_ptr == NULL
             || !group_model.application_ptr->load())
         {
-            LogProducer::error("SystemModel", "Loading %s failed.", group_application_file_path.c_str());
+            LogProducer::error("SystemModel", "Loading application %s failed.", group_application_file_path.c_str());
             return false;
         }                    
         // axis set
@@ -209,28 +168,6 @@ bool SystemModelManager::load()
                 return false;
             }
             group_model.axis_set.push_back(axis_model_ptr);
-        }
-        // algorithms dir
-        std::string algorithms_root_dir;
-        algorithms_root_dir.append(group_config_ref[i].root_dir).append("/algorithms/");
-        for(size_t j = 0; j < group_config_ref[i].algorithm.size(); ++j)
-        {
-            std::string algorithm_file_path;
-            algorithm_file_path.append(algorithms_root_dir).append(group_config_ref[i].algorithm[j]).append(".yaml");
-            ModelBase* algorithm_ptr = GroupAlgorithmDb::newModel(group_config_ref[i].algorithm[j], algorithm_file_path);
-            if(algorithm_ptr == NULL
-                || !algorithm_ptr->load())
-            {
-                LogProducer::error("SystemModel", "Loading %s failed.", algorithm_file_path.c_str());
-                return false;
-            }
-            std::string name_str = group_config_ref[i].algorithm[j];
-            size_t dot_pos = name_str.find_first_of('.');
-            if(dot_pos != std::string::npos)
-            {
-                name_str = name_str.substr(0, dot_pos);
-            }
-            group_model.algorithm_set.insert(std::pair<std::string, ModelBase*>(name_str, algorithm_ptr));
         }
         
         group_model_set_.insert(std::pair<int32_t, GroupModel_t>(group_config_ref[i].group_id, group_model));
@@ -255,19 +192,10 @@ bool SystemModelManager::save()
     for(group_it = group_model_set_.begin(); group_it != group_model_set_.end(); ++group_it)
     {
         if((group_it->second.kinematics_ptr != NULL && !group_it->second.kinematics_ptr->save())
-            || (group_it->second.dynamics_ptr != NULL && !group_it->second.dynamics_ptr->save())
             || (group_it->second.application_ptr != NULL && !group_it->second.application_ptr->save()))
         {
             return false;
-        }
-        std::map<std::string, ModelBase*>::iterator algorithm_it;
-        for(algorithm_it = group_it->second.algorithm_set.begin(); algorithm_it != group_it->second.algorithm_set.end(); algorithm_it++)
-        {
-            if(algorithm_it->second != NULL && !algorithm_it->second->save())
-            {
-                return false;
-            }
-        }     
+        }   
     }
     return true;
 }

@@ -63,6 +63,15 @@ typedef unsigned long long int ErrorCode;
 #define AXIS_SEND_CORE_HOMING_FAILED 0x500A
 #define AXIS_SEND_CORE_ABORT_HOMING_FAILED 0x500B
 
+#define GROUP_INVALID_PARAM 0x6001
+#define GROUP_STATE_EXE_INVALID 0x6002
+#define GROUP_ADD_AXIS_FAILED 0x6003
+#define GROUP_REMOVE_AXIS_FAILED 0x6004
+#define GROUP_READ_CONFIG_FAILED 0x6005
+#define GROUP_ALG_NOT_DEFINED 0x5006
+#define GROUP_ALG_COMPUTE_FAILED 0x6007
+#define GROUP_PDO_TIMEOUT 0x6008
+
 #define FILE_MANAGER_READ_FILE_FAILED 0x7001   /*failed to read file*/
 #define FILE_MANAGER_WRITE_FILE_FAILED 0x7002   /*failed to write file*/
 
@@ -139,6 +148,8 @@ typedef unsigned long long int ErrorCode;
 #define MC_MANUAL_FRAME_ERROR (unsigned long long int)0x0001000400A90FA3    /* 运控手动示教坐标系错误 */
 #define MC_PAUSE_FAILED (unsigned long long int)0x0001000700A90BBE    /* 规划器规划减速暂停轨迹失败 */
 #define MC_RESUME_FAILED (unsigned long long int)0x0001000700A90BBF    /* 规划器规划加速恢复轨迹失败 */
+#define MC_LOAD_PARAM_FAILED (unsigned long long int)0x0001000700A90BC0
+#define MC_SET_PARAM_FAILED (unsigned long long int)0x0001000700A90BC1
 
 #define DYNAMIC_PAYLOAD_INVALID_ARG (unsigned long long int)0x0001000200B40001    /* Dynamic模块的payload传入非法参数 */
 #define DYNAMIC_PAYLOAD_INFO_FILE_WRITE_FAILED (unsigned long long int)0x0001000200B40002    /* Dynamic模块的payload数值写入文件失败 */

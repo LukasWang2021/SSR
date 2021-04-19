@@ -17,6 +17,7 @@
 #define LOG_ITEM_AREA_SIZE LOG_CTRL_AREA_SIZE           /**< The byte size of text area occupies.*/
 #define LOG_ITEM_AREA_TEXT_SIZE LOG_ITEM_AREA_SIZE - 4  /**< The byte size of the main body of one text.*/
 #define LOG_NAME_SIZE 32                                /**< The byte size of the name of the bind thread.*/
+#define LOG_TEXT_SIZE LOG_ITEM_AREA_TEXT_SIZE //add for p7a motion_control
 
 /**
  * @brief LogControlArea is the control header of the log block.

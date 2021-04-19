@@ -1,0 +1,51 @@
+number_of_axis: 6
+step:
+    axis:
+        - 0.1
+        - 0.1
+        - 0.1
+        - 0.1
+        - 0.1
+        - 0.1
+    position: 0.1
+    orientation: 0.1
+reference:
+    axis:
+        move_to_point_velocity:
+            - 0.322886
+            - 0.322886
+            - 0.322886
+            - 0.322886
+            - 0.322886
+            - 0.322886
+        velocity:
+            - 0.322886
+            - 0.322886
+            - 0.322886
+            - 0.322886
+            - 0.322886
+            - 0.322886
+        acceleration:
+            - 5.0
+            - 5.0
+            - 5.0
+            - 5.0
+            - 5.0
+            - 5.0
+        jerk:
+            - 50.0
+            - 50.0
+            - 50.0
+            - 50.0
+            - 50.0
+            - 50.0
+    position:
+        velocity: 250.0
+        acceleration: 5000.0
+        jerk: 50000.0
+    orientation:
+        omega: 0.5
+        alpha: 5.0
+        beta: 50.0
+
+#END

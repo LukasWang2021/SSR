@@ -42,10 +42,8 @@ typedef struct
 typedef struct
 {
     ModelBase* kinematics_ptr;          /**< Pointer of group kinematics model.*/
-    ModelBase* dynamics_ptr;            /**< Pointer of group dynamics model.*/
     ModelBase* application_ptr;         /**< Pointer of group application model.*/
     std::vector<AxisModel_t*> axis_set; /**< Pointer of axis model.*/
-    std::map<std::string, ModelBase*> algorithm_set;    /**< Pointer of group algorithm model.*/
 }GroupModel_t;
 /**
  * @brief SystemModelManager is the interface class for system model.

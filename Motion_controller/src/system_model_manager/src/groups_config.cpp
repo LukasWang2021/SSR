@@ -57,20 +57,11 @@ bool GroupsConfig::loadGroupConfig(const xmlDocPtr doc_ptr, const xmlNodePtr chi
 	if(!xml_help_.getDataFromNode<int32_t>(doc_ptr, child_node_ptr, group_config.group_id, BAD_CAST("./GroupId"))
         || !xml_help_.getDataFromNode<std::string>(doc_ptr, child_node_ptr, group_config.root_dir, BAD_CAST("./RootDir"))
         || !xml_help_.getDataFromNode<std::string>(doc_ptr, child_node_ptr, group_config.kinematics, BAD_CAST("./Kinematics"))
-        || !xml_help_.getDataFromNode<std::string>(doc_ptr, child_node_ptr, group_config.dynamics, BAD_CAST("./Dynamics"))
         || !xml_help_.getDataFromNode<std::string>(doc_ptr, child_node_ptr, group_config.application, BAD_CAST("./Application")))
     {
         return false;
     }
     if(!loadAxesId(doc_ptr, child_node_ptr, group_config.axis_id))
-    {
-        return false;
-    }
-    if(!loadAlgorithms(doc_ptr, child_node_ptr, group_config.algorithm))
-    {
-        return false;
-    }
-    if(!loadDefaultAlgorithms(doc_ptr, child_node_ptr, group_config.default_algorithm))
     {
         return false;
     }

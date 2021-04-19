@@ -20,8 +20,7 @@ Controller::Controller():
     is_exit_(false),
     servo_1001_ptr_(NULL),
     cpu_comm_ptr_(NULL),
-    io_digital_dev_ptr_(NULL),
-    io_analog_dev_ptr_(NULL)
+    io_digital_dev_ptr_(NULL)
 {    
     for(size_t i = 0; i < AXIS_NUM; ++i)
     {
@@ -79,11 +78,6 @@ Controller::~Controller()
         delete io_digital_dev_ptr_;
         io_digital_dev_ptr_ = NULL;
     }
-    if(io_analog_dev_ptr_ != NULL)
-    {
-        delete io_analog_dev_ptr_;
-        io_analog_dev_ptr_ = NULL;
-    }
 }
 
 Controller* Controller::getInstance()
@@ -107,10 +101,6 @@ ErrorCode Controller::init()
     io_digital_dev_ptr_ = new hal_space::Io1000();
     io_digital_dev_ptr_->init(config_ptr_->dio_exist_);
     dev_ptr_list.push_back(io_digital_dev_ptr_);
-
-    io_analog_dev_ptr_ = new hal_space::IoAnalog();
-    io_analog_dev_ptr_->init(config_ptr_->aio_exist_);
-    dev_ptr_list.push_back(io_analog_dev_ptr_);
     
     for (size_t i = 0; i < axes_config_.size(); ++i)
     {
@@ -161,8 +151,8 @@ ErrorCode Controller::init()
         return error_code;
     }
 
-	publish_.init(&tp_comm_, cpu_comm_ptr_, axis_ptr_, io_digital_dev_ptr_, io_analog_dev_ptr_);
-	rpc_.init(&tp_comm_, &publish_, cpu_comm_ptr_, servo_comm_ptr_, axis_ptr_, axis_model_ptr_, &file_manager_, io_digital_dev_ptr_, io_analog_dev_ptr_);
+	publish_.init(&tp_comm_, cpu_comm_ptr_, axis_ptr_, io_digital_dev_ptr_);
+	rpc_.init(&tp_comm_, &publish_, cpu_comm_ptr_, servo_comm_ptr_, axis_ptr_, axis_model_ptr_, &file_manager_, io_digital_dev_ptr_);
 
     if(!routine_thread_.run(&controllerRoutineThreadFunc, this, config_ptr_->routine_thread_priority_))
     {
@@ -192,7 +182,6 @@ void Controller::runRoutineThreadFunc()
 {
     usleep(config_ptr_->routine_cycle_time_);
 	publish_.processPublish();
-    processDevice();
     uploadErrorCode();
 }
 

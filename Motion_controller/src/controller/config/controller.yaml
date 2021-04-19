@@ -3,6 +3,5 @@ routine_cycle_time: 50000
 realtime_cycle_time: 10000 
 routine_thread_priority: 50 
 realtime_thread_priority: 80 
-dio_exist: true
-aio_exist: true
+dio_exist: false
 #END

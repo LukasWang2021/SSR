@@ -30,7 +30,7 @@ void ControllerRpc::init(TpComm* tp_comm_ptr, ControllerPublish* publish_ptr, se
         servo_comm_space::ServoCommBase* servo_comm_ptr[], axis_space::Axis* axis_ptr[AXIS_NUM],
         system_model_space::AxisModel_t* axis_model_ptr[AXIS_NUM], 
         base_space::FileManager* file_manager_ptr, 
-        hal_space::Io1000* io_dev_ptr, hal_space::IoAnalog* io_analog_ptr)
+        hal_space::Io1000* io_dev_ptr)
 {
     tp_comm_ptr_ = tp_comm_ptr;
 	publish_ptr_ = publish_ptr;
@@ -44,7 +44,6 @@ void ControllerRpc::init(TpComm* tp_comm_ptr, ControllerPublish* publish_ptr, se
 
     file_manager_ptr_ = file_manager_ptr;
     io_dev_ptr_ = io_dev_ptr;
-    io_analog_ptr_ = io_analog_ptr;
 
     device_version_.init();
 

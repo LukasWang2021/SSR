@@ -12,7 +12,7 @@
  * @def AXIS_NUM 
  * The number of axes in the system.
  */
-#define AXIS_NUM 14
+#define AXIS_NUM 10
 /**
  * @def GROUP_NUM 
  * The number of groups in the system.

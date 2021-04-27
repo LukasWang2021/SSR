@@ -47,7 +47,8 @@ class BareCoreInterface
     BareCoreInterface();
     ~BareCoreInterface();
 
-    bool initInterface(uint32_t joint_num, std::map<int32_t, axis_space::Axis*>* axis_group_ptr, GroupSm* sm_ptr);
+    bool initInterface(uint32_t joint_num, std::map<int32_t, axis_space::Axis*>* axis_group_ptr, GroupSm* sm_ptr,
+        servo_comm_space::ServoCpuCommBase* cpu_comm_ptr);
     
     bool sendPoint(void);
     bool isPointCacheEmpty(void);
@@ -68,8 +69,9 @@ class BareCoreInterface
   private:
     uint32_t joint_num_;
     PointCache  point_cache_;
-    std::map<int32_t, axis_space::Axis*>* axis_group_ptr_;              /**< The list of the axes in the group.*/
-	  GroupSm* sm_ptr_;                                               /**< The state machine of the group.*/
+    std::map<int32_t, axis_space::Axis*>* axis_group_ptr_;  /**< The list of the axes in the group.*/
+	  GroupSm* sm_ptr_;                                       /**< The state machine of the group.*/
+    servo_comm_space::ServoCpuCommBase* cpu_comm_ptr_;      /**< The pointer to communicate with the other cpu.*/
 };
 
 

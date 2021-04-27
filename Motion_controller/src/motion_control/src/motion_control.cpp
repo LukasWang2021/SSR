@@ -318,7 +318,7 @@ ErrorCode MotionControl::initApplication(fst_ctrl::CoordinateManager* coordinate
     user_frame_id_ = 0;
     tool_frame_id_ = 0;
 
-    ErrorCode  err = group_ptr_->initGroup(coordinate_manager_ptr_, tool_manager_ptr_, &axis_group_, &sm_);
+    ErrorCode  err = group_ptr_->initGroup(coordinate_manager_ptr_, tool_manager_ptr_, &axis_group_, &sm_, cpu_comm_ptr_);
 
     if (err == SUCCESS)
     {

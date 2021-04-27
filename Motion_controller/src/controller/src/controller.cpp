@@ -119,27 +119,8 @@ ErrorCode Controller::init()
     for (size_t i = 0; i < axes_config_.size(); ++i)
     {
         axis_model_ptr_[i] = model_manager_.getAxisModel(axes_config_[i].axis_id);
-        
-        size_t dot_pos = axes_config_[i].actuator.servo.find_first_of('.');
-        if(dot_pos != std::string::npos)
-        {
-            std::string name_str = axes_config_[i].actuator.servo.substr(0, dot_pos);
-            if(name_str.compare("servo_1000") == 0)
-            {
-                LogProducer::info("main", "Controller new axis[%d]: pmsm", axes_config_[i].axis_id);
-                axis_ptr_[i] = new axis_space::Axis1000(axes_config_[i].axis_id);
-            }
-            else if (name_str.compare("servo_1001") == 0)
-            {
-                LogProducer::info("main", "Controller new axis[%d]: stepper", axes_config_[i].axis_id);
-                axis_ptr_[i] = new axis_space::Axis1001(axes_config_[i].axis_id);
-            }
-            else
-            {
-                LogProducer::error("main", "Controller new axis[%d] failed", axes_config_[i].axis_id);
-                return CONTROLLER_INIT_FAILED;
-            }
-        }
+        axis_ptr_[i] = new axis_space::Axis1000(axes_config_[i].axis_id);
+
         //download servo parameters
         if (!downloadServoParams(i))
             return CONTROLLER_INIT_FAILED;
@@ -251,7 +232,7 @@ void Controller::runRtThreadFunc()
 {
     usleep(config_ptr_->realtime_cycle_time_);
  
-    axis_ptr_[13]->processFdbPdoCurrent(&fdb_current_time_stamp_);
+    axis_ptr_[9]->processFdbPdoCurrent(&fdb_current_time_stamp_);
     axis_ptr_[0]->processFdbPdoSync(fdb_current_time_stamp_);
     axis_ptr_[1]->processFdbPdoSync(fdb_current_time_stamp_);
     axis_ptr_[2]->processFdbPdoSync(fdb_current_time_stamp_);
@@ -261,10 +242,6 @@ void Controller::runRtThreadFunc()
     axis_ptr_[6]->processFdbPdoSync(fdb_current_time_stamp_);
     axis_ptr_[7]->processFdbPdoSync(fdb_current_time_stamp_);
     axis_ptr_[8]->processFdbPdoSync(fdb_current_time_stamp_);
-    axis_ptr_[9]->processFdbPdoSync(fdb_current_time_stamp_);
-    axis_ptr_[10]->processFdbPdoSync(fdb_current_time_stamp_);
-    axis_ptr_[11]->processFdbPdoSync(fdb_current_time_stamp_);
-    axis_ptr_[12]->processFdbPdoSync(fdb_current_time_stamp_);
 
     for (size_t i = 0; i < AXIS_NUM; ++i)
     {

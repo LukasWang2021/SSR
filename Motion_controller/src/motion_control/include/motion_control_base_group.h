@@ -66,7 +66,7 @@ class BaseGroup
     virtual ~BaseGroup();
 
     virtual ErrorCode initGroup(fst_ctrl::CoordinateManager *coordinate_manager_ptr, fst_ctrl::ToolManager *tool_manager_ptr, 
-        std::map<int32_t, axis_space::Axis*>* axis_group_ptr, GroupSm* sm_ptr) = 0;
+        std::map<int32_t, axis_space::Axis*>* axis_group_ptr, GroupSm* sm_ptr,servo_comm_space::ServoCpuCommBase* cpu_comm_ptr) = 0;
     virtual ErrorCode stopGroup(void);
     virtual ErrorCode clearGroup(void);
     virtual ErrorCode clearTeachGroup(void);
@@ -326,8 +326,9 @@ class BaseGroup
     TrajectoryPoint* traj_log_data_ptr_;
     TrajectoryLogControl *traj_log_ctrl_ptr_;
 
-    std::map<int32_t, axis_space::Axis*>* axis_group_ptr_;              /**< The list of the axes in the group.*/
-	  GroupSm* sm_ptr_;                                               /**< The state machine of the group.*/
+    std::map<int32_t, axis_space::Axis*>* axis_group_ptr_;  /**< The list of the axes in the group.*/
+	  GroupSm* sm_ptr_;                                       /**< The state machine of the group.*/
+    servo_comm_space::ServoCpuCommBase* cpu_comm_ptr_;      /**< The pointer to communicate with the other cpu.*/
 };
 
 

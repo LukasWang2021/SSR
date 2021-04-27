@@ -26,11 +26,13 @@ BareCoreInterface::BareCoreInterface(void)
 BareCoreInterface::~BareCoreInterface(void)
 {}
 
-bool BareCoreInterface::initInterface(uint32_t joint_num, std::map<int32_t, axis_space::Axis*>* axis_group_ptr, GroupSm* sm_ptr)
+bool BareCoreInterface::initInterface(uint32_t joint_num, std::map<int32_t, axis_space::Axis*>* axis_group_ptr, GroupSm* sm_ptr,
+    servo_comm_space::ServoCpuCommBase* cpu_comm_ptr)
 {
     joint_num_ = joint_num;
     axis_group_ptr_ = axis_group_ptr;
     sm_ptr_ = sm_ptr;
+    cpu_comm_ptr_ = cpu_comm_ptr;
     if (joint_num_ != axis_group_ptr->size())
         return false;
     

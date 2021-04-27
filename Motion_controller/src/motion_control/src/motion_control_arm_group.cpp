@@ -28,14 +28,15 @@ namespace group_space
 {
 
 ErrorCode ArmGroup::initGroup(CoordinateManager *coordinate_manager_ptr, ToolManager *tool_manager_ptr,
-    std::map<int32_t,axis_space::Axis*>* axis_group_ptr, GroupSm* sm_ptr)
+    std::map<int32_t,axis_space::Axis*>* axis_group_ptr, GroupSm* sm_ptr, servo_comm_space::ServoCpuCommBase* cpu_comm_ptr)
 {
     vel_ratio_ = 0.1;
     acc_ratio_ = 1.0;
     cycle_time_ = 0.001;
     id_ = 1;
 
-    if (coordinate_manager_ptr == NULL || tool_manager_ptr == NULL || axis_group_ptr == NULL || sm_ptr == NULL)
+    if (coordinate_manager_ptr == NULL || tool_manager_ptr == NULL || axis_group_ptr == NULL 
+        || sm_ptr == NULL || cpu_comm_ptr == NULL)
     {
         LogProducer::error("mc_arm_group","Invalid pointer of error-monitor or coordinate-manager or tool-manager.");
         return MC_INTERNAL_FAULT;
@@ -45,6 +46,7 @@ ErrorCode ArmGroup::initGroup(CoordinateManager *coordinate_manager_ptr, ToolMan
     tool_manager_ptr_ = tool_manager_ptr;
     axis_group_ptr_ = axis_group_ptr;
     sm_ptr_ = sm_ptr;
+    cpu_comm_ptr_ = cpu_comm_ptr;
 
     if (pthread_mutex_init(&planner_list_mutex_, NULL) != 0 ||
         pthread_mutex_init(&manual_traj_mutex_, NULL) != 0 ||
@@ -137,7 +139,7 @@ ErrorCode ArmGroup::initGroup(CoordinateManager *coordinate_manager_ptr, ToolMan
     // 初始化裸核通信句柄
     LogProducer::info("mc_arm_group","Initializing interface to bare core ...");
 
-    if (!bare_core_.initInterface(JOINT_OF_ARM, axis_group_ptr_, sm_ptr_))
+    if (!bare_core_.initInterface(JOINT_OF_ARM, axis_group_ptr_, sm_ptr_, cpu_comm_ptr_))
     {
         LogProducer::error("mc_arm_group","Fail to create communication with bare core.");
         return MC_FAIL_IN_INIT;

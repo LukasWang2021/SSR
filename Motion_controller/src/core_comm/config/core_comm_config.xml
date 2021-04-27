@@ -59,24 +59,36 @@
 		<Param2>36</Param2>
 		<Param3>10</Param3>
 		<Param4>0</Param4>
+	</CommBlock>
+	<CommBlock>
+		<!--axis0 ctrl pdo-->
+		<Type>circle_buffer</Type>
+		<ApplicationID>4000</ApplicationID>
+		<ByteOffset>0x2200</ByteOffset>
+		<From>1</From>
+		<To>2</To>
+		<Param1>0</Param1>
+		<Param2>24</Param2>
+		<Param3>1200</Param3>
+		<Param4>0</Param4>
 	</CommBlock>	
 	<CommBlock>
 		<!--axis0 fdb pdo-->
 		<Type>circle_buffer</Type>
-		<ApplicationID>3001</ApplicationID>
-		<ByteOffset>0x2200</ByteOffset>
+		<ApplicationID>3000</ApplicationID>
+		<ByteOffset>0x3200</ByteOffset>
 		<From>2</From>
 		<To>1</To>
 		<Param1>0</Param1>
-		<Param2>48</Param2>
-		<Param3>2160</Param3>
+		<Param2>32</Param2>
+		<Param3>1600</Param3>
 		<Param4>0</Param4>
 	</CommBlock>	
 	<CommBlock>
 		<!--axis0 download param buffer-->
 		<Type>buffer</Type>
 		<ApplicationID>2001</ApplicationID>
-		<ByteOffset>0x3200</ByteOffset>
+		<ByteOffset>0x4200</ByteOffset>
 		<From>1</From>
 		<To>2</To>
 		<Param1>0</Param1>
@@ -88,7 +100,7 @@
 		<!--axis0 upload param buffer-->
 		<Type>buffer</Type>
 		<ApplicationID>2002</ApplicationID>
-		<ByteOffset>0x4200</ByteOffset>
+		<ByteOffset>0x5200</ByteOffset>
 		<From>2</From>
 		<To>1</To>
 		<Param1>0</Param1>
@@ -120,24 +132,36 @@
 		<Param2>36</Param2>
 		<Param3>10</Param3>
 		<Param4>0</Param4>
+	</CommBlock>
+	<CommBlock>
+		<!--axis1 ctrl pdo-->
+		<Type>circle_buffer</Type>
+		<ApplicationID>4000</ApplicationID>
+		<ByteOffset>0xB200</ByteOffset>
+		<From>1</From>
+		<To>2</To>
+		<Param1>1</Param1>
+		<Param2>24</Param2>
+		<Param3>1200</Param3>
+		<Param4>0</Param4>
 	</CommBlock>	
 	<CommBlock>
 		<!--axis1 fdb pdo-->
 		<Type>circle_buffer</Type>
-		<ApplicationID>3001</ApplicationID>
-		<ByteOffset>0xB200</ByteOffset>
+		<ApplicationID>3000</ApplicationID>
+		<ByteOffset>0xC200</ByteOffset>
 		<From>2</From>
 		<To>1</To>
 		<Param1>1</Param1>
-		<Param2>48</Param2>
-		<Param3>2160</Param3>
+		<Param2>32</Param2>
+		<Param3>1600</Param3>
 		<Param4>0</Param4>
 	</CommBlock>	
 	<CommBlock>
 		<!--axis1 download param buffer-->
 		<Type>buffer</Type>
 		<ApplicationID>2001</ApplicationID>
-		<ByteOffset>0xC200</ByteOffset>
+		<ByteOffset>0xD200</ByteOffset>
 		<From>1</From>
 		<To>2</To>
 		<Param1>1</Param1>
@@ -149,7 +173,7 @@
 		<!--axis1 upload param buffer-->
 		<Type>buffer</Type>
 		<ApplicationID>2002</ApplicationID>
-		<ByteOffset>0xD200</ByteOffset>
+		<ByteOffset>0xE200</ByteOffset>
 		<From>2</From>
 		<To>1</To>
 		<Param1>1</Param1>
@@ -182,23 +206,35 @@
 		<Param3>10</Param3>
 		<Param4>0</Param4>
 	</CommBlock>	
+    <CommBlock>
+		<!--axis2 ctrl pdo-->
+		<Type>circle_buffer</Type>
+		<ApplicationID>4000</ApplicationID>
+		<ByteOffset>0x14200</ByteOffset>
+		<From>1</From>
+		<To>2</To>
+		<Param1>2</Param1>
+		<Param2>24</Param2>
+		<Param3>1200</Param3>
+		<Param4>0</Param4>
+	</CommBlock>
 	<CommBlock>
 		<!--axis2 fdb pdo-->
 		<Type>circle_buffer</Type>
-		<ApplicationID>3001</ApplicationID>
-		<ByteOffset>0x14200</ByteOffset>
+		<ApplicationID>3000</ApplicationID>
+		<ByteOffset>0x15200</ByteOffset>
 		<From>2</From>
 		<To>1</To>
 		<Param1>2</Param1>
-		<Param2>48</Param2>
-		<Param3>2160</Param3>
+		<Param2>32</Param2>
+		<Param3>1600</Param3>
 		<Param4>0</Param4>
 	</CommBlock>	
 	<CommBlock>
 		<!--axis2 download param buffer-->
 		<Type>buffer</Type>
 		<ApplicationID>2001</ApplicationID>
-		<ByteOffset>0x15200</ByteOffset>
+		<ByteOffset>0x16200</ByteOffset>
 		<From>1</From>
 		<To>2</To>
 		<Param1>2</Param1>
@@ -210,7 +246,7 @@
 		<!--axis2 upload param buffer-->
 		<Type>buffer</Type>
 		<ApplicationID>2002</ApplicationID>
-		<ByteOffset>0x16200</ByteOffset>
+		<ByteOffset>0x17200</ByteOffset>
 		<From>2</From>
 		<To>1</To>
 		<Param1>2</Param1>
@@ -244,22 +280,34 @@
 		<Param4>0</Param4>
 	</CommBlock>	
 	<CommBlock>
+		<!--axis3 ctrl pdo-->
+		<Type>circle_buffer</Type>
+		<ApplicationID>4000</ApplicationID>
+		<ByteOffset>0x1D200</ByteOffset>
+		<From>1</From>
+		<To>2</To>
+		<Param1>3</Param1>
+		<Param2>24</Param2>
+		<Param3>1200</Param3>
+		<Param4>0</Param4>
+	</CommBlock>
+	<CommBlock>
 		<!--axis3 fdb pdo-->
 		<Type>circle_buffer</Type>
-		<ApplicationID>3001</ApplicationID>
-		<ByteOffset>0x1D200</ByteOffset>
+		<ApplicationID>3000</ApplicationID>
+		<ByteOffset>0x1E200</ByteOffset>
 		<From>2</From>
 		<To>1</To>
 		<Param1>3</Param1>
-		<Param2>48</Param2>
-		<Param3>2160</Param3>
+		<Param2>32</Param2>
+		<Param3>1600</Param3>
 		<Param4>0</Param4>
 	</CommBlock>	
 	<CommBlock>
 		<!--axis3 download param buffer-->
 		<Type>buffer</Type>
 		<ApplicationID>2001</ApplicationID>
-		<ByteOffset>0x1E200</ByteOffset>
+		<ByteOffset>0x1F200</ByteOffset>
 		<From>1</From>
 		<To>2</To>
 		<Param1>3</Param1>
@@ -271,7 +319,7 @@
 		<!--axis3 upload param buffer-->
 		<Type>buffer</Type>
 		<ApplicationID>2002</ApplicationID>
-		<ByteOffset>0x1F200</ByteOffset>
+		<ByteOffset>0x20200</ByteOffset>
 		<From>2</From>
 		<To>1</To>
 		<Param1>3</Param1>
@@ -305,22 +353,34 @@
 		<Param4>0</Param4>
 	</CommBlock>	
 	<CommBlock>
+		<!--axis4 ctrl pdo-->
+		<Type>circle_buffer</Type>
+		<ApplicationID>4000</ApplicationID>
+		<ByteOffset>0x26200</ByteOffset>
+		<From>1</From>
+		<To>2</To>
+		<Param1>4</Param1>
+		<Param2>24</Param2>
+		<Param3>1200</Param3>
+		<Param4>0</Param4>
+	</CommBlock>
+	<CommBlock>
 		<!--axis4 fdb pdo-->
 		<Type>circle_buffer</Type>
-		<ApplicationID>3001</ApplicationID>
-		<ByteOffset>0x26200</ByteOffset>
+		<ApplicationID>3000</ApplicationID>
+		<ByteOffset>0x27200</ByteOffset>
 		<From>2</From>
 		<To>1</To>
 		<Param1>4</Param1>
-		<Param2>48</Param2>
-		<Param3>2160</Param3>
+		<Param2>32</Param2>
+		<Param3>1600</Param3>
 		<Param4>0</Param4>
 	</CommBlock>	
 	<CommBlock>
 		<!--axis4 download param buffer-->
 		<Type>buffer</Type>
 		<ApplicationID>2001</ApplicationID>
-		<ByteOffset>0x27200</ByteOffset>
+		<ByteOffset>0x28200</ByteOffset>
 		<From>1</From>
 		<To>2</To>
 		<Param1>4</Param1>
@@ -332,7 +392,7 @@
 		<!--axis4 upload param buffer-->
 		<Type>buffer</Type>
 		<ApplicationID>2002</ApplicationID>
-		<ByteOffset>0x28200</ByteOffset>
+		<ByteOffset>0x29200</ByteOffset>
 		<From>2</From>
 		<To>1</To>
 		<Param1>4</Param1>
@@ -366,22 +426,34 @@
 		<Param4>0</Param4>
 	</CommBlock>
 	<CommBlock>
+		<!--axis5 ctrl pdo-->
+		<Type>circle_buffer</Type>
+		<ApplicationID>4000</ApplicationID>
+		<ByteOffset>0x2F200</ByteOffset>
+		<From>1</From>
+		<To>5</To>
+		<Param1>5</Param1>
+		<Param2>24</Param2>
+		<Param3>1200</Param3>
+		<Param4>0</Param4>
+	</CommBlock>
+	<CommBlock>
 		<!--axis5 fdb pdo-->
 		<Type>circle_buffer</Type>
-		<ApplicationID>3001</ApplicationID>
-		<ByteOffset>0x2F200</ByteOffset>
+		<ApplicationID>3000</ApplicationID>
+		<ByteOffset>0x30200</ByteOffset>
 		<From>2</From>
 		<To>1</To>
 		<Param1>5</Param1>
-		<Param2>48</Param2>
-		<Param3>2160</Param3>
+		<Param2>32</Param2>
+		<Param3>1600</Param3>
 		<Param4>0</Param4>
 	</CommBlock>	
 	<CommBlock>
 		<!--axis5 download param buffer-->
 		<Type>buffer</Type>
 		<ApplicationID>2001</ApplicationID>
-		<ByteOffset>0x30200</ByteOffset>
+		<ByteOffset>0x31200</ByteOffset>
 		<From>1</From>
 		<To>2</To>
 		<Param1>5</Param1>
@@ -393,7 +465,7 @@
 		<!--axis5 upload param buffer-->
 		<Type>buffer</Type>
 		<ApplicationID>2002</ApplicationID>
-		<ByteOffset>0x31200</ByteOffset>
+		<ByteOffset>0x32200</ByteOffset>
 		<From>2</From>
 		<To>1</To>
 		<Param1>5</Param1>
@@ -427,22 +499,34 @@
 		<Param4>0</Param4>
 	</CommBlock>
 	<CommBlock>
+		<!--axis6 ctrl pdo-->
+		<Type>circle_buffer</Type>
+		<ApplicationID>4000</ApplicationID>
+		<ByteOffset>0x38200</ByteOffset>
+		<From>1</From>
+		<To>2</To>
+		<Param1>6</Param1>
+		<Param2>24</Param2>
+		<Param3>1200</Param3>
+		<Param4>0</Param4>
+	</CommBlock>
+	<CommBlock>
 		<!--axis6 fdb pdo-->
 		<Type>circle_buffer</Type>
-		<ApplicationID>3001</ApplicationID>
-		<ByteOffset>0x38200</ByteOffset>
+		<ApplicationID>3000</ApplicationID>
+		<ByteOffset>0x39200</ByteOffset>
 		<From>2</From>
 		<To>1</To>
 		<Param1>6</Param1>
-		<Param2>48</Param2>
-		<Param3>2160</Param3>
+		<Param2>32</Param2>
+		<Param3>1600</Param3>
 		<Param4>0</Param4>
 	</CommBlock>	
 	<CommBlock>
 		<!--axis6 download param buffer-->
 		<Type>buffer</Type>
 		<ApplicationID>2001</ApplicationID>
-		<ByteOffset>0x39200</ByteOffset>
+		<ByteOffset>0x3A200</ByteOffset>
 		<From>1</From>
 		<To>2</To>
 		<Param1>6</Param1>
@@ -454,7 +538,7 @@
 		<!--axis6 upload param buffer-->
 		<Type>buffer</Type>
 		<ApplicationID>2002</ApplicationID>
-		<ByteOffset>0x3A200</ByteOffset>
+		<ByteOffset>0x3B200</ByteOffset>
 		<From>2</From>
 		<To>1</To>
 		<Param1>6</Param1>
@@ -488,22 +572,34 @@
 		<Param4>0</Param4>
 	</CommBlock>
 	<CommBlock>
+		<!--axis7 ctrl pdo-->
+		<Type>circle_buffer</Type>
+		<ApplicationID>4000</ApplicationID>
+		<ByteOffset>0x41200</ByteOffset>
+		<From>1</From>
+		<To>2</To>
+		<Param1>7</Param1>
+		<Param2>24</Param2>
+		<Param3>1200</Param3>
+		<Param4>0</Param4>
+	</CommBlock>
+	<CommBlock>
 		<!--axis7 fdb pdo-->
 		<Type>circle_buffer</Type>
-		<ApplicationID>3001</ApplicationID>
-		<ByteOffset>0x41200</ByteOffset>
+		<ApplicationID>3000</ApplicationID>
+		<ByteOffset>0x42200</ByteOffset>
 		<From>2</From>
 		<To>1</To>
 		<Param1>7</Param1>
-		<Param2>48</Param2>
-		<Param3>2160</Param3>
+		<Param2>32</Param2>
+		<Param3>1600</Param3>
 		<Param4>0</Param4>
 	</CommBlock>	
 	<CommBlock>
 		<!--axis7 download param buffer-->
 		<Type>buffer</Type>
 		<ApplicationID>2001</ApplicationID>
-		<ByteOffset>0x42200</ByteOffset>
+		<ByteOffset>0x43200</ByteOffset>
 		<From>1</From>
 		<To>2</To>
 		<Param1>7</Param1>
@@ -515,7 +611,7 @@
 		<!--axis7 upload param buffer-->
 		<Type>buffer</Type>
 		<ApplicationID>2002</ApplicationID>
-		<ByteOffset>0x43200</ByteOffset>
+		<ByteOffset>0x44200</ByteOffset>
 		<From>2</From>
 		<To>1</To>
 		<Param1>7</Param1>
@@ -547,24 +643,36 @@
 		<Param2>36</Param2>
 		<Param3>10</Param3>
 		<Param4>0</Param4>
+	</CommBlock>
+	<CommBlock>
+		<!--axis8 ctrl pdo-->
+		<Type>circle_buffer</Type>
+		<ApplicationID>4000</ApplicationID>
+		<ByteOffset>0x4A200</ByteOffset>
+		<From>1</From>
+		<To>2</To>
+		<Param1>8</Param1>
+		<Param2>24</Param2>
+		<Param3>1200</Param3>
+		<Param4>0</Param4>
 	</CommBlock>	
 	<CommBlock>
 		<!--axis8 fdb pdo-->
 		<Type>circle_buffer</Type>
-		<ApplicationID>3001</ApplicationID>
-		<ByteOffset>0x4A200</ByteOffset>
+		<ApplicationID>3000</ApplicationID>
+		<ByteOffset>0x4B200</ByteOffset>
 		<From>2</From>
 		<To>1</To>
 		<Param1>8</Param1>
-		<Param2>48</Param2>
-		<Param3>2160</Param3>
+		<Param2>32</Param2>
+		<Param3>1600</Param3>
 		<Param4>0</Param4>
 	</CommBlock>	
 	<CommBlock>
 		<!--axis8 download param buffer-->
 		<Type>buffer</Type>
 		<ApplicationID>2001</ApplicationID>
-		<ByteOffset>0x4B200</ByteOffset>
+		<ByteOffset>0x4C200</ByteOffset>
 		<From>1</From>
 		<To>2</To>
 		<Param1>8</Param1>
@@ -576,7 +684,7 @@
 		<!--axis8 upload param buffer-->
 		<Type>buffer</Type>
 		<ApplicationID>2002</ApplicationID>
-		<ByteOffset>0x4C200</ByteOffset>
+		<ByteOffset>0x4D200</ByteOffset>
 		<From>2</From>
 		<To>1</To>
 		<Param1>8</Param1>
@@ -610,22 +718,34 @@
 		<Param4>0</Param4>
 	</CommBlock>	
 	<CommBlock>
+		<!--axis9 ctrl pdo-->
+		<Type>circle_buffer</Type>
+		<ApplicationID>4000</ApplicationID>
+		<ByteOffset>0x53200</ByteOffset>
+		<From>1</From>
+		<To>2</To>
+		<Param1>9</Param1>
+		<Param2>24</Param2>
+		<Param3>1200</Param3>
+		<Param4>0</Param4>
+	</CommBlock>
+	<CommBlock>
 		<!--axis9 fdb pdo-->
 		<Type>circle_buffer</Type>
-		<ApplicationID>3001</ApplicationID>
-		<ByteOffset>0x53200</ByteOffset>
+		<ApplicationID>3000</ApplicationID>
+		<ByteOffset>0x54200</ByteOffset>
 		<From>2</From>
 		<To>1</To>
 		<Param1>9</Param1>
-		<Param2>48</Param2>
-		<Param3>2160</Param3>
+		<Param2>32</Param2>
+		<Param3>1600</Param3>
 		<Param4>0</Param4>
 	</CommBlock>	
 	<CommBlock>
 		<!--axis9 download param buffer-->
 		<Type>buffer</Type>
 		<ApplicationID>2001</ApplicationID>
-		<ByteOffset>0x54200</ByteOffset>
+		<ByteOffset>0x55200</ByteOffset>
 		<From>1</From>
 		<To>2</To>
 		<Param1>9</Param1>
@@ -637,376 +757,10 @@
 		<!--axis9 upload param buffer-->
 		<Type>buffer</Type>
 		<ApplicationID>2002</ApplicationID>
-		<ByteOffset>0x55200</ByteOffset>
+		<ByteOffset>0x56200</ByteOffset>
 		<From>2</From>
 		<To>1</To>
 		<Param1>9</Param1>
-		<Param2>20480</Param2>
-		<Param3>0</Param3>
-		<Param4>0</Param4>
-	</CommBlock>
-    <!--axis10 is STEEPER-J1-->
-	<CommBlock>	
-		<!--axis10 comm reg-->
-		<Type>comm_reg</Type>
-		<ApplicationID>0</ApplicationID>
-		<ByteOffset>0x5B000</ByteOffset>
-		<From>2</From>
-		<To>1</To>
-		<Param1>10</Param1>
-		<Param2>0</Param2>
-		<Param3>0</Param3>
-		<Param4>0</Param4>
-	</CommBlock>
-	<CommBlock>	
-		<!--axis10 core process call-->
-		<Type>core_process_call</Type>
-		<ApplicationID>1000</ApplicationID>
-		<ByteOffset>0x5B100</ByteOffset>
-		<From>1</From>
-		<To>2</To>
-		<Param1>10</Param1>
-		<Param2>36</Param2>
-		<Param3>10</Param3>
-		<Param4>0</Param4>
-	</CommBlock>	
-	<CommBlock>
-		<!--axis10 fdb pdo-->
-		<Type>circle_buffer</Type>
-		<ApplicationID>3002</ApplicationID>
-		<ByteOffset>0x5C200</ByteOffset>
-		<From>2</From>
-		<To>1</To>
-		<Param1>10</Param1>
-		<Param2>48</Param2>
-		<Param3>2160</Param3>
-		<Param4>0</Param4>
-	</CommBlock>	
-	<CommBlock>
-		<!--axis10 download param buffer-->
-		<Type>buffer</Type>
-		<ApplicationID>2001</ApplicationID>
-		<ByteOffset>0x5D200</ByteOffset>
-		<From>1</From>
-		<To>2</To>
-		<Param1>10</Param1>
-		<Param2>2048</Param2>
-		<Param3>0</Param3>
-		<Param4>0</Param4>
-	</CommBlock>
-	<CommBlock>
-		<!--axis10 upload param buffer-->
-		<Type>buffer</Type>
-		<ApplicationID>2002</ApplicationID>
-		<ByteOffset>0x5E200</ByteOffset>
-		<From>2</From>
-		<To>1</To>
-		<Param1>10</Param1>
-		<Param2>20480</Param2>
-		<Param3>0</Param3>
-		<Param4>0</Param4>
-	</CommBlock>
-    <!--axis11 is STEEPER-J2-->
-	<CommBlock>	
-		<!--axis11 comm reg-->
-		<Type>comm_reg</Type>
-		<ApplicationID>0</ApplicationID>
-		<ByteOffset>0x64000</ByteOffset>
-		<From>2</From>
-		<To>1</To>
-		<Param1>11</Param1>
-		<Param2>0</Param2>
-		<Param3>0</Param3>
-		<Param4>0</Param4>
-	</CommBlock>
-	<CommBlock>	
-		<!--axis11 core process call-->
-		<Type>core_process_call</Type>
-		<ApplicationID>1000</ApplicationID>
-		<ByteOffset>0x64100</ByteOffset>
-		<From>1</From>
-		<To>2</To>
-		<Param1>11</Param1>
-		<Param2>36</Param2>
-		<Param3>10</Param3>
-		<Param4>0</Param4>
-	</CommBlock>	
-	<CommBlock>
-		<!--axis11 fdb pdo-->
-		<Type>circle_buffer</Type>
-		<ApplicationID>3002</ApplicationID>
-		<ByteOffset>0x65200</ByteOffset>
-		<From>2</From>
-		<To>1</To>
-		<Param1>11</Param1>
-		<Param2>48</Param2>
-		<Param3>2160</Param3>
-		<Param4>0</Param4>
-	</CommBlock>	
-	<CommBlock>
-		<!--axis11 download param buffer-->
-		<Type>buffer</Type>
-		<ApplicationID>2001</ApplicationID>
-		<ByteOffset>0x66200</ByteOffset>
-		<From>1</From>
-		<To>2</To>
-		<Param1>11</Param1>
-		<Param2>2048</Param2>
-		<Param3>0</Param3>
-		<Param4>0</Param4>
-	</CommBlock>
-	<CommBlock>
-		<!--axis11 upload param buffer-->
-		<Type>buffer</Type>
-		<ApplicationID>2002</ApplicationID>
-		<ByteOffset>0x67200</ByteOffset>
-		<From>2</From>
-		<To>1</To>
-		<Param1>11</Param1>
-		<Param2>20480</Param2>
-		<Param3>0</Param3>
-		<Param4>0</Param4>
-	</CommBlock>
-    <!--axis12 is STEEPER-J3-->
-	<CommBlock>	
-		<!--axis12 comm reg-->
-		<Type>comm_reg</Type>
-		<ApplicationID>0</ApplicationID>
-		<ByteOffset>0x6D000</ByteOffset>
-		<From>2</From>
-		<To>1</To>
-		<Param1>12</Param1>
-		<Param2>0</Param2>
-		<Param3>0</Param3>
-		<Param4>0</Param4>
-	</CommBlock>
-	<CommBlock>	
-		<!--axis12 core process call-->
-		<Type>core_process_call</Type>
-		<ApplicationID>1000</ApplicationID>
-		<ByteOffset>0x6D100</ByteOffset>
-		<From>1</From>
-		<To>2</To>
-		<Param1>12</Param1>
-		<Param2>36</Param2>
-		<Param3>10</Param3>
-		<Param4>0</Param4>
-	</CommBlock>	
-	<CommBlock>
-		<!--axis12 fdb pdo-->
-		<Type>circle_buffer</Type>
-		<ApplicationID>3002</ApplicationID>
-		<ByteOffset>0x6E200</ByteOffset>
-		<From>2</From>
-		<To>1</To>
-		<Param1>12</Param1>
-		<Param2>48</Param2>
-		<Param3>2160</Param3>
-		<Param4>0</Param4>
-	</CommBlock>	
-	<CommBlock>
-		<!--axis12 download param buffer-->
-		<Type>buffer</Type>
-		<ApplicationID>2001</ApplicationID>
-		<ByteOffset>0x6F200</ByteOffset>
-		<From>1</From>
-		<To>2</To>
-		<Param1>12</Param1>
-		<Param2>2048</Param2>
-		<Param3>0</Param3>
-		<Param4>0</Param4>
-	</CommBlock>
-	<CommBlock>
-		<!--axis12 upload param buffer-->
-		<Type>buffer</Type>
-		<ApplicationID>2002</ApplicationID>
-		<ByteOffset>0x70200</ByteOffset>
-		<From>2</From>
-		<To>1</To>
-		<Param1>12</Param1>
-		<Param2>20480</Param2>
-		<Param3>0</Param3>
-		<Param4>0</Param4>
-	</CommBlock>
-    <!--axis13 is STEEPER-J4-->
-	<CommBlock>	
-		<!--axis13 comm reg-->
-		<Type>comm_reg</Type>
-		<ApplicationID>0</ApplicationID>
-		<ByteOffset>0x76000</ByteOffset>
-		<From>2</From>
-		<To>1</To>
-		<Param1>13</Param1>
-		<Param2>0</Param2>
-		<Param3>0</Param3>
-		<Param4>0</Param4>
-	</CommBlock>
-	<CommBlock>	
-		<!--axis13 core process call-->
-		<Type>core_process_call</Type>
-		<ApplicationID>1000</ApplicationID>
-		<ByteOffset>0x76100</ByteOffset>
-		<From>1</From>
-		<To>2</To>
-		<Param1>13</Param1>
-		<Param2>36</Param2>
-		<Param3>10</Param3>
-		<Param4>0</Param4>
-	</CommBlock>	
-	<CommBlock>
-		<!--axis13 fdb pdo-->
-		<Type>circle_buffer</Type>
-		<ApplicationID>3002</ApplicationID>
-		<ByteOffset>0x77200</ByteOffset>
-		<From>2</From>
-		<To>1</To>
-		<Param1>13</Param1>
-		<Param2>48</Param2>
-		<Param3>2160</Param3>
-		<Param4>0</Param4>
-	</CommBlock>	
-	<CommBlock>
-		<!--axis13 download param buffer-->
-		<Type>buffer</Type>
-		<ApplicationID>2001</ApplicationID>
-		<ByteOffset>0x78200</ByteOffset>
-		<From>1</From>
-		<To>2</To>
-		<Param1>13</Param1>
-		<Param2>2048</Param2>
-		<Param3>0</Param3>
-		<Param4>0</Param4>
-	</CommBlock>
-	<CommBlock>
-		<!--axis13 upload param buffer-->
-		<Type>buffer</Type>
-		<ApplicationID>2002</ApplicationID>
-		<ByteOffset>0x79200</ByteOffset>
-		<From>2</From>
-		<To>1</To>
-		<Param1>13</Param1>
-		<Param2>20480</Param2>
-		<Param3>0</Param3>
-		<Param4>0</Param4>
-	</CommBlock>
-	<!--axis14 is STEEPER-J7-->
-	<CommBlock>	
-		<!--axis14 comm reg-->
-		<Type>comm_reg</Type>
-		<ApplicationID>0</ApplicationID>
-		<ByteOffset>0x7F000</ByteOffset>
-		<From>2</From>
-		<To>1</To>
-		<Param1>14</Param1>
-		<Param2>0</Param2>
-		<Param3>0</Param3>
-		<Param4>0</Param4>
-	</CommBlock>
-	<CommBlock>	
-		<!--axis14 core process call-->
-		<Type>core_process_call</Type>
-		<ApplicationID>1000</ApplicationID>
-		<ByteOffset>0x7F100</ByteOffset>
-		<From>1</From>
-		<To>2</To>
-		<Param1>14</Param1>
-		<Param2>36</Param2>
-		<Param3>10</Param3>
-		<Param4>0</Param4>
-	</CommBlock>
-	<CommBlock>
-		<!--axis14 fdb pdo-->
-		<Type>circle_buffer</Type>
-		<ApplicationID>3002</ApplicationID>
-		<ByteOffset>0x80200</ByteOffset>
-		<From>2</From>
-		<To>1</To>
-		<Param1>14</Param1>
-		<Param2>48</Param2>
-		<Param3>2160</Param3>
-		<Param4>0</Param4>
-	</CommBlock>	
-	<CommBlock>
-		<!--axis14 download param buffer-->
-		<Type>buffer</Type>
-		<ApplicationID>2001</ApplicationID>
-		<ByteOffset>0x81200</ByteOffset>
-		<From>1</From>
-		<To>2</To>
-		<Param1>14</Param1>
-		<Param2>2048</Param2>
-		<Param3>0</Param3>
-		<Param4>0</Param4>
-	</CommBlock>
-	<CommBlock>
-		<!--axis14 upload param buffer-->
-		<Type>buffer</Type>
-		<ApplicationID>2002</ApplicationID>
-		<ByteOffset>0x82200</ByteOffset>
-		<From>2</From>
-		<To>1</To>
-		<Param1>14</Param1>
-		<Param2>20480</Param2>
-		<Param3>0</Param3>
-		<Param4>0</Param4>
-	</CommBlock>
-	<!--axis15 is STEEPER-J8-->
-	<CommBlock>	
-		<!--axis15 comm reg-->
-		<Type>comm_reg</Type>
-		<ApplicationID>0</ApplicationID>
-		<ByteOffset>0x88000</ByteOffset>
-		<From>2</From>
-		<To>1</To>
-		<Param1>15</Param1>
-		<Param2>0</Param2>
-		<Param3>0</Param3>
-		<Param4>0</Param4>
-	</CommBlock>
-	<CommBlock>	
-		<!--axis15 core process call-->
-		<Type>core_process_call</Type>
-		<ApplicationID>1000</ApplicationID>
-		<ByteOffset>0x88100</ByteOffset>
-		<From>1</From>
-		<To>2</To>
-		<Param1>15</Param1>
-		<Param2>36</Param2>
-		<Param3>10</Param3>
-		<Param4>0</Param4>
-	</CommBlock>
-	<CommBlock>
-		<!--axis15 fdb pdo-->
-		<Type>circle_buffer</Type>
-		<ApplicationID>3002</ApplicationID>
-		<ByteOffset>0x89200</ByteOffset>
-		<From>2</From>
-		<To>1</To>
-		<Param1>15</Param1>
-		<Param2>48</Param2>
-		<Param3>2160</Param3>
-		<Param4>0</Param4>
-	</CommBlock>	
-	<CommBlock>
-		<!--axis15 download param buffer-->
-		<Type>buffer</Type>
-		<ApplicationID>2001</ApplicationID>
-		<ByteOffset>0x8A200</ByteOffset>
-		<From>1</From>
-		<To>2</To>
-		<Param1>15</Param1>
-		<Param2>2048</Param2>
-		<Param3>0</Param3>
-		<Param4>0</Param4>
-	</CommBlock>
-	<CommBlock>
-		<!--axis15 upload param buffer-->
-		<Type>buffer</Type>
-		<ApplicationID>2002</ApplicationID>
-		<ByteOffset>0x8B200</ByteOffset>
-		<From>2</From>
-		<To>1</To>
-		<Param1>15</Param1>
 		<Param2>20480</Param2>
 		<Param3>0</Param3>
 		<Param4>0</Param4>

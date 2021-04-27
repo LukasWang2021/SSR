@@ -17,7 +17,7 @@
 #include <nvram_handler.h>
 #include "log_manager_producer.h"
 
-namespace fst_mc
+namespace group_space
 {
 
 enum CalibrateState
@@ -100,7 +100,7 @@ class Calibrator
     // 输出：  None
     // 返回：  错误代码，详见报警代码表
     //------------------------------------------------------------------------------
-    ErrorCode calibrateOffset(uint32_t index, double *new_offset);
+    ErrorCode calibrateOffset(size_t index, double *new_offset);
 
     //------------------------------------------------------------------------------
     // 方法：  calibrateOffset
@@ -111,7 +111,7 @@ class Calibrator
     // 输出：  None
     // 返回：  错误代码，详见报警代码表
     //------------------------------------------------------------------------------
-    ErrorCode calibrateOffset(const uint32_t *pindex, uint32_t length, double *new_offset);
+    ErrorCode calibrateOffset(const size_t *pindex, uint32_t length, double *new_offset);
 
     //------------------------------------------------------------------------------
     // 方法：  saveJoint

@@ -16,7 +16,7 @@
 #include "log_manager_producer.h"
 
 using namespace basic_alg;
-using namespace fst_mc;
+using namespace group_space;
 using namespace std;
 using namespace log_space;
 

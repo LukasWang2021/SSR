@@ -27,6 +27,10 @@ Controller::Controller():
         servo_comm_ptr_[i] = NULL;
         axis_ptr_[i] = NULL;
     }
+    for (size_t i = 0; i < GROUP_NUM; ++i)
+    {
+        group_ptr_[i] = NULL;
+    }
 
     config_ptr_ = new ControllerConfig();
 }
@@ -37,12 +41,15 @@ Controller::~Controller()
     rt_thread_.join();
     routine_thread_.join();
 
-    if (servo_1001_ptr_ != NULL)
+    for (size_t i = 0; i < GROUP_NUM; ++i)
     {
-        delete servo_1001_ptr_;
-        servo_1001_ptr_ = NULL;
+        if (group_ptr_[i] != NULL)
+        {
+            delete group_ptr_[i];
+            group_ptr_[i] = NULL;
+        }
     }
-   
+
     for(size_t i = 0; i < AXIS_NUM; ++i)
     {
         if (axis_ptr_[i] != NULL)
@@ -65,6 +72,12 @@ Controller::~Controller()
                 }
             }
         }
+    }
+
+    if (servo_1001_ptr_ != NULL)
+    {
+        delete servo_1001_ptr_;
+        servo_1001_ptr_ = NULL;
     }
 
     if(config_ptr_ != NULL)
@@ -102,6 +115,7 @@ ErrorCode Controller::init()
     io_digital_dev_ptr_->init(config_ptr_->dio_exist_);
     dev_ptr_list.push_back(io_digital_dev_ptr_);
     
+    //axis init
     for (size_t i = 0; i < axes_config_.size(); ++i)
     {
         axis_model_ptr_[i] = model_manager_.getAxisModel(axes_config_[i].axis_id);
@@ -139,6 +153,54 @@ ErrorCode Controller::init()
             return ret;
         }
     }
+
+    //group init
+    for (size_t i = 0; i < group_config_.size(); ++i)
+    {
+        group_model_ptr_[i] = model_manager_.getGroupModel(group_config_[i].group_id);
+        group_ptr_[i] = new group_space::MotionControl(group_config_[i].group_id);
+        bool ret = group_ptr_[i]->init(cpu_comm_ptr_, group_model_ptr_[i], &(group_config_[i]));
+        if (!ret)
+        {
+            LogProducer::error("main", "Controller group[%d] initialization failed", group_config_[i].group_id);
+            return ret;
+        }
+    }
+    if(SUCCESS != tool_manager_.init())
+    {
+        LogProducer::error("main", "Controller tool manager initialization failed");
+        return error_code;
+    }
+    if(SUCCESS != coordinate_manager_.init())
+    {
+        LogProducer::error("main", "Controller coord manager initialization failed");
+        return error_code;
+    }
+    //add axis to group according config.xml
+    for (unsigned int i = 0; i < group_config_.size(); ++i)
+    {
+        for (unsigned int j = 0; j < group_config_[i].axis_id.size(); ++j)
+        {
+            for (unsigned int k = 0; k < axes_config_.size(); ++k)
+            {
+                if(group_config_[i].axis_id[j] == axis_ptr_[k]->getID())
+                {
+                    error_code = group_ptr_[i]->mcAddAxisToGroup(j, *axis_ptr_[k]);
+                    if (error_code != SUCCESS)
+                    {
+                        LogProducer::error("main", "Controller group[%d] add axis[%d] failed", group_config_[i].group_id, group_config_[i].axis_id[j]);
+                        return error_code;
+                    }
+                }
+            }
+        }
+        error_code = group_ptr_[i]->initApplication(&coordinate_manager_, &tool_manager_);
+        if (SUCCESS != error_code)
+        {
+            LogProducer::error("main", "Controller group[%d] application initialization failed", group_config_[i].group_id);
+            return error_code;
+        }
+    }
    
     //setting ISR as soon
     int32_t size = 0;
@@ -152,7 +214,7 @@ ErrorCode Controller::init()
     }
 
 	publish_.init(&tp_comm_, cpu_comm_ptr_, axis_ptr_, io_digital_dev_ptr_);
-	rpc_.init(&tp_comm_, &publish_, cpu_comm_ptr_, servo_comm_ptr_, axis_ptr_, axis_model_ptr_, &file_manager_, io_digital_dev_ptr_);
+	rpc_.init(&tp_comm_, &publish_, cpu_comm_ptr_, servo_comm_ptr_, axis_ptr_, axis_model_ptr_, group_ptr_, &file_manager_, io_digital_dev_ptr_);
 
     if(!routine_thread_.run(&controllerRoutineThreadFunc, this, config_ptr_->routine_thread_priority_))
     {
@@ -208,6 +270,12 @@ void Controller::runRtThreadFunc()
     {
         axis_ptr_[i]->processStateMachine();
     }
+
+    for (size_t i = 0; i < GROUP_NUM; ++i)
+    {
+        group_ptr_[i]->processFdbPdo();
+        group_ptr_[i]->processStateMachine();
+    }
     rpc_.processRpc();
 }
 
@@ -240,6 +308,14 @@ ErrorCode Controller::bootUp(void)
         return CONTROLLER_INIT_FAILED;
     }
     axes_config_ = axes_config_ptr->getRef();
+
+    GroupsConfig* group_config_ptr = model_manager_.getGroupsConfig();
+    if (!group_config_ptr->load())
+    {
+        LogProducer::error("main", "Controller group config load failed");
+        return CONTROLLER_INIT_FAILED;
+    }
+    group_config_ = group_config_ptr->getRef();
 
     //boot up
     ErrorCode error_code;

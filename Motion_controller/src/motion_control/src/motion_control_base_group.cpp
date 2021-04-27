@@ -22,7 +22,7 @@
 #include "log_manager_producer.h"
 
 using namespace std;
-using namespace fst_mc;
+using namespace group_space;
 using namespace basic_alg;
 using namespace base_space;
 using namespace log_space;
@@ -49,7 +49,7 @@ static void dumpShareMemory(void)
     shm_out.close();
 }
 
-namespace fst_mc
+namespace group_space
 {
 
 BaseGroup::BaseGroup()
@@ -69,8 +69,6 @@ BaseGroup::BaseGroup()
     fine_cycle_ = 0;
     fine_threshold_ = 10;
 
-    stop_request_ = false;
-    reset_request_ = false;
     clear_request_ = false;
     stop_barecore_ = false;
     clear_teach_request_ = false;
@@ -107,7 +105,7 @@ bool BaseGroup::initTrajectoryLogSpace(void)
     
     if (-1 == fd)
     {
-        LogProducer::error("mc","Fail to create rtm_trajectory");
+        LogProducer::error("mc_base","Fail to create rtm_trajectory");
         return false;
     }
 
@@ -115,7 +113,7 @@ bool BaseGroup::initTrajectoryLogSpace(void)
     
     if (lock == -1)
     {
-        LogProducer::error("mc","Fail to take over rtm_trajectory");
+        LogProducer::error("mc_base","Fail to take over rtm_trajectory");
         return false;
     }
 
@@ -125,7 +123,7 @@ bool BaseGroup::initTrajectoryLogSpace(void)
     if (ptr == MAP_FAILED)
     {
         close(fd);
-        LogProducer::error("mc","Fail to map rtm_trajectory");
+        LogProducer::error("mc_base","Fail to map rtm_trajectory");
         return false;
     }
 
@@ -280,12 +278,12 @@ ManualFrame BaseGroup::getManualFrame(void)
 
 ErrorCode BaseGroup::setManualFrame(ManualFrame frame)
 {
-    LogProducer::info("mc","Set manual frame = %d, current frame is %d", frame, manual_teach_.getManualFrame());
+    LogProducer::info("mc_base","Set manual frame = %d, current frame is %d", frame, manual_teach_.getManualFrame());
     GroupState group_state = group_state_;
 
     if (group_state != STANDBY && group_state != PAUSE)
     {
-        LogProducer::error("mc","Cannot set frame in current state = %d", group_state);
+        LogProducer::error("mc_base","Cannot set frame in current state = %d", group_state);
         return INVALID_SEQUENCE;
     }
 
@@ -297,7 +295,7 @@ ErrorCode BaseGroup::setManualFrame(ManualFrame frame)
     }
 
     pthread_mutex_unlock(&manual_traj_mutex_);
-    LogProducer::info("mc","Done.");
+    LogProducer::info("mc_base","Done.");
     return SUCCESS;
 }
 
@@ -305,72 +303,72 @@ void BaseGroup::getManualStepAxis(double *steps)
 {
     char buffer[LOG_TEXT_SIZE];
     manual_teach_.getManualStepAxis(steps);
-    LogProducer::info("mc","Get manual step axis = %s", printDBLine(steps, buffer, LOG_TEXT_SIZE));
+    LogProducer::info("mc_base","Get manual step axis = %s", printDBLine(steps, buffer, LOG_TEXT_SIZE));
 }
 
 double BaseGroup::getManualStepPosition(void)
 {
     double step = manual_teach_.getManualStepPosition();
-    LogProducer::info("mc","Get manual step position = %.4f", step);
+    LogProducer::info("mc_base","Get manual step position = %.4f", step);
     return step;
 }
 
 double BaseGroup::getManualStepOrientation(void)
 {
     double step = manual_teach_.getManualStepOrientation();
-    LogProducer::info("mc","Get manual step orientation = %.6f", step);
+    LogProducer::info("mc_base","Get manual step orientation = %.6f", step);
     return step;
 }
 
 ErrorCode BaseGroup::setManualStepAxis(const double *steps)
 {
     char buffer[LOG_TEXT_SIZE];
-    LogProducer::info("mc","Set manual steps for axis = %s", printDBLine(steps, buffer, LOG_TEXT_SIZE));
+    LogProducer::info("mc_base","Set manual steps for axis = %s", printDBLine(steps, buffer, LOG_TEXT_SIZE));
     return manual_teach_.setManualStepAxis(steps);
 }
 
 ErrorCode BaseGroup::setManualStepPosition(double step)
 {
-    LogProducer::info("mc","Set manual step position = %.4f", step);
+    LogProducer::info("mc_base","Set manual step position = %.4f", step);
     return manual_teach_.setManualStepPosition(step);
 }
 
 ErrorCode BaseGroup::setManualStepOrientation(double step)
 {
-    LogProducer::info("mc","Set manual step orientation = %.6f", step);
+    LogProducer::info("mc_base","Set manual step orientation = %.6f", step);
     return manual_teach_.setManualStepOrientation(step);
 }
 
 ErrorCode BaseGroup::manualMoveToPoint(const IntactPoint &point)
 {
     char buffer[LOG_TEXT_SIZE];
-    LogProducer::info("mc","Manual to target point");
+    LogProducer::info("mc_base","Manual to target point");
     GroupState group_state = group_state_;
     ServoState servo_state = getServoState();
 
     if ((group_state != STANDBY && group_state != PAUSE) || servo_state != SERVO_IDLE)
     {
-        LogProducer::error("mc","Cannot manual to target in current group-state = %d, servo-state = %d", group_state, servo_state);
+        LogProducer::error("mc_base","Cannot manual to target in current group-state = %d, servo-state = %d", group_state, servo_state);
         return MC_FAIL_MANUAL_TO_POINT;
     }
 
     Joint start_joint = start_joint_;
-    LogProducer::info("mc","Joint: %s", printDBLine(&point.joint[0], buffer, LOG_TEXT_SIZE));
-    LogProducer::info("mc","Pose: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", point.pose.pose.point_.x_, point.pose.pose.point_.y_, point.pose.pose.point_.z_, point.pose.pose.euler_.a_, point.pose.pose.euler_.b_, point.pose.pose.euler_.c_);
-    LogProducer::info("mc","Posture: %d, %d, %d, %d", point.pose.posture.arm, point.pose.posture.elbow, point.pose.posture.wrist, point.pose.posture.flip);
-    LogProducer::info("mc","UserFrame: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", point.user_frame.point_.x_, point.user_frame.point_.y_, point.user_frame.point_.z_, point.user_frame.euler_.a_, point.user_frame.euler_.b_, point.user_frame.euler_.c_);
-    LogProducer::info("mc","ToolFrame: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", point.tool_frame.point_.x_, point.tool_frame.point_.y_, point.tool_frame.point_.z_, point.tool_frame.euler_.a_, point.tool_frame.euler_.b_, point.tool_frame.euler_.c_);
-    LogProducer::info("mc","Start-joint = %s", printDBLine(&start_joint[0], buffer, LOG_TEXT_SIZE));
+    LogProducer::info("mc_base","Joint: %s", printDBLine(&point.joint[0], buffer, LOG_TEXT_SIZE));
+    LogProducer::info("mc_base","Pose: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", point.pose.pose.point_.x_, point.pose.pose.point_.y_, point.pose.pose.point_.z_, point.pose.pose.euler_.a_, point.pose.pose.euler_.b_, point.pose.pose.euler_.c_);
+    LogProducer::info("mc_base","Posture: %d, %d, %d, %d", point.pose.posture.arm, point.pose.posture.elbow, point.pose.posture.wrist, point.pose.posture.flip);
+    LogProducer::info("mc_base","UserFrame: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", point.user_frame.point_.x_, point.user_frame.point_.y_, point.user_frame.point_.z_, point.user_frame.euler_.a_, point.user_frame.euler_.b_, point.user_frame.euler_.c_);
+    LogProducer::info("mc_base","ToolFrame: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", point.tool_frame.point_.x_, point.tool_frame.point_.y_, point.tool_frame.point_.z_, point.tool_frame.euler_.a_, point.tool_frame.euler_.b_, point.tool_frame.euler_.c_);
+    LogProducer::info("mc_base","Start-joint = %s", printDBLine(&start_joint[0], buffer, LOG_TEXT_SIZE));
 
     if (!soft_constraint_.isJointInConstraint(start_joint, MINIMUM_E3))
     {
-        LogProducer::error("mc","Start-joint is out of soft constraint, manual-mode-apoint is disabled.");
+        LogProducer::error("mc_base","Start-joint is out of soft constraint, manual-mode-apoint is disabled.");
         return JOINT_OUT_OF_CONSTRAINT;
     }
 
     if (!soft_constraint_.isJointInConstraint(point.joint))
     {
-        LogProducer::error("mc","Target-joint out of constraint: %s", printDBLine(&point.joint[0], buffer, LOG_TEXT_SIZE));
+        LogProducer::error("mc_base","Target-joint out of constraint: %s", printDBLine(&point.joint[0], buffer, LOG_TEXT_SIZE));
         return JOINT_OUT_OF_CONSTRAINT;
     }
 
@@ -382,7 +380,7 @@ ErrorCode BaseGroup::manualMoveToPoint(const IntactPoint &point)
 
     if (err == SUCCESS)
     {
-        LogProducer::info("mc","Manual move to target joint, total-duration = %.4f, Success.", duration);
+        LogProducer::info("mc_base","Manual move to target joint, total-duration = %.4f, Success.", duration);
 
         if (duration > MINIMUM_E6 && group_state == STANDBY) standby_to_manual_request_ = true;
         else if (duration > MINIMUM_E6 && group_state == PAUSE) pause_to_manual_request_ = true;
@@ -390,20 +388,20 @@ ErrorCode BaseGroup::manualMoveToPoint(const IntactPoint &point)
     }
     else
     {
-        LogProducer::error("mc","Fail to create manual trajectory, error-code = 0x%llx", err);
+        LogProducer::error("mc_base","Fail to create manual trajectory, error-code = 0x%llx", err);
         return err;
     }
 }
 
 ErrorCode BaseGroup::manualMoveStep(const ManualDirection *direction)
 {
-    LogProducer::info("mc","Manual step by direction.");
+    LogProducer::info("mc_base","Manual step by direction.");
     GroupState group_state = group_state_;
     ServoState servo_state = getServoState();
 
     if ((group_state != STANDBY && group_state != PAUSE) || servo_state != SERVO_IDLE)
     {
-        LogProducer::error("mc","Cannot manual step in current group-state = %d, servo-state = %d", group_state, servo_state);
+        LogProducer::error("mc_base","Cannot manual step in current group-state = %d, servo-state = %d", group_state, servo_state);
         return MC_FAIL_MANUAL_STEP;
     }
 
@@ -414,8 +412,8 @@ ErrorCode BaseGroup::manualMoveStep(const ManualDirection *direction)
         if (manual_teach_.getManualFrame() != JOINT)
         {
             char buffer[LOG_TEXT_SIZE];
-            LogProducer::error("mc","Start-joint = %s", printDBLine(&start_joint.j1_, buffer, LOG_TEXT_SIZE));
-            LogProducer::error("mc","Start-joint is out of soft constraint, cannot manual in cartesian space.");
+            LogProducer::error("mc_base","Start-joint = %s", printDBLine(&start_joint.j1_, buffer, LOG_TEXT_SIZE));
+            LogProducer::error("mc_base","Start-joint is out of soft constraint, cannot manual in cartesian space.");
             return MC_FAIL_MANUAL_STEP;
         }
 
@@ -423,13 +421,13 @@ ErrorCode BaseGroup::manualMoveStep(const ManualDirection *direction)
         {
             if (start_joint[i] > soft_constraint_.upper()[i] + MINIMUM_E9 && direction[i] == INCREASE)
             {
-                LogProducer::error("mc","J%d = %.4f out of range [%.4f, %.4f], cannot move as given direction (increase).",
+                LogProducer::error("mc_base","J%d = %.4f out of range [%.4f, %.4f], cannot move as given direction (increase).",
                             i + 1, start_joint[i], soft_constraint_.lower()[i], soft_constraint_.upper()[i]);
                 return MC_FAIL_MANUAL_STEP;
             }
             else if (start_joint[i] < soft_constraint_.lower()[i] - MINIMUM_E9 && direction[i] == DECREASE)
             {
-                LogProducer::error("mc","J%d = %.4f out of range [%.4f, %.4f], cannot move as given direction (decrease).",
+                LogProducer::error("mc_base","J%d = %.4f out of range [%.4f, %.4f], cannot move as given direction (decrease).",
                             i + 1, start_joint[i], soft_constraint_.lower()[i], soft_constraint_.upper()[i]);
                 return MC_FAIL_MANUAL_STEP;
             }
@@ -444,14 +442,14 @@ ErrorCode BaseGroup::manualMoveStep(const ManualDirection *direction)
 
     if (err == SUCCESS)
     {
-        LogProducer::info("mc","Manual move step, total-duration = %.4f, Success.", duration);
+        LogProducer::info("mc_base","Manual move step, total-duration = %.4f, Success.", duration);
         if (duration > MINIMUM_E6 && group_state == STANDBY) standby_to_manual_request_ = true;
         else if (duration > MINIMUM_E6 && group_state == PAUSE) pause_to_manual_request_ = true;
         return SUCCESS;
     }
     else
     {
-        LogProducer::error("mc","Fail to create manual trajectory, error-code = 0x%llx", err);
+        LogProducer::error("mc_base","Fail to create manual trajectory, error-code = 0x%llx", err);
         return err;
     }
 }
@@ -464,13 +462,13 @@ ErrorCode BaseGroup::manualMoveContinuous(const ManualDirection *direction)
 
     if ((group_state != STANDBY && group_state != MANUAL && group_state != PAUSE && group_state != PAUSE_MANUAL) || ((group_state == STANDBY || group_state == PAUSE) && servo_state != SERVO_IDLE))
     {
-        LogProducer::error("mc","Cannot manual continuous in current grp-state = %d, servo-state = %d", group_state, servo_state);
+        LogProducer::error("mc_base","Cannot manual continuous in current grp-state = %d, servo-state = %d", group_state, servo_state);
         return MC_FAIL_MANUAL_CONTINUOUS;
     }
 
     if (group_state != STANDBY && group_state != PAUSE && manual_trajectory_check_fail_)
     {
-        LogProducer::error("mc","Manual trajectory check failed, manual continuous refused", group_state, servo_state);
+        LogProducer::error("mc_base","Manual trajectory check failed, manual continuous refused", group_state, servo_state);
         return MC_FAIL_MANUAL_CONTINUOUS;
     }
 
@@ -481,8 +479,8 @@ ErrorCode BaseGroup::manualMoveContinuous(const ManualDirection *direction)
         if (manual_teach_.getManualFrame() != JOINT)
         {
             char buffer[LOG_TEXT_SIZE];
-            LogProducer::error("mc","Start-joint = %s", printDBLine(&start_joint.j1_, buffer, LOG_TEXT_SIZE));
-            LogProducer::error("mc","Start-joint is out of soft constraint, cannot manual in cartesian space.");
+            LogProducer::error("mc_base","Start-joint = %s", printDBLine(&start_joint.j1_, buffer, LOG_TEXT_SIZE));
+            LogProducer::error("mc_base","Start-joint is out of soft constraint, cannot manual in cartesian space.");
             return MC_FAIL_MANUAL_CONTINUOUS;
         }
 
@@ -490,13 +488,13 @@ ErrorCode BaseGroup::manualMoveContinuous(const ManualDirection *direction)
         {
             if (start_joint[i] > soft_constraint_.upper()[i] + MINIMUM_E9 && direction[i] == INCREASE)
             {
-                LogProducer::error("mc","J%d = %.4f out of range [%.4f, %.4f], cannot move as given direction (increase).",
+                LogProducer::error("mc_base","J%d = %.4f out of range [%.4f, %.4f], cannot move as given direction (increase).",
                             i + 1, start_joint[i], soft_constraint_.lower()[i], soft_constraint_.upper()[i]);
                 return MC_FAIL_MANUAL_CONTINUOUS;
             }
             else if (start_joint[i] < soft_constraint_.lower()[i] - MINIMUM_E9 && direction[i] == DECREASE)
             {
-                LogProducer::error("mc","J%d = %.4f out of range [%.4f, %.4f], cannot move as given direction (decrease).",
+                LogProducer::error("mc_base","J%d = %.4f out of range [%.4f, %.4f], cannot move as given direction (decrease).",
                             i + 1, start_joint[i], soft_constraint_.lower()[i], soft_constraint_.upper()[i]);
                 return MC_FAIL_MANUAL_CONTINUOUS;
             }
@@ -505,7 +503,7 @@ ErrorCode BaseGroup::manualMoveContinuous(const ManualDirection *direction)
 
     if (group_state_ == STANDBY || group_state == PAUSE)
     {
-        LogProducer::info("mc","Manual continuous by direction.");
+        LogProducer::info("mc_base","Manual continuous by direction.");
         pthread_mutex_lock(&manual_traj_mutex_);
         ErrorCode err = manual_teach_.manualContinuous(direction, start_joint);
         double duration = manual_teach_.getDuration();
@@ -513,7 +511,7 @@ ErrorCode BaseGroup::manualMoveContinuous(const ManualDirection *direction)
 
         if (err != SUCCESS)
         {
-            LogProducer::error("mc","Fail to create manual trajectory, error-code = 0x%llx", err);
+            LogProducer::error("mc_base","Fail to create manual trajectory, error-code = 0x%llx", err);
             return err;
         }
 
@@ -524,12 +522,12 @@ ErrorCode BaseGroup::manualMoveContinuous(const ManualDirection *direction)
 
         if (err != SUCCESS)
         {
-            LogProducer::error("mc","Fail to check manual trajectory, error-code = 0x%llx", err);
+            LogProducer::error("mc_base","Fail to check manual trajectory, error-code = 0x%llx", err);
             return err;
         }
         */
 
-        LogProducer::info("mc","Manual move continuous, total-duration = %.4f, Success.", duration);
+        LogProducer::info("mc_base","Manual move continuous, total-duration = %.4f, Success.", duration);
         if (duration > MINIMUM_E6 && group_state == STANDBY) standby_to_manual_request_ = true;
         else if (duration > MINIMUM_E6 && group_state == PAUSE) pause_to_manual_request_ = true;
         return SUCCESS;
@@ -572,7 +570,7 @@ ErrorCode BaseGroup::manualMoveContinuous(const ManualDirection *direction)
 
             if (err != SUCCESS)
             {
-                LogProducer::error("mc","Fail to check manual trajectory, error-code = 0x%llx", err);
+                LogProducer::error("mc_base","Fail to check manual trajectory, error-code = 0x%llx", err);
                 manualStop();
                 manual_trajectory_check_fail_ = true;
                 pthread_mutex_unlock(&manual_traj_mutex_);
@@ -585,33 +583,33 @@ ErrorCode BaseGroup::manualMoveContinuous(const ManualDirection *direction)
     }
     else
     {
-        LogProducer::error("mc","Cannot manual continuous in current grp-state = %d, servo-state = %d", group_state_, servo_state_);
+        LogProducer::error("mc_base","Cannot manual continuous in current grp-state = %d, servo-state = %d", group_state_, servo_state_);
         return MC_FAIL_MANUAL_CONTINUOUS;
     }
 }
 
 void BaseGroup::manualStopWithLock(void)
 {
-    LogProducer::info("mc","Manual stop with lock");
+    LogProducer::info("mc_base","Manual stop with lock");
     pthread_mutex_lock(&manual_traj_mutex_);
     manualStop();
     pthread_mutex_unlock(&manual_traj_mutex_);
-    LogProducer::info("mc","Lock stop success");
+    LogProducer::info("mc_base","Lock stop success");
 }
 
 void BaseGroup::manualStop(void)
 {
     GroupState group_state = group_state_;
-    LogProducer::info("mc","Stop manual teach, grp-state: 0x%x, manual-mode: %d, manual-frame: %d", group_state, manual_teach_.getManualMode(), manual_teach_.getManualFrame());
+    LogProducer::info("mc_base","Stop manual teach, grp-state: 0x%x, manual-mode: %d, manual-frame: %d", group_state, manual_teach_.getManualMode(), manual_teach_.getManualFrame());
 
     if ((group_state == MANUAL || group_state == STANDBY_TO_MANUAL || group_state == PAUSE_MANUAL || group_state == PAUSE_TO_PAUSE_MANUAL) && manual_time_ < manual_teach_.getDuration())
     {
         manual_teach_.manualStop(manual_time_);
-        LogProducer::info("mc","Success, the group will stop in %.4fs", manual_teach_.getDuration() - manual_time_);
+        LogProducer::info("mc_base","Success, the group will stop in %.4fs", manual_teach_.getDuration() - manual_time_);
     }
     else
     {
-        LogProducer::info("mc","The group is not in manual state, group-state: 0x%x, manual-time: %.6f, manual-duration: %.6f", group_state, manual_time_, manual_teach_.getDuration());
+        LogProducer::info("mc_base","The group is not in manual state, group-state: 0x%x, manual-time: %.6f, manual-duration: %.6f", group_state, manual_time_, manual_teach_.getDuration());
     }
 }
 
@@ -627,7 +625,7 @@ bool BaseGroup::isMoving(void)
 ErrorCode BaseGroup::pauseMove(void)
 {
     GroupState group_state = group_state_;
-    LogProducer::info("mc","Pause move request received.");
+    LogProducer::info("mc_base","Pause move request received.");
 
     if (group_state == AUTO && !auto_to_standby_request_ && !auto_to_pause_request_)
     {
@@ -647,7 +645,7 @@ ErrorCode BaseGroup::pauseMove(void)
     else
     {}
 
-    LogProducer::warn("mc","Group state is %d, pause request refused.", group_state);
+    LogProducer::warn("mc_base","Group state is %d, pause request refused.", group_state);
     return INVALID_SEQUENCE;
 }
 
@@ -659,7 +657,7 @@ ErrorCode BaseGroup::planPauseTrajectory(void)
     vector<double>::iterator time_stamps_iterator = time_stamps.begin();
     vector<JointState> trajectory(traj_fifo_.size());
     vector<JointState>::iterator trajectory_iterator = trajectory.begin();
-    LogProducer::info("mc","Plan pause trajectory, %d points in trajectory FIFO", traj_fifo_.size());
+    LogProducer::info("mc_base","Plan pause trajectory, %d points in trajectory FIFO", traj_fifo_.size());
 
     while (!traj_fifo_.empty())
     {
@@ -672,11 +670,11 @@ ErrorCode BaseGroup::planPauseTrajectory(void)
 
     ErrorCode err = SUCCESS;
     uint32_t pause_at = 0;
-    uint32_t joint_num = getNumberOfJoint();
     double ratio = 0;
-    double omega_max[] = {5.8118, 4.6600, 5.8118, 7.8540, 7.0686, 10.5592, 0.0, 0.0, 0.0};
 
     /*
+    uint32_t joint_num = getNumberOfJoint();
+    double omega_max[] = {5.8118, 4.6600, 5.8118, 7.8540, 7.0686, 10.5592, 0.0, 0.0, 0.0};
     for (uint32_t i = 0; i < joint_num; i++)
     {
         if (fabs(trajectory[0].omega[i] / omega_max[i]) > ratio)
@@ -692,7 +690,7 @@ ErrorCode BaseGroup::planPauseTrajectory(void)
     while (err != SUCCESS && ratio < 3 + MINIMUM_E6)
     {
         ratio += 0.5;
-        LogProducer::info("mc","Alpha ratio: %.2f", ratio);
+        LogProducer::info("mc_base","Alpha ratio: %.2f", ratio);
         err = pause_resume_planner_.planPauseTrajectory(ratio, trajectory, pause_trajectory_, pause_at);
     }
 
@@ -709,13 +707,13 @@ ErrorCode BaseGroup::planPauseTrajectory(void)
             traj_fifo_.push(traj_point);
         }
 
-        LogProducer::error("mc","Fail to plan pause trajectory, code: 0x%llx", err);
+        LogProducer::error("mc_base","Fail to plan pause trajectory, code: 0x%llx", err);
         return err;
     }
 
     size_t num = 0;
     size_t pause_trajectory_size = pause_trajectory_.size();
-    LogProducer::info("mc","Pause trajectory ready with %d points, pause at %d", pause_trajectory_size, pause_at);
+    LogProducer::info("mc_base","Pause trajectory ready with %d points, pause at %d", pause_trajectory_size, pause_at);
     traj_point.level = POINT_MIDDLE;
     pause_trajectory_time_stamp_ = time_stamps[0];
 
@@ -743,39 +741,39 @@ ErrorCode BaseGroup::planPauseTrajectory(void)
     start_joint_ = pause_trajectory_.back().angle;
     pause_joint_ = trajectory[pause_at].angle;
     pause_trajectory_.erase(pause_trajectory_.begin(), pause_trajectory_.begin() + num);
-    LogProducer::info("mc","Fill trajectory fifo finished, %d points fill into trajectory fifo, %d points left", num, pause_trajectory_.size());
-    LogProducer::info("mc","Group will pause at: %s", printDBLine(&start_joint_.j1_, buffer, LOG_TEXT_SIZE));
+    LogProducer::info("mc_base","Fill trajectory fifo finished, %d points fill into trajectory fifo, %d points left", num, pause_trajectory_.size());
+    LogProducer::info("mc_base","Group will pause at: %s", printDBLine(&start_joint_.j1_, buffer, LOG_TEXT_SIZE));
     return SUCCESS;
 }
 
 ErrorCode BaseGroup::planPauseReturnTrajectory(void)
 {
     char buffer[LOG_TEXT_SIZE];
-    LogProducer::info("mc","Start joint different with pause joint, plan pause return trajectory.");
-    LogProducer::info("mc","Start: %s", printDBLine(&start_joint_.j1_, buffer, LOG_TEXT_SIZE));
-    LogProducer::info("mc","Pause: %s", printDBLine(&pause_joint_.j1_, buffer, LOG_TEXT_SIZE));
+    LogProducer::info("mc_base","Start joint different with pause joint, plan pause return trajectory.");
+    LogProducer::info("mc_base","Start: %s", printDBLine(&start_joint_.j1_, buffer, LOG_TEXT_SIZE));
+    LogProducer::info("mc_base","Pause: %s", printDBLine(&pause_joint_.j1_, buffer, LOG_TEXT_SIZE));
     resume_trajectory_.clear();
 
     if (!soft_constraint_.isJointInConstraint(start_joint_, MINIMUM_E3))
     {
-        LogProducer::error("mc","Start joint out of soft constraint.");
-        LogProducer::error("mc","Joint = %s", printDBLine(&start_joint_.j1_, buffer, LOG_TEXT_SIZE));
-        LogProducer::error("mc","Upper = %s", printDBLine(&soft_constraint_.upper()[0], buffer, LOG_TEXT_SIZE));
-        LogProducer::error("mc","Lower = %s", printDBLine(&soft_constraint_.lower()[0], buffer, LOG_TEXT_SIZE));
+        LogProducer::error("mc_base","Start joint out of soft constraint.");
+        LogProducer::error("mc_base","Joint = %s", printDBLine(&start_joint_.j1_, buffer, LOG_TEXT_SIZE));
+        LogProducer::error("mc_base","Upper = %s", printDBLine(&soft_constraint_.upper()[0], buffer, LOG_TEXT_SIZE));
+        LogProducer::error("mc_base","Lower = %s", printDBLine(&soft_constraint_.lower()[0], buffer, LOG_TEXT_SIZE));
         return JOINT_OUT_OF_CONSTRAINT;
     }
 
     if (!soft_constraint_.isJointInConstraint(pause_joint_))
     {
-        LogProducer::error("mc","Pause joint out of soft constraint.");
-        LogProducer::error("mc","Joint = %s", printDBLine(&pause_joint_.j1_, buffer, LOG_TEXT_SIZE));
-        LogProducer::error("mc","Upper = %s", printDBLine(&soft_constraint_.upper()[0], buffer, LOG_TEXT_SIZE));
-        LogProducer::error("mc","Lower = %s", printDBLine(&soft_constraint_.lower()[0], buffer, LOG_TEXT_SIZE));
+        LogProducer::error("mc_base","Pause joint out of soft constraint.");
+        LogProducer::error("mc_base","Joint = %s", printDBLine(&pause_joint_.j1_, buffer, LOG_TEXT_SIZE));
+        LogProducer::error("mc_base","Upper = %s", printDBLine(&soft_constraint_.upper()[0], buffer, LOG_TEXT_SIZE));
+        LogProducer::error("mc_base","Lower = %s", printDBLine(&soft_constraint_.lower()[0], buffer, LOG_TEXT_SIZE));
         return JOINT_OUT_OF_CONSTRAINT;
     }
 
     joint_planner_.planTrajectory(start_joint_, pause_joint_, 0.125, 0.5, 0.125, 0.125);
-    LogProducer::info("mc","duration: %.6f", joint_planner_.getDuration());
+    LogProducer::info("mc_base","duration: %.6f", joint_planner_.getDuration());
     double duration = joint_planner_.getDuration() + cycle_time_;
     JointState sample_state;
 
@@ -785,7 +783,7 @@ ErrorCode BaseGroup::planPauseReturnTrajectory(void)
         resume_trajectory_.push_back(sample_state);
     }
 
-    LogProducer::info("mc","Return to pause position: %d points", resume_trajectory_.size());
+    LogProducer::info("mc_base","Return to pause position: %d points", resume_trajectory_.size());
     resume_trajectory_time_stamp_ = cycle_time_;
     start_joint_ = pause_joint_;
 
@@ -806,7 +804,7 @@ ErrorCode BaseGroup::planPauseReturnTrajectory(void)
     }
 
     resume_trajectory_.erase(resume_trajectory_.begin(), resume_trajectory_.begin() + insert_index);
-    LogProducer::info("mc","Total %d points, %d points filled into trajectory fifo, %d points left", trajectory_size, insert_index, resume_trajectory_.size());
+    LogProducer::info("mc_base","Total %d points, %d points filled into trajectory fifo, %d points left", trajectory_size, insert_index, resume_trajectory_.size());
     return SUCCESS;
 }
 
@@ -817,7 +815,7 @@ ErrorCode BaseGroup::planResumeTrajectory(void)
     origin_trajectory_.clear();
     uint32_t origin_trajectory_size = traj_fifo_.size();
     origin_trajectory_.resize(origin_trajectory_size);
-    LogProducer::info("mc","Plan resume trajectory.");
+    LogProducer::info("mc_base","Plan resume trajectory.");
 
     for (uint32_t i = 0; i < origin_trajectory_size; i++)
     {
@@ -829,30 +827,30 @@ ErrorCode BaseGroup::planResumeTrajectory(void)
     //
     //for (uint32_t i = 0; i < origin_trajectory_.size(); ++i)
     //{
-    //    LogProducer::info("mc","origin-%d: %s", i, printDBLine(&origin_trajectory_[i].angle.j1_, buffer, LOG_TEXT_SIZE));
+    //    LogProducer::info("mc_base","origin-%d: %s", i, printDBLine(&origin_trajectory_[i].angle.j1_, buffer, LOG_TEXT_SIZE));
     //}
 
     uint32_t resume_at = 0;
     double alpha_ratio = 0.5;
     resume_trajectory_.clear();
-    LogProducer::info("mc","Plan resume trajectory, input %d points", origin_trajectory_size);
-    LogProducer::info("mc","Alpha ratio: %.2f", alpha_ratio);
+    LogProducer::info("mc_base","Plan resume trajectory, input %d points", origin_trajectory_size);
+    LogProducer::info("mc_base","Alpha ratio: %.2f", alpha_ratio);
     ErrorCode err = pause_resume_planner_.planResumeTrajectory(origin_trajectory_, resume_trajectory_, resume_at, alpha_ratio);
 
     while (err != SUCCESS && alpha_ratio < 3 + MINIMUM_E6)
     {
         alpha_ratio += 0.25;
-        LogProducer::info("mc","Alpha ratio: %.2f", alpha_ratio);
+        LogProducer::info("mc_base","Alpha ratio: %.2f", alpha_ratio);
         err = pause_resume_planner_.planResumeTrajectory(origin_trajectory_, resume_trajectory_, resume_at, alpha_ratio);
     }
 
     if (err != SUCCESS)
     {
-        LogProducer::error("mc","Fail to plan resume trajectory, code: 0x%llx", err);
+        LogProducer::error("mc_base","Fail to plan resume trajectory, code: 0x%llx", err);
         return err;
     }
 
-    LogProducer::info("mc","Resume trajectory ready with %d points, resume at %d", resume_trajectory_.size(), resume_at);
+    LogProducer::info("mc_base","Resume trajectory ready with %d points, resume at %d", resume_trajectory_.size(), resume_at);
     /*
     ofstream out_before("/root/before_resume.csv");
     ofstream out_after("/root/after_resume.csv");
@@ -872,16 +870,16 @@ ErrorCode BaseGroup::planResumeTrajectory(void)
     */
     //for (uint32_t i = 0; i < resume_trajectory_.size(); ++i)
     //{
-    //    LogProducer::info("mc","resume-%d: %s", i, printDBLine(&resume_trajectory_[i].angle.j1_, buffer, LOG_TEXT_SIZE));
+    //    LogProducer::info("mc_base","resume-%d: %s", i, printDBLine(&resume_trajectory_[i].angle.j1_, buffer, LOG_TEXT_SIZE));
     //}
 
     for (uint32_t i = resume_at + 1; i < origin_trajectory_size; ++i)
     {
-        //LogProducer::info("mc","remain-%d: %s", i, printDBLine(&origin_trajectory_[i].angle.j1_, buffer, LOG_TEXT_SIZE));
+        //LogProducer::info("mc_base","remain-%d: %s", i, printDBLine(&origin_trajectory_[i].angle.j1_, buffer, LOG_TEXT_SIZE));
         resume_trajectory_.push_back(origin_trajectory_[i]);
     }
 
-    LogProducer::info("mc","Last %d points in origin trajectory push back to resume trajectory, resume trajectory size: %d", origin_trajectory_size - 1 - resume_at, resume_trajectory_.size());
+    LogProducer::info("mc_base","Last %d points in origin trajectory push back to resume trajectory, resume trajectory size: %d", origin_trajectory_size - 1 - resume_at, resume_trajectory_.size());
     resume_trajectory_time_stamp_ = cycle_time_;
     point.level = POINT_START;
     uint32_t insert_index = 0;
@@ -899,14 +897,14 @@ ErrorCode BaseGroup::planResumeTrajectory(void)
     }
 
     resume_trajectory_.erase(resume_trajectory_.begin(), resume_trajectory_.begin() + insert_index);
-    LogProducer::info("mc","Total %d points, %d points filled into trajectory fifo, %d points left", trajectory_size, insert_index, resume_trajectory_.size());
+    LogProducer::info("mc_base","Total %d points, %d points filled into trajectory fifo, %d points left", trajectory_size, insert_index, resume_trajectory_.size());
     return SUCCESS;
 }
 
 
 ErrorCode BaseGroup::restartMove(void)
 {
-    LogProducer::info("mc","Restart move request received.");
+    LogProducer::info("mc_base","Restart move request received.");
     GroupState group_state = group_state_;
     ServoState servo_state = getServoState();
     
@@ -929,11 +927,11 @@ ErrorCode BaseGroup::restartMove(void)
 ErrorCode BaseGroup::isLinearPathReachable(const IntactPoint &start, const IntactPoint &target)
 {
     char buffer[LOG_TEXT_SIZE];
-    LogProducer::info("mc","Check linear path reachable request received");
-    LogProducer::info("mc","start joint: %s", printDBLine(&start.joint.j1_, buffer, LOG_TEXT_SIZE));
-    LogProducer::info("mc","target joint: %s", printDBLine(&target.joint.j1_, buffer, LOG_TEXT_SIZE));
-    LogProducer::info("mc","start pose: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", start.pose.pose.point_.x_, start.pose.pose.point_.y_, start.pose.pose.point_.z_, start.pose.pose.euler_.a_, start.pose.pose.euler_.b_, start.pose.pose.euler_.c_);
-    LogProducer::info("mc","target pose: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", target.pose.pose.point_.x_, target.pose.pose.point_.y_, target.pose.pose.point_.z_, target.pose.pose.euler_.a_, target.pose.pose.euler_.b_, target.pose.pose.euler_.c_);
+    LogProducer::info("mc_base","Check linear path reachable request received");
+    LogProducer::info("mc_base","start joint: %s", printDBLine(&start.joint.j1_, buffer, LOG_TEXT_SIZE));
+    LogProducer::info("mc_base","target joint: %s", printDBLine(&target.joint.j1_, buffer, LOG_TEXT_SIZE));
+    LogProducer::info("mc_base","start pose: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", start.pose.pose.point_.x_, start.pose.pose.point_.y_, start.pose.pose.point_.z_, start.pose.pose.euler_.a_, start.pose.pose.euler_.b_, start.pose.pose.euler_.c_);
+    LogProducer::info("mc_base","target pose: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", target.pose.pose.point_.x_, target.pose.pose.point_.y_, target.pose.pose.point_.z_, target.pose.pose.euler_.a_, target.pose.pose.euler_.b_, target.pose.pose.euler_.c_);
     MotionInfo info;
     info.type = MOTION_LINE;
     info.smooth_type = SMOOTH_NONE;
@@ -949,14 +947,14 @@ ErrorCode BaseGroup::isLinearPathReachable(const IntactPoint &start, const Intac
         const PoseEuler &uf = start.user_frame;
         const PoseEuler &tf = start.tool_frame;
 
-        LogProducer::error("mc","Start joint out of soft constraint.");
-        LogProducer::error("mc","Pose: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", pose.point_.x_, pose.point_.y_, pose.point_.z_, pose.euler_.a_, pose.euler_.b_, pose.euler_.c_);
-        LogProducer::error("mc","Posture: %d, %d, %d, %d", posture.arm, posture.elbow, posture.wrist, posture.flip);
-        LogProducer::error("mc","Tool frame: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", tf.point_.x_, tf.point_.y_, tf.point_.z_, tf.euler_.a_, tf.euler_.b_, tf.euler_.c_);
-        LogProducer::error("mc","User frame: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", uf.point_.x_, uf.point_.y_, uf.point_.z_, uf.euler_.a_, uf.euler_.b_, uf.euler_.c_);
-        LogProducer::error("mc","Joint = %s", printDBLine(&start.joint[0], buffer, LOG_TEXT_SIZE));
-        LogProducer::error("mc","Upper = %s", printDBLine(&soft_constraint_.upper()[0], buffer, LOG_TEXT_SIZE));
-        LogProducer::error("mc","Lower = %s", printDBLine(&soft_constraint_.lower()[0], buffer, LOG_TEXT_SIZE));
+        LogProducer::error("mc_base","Start joint out of soft constraint.");
+        LogProducer::error("mc_base","Pose: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", pose.point_.x_, pose.point_.y_, pose.point_.z_, pose.euler_.a_, pose.euler_.b_, pose.euler_.c_);
+        LogProducer::error("mc_base","Posture: %d, %d, %d, %d", posture.arm, posture.elbow, posture.wrist, posture.flip);
+        LogProducer::error("mc_base","Tool frame: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", tf.point_.x_, tf.point_.y_, tf.point_.z_, tf.euler_.a_, tf.euler_.b_, tf.euler_.c_);
+        LogProducer::error("mc_base","User frame: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", uf.point_.x_, uf.point_.y_, uf.point_.z_, uf.euler_.a_, uf.euler_.b_, uf.euler_.c_);
+        LogProducer::error("mc_base","Joint = %s", printDBLine(&start.joint[0], buffer, LOG_TEXT_SIZE));
+        LogProducer::error("mc_base","Upper = %s", printDBLine(&soft_constraint_.upper()[0], buffer, LOG_TEXT_SIZE));
+        LogProducer::error("mc_base","Lower = %s", printDBLine(&soft_constraint_.lower()[0], buffer, LOG_TEXT_SIZE));
         return JOINT_OUT_OF_CONSTRAINT;
     }
 
@@ -967,22 +965,22 @@ ErrorCode BaseGroup::isLinearPathReachable(const IntactPoint &start, const Intac
         const PoseEuler &uf = target.user_frame;
         const PoseEuler &tf = target.tool_frame;
 
-        LogProducer::error("mc","Target joint out of soft constraint.");
-        LogProducer::error("mc","Pose: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", pose.point_.x_, pose.point_.y_, pose.point_.z_, pose.euler_.a_, pose.euler_.b_, pose.euler_.c_);
-        LogProducer::error("mc","Posture: %d, %d, %d, %d", posture.arm, posture.elbow, posture.wrist, posture.flip);
-        LogProducer::error("mc","Tool frame: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", tf.point_.x_, tf.point_.y_, tf.point_.z_, tf.euler_.a_, tf.euler_.b_, tf.euler_.c_);
-        LogProducer::error("mc","User frame: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", uf.point_.x_, uf.point_.y_, uf.point_.z_, uf.euler_.a_, uf.euler_.b_, uf.euler_.c_);
-        LogProducer::error("mc","Joint = %s", printDBLine(&target.joint[0], buffer, LOG_TEXT_SIZE));
-        LogProducer::error("mc","Upper = %s", printDBLine(&soft_constraint_.upper()[0], buffer, LOG_TEXT_SIZE));
-        LogProducer::error("mc","Lower = %s", printDBLine(&soft_constraint_.lower()[0], buffer, LOG_TEXT_SIZE));
+        LogProducer::error("mc_base","Target joint out of soft constraint.");
+        LogProducer::error("mc_base","Pose: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", pose.point_.x_, pose.point_.y_, pose.point_.z_, pose.euler_.a_, pose.euler_.b_, pose.euler_.c_);
+        LogProducer::error("mc_base","Posture: %d, %d, %d, %d", posture.arm, posture.elbow, posture.wrist, posture.flip);
+        LogProducer::error("mc_base","Tool frame: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", tf.point_.x_, tf.point_.y_, tf.point_.z_, tf.euler_.a_, tf.euler_.b_, tf.euler_.c_);
+        LogProducer::error("mc_base","User frame: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", uf.point_.x_, uf.point_.y_, uf.point_.z_, uf.euler_.a_, uf.euler_.b_, uf.euler_.c_);
+        LogProducer::error("mc_base","Joint = %s", printDBLine(&target.joint[0], buffer, LOG_TEXT_SIZE));
+        LogProducer::error("mc_base","Upper = %s", printDBLine(&soft_constraint_.upper()[0], buffer, LOG_TEXT_SIZE));
+        LogProducer::error("mc_base","Lower = %s", printDBLine(&soft_constraint_.lower()[0], buffer, LOG_TEXT_SIZE));
         return JOINT_OUT_OF_CONSTRAINT;
     }
 
     if (!isPostureMatch(start.pose.posture, target.pose.posture))
     {
-        LogProducer::error("mc","Posture of target mismatch with start.");
-        LogProducer::error("mc","Posture of start: ARM = %d, ELBOW = %d, WRIST = %d, FLIP = %d", start.pose.posture.arm, start.pose.posture.elbow, start.pose.posture.wrist, start.pose.posture.flip);
-        LogProducer::error("mc","Posture of target: ARM = %d, ELBOW = %d, WRIST = %d, FLIP = %d", target.pose.posture.arm, target.pose.posture.elbow, target.pose.posture.wrist, target.pose.posture.flip);
+        LogProducer::error("mc_base","Posture of target mismatch with start.");
+        LogProducer::error("mc_base","Posture of start: ARM = %d, ELBOW = %d, WRIST = %d, FLIP = %d", start.pose.posture.arm, start.pose.posture.elbow, start.pose.posture.wrist, start.pose.posture.flip);
+        LogProducer::error("mc_base","Posture of target: ARM = %d, ELBOW = %d, WRIST = %d, FLIP = %d", target.pose.posture.arm, target.pose.posture.elbow, target.pose.posture.wrist, target.pose.posture.flip);
         return MC_POSTURE_MISMATCH;
     }
 
@@ -992,16 +990,16 @@ ErrorCode BaseGroup::isLinearPathReachable(const IntactPoint &start, const Intac
         return SUCCESS;
     }
 
-    LogProducer::info("mc","Parameter check passed, planning ...");
+    LogProducer::info("mc_base","Parameter check passed, planning ...");
     ErrorCode err = planner_for_check_.planTrajectory(start.joint, info, 1, 1);
 
     if (err != SUCCESS)
     {
-        LogProducer::error("mc","Planning failed with code = 0x%llx, linear path unreachable.", err);
+        LogProducer::error("mc_base","Planning failed with code = 0x%llx, linear path unreachable.", err);
         return err;
     }
 
-    LogProducer::info("mc","Planning success, linear path reachable");
+    LogProducer::info("mc_base","Planning success, linear path reachable");
     return SUCCESS;
 }
 
@@ -1012,19 +1010,19 @@ ErrorCode BaseGroup::autoMove(const MotionInfo &info)
     const PoseEuler &pose = info.target.pose.pose;
     const Posture &posture = info.target.pose.posture;
 
-    LogProducer::info("mc","Auto move request received, type = %d", info.type);
-    LogProducer::info("mc","vel = %.6f, acc = %.6f, cnt = %.6f, swift = %d", info.vel, info.acc, info.cnt, info.is_swift);
-    LogProducer::info("mc","start-joint: %s", printDBLine(&start_joint_.j1_, buffer, LOG_TEXT_SIZE));
-    LogProducer::info("mc","target-joint: %s", printDBLine(&info.target.joint.j1_, buffer, LOG_TEXT_SIZE));
-    LogProducer::info("mc","target-pose: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", pose.point_.x_, pose.point_.y_, pose.point_.z_, pose.euler_.a_, pose.euler_.b_, pose.euler_.c_);
-    LogProducer::info("mc","target-posture: %d, %d, %d, %d", posture.arm, posture.elbow, posture.wrist, posture.flip);
+    LogProducer::info("mc_base","Auto move request received, type = %d", info.type);
+    LogProducer::info("mc_base","vel = %.6f, acc = %.6f, cnt = %.6f, swift = %d", info.vel, info.acc, info.cnt, info.is_swift);
+    LogProducer::info("mc_base","start-joint: %s", printDBLine(&start_joint_.j1_, buffer, LOG_TEXT_SIZE));
+    LogProducer::info("mc_base","target-joint: %s", printDBLine(&info.target.joint.j1_, buffer, LOG_TEXT_SIZE));
+    LogProducer::info("mc_base","target-pose: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", pose.point_.x_, pose.point_.y_, pose.point_.z_, pose.euler_.a_, pose.euler_.b_, pose.euler_.c_);
+    LogProducer::info("mc_base","target-posture: %d, %d, %d, %d", posture.arm, posture.elbow, posture.wrist, posture.flip);
 
     if (info.type == MOTION_CIRCLE)
     {
         const PoseEuler &via_pose = info.via.pose.pose;
         const Posture &via_posture = info.via.pose.posture;
-        LogProducer::info("mc","via-pose: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", via_pose.point_.x_, via_pose.point_.y_, via_pose.point_.z_, via_pose.euler_.a_, via_pose.euler_.b_, via_pose.euler_.c_);
-        LogProducer::info("mc","via-posture: %d, %d, %d, %d", via_posture.arm, via_posture.elbow, via_posture.wrist, via_posture.flip);
+        LogProducer::info("mc_base","via-pose: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", via_pose.point_.x_, via_pose.point_.y_, via_pose.point_.z_, via_pose.euler_.a_, via_pose.euler_.b_, via_pose.euler_.c_);
+        LogProducer::info("mc_base","via-posture: %d, %d, %d, %d", via_posture.arm, via_posture.elbow, via_posture.wrist, via_posture.flip);
     }
     
     ErrorCode err = checkMotionTarget(info);
@@ -1035,19 +1033,19 @@ ErrorCode BaseGroup::autoMove(const MotionInfo &info)
         // 如果是其他错误则报错，提前结束运动规划
         if (err == TARGET_COINCIDENCE)
         {
-            LogProducer::warn("mc","Target coincidence with start, nothing to do.");
+            LogProducer::warn("mc_base","Target coincidence with start, nothing to do.");
             return SUCCESS;
         }
         else
         {
-            LogProducer::error("mc","Parameter check failed, code = 0x%llx", err);
+            LogProducer::error("mc_base","Parameter check failed, code = 0x%llx", err);
             return err;
         }
     }
 
     if (plan_traj_ptr_->valid == true)
     {
-        LogProducer::error("mc","No trajectory cache available, cannot plan new trajectory before old trajectory finish.");
+        LogProducer::error("mc_base","No trajectory cache available, cannot plan new trajectory before old trajectory finish.");
         return MC_INTERNAL_FAULT;
     }
 
@@ -1060,24 +1058,24 @@ ErrorCode BaseGroup::autoMove(const MotionInfo &info)
         plan_traj_ptr_->trajectory.useStableParam();
     }
 
-    LogProducer::info("mc","Parameter check passed, planning trajectory ...");
+    LogProducer::info("mc_base","Parameter check passed, planning trajectory ...");
     err = plan_traj_ptr_->trajectory.planTrajectory(start_joint_, info, vel_ratio_, acc_ratio_);
     MotionInfo motion_info_this = plan_traj_ptr_->trajectory.getMotionInfo();
     MotionInfo motion_info_pre = pick_traj_ptr_->trajectory.getMotionInfo();
 
     if (err != SUCCESS)
     {
-        LogProducer::error("mc","Planning failed with code = 0x%llx, autoMove aborted.", err);
+        LogProducer::error("mc_base","Planning failed with code = 0x%llx, autoMove aborted.", err);
         return err;
     }
 
-    LogProducer::info("mc","Planning trajectory success, duration of trajectory: %.6f", plan_traj_ptr_->trajectory.getDuration());
+    LogProducer::info("mc_base","Planning trajectory success, duration of trajectory: %.6f", plan_traj_ptr_->trajectory.getDuration());
     start_joint_ = info.target.joint;
 
     if (pick_traj_ptr_->valid && pick_traj_ptr_->end_with_smooth)
     {
         // 上一条指令带平滑: 计算平滑切入点,规划平滑段轨迹
-        LogProducer::info("mc","Planning smooth ...");
+        LogProducer::info("mc_base","Planning smooth ...");
         plan_traj_ptr_->smooth.setCoord(info.target.user_frame);
         plan_traj_ptr_->smooth.setTool(info.target.tool_frame);
         plan_traj_ptr_->smooth.planTrajectory(pick_traj_ptr_->trajectory, plan_traj_ptr_->trajectory, pick_traj_ptr_->trajectory.getMotionInfo().cnt);
@@ -1091,7 +1089,7 @@ ErrorCode BaseGroup::autoMove(const MotionInfo &info)
             plan_traj_ptr_->smooth_in_time = smooth_in_time;
             plan_traj_ptr_->start_from_smooth = true;
             pthread_mutex_unlock(&planner_list_mutex_);
-            LogProducer::info("mc","Start from smooth, smooth-duration: %.6f", plan_traj_ptr_->smooth.getDuration());
+            LogProducer::info("mc_base","Start from smooth, smooth-duration: %.6f", plan_traj_ptr_->smooth.getDuration());
         }
         else
         {
@@ -1099,13 +1097,13 @@ ErrorCode BaseGroup::autoMove(const MotionInfo &info)
             pick_traj_ptr_->smooth_time = pick_traj_ptr_->trajectory.getDuration();
             plan_traj_ptr_->start_from_smooth = false;
             pthread_mutex_unlock(&planner_list_mutex_);
-            LogProducer::info("mc","Start from stable.", err);
+            LogProducer::info("mc_base","Start from stable.", err);
         }
     }
     else 
     {
         plan_traj_ptr_->start_from_smooth = false;
-        LogProducer::info("mc","Start from stable.");
+        LogProducer::info("mc_base","Start from stable.");
     }
 
     if (info.cnt > MINIMUM_E3)
@@ -1117,14 +1115,14 @@ ErrorCode BaseGroup::autoMove(const MotionInfo &info)
         {
             plan_traj_ptr_->end_with_smooth = true;
             fine_enable_ = false;
-            LogProducer::info("mc","End with smooth, smooth-time: %.6f, smooth-distance: %.6f", plan_traj_ptr_->smooth_time, info.cnt);
+            LogProducer::info("mc_base","End with smooth, smooth-time: %.6f, smooth-distance: %.6f", plan_traj_ptr_->smooth_time, info.cnt);
         }
         else
         {
             plan_traj_ptr_->smooth_time = -1;
             plan_traj_ptr_->end_with_smooth = false;
             fine_enable_ = false;
-            LogProducer::info("mc","End with pre-fetch.");
+            LogProducer::info("mc_base","End with pre-fetch.");
         }
     }
     else if (fabs(info.cnt) < MINIMUM_E3)
@@ -1133,14 +1131,14 @@ ErrorCode BaseGroup::autoMove(const MotionInfo &info)
         plan_traj_ptr_->smooth_time = -1;
         plan_traj_ptr_->end_with_smooth = false;
         fine_enable_ = false;
-        LogProducer::info("mc","End with pre-fetch.");
+        LogProducer::info("mc_base","End with pre-fetch.");
     }
     else
     {
         plan_traj_ptr_->smooth_time = -1;
         plan_traj_ptr_->end_with_smooth = false;
         fine_enable_ = true;
-        LogProducer::info("mc","End with fine.");
+        LogProducer::info("mc_base","End with fine.");
     }
     
     pthread_mutex_lock(&planner_list_mutex_);
@@ -1150,7 +1148,7 @@ ErrorCode BaseGroup::autoMove(const MotionInfo &info)
         if (!pick_traj_ptr_->valid || !pick_traj_ptr_->end_with_smooth)
         {
             // 如果下发线程已经被迫放弃圆滑
-            LogProducer::warn("mc","Smooth fail, start from stable, pick.valid: %d, pick.smooth: %d", pick_traj_ptr_->valid, pick_traj_ptr_->end_with_smooth);
+            LogProducer::warn("mc_base","Smooth fail, start from stable, pick.valid: %d, pick.smooth: %d", pick_traj_ptr_->valid, pick_traj_ptr_->end_with_smooth);
             plan_traj_ptr_->start_from_smooth = false;
         }
     }
@@ -1164,7 +1162,7 @@ ErrorCode BaseGroup::autoMove(const MotionInfo &info)
         standby_to_auto_request_ = true;
     }
 
-    LogProducer::info("mc","Trajectory plan finished.");
+    LogProducer::info("mc_base","Trajectory plan finished.");
     return err;
 }
 
@@ -1183,24 +1181,24 @@ ErrorCode BaseGroup::checkStartState(const Joint &start_joint)
             if (!isSameJoint(current_joint, control_joint, joint_tracking_accuracy_))
             {
                 char buffer[LOG_TEXT_SIZE];
-                LogProducer::error("mc","Control-position different with current-position, it might be a trouble.");
-                LogProducer::error("mc","control-position: %s", printDBLine(&control_joint[0], buffer, LOG_TEXT_SIZE));
-                LogProducer::error("mc","current-position: %s", printDBLine(&current_joint[0], buffer, LOG_TEXT_SIZE));
+                LogProducer::error("mc_base","Control-position different with current-position, it might be a trouble.");
+                LogProducer::error("mc_base","control-position: %s", printDBLine(&control_joint[0], buffer, LOG_TEXT_SIZE));
+                LogProducer::error("mc_base","current-position: %s", printDBLine(&current_joint[0], buffer, LOG_TEXT_SIZE));
                 return MC_JOINT_TRACKING_ERROR;
             }
 
             if (!isSameJoint(start_joint, control_joint, joint_tracking_accuracy_))
             {
                 char buffer[LOG_TEXT_SIZE];
-                LogProducer::error("mc","Control-position different with start-position, it might be a trouble.");
-                LogProducer::error("mc","control-position: %s", printDBLine(&control_joint[0], buffer, LOG_TEXT_SIZE));
-                LogProducer::error("mc","start-position:   %s", printDBLine(&start_joint[0], buffer, LOG_TEXT_SIZE));
+                LogProducer::error("mc_base","Control-position different with start-position, it might be a trouble.");
+                LogProducer::error("mc_base","control-position: %s", printDBLine(&control_joint[0], buffer, LOG_TEXT_SIZE));
+                LogProducer::error("mc_base","start-position:   %s", printDBLine(&start_joint[0], buffer, LOG_TEXT_SIZE));
                 return MC_JOINT_TRACKING_ERROR;
             }
         }
         else
         {
-            LogProducer::error("mc","Cannot get control position from bare core.");
+            LogProducer::error("mc_base","Cannot get control position from bare core.");
             return MC_COMMUNICATION_WITH_BARECORE_FAIL;
         }
     }
@@ -1208,10 +1206,10 @@ ErrorCode BaseGroup::checkStartState(const Joint &start_joint)
     if (!soft_constraint_.isJointInConstraint(start_joint))
     {
         char buffer[LOG_TEXT_SIZE];
-        LogProducer::error("mc","Start joint out of soft constraint.");
-        LogProducer::error("mc","  joint: %s", printDBLine(&start_joint[0], buffer, LOG_TEXT_SIZE));
-        LogProducer::error("mc","  upper: %s", printDBLine(&soft_constraint_.upper()[0], buffer, LOG_TEXT_SIZE));
-        LogProducer::error("mc","  lower: %s", printDBLine(&soft_constraint_.lower()[0], buffer, LOG_TEXT_SIZE));
+        LogProducer::error("mc_base","Start joint out of soft constraint.");
+        LogProducer::error("mc_base","  joint: %s", printDBLine(&start_joint[0], buffer, LOG_TEXT_SIZE));
+        LogProducer::error("mc_base","  upper: %s", printDBLine(&soft_constraint_.upper()[0], buffer, LOG_TEXT_SIZE));
+        LogProducer::error("mc_base","  lower: %s", printDBLine(&soft_constraint_.lower()[0], buffer, LOG_TEXT_SIZE));
         return JOINT_OUT_OF_CONSTRAINT;
     }
 
@@ -1223,7 +1221,7 @@ ErrorCode BaseGroup::checkMotionTarget(const MotionInfo &info)
 {
     if (info.type != MOTION_JOINT && info.type != MOTION_LINE && info.type != MOTION_CIRCLE)
     {
-        LogProducer::error("mc","Invalid motion type: %d", info.type);
+        LogProducer::error("mc_base","Invalid motion type: %d", info.type);
         return INVALID_PARAMETER;
     }
     
@@ -1231,7 +1229,7 @@ ErrorCode BaseGroup::checkMotionTarget(const MotionInfo &info)
     {
         if (info.cnt < -MINIMUM_E9)
         {
-            LogProducer::error("mc","Invalid CNT by smooth-distance: %.12f", info.cnt);
+            LogProducer::error("mc_base","Invalid CNT by smooth-distance: %.12f", info.cnt);
             return INVALID_PARAMETER;
         }
     }
@@ -1239,7 +1237,7 @@ ErrorCode BaseGroup::checkMotionTarget(const MotionInfo &info)
     {
         if (info.cnt < -MINIMUM_E9 || info.cnt > 1 + MINIMUM_E9)
         {
-            LogProducer::error("mc","Invalid CNT by smooth-velocity: %.12f", info.cnt);
+            LogProducer::error("mc_base","Invalid CNT by smooth-velocity: %.12f", info.cnt);
             return INVALID_PARAMETER;
         }
     }
@@ -1247,7 +1245,7 @@ ErrorCode BaseGroup::checkMotionTarget(const MotionInfo &info)
     {
         if (fabs(info.cnt + 1) > MINIMUM_E9)
         {
-            LogProducer::error("mc","Invalid CNT by smooth-none: %.12f", info.cnt);
+            LogProducer::error("mc_base","Invalid CNT by smooth-none: %.12f", info.cnt);
             return INVALID_PARAMETER;
         }
     }
@@ -1255,20 +1253,20 @@ ErrorCode BaseGroup::checkMotionTarget(const MotionInfo &info)
     // CNT ∈ [0, 1] U CNT = -1
     //if (fabs(info.cnt + 1) > MINIMUM_E9 && (info.cnt < -MINIMUM_E9 || info.cnt > 1 + MINIMUM_E9))
     //{
-    //    LogProducer::error("mc","Invalid CNT: %.12f", info.cnt);
+    //    LogProducer::error("mc_base","Invalid CNT: %.12f", info.cnt);
     //    return INVALID_PARAMETER;
     //}
 
     if (  ((info.type == MOTION_JOINT) && (info.vel < MINIMUM_E6 || info.vel > 1 + MINIMUM_E6)) ||
           ((info.type == MOTION_LINE || info.type == MOTION_CIRCLE) && (info.vel < cartesian_vel_min_ || info.vel > cartesian_vel_max_))  )
     {
-        LogProducer::error("mc","Invalid vel: %.6f", info.vel);
+        LogProducer::error("mc_base","Invalid vel: %.6f", info.vel);
         return INVALID_PARAMETER;
     }
 
     if (info.acc < MINIMUM_E6 || info.acc > 1 + MINIMUM_E6)
     {
-        LogProducer::error("mc","Invalid acc: %.6f", info.acc);
+        LogProducer::error("mc_base","Invalid acc: %.6f", info.acc);
         return INVALID_PARAMETER;
     }
 
@@ -1282,14 +1280,14 @@ ErrorCode BaseGroup::checkMotionTarget(const MotionInfo &info)
             const PoseEuler &uf = info.target.user_frame;
             const PoseEuler &tf = info.target.tool_frame;
 
-            LogProducer::error("mc","Target joint out of soft constraint.");
-            LogProducer::error("mc","Pose: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", pose.point_.x_, pose.point_.y_, pose.point_.z_, pose.euler_.a_, pose.euler_.b_, pose.euler_.c_);
-            LogProducer::error("mc","Posture: %d, %d, %d, %d", posture.arm, posture.elbow, posture.wrist, posture.flip);
-            LogProducer::error("mc","Tool frame: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", tf.point_.x_, tf.point_.y_, tf.point_.z_, tf.euler_.a_, tf.euler_.b_, tf.euler_.c_);
-            LogProducer::error("mc","User frame: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", uf.point_.x_, uf.point_.y_, uf.point_.z_, uf.euler_.a_, uf.euler_.b_, uf.euler_.c_);
-            LogProducer::error("mc","Joint = %s", printDBLine(&info.target.joint[0], buffer, LOG_TEXT_SIZE));
-            LogProducer::error("mc","Upper = %s", printDBLine(&soft_constraint_.upper()[0], buffer, LOG_TEXT_SIZE));
-            LogProducer::error("mc","Lower = %s", printDBLine(&soft_constraint_.lower()[0], buffer, LOG_TEXT_SIZE));
+            LogProducer::error("mc_base","Target joint out of soft constraint.");
+            LogProducer::error("mc_base","Pose: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", pose.point_.x_, pose.point_.y_, pose.point_.z_, pose.euler_.a_, pose.euler_.b_, pose.euler_.c_);
+            LogProducer::error("mc_base","Posture: %d, %d, %d, %d", posture.arm, posture.elbow, posture.wrist, posture.flip);
+            LogProducer::error("mc_base","Tool frame: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", tf.point_.x_, tf.point_.y_, tf.point_.z_, tf.euler_.a_, tf.euler_.b_, tf.euler_.c_);
+            LogProducer::error("mc_base","User frame: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", uf.point_.x_, uf.point_.y_, uf.point_.z_, uf.euler_.a_, uf.euler_.b_, uf.euler_.c_);
+            LogProducer::error("mc_base","Joint = %s", printDBLine(&info.target.joint[0], buffer, LOG_TEXT_SIZE));
+            LogProducer::error("mc_base","Upper = %s", printDBLine(&soft_constraint_.upper()[0], buffer, LOG_TEXT_SIZE));
+            LogProducer::error("mc_base","Lower = %s", printDBLine(&soft_constraint_.lower()[0], buffer, LOG_TEXT_SIZE));
             return JOINT_OUT_OF_CONSTRAINT;
         }
 
@@ -1308,9 +1306,9 @@ ErrorCode BaseGroup::checkMotionTarget(const MotionInfo &info)
         if (is_same_joint)
         {
             char buffer[LOG_TEXT_SIZE];
-            LogProducer::warn("mc","Target joint coincidence with start joint.");
-            LogProducer::warn("mc","Start-joint = %s", printDBLine(&start_joint_.j1_, buffer, LOG_TEXT_SIZE));
-            LogProducer::warn("mc","Target-joint = %s", printDBLine(&info.target.joint.j1_, buffer, LOG_TEXT_SIZE));
+            LogProducer::warn("mc_base","Target joint coincidence with start joint.");
+            LogProducer::warn("mc_base","Start-joint = %s", printDBLine(&start_joint_.j1_, buffer, LOG_TEXT_SIZE));
+            LogProducer::warn("mc_base","Target-joint = %s", printDBLine(&info.target.joint.j1_, buffer, LOG_TEXT_SIZE));
             return TARGET_COINCIDENCE;
         }
     }
@@ -1324,8 +1322,8 @@ ErrorCode BaseGroup::checkMotionTarget(const MotionInfo &info)
         transformation_.convertPoseFromBaseToUser(tcp_in_base, info.target.user_frame, start_pose);
         Posture start_posture = kinematics_ptr_->getPostureByJoint(start_joint_);
         const Posture &target_posture = info.target.pose.posture;
-        LogProducer::info("mc","Start-pose: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", start_pose.point_.x_, start_pose.point_.y_, start_pose.point_.z_, start_pose.euler_.a_, start_pose.euler_.b_, start_pose.euler_.c_);
-        LogProducer::info("mc","Start-posture: ARM = %d, ELBOW = %d, WRIST = %d, FLIP = %d", start_posture.arm, start_posture.elbow, start_posture.wrist, start_posture.flip);
+        LogProducer::info("mc_base","Start-pose: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", start_pose.point_.x_, start_pose.point_.y_, start_pose.point_.z_, start_pose.euler_.a_, start_pose.euler_.b_, start_pose.euler_.c_);
+        LogProducer::info("mc_base","Start-posture: ARM = %d, ELBOW = %d, WRIST = %d, FLIP = %d", start_posture.arm, start_posture.elbow, start_posture.wrist, start_posture.flip);
 
         if (!soft_constraint_.isJointInConstraint(info.target.joint))
         {
@@ -1335,22 +1333,22 @@ ErrorCode BaseGroup::checkMotionTarget(const MotionInfo &info)
             const PoseEuler &uf = info.target.user_frame;
             const PoseEuler &tf = info.target.tool_frame;
 
-            LogProducer::error("mc","Target joint out of soft constraint.");
-            LogProducer::error("mc","Pose: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", pose.point_.x_, pose.point_.y_, pose.point_.z_, pose.euler_.a_, pose.euler_.b_, pose.euler_.c_);
-            LogProducer::error("mc","Posture: %d, %d, %d, %d", posture.arm, posture.elbow, posture.wrist, posture.flip);
-            LogProducer::error("mc","Tool frame: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", tf.point_.x_, tf.point_.y_, tf.point_.z_, tf.euler_.a_, tf.euler_.b_, tf.euler_.c_);
-            LogProducer::error("mc","User frame: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", uf.point_.x_, uf.point_.y_, uf.point_.z_, uf.euler_.a_, uf.euler_.b_, uf.euler_.c_);
-            LogProducer::error("mc","Joint = %s", printDBLine(&info.target.joint[0], buffer, LOG_TEXT_SIZE));
-            LogProducer::error("mc","Upper = %s", printDBLine(&soft_constraint_.upper()[0], buffer, LOG_TEXT_SIZE));
-            LogProducer::error("mc","Lower = %s", printDBLine(&soft_constraint_.lower()[0], buffer, LOG_TEXT_SIZE));
+            LogProducer::error("mc_base","Target joint out of soft constraint.");
+            LogProducer::error("mc_base","Pose: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", pose.point_.x_, pose.point_.y_, pose.point_.z_, pose.euler_.a_, pose.euler_.b_, pose.euler_.c_);
+            LogProducer::error("mc_base","Posture: %d, %d, %d, %d", posture.arm, posture.elbow, posture.wrist, posture.flip);
+            LogProducer::error("mc_base","Tool frame: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", tf.point_.x_, tf.point_.y_, tf.point_.z_, tf.euler_.a_, tf.euler_.b_, tf.euler_.c_);
+            LogProducer::error("mc_base","User frame: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", uf.point_.x_, uf.point_.y_, uf.point_.z_, uf.euler_.a_, uf.euler_.b_, uf.euler_.c_);
+            LogProducer::error("mc_base","Joint = %s", printDBLine(&info.target.joint[0], buffer, LOG_TEXT_SIZE));
+            LogProducer::error("mc_base","Upper = %s", printDBLine(&soft_constraint_.upper()[0], buffer, LOG_TEXT_SIZE));
+            LogProducer::error("mc_base","Lower = %s", printDBLine(&soft_constraint_.lower()[0], buffer, LOG_TEXT_SIZE));
             return JOINT_OUT_OF_CONSTRAINT;
         }
 
         if (!isPostureMatch(start_posture, target_posture))
         {
-            LogProducer::error("mc","Posture of target mismatch with start.");
-            LogProducer::error("mc","Posture of start: ARM = %d, ELBOW = %d, WRIST = %d, FLIP = %d", start_posture.arm, start_posture.elbow, start_posture.wrist, start_posture.flip);
-            LogProducer::error("mc","Posture of target: ARM = %d, ELBOW = %d, WRIST = %d, FLIP = %d", target_posture.arm, target_posture.elbow, target_posture.wrist, target_posture.flip);
+            LogProducer::error("mc_base","Posture of target mismatch with start.");
+            LogProducer::error("mc_base","Posture of start: ARM = %d, ELBOW = %d, WRIST = %d, FLIP = %d", start_posture.arm, start_posture.elbow, start_posture.wrist, start_posture.flip);
+            LogProducer::error("mc_base","Posture of target: ARM = %d, ELBOW = %d, WRIST = %d, FLIP = %d", target_posture.arm, target_posture.elbow, target_posture.wrist, target_posture.flip);
             return MC_POSTURE_MISMATCH;
         }
 
@@ -1359,11 +1357,11 @@ ErrorCode BaseGroup::checkMotionTarget(const MotionInfo &info)
             char buffer[LOG_TEXT_SIZE];
             const Joint &target_joint = info.target.joint;
             const PoseEuler &target_pose = info.target.pose.pose;
-            LogProducer::warn("mc","Target pose coincidence with start.");
-            LogProducer::warn("mc","Start-pose = %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", start_pose.point_.x_, start_pose.point_.y_, start_pose.point_.z_, start_pose.euler_.a_, start_pose.euler_.b_, start_pose.euler_.c_);
-            LogProducer::warn("mc","Target-pose = %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", target_pose.point_.x_, target_pose.point_.y_, target_pose.point_.z_, target_pose.euler_.a_, target_pose.euler_.b_, target_pose.euler_.c_);
-            LogProducer::warn("mc","Start-joint = %s", printDBLine(&start_joint_.j1_, buffer, LOG_TEXT_SIZE));
-            LogProducer::warn("mc","Target-joint = %s", printDBLine(&target_joint.j1_, buffer, LOG_TEXT_SIZE));
+            LogProducer::warn("mc_base","Target pose coincidence with start.");
+            LogProducer::warn("mc_base","Start-pose = %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", start_pose.point_.x_, start_pose.point_.y_, start_pose.point_.z_, start_pose.euler_.a_, start_pose.euler_.b_, start_pose.euler_.c_);
+            LogProducer::warn("mc_base","Target-pose = %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", target_pose.point_.x_, target_pose.point_.y_, target_pose.point_.z_, target_pose.euler_.a_, target_pose.euler_.b_, target_pose.euler_.c_);
+            LogProducer::warn("mc_base","Start-joint = %s", printDBLine(&start_joint_.j1_, buffer, LOG_TEXT_SIZE));
+            LogProducer::warn("mc_base","Target-joint = %s", printDBLine(&target_joint.j1_, buffer, LOG_TEXT_SIZE));
             return TARGET_COINCIDENCE;
         }
     }
@@ -1378,8 +1376,8 @@ ErrorCode BaseGroup::checkMotionTarget(const MotionInfo &info)
         Posture start_posture = kinematics_ptr_->getPostureByJoint(start_joint_);
         const Posture &target_posture = info.target.pose.posture;
         const Posture &via_posture = info.via.pose.posture;
-        LogProducer::info("mc","Start-pose: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", start_pose.point_.x_, start_pose.point_.y_, start_pose.point_.z_, start_pose.euler_.a_, start_pose.euler_.b_, start_pose.euler_.c_);
-        LogProducer::info("mc","Start-posture: ARM = %d, ELBOW = %d, WRIST = %d, FLIP = %d", start_posture.arm, start_posture.elbow, start_posture.wrist, start_posture.flip);
+        LogProducer::info("mc_base","Start-pose: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", start_pose.point_.x_, start_pose.point_.y_, start_pose.point_.z_, start_pose.euler_.a_, start_pose.euler_.b_, start_pose.euler_.c_);
+        LogProducer::info("mc_base","Start-posture: ARM = %d, ELBOW = %d, WRIST = %d, FLIP = %d", start_posture.arm, start_posture.elbow, start_posture.wrist, start_posture.flip);
 
         if (!soft_constraint_.isJointInConstraint(info.target.joint))
         {
@@ -1389,14 +1387,14 @@ ErrorCode BaseGroup::checkMotionTarget(const MotionInfo &info)
             const PoseEuler &uf = info.target.user_frame;
             const PoseEuler &tf = info.target.tool_frame;
 
-            LogProducer::error("mc","Target joint out of soft constraint.");
-            LogProducer::error("mc","Pose: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", pose.point_.x_, pose.point_.y_, pose.point_.z_, pose.euler_.a_, pose.euler_.b_, pose.euler_.c_);
-            LogProducer::error("mc","Posture: %d, %d, %d, %d", posture.arm, posture.elbow, posture.wrist, posture.flip);
-            LogProducer::error("mc","Tool frame: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", tf.point_.x_, tf.point_.y_, tf.point_.z_, tf.euler_.a_, tf.euler_.b_, tf.euler_.c_);
-            LogProducer::error("mc","User frame: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", uf.point_.x_, uf.point_.y_, uf.point_.z_, uf.euler_.a_, uf.euler_.b_, uf.euler_.c_);
-            LogProducer::error("mc","Joint = %s", printDBLine(&info.target.joint[0], buffer, LOG_TEXT_SIZE));
-            LogProducer::error("mc","Upper = %s", printDBLine(&soft_constraint_.upper()[0], buffer, LOG_TEXT_SIZE));
-            LogProducer::error("mc","Lower = %s", printDBLine(&soft_constraint_.lower()[0], buffer, LOG_TEXT_SIZE));
+            LogProducer::error("mc_base","Target joint out of soft constraint.");
+            LogProducer::error("mc_base","Pose: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", pose.point_.x_, pose.point_.y_, pose.point_.z_, pose.euler_.a_, pose.euler_.b_, pose.euler_.c_);
+            LogProducer::error("mc_base","Posture: %d, %d, %d, %d", posture.arm, posture.elbow, posture.wrist, posture.flip);
+            LogProducer::error("mc_base","Tool frame: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", tf.point_.x_, tf.point_.y_, tf.point_.z_, tf.euler_.a_, tf.euler_.b_, tf.euler_.c_);
+            LogProducer::error("mc_base","User frame: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", uf.point_.x_, uf.point_.y_, uf.point_.z_, uf.euler_.a_, uf.euler_.b_, uf.euler_.c_);
+            LogProducer::error("mc_base","Joint = %s", printDBLine(&info.target.joint[0], buffer, LOG_TEXT_SIZE));
+            LogProducer::error("mc_base","Upper = %s", printDBLine(&soft_constraint_.upper()[0], buffer, LOG_TEXT_SIZE));
+            LogProducer::error("mc_base","Lower = %s", printDBLine(&soft_constraint_.lower()[0], buffer, LOG_TEXT_SIZE));
             return JOINT_OUT_OF_CONSTRAINT;
         }
 
@@ -1407,30 +1405,30 @@ ErrorCode BaseGroup::checkMotionTarget(const MotionInfo &info)
             const PoseEuler &pose = info.via.pose.pose;
             const PoseEuler &uf = info.via.user_frame;
             const PoseEuler &tf = info.via.tool_frame;
-            LogProducer::error("mc","Via joint out of soft constraint.");
-            LogProducer::error("mc","Pose: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", pose.point_.x_, pose.point_.y_, pose.point_.z_, pose.euler_.a_, pose.euler_.b_, pose.euler_.c_);
-            LogProducer::error("mc","Posture: %d, %d, %d, %d", posture.arm, posture.elbow, posture.wrist, posture.flip);
-            LogProducer::error("mc","Tool frame: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", tf.point_.x_, tf.point_.y_, tf.point_.z_, tf.euler_.a_, tf.euler_.b_, tf.euler_.c_);
-            LogProducer::error("mc","User frame: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", uf.point_.x_, uf.point_.y_, uf.point_.z_, uf.euler_.a_, uf.euler_.b_, uf.euler_.c_);
-            LogProducer::error("mc","Joint = %s", printDBLine(&info.via.joint[0], buffer, LOG_TEXT_SIZE));
-            LogProducer::error("mc","Upper = %s", printDBLine(&soft_constraint_.upper()[0], buffer, LOG_TEXT_SIZE));
-            LogProducer::error("mc","Lower = %s", printDBLine(&soft_constraint_.lower()[0], buffer, LOG_TEXT_SIZE));
+            LogProducer::error("mc_base","Via joint out of soft constraint.");
+            LogProducer::error("mc_base","Pose: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", pose.point_.x_, pose.point_.y_, pose.point_.z_, pose.euler_.a_, pose.euler_.b_, pose.euler_.c_);
+            LogProducer::error("mc_base","Posture: %d, %d, %d, %d", posture.arm, posture.elbow, posture.wrist, posture.flip);
+            LogProducer::error("mc_base","Tool frame: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", tf.point_.x_, tf.point_.y_, tf.point_.z_, tf.euler_.a_, tf.euler_.b_, tf.euler_.c_);
+            LogProducer::error("mc_base","User frame: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", uf.point_.x_, uf.point_.y_, uf.point_.z_, uf.euler_.a_, uf.euler_.b_, uf.euler_.c_);
+            LogProducer::error("mc_base","Joint = %s", printDBLine(&info.via.joint[0], buffer, LOG_TEXT_SIZE));
+            LogProducer::error("mc_base","Upper = %s", printDBLine(&soft_constraint_.upper()[0], buffer, LOG_TEXT_SIZE));
+            LogProducer::error("mc_base","Lower = %s", printDBLine(&soft_constraint_.lower()[0], buffer, LOG_TEXT_SIZE));
             return JOINT_OUT_OF_CONSTRAINT;
         }
 
         if (!isPostureMatch(start_posture, target_posture))
         {
-            LogProducer::error("mc","Posture of target mismatch with start.");
-            LogProducer::error("mc","Posture of start: ARM = %d, ELBOW = %d, WRIST = %d, FLIP = %d", start_posture.arm, start_posture.elbow, start_posture.wrist, start_posture.flip);
-            LogProducer::error("mc","Posture of target: ARM = %d, ELBOW = %d, WRIST = %d, FLIP = %d", target_posture.arm, target_posture.elbow, target_posture.wrist, target_posture.flip);
+            LogProducer::error("mc_base","Posture of target mismatch with start.");
+            LogProducer::error("mc_base","Posture of start: ARM = %d, ELBOW = %d, WRIST = %d, FLIP = %d", start_posture.arm, start_posture.elbow, start_posture.wrist, start_posture.flip);
+            LogProducer::error("mc_base","Posture of target: ARM = %d, ELBOW = %d, WRIST = %d, FLIP = %d", target_posture.arm, target_posture.elbow, target_posture.wrist, target_posture.flip);
             return MC_POSTURE_MISMATCH;
         }
 
         if (!isPostureMatch(start_posture, via_posture))
         {
-            LogProducer::error("mc","Posture of via mismatch with start.");
-            LogProducer::error("mc","Posture of start: ARM = %d, ELBOW = %d, WRIST = %d, FLIP = %d", start_posture.arm, start_posture.elbow, start_posture.wrist, start_posture.flip);
-            LogProducer::error("mc","Posture of via: ARM = %d, ELBOW = %d, WRIST = %d, FLIP = %d", via_posture.arm, via_posture.elbow, via_posture.wrist, via_posture.flip);
+            LogProducer::error("mc_base","Posture of via mismatch with start.");
+            LogProducer::error("mc_base","Posture of start: ARM = %d, ELBOW = %d, WRIST = %d, FLIP = %d", start_posture.arm, start_posture.elbow, start_posture.wrist, start_posture.flip);
+            LogProducer::error("mc_base","Posture of via: ARM = %d, ELBOW = %d, WRIST = %d, FLIP = %d", via_posture.arm, via_posture.elbow, via_posture.wrist, via_posture.flip);
             return MC_POSTURE_MISMATCH;
         }
 
@@ -1439,11 +1437,11 @@ ErrorCode BaseGroup::checkMotionTarget(const MotionInfo &info)
             char buffer[LOG_TEXT_SIZE];
             const Joint &target_joint = info.target.joint;
             const PoseEuler &target_pose = info.target.pose.pose;
-            LogProducer::warn("mc","Target pose coincidence with start.");
-            LogProducer::warn("mc","Start-pose = %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", start_pose.point_.x_, start_pose.point_.y_, start_pose.point_.z_, start_pose.euler_.a_, start_pose.euler_.b_, start_pose.euler_.c_);
-            LogProducer::warn("mc","Target-pose = %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", target_pose.point_.x_, target_pose.point_.y_, target_pose.point_.z_, target_pose.euler_.a_, target_pose.euler_.b_, target_pose.euler_.c_);
-            LogProducer::warn("mc","Start-joint = %s", printDBLine(&start_joint_.j1_, buffer, LOG_TEXT_SIZE));
-            LogProducer::warn("mc","Target-joint = %s", printDBLine(&target_joint.j1_, buffer, LOG_TEXT_SIZE));
+            LogProducer::warn("mc_base","Target pose coincidence with start.");
+            LogProducer::warn("mc_base","Start-pose = %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", start_pose.point_.x_, start_pose.point_.y_, start_pose.point_.z_, start_pose.euler_.a_, start_pose.euler_.b_, start_pose.euler_.c_);
+            LogProducer::warn("mc_base","Target-pose = %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", target_pose.point_.x_, target_pose.point_.y_, target_pose.point_.z_, target_pose.euler_.a_, target_pose.euler_.b_, target_pose.euler_.c_);
+            LogProducer::warn("mc_base","Start-joint = %s", printDBLine(&start_joint_.j1_, buffer, LOG_TEXT_SIZE));
+            LogProducer::warn("mc_base","Target-joint = %s", printDBLine(&target_joint.j1_, buffer, LOG_TEXT_SIZE));
             return MC_ARC_PLANNING_FAIL;
         }
 
@@ -1452,11 +1450,11 @@ ErrorCode BaseGroup::checkMotionTarget(const MotionInfo &info)
             char buffer[LOG_TEXT_SIZE];
             const Joint &via_joint = info.via.joint;
             const PoseEuler &via_pose = info.via.pose.pose;
-            LogProducer::warn("mc","Via pose coincidence with start.");
-            LogProducer::warn("mc","  start-pose = %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", start_pose.point_.x_, start_pose.point_.y_, start_pose.point_.z_, start_pose.euler_.a_, start_pose.euler_.b_, start_pose.euler_.c_);
-            LogProducer::warn("mc","  via-pose = %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", via_pose.point_.x_, via_pose.point_.y_, via_pose.point_.z_, via_pose.euler_.a_, via_pose.euler_.b_, via_pose.euler_.c_);
-            LogProducer::warn("mc","  start-joint = %s", printDBLine(&start_joint_.j1_, buffer, LOG_TEXT_SIZE));
-            LogProducer::warn("mc","  via-joint = %s", printDBLine(&via_joint.j1_, buffer, LOG_TEXT_SIZE));
+            LogProducer::warn("mc_base","Via pose coincidence with start.");
+            LogProducer::warn("mc_base","  start-pose = %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", start_pose.point_.x_, start_pose.point_.y_, start_pose.point_.z_, start_pose.euler_.a_, start_pose.euler_.b_, start_pose.euler_.c_);
+            LogProducer::warn("mc_base","  via-pose = %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", via_pose.point_.x_, via_pose.point_.y_, via_pose.point_.z_, via_pose.euler_.a_, via_pose.euler_.b_, via_pose.euler_.c_);
+            LogProducer::warn("mc_base","  start-joint = %s", printDBLine(&start_joint_.j1_, buffer, LOG_TEXT_SIZE));
+            LogProducer::warn("mc_base","  via-joint = %s", printDBLine(&via_joint.j1_, buffer, LOG_TEXT_SIZE));
             return MC_ARC_PLANNING_FAIL;
         }
 
@@ -1467,11 +1465,11 @@ ErrorCode BaseGroup::checkMotionTarget(const MotionInfo &info)
             const Joint &target_joint = info.target.joint;
             const PoseEuler &via_pose = info.via.pose.pose;
             const PoseEuler &target_pose = info.target.pose.pose;
-            LogProducer::warn("mc","Via pose coincidence with target.");
-            LogProducer::warn("mc","  via-pose = %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", via_pose.point_.x_, via_pose.point_.y_, via_pose.point_.z_, via_pose.euler_.a_, via_pose.euler_.b_, via_pose.euler_.c_);
-            LogProducer::warn("mc","  target-pose = %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", target_pose.point_.x_, target_pose.point_.y_, target_pose.point_.z_, target_pose.euler_.a_, target_pose.euler_.b_, target_pose.euler_.c_);
-            LogProducer::warn("mc","  via-joint = %s", printDBLine(&via_joint.j1_, buffer, LOG_TEXT_SIZE));
-            LogProducer::warn("mc","  target-joint = %s", printDBLine(&target_joint.j1_, buffer, LOG_TEXT_SIZE));
+            LogProducer::warn("mc_base","Via pose coincidence with target.");
+            LogProducer::warn("mc_base","  via-pose = %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", via_pose.point_.x_, via_pose.point_.y_, via_pose.point_.z_, via_pose.euler_.a_, via_pose.euler_.b_, via_pose.euler_.c_);
+            LogProducer::warn("mc_base","  target-pose = %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", target_pose.point_.x_, target_pose.point_.y_, target_pose.point_.z_, target_pose.euler_.a_, target_pose.euler_.b_, target_pose.euler_.c_);
+            LogProducer::warn("mc_base","  via-joint = %s", printDBLine(&via_joint.j1_, buffer, LOG_TEXT_SIZE));
+            LogProducer::warn("mc_base","  target-joint = %s", printDBLine(&target_joint.j1_, buffer, LOG_TEXT_SIZE));
             return MC_ARC_PLANNING_FAIL;
         }
 
@@ -1482,10 +1480,10 @@ ErrorCode BaseGroup::checkMotionTarget(const MotionInfo &info)
         {
             const PoseEuler &via_pose = info.via.pose.pose;
             const PoseEuler &target_pose = info.target.pose.pose;
-            LogProducer::warn("mc","Three points are collinear, arc planning fail.");
-            LogProducer::warn("mc","  start-pose = %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", start_pose.point_.x_, start_pose.point_.y_, start_pose.point_.z_, start_pose.euler_.a_, start_pose.euler_.b_, start_pose.euler_.c_);
-            LogProducer::warn("mc","  via-pose = %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", via_pose.point_.x_, via_pose.point_.y_, via_pose.point_.z_, via_pose.euler_.a_, via_pose.euler_.b_, via_pose.euler_.c_);
-            LogProducer::warn("mc","  target-pose = %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", target_pose.point_.x_, target_pose.point_.y_, target_pose.point_.z_, target_pose.euler_.a_, target_pose.euler_.b_, target_pose.euler_.c_);
+            LogProducer::warn("mc_base","Three points are collinear, arc planning fail.");
+            LogProducer::warn("mc_base","  start-pose = %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", start_pose.point_.x_, start_pose.point_.y_, start_pose.point_.z_, start_pose.euler_.a_, start_pose.euler_.b_, start_pose.euler_.c_);
+            LogProducer::warn("mc_base","  via-pose = %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", via_pose.point_.x_, via_pose.point_.y_, via_pose.point_.z_, via_pose.euler_.a_, via_pose.euler_.b_, via_pose.euler_.c_);
+            LogProducer::warn("mc_base","  target-pose = %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", target_pose.point_.x_, target_pose.point_.y_, target_pose.point_.z_, target_pose.euler_.a_, target_pose.euler_.b_, target_pose.euler_.c_);
             return MC_ARC_PLANNING_FAIL;
         }
     }
@@ -1500,7 +1498,7 @@ bool BaseGroup::isPostureMatch(const Posture &posture_1, const Posture &posture_
 
 bool BaseGroup::nextMovePermitted(void)
 {
-    // LogProducer::warn("mc","is-next-Move-Permitted ?");
+    // LogProducer::warn("mc_base","is-next-Move-Permitted ?");
     uint32_t branch = 0;
     GroupState state = group_state_;
     ServoState servo_state = getServoState();
@@ -1576,16 +1574,16 @@ bool BaseGroup::nextMovePermitted(void)
     */
 
     
-    //LogProducer::warn("mc","Next motion permitted: grp-state = %d, branch = %u", state, branch);
+    //LogProducer::warn("mc_base","Next motion permitted: grp-state = %d, branch = %u", state, branch);
 
     if (branch == 0)
     {
-        LogProducer::warn("mc","Next motion permitted: state=0x%x, servo-state=0x%x, pick->valid=%d, plan->valid=%d, pick->start_from_smooth=%d, pick->end_with_smooth=%d, auto_time=%.6f, pick->smooth_time=%.6f", 
+        LogProducer::warn("mc_base","Next motion permitted: state=0x%x, servo-state=0x%x, pick->valid=%d, plan->valid=%d, pick->start_from_smooth=%d, pick->end_with_smooth=%d, auto_time=%.6f, pick->smooth_time=%.6f", 
             state, servo_state, pick_traj_ptr_->valid, plan_traj_ptr_->valid, pick_traj_ptr_->start_from_smooth, pick_traj_ptr_->end_with_smooth, auto_time_, pick_traj_ptr_->smooth_time);
     }
     else
     {
-        //LogProducer::info("mc","Next motion not permitted, branch: %d", branch);
+        //LogProducer::info("mc_base","Next motion not permitted, branch: %d", branch);
     }
 
     pthread_mutex_unlock(&planner_list_mutex_);
@@ -1608,21 +1606,6 @@ ServoState BaseGroup::getServoState(void)
     return state;
 }
 
-ErrorCode BaseGroup::getServoVersion(std::string &version)
-{
-    char buffer[256];
-
-    if (bare_core_.readVersion(buffer, 256))
-    {
-        version = buffer;
-        return SUCCESS;
-    }
-    else
-    {
-        version.clear();
-        return MC_COMMUNICATION_WITH_BARECORE_FAIL;
-    }
-}
 
 GroupState BaseGroup::getGroupState(void)
 {
@@ -1631,11 +1614,11 @@ GroupState BaseGroup::getGroupState(void)
 
 ErrorCode BaseGroup::setGlobalVelRatio(double ratio)
 {
-    LogProducer::info("mc","Set global velocity ratio: %.4f", ratio);
+    LogProducer::info("mc_base","Set global velocity ratio: %.4f", ratio);
 
     if (ratio < MINIMUM_E3 || ratio > 1)
     {
-        LogProducer::error("mc","Given ratio out of range (0, 1)");
+        LogProducer::error("mc_base","Given ratio out of range (0, 1)");
         return INVALID_PARAMETER;
     }
     else
@@ -1648,11 +1631,11 @@ ErrorCode BaseGroup::setGlobalVelRatio(double ratio)
 
 ErrorCode BaseGroup::setGlobalAccRatio(double ratio)
 {
-    LogProducer::info("mc","Set global acceleration ratio: %.4f", ratio);
+    LogProducer::info("mc_base","Set global acceleration ratio: %.4f", ratio);
 
     if (ratio < MINIMUM_E3 || ratio > 1)
     {
-        LogProducer::error("mc","Given ratio out of range (0, 1)");
+        LogProducer::error("mc_base","Given ratio out of range (0, 1)");
         return INVALID_PARAMETER;
     }
     else
@@ -1673,18 +1656,18 @@ double BaseGroup::getGlobalAccRatio(void)
     return acc_ratio_;
 }
 
-ErrorCode BaseGroup::pickPointsFromManualTrajectory(TrajectoryPoint *points, uint32_t &length)
+ErrorCode BaseGroup::pickPointsFromManualTrajectory(TrajectoryPoint *points, size_t &length)
 {
-    uint32_t picked = 0;
+    size_t picked = 0;
     ErrorCode err = SUCCESS;
     GroupState group_state = group_state_;
 
-    for (uint32_t i = 0; i < length; i++)
+    for (size_t i = 0; i < length; i++)
     {
         if (!manual_fifo_.empty())
         {
             manual_fifo_.fetch(points[i]);
-            //LogProducer::info("mc","%d-%.4f-%.6f,%.6f,%.6f", points[i].level, points[i].time_stamp, points[i].state.angle.j1_, points[i].state.angle.j2_, points[i].state.angle.j3_);
+            //LogProducer::info("mc_base","%d-%.4f-%.6f,%.6f,%.6f", points[i].level, points[i].time_stamp, points[i].state.angle.j1_, points[i].state.angle.j2_, points[i].state.angle.j3_);
             picked ++;
         }
         else
@@ -1702,7 +1685,7 @@ ErrorCode BaseGroup::pickPointsFromManualTrajectory(TrajectoryPoint *points, uin
             char buffer[LOG_TEXT_SIZE];
             if (group_state == MANUAL) manual_to_standby_request_ = true;
             else if (group_state == PAUSE_MANUAL) manual_to_pause_request_ = true;
-            LogProducer::info("mc","Get ending-point: %.4f - %s", manual_time_, printDBLine(&points[length - 1].state.angle[0], buffer, LOG_TEXT_SIZE));
+            LogProducer::info("mc_base","Get ending-point: %.4f - %s", manual_time_, printDBLine(&points[length - 1].state.angle[0], buffer, LOG_TEXT_SIZE));
             start_joint_ = points[length - 1].state.angle;
         }
 
@@ -1710,7 +1693,7 @@ ErrorCode BaseGroup::pickPointsFromManualTrajectory(TrajectoryPoint *points, uin
     }
     else
     {
-        LogProducer::error("mc","Fail to pick points from manual trajectory, code = 0x%llx.", err);
+        LogProducer::error("mc_base","Fail to pick points from manual trajectory, code = 0x%llx.", err);
         return err;
     }
 }
@@ -1718,7 +1701,7 @@ ErrorCode BaseGroup::pickPointsFromManualTrajectory(TrajectoryPoint *points, uin
 
 ErrorCode BaseGroup::checkManualTrajectory(double start_time, double end_time, double step_time, Joint reference)
 {
-    LogProducer::info("mc","Check manual trajectory, start at: %.6f, end at: %.6f, step: %.6f", start_time, end_time, step_time);
+    LogProducer::info("mc_base","Check manual trajectory, start at: %.6f, end at: %.6f, step: %.6f", start_time, end_time, step_time);
     ErrorCode err = SUCCESS;
     JointState state;
 
@@ -1728,19 +1711,19 @@ ErrorCode BaseGroup::checkManualTrajectory(double start_time, double end_time, d
 
         if (err != SUCCESS)
         {
-            LogProducer::error("mc","Trajectory check failed at t: %.6f, code: 0x%llx", t, err);
+            LogProducer::error("mc_base","Trajectory check failed at t: %.6f, code: 0x%llx", t, err);
             return err;
         }
         else if (!soft_constraint_.isJointInConstraint(state.angle, MINIMUM_E3))
         {
             char buffer[LOG_TEXT_SIZE];
-            LogProducer::error("mc","Trajectory near soft constraint at t: %.6f, joint: %s", t, printDBLine(&state.angle.j1_, buffer, LOG_TEXT_SIZE));
+            LogProducer::error("mc_base","Trajectory near soft constraint at t: %.6f, joint: %s", t, printDBLine(&state.angle.j1_, buffer, LOG_TEXT_SIZE));
             return JOINT_OUT_OF_CONSTRAINT;
         }
         else if (kinematics_ptr_->nearSingularPosition(state.angle))
         {
             char buffer[LOG_TEXT_SIZE];
-            LogProducer::error("mc","Trajectory near singular position at t: %.6f, joint: %s", t, printDBLine(&state.angle.j1_, buffer, LOG_TEXT_SIZE));
+            LogProducer::error("mc_base","Trajectory near singular position at t: %.6f, joint: %s", t, printDBLine(&state.angle.j1_, buffer, LOG_TEXT_SIZE));
             return MC_MANUAL_TO_SINGULAR_POSITION;
         }
         else
@@ -1749,7 +1732,7 @@ ErrorCode BaseGroup::checkManualTrajectory(double start_time, double end_time, d
         reference = state.angle;
     }
 
-    LogProducer::info("mc","Check manual trajectory passed");
+    LogProducer::info("mc_base","Check manual trajectory passed");
     return SUCCESS;
 }
 
@@ -1782,22 +1765,22 @@ ErrorCode BaseGroup::pickManualPoint(TrajectoryPoint &point)
 
         if (err != SUCCESS)
         {
-            LogProducer::error("mc","Manual trajectory check fail, stop manual");
+            LogProducer::error("mc_base","Manual trajectory check fail, stop manual");
             manual_trajectory_check_fail_ = true;
         }
         else if (!soft_constraint_.isJointInConstraint(forestate.angle, MINIMUM_E3))
         {
             char buffer[LOG_TEXT_SIZE];
-            LogProducer::error("mc","Manual trajectory near soft constraint, stop manual");
-            LogProducer::error("mc","Time: %.6f, joint: %s", manual_time_, printDBLine(&forestate.angle.j1_, buffer, LOG_TEXT_SIZE));
+            LogProducer::error("mc_base","Manual trajectory near soft constraint, stop manual");
+            LogProducer::error("mc_base","Time: %.6f, joint: %s", manual_time_, printDBLine(&forestate.angle.j1_, buffer, LOG_TEXT_SIZE));
             err = JOINT_OUT_OF_CONSTRAINT;
             manual_trajectory_check_fail_ = true;
         }
         else if(kinematics_ptr_->nearSingularPosition(forestate.angle))
         {
             char buffer[LOG_TEXT_SIZE];
-            LogProducer::error("mc","Manual trajectory near singular position, stop manual");
-            LogProducer::error("mc","Time: %.6f, joint: %s", manual_time_, printDBLine(&forestate.angle.j1_, buffer, LOG_TEXT_SIZE));
+            LogProducer::error("mc_base","Manual trajectory near singular position, stop manual");
+            LogProducer::error("mc_base","Time: %.6f, joint: %s", manual_time_, printDBLine(&forestate.angle.j1_, buffer, LOG_TEXT_SIZE));
             err = MC_MANUAL_TO_SINGULAR_POSITION;
             manual_trajectory_check_fail_ = true;
         }
@@ -1821,8 +1804,8 @@ ErrorCode BaseGroup::pickManualPoint(TrajectoryPoint &point)
     }
 
     //char buffer[LOG_TEXT_SIZE];
-    //LogProducer::info("mc",">> manual joint: %s", printDBLine(&point.state.angle[0], buffer, LOG_TEXT_SIZE));
-    //LogProducer::info("mc",">> manual omega: %s", printDBLine(&point.state.omega[0], buffer, LOG_TEXT_SIZE));
+    //LogProducer::info("mc_base",">> manual joint: %s", printDBLine(&point.state.angle[0], buffer, LOG_TEXT_SIZE));
+    //LogProducer::info("mc_base",">> manual omega: %s", printDBLine(&point.state.omega[0], buffer, LOG_TEXT_SIZE));
 
     if (traj_log_enable_)
     {
@@ -1842,26 +1825,26 @@ bool BaseGroup::updateStartJoint(void)
 
     if (bare_core_.getControlPosition(&control_joint[0], getNumberOfJoint()))
     {
-        LogProducer::info("mc","Control-position: %s", printDBLine(&control_joint[0], buffer, LOG_TEXT_SIZE));
-        LogProducer::info("mc","Current-position: %s", printDBLine(&current_joint[0], buffer, LOG_TEXT_SIZE));
+        LogProducer::info("mc_base","Control-position: %s", printDBLine(&control_joint[0], buffer, LOG_TEXT_SIZE));
+        LogProducer::info("mc_base","Current-position: %s", printDBLine(&current_joint[0], buffer, LOG_TEXT_SIZE));
 
         //if (isSameJoint(current_joint, control_joint, MINIMUM_E3))
         if (isSameJoint(current_joint, control_joint, joint_tracking_accuracy_))
         {
             start_joint_ = control_joint;
             memset(&start_joint_[getNumberOfJoint()], 0, (NUM_OF_JOINT - getNumberOfJoint()) * sizeof(double));
-            LogProducer::info("mc","Update start joint success");
+            LogProducer::info("mc_base","Update start joint success");
             return true;
         }
         else
         {
-            LogProducer::error("mc","Control-position different with current-position.");
+            LogProducer::error("mc_base","Control-position different with current-position.");
             return false;
         }
     }
     else
     {
-        LogProducer::error("mc","Cannot get control position from bare core.");
+        LogProducer::error("mc_base","Cannot get control position from bare core.");
         return false;
     }
 }
@@ -1899,7 +1882,7 @@ void BaseGroup::fillTrajectoryFifo(void)
 
                 if (err != SUCCESS)
                 {
-                    LogProducer::error("mc","Fail to sample point on trajectory, code = 0x%llx", err);
+                    LogProducer::error("mc_base","Fail to sample point on trajectory, code = 0x%llx", err);
                     reportError(err);
                     break;
                 }
@@ -1907,8 +1890,8 @@ void BaseGroup::fillTrajectoryFifo(void)
                 if (!soft_constraint_.isJointInConstraint(point.state.angle, MINIMUM_E3))
                 {
                     char buffer[LOG_TEXT_SIZE];
-                    LogProducer::error("mc","Trajectory point out of soft constraint:");
-                    LogProducer::error("mc","Time: %.6f, joint: %s", auto_time_, printDBLine(&point.state.angle[0], buffer, LOG_TEXT_SIZE));
+                    LogProducer::error("mc_base","Trajectory point out of soft constraint:");
+                    LogProducer::error("mc_base","Time: %.6f, joint: %s", auto_time_, printDBLine(&point.state.angle[0], buffer, LOG_TEXT_SIZE));
                     reportError(JOINT_OUT_OF_CONSTRAINT);
                     break;
                 }
@@ -1922,7 +1905,7 @@ void BaseGroup::fillTrajectoryFifo(void)
                 if (auto_time_ + cycle_time_ >= pick_traj_ptr_->smooth.getDuration())
                 {
                     // 平滑段已取完,不足1个cycle_time的剩余时间累加计入接下来的轨迹段
-                    LogProducer::warn("mc","Trajectory start with smooth, smooth picked out, switch to trajectory.");
+                    LogProducer::warn("mc_base","Trajectory start with smooth, smooth picked out, switch to trajectory.");
                     pick_traj_ptr_->start_from_smooth = false;
                     auto_time_ = pick_traj_ptr_->smooth_in_time + (auto_time_ + cycle_time_ - pick_traj_ptr_->smooth.getDuration());
                 }
@@ -1945,7 +1928,7 @@ void BaseGroup::fillTrajectoryFifo(void)
                     pick_traj_ptr_ = pick_traj_ptr_->next;
                     auto_time_ = cycle_time_;
                     waiting_smooth_cnt = 0;
-                    LogProducer::warn("mc","Trajectory end without smooth, switch to next trajectory.");
+                    LogProducer::warn("mc_base","Trajectory end without smooth, switch to next trajectory.");
                     continue;
                 }
                 else if (pick_traj_ptr_->end_with_smooth && auto_time_ > pick_traj_ptr_->smooth_time + MINIMUM_E6)
@@ -1956,7 +1939,7 @@ void BaseGroup::fillTrajectoryFifo(void)
                         // 下一条语句已经就绪,切换到下一条语句;
                         // 直接开始下个循环
                         auto_time_ = auto_time_ - pick_traj_ptr_->smooth_time;
-                        LogProducer::warn("mc","Trajectory end with smooth, next trajectory available, switch to next trajectory. auto_time_ = %lf", auto_time_);
+                        LogProducer::warn("mc_base","Trajectory end with smooth, next trajectory available, switch to next trajectory. auto_time_ = %lf", auto_time_);
                         pick_traj_ptr_->valid = false;
                         pick_traj_ptr_ = pick_traj_ptr_->next;
                         waiting_smooth_cnt = 0;
@@ -1970,7 +1953,7 @@ void BaseGroup::fillTrajectoryFifo(void)
                         if (traj_fifo_.size() < traj_fifo_lower_limit_)
                         {
                             // 轨迹FIFO中轨迹不足, 放弃平滑, 改为CNT0或FINE
-                            LogProducer::warn("mc","Trajectory end with smooth, next trajectory not available when fifo-size = %d, switch to none smooth trajectory.", traj_fifo_.size());
+                            LogProducer::warn("mc_base","Trajectory end with smooth, next trajectory not available when fifo-size = %d, switch to none smooth trajectory.", traj_fifo_.size());
 			                fine_enable_ = true;
                             pick_traj_ptr_->end_with_smooth = false;
                             pick_traj_ptr_->smooth_time = -1;
@@ -1982,7 +1965,7 @@ void BaseGroup::fillTrajectoryFifo(void)
                             // 在PREPARE_RESUME阶段FIFO只进不出，如果卡在圆滑切出点之前且点数大于限制值时上述条件恒不能达成，可能造成暂停恢复规划时点数不足的问题，
                             // 此处需要计时，当超时后下一条语句仍未介入则放弃平滑，保证恢复规划时点数足够
                             // 超时时间300ms, 放弃平滑, 改为CNT0或FINE
-                            LogProducer::warn("mc","Trajectory end with smooth, next trajectory not available when fifo-size = %d in prepare resume, switch to none smooth trajectory.", traj_fifo_.size());
+                            LogProducer::warn("mc_base","Trajectory end with smooth, next trajectory not available when fifo-size = %d in prepare resume, switch to none smooth trajectory.", traj_fifo_.size());
                             fine_enable_ = true;
                             pick_traj_ptr_->end_with_smooth = false;
                             pick_traj_ptr_->smooth_time = -1;
@@ -2006,7 +1989,7 @@ void BaseGroup::fillTrajectoryFifo(void)
 
                 if (err != SUCCESS)
                 {
-                    LogProducer::error("mc","Fail to sample point on trajectory, code = 0x%llx", err);
+                    LogProducer::error("mc_base","Fail to sample point on trajectory, code = 0x%llx", err);
                     reportError(err);
                     break;
                 }
@@ -2016,8 +1999,8 @@ void BaseGroup::fillTrajectoryFifo(void)
                     if (!soft_constraint_.isJointInConstraint(point.state.angle, MINIMUM_E3))
                     {
                         char buffer[LOG_TEXT_SIZE];
-                        LogProducer::error("mc","Trajectory point out of soft constraint:");
-                        LogProducer::error("mc","Time: %.6f, joint: %s", auto_time_, printDBLine(&point.state.angle[0], buffer, LOG_TEXT_SIZE));
+                        LogProducer::error("mc_base","Trajectory point out of soft constraint:");
+                        LogProducer::error("mc_base","Time: %.6f, joint: %s", auto_time_, printDBLine(&point.state.angle[0], buffer, LOG_TEXT_SIZE));
                         reportError(JOINT_OUT_OF_CONSTRAINT);
                         break;
                     }
@@ -2050,13 +2033,13 @@ void BaseGroup::fillTrajectoryFifo(void)
         if (err != SUCCESS)
         {
             group_state_ = AUTO;
-            LogProducer::info("mc","Group-state switch to auto.");
+            LogProducer::info("mc_base","Group-state switch to auto.");
             reportError(err);
         }
         else
         {
             group_state_ = PAUSING;
-            LogProducer::info("mc","Group-state switch to pausing.");
+            LogProducer::info("mc_base","Group-state switch to pausing.");
         }
     }
     else if (group_state_ == PAUSING)
@@ -2194,7 +2177,7 @@ void BaseGroup::updateJointRecorder(void)
     if (loop_cnt > joint_record_update_timeout_)
     {
         loop_cnt = 0;
-        LogProducer::error("mc","Record timeout, cannot save joint into NvRam.");
+        LogProducer::error("mc_base","Record timeout, cannot save joint into NvRam.");
         reportError(MC_RECORD_JOINT_TIMEOUT);
     }
 }
@@ -2218,15 +2201,15 @@ void BaseGroup::updateServoStateAndJoint(void)
 
         if (last_servo_state != servo_state_)
         {
-            LogProducer::info("mc","Servo-state switch %d to %d", last_servo_state, servo_state_);
+            LogProducer::info("mc_base","Servo-state switch %d to %d", last_servo_state, servo_state_);
 
             if ((last_servo_state == SERVO_RUNNING) && (servo_state_ != SERVO_IDLE))
             {
-                LogProducer::error("mc","Group-state: 0x%x, point-cache-empty: %d, auto_to_standby_request: %d, auto_to_pause_request: %d", 
+                LogProducer::error("mc_base","Group-state: 0x%x, point-cache-empty: %d, auto_to_standby_request: %d, auto_to_pause_request: %d", 
                 group_state_, bare_core_.isPointCacheEmpty(), auto_to_standby_request_, auto_to_pause_request_);
-                LogProducer::info("mc","Dump share memory ...");
+                LogProducer::info("mc_base","Dump share memory ...");
                 dumpShareMemory();
-                LogProducer::info("mc","Done.");
+                LogProducer::info("mc_base","Done.");
             }
 
             if ((last_servo_state != SERVO_IDLE && last_servo_state != SERVO_RUNNING) && (servo_state_ == SERVO_IDLE))
@@ -2242,7 +2225,7 @@ void BaseGroup::updateServoStateAndJoint(void)
         if (++fail_cnt > servo_update_timeout_)
         {
             fail_cnt = 0;
-            LogProducer::error("mc","Fail to update joint and state from bare core.");
+            LogProducer::error("mc_base","Fail to update joint and state from bare core.");
             reportError(MC_FAIL_GET_FEEDBACK_JOINT);
         }
     }
@@ -2283,7 +2266,7 @@ ErrorCode BaseGroup::sendAutoTrajectoryFlow(void)
 
         if (err != SUCCESS)
         {
-            LogProducer::error("mc","sendAutoTrajectoryFlow: cannot pick point from trajectory fifo.");
+            LogProducer::error("mc_base","sendAutoTrajectoryFlow: cannot pick point from trajectory fifo.");
             return err;
         }
 
@@ -2293,8 +2276,8 @@ ErrorCode BaseGroup::sendAutoTrajectoryFlow(void)
         {
             // 取到了ENDING-POINT，意味着轨迹FIFO已经取完,必须要切换状态机
             char buffer[LOG_TEXT_SIZE];
-            LogProducer::info("mc","Get ending-point: %s", printDBLine(&points[length - 1].state.angle[0], buffer, LOG_TEXT_SIZE));
-            LogProducer::info("mc","Length of this package: %d, fill result: %d", length, res);
+            LogProducer::info("mc_base","Get ending-point: %s", printDBLine(&points[length - 1].state.angle[0], buffer, LOG_TEXT_SIZE));
+            LogProducer::info("mc_base","Length of this package: %d, fill result: %d", length, res);
 
             if (group_state_ == AUTO)
             {
@@ -2327,10 +2310,10 @@ ErrorCode BaseGroup::pickPointsFromTrajectoryFifo(TrajectoryPoint *points, size_
     while ((traj_fifo_.size() < length + 1) && filling_points_into_traj_fifo_ && (wait_cycle > 0))
     {
         // 如果由于各种问题导致的，FIFO中点数不足，且正在填充FIFO，这种情况下等待10ms
-        LogProducer::warn("mc","Not enough %d points in trajectory FIFO, but fifo fillter is filling points, wait 10 ms", traj_fifo_.size());
+        LogProducer::warn("mc_base","Not enough %d points in trajectory FIFO, but fifo fillter is filling points, wait 10 ms", traj_fifo_.size());
         usleep(10 * 1000);
         wait_cycle --;
-        LogProducer::warn("mc","Now we have %d points in trajectory FIFO", traj_fifo_.size());
+        LogProducer::warn("mc_base","Now we have %d points in trajectory FIFO", traj_fifo_.size());
     }
 
     for (i = 0; i < length; i++)
@@ -2374,7 +2357,7 @@ ErrorCode BaseGroup::sendManualTrajectoryFlow(void)
 
         if (err != SUCCESS)
         {
-            LogProducer::error("mc","sendPoint: cannot pick point from manual motion.");
+            LogProducer::error("mc_base","sendPoint: cannot pick point from manual motion.");
             return err;
         }
 
@@ -2487,12 +2470,12 @@ void BaseGroup::sendTrajectoryFlow(void)
             {
                 error_cnt = 0;
                 reportError(MC_SEND_TRAJECTORY_FAIL);
-                LogProducer::error("mc","sendTrajectoryFlow: bare core time-out, servo state: 0x%x.", servo_state);
+                LogProducer::error("mc_base","sendTrajectoryFlow: bare core time-out, servo state: 0x%x.", servo_state);
             }
         }
         else
         {
-            LogProducer::error("mc","sendTrajectoryFlow aborted, code = 0x%llx", err);
+            LogProducer::error("mc_base","sendTrajectoryFlow aborted, code = 0x%llx", err);
             reportError(err);
             error_cnt = 0;
         }
@@ -2568,9 +2551,9 @@ ErrorCode BaseGroup::getSoftConstraint(JointConstraint &soft_constraint)
 {
     char buffer[LOG_TEXT_SIZE];
     soft_constraint_.getConstraint(soft_constraint);
-    LogProducer::info("mc","Get soft constraint:");
-    LogProducer::info("mc","  lower = %s", printDBLine(&soft_constraint.lower[0], buffer, LOG_TEXT_SIZE));
-    LogProducer::info("mc","  upper = %s", printDBLine(&soft_constraint.upper[0], buffer, LOG_TEXT_SIZE));
+    LogProducer::info("mc_base","Get soft constraint:");
+    LogProducer::info("mc_base","  lower = %s", printDBLine(&soft_constraint.lower[0], buffer, LOG_TEXT_SIZE));
+    LogProducer::info("mc_base","  upper = %s", printDBLine(&soft_constraint.upper[0], buffer, LOG_TEXT_SIZE));
     return SUCCESS;
 }
 
@@ -2579,9 +2562,9 @@ ErrorCode BaseGroup::getFirmConstraint(JointConstraint &firm_constraint)
 {
     char buffer[LOG_TEXT_SIZE];
     firm_constraint_.getConstraint(firm_constraint);
-    LogProducer::info("mc","Get firm constraint.");
-    LogProducer::info("mc","  lower = %s", printDBLine(&firm_constraint.lower[0], buffer, LOG_TEXT_SIZE));
-    LogProducer::info("mc","  upper = %s", printDBLine(&firm_constraint.upper[0], buffer, LOG_TEXT_SIZE));
+    LogProducer::info("mc_base","Get firm constraint.");
+    LogProducer::info("mc_base","  lower = %s", printDBLine(&firm_constraint.lower[0], buffer, LOG_TEXT_SIZE));
+    LogProducer::info("mc_base","  upper = %s", printDBLine(&firm_constraint.upper[0], buffer, LOG_TEXT_SIZE));
     return SUCCESS;
 }
 
@@ -2590,9 +2573,9 @@ ErrorCode BaseGroup::getHardConstraint(JointConstraint &hard_constraint)
 {
     char buffer[LOG_TEXT_SIZE];
     hard_constraint_.getConstraint(hard_constraint);
-    LogProducer::info("mc","Get hard constraint.");
-    LogProducer::info("mc","  lower = %s", printDBLine(&hard_constraint.lower[0], buffer, LOG_TEXT_SIZE));
-    LogProducer::info("mc","  upper = %s", printDBLine(&hard_constraint.upper[0], buffer, LOG_TEXT_SIZE));
+    LogProducer::info("mc_base","Get hard constraint.");
+    LogProducer::info("mc_base","  lower = %s", printDBLine(&hard_constraint.lower[0], buffer, LOG_TEXT_SIZE));
+    LogProducer::info("mc_base","  upper = %s", printDBLine(&hard_constraint.upper[0], buffer, LOG_TEXT_SIZE));
     return SUCCESS;
 }
 
@@ -2601,21 +2584,21 @@ ErrorCode BaseGroup::setSoftConstraint(const JointConstraint &soft_constraint)
 {
     Joint lower, upper;
     char buffer[LOG_TEXT_SIZE];
-    LogProducer::info("mc","Set soft constraint.");
+    LogProducer::info("mc_base","Set soft constraint.");
 
     soft_constraint_.getConstraint(lower, upper);
-    LogProducer::info("mc","Origin soft constraint:");
-    LogProducer::info("mc","  lower = %s", printDBLine(&lower[0], buffer, LOG_TEXT_SIZE));
-    LogProducer::info("mc","  upper = %s", printDBLine(&upper[0], buffer, LOG_TEXT_SIZE));
+    LogProducer::info("mc_base","Origin soft constraint:");
+    LogProducer::info("mc_base","  lower = %s", printDBLine(&lower[0], buffer, LOG_TEXT_SIZE));
+    LogProducer::info("mc_base","  upper = %s", printDBLine(&upper[0], buffer, LOG_TEXT_SIZE));
 
-    LogProducer::info("mc","Given soft constraint:");
-    LogProducer::info("mc","  lower = %s", printDBLine(&soft_constraint.lower[0], buffer, LOG_TEXT_SIZE));
-    LogProducer::info("mc","  upper = %s", printDBLine(&soft_constraint.upper[0], buffer, LOG_TEXT_SIZE));
+    LogProducer::info("mc_base","Given soft constraint:");
+    LogProducer::info("mc_base","  lower = %s", printDBLine(&soft_constraint.lower[0], buffer, LOG_TEXT_SIZE));
+    LogProducer::info("mc_base","  upper = %s", printDBLine(&soft_constraint.upper[0], buffer, LOG_TEXT_SIZE));
 
     firm_constraint_.getConstraint(lower, upper);
-    LogProducer::info("mc","Firm constraint:");
-    LogProducer::info("mc","  lower = %s", printDBLine(&lower[0], buffer, LOG_TEXT_SIZE));
-    LogProducer::info("mc","  upper = %s", printDBLine(&upper[0], buffer, LOG_TEXT_SIZE));
+    LogProducer::info("mc_base","Firm constraint:");
+    LogProducer::info("mc_base","  lower = %s", printDBLine(&lower[0], buffer, LOG_TEXT_SIZE));
+    LogProducer::info("mc_base","  upper = %s", printDBLine(&upper[0], buffer, LOG_TEXT_SIZE));
 
     if (firm_constraint_.isCoverConstaint(soft_constraint))
     {
@@ -2635,18 +2618,18 @@ ErrorCode BaseGroup::setSoftConstraint(const JointConstraint &soft_constraint)
             param.dumpParamFile(AXIS_GROUP_DIR"soft_constraint.yaml"))
         {
             soft_constraint_.setConstraint(soft_constraint);
-            LogProducer::info("mc","Soft constraint updated successfully.");
+            LogProducer::info("mc_base","Soft constraint updated successfully.");
             return SUCCESS;
         }
         else
         {
-            LogProducer::error("mc","Fail dumping soft constraint to config file");
+            LogProducer::error("mc_base","Fail dumping soft constraint to config file");
             return MC_SET_PARAM_FAILED;
         }
     }
     else
     {
-        LogProducer::error("mc","Given soft constraint out of firm constraint.");
+        LogProducer::error("mc_base","Given soft constraint out of firm constraint.");
         return INVALID_PARAMETER;
     }
 }
@@ -2656,21 +2639,21 @@ ErrorCode BaseGroup::setFirmConstraint(const JointConstraint &firm_constraint)
 {
     Joint lower, upper;
     char buffer[LOG_TEXT_SIZE];
-    LogProducer::info("mc","Set firm constraint.");
+    LogProducer::info("mc_base","Set firm constraint.");
 
     firm_constraint_.getConstraint(lower, upper);
-    LogProducer::info("mc","Origin firm constraint:");
-    LogProducer::info("mc","  lower = %s", printDBLine(&lower[0], buffer, LOG_TEXT_SIZE));
-    LogProducer::info("mc","  upper = %s", printDBLine(&upper[0], buffer, LOG_TEXT_SIZE));
+    LogProducer::info("mc_base","Origin firm constraint:");
+    LogProducer::info("mc_base","  lower = %s", printDBLine(&lower[0], buffer, LOG_TEXT_SIZE));
+    LogProducer::info("mc_base","  upper = %s", printDBLine(&upper[0], buffer, LOG_TEXT_SIZE));
 
-    LogProducer::info("mc","Given firm constraint:");
-    LogProducer::info("mc","  lower = %s", printDBLine(&firm_constraint.lower[0], buffer, LOG_TEXT_SIZE));
-    LogProducer::info("mc","  upper = %s", printDBLine(&firm_constraint.upper[0], buffer, LOG_TEXT_SIZE));
+    LogProducer::info("mc_base","Given firm constraint:");
+    LogProducer::info("mc_base","  lower = %s", printDBLine(&firm_constraint.lower[0], buffer, LOG_TEXT_SIZE));
+    LogProducer::info("mc_base","  upper = %s", printDBLine(&firm_constraint.upper[0], buffer, LOG_TEXT_SIZE));
 
     hard_constraint_.getConstraint(lower, upper);
-    LogProducer::info("mc","Hard constraint:");
-    LogProducer::info("mc","  lower = %s", printDBLine(&lower[0], buffer, LOG_TEXT_SIZE));
-    LogProducer::info("mc","  upper = %s", printDBLine(&upper[0], buffer, LOG_TEXT_SIZE));
+    LogProducer::info("mc_base","Hard constraint:");
+    LogProducer::info("mc_base","  lower = %s", printDBLine(&lower[0], buffer, LOG_TEXT_SIZE));
+    LogProducer::info("mc_base","  upper = %s", printDBLine(&upper[0], buffer, LOG_TEXT_SIZE));
 
     if (hard_constraint_.isCoverConstaint(firm_constraint_))
     {
@@ -2690,18 +2673,18 @@ ErrorCode BaseGroup::setFirmConstraint(const JointConstraint &firm_constraint)
             param.dumpParamFile(AXIS_GROUP_DIR"firm_constraint.yaml"))
         {
             firm_constraint_.setConstraint(firm_constraint);
-            LogProducer::info("mc","Firm constraint updated successfully.");
+            LogProducer::info("mc_base","Firm constraint updated successfully.");
             return SUCCESS;
         }
         else
         {
-            LogProducer::error("mc","Fail dumping firm constraint to config file");
+            LogProducer::error("mc_base","Fail dumping firm constraint to config file");
             return MC_SET_PARAM_FAILED;
         }
     }
     else
     {
-        LogProducer::error("mc","Given firm constraint out of hard constraint.");
+        LogProducer::error("mc_base","Given firm constraint out of hard constraint.");
         return INVALID_PARAMETER;
     }
 }
@@ -2710,14 +2693,14 @@ ErrorCode BaseGroup::setFirmConstraint(const JointConstraint &firm_constraint)
 ErrorCode BaseGroup::setHardConstraint(const JointConstraint &hard_constraint)
 {
     char buffer[LOG_TEXT_SIZE];
-    LogProducer::info("mc","Set hard constraint.");
-    LogProducer::info("mc","Origin hard constraint:");
-    LogProducer::info("mc","  lower = %s", printDBLine(&hard_constraint_.lower()[0], buffer, LOG_TEXT_SIZE));
-    LogProducer::info("mc","  upper = %s", printDBLine(&hard_constraint_.upper()[0], buffer, LOG_TEXT_SIZE));
+    LogProducer::info("mc_base","Set hard constraint.");
+    LogProducer::info("mc_base","Origin hard constraint:");
+    LogProducer::info("mc_base","  lower = %s", printDBLine(&hard_constraint_.lower()[0], buffer, LOG_TEXT_SIZE));
+    LogProducer::info("mc_base","  upper = %s", printDBLine(&hard_constraint_.upper()[0], buffer, LOG_TEXT_SIZE));
 
-    LogProducer::info("mc","Given hard constraint:");
-    LogProducer::info("mc","  lower = %s", printDBLine(&hard_constraint.lower[0], buffer, LOG_TEXT_SIZE));
-    LogProducer::info("mc","  upper = %s", printDBLine(&hard_constraint.upper[0], buffer, LOG_TEXT_SIZE));
+    LogProducer::info("mc_base","Given hard constraint:");
+    LogProducer::info("mc_base","  lower = %s", printDBLine(&hard_constraint.lower[0], buffer, LOG_TEXT_SIZE));
+    LogProducer::info("mc_base","  upper = %s", printDBLine(&hard_constraint.upper[0], buffer, LOG_TEXT_SIZE));
 
     base_space::YamlHelp param;
     vector<double> v_upper(&hard_constraint.upper[0], &hard_constraint.upper[0] + NUM_OF_JOINT);
@@ -2735,82 +2718,15 @@ ErrorCode BaseGroup::setHardConstraint(const JointConstraint &hard_constraint)
         param.dumpParamFile(AXIS_GROUP_DIR"hard_constraint.yaml"))
     {
         hard_constraint_.setConstraint(hard_constraint);
-        LogProducer::info("mc","Hard constraint updated successfully.");
+        LogProducer::info("mc_base","Hard constraint updated successfully.");
         return SUCCESS;
     }
     else
     {
-        LogProducer::error("mc","Fail dumping hard constraint to config file");
+        LogProducer::error("mc_base","Fail dumping hard constraint to config file");
         return MC_SET_PARAM_FAILED;
     }
 }
-
-ErrorCode BaseGroup::downloadServoParam(const char *file_name)
-{
-    base_space::YamlHelp param;
-    LogProducer::info("mc","Download servo parameters to bare core ...");
-
-    if (!param.loadParamFile(file_name))
-    {
-        LogProducer::error("mc","Fail to load servo config file: %s", file_name);
-        return MC_LOAD_PARAM_FAILED;
-    }
-
-    int param_length;
-    int startaddr_stored;
-    int stored_length;
-    vector<int> stored_conf;
-
-    if (!param.getParam("servo/stored_start", startaddr_stored) ||
-        !param.getParam("servo/param_length", param_length) ||
-        !param.getParam("servo/stored_length", stored_length) ||
-        !param.getParam("servo/stored_param", stored_conf))
-    {
-        LogProducer::error("mc","Fail to load max velocity of each axis");
-        return MC_LOAD_PARAM_FAILED;
-    }
-
-    if (startaddr_stored + stored_length > param_length)
-    {
-        LogProducer::error("mc","Servo param format invalid: start_addr + length > param_length");
-        return INVALID_PARAMETER;
-    }
-
-    if ((int)stored_conf.size() * 4 != stored_length)
-    {
-        LogProducer::error("mc","Servo param format invalid: stored_length mismatch with array_size");
-        return INVALID_PARAMETER;
-    }
-
-    char *datastr = new char[param_length];
-
-    if (datastr == NULL)
-    {
-        LogProducer::error("mc","Fail to buffer servo parameter");
-        return MC_INTERNAL_FAULT;
-    }
-
-    memcpy(datastr + startaddr_stored, static_cast<void*>(&stored_conf[0]), stored_length);
-    
-    for (int addr = startaddr_stored; addr < startaddr_stored + stored_length;)
-    {
-        int seg_len = startaddr_stored + stored_length - addr;
-        seg_len = seg_len > 512 ? 512 : seg_len;
-        // std::cout << "addr=" << addr << ", startaddr=" << startaddr_stored << ", seg_len=" << seg_len << std::endl;
-
-        if (!bare_core_.downloadServoParam(addr, &datastr[addr], seg_len))
-        {
-            LogProducer::error("mc","Fail to download servo parameter to barecore");
-            return MC_COMMUNICATION_WITH_BARECORE_FAIL;
-        }
-
-        addr += seg_len;
-    }
-
-    delete [] datastr;
-    return SUCCESS;
-}
-
 
 
 } // namespace fst_mc

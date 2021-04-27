@@ -17,3 +17,11 @@ target_link_libraries(test_controller_get_system_time ${rtm_LIBRARIES} pb tp_com
 ######### test_controller_set_system_time #########
 add_executable(test_controller_set_system_time test_controller_set_system_time.cpp)
 target_link_libraries(test_controller_set_system_time ${rtm_LIBRARIES} pb tp_comm_test protos)
+
+######### test_controller_set_work_mode #########
+add_executable(test_controller_set_work_mode test_controller_set_work_mode.cpp)
+target_link_libraries(test_controller_set_work_mode ${rtm_LIBRARIES} pb tp_comm_test protos)
+
+######### test_controller_get_work_mode #########
+add_executable(test_controller_get_work_mode test_controller_get_work_mode.cpp)
+target_link_libraries(test_controller_get_work_mode ${rtm_LIBRARIES} pb tp_comm_test protos)

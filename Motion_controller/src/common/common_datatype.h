@@ -17,7 +17,7 @@
  * @def GROUP_NUM 
  * The number of groups in the system.
  */
-#define GROUP_NUM 0
+#define GROUP_NUM 1
 
 /**
  * @brief The attribute of a parameter defined by bit.

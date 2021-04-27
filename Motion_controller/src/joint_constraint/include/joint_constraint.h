@@ -10,7 +10,7 @@
 #include <basic_alg.h>
 
 
-namespace fst_mc
+namespace group_space
 {
 
 

@@ -17,7 +17,7 @@
 #include <algorithm>
 
 
-namespace fst_mc
+namespace group_space
 {
 
 class PauseResumePlanner

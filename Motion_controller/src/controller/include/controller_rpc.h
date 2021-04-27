@@ -19,6 +19,7 @@
 #include "system/servo_cpu_comm_base.h"
 #include "axis.h"
 #include "io_1000.h"
+#include "motion_control.h"
 
 /**
  * @brief user_space includes the user level implementation.
@@ -56,9 +57,8 @@ public:
      */
     void init(TpComm* tp_comm_ptr, ControllerPublish* publish_ptr, servo_comm_space::ServoCpuCommBase* cpu_comm_ptr, 
         servo_comm_space::ServoCommBase* servo_comm_ptr[], axis_space::Axis* axis_ptr[AXIS_NUM],
-        system_model_space::AxisModel_t* axis_model_ptr[AXIS_NUM], 
-        base_space::FileManager* file_manager_ptr,
-        hal_space::Io1000* io_dev_ptr);
+        system_model_space::AxisModel_t* axis_model_ptr[AXIS_NUM], group_space::MotionControl* group_ptr[GROUP_NUM],
+        base_space::FileManager* file_manager_ptr, hal_space::Io1000* io_dev_ptr);
 
     /**
      * @brief Process the service request in case the rpc comes.
@@ -78,6 +78,8 @@ private:
     int32_t* sync_ack_ptr_;
     hal_space::Io1000* io_dev_ptr_;
     DeviceVersion device_version_;
+
+    group_space::MotionControl* group_ptr_[GROUP_NUM];
 
     enum {HASH_BYTE_SIZE = 4,};
     enum {QUICK_SEARCH_TABLE_SIZE = 128,};
@@ -164,6 +166,17 @@ private:
     void handleRpc0x0000E4B7(void* request_data_ptr, void* response_data_ptr);
     //"/rpc/axis/rtmReadAxisFdbPdoPtr"	
     void handleRpc0x0000A632(void* request_data_ptr, void* response_data_ptr);
+
+    //"/rpc/group/mcGroupReset"	
+    void handleRpc0x00016FF4(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/group/mcGroupEnable"	
+    void handleRpc0x00003615(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/group/mcGroupDisable"	
+    void handleRpc0x0000D185(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/group/mcGroupReadError"	
+    void handleRpc0x00004BE2(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/group/mcGroupReadStatus"	
+    void handleRpc0x00002A83(void* request_data_ptr, void* response_data_ptr);
 
     //"/rpc/servo_sampling/setSamplingConfiguration"	
     void handleRpc0x0000845E(void* request_data_ptr, void* response_data_ptr);

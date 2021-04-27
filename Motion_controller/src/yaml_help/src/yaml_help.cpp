@@ -86,6 +86,18 @@ bool YamlHelp::getParam(const std::string& key, bool& value)
                     value = node_[key_set[0]][key_set[1]].as<bool>();
                     return true;
                 }
+            case 3: 
+                if(node_[key_set[0]][key_set[1]][key_set[2]].IsDefined())
+                {
+                    value = node_[key_set[0]][key_set[1]][key_set[2]].as<bool>();
+                    return true;
+                }
+            case 4: 
+                if(node_[key_set[0]][key_set[1]][key_set[2]][key_set[3]].IsDefined())
+                {
+                    value = node_[key_set[0]][key_set[1]][key_set[2]][key_set[3]].as<bool>();
+                    return true;
+                }
         }
         return false;
     }
@@ -114,6 +126,18 @@ bool YamlHelp::getParam(const std::string& key, int& value)
                 if(node_[key_set[0]][key_set[1]].IsDefined())
                 {
                     value = node_[key_set[0]][key_set[1]].as<int>();
+                    return true;
+                }
+            case 3: 
+                if(node_[key_set[0]][key_set[1]][key_set[2]].IsDefined())
+                {
+                    value = node_[key_set[0]][key_set[1]][key_set[2]].as<int>();
+                    return true;
+                }
+            case 4: 
+                if(node_[key_set[0]][key_set[1]][key_set[2]][key_set[3]].IsDefined())
+                {
+                    value = node_[key_set[0]][key_set[1]][key_set[2]][key_set[3]].as<int>();
                     return true;
                 }
         }
@@ -146,6 +170,18 @@ bool YamlHelp::getParam(const std::string& key, double& value)
                     value = node_[key_set[0]][key_set[1]].as<double>();
                     return true;
                 }
+            case 3: 
+                if(node_[key_set[0]][key_set[1]][key_set[2]].IsDefined())
+                {
+                    value = node_[key_set[0]][key_set[1]][key_set[2]].as<double>();
+                    return true;
+                }
+            case 4: 
+                if(node_[key_set[0]][key_set[1]][key_set[2]][key_set[3]].IsDefined())
+                {
+                    value = node_[key_set[0]][key_set[1]][key_set[2]][key_set[3]].as<double>();
+                    return true;
+                }
         }
         return false;
     }
@@ -174,6 +210,18 @@ bool YamlHelp::getParam(const std::string& key, std::string& value)
                 if(node_[key_set[0]][key_set[1]].IsDefined())
                 {
                     value = node_[key_set[0]][key_set[1]].as<std::string>();
+                    return true;
+                }
+            case 3: 
+                if(node_[key_set[0]][key_set[1]][key_set[2]].IsDefined())
+                {
+                    value = node_[key_set[0]][key_set[1]][key_set[2]].as<string>();
+                    return true;
+                }
+            case 4: 
+                if(node_[key_set[0]][key_set[1]][key_set[2]][key_set[3]].IsDefined())
+                {
+                    value = node_[key_set[0]][key_set[1]][key_set[2]][key_set[3]].as<string>();
                     return true;
                 }
         }
@@ -206,6 +254,18 @@ bool YamlHelp::getParam(const std::string& key, std::vector<bool>& value)
                     value = node_[key_set[0]][key_set[1]].as<std::vector<bool>>();
                     return true;
                 }
+            case 3: 
+                if(node_[key_set[0]][key_set[1]][key_set[2]].IsDefined())
+                {
+                    value = node_[key_set[0]][key_set[1]][key_set[2]].as<std::vector<bool>>();
+                    return true;
+                }
+            case 4: 
+                if(node_[key_set[0]][key_set[1]][key_set[2]][key_set[3]].IsDefined())
+                {
+                    value = node_[key_set[0]][key_set[1]][key_set[2]][key_set[3]].as<std::vector<bool>>();
+                    return true;
+                }
         }
         return false;
     }
@@ -234,6 +294,18 @@ bool YamlHelp::getParam(const std::string& key, std::vector<int>& value)
                 if(node_[key_set[0]][key_set[1]].IsDefined())
                 {
                     value = node_[key_set[0]][key_set[1]].as<std::vector<int>>();
+                    return true;
+                }
+            case 3: 
+                if(node_[key_set[0]][key_set[1]][key_set[2]].IsDefined())
+                {
+                    value = node_[key_set[0]][key_set[1]][key_set[2]].as<std::vector<int>>();
+                    return true;
+                }
+            case 4: 
+                if(node_[key_set[0]][key_set[1]][key_set[2]][key_set[3]].IsDefined())
+                {
+                    value = node_[key_set[0]][key_set[1]][key_set[2]][key_set[3]].as<std::vector<int>>();
                     return true;
                 }
         }
@@ -266,6 +338,18 @@ bool YamlHelp::getParam(const std::string& key, std::vector<double>& value)
                     value = node_[key_set[0]][key_set[1]].as<std::vector<double>>();
                     return true;
                 }
+            case 3: 
+                if(node_[key_set[0]][key_set[1]][key_set[2]].IsDefined())
+                {
+                    value = node_[key_set[0]][key_set[1]][key_set[2]].as<std::vector<double>>();
+                    return true;
+                }
+            case 4: 
+                if(node_[key_set[0]][key_set[1]][key_set[2]][key_set[3]].IsDefined())
+                {
+                    value = node_[key_set[0]][key_set[1]][key_set[2]][key_set[3]].as<std::vector<double>>();
+                    return true;
+                }
         }
         return false;
     }
@@ -294,6 +378,18 @@ bool YamlHelp::getParam(const std::string& key, std::vector<std::string>& value)
                 if(node_[key_set[0]][key_set[1]].IsDefined())
                 {
                     value = node_[key_set[0]][key_set[1]].as<std::vector<std::string>>();
+                    return true;
+                }
+            case 3: 
+                if(node_[key_set[0]][key_set[1]][key_set[2]].IsDefined())
+                {
+                    value = node_[key_set[0]][key_set[1]][key_set[2]].as<std::vector<std::string>>();
+                    return true;
+                }
+            case 4: 
+                if(node_[key_set[0]][key_set[1]][key_set[2]][key_set[3]].IsDefined())
+                {
+                    value = node_[key_set[0]][key_set[1]][key_set[2]][key_set[3]].as<std::vector<std::string>>();
                     return true;
                 }
         }
@@ -353,6 +449,18 @@ bool YamlHelp::setParam(const std::string& key, const bool& value)
                 {
                     node_[key_set[0]][key_set[1]] = value;
                     return true;
+                }
+            case 3: 
+                if(node_[key_set[0]][key_set[1]][key_set[2]].IsDefined())
+                {
+                    node_[key_set[0]][key_set[1]][key_set[2]] = value;
+                    return true;
+                }
+            case 4: 
+                if(node_[key_set[0]][key_set[1]][key_set[2]][key_set[3]].IsDefined())
+                {
+                    node_[key_set[0]][key_set[1]][key_set[2]][key_set[3]] = value;
+                    return true;
                 }                
         }
         return false;
@@ -383,7 +491,19 @@ bool YamlHelp::setParam(const std::string& key, const int& value)
                 {
                     node_[key_set[0]][key_set[1]] = value;
                     return true;
-                }                
+                }   
+            case 3: 
+                if(node_[key_set[0]][key_set[1]][key_set[2]].IsDefined())
+                {
+                    node_[key_set[0]][key_set[1]][key_set[2]] = value;
+                    return true;
+                }
+            case 4: 
+                if(node_[key_set[0]][key_set[1]][key_set[2]][key_set[3]].IsDefined())
+                {
+                    node_[key_set[0]][key_set[1]][key_set[2]][key_set[3]] = value;
+                    return true;
+                }             
         }
         return false;
     }
@@ -413,7 +533,19 @@ bool YamlHelp::setParam(const std::string& key, const double& value)
                 {
                     node_[key_set[0]][key_set[1]] = value;
                     return true;
-                }                
+                } 
+            case 3: 
+                if(node_[key_set[0]][key_set[1]][key_set[2]].IsDefined())
+                {
+                    node_[key_set[0]][key_set[1]][key_set[2]] = value;
+                    return true;
+                }
+            case 4: 
+                if(node_[key_set[0]][key_set[1]][key_set[2]][key_set[3]].IsDefined())
+                {
+                    node_[key_set[0]][key_set[1]][key_set[2]][key_set[3]] = value;
+                    return true;
+                }               
         }
         return false;
     }
@@ -443,7 +575,19 @@ bool YamlHelp::setParam(const std::string& key, const std::string& value)
                 {
                     node_[key_set[0]][key_set[1]] = value;
                     return true;
-                }                
+                }    
+            case 3: 
+                if(node_[key_set[0]][key_set[1]][key_set[2]].IsDefined())
+                {
+                    node_[key_set[0]][key_set[1]][key_set[2]] = value;
+                    return true;
+                }
+            case 4: 
+                if(node_[key_set[0]][key_set[1]][key_set[2]][key_set[3]].IsDefined())
+                {
+                    node_[key_set[0]][key_set[1]][key_set[2]][key_set[3]] = value;
+                    return true;
+                }            
         }
         return false;
     }
@@ -473,7 +617,19 @@ bool YamlHelp::setParam(const std::string& key, const std::vector<bool>& value)
                 {
                     node_[key_set[0]][key_set[1]] = value;
                     return true;
-                }                
+                } 
+            case 3: 
+                if(node_[key_set[0]][key_set[1]][key_set[2]].IsDefined())
+                {
+                    node_[key_set[0]][key_set[1]][key_set[2]] = value;
+                    return true;
+                }
+            case 4: 
+                if(node_[key_set[0]][key_set[1]][key_set[2]][key_set[3]].IsDefined())
+                {
+                    node_[key_set[0]][key_set[1]][key_set[2]][key_set[3]] = value;
+                    return true;
+                }               
         }
         return false;
     }
@@ -503,7 +659,19 @@ bool YamlHelp::setParam(const std::string& key, const std::vector<int>& value)
                 {
                     node_[key_set[0]][key_set[1]] = value;
                     return true;
-                }                
+                } 
+            case 3: 
+                if(node_[key_set[0]][key_set[1]][key_set[2]].IsDefined())
+                {
+                    node_[key_set[0]][key_set[1]][key_set[2]] = value;
+                    return true;
+                }
+            case 4: 
+                if(node_[key_set[0]][key_set[1]][key_set[2]][key_set[3]].IsDefined())
+                {
+                    node_[key_set[0]][key_set[1]][key_set[2]][key_set[3]] = value;
+                    return true;
+                }               
         }
         return false;
     }
@@ -533,7 +701,19 @@ bool YamlHelp::setParam(const std::string& key, const std::vector<double>& value
                 {
                     node_[key_set[0]][key_set[1]] = value;
                     return true;
-                }                
+                }  
+            case 3: 
+                if(node_[key_set[0]][key_set[1]][key_set[2]].IsDefined())
+                {
+                    node_[key_set[0]][key_set[1]][key_set[2]] = value;
+                    return true;
+                }
+            case 4: 
+                if(node_[key_set[0]][key_set[1]][key_set[2]][key_set[3]].IsDefined())
+                {
+                    node_[key_set[0]][key_set[1]][key_set[2]][key_set[3]] = value;
+                    return true;
+                }              
         }
         return false;
     }
@@ -563,7 +743,19 @@ bool YamlHelp::setParam(const std::string& key, const std::vector<std::string>& 
                 {
                     node_[key_set[0]][key_set[1]] = value;
                     return true;
-                }                
+                }       
+            case 3: 
+                if(node_[key_set[0]][key_set[1]][key_set[2]].IsDefined())
+                {
+                    node_[key_set[0]][key_set[1]][key_set[2]] = value;
+                    return true;
+                }
+            case 4: 
+                if(node_[key_set[0]][key_set[1]][key_set[2]][key_set[3]].IsDefined())
+                {
+                    node_[key_set[0]][key_set[1]][key_set[2]][key_set[3]] = value;
+                    return true;
+                }         
         }
         return false;
     }
@@ -593,7 +785,19 @@ bool YamlHelp::addParam(const std::string& key, const bool& value)
                 {
                     node_[key_set[0]][key_set[1]] = value;
                     return true;
-                }                
+                }      
+            case 3: 
+                if(node_[key_set[0]][key_set[1]][key_set[2]].IsDefined())
+                {
+                    node_[key_set[0]][key_set[1]][key_set[2]] = value;
+                    return true;
+                }
+            case 4: 
+                if(node_[key_set[0]][key_set[1]][key_set[2]][key_set[3]].IsDefined())
+                {
+                    node_[key_set[0]][key_set[1]][key_set[2]][key_set[3]] = value;
+                    return true;
+                }          
         }
         return false;
     }
@@ -623,7 +827,19 @@ bool YamlHelp::addParam(const std::string& key, const int& value)
                 {
                     node_[key_set[0]][key_set[1]] = value;
                     return true;
-                }                
+                }     
+            case 3: 
+                if(node_[key_set[0]][key_set[1]][key_set[2]].IsDefined())
+                {
+                    node_[key_set[0]][key_set[1]][key_set[2]] = value;
+                    return true;
+                }
+            case 4: 
+                if(node_[key_set[0]][key_set[1]][key_set[2]][key_set[3]].IsDefined())
+                {
+                    node_[key_set[0]][key_set[1]][key_set[2]][key_set[3]] = value;
+                    return true;
+                }           
         }
         return false;
     }
@@ -653,7 +869,19 @@ bool YamlHelp::addParam(const std::string& key, const double& value)
                 {
                     node_[key_set[0]][key_set[1]] = value;
                     return true;
-                }                
+                }   
+            case 3: 
+                if(node_[key_set[0]][key_set[1]][key_set[2]].IsDefined())
+                {
+                    node_[key_set[0]][key_set[1]][key_set[2]] = value;
+                    return true;
+                }
+            case 4: 
+                if(node_[key_set[0]][key_set[1]][key_set[2]][key_set[3]].IsDefined())
+                {
+                    node_[key_set[0]][key_set[1]][key_set[2]][key_set[3]] = value;
+                    return true;
+                }             
         }
         return false;
     }
@@ -683,7 +911,19 @@ bool YamlHelp::addParam(const std::string& key, const std::string& value)
                 {
                     node_[key_set[0]][key_set[1]] = value;
                     return true;
-                }                
+                }   
+            case 3: 
+                if(node_[key_set[0]][key_set[1]][key_set[2]].IsDefined())
+                {
+                    node_[key_set[0]][key_set[1]][key_set[2]] = value;
+                    return true;
+                }
+            case 4: 
+                if(node_[key_set[0]][key_set[1]][key_set[2]][key_set[3]].IsDefined())
+                {
+                    node_[key_set[0]][key_set[1]][key_set[2]][key_set[3]] = value;
+                    return true;
+                }             
         }
         return false;
     }
@@ -713,7 +953,19 @@ bool YamlHelp::addParam(const std::string& key, const std::vector<bool>& value)
                 {
                     node_[key_set[0]][key_set[1]] = value;
                     return true;
-                }                
+                }   
+            case 3: 
+                if(node_[key_set[0]][key_set[1]][key_set[2]].IsDefined())
+                {
+                    node_[key_set[0]][key_set[1]][key_set[2]] = value;
+                    return true;
+                }
+            case 4: 
+                if(node_[key_set[0]][key_set[1]][key_set[2]][key_set[3]].IsDefined())
+                {
+                    node_[key_set[0]][key_set[1]][key_set[2]][key_set[3]] = value;
+                    return true;
+                }             
         }
         return false;
     }
@@ -743,7 +995,19 @@ bool YamlHelp::addParam(const std::string& key, const std::vector<int>& value)
                 {
                     node_[key_set[0]][key_set[1]] = value;
                     return true;
-                }                
+                }       
+            case 3: 
+                if(node_[key_set[0]][key_set[1]][key_set[2]].IsDefined())
+                {
+                    node_[key_set[0]][key_set[1]][key_set[2]] = value;
+                    return true;
+                }
+            case 4: 
+                if(node_[key_set[0]][key_set[1]][key_set[2]][key_set[3]].IsDefined())
+                {
+                    node_[key_set[0]][key_set[1]][key_set[2]][key_set[3]] = value;
+                    return true;
+                }         
         }
         return false;
     }
@@ -803,7 +1067,19 @@ bool YamlHelp::addParam(const std::string& key, const std::vector<std::string>& 
                 {
                     node_[key_set[0]][key_set[1]] = value;
                     return true;
-                }                
+                }       
+            case 3: 
+                if(node_[key_set[0]][key_set[1]][key_set[2]].IsDefined())
+                {
+                    node_[key_set[0]][key_set[1]][key_set[2]] = value;
+                    return true;
+                }
+            case 4: 
+                if(node_[key_set[0]][key_set[1]][key_set[2]][key_set[3]].IsDefined())
+                {
+                    node_[key_set[0]][key_set[1]][key_set[2]][key_set[3]] = value;
+                    return true;
+                }         
         }
         return false;
     }

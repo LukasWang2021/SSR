@@ -247,7 +247,7 @@ private:
     void handleRequest0x000167C5(int recv_bytes);
     /********rpc/controller/getSystemTime, RequestMessageType_Void**********/	
     void handleRequest0x000003F5(int recv_bytes);
-    /********rpc/controller/setWorkMode, RequestMessageType_WorkMode**********/	
+    /********rpc/controller/setWorkMode, RequestMessageType_Uint32**********/	
     void handleRequest0x00006825(int recv_bytes);
     /********rpc/controller/getWorkMode, RequestMessageType_Void**********/	
     void handleRequest0x00003325(int recv_bytes);
@@ -293,6 +293,17 @@ private:
     /********rpc/axis/rtmReadAxisFdbPdoPtr, RequestMessageType_Int32**********/	
     void handleRequest0x0000A632(int recv_bytes);
         
+    /********rpc/group/mcGroupReset, RequestMessageType_Int32**********/	
+    void handleRequest0x00016FF4(int recv_bytes);
+    /********rpc/group/mcGroupEnable, RequestMessageType_Int32**********/	
+    void handleRequest0x00003615(int recv_bytes);
+    /********rpc/group/mcGroupDisable, RequestMessageType_Int32**********/	
+    void handleRequest0x0000D185(int recv_bytes);
+    /********rpc/group/mcGroupReadError, RequestMessageType_Int32**********/	
+    void handleRequest0x00004BE2(int recv_bytes);
+    /********rpc/group/mcGroupReadStatus, RequestMessageType_Int32**********/	
+    void handleRequest0x00002A83(int recv_bytes);
+
     /********rpc/servo_sampling/setSamplingConfiguration, RequestMessageType_Int32_Uint32List(count=2)**********/	
     void handleRequest0x0000845E(int recv_bytes);
     /********rpc/servo_sampling/getSamplingConfiguration, RequestMessageType_Int32**********/	
@@ -429,7 +440,7 @@ private:
     void handleResponse0x000003F5(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
     /********rpc/controller/setWorkMode, ResponseMessageType_Uint64**********/	
     void handleResponse0x00006825(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
-    /********rpc/controller/getWorkMode, ResponseMessageType_Uint64_WorkMode**********/	
+    /********rpc/controller/getWorkMode, ResponseMessageType_Uint64_Uint32**********/	
     void handleResponse0x00003325(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
         
     /********rpc/axis/mcPower, ResponseMessageType_Uint64**********/	
@@ -472,7 +483,19 @@ private:
     void handleResponse0x0000E4B7(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
     /********rpc/axis/rtmReadAxisFdbPdoPtr, ResponseMessageType_Uint64_Int32List**********/	
     void handleResponse0x0000A632(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
-        
+
+    /********rpc/group/mcGroupReset, ResponseMessageType_Uint64**********/	
+    void handleResponse0x00016FF4(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/group/mcGroupEnable, ResponseMessageType_Uint64**********/	
+    void handleResponse0x00003615(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/group/mcGroupDisable, ResponseMessageType_Uint64**********/	
+    void handleResponse0x0000D185(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/group/mcGroupReadError, ResponseMessageType_Uint64_Uint64**********/	
+    void handleResponse0x00004BE2(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/group/mcGroupReadStatus, ResponseMessageType_Uint64_GroupStatus**********/	
+    void handleResponse0x00002A83(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+
+
     /********rpc/servo_sampling/setSamplingConfiguration, ResponseMessageType_Uint64**********/	
     void handleResponse0x0000845E(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
     /********rpc/servo_sampling/getSamplingConfiguration, ResponseMessageType_Uint64_Uint32List(count=2)**********/	

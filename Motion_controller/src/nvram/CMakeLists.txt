@@ -14,21 +14,21 @@ include_directories(
 
 aux_source_directory(src SRC)
 
-add_executable(nvram_server
-    src/nvram_server.cpp
-)
+#add_executable(nvram_server
+#    src/nvram_server.cpp
+#)
 
 add_library(nvram_handler SHARED
     src/nvram_handler.cpp
 )
 
-target_link_libraries(nvram_server
-    ${rtm_LIBRARIES}
-    yaml_help
-    log_manager_producer
-    thread_help
-    rtm_spi
-)
+#target_link_libraries(nvram_server
+#    ${rtm_LIBRARIES}
+#    yaml_help
+#    log_manager_producer
+#    thread_help
+#    rtm_spi
+#)
 
 target_link_libraries(nvram_handler 
     ${rtm_LIBRARIES}

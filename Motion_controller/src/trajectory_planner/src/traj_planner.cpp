@@ -12,11 +12,11 @@
 #include <traj_planner.h>
 #include "log_manager_producer.h"
 
-using namespace fst_mc;
+using namespace group_space;
 using namespace basic_alg;
 using namespace log_space;
 
-namespace fst_mc
+namespace group_space
 {
 
 TrajectoryPlanner::TrajectoryPlanner(void)
@@ -799,7 +799,7 @@ ErrorCode TrajectoryPlanner::sampleTrajectory(double sample_time, JointState &po
 	return SUCCESS;
 }
 
-ErrorCode TrajectoryPlanner::sampleTrajectory(double sample_time, const basic_alg::Joint &reference, fst_mc::JointState &point)
+ErrorCode TrajectoryPlanner::sampleTrajectory(double sample_time, const basic_alg::Joint &reference, JointState &point)
 {
 	if (target_info_.type == MOTION_JOINT)
 	{
@@ -1054,7 +1054,7 @@ ErrorCode TrajectoryPlanner::sampleTrajectoryJoint(double start_time, basic_alg:
 
 
 ErrorCode TrajectoryPlanner::sampleCartesianTrajectory(double start_time, basic_alg::Joint reference, uint32_t &point_num, 
-		fst_mc::JointState &point, basic_alg::PoseQuaternion &pose, double &postion_vel)
+		JointState &point, basic_alg::PoseQuaternion &pose, double &postion_vel)
 {
 	double total_time;
 	double sample_time = start_time;
@@ -1266,7 +1266,7 @@ double TrajectoryPlanner::getDuration(void)
 	return duration;
 }
 
-const fst_mc::MotionInfo& TrajectoryPlanner::getMotionInfo(void) const
+const MotionInfo& TrajectoryPlanner::getMotionInfo(void) const
 {
 	return target_info_;
 }

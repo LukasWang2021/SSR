@@ -15,7 +15,7 @@ using namespace std;
 using namespace basic_alg;
 using namespace log_space;
 
-namespace fst_mc
+namespace group_space
 {
 
 ErrorCode BaseGroup::setOfflineTrajectory(const std::string &offline_trajectory)

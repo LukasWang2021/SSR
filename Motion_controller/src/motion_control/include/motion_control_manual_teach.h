@@ -18,7 +18,7 @@
 #include <trans_matrix.h>
 #include "log_manager_producer.h"
 
-namespace fst_mc
+namespace group_space
 {
 
 

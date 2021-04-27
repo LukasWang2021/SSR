@@ -12,7 +12,7 @@
 #define DOUBLE_CONSTANT_DOWN -0.001000
 #define INPUT_POINTS 20
 
-using namespace fst_mc;
+using namespace group_space;
 using namespace log_space;
 
 PauseResumePlanner::PauseResumePlanner(void)
@@ -36,7 +36,6 @@ PauseResumePlanner::~PauseResumePlanner(void)
 bool PauseResumePlanner::initPausePlanner(uint32_t joint_num)
 {
 	joint_num_ = joint_num;
-	LogProducer::info("traj_planner","joint num = %d", joint_num_);
 
 	return true;
 }
@@ -204,7 +203,7 @@ ErrorCode PauseResumePlanner::planPauseTrajectory(double d_ratio, std::vector<Jo
 		}
 
 		//5.update the time and the position and speed and acc
-		fst_mc::JointState temp_JointState;
+		JointState temp_JointState;
 		memset(&temp_JointState, 0, sizeof(temp_JointState));
 
 		g_cur_pos_in_old_time_ = tmp1;
@@ -292,7 +291,7 @@ ErrorCode PauseResumePlanner::planResumeTrajectory(std::vector<JointState> &traj
 	v_traj_.clear();
 	v_traj_.assign(trajectory.begin(), trajectory.end());
 	g_cur_pos_in_old_time_ = 0;
-	fst_mc::JointState temp_JointState;
+	JointState temp_JointState;
 	memset(&temp_JointState, 0, sizeof(temp_JointState));
 	if(n_input_point_counts_ < INPUT_POINTS)
 	{

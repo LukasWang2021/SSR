@@ -12,7 +12,7 @@
 
 #define JOINT_OF_ARM    6
 
-namespace fst_mc
+namespace group_space
 {
 
 class ArmGroup : public BaseGroup
@@ -21,7 +21,8 @@ class ArmGroup : public BaseGroup
     ArmGroup() : BaseGroup() {};
     ~ArmGroup() {};
 
-    ErrorCode initGroup(fst_ctrl::CoordinateManager *coordinate_manager_ptr, fst_ctrl::ToolManager *tool_manager_ptr);
+    ErrorCode initGroup(fst_ctrl::CoordinateManager *coordinate_manager_ptr, fst_ctrl::ToolManager *tool_manager_ptr, 
+        std::map<int32_t, axis_space::Axis*>* axis_group_ptr, GroupSm* sm_ptr);
 
     char* getModelName(char *buffer, size_t length);
     size_t getNumberOfJoint(void);

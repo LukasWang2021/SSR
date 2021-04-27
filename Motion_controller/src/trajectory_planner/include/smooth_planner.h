@@ -15,7 +15,7 @@
 
 #define CHECK_POINT_NUM (20)
 
-namespace fst_mc
+namespace group_space
 {
 
 

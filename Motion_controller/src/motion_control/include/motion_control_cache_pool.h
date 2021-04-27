@@ -10,7 +10,7 @@
 
 #include <motion_control_datatype.h>
 
-namespace fst_mc
+namespace group_space
 {
 
 template <typename T>

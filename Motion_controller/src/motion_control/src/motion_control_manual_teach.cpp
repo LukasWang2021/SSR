@@ -19,7 +19,7 @@ using namespace std;
 using namespace basic_alg;
 using namespace log_space;
 
-namespace fst_mc
+namespace group_space
 {
 
 ManualTeach::ManualTeach(void)
@@ -79,7 +79,7 @@ ErrorCode ManualTeach::init(basic_alg::Kinematics *pkinematics, basic_alg::Dynam
 
     if (!config.loadParamFile(manual_config_file_))
     {
-        LogProducer::error("mc","Fail to load config file: %s", manual_config_file_.c_str());
+        LogProducer::error("mc_manual","Fail to load config file: %s", manual_config_file_.c_str());
         return MC_LOAD_PARAM_FAILED;
     }
 
@@ -88,28 +88,28 @@ ErrorCode ManualTeach::init(basic_alg::Kinematics *pkinematics, basic_alg::Dynam
         if (joint_num > 0 && joint_num <= NUM_OF_JOINT)
         {
             joint_num_ = joint_num;
-            LogProducer::info("mc","Number of axis: %d", joint_num_);
+            LogProducer::info("mc_manual","Number of axis: %d", joint_num_);
         }
         else
         {
-            LogProducer::error("mc","Invalid number of axis in config file, num-of-joint = %d", joint_num);
+            LogProducer::error("mc_manual","Invalid number of axis in config file, num-of-joint = %d", joint_num);
             return INVALID_PARAMETER;
         }
     }
     else
     {
-        LogProducer::error("mc","Fail to load number of manual axis");
+        LogProducer::error("mc_manual","Fail to load number of manual axis");
         return MC_LOAD_PARAM_FAILED;
     }
 
     if (!config.getParam("step/axis", data, joint_num_))
     {
-        LogProducer::error("mc","Fail to load manual step");
+        LogProducer::error("mc_manual","Fail to load manual step");
         return MC_LOAD_PARAM_FAILED;
     }
 
     memcpy(step_axis_, data, joint_num_ * sizeof(double));
-    LogProducer::info("mc","Axis step: %s", printDBLine(step_axis_, buffer, LOG_TEXT_SIZE));
+    LogProducer::info("mc_manual","Axis step: %s", printDBLine(step_axis_, buffer, LOG_TEXT_SIZE));
 
     if (config.getParam("step/position", step_position_) &&
         config.getParam("step/orientation", step_orientation_) &&
@@ -120,51 +120,51 @@ ErrorCode ManualTeach::init(basic_alg::Kinematics *pkinematics, basic_alg::Dynam
         config.getParam("reference/orientation/alpha", orientation_alpha_reference_) &&
         config.getParam("reference/orientation/beta", orientation_beta_reference_))
     {
-        LogProducer::info("mc","Step: position=%.4f, orientation=%.4f", step_position_, step_orientation_);
-        LogProducer::info("mc","Reference: position-vel=%.4f, position-acc=%.4f, position-jerk=%.4f, orientation-omega=%.4f, orientation-alpha=%.4f, orientation-beta=%.4f",
+        LogProducer::info("mc_manual","Step: position=%.4f, orientation=%.4f", step_position_, step_orientation_);
+        LogProducer::info("mc_manual","Reference: position-vel=%.4f, position-acc=%.4f, position-jerk=%.4f, orientation-omega=%.4f, orientation-alpha=%.4f, orientation-beta=%.4f",
                  position_vel_reference_, position_acc_reference_, position_jerk_reference_, orientation_omega_reference_, orientation_alpha_reference_, orientation_beta_reference_);
     }
     else
     {
-        LogProducer::error("mc","Fail to load manual configuration.");
+        LogProducer::error("mc_manual","Fail to load manual configuration.");
         return MC_LOAD_PARAM_FAILED;
     }
 
     if (!config.getParam("reference/axis/move_to_point_velocity", data, joint_num_))
     {
-        LogProducer::error("mc","Fail to load reference velocity in move-to-point of each axis");
+        LogProducer::error("mc_manual","Fail to load reference velocity in move-to-point of each axis");
         return MC_LOAD_PARAM_FAILED;
     }
 
     memcpy(move_to_point_vel_, data, joint_num_ * sizeof(double));
-    LogProducer::info("mc","Axis vel in move-to-point: %s", printDBLine(move_to_point_vel_, buffer, LOG_TEXT_SIZE));
+    LogProducer::info("mc_manual","Axis vel in move-to-point: %s", printDBLine(move_to_point_vel_, buffer, LOG_TEXT_SIZE));
 
     if (!config.getParam("reference/axis/velocity", data, joint_num_))
     {
-        LogProducer::error("mc","Fail to load reference velocity of each axis");
+        LogProducer::error("mc_manual","Fail to load reference velocity of each axis");
         return MC_LOAD_PARAM_FAILED;
     }
 
     memcpy(axis_vel_, data, joint_num_ * sizeof(double));
-    LogProducer::info("mc","Axis vel: %s", printDBLine(axis_vel_, buffer, LOG_TEXT_SIZE));
+    LogProducer::info("mc_manual","Axis vel: %s", printDBLine(axis_vel_, buffer, LOG_TEXT_SIZE));
     
     if(!config.getParam("reference/axis/acceleration", data, joint_num_))
     {
-        LogProducer::error("mc","Fail to load reference acceleration of each axis");
+        LogProducer::error("mc_manual","Fail to load reference acceleration of each axis");
         return MC_LOAD_PARAM_FAILED;
     }
 
     memcpy(axis_acc_, data, joint_num_ * sizeof(double));
-    LogProducer::info("mc","Axis acc : %s", printDBLine(axis_acc_, buffer, LOG_TEXT_SIZE));
+    LogProducer::info("mc_manual","Axis acc : %s", printDBLine(axis_acc_, buffer, LOG_TEXT_SIZE));
 
     if(!config.getParam("reference/axis/jerk", data, joint_num_))
     {
-        LogProducer::error("mc","Fail to load reference jerk of each axis");
+        LogProducer::error("mc_manual","Fail to load reference jerk of each axis");
         return MC_LOAD_PARAM_FAILED;
     }
 
     memcpy(axis_jerk_, data, joint_num_ * sizeof(double));
-    LogProducer::info("mc","Axis jerk : %s", printDBLine(axis_jerk_, buffer, LOG_TEXT_SIZE));
+    LogProducer::info("mc_manual","Axis jerk : %s", printDBLine(axis_jerk_, buffer, LOG_TEXT_SIZE));
 
     return SUCCESS;
 }
@@ -226,7 +226,7 @@ ErrorCode ManualTeach::setManualStepAxis(const double *steps)
     }
     else
     {
-        LogProducer::error("mc","setManualStepAxis failed.");
+        LogProducer::error("mc_manual","setManualStepAxis failed.");
         return MC_LOAD_PARAM_FAILED;
     }
 
@@ -246,7 +246,7 @@ ErrorCode ManualTeach::setManualStepPosition(double step)
         }
         else
         {
-            LogProducer::error("mc","setManualStepPosition failed.");
+            LogProducer::error("mc_manual","setManualStepPosition failed.");
             return MC_LOAD_PARAM_FAILED;
         }
     }
@@ -269,7 +269,7 @@ ErrorCode ManualTeach::setManualStepOrientation(double step)
         }
         else
         {
-            LogProducer::error("mc","setManualStepOrientation failed.");
+            LogProducer::error("mc_manual","setManualStepOrientation failed.");
             return MC_LOAD_PARAM_FAILED;
         }
     }
@@ -322,43 +322,43 @@ ErrorCode ManualTeach::manualStep(const ManualDirection *directions, const Joint
     switch (frame_type_)
     {
         case JOINT:
-            LogProducer::info("mc","Manual step in joint space");
+            LogProducer::info("mc_manual","Manual step in joint space");
             err = manualStepInJoint(directions, start);
             break;
 
         case BASE:
-            LogProducer::info("mc","Manual step in base space");
+            LogProducer::info("mc_manual","Manual step in base space");
             err = manualStepInBase(directions, start);
             break;
         case USER:
-            LogProducer::info("mc","Manual step in user space");
+            LogProducer::info("mc_manual","Manual step in user space");
             err = manualStepInUser(directions, start);
             break;
         case WORLD:
-            LogProducer::info("mc","Manual step in world space");
+            LogProducer::info("mc_manual","Manual step in world space");
             err = manualStepInWorld(directions, start);
             break;
         case TOOL:
-            LogProducer::info("mc","Manual step in tool space");
+            LogProducer::info("mc_manual","Manual step in tool space");
             err = manualStepInTool(directions, start);
             break;
 
         default:
             err = MC_MANUAL_FRAME_ERROR;
-            LogProducer::error("mc","Manual step unsupported frame: %d", frame_type_);
+            LogProducer::error("mc_manual","Manual step unsupported frame: %d", frame_type_);
             break;
     }
 
     if (err == SUCCESS)
     {
-        LogProducer::info("mc","Manual step trajectory ready.");
+        LogProducer::info("mc_manual","Manual step trajectory ready.");
         motion_type_ = STEP;
         stop_teach_ = false;
         return SUCCESS;
     }
     else
     {
-        LogProducer::error("mc","Manual step failed, err = 0x%llx", err);
+        LogProducer::error("mc_manual","Manual step failed, err = 0x%llx", err);
         total_duration_ = 0;
         return err;
     }
@@ -377,33 +377,33 @@ ErrorCode ManualTeach::manualStepInJoint(const ManualDirection *dir, const Joint
         if (dir[i] == DECREASE) {target[i] -= step_axis_[i]; index = i; break;}
     }
     
-    LogProducer::info("mc","Manual step in joint: directions = %s, planning trajectory ...", printDBLine((int*)dir, buffer, LOG_TEXT_SIZE));
-    LogProducer::info("mc","Step-axis = %s", printDBLine(step_axis_, buffer, LOG_TEXT_SIZE));
-    LogProducer::info("mc","Start-joint = %s", printDBLine(&start.j1_, buffer, LOG_TEXT_SIZE));
-    LogProducer::info("mc","Target-joint = %s", printDBLine(&target.j1_, buffer, LOG_TEXT_SIZE));
+    LogProducer::info("mc_manual","Manual step in joint: directions = %s, planning trajectory ...", printDBLine((int*)dir, buffer, LOG_TEXT_SIZE));
+    LogProducer::info("mc_manual","Step-axis = %s", printDBLine(step_axis_, buffer, LOG_TEXT_SIZE));
+    LogProducer::info("mc_manual","Start-joint = %s", printDBLine(&start.j1_, buffer, LOG_TEXT_SIZE));
+    LogProducer::info("mc_manual","Target-joint = %s", printDBLine(&target.j1_, buffer, LOG_TEXT_SIZE));
 
     if (!joint_constraint_ptr_->isJointInConstraint(start, MINIMUM_E3))
     {
-        LogProducer::error("mc","Start joint out of soft constraint.");
+        LogProducer::error("mc_manual","Start joint out of soft constraint.");
         return JOINT_OUT_OF_CONSTRAINT;
     }
 
     if (!joint_constraint_ptr_->isJointInConstraint(target))
     {
-        LogProducer::error("mc","Target joint out of soft constraint.");
+        LogProducer::error("mc_manual","Target joint out of soft constraint.");
         return JOINT_OUT_OF_CONSTRAINT;
     }
 
-    LogProducer::info("mc","  axis-vel = %s", printDBLine(axis_vel_, buffer, LOG_TEXT_SIZE));
-    LogProducer::info("mc","  axis-acc = %s", printDBLine(axis_acc_, buffer, LOG_TEXT_SIZE));
-    LogProducer::info("mc","  axis-jerk = %s", printDBLine(axis_jerk_, buffer, LOG_TEXT_SIZE));
+    LogProducer::info("mc_manual","  axis-vel = %s", printDBLine(axis_vel_, buffer, LOG_TEXT_SIZE));
+    LogProducer::info("mc_manual","  axis-acc = %s", printDBLine(axis_acc_, buffer, LOG_TEXT_SIZE));
+    LogProducer::info("mc_manual","  axis-jerk = %s", printDBLine(axis_jerk_, buffer, LOG_TEXT_SIZE));
     joint_start_ = start;
     joint_end_ = target;
     double trip = fabs(target[index] - start[index]);
     
     if (index < 0 || fabs(target[index] - start[index]) < MINIMUM_E6)
     {
-        LogProducer::warn("mc","Start joint near target joint, do not move");
+        LogProducer::warn("mc_manual","Start joint near target joint, do not move");
         total_duration_ = 0;
         return SUCCESS;
     }
@@ -411,10 +411,10 @@ ErrorCode ManualTeach::manualStepInJoint(const ManualDirection *dir, const Joint
     double vel = axis_vel_[index] / trip;
     double acc = axis_acc_[index] / trip;
     double jerk = axis_jerk_[index] / trip;
-    LogProducer::info("mc","index: %d, trip: %.6f, vel: %.6f, acc: %.6f, jerk: %.6f, create ds curve ...", index, trip, vel, acc, jerk);
+    LogProducer::info("mc_manual","index: %d, trip: %.6f, vel: %.6f, acc: %.6f, jerk: %.6f, create ds curve ...", index, trip, vel, acc, jerk);
     ds_curve_.planDSCurve(0, 1, vel, acc, &jerk, 1.0); // FIX ME
     total_duration_ = ds_curve_.getDuration();
-    LogProducer::info("mc","Success, duration: %.6f", total_duration_);
+    LogProducer::info("mc_manual","Success, duration: %.6f", total_duration_);
     return SUCCESS;
 }
 
@@ -464,11 +464,11 @@ ErrorCode ManualTeach::manualStepInBase(const ManualDirection *dir, const Joint 
         index = 5;
     }
 
-    LogProducer::info("mc","Manual step in base: directions = %s, planning trajectory ...", printDBLine((int*)dir, buffer, LOG_TEXT_SIZE));
-    LogProducer::info("mc","Start-joint = %s", printDBLine(&start.j1_, buffer, LOG_TEXT_SIZE));
-    LogProducer::info("mc","Auxiliary-coord = %.4f, %.4f, %.4f,   %.4f, %.4f, %.4f,", auxiliary_coord_.point_.x_, auxiliary_coord_.point_.y_, auxiliary_coord_.point_.z_, auxiliary_coord_.euler_.a_, auxiliary_coord_.euler_.b_, auxiliary_coord_.euler_.c_);
-    LogProducer::info("mc","Start-pose = %.4f %.4f %.4f - %.4f %.4f %.4f", cart_start_.point_.x_, cart_start_.point_.y_, cart_start_.point_.z_, cart_start_.euler_.a_, cart_start_.euler_.b_, cart_start_.euler_.c_);
-    LogProducer::info("mc","End-pose = %.4f %.4f %.4f - %.4f %.4f %.4f", cart_end_.point_.x_, cart_end_.point_.y_, cart_end_.point_.z_, cart_end_.euler_.a_, cart_end_.euler_.b_, cart_end_.euler_.c_);
+    LogProducer::info("mc_manual","Manual step in base: directions = %s, planning trajectory ...", printDBLine((int*)dir, buffer, LOG_TEXT_SIZE));
+    LogProducer::info("mc_manual","Start-joint = %s", printDBLine(&start.j1_, buffer, LOG_TEXT_SIZE));
+    LogProducer::info("mc_manual","Auxiliary-coord = %.4f, %.4f, %.4f,   %.4f, %.4f, %.4f,", auxiliary_coord_.point_.x_, auxiliary_coord_.point_.y_, auxiliary_coord_.point_.z_, auxiliary_coord_.euler_.a_, auxiliary_coord_.euler_.b_, auxiliary_coord_.euler_.c_);
+    LogProducer::info("mc_manual","Start-pose = %.4f %.4f %.4f - %.4f %.4f %.4f", cart_start_.point_.x_, cart_start_.point_.y_, cart_start_.point_.z_, cart_start_.euler_.a_, cart_start_.euler_.b_, cart_start_.euler_.c_);
+    LogProducer::info("mc_manual","End-pose = %.4f %.4f %.4f - %.4f %.4f %.4f", cart_end_.point_.x_, cart_end_.point_.y_, cart_end_.point_.z_, cart_end_.euler_.a_, cart_end_.euler_.b_, cart_end_.euler_.c_);
     double trip, vel, acc, jerk;
     
     if (index >= 0 && index < 3)
@@ -487,14 +487,14 @@ ErrorCode ManualTeach::manualStepInBase(const ManualDirection *dir, const Joint 
     }
     else
     {
-        LogProducer::error("mc","Manual step directions invalid");
+        LogProducer::error("mc_manual","Manual step directions invalid");
         return INVALID_PARAMETER;
     }
 
-    LogProducer::info("mc","index: %d, trip: %.6f, vel: %.6f, acc: %.6f, jerk: %.6f, create ds curve ...", index, trip, vel, acc, jerk);
+    LogProducer::info("mc_manual","index: %d, trip: %.6f, vel: %.6f, acc: %.6f, jerk: %.6f, create ds curve ...", index, trip, vel, acc, jerk);
     ds_curve_.planDSCurve(0, 1, vel, acc, &jerk, 1.0); // FIX ME
     total_duration_ = ds_curve_.getDuration();
-    LogProducer::info("mc","Success, duration: %.6f", total_duration_);
+    LogProducer::info("mc_manual","Success, duration: %.6f", total_duration_);
     return SUCCESS;
 }
 
@@ -544,11 +544,11 @@ ErrorCode ManualTeach::manualStepInUser(const ManualDirection *dir, const Joint 
         index = 5;
     }
 
-    LogProducer::info("mc","Manual step in user: directions = %s, planning trajectory ...", printDBLine((int*)dir, buffer, LOG_TEXT_SIZE));
-    LogProducer::info("mc","Start-joint = %s", printDBLine(&start.j1_, buffer, LOG_TEXT_SIZE));
-    LogProducer::info("mc","Auxiliary-coord = %.4f, %.4f, %.4f,   %.4f, %.4f, %.4f,", auxiliary_coord_.point_.x_, auxiliary_coord_.point_.y_, auxiliary_coord_.point_.z_, auxiliary_coord_.euler_.a_, auxiliary_coord_.euler_.b_, auxiliary_coord_.euler_.c_);
-    LogProducer::info("mc","Start-pose = %.4f %.4f %.4f - %.4f %.4f %.4f", cart_start_.point_.x_, cart_start_.point_.y_, cart_start_.point_.z_, cart_start_.euler_.a_, cart_start_.euler_.b_, cart_start_.euler_.c_);
-    LogProducer::info("mc","End-pose = %.4f %.4f %.4f - %.4f %.4f %.4f", cart_end_.point_.x_, cart_end_.point_.y_, cart_end_.point_.z_, cart_end_.euler_.a_, cart_end_.euler_.b_, cart_end_.euler_.c_);
+    LogProducer::info("mc_manual","Manual step in user: directions = %s, planning trajectory ...", printDBLine((int*)dir, buffer, LOG_TEXT_SIZE));
+    LogProducer::info("mc_manual","Start-joint = %s", printDBLine(&start.j1_, buffer, LOG_TEXT_SIZE));
+    LogProducer::info("mc_manual","Auxiliary-coord = %.4f, %.4f, %.4f,   %.4f, %.4f, %.4f,", auxiliary_coord_.point_.x_, auxiliary_coord_.point_.y_, auxiliary_coord_.point_.z_, auxiliary_coord_.euler_.a_, auxiliary_coord_.euler_.b_, auxiliary_coord_.euler_.c_);
+    LogProducer::info("mc_manual","Start-pose = %.4f %.4f %.4f - %.4f %.4f %.4f", cart_start_.point_.x_, cart_start_.point_.y_, cart_start_.point_.z_, cart_start_.euler_.a_, cart_start_.euler_.b_, cart_start_.euler_.c_);
+    LogProducer::info("mc_manual","End-pose = %.4f %.4f %.4f - %.4f %.4f %.4f", cart_end_.point_.x_, cart_end_.point_.y_, cart_end_.point_.z_, cart_end_.euler_.a_, cart_end_.euler_.b_, cart_end_.euler_.c_);
     double trip, vel, acc, jerk;
     
     if (index >= 0 && index < 3)
@@ -567,14 +567,14 @@ ErrorCode ManualTeach::manualStepInUser(const ManualDirection *dir, const Joint 
     }
     else
     {
-        LogProducer::error("mc","Manual step directions invalid");
+        LogProducer::error("mc_manual","Manual step directions invalid");
         return INVALID_PARAMETER;
     }
 
-    LogProducer::info("mc","index: %d, trip: %.6f, vel: %.6f, acc: %.6f, jerk: %.6f, create ds curve ...", index, trip, vel, acc, jerk);
+    LogProducer::info("mc_manual","index: %d, trip: %.6f, vel: %.6f, acc: %.6f, jerk: %.6f, create ds curve ...", index, trip, vel, acc, jerk);
     ds_curve_.planDSCurve(0, 1, vel, acc, &jerk, 1.0); // FIX ME
     total_duration_ = ds_curve_.getDuration();
-    LogProducer::info("mc","Success, duration: %.6f", total_duration_);
+    LogProducer::info("mc_manual","Success, duration: %.6f", total_duration_);
     return SUCCESS;
 }
 
@@ -624,11 +624,11 @@ ErrorCode ManualTeach::manualStepInWorld(const ManualDirection *dir, const Joint
         index = 5;
     }
 
-    LogProducer::info("mc","Manual step in world: directions = %s, planning trajectory ...", printDBLine((int*)dir, buffer, LOG_TEXT_SIZE));
-    LogProducer::info("mc","Start-joint = %s", printDBLine(&start.j1_, buffer, LOG_TEXT_SIZE));
-    LogProducer::info("mc","Auxiliary-coord = %.4f, %.4f, %.4f,   %.4f, %.4f, %.4f,", auxiliary_coord_.point_.x_, auxiliary_coord_.point_.y_, auxiliary_coord_.point_.z_, auxiliary_coord_.euler_.a_, auxiliary_coord_.euler_.b_, auxiliary_coord_.euler_.c_);
-    LogProducer::info("mc","Start-pose = %.4f %.4f %.4f - %.4f %.4f %.4f", cart_start_.point_.x_, cart_start_.point_.y_, cart_start_.point_.z_, cart_start_.euler_.a_, cart_start_.euler_.b_, cart_start_.euler_.c_);
-    LogProducer::info("mc","End-pose = %.4f %.4f %.4f - %.4f %.4f %.4f", cart_end_.point_.x_, cart_end_.point_.y_, cart_end_.point_.z_, cart_end_.euler_.a_, cart_end_.euler_.b_, cart_end_.euler_.c_);
+    LogProducer::info("mc_manual","Manual step in world: directions = %s, planning trajectory ...", printDBLine((int*)dir, buffer, LOG_TEXT_SIZE));
+    LogProducer::info("mc_manual","Start-joint = %s", printDBLine(&start.j1_, buffer, LOG_TEXT_SIZE));
+    LogProducer::info("mc_manual","Auxiliary-coord = %.4f, %.4f, %.4f,   %.4f, %.4f, %.4f,", auxiliary_coord_.point_.x_, auxiliary_coord_.point_.y_, auxiliary_coord_.point_.z_, auxiliary_coord_.euler_.a_, auxiliary_coord_.euler_.b_, auxiliary_coord_.euler_.c_);
+    LogProducer::info("mc_manual","Start-pose = %.4f %.4f %.4f - %.4f %.4f %.4f", cart_start_.point_.x_, cart_start_.point_.y_, cart_start_.point_.z_, cart_start_.euler_.a_, cart_start_.euler_.b_, cart_start_.euler_.c_);
+    LogProducer::info("mc_manual","End-pose = %.4f %.4f %.4f - %.4f %.4f %.4f", cart_end_.point_.x_, cart_end_.point_.y_, cart_end_.point_.z_, cart_end_.euler_.a_, cart_end_.euler_.b_, cart_end_.euler_.c_);
     double trip, vel, acc, jerk;
     
     if (index >= 0 && index < 3)
@@ -647,14 +647,14 @@ ErrorCode ManualTeach::manualStepInWorld(const ManualDirection *dir, const Joint
     }
     else
     {
-        LogProducer::error("mc","Manual step directions invalid");
+        LogProducer::error("mc_manual","Manual step directions invalid");
         return INVALID_PARAMETER;
     }
 
-    LogProducer::info("mc","index: %d, trip: %.6f, vel: %.6f, acc: %.6f, jerk: %.6f, create ds curve ...", index, trip, vel, acc, jerk);
+    LogProducer::info("mc_manual","index: %d, trip: %.6f, vel: %.6f, acc: %.6f, jerk: %.6f, create ds curve ...", index, trip, vel, acc, jerk);
     ds_curve_.planDSCurve(0, 1, vel, acc, &jerk, 1.0); // FIX ME
     total_duration_ = ds_curve_.getDuration();
-    LogProducer::info("mc","Success, duration: %.6f", total_duration_);
+    LogProducer::info("mc_manual","Success, duration: %.6f", total_duration_);
     return SUCCESS;
 }
 
@@ -702,11 +702,11 @@ ErrorCode ManualTeach::manualStepInTool(const ManualDirection *dir, const Joint 
         index = 5;
     }
 
-    LogProducer::info("mc","Manual step in tool: directions = %s, planning trajectory ...", printDBLine((int*)dir, buffer, LOG_TEXT_SIZE));
-    LogProducer::info("mc","Start-joint = %s", printDBLine(&start.j1_, buffer, LOG_TEXT_SIZE));
-    LogProducer::info("mc","Auxiliary-coord = %.4f, %.4f, %.4f,   %.4f, %.4f, %.4f,", auxiliary_coord_.point_.x_, auxiliary_coord_.point_.y_, auxiliary_coord_.point_.z_, auxiliary_coord_.euler_.a_, auxiliary_coord_.euler_.b_, auxiliary_coord_.euler_.c_);
-    LogProducer::info("mc","Start-pose = %.4f %.4f %.4f - %.4f %.4f %.4f", cart_start_.point_.x_, cart_start_.point_.y_, cart_start_.point_.z_, cart_start_.euler_.a_, cart_start_.euler_.b_, cart_start_.euler_.c_);
-    LogProducer::info("mc","End-pose = %.4f %.4f %.4f - %.4f %.4f %.4f", cart_end_.point_.x_, cart_end_.point_.y_, cart_end_.point_.z_, cart_end_.euler_.a_, cart_end_.euler_.b_, cart_end_.euler_.c_);
+    LogProducer::info("mc_manual","Manual step in tool: directions = %s, planning trajectory ...", printDBLine((int*)dir, buffer, LOG_TEXT_SIZE));
+    LogProducer::info("mc_manual","Start-joint = %s", printDBLine(&start.j1_, buffer, LOG_TEXT_SIZE));
+    LogProducer::info("mc_manual","Auxiliary-coord = %.4f, %.4f, %.4f,   %.4f, %.4f, %.4f,", auxiliary_coord_.point_.x_, auxiliary_coord_.point_.y_, auxiliary_coord_.point_.z_, auxiliary_coord_.euler_.a_, auxiliary_coord_.euler_.b_, auxiliary_coord_.euler_.c_);
+    LogProducer::info("mc_manual","Start-pose = %.4f %.4f %.4f - %.4f %.4f %.4f", cart_start_.point_.x_, cart_start_.point_.y_, cart_start_.point_.z_, cart_start_.euler_.a_, cart_start_.euler_.b_, cart_start_.euler_.c_);
+    LogProducer::info("mc_manual","End-pose = %.4f %.4f %.4f - %.4f %.4f %.4f", cart_end_.point_.x_, cart_end_.point_.y_, cart_end_.point_.z_, cart_end_.euler_.a_, cart_end_.euler_.b_, cart_end_.euler_.c_);
     double trip, vel, acc, jerk;
     
     if (index >= 0 && index < 3)
@@ -725,14 +725,14 @@ ErrorCode ManualTeach::manualStepInTool(const ManualDirection *dir, const Joint 
     }
     else
     {
-        LogProducer::error("mc","Manual step directions invalid");
+        LogProducer::error("mc_manual","Manual step directions invalid");
         return INVALID_PARAMETER;
     }
 
-    LogProducer::info("mc","index: %d, trip: %.6f, vel: %.6f, acc: %.6f, jerk: %.6f, create ds curve ...", index, trip, vel, acc, jerk);
+    LogProducer::info("mc_manual","index: %d, trip: %.6f, vel: %.6f, acc: %.6f, jerk: %.6f, create ds curve ...", index, trip, vel, acc, jerk);
     ds_curve_.planDSCurve(0, 1, vel, acc, &jerk, 1.0); // FIX ME
     total_duration_ = ds_curve_.getDuration();
-    LogProducer::info("mc","Success, duration: %.6f", total_duration_);
+    LogProducer::info("mc_manual","Success, duration: %.6f", total_duration_);
     return SUCCESS;
 }
 
@@ -752,50 +752,50 @@ ErrorCode ManualTeach::manualContinuous(const ManualDirection *directions, const
 
     if (manual_index < 0)
     {
-        LogProducer::error("mc","Manual continuous start directions invalid, no one is required to move");
+        LogProducer::error("mc_manual","Manual continuous start directions invalid, no one is required to move");
         return MC_FAIL_MANUAL_CONTINUOUS;
     }
     
     switch (frame_type_)
     {
         case JOINT:
-            LogProducer::info("mc","Manual continuous in joint space");
+            LogProducer::info("mc_manual","Manual continuous in joint space");
             err = manualContinuousInJoint(directions, start);
             break;
 
         case BASE:
-            LogProducer::info("mc","Manual continuous in base space");
+            LogProducer::info("mc_manual","Manual continuous in base space");
             err = manualContinuousInBase(directions, start);
             break;
         case USER:
-            LogProducer::info("mc","Manual continuous in user space");
+            LogProducer::info("mc_manual","Manual continuous in user space");
             err = manualContinuousInUser(directions, start);
             break;
         case WORLD:
-            LogProducer::info("mc","Manual continuous in world space");
+            LogProducer::info("mc_manual","Manual continuous in world space");
             err = manualContinuousInWorld(directions, start);
             break;
         case TOOL:
-            LogProducer::info("mc","Manual continuous in tool space");
+            LogProducer::info("mc_manual","Manual continuous in tool space");
             err = manualContinuousInTool(directions, start);
             break;
 
         default:
             err = MC_MANUAL_FRAME_ERROR;
-            LogProducer::error("mc","Manual continuous unsupported frame: %d", frame_type_);
+            LogProducer::error("mc_manual","Manual continuous unsupported frame: %d", frame_type_);
             break;
     }
 
     if (err == SUCCESS)
     {
-        LogProducer::info("mc","Manual continuous trajectory ready.");
+        LogProducer::info("mc_manual","Manual continuous trajectory ready.");
         motion_type_ = CONTINUOUS;
         stop_teach_ = false;
         return SUCCESS;
     }
     else
     {
-        LogProducer::error("mc","Manual continuous failed, err = 0x%llx", err);
+        LogProducer::error("mc_manual","Manual continuous failed, err = 0x%llx", err);
         total_duration_ = 0;
         return err;
     }
@@ -806,11 +806,11 @@ ErrorCode ManualTeach::manualContinuousInJoint(const ManualDirection *dir, const
     Joint target;
     double duration = 0;
     char buffer[LOG_TEXT_SIZE];
-    LogProducer::info("mc","Manual continuous in joint: directions = %s, planning trajectory ...", printDBLine((int*)dir, buffer, LOG_TEXT_SIZE));
-    LogProducer::info("mc","Start-joint = %s", printDBLine(&start.j1_, buffer, LOG_TEXT_SIZE));
-    LogProducer::info("mc","  axis-vel = %s", printDBLine(axis_vel_, buffer, LOG_TEXT_SIZE));
-    LogProducer::info("mc","  axis-acc = %s", printDBLine(axis_acc_, buffer, LOG_TEXT_SIZE));
-    LogProducer::info("mc","  axis-jerk = %s", printDBLine(axis_jerk_, buffer, LOG_TEXT_SIZE));
+    LogProducer::info("mc_manual","Manual continuous in joint: directions = %s, planning trajectory ...", printDBLine((int*)dir, buffer, LOG_TEXT_SIZE));
+    LogProducer::info("mc_manual","Start-joint = %s", printDBLine(&start.j1_, buffer, LOG_TEXT_SIZE));
+    LogProducer::info("mc_manual","  axis-vel = %s", printDBLine(axis_vel_, buffer, LOG_TEXT_SIZE));
+    LogProducer::info("mc_manual","  axis-acc = %s", printDBLine(axis_acc_, buffer, LOG_TEXT_SIZE));
+    LogProducer::info("mc_manual","  axis-jerk = %s", printDBLine(axis_jerk_, buffer, LOG_TEXT_SIZE));
 
     for (uint32_t j = 0; j < joint_num_; j++)
     {
@@ -832,7 +832,7 @@ ErrorCode ManualTeach::manualContinuousInJoint(const ManualDirection *dir, const
 
         if (trip < MINIMUM_E6)
         {
-            LogProducer::info("mc","index: %d: near soft constraint, cannot manual move", j);
+            LogProducer::info("mc_manual","index: %d: near soft constraint, cannot manual move", j);
             motion_direction_[j] = STANDING;
             axis_ds_curve_valid_[j] = false;
             axis_ds_curve_start_time_[j] = 0;
@@ -851,13 +851,13 @@ ErrorCode ManualTeach::manualContinuousInJoint(const ManualDirection *dir, const
         axis_ds_curve_start_time_[j] = 0;
         duration = duration < axis_ds_curve_[j].getDuration() ? axis_ds_curve_[j].getDuration() : duration;
         target[j] = (dir[j] == INCREASE) ? (start[j] + trip) : (start[j] - trip);
-        LogProducer::info("mc","index: %d, trip: %.6f, vel: %.6f, acc: %.6f, jerk: %.6f, duration: %.6f", j, trip, vel, acc, jerk, axis_ds_curve_[j].getDuration());
+        LogProducer::info("mc_manual","index: %d, trip: %.6f, vel: %.6f, acc: %.6f, jerk: %.6f, duration: %.6f", j, trip, vel, acc, jerk, axis_ds_curve_[j].getDuration());
     }
 
     joint_start_ = start;
     joint_end_ = target;
     total_duration_ = duration;
-    LogProducer::info("mc","Success, duration: %.6f", total_duration_);
+    LogProducer::info("mc_manual","Success, duration: %.6f", total_duration_);
     return SUCCESS;
 }
 
@@ -928,22 +928,22 @@ ErrorCode ManualTeach::manualContinuousInBase(const ManualDirection *dir, const 
     }
     else
     {
-        LogProducer::error("mc","Manual continuous directions invalid");
+        LogProducer::error("mc_manual","Manual continuous directions invalid");
         return INVALID_PARAMETER;
     }
 
-    LogProducer::info("mc","Manual continuous in base: directions = %s, planning trajectory ...", printDBLine((int*)dir, buffer, LOG_TEXT_SIZE));
-    LogProducer::info("mc","Start-joint = %s", printDBLine(&start.j1_, buffer, LOG_TEXT_SIZE));
-    LogProducer::info("mc","Auxiliary-coord = %.4f, %.4f, %.4f,   %.4f, %.4f, %.4f,", auxiliary_coord_.point_.x_, auxiliary_coord_.point_.y_, auxiliary_coord_.point_.z_, auxiliary_coord_.euler_.a_, auxiliary_coord_.euler_.b_, auxiliary_coord_.euler_.c_);
-    LogProducer::info("mc","Start-pose = %.4f %.4f %.4f - %.4f %.4f %.4f", cart_start_.point_.x_, cart_start_.point_.y_, cart_start_.point_.z_, cart_start_.euler_.a_, cart_start_.euler_.b_, cart_start_.euler_.c_);
-    LogProducer::info("mc","End-pose = %.4f %.4f %.4f - %.4f %.4f %.4f", cart_end_.point_.x_, cart_end_.point_.y_, cart_end_.point_.z_, cart_end_.euler_.a_, cart_end_.euler_.b_, cart_end_.euler_.c_);
-    LogProducer::info("mc","Index: %d, trip: %.6f, vel: %.6f, acc: %.6f, jerk: %.6f, create ds curve ...", index, trip, vel, acc, jerk);
+    LogProducer::info("mc_manual","Manual continuous in base: directions = %s, planning trajectory ...", printDBLine((int*)dir, buffer, LOG_TEXT_SIZE));
+    LogProducer::info("mc_manual","Start-joint = %s", printDBLine(&start.j1_, buffer, LOG_TEXT_SIZE));
+    LogProducer::info("mc_manual","Auxiliary-coord = %.4f, %.4f, %.4f,   %.4f, %.4f, %.4f,", auxiliary_coord_.point_.x_, auxiliary_coord_.point_.y_, auxiliary_coord_.point_.z_, auxiliary_coord_.euler_.a_, auxiliary_coord_.euler_.b_, auxiliary_coord_.euler_.c_);
+    LogProducer::info("mc_manual","Start-pose = %.4f %.4f %.4f - %.4f %.4f %.4f", cart_start_.point_.x_, cart_start_.point_.y_, cart_start_.point_.z_, cart_start_.euler_.a_, cart_start_.euler_.b_, cart_start_.euler_.c_);
+    LogProducer::info("mc_manual","End-pose = %.4f %.4f %.4f - %.4f %.4f %.4f", cart_end_.point_.x_, cart_end_.point_.y_, cart_end_.point_.z_, cart_end_.euler_.a_, cart_end_.euler_.b_, cart_end_.euler_.c_);
+    LogProducer::info("mc_manual","Index: %d, trip: %.6f, vel: %.6f, acc: %.6f, jerk: %.6f, create ds curve ...", index, trip, vel, acc, jerk);
     axis_ds_curve_[index].planDSCurve(0, 1, vel, acc, &jerk, 1.0); // FIX ME
     motion_direction_[index] = dir[index];
     axis_ds_curve_valid_[index] = true;
     axis_ds_curve_start_time_[index] = 0;
     total_duration_ = axis_ds_curve_[index].getDuration();
-    LogProducer::info("mc","Success, duration: %.6f", total_duration_);
+    LogProducer::info("mc_manual","Success, duration: %.6f", total_duration_);
     return SUCCESS;
 }
 
@@ -1014,22 +1014,22 @@ ErrorCode ManualTeach::manualContinuousInUser(const ManualDirection *dir, const 
     }
     else
     {
-        LogProducer::error("mc","Manual continuous directions invalid");
+        LogProducer::error("mc_manual","Manual continuous directions invalid");
         return INVALID_PARAMETER;
     }
 
-    LogProducer::info("mc","Manual continuous in user: directions = %s, planning trajectory ...", printDBLine((int*)dir, buffer, LOG_TEXT_SIZE));
-    LogProducer::info("mc","Start-joint = %s", printDBLine(&start.j1_, buffer, LOG_TEXT_SIZE));
-    LogProducer::info("mc","Auxiliary-coord = %.4f, %.4f, %.4f,   %.4f, %.4f, %.4f,", auxiliary_coord_.point_.x_, auxiliary_coord_.point_.y_, auxiliary_coord_.point_.z_, auxiliary_coord_.euler_.a_, auxiliary_coord_.euler_.b_, auxiliary_coord_.euler_.c_);
-    LogProducer::info("mc","Start-pose = %.4f %.4f %.4f - %.4f %.4f %.4f", cart_start_.point_.x_, cart_start_.point_.y_, cart_start_.point_.z_, cart_start_.euler_.a_, cart_start_.euler_.b_, cart_start_.euler_.c_);
-    LogProducer::info("mc","End-pose = %.4f %.4f %.4f - %.4f %.4f %.4f", cart_end_.point_.x_, cart_end_.point_.y_, cart_end_.point_.z_, cart_end_.euler_.a_, cart_end_.euler_.b_, cart_end_.euler_.c_);
-    LogProducer::info("mc","Index: %d, trip: %.6f, vel: %.6f, acc: %.6f, jerk: %.6f, create ds curve ...", index, trip, vel, acc, jerk);
+    LogProducer::info("mc_manual","Manual continuous in user: directions = %s, planning trajectory ...", printDBLine((int*)dir, buffer, LOG_TEXT_SIZE));
+    LogProducer::info("mc_manual","Start-joint = %s", printDBLine(&start.j1_, buffer, LOG_TEXT_SIZE));
+    LogProducer::info("mc_manual","Auxiliary-coord = %.4f, %.4f, %.4f,   %.4f, %.4f, %.4f,", auxiliary_coord_.point_.x_, auxiliary_coord_.point_.y_, auxiliary_coord_.point_.z_, auxiliary_coord_.euler_.a_, auxiliary_coord_.euler_.b_, auxiliary_coord_.euler_.c_);
+    LogProducer::info("mc_manual","Start-pose = %.4f %.4f %.4f - %.4f %.4f %.4f", cart_start_.point_.x_, cart_start_.point_.y_, cart_start_.point_.z_, cart_start_.euler_.a_, cart_start_.euler_.b_, cart_start_.euler_.c_);
+    LogProducer::info("mc_manual","End-pose = %.4f %.4f %.4f - %.4f %.4f %.4f", cart_end_.point_.x_, cart_end_.point_.y_, cart_end_.point_.z_, cart_end_.euler_.a_, cart_end_.euler_.b_, cart_end_.euler_.c_);
+    LogProducer::info("mc_manual","Index: %d, trip: %.6f, vel: %.6f, acc: %.6f, jerk: %.6f, create ds curve ...", index, trip, vel, acc, jerk);
     axis_ds_curve_[index].planDSCurve(0, 1, vel, acc, &jerk, 1.0); // FIX ME
     motion_direction_[index] = dir[index];
     axis_ds_curve_valid_[index] = true;
     axis_ds_curve_start_time_[index] = 0;
     total_duration_ = axis_ds_curve_[index].getDuration();
-    LogProducer::info("mc","Success, duration: %.6f", total_duration_);
+    LogProducer::info("mc_manual","Success, duration: %.6f", total_duration_);
     return SUCCESS;
 }
 
@@ -1100,22 +1100,22 @@ ErrorCode ManualTeach::manualContinuousInWorld(const ManualDirection *dir, const
     }
     else
     {
-        LogProducer::error("mc","Manual continuous directions invalid");
+        LogProducer::error("mc_manual","Manual continuous directions invalid");
         return INVALID_PARAMETER;
     }
 
-    LogProducer::info("mc","Manual continuous in world: directions = %s, planning trajectory ...", printDBLine((int*)dir, buffer, LOG_TEXT_SIZE));
-    LogProducer::info("mc","Start-joint = %s", printDBLine(&start.j1_, buffer, LOG_TEXT_SIZE));
-    LogProducer::info("mc","Auxiliary-coord = %.4f, %.4f, %.4f,   %.4f, %.4f, %.4f,", auxiliary_coord_.point_.x_, auxiliary_coord_.point_.y_, auxiliary_coord_.point_.z_, auxiliary_coord_.euler_.a_, auxiliary_coord_.euler_.b_, auxiliary_coord_.euler_.c_);
-    LogProducer::info("mc","Start-pose = %.4f %.4f %.4f - %.4f %.4f %.4f", cart_start_.point_.x_, cart_start_.point_.y_, cart_start_.point_.z_, cart_start_.euler_.a_, cart_start_.euler_.b_, cart_start_.euler_.c_);
-    LogProducer::info("mc","End-pose = %.4f %.4f %.4f - %.4f %.4f %.4f", cart_end_.point_.x_, cart_end_.point_.y_, cart_end_.point_.z_, cart_end_.euler_.a_, cart_end_.euler_.b_, cart_end_.euler_.c_);
-    LogProducer::info("mc","Index: %d, trip: %.6f, vel: %.6f, acc: %.6f, jerk: %.6f, create ds curve ...", index, trip, vel, acc, jerk);
+    LogProducer::info("mc_manual","Manual continuous in world: directions = %s, planning trajectory ...", printDBLine((int*)dir, buffer, LOG_TEXT_SIZE));
+    LogProducer::info("mc_manual","Start-joint = %s", printDBLine(&start.j1_, buffer, LOG_TEXT_SIZE));
+    LogProducer::info("mc_manual","Auxiliary-coord = %.4f, %.4f, %.4f,   %.4f, %.4f, %.4f,", auxiliary_coord_.point_.x_, auxiliary_coord_.point_.y_, auxiliary_coord_.point_.z_, auxiliary_coord_.euler_.a_, auxiliary_coord_.euler_.b_, auxiliary_coord_.euler_.c_);
+    LogProducer::info("mc_manual","Start-pose = %.4f %.4f %.4f - %.4f %.4f %.4f", cart_start_.point_.x_, cart_start_.point_.y_, cart_start_.point_.z_, cart_start_.euler_.a_, cart_start_.euler_.b_, cart_start_.euler_.c_);
+    LogProducer::info("mc_manual","End-pose = %.4f %.4f %.4f - %.4f %.4f %.4f", cart_end_.point_.x_, cart_end_.point_.y_, cart_end_.point_.z_, cart_end_.euler_.a_, cart_end_.euler_.b_, cart_end_.euler_.c_);
+    LogProducer::info("mc_manual","Index: %d, trip: %.6f, vel: %.6f, acc: %.6f, jerk: %.6f, create ds curve ...", index, trip, vel, acc, jerk);
     axis_ds_curve_[index].planDSCurve(0, 1, vel, acc, &jerk, 1.0); // FIX ME
     motion_direction_[index] = dir[index];
     axis_ds_curve_valid_[index] = true;
     axis_ds_curve_start_time_[index] = 0;
     total_duration_ = axis_ds_curve_[index].getDuration();
-    LogProducer::info("mc","Success, duration: %.6f", total_duration_);
+    LogProducer::info("mc_manual","Success, duration: %.6f", total_duration_);
     return SUCCESS;
 }
 
@@ -1184,22 +1184,22 @@ ErrorCode ManualTeach::manualContinuousInTool(const ManualDirection *dir, const 
     }
     else
     {
-        LogProducer::error("mc","Manual continuous directions invalid");
+        LogProducer::error("mc_manual","Manual continuous directions invalid");
         return INVALID_PARAMETER;
     }
 
-    LogProducer::info("mc","Manual continuous in tool: directions = %s, planning trajectory ...", printDBLine((int*)dir, buffer, LOG_TEXT_SIZE));
-    LogProducer::info("mc","Start-joint = %s", printDBLine(&start.j1_, buffer, LOG_TEXT_SIZE));
-    LogProducer::info("mc","Auxiliary-coord = %.4f, %.4f, %.4f,   %.4f, %.4f, %.4f,", auxiliary_coord_.point_.x_, auxiliary_coord_.point_.y_, auxiliary_coord_.point_.z_, auxiliary_coord_.euler_.a_, auxiliary_coord_.euler_.b_, auxiliary_coord_.euler_.c_);
-    LogProducer::info("mc","Start-pose = %.4f %.4f %.4f - %.4f %.4f %.4f", cart_start_.point_.x_, cart_start_.point_.y_, cart_start_.point_.z_, cart_start_.euler_.a_, cart_start_.euler_.b_, cart_start_.euler_.c_);
-    LogProducer::info("mc","End-pose = %.4f %.4f %.4f - %.4f %.4f %.4f", cart_end_.point_.x_, cart_end_.point_.y_, cart_end_.point_.z_, cart_end_.euler_.a_, cart_end_.euler_.b_, cart_end_.euler_.c_);
-    LogProducer::info("mc","Index: %d, trip: %.6f, vel: %.6f, acc: %.6f, jerk: %.6f, create ds curve ...", index, trip, vel, acc, jerk);
+    LogProducer::info("mc_manual","Manual continuous in tool: directions = %s, planning trajectory ...", printDBLine((int*)dir, buffer, LOG_TEXT_SIZE));
+    LogProducer::info("mc_manual","Start-joint = %s", printDBLine(&start.j1_, buffer, LOG_TEXT_SIZE));
+    LogProducer::info("mc_manual","Auxiliary-coord = %.4f, %.4f, %.4f,   %.4f, %.4f, %.4f,", auxiliary_coord_.point_.x_, auxiliary_coord_.point_.y_, auxiliary_coord_.point_.z_, auxiliary_coord_.euler_.a_, auxiliary_coord_.euler_.b_, auxiliary_coord_.euler_.c_);
+    LogProducer::info("mc_manual","Start-pose = %.4f %.4f %.4f - %.4f %.4f %.4f", cart_start_.point_.x_, cart_start_.point_.y_, cart_start_.point_.z_, cart_start_.euler_.a_, cart_start_.euler_.b_, cart_start_.euler_.c_);
+    LogProducer::info("mc_manual","End-pose = %.4f %.4f %.4f - %.4f %.4f %.4f", cart_end_.point_.x_, cart_end_.point_.y_, cart_end_.point_.z_, cart_end_.euler_.a_, cart_end_.euler_.b_, cart_end_.euler_.c_);
+    LogProducer::info("mc_manual","Index: %d, trip: %.6f, vel: %.6f, acc: %.6f, jerk: %.6f, create ds curve ...", index, trip, vel, acc, jerk);
     axis_ds_curve_[index].planDSCurve(0, 1, vel, acc, &jerk, 1.0); // FIX ME
     motion_direction_[index] = dir[index];
     axis_ds_curve_valid_[index] = true;
     axis_ds_curve_start_time_[index] = 0;
     total_duration_ = axis_ds_curve_[index].getDuration();
-    LogProducer::info("mc","Success, duration: %.6f", total_duration_);
+    LogProducer::info("mc_manual","Success, duration: %.6f", total_duration_);
     return SUCCESS;
 }
 
@@ -1237,7 +1237,7 @@ ErrorCode ManualTeach::manualContinuous(const ManualDirection *directions, doubl
             return SUCCESS;
 
         default:
-            LogProducer::error("mc","Manual continuous unsupported frame: %d", frame_type_);
+            LogProducer::error("mc_manual","Manual continuous unsupported frame: %d", frame_type_);
             return MC_MANUAL_FRAME_ERROR;
     }
 }
@@ -1410,13 +1410,13 @@ ErrorCode ManualTeach::manualContinuousInCartesian(const ManualDirection *dir, d
 ErrorCode ManualTeach::manualToJoint(const Joint &start, const Joint &end)
 {
     char buffer[LOG_TEXT_SIZE];
-    LogProducer::info("mc","Manual move to joint: planning trajectory ...");
-    LogProducer::info("mc","Start joint = %s", printDBLine(&start.j1_, buffer, LOG_TEXT_SIZE));
-    LogProducer::info("mc","Target joint = %s", printDBLine(&end.j1_, buffer, LOG_TEXT_SIZE));
-    LogProducer::info("mc","Axis-vel = %s", printDBLine(move_to_point_vel_, buffer, LOG_TEXT_SIZE));
-    LogProducer::info("mc","Axis-acc = %s", printDBLine(axis_acc_, buffer, LOG_TEXT_SIZE));
-    LogProducer::info("mc","Axis-jerk = %s", printDBLine(axis_jerk_, buffer, LOG_TEXT_SIZE));
-    LogProducer::info("mc","vel-ratio = %.0f%%, acc-ratio = %.0f%%", vel_ratio_ * 100, acc_ratio_ * 100);
+    LogProducer::info("mc_manual","Manual move to joint: planning trajectory ...");
+    LogProducer::info("mc_manual","Start joint = %s", printDBLine(&start.j1_, buffer, LOG_TEXT_SIZE));
+    LogProducer::info("mc_manual","Target joint = %s", printDBLine(&end.j1_, buffer, LOG_TEXT_SIZE));
+    LogProducer::info("mc_manual","Axis-vel = %s", printDBLine(move_to_point_vel_, buffer, LOG_TEXT_SIZE));
+    LogProducer::info("mc_manual","Axis-acc = %s", printDBLine(axis_acc_, buffer, LOG_TEXT_SIZE));
+    LogProducer::info("mc_manual","Axis-jerk = %s", printDBLine(axis_jerk_, buffer, LOG_TEXT_SIZE));
+    LogProducer::info("mc_manual","vel-ratio = %.0f%%, acc-ratio = %.0f%%", vel_ratio_ * 100, acc_ratio_ * 100);
     joint_start_ = start;
     joint_end_ = end;
     uint32_t index = 0;
@@ -1435,7 +1435,7 @@ ErrorCode ManualTeach::manualToJoint(const Joint &start, const Joint &end)
     
     if (trip < MINIMUM_E6)
     {
-        LogProducer::warn("mc","Start joint near target joint, do not move");
+        LogProducer::warn("mc_manual","Start joint near target joint, do not move");
         total_duration_ = 0;
         return SUCCESS;
     }
@@ -1445,12 +1445,12 @@ ErrorCode ManualTeach::manualToJoint(const Joint &start, const Joint &end)
     double vel = move_to_point_vel_[index] * vel_ratio / trip;
     double acc = axis_acc_[index] * acc_ratio / trip;
     double jerk = axis_jerk_[index] * acc_ratio / trip;
-    LogProducer::info("mc","index: %d, trip: %.6f, vel: %.6f, acc: %.6f, jerk: %.6f, create ds curve ...", index, trip, vel, acc, jerk);
+    LogProducer::info("mc_manual","index: %d, trip: %.6f, vel: %.6f, acc: %.6f, jerk: %.6f, create ds curve ...", index, trip, vel, acc, jerk);
     ds_curve_.planDSCurve(0, 1, vel, acc, &jerk, 1.0); // FIX ME
     total_duration_ = ds_curve_.getDuration();
     motion_type_ = APOINT;
     stop_teach_ = false;
-    LogProducer::info("mc","Success, duration: %.6f", total_duration_);
+    LogProducer::info("mc_manual","Success, duration: %.6f", total_duration_);
     return SUCCESS;
 }
 
@@ -1522,11 +1522,11 @@ ErrorCode ManualTeach::sampleTrajectory(double sample_time, const Joint &referen
                 trans.convertToPoseEuler(pe0);
                 trans_delta1.convertToPoseEuler(pe1);
                 trans_delta2.convertToPoseEuler(pe2);
-                LogProducer::error("mc","Compute IK failed.");
-                LogProducer::error("mc","Reference: %s", printDBLine(&reference.j1_, buffer, LOG_TEXT_SIZE));
-                LogProducer::error("mc","Pose: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", pe0.point_.x_, pe0.point_.y_, pe0.point_.z_, pe0.euler_.a_, pe0.euler_.b_, pe0.euler_.c_);
-                LogProducer::error("mc","Pose delta 1: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", pe1.point_.x_, pe1.point_.y_, pe1.point_.z_, pe1.euler_.a_, pe1.euler_.b_, pe1.euler_.c_);
-                LogProducer::error("mc","Pose delta 2: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", pe2.point_.x_, pe2.point_.y_, pe2.point_.z_, pe2.euler_.a_, pe2.euler_.b_, pe2.euler_.c_);
+                LogProducer::error("mc_manual","Compute IK failed.");
+                LogProducer::error("mc_manual","Reference: %s", printDBLine(&reference.j1_, buffer, LOG_TEXT_SIZE));
+                LogProducer::error("mc_manual","Pose: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", pe0.point_.x_, pe0.point_.y_, pe0.point_.z_, pe0.euler_.a_, pe0.euler_.b_, pe0.euler_.c_);
+                LogProducer::error("mc_manual","Pose delta 1: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", pe1.point_.x_, pe1.point_.y_, pe1.point_.z_, pe1.euler_.a_, pe1.euler_.b_, pe1.euler_.c_);
+                LogProducer::error("mc_manual","Pose delta 2: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", pe2.point_.x_, pe2.point_.y_, pe2.point_.z_, pe2.euler_.a_, pe2.euler_.b_, pe2.euler_.c_);
                 return MC_COMPUTE_IK_FAIL;
             }
 
@@ -1565,11 +1565,11 @@ ErrorCode ManualTeach::sampleTrajectory(double sample_time, const Joint &referen
                 trans.convertToPoseEuler(pe0);
                 trans_delta1.convertToPoseEuler(pe1);
                 trans_delta2.convertToPoseEuler(pe2);
-                LogProducer::error("mc","Compute IK failed.");
-                LogProducer::error("mc","Reference: %s", printDBLine(&reference.j1_, buffer, LOG_TEXT_SIZE));
-                LogProducer::error("mc","Pose: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", pe0.point_.x_, pe0.point_.y_, pe0.point_.z_, pe0.euler_.a_, pe0.euler_.b_, pe0.euler_.c_);
-                LogProducer::error("mc","Pose delta 1: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", pe1.point_.x_, pe1.point_.y_, pe1.point_.z_, pe1.euler_.a_, pe1.euler_.b_, pe1.euler_.c_);
-                LogProducer::error("mc","Pose delta 2: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", pe2.point_.x_, pe2.point_.y_, pe2.point_.z_, pe2.euler_.a_, pe2.euler_.b_, pe2.euler_.c_);
+                LogProducer::error("mc_manual","Compute IK failed.");
+                LogProducer::error("mc_manual","Reference: %s", printDBLine(&reference.j1_, buffer, LOG_TEXT_SIZE));
+                LogProducer::error("mc_manual","Pose: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", pe0.point_.x_, pe0.point_.y_, pe0.point_.z_, pe0.euler_.a_, pe0.euler_.b_, pe0.euler_.c_);
+                LogProducer::error("mc_manual","Pose delta 1: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", pe1.point_.x_, pe1.point_.y_, pe1.point_.z_, pe1.euler_.a_, pe1.euler_.b_, pe1.euler_.c_);
+                LogProducer::error("mc_manual","Pose delta 2: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", pe2.point_.x_, pe2.point_.y_, pe2.point_.z_, pe2.euler_.a_, pe2.euler_.b_, pe2.euler_.c_);
                 return MC_COMPUTE_IK_FAIL;
             }
 
@@ -1608,11 +1608,11 @@ ErrorCode ManualTeach::sampleTrajectory(double sample_time, const Joint &referen
                 trans.convertToPoseEuler(pe0);
                 trans_delta1.convertToPoseEuler(pe1);
                 trans_delta2.convertToPoseEuler(pe2);
-                LogProducer::error("mc","Compute IK failed.");
-                LogProducer::error("mc","Reference: %s", printDBLine(&reference.j1_, buffer, LOG_TEXT_SIZE));
-                LogProducer::error("mc","Pose: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", pe0.point_.x_, pe0.point_.y_, pe0.point_.z_, pe0.euler_.a_, pe0.euler_.b_, pe0.euler_.c_);
-                LogProducer::error("mc","Pose delta 1: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", pe1.point_.x_, pe1.point_.y_, pe1.point_.z_, pe1.euler_.a_, pe1.euler_.b_, pe1.euler_.c_);
-                LogProducer::error("mc","Pose delta 2: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", pe2.point_.x_, pe2.point_.y_, pe2.point_.z_, pe2.euler_.a_, pe2.euler_.b_, pe2.euler_.c_);
+                LogProducer::error("mc_manual","Compute IK failed.");
+                LogProducer::error("mc_manual","Reference: %s", printDBLine(&reference.j1_, buffer, LOG_TEXT_SIZE));
+                LogProducer::error("mc_manual","Pose: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", pe0.point_.x_, pe0.point_.y_, pe0.point_.z_, pe0.euler_.a_, pe0.euler_.b_, pe0.euler_.c_);
+                LogProducer::error("mc_manual","Pose delta 1: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", pe1.point_.x_, pe1.point_.y_, pe1.point_.z_, pe1.euler_.a_, pe1.euler_.b_, pe1.euler_.c_);
+                LogProducer::error("mc_manual","Pose delta 2: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", pe2.point_.x_, pe2.point_.y_, pe2.point_.z_, pe2.euler_.a_, pe2.euler_.b_, pe2.euler_.c_);
                 return MC_COMPUTE_IK_FAIL;
             }
 
@@ -1652,11 +1652,11 @@ ErrorCode ManualTeach::sampleTrajectory(double sample_time, const Joint &referen
                 trans.convertToPoseEuler(pe0);
                 trans_delta1.convertToPoseEuler(pe1);
                 trans_delta2.convertToPoseEuler(pe2);
-                LogProducer::error("mc","Compute IK failed.");
-                LogProducer::error("mc","Reference: %s", printDBLine(&reference.j1_, buffer, LOG_TEXT_SIZE));
-                LogProducer::error("mc","Pose: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", pe0.point_.x_, pe0.point_.y_, pe0.point_.z_, pe0.euler_.a_, pe0.euler_.b_, pe0.euler_.c_);
-                LogProducer::error("mc","Pose delta 1: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", pe1.point_.x_, pe1.point_.y_, pe1.point_.z_, pe1.euler_.a_, pe1.euler_.b_, pe1.euler_.c_);
-                LogProducer::error("mc","Pose delta 2: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", pe2.point_.x_, pe2.point_.y_, pe2.point_.z_, pe2.euler_.a_, pe2.euler_.b_, pe2.euler_.c_);
+                LogProducer::error("mc_manual","Compute IK failed.");
+                LogProducer::error("mc_manual","Reference: %s", printDBLine(&reference.j1_, buffer, LOG_TEXT_SIZE));
+                LogProducer::error("mc_manual","Pose: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", pe0.point_.x_, pe0.point_.y_, pe0.point_.z_, pe0.euler_.a_, pe0.euler_.b_, pe0.euler_.c_);
+                LogProducer::error("mc_manual","Pose delta 1: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", pe1.point_.x_, pe1.point_.y_, pe1.point_.z_, pe1.euler_.a_, pe1.euler_.b_, pe1.euler_.c_);
+                LogProducer::error("mc_manual","Pose delta 2: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", pe2.point_.x_, pe2.point_.y_, pe2.point_.z_, pe2.euler_.a_, pe2.euler_.b_, pe2.euler_.c_);
                 return MC_COMPUTE_IK_FAIL;
             }
 
@@ -1669,7 +1669,7 @@ ErrorCode ManualTeach::sampleTrajectory(double sample_time, const Joint &referen
         }
         else
         {
-            LogProducer::error("mc","Sample manual trajectory failed, type: %d, frame: %d", motion_type_, frame_type_);
+            LogProducer::error("mc_manual","Sample manual trajectory failed, type: %d, frame: %d", motion_type_, frame_type_);
             return MC_MANUAL_FRAME_ERROR;
         }
 
@@ -1762,11 +1762,11 @@ ErrorCode ManualTeach::sampleTrajectory(double sample_time, const Joint &referen
                 trans.convertToPoseEuler(pe0);
                 trans_delta1.convertToPoseEuler(pe1);
                 trans_delta2.convertToPoseEuler(pe2);
-                LogProducer::error("mc","Compute IK failed.");
-                LogProducer::error("mc","Reference: %s", printDBLine(&reference.j1_, buffer, LOG_TEXT_SIZE));
-                LogProducer::error("mc","Pose: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", pe0.point_.x_, pe0.point_.y_, pe0.point_.z_, pe0.euler_.a_, pe0.euler_.b_, pe0.euler_.c_);
-                LogProducer::error("mc","Pose delta 1: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", pe1.point_.x_, pe1.point_.y_, pe1.point_.z_, pe1.euler_.a_, pe1.euler_.b_, pe1.euler_.c_);
-                LogProducer::error("mc","Pose delta 2: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", pe2.point_.x_, pe2.point_.y_, pe2.point_.z_, pe2.euler_.a_, pe2.euler_.b_, pe2.euler_.c_);
+                LogProducer::error("mc_manual","Compute IK failed.");
+                LogProducer::error("mc_manual","Reference: %s", printDBLine(&reference.j1_, buffer, LOG_TEXT_SIZE));
+                LogProducer::error("mc_manual","Pose: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", pe0.point_.x_, pe0.point_.y_, pe0.point_.z_, pe0.euler_.a_, pe0.euler_.b_, pe0.euler_.c_);
+                LogProducer::error("mc_manual","Pose delta 1: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", pe1.point_.x_, pe1.point_.y_, pe1.point_.z_, pe1.euler_.a_, pe1.euler_.b_, pe1.euler_.c_);
+                LogProducer::error("mc_manual","Pose delta 2: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", pe2.point_.x_, pe2.point_.y_, pe2.point_.z_, pe2.euler_.a_, pe2.euler_.b_, pe2.euler_.c_);
                 return MC_COMPUTE_IK_FAIL;
             }
 
@@ -1838,11 +1838,11 @@ ErrorCode ManualTeach::sampleTrajectory(double sample_time, const Joint &referen
                 trans.convertToPoseEuler(pe0);
                 trans_delta1.convertToPoseEuler(pe1);
                 trans_delta2.convertToPoseEuler(pe2);
-                LogProducer::error("mc","Compute IK failed.");
-                LogProducer::error("mc","Reference: %s", printDBLine(&reference.j1_, buffer, LOG_TEXT_SIZE));
-                LogProducer::error("mc","Pose: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", pe0.point_.x_, pe0.point_.y_, pe0.point_.z_, pe0.euler_.a_, pe0.euler_.b_, pe0.euler_.c_);
-                LogProducer::error("mc","Pose delta 1: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", pe1.point_.x_, pe1.point_.y_, pe1.point_.z_, pe1.euler_.a_, pe1.euler_.b_, pe1.euler_.c_);
-                LogProducer::error("mc","Pose delta 2: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", pe2.point_.x_, pe2.point_.y_, pe2.point_.z_, pe2.euler_.a_, pe2.euler_.b_, pe2.euler_.c_);
+                LogProducer::error("mc_manual","Compute IK failed.");
+                LogProducer::error("mc_manual","Reference: %s", printDBLine(&reference.j1_, buffer, LOG_TEXT_SIZE));
+                LogProducer::error("mc_manual","Pose: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", pe0.point_.x_, pe0.point_.y_, pe0.point_.z_, pe0.euler_.a_, pe0.euler_.b_, pe0.euler_.c_);
+                LogProducer::error("mc_manual","Pose delta 1: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", pe1.point_.x_, pe1.point_.y_, pe1.point_.z_, pe1.euler_.a_, pe1.euler_.b_, pe1.euler_.c_);
+                LogProducer::error("mc_manual","Pose delta 2: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", pe2.point_.x_, pe2.point_.y_, pe2.point_.z_, pe2.euler_.a_, pe2.euler_.b_, pe2.euler_.c_);
                 return MC_COMPUTE_IK_FAIL;
             }
 
@@ -1914,11 +1914,11 @@ ErrorCode ManualTeach::sampleTrajectory(double sample_time, const Joint &referen
                 trans.convertToPoseEuler(pe0);
                 trans_delta1.convertToPoseEuler(pe1);
                 trans_delta2.convertToPoseEuler(pe2);
-                LogProducer::error("mc","Compute IK failed.");
-                LogProducer::error("mc","Reference: %s", printDBLine(&reference.j1_, buffer, LOG_TEXT_SIZE));
-                LogProducer::error("mc","Pose: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", pe0.point_.x_, pe0.point_.y_, pe0.point_.z_, pe0.euler_.a_, pe0.euler_.b_, pe0.euler_.c_);
-                LogProducer::error("mc","Pose delta 1: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", pe1.point_.x_, pe1.point_.y_, pe1.point_.z_, pe1.euler_.a_, pe1.euler_.b_, pe1.euler_.c_);
-                LogProducer::error("mc","Pose delta 2: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", pe2.point_.x_, pe2.point_.y_, pe2.point_.z_, pe2.euler_.a_, pe2.euler_.b_, pe2.euler_.c_);
+                LogProducer::error("mc_manual","Compute IK failed.");
+                LogProducer::error("mc_manual","Reference: %s", printDBLine(&reference.j1_, buffer, LOG_TEXT_SIZE));
+                LogProducer::error("mc_manual","Pose: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", pe0.point_.x_, pe0.point_.y_, pe0.point_.z_, pe0.euler_.a_, pe0.euler_.b_, pe0.euler_.c_);
+                LogProducer::error("mc_manual","Pose delta 1: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", pe1.point_.x_, pe1.point_.y_, pe1.point_.z_, pe1.euler_.a_, pe1.euler_.b_, pe1.euler_.c_);
+                LogProducer::error("mc_manual","Pose delta 2: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", pe2.point_.x_, pe2.point_.y_, pe2.point_.z_, pe2.euler_.a_, pe2.euler_.b_, pe2.euler_.c_);
                 return MC_COMPUTE_IK_FAIL;
             }
 
@@ -1991,11 +1991,11 @@ ErrorCode ManualTeach::sampleTrajectory(double sample_time, const Joint &referen
                 trans.convertToPoseEuler(pe0);
                 trans_delta1.convertToPoseEuler(pe1);
                 trans_delta2.convertToPoseEuler(pe2);
-                LogProducer::error("mc","Compute IK failed.");
-                LogProducer::error("mc","Reference: %s", printDBLine(&reference.j1_, buffer, LOG_TEXT_SIZE));
-                LogProducer::error("mc","Pose: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", pe0.point_.x_, pe0.point_.y_, pe0.point_.z_, pe0.euler_.a_, pe0.euler_.b_, pe0.euler_.c_);
-                LogProducer::error("mc","Pose delta 1: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", pe1.point_.x_, pe1.point_.y_, pe1.point_.z_, pe1.euler_.a_, pe1.euler_.b_, pe1.euler_.c_);
-                LogProducer::error("mc","Pose delta 2: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", pe2.point_.x_, pe2.point_.y_, pe2.point_.z_, pe2.euler_.a_, pe2.euler_.b_, pe2.euler_.c_);
+                LogProducer::error("mc_manual","Compute IK failed.");
+                LogProducer::error("mc_manual","Reference: %s", printDBLine(&reference.j1_, buffer, LOG_TEXT_SIZE));
+                LogProducer::error("mc_manual","Pose: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", pe0.point_.x_, pe0.point_.y_, pe0.point_.z_, pe0.euler_.a_, pe0.euler_.b_, pe0.euler_.c_);
+                LogProducer::error("mc_manual","Pose delta 1: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", pe1.point_.x_, pe1.point_.y_, pe1.point_.z_, pe1.euler_.a_, pe1.euler_.b_, pe1.euler_.c_);
+                LogProducer::error("mc_manual","Pose delta 2: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", pe2.point_.x_, pe2.point_.y_, pe2.point_.z_, pe2.euler_.a_, pe2.euler_.b_, pe2.euler_.c_);
                 return MC_COMPUTE_IK_FAIL;
             }
 
@@ -2008,7 +2008,7 @@ ErrorCode ManualTeach::sampleTrajectory(double sample_time, const Joint &referen
         }
         else
         {
-            LogProducer::error("mc","Sample manual trajectory failed, type: %d, frame: %d", motion_type_, frame_type_);
+            LogProducer::error("mc_manual","Sample manual trajectory failed, type: %d, frame: %d", motion_type_, frame_type_);
             return MC_MANUAL_FRAME_ERROR;
         }
 
@@ -2016,7 +2016,7 @@ ErrorCode ManualTeach::sampleTrajectory(double sample_time, const Joint &referen
         return SUCCESS;
     }
 
-    LogProducer::error("mc","Internal fault, type: %d, frame: %d, in file: %s line: %d", motion_type_, frame_type_, __FILE__, __LINE__);
+    LogProducer::error("mc_manual","Internal fault, type: %d, frame: %d, in file: %s line: %d", motion_type_, frame_type_, __FILE__, __LINE__);
     return MC_INTERNAL_FAULT;
 }
 
@@ -2034,18 +2034,18 @@ PoseEuler ManualTeach::interpolatPoseEuler(double p, const PoseEuler &start, con
 
 ErrorCode ManualTeach::manualStop(MotionTime stop_time)
 {
-    LogProducer::info("mc","stopTeach: stop-time=%.6f, total-duration=%.6f", stop_time, total_duration_);
+    LogProducer::info("mc_manual","stopTeach: stop-time=%.6f, total-duration=%.6f", stop_time, total_duration_);
 
     if (stop_teach_)
     {
-        LogProducer::info("mc","Success, total-duration=%.6f", total_duration_);
+        LogProducer::info("mc_manual","Success, total-duration=%.6f", total_duration_);
     }
 
     if (motion_type_ == CONTINUOUS)
     {
         ManualDirection direction[NUM_OF_JOINT] = {STANDING};
         manualContinuous(direction, stop_time);
-        LogProducer::info("mc","Success, total-duration=%.6f", total_duration_);
+        LogProducer::info("mc_manual","Success, total-duration=%.6f", total_duration_);
         stop_teach_ = true;
         return SUCCESS;
     }
@@ -2053,13 +2053,13 @@ ErrorCode ManualTeach::manualStop(MotionTime stop_time)
     {
         ds_curve_.planStopDSCurve(stop_time);
         total_duration_ = ds_curve_.getDuration();
-        LogProducer::info("mc","Success, total duration=%.6f", total_duration_);
+        LogProducer::info("mc_manual","Success, total duration=%.6f", total_duration_);
         stop_teach_ = true;
         return SUCCESS;
     }
     else
     {
-        LogProducer::info("mc","Cannot stop manual motion in step mode, total-duration=%.6f", total_duration_);
+        LogProducer::info("mc_manual","Cannot stop manual motion in step mode, total-duration=%.6f", total_duration_);
         return SUCCESS;
     }
 }

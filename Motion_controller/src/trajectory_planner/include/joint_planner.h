@@ -25,7 +25,7 @@ public:
 	void setLimit(const basic_alg::Joint &vel_limit, const basic_alg::Joint &acc_limit, const basic_alg::Joint *jerk_limit);
 	void planStopTrajectory(double stop_time);
 	void planTrajectory(const basic_alg::Joint &start, const basic_alg::Joint &end, double vel, double vel_ratio, double acc_ratio, double jerk_ratio);
-	void sampleTrajectory(double t, fst_mc::JointState &sample);
+	void sampleTrajectory(double t, group_space::JointState &sample);
 	double getDuration(void);
 	double getSegmentEndingTime(DSSetment segment);
 

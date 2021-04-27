@@ -9,7 +9,7 @@
 
 using namespace basic_alg;
 
-namespace fst_mc
+namespace group_space
 {
 
 Constraint::Constraint()

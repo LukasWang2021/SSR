@@ -65,7 +65,7 @@ void TpComm::handleResponse0x00006825(std::vector<TpRequestResponse>::iterator& 
     }
     if(task->request_data_ptr != NULL)
     {
-        delete (RequestMessageType_WorkMode*)task->request_data_ptr;
+        delete (RequestMessageType_Uint32*)task->request_data_ptr;
     }
     if(task->response_data_ptr != NULL)
     {
@@ -75,7 +75,7 @@ void TpComm::handleResponse0x00006825(std::vector<TpRequestResponse>::iterator& 
 //"/rpc/controller/getWorkMode"
 void TpComm::handleResponse0x00003325(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size)
 {
-    if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_WorkMode_fields, task->response_data_ptr, send_buffer_size))
+    if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_Uint32_fields, task->response_data_ptr, send_buffer_size))
     {
         LogProducer::error("rpc", "handleResponse0x00003325: failed to encode response package");
     }
@@ -85,7 +85,7 @@ void TpComm::handleResponse0x00003325(std::vector<TpRequestResponse>::iterator& 
     }
     if(task->response_data_ptr != NULL)
     {
-        delete (ResponseMessageType_Uint64_WorkMode*)task->response_data_ptr;
+        delete (ResponseMessageType_Uint64_Uint32*)task->response_data_ptr;
     }
 }
 

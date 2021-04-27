@@ -32,22 +32,27 @@ NvramHandler::~NvramHandler()
 
 bool NvramHandler::init(void)
 {
-    int fd = shm_open("rtm_nvram", O_RDWR, 00777);
+    int fd = shm_open("rtm_nvram", O_CREAT|O_RDWR, 00777);
     
     if (-1 == fd)
 	{
+		close(fd);
         return false;
     }
-
-    void *ptr = mmap(NULL, sizeof(NvramImage), PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
+	ftruncate(fd, sizeof(NvramImage));//necessary if using O_CREAT.
+    void *ptr = (char*)mmap(NULL, sizeof(NvramImage), PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
     
     if (ptr == MAP_FAILED)
 	{
         close(fd);
         return false;
     }
+	close(fd);
+	memset(ptr, 0, sizeof(NvramImage));
 
 	image_ptr_ = (NvramImage*)ptr;
+	image_ptr_->magic_number = NVRAM_MAGIC_NUMBER;
+
     return true;
 }
 
@@ -65,7 +70,6 @@ bool NvramHandler::writeNvram(uint32_t address, const uint8_t *data, uint32_t le
 {
 	if (image_ptr_->magic_number != NVRAM_MAGIC_NUMBER) return false;
 	if (address + length > NVRAM_IMAGE_DATA_SIZE) return false;
-	
 	uint32_t block_index = address >> 10;
 	uint32_t block_last = ((block_index + 1) << 10) - address;
 	uint32_t write_size = length <= block_last ? length : block_last;

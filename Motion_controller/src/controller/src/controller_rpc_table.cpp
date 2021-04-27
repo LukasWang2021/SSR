@@ -41,6 +41,13 @@ void ControllerRpc::initRpcTable()
     rpc_service =	{	"/rpc/axis/rtmAbortHoming",	0x0000E4B7,	&ControllerRpc::handleRpc0x0000E4B7	};	rpc_table_.push_back(rpc_service);
     rpc_service =	{	"/rpc/axis/rtmReadAxisFdbPdoPtr",	0x0000A632,	&ControllerRpc::handleRpc0x0000A632	};	rpc_table_.push_back(rpc_service);
 
+    rpc_service =	{	"/rpc/group/mcGroupReset",	0x00016FF4,	&ControllerRpc::handleRpc0x00016FF4	};	rpc_table_.push_back(rpc_service);
+    rpc_service =	{	"/rpc/group/mcGroupEnable",	0x00003615,	&ControllerRpc::handleRpc0x00003615	};	rpc_table_.push_back(rpc_service);
+    rpc_service =	{	"/rpc/group/mcGroupDisable",	0x0000D185,	&ControllerRpc::handleRpc0x0000D185	};	rpc_table_.push_back(rpc_service);
+    rpc_service =	{	"/rpc/group/mcGroupReadError",	0x00004BE2,	&ControllerRpc::handleRpc0x00004BE2	};	rpc_table_.push_back(rpc_service);
+    rpc_service =	{	"/rpc/group/mcGroupReadStatus",	0x00002A83,	&ControllerRpc::handleRpc0x00002A83	};	rpc_table_.push_back(rpc_service);
+
+
     rpc_service =	{	"/rpc/servo_sampling/setSamplingConfiguration",	0x0000845E,	&ControllerRpc::handleRpc0x0000845E	};	rpc_table_.push_back(rpc_service);
     rpc_service =	{	"/rpc/servo_sampling/getSamplingConfiguration",	0x000106EE,	&ControllerRpc::handleRpc0x000106EE	};	rpc_table_.push_back(rpc_service);
     rpc_service =	{	"/rpc/servo_sampling/activateSamplingConfiguration",	0x0000CDDE,	&ControllerRpc::handleRpc0x0000CDDE	};	rpc_table_.push_back(rpc_service);

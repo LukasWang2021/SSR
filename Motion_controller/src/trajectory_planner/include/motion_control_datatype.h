@@ -14,7 +14,7 @@
 #include <common_enum.h>
 #include <kinematics.h>
 
-namespace fst_mc
+namespace group_space
 {
 
 typedef unsigned int Tick;

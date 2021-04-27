@@ -17,16 +17,16 @@ extern "C" {
 /* Enum definitions */
 typedef enum _MessageType_GroupStatus {
     MessageType_GroupStatus_UNKNOWN = 0,
-    MessageType_GroupStatus_ERROR_STOP = 1,
-    MessageType_GroupStatus_DISABLED = 2,
-    MessageType_GroupStatus_STANDBY = 3,
-    MessageType_GroupStatus_STOPPING = 4,
-    MessageType_GroupStatus_HOMING = 5,
-    MessageType_GroupStatus_MOVING = 6
+    MessageType_GroupStatus_ERROR_STOP = 4,
+    MessageType_GroupStatus_DISABLED = 3,
+    MessageType_GroupStatus_STANDBY = 1,
+    MessageType_GroupStatus_STOPPING = 5,
+    MessageType_GroupStatus_HOMING = 6,
+    MessageType_GroupStatus_MOVING = 2
 } MessageType_GroupStatus;
 #define _MessageType_GroupStatus_MIN MessageType_GroupStatus_UNKNOWN
-#define _MessageType_GroupStatus_MAX MessageType_GroupStatus_MOVING
-#define _MessageType_GroupStatus_ARRAYSIZE ((MessageType_GroupStatus)(MessageType_GroupStatus_MOVING+1))
+#define _MessageType_GroupStatus_MAX MessageType_GroupStatus_HOMING
+#define _MessageType_GroupStatus_ARRAYSIZE ((MessageType_GroupStatus)(MessageType_GroupStatus_HOMING+1))
 
 #ifdef __cplusplus
 } /* extern "C" */

@@ -25,9 +25,6 @@ bool Axis1000::initApplication(void)
 
 bool Axis1000::reloadSystemModel(void)
 {
-	if (!db_ptr_->application_ptr->get(AxisApplication1001__app_max_vel, &max_vel_))
-		return false;
-	LogProducer::info("Axis1000", "Axis[%d] max velocity = %d", getID(), max_vel_);
     return true;
 }
 

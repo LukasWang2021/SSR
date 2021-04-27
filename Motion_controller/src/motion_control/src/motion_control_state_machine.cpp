@@ -12,7 +12,7 @@ using namespace std;
 using namespace basic_alg;
 using namespace log_space;
 
-namespace fst_mc
+namespace group_space
 {
 
 void BaseGroup::doStateMachine(void)
@@ -96,21 +96,6 @@ void BaseGroup::doStateMachine(void)
         LogProducer::info("mc_sm","Teach group cleared, group-state = 0x%x", group_state);
     }
 
-    if (reset_request_ && (group_state != STANDBY && group_state != PAUSE))
-    {
-        reset_request_ = false;
-    }
-
-    if (reset_request_ && (servo_state == SERVO_IDLE || servo_state == SERVO_RUNNING))
-    {
-        reset_request_ = false;
-    }
-
-    if (stop_request_ && servo_state == SERVO_DISABLE)
-    {
-        stop_request_ = false;
-    }
-
     if (standby_to_offline_request_ && group_state != STANDBY)
     {
         standby_to_offline_request_ = false;
@@ -161,19 +146,6 @@ void BaseGroup::doStateMachine(void)
         pause_to_auto_request_ = false;
     }
 
-    if (reset_request_ && servo_state != SERVO_IDLE && servo_state != SERVO_RUNNING)
-    {
-        LogProducer::info("mc_sm","Reset barecore, group-state = 0x%x, servo-state = 0x%x", group_state, servo_state);
-        bare_core_.resetBareCore();
-        reset_request_ = false;
-    }
-    
-    if (stop_request_ && (servo_state != SERVO_DISABLE && servo_state != SERVO_WAIT_DOWN))
-    {
-        LogProducer::info("mc_sm","Stop barecore, group-state = 0x%x, servo-state = 0x%x", group_state, servo_state);
-        bare_core_.stopBareCore();
-        stop_request_ = false;
-    }
 
     if (stop_barecore_ && (servo_state == SERVO_DISABLE))
     {
@@ -893,19 +865,12 @@ void BaseGroup::doPauseManualToPause(const ServoState &servo_state, uint32_t &fa
 	}
 }
 
-ErrorCode BaseGroup::resetGroup(void)
-{
-    LogProducer::info("mc_sm","Reset request received, group-state = 0x%x", group_state_);
-    reset_request_ = true;
-    return SUCCESS;
-}
 
 ErrorCode BaseGroup::stopGroup(void)
 {
     LogProducer::info("mc_sm","Stop request received, group-state = 0x%x", group_state_);
-    stop_request_ = true;
     stop_barecore_ = true;
-    return true;
+    return SUCCESS;
 }
 
 ErrorCode BaseGroup::clearGroup(void)

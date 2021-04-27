@@ -27,7 +27,7 @@
 
 
 using namespace std;
-using namespace fst_mc;
+using namespace group_space;
 using namespace log_space;
 using namespace base_space;
 using namespace basic_alg;
@@ -111,7 +111,7 @@ void test0(void)
 void test1(void)
 {
     ArmGroup arm;
-    arm.initGroup(NULL, NULL);
+    arm.initGroup(NULL, NULL, NULL,NULL);
 
     double data[] = {0, 0, 0, 0, 0, PI / 2, 0, 0, 0};
     //Joint joint = {PI / 2, PI / 4, PI / 8, PI / 16, PI / 16, PI / 16, 0, 0, 0};
@@ -196,7 +196,7 @@ void test2(void)
     ThreadHelp rt_thread, nrt_thread;
     cout << "begin" << endl;
 
-    arm.initGroup(NULL, NULL);
+    arm.initGroup(NULL, NULL,NULL,NULL);
     g_thread_running = true;
     rt_thread.run(rtTask, &arm, 80);
     nrt_thread.run(nrtTask, &arm, 78);
@@ -206,7 +206,7 @@ void test2(void)
     arm.setManualFrame(JOINT);
     double steps[9] = {0.15, 0.15, 0.15, 0.15, 0.15, 0.15, 0, 0, 0};
     arm.setManualStepAxis(steps);
-    arm.resetGroup();
+    //arm.resetGroup();
     usleep(100 * 1000);
 
     //ManualDirection dirs[9] = {STANDING, STANDING, INCREASE, STANDING, STANDING, STANDING, STANDING, STANDING, STANDING};
@@ -412,7 +412,7 @@ void test6(void)
     ArmGroup arm;
     ThreadHelp rt_thread;
 
-    arm.initGroup(NULL, NULL);
+    arm.initGroup(NULL, NULL,NULL,NULL);
 
     p.point_.x_ = -29.04;
     p.point_.y_ = 167.96;

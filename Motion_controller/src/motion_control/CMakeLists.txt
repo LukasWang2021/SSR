@@ -23,6 +23,12 @@ include_directories(
     ../rtm_spi/include
     ../trajectory_planner/include
     ../joint_constraint/include
+    ../group/include
+    ../system_model_manager/include
+    ../axis/include
+    ../core_comm/include 
+	../servo_comm/include
+    ../algorithm_base/include 
     ${rtm_INCLUDE_DIRS}
 )
 
@@ -53,9 +59,14 @@ target_link_libraries(motion_control
     kinematics_alg
     transformation
     nvram_handler
-    dynamic_alg
     trajectory_planner
     joint_constraint
+    group
+    system_model_manager
+    axis
+    core_comm_system
+    servo_comm
+    algorithm_base
 )
 
 install(FILES ./config/motion_control.yaml 

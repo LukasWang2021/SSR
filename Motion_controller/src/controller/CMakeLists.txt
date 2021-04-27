@@ -42,6 +42,17 @@ include_directories(
     ../axis1000/include
     ../axis1001/include
     ../io_1000/include
+    ../group/include
+    ../motion_control/include
+    ../coordinate_manager/include
+    ../tool_manager/include
+    ../dynamic_alg/include
+    ../kinematics_alg/include
+    ../transformation/include
+    ../nvram/include
+    ../rtm_spi/include
+    ../trajectory_planner/include
+    ../joint_constraint/include
     ${PROJECT_BINARY_DIR}
 	${rtm_INCLUDE_DIRS}
 )
@@ -74,6 +85,16 @@ target_link_libraries(controller
     axis1001
     base_device
     io_1000
+    group
+    motion_control
+    coordinate_manager
+    tool_manager
+    dynamic_alg 
+    kinematics_alg
+    transformation
+    nvram_handler
+    trajectory_planner
+    joint_constraint
 )
 install(FILES ./config/controller.yaml 
     DESTINATION ${CONFIG_FILE_OUTPUT_PATH}/component/

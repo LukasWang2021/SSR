@@ -465,7 +465,6 @@ class Axis {
     system_model_space::AxisConfig_t* axis_config_ptr_;        /**< The pointer of the configuration of the axis.*/
     system_model_space::AxisModel_t* db_ptr_;                  /**< The pointer of the parameters of the axis model.*/
     AxisSm sm_;                                                /**< The state machine of the axis.*/
-    int32_t max_vel_;
 
   private:    	
 	AxisFdb fdb_;

@@ -8,6 +8,7 @@
 #ifndef _MOTION_CONTROLLER_OFFSET_CALIBRATOR_H
 #define _MOTION_CONTROLLER_OFFSET_CALIBRATOR_H
 
+#include <unistd.h>
 #include <string>
 #include <vector>
 #include <motion_control_datatype.h>

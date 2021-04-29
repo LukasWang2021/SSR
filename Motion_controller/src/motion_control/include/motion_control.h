@@ -1,6 +1,7 @@
 #ifndef MOTION_CONTROL_H
 #define MOTION_CONTROL_H
 
+#include <unistd.h> 
 #include <queue>
 #include <coordinate_manager.h>
 #include <tool_manager.h>
@@ -8,7 +9,6 @@
 #include <motion_control_datatype.h>
 #include <motion_control_param.h>
 #include <motion_control_arm_group.h>
-//#include <interpreter_common.h>
 #include "log_manager_producer.h"
 #include "common_error_code.h"
 #include "group.h"
@@ -40,7 +40,7 @@ public:
     ErrorCode doGotoPointManualMove(const PoseAndPosture &pose, int user_frame_id, int tool_frame_id);
 
     // API for auto run
-    ErrorCode autoMove(const Instruction &instruction);
+    ErrorCode autoMove(const struct Instruction &instruction);
     ErrorCode restartMove(void);
     ErrorCode pauseMove(void);
     bool isMoving(void);
@@ -193,7 +193,7 @@ private:
     bool common_thread_running_;
     bool motion_error_flag_;
 
-    std::queue<Instruction> instruction_fifo_;
+    std::queue<struct Instruction> instruction_fifo_;
     pthread_mutex_t  instruction_mutex_;
     uint32_t instructions_recv_counter_;
     uint32_t instructions_handle_counter_;

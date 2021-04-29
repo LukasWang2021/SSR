@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(log_manager)
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D${COMPILE_OPTION}")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D${COMPILE_OPTION}")
+#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D${COMPILE_OPTION}")
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D${COMPILE_OPTION}")
 
 include_directories(
 	include
@@ -20,6 +20,9 @@ add_library(log_manager_producer SHARED
     src/log_manager_config.cpp
 )
 
+link_directories(
+	../../install/lib
+)
 target_link_libraries(log_manager_producer
     ${rtm_LIBRARIES}
     yaml_help

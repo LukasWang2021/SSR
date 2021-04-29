@@ -8,7 +8,6 @@
 #include <stdlib.h>
 #include <fstream>
 #include <math.h>
-#include <boost/filesystem.hpp>
 #include <motion_control_offset_calibrator.h>
 #include <common_file_path.h>
 
@@ -563,7 +562,7 @@ ErrorCode Calibrator::calibrateOffset(const size_t *pindex, uint32_t length, dou
     // 检查需要标定的轴标号
     for (uint32_t i = 0; i < length; i++)
     {
-        snprintf(buf, sizeof(buf), " %d", pindex[i]);
+        snprintf(buf, sizeof(buf), " %zu", pindex[i]);
         str += buf;
 
         if (pindex[i] >= joint_num_)
@@ -1210,9 +1209,9 @@ ErrorCode Calibrator::saveReference(void)
     }
 
     LogProducer::info("mc_calib","  encoder: %s", printDBLine(&ref_encoder[0], buffer, LOG_TEXT_SIZE));
-
+    bool valid = true;
     if (!params.setParam("reference_joint", ref_joint) || !params.setParam("reference_offset", ref_offset) ||
-        !params.setParam("reference_encoder", ref_encoder) || !params.setParam("reference_available", true) ||
+        !params.setParam("reference_encoder", ref_encoder) || !params.setParam("reference_available", valid) ||
         !params.dumpParamFile(AXIS_GROUP_DIR"arm_group_offset_reference.yaml"))
     {
         LogProducer::error("mc_calib","Error while saving reference point");

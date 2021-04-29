@@ -22,7 +22,6 @@
 #include <basic_alg.h>
 #include <motion_control_arm_group.h>
 #include "thread_help.h"
-#include <motion_control_cache_pool.h>
 #include <transformation.h>
 
 
@@ -813,7 +812,7 @@ int main(int argc, char **argv)
     //test10();
     //test15();
     /*
-    int fd = open("/dev/fst_shmem", O_RDWR);
+    int fd = open("/devmem", O_RDWR);
     static TestBuffer* test_buffer = (TestBuffer *) mmap(NULL, 1000 * 1024, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0x3B000000);
     if (test_buffer == MAP_FAILED) 
     {
@@ -849,7 +848,7 @@ int main(int argc, char **argv)
     cout << "offset of last_fragment: " << (uint32_t)(&seg.last_fragment) - (uint32_t)(&seg) << endl;
 
     ofstream  shm_out("/root/share_memory.dump");
-    int fd = open("/dev/fst_shmem", O_RDWR);
+    int fd = open("/dev/mem", O_RDWR);
     void *ptr = mmap(NULL, 524288, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0x38100000);
     uint32_t *pdata = (uint32_t*)ptr;
     char buffer[1024];

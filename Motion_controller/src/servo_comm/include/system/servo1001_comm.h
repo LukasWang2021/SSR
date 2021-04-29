@@ -17,7 +17,7 @@ namespace servo_comm_space
 {
 /**
  * @brief Servo1001 is the abstract device of the real servo1001 device. 
- * @details A Servo1001 device consists of 1 servo cpu 8 stepper device and 8 servo device. 
+ * @details A Servo1001 device consists of 1 servo cpu 10 servo device. 
  */
 class Servo1001
 {

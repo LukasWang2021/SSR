@@ -162,7 +162,8 @@ typedef enum _InstType
 
 typedef void (*PauseCallBack_fp)(bool);
 typedef void (*SetLineNumCallBack_fp)(int32_t);
-typedef struct _Instruction
+//typedef struct
+struct Instruction
 {
 
     char            line[512];
@@ -190,7 +191,7 @@ typedef struct _Instruction
     //add some other additional statement
     //.....
     //.....
-}Instruction;
+};
 
 }
 

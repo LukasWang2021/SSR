@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(coordinate_manager)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -g -Wno-unused-but-set-variable -Wno-unused-local-typedefs -O0 -fpermissive -DPB_FIELD_32BIT -DSIMMULATION -DPRINT")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0 -D PB_FIELD_32BIT -D_GLIBCXX_USE_CXX11_ABI=0")
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -g -Wno-unused-but-set-variable -Wno-unused-local-typedefs -O0 -fpermissive -DPB_FIELD_32BIT -DSIMMULATION -DPRINT")
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0 -D PB_FIELD_32BIT")
 
 include_directories(
   include
@@ -19,8 +19,13 @@ add_library(coordinate_manager SHARED
     ${BASE_SRCS}
 )
 
+link_directories(
+	../../install/lib
+)
 target_link_libraries(coordinate_manager
     ${rtm_LIBRARIES}
+    yaml_help
+    log_manager_producer
 )
 
 install(FILES ./config/coordinate_manager.yaml 

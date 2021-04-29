@@ -26,6 +26,9 @@ add_library(tp_comm SHARED
     ${BASE_SRCS}
 )
 
+link_directories(
+	../../install/lib
+)
 target_link_libraries(tp_comm
     ${rtm_LIBRARIES}
     protos

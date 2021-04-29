@@ -32,6 +32,10 @@ target_link_libraries(core_comm_system
 	thread_help 
 )
 
+target_link_libraries(core_comm_bare
+	${rtm_LIBRARIES}
+)
+
 install(FILES config/core_comm_config.xml
 	DESTINATION ${CONFIG_FILE_OUTPUT_PATH}/comm/
 )

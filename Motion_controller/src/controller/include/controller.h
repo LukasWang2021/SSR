@@ -23,7 +23,6 @@
 #include "axis.h"
 #include "error_queue.h"
 #include "axis1000.h"
-#include "axis1001.h"
 #include "io_1000.h"
 #include "group.h"
 #include "motion_control.h"

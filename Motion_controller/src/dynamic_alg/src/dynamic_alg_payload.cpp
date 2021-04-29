@@ -270,7 +270,7 @@ bool DynamicAlgPayload::readAllPayloadInfoFromYaml(void)
     }
 }
 
-bool DynamicAlgPayload::writePayloadInfoToYaml(const PayloadInfo& info)
+bool DynamicAlgPayload::writePayloadInfoToYaml(PayloadInfo& info)
 {
     std::string payload_info_path = getPayloadInfoPath(info.id);
 

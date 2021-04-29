@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(rtm_spi)
 
-set(CMAKE_CXX_FLAGS "-std=c++11 -Wall -g -pthread")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
 
 include_directories(
   include

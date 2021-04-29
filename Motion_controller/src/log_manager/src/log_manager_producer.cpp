@@ -231,8 +231,8 @@ void LogProducer::constructItem(const char *module_name, const LogControlArea *c
 {
     struct timeval time_now;
 	gettimeofday(&time_now, NULL);
-    uint64_t sec = time_now.tv_sec;
-    uint64_t usec = time_now.tv_usec;
+    long long unsigned int sec = time_now.tv_sec;
+    long long unsigned int usec = time_now.tv_usec;
     std::string temp_str = pitem->text_buf;
   
     snprintf(pitem->text_buf, LOG_ITEM_AREA_TEXT_SIZE, "[%u][%u][%s][%llu.%06llu][%s]%s", pitem->level, *isr_count_ptr_, 

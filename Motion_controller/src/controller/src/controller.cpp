@@ -64,12 +64,6 @@ Controller::~Controller()
                     delete axis_ptr;
                     axis_ptr_[i] = NULL;
                 }
-                else if (name_str.compare("servo_1001") == 0)
-                {
-                    axis_space::Axis1001* axis_ptr = static_cast<axis_space::Axis1001*>(axis_ptr_[i]);
-                    delete axis_ptr;
-                    axis_ptr_[i] = NULL;
-                }
             }
         }
     }

@@ -31,7 +31,7 @@ using namespace log_space;
 static void dumpShareMemory(void)
 {
     ofstream  shm_out("/root/share_memory.dump");
-    int fd = open("/dev/fst_shmem", O_RDWR);
+    int fd = open("/dev/mem", O_RDWR);
     void *ptr = mmap(NULL, 524288, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0x38100000);
     uint32_t *pdata = (uint32_t*)ptr;
     char buffer[1024];

@@ -571,7 +571,7 @@ void MotionControl::clearErrorFlag(void)
     motion_error_flag_ = false;
 }
 
-ErrorCode MotionControl::autoMove(const Instruction &instruction)
+ErrorCode MotionControl::autoMove(const struct Instruction &instruction)
 {
     /*
     GroupState state = group_ptr_->getGroupState();
@@ -1892,13 +1892,13 @@ base_space::FBQueueStatus_e MotionControl::getFBQStatus()
 }
 void MotionControl::processFBQ()
 {
-    return false;
+    
 }
 void MotionControl::processTBQ()
 {
-    return false;
+    
 }
 void MotionControl::clearBQ()
 {
-    return false;
+    
 }

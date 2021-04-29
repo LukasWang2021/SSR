@@ -55,7 +55,7 @@ private:
     void packDummyPayloadInfo(PayloadInfo& info);
     std::string getPayloadInfoPath(int coord_id);
     bool readAllPayloadInfoFromYaml(void);
-    bool writePayloadInfoToYaml(const PayloadInfo& info);
+    bool writePayloadInfoToYaml(PayloadInfo& info);
     void printfPayload(void);
 };
 

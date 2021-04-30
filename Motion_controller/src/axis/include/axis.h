@@ -262,6 +262,14 @@ class Axis {
 	uint8_t* rtmReadAxisFdbPdoPtr(int32_t* size);
 
     /**
+     * @brief Get the pointer of the feedback PDO.
+     * @details It is used to be called in publishing feedback data.
+     * @param [out] size The valid size of the data.
+     * @return Pointer of the data.
+     */
+	ErrorCode rtmResetEncoder(void);
+
+    /**
      * @brief Check if the target position is reached.
      * @details It is used to be called in a group.
      * @retval false The target position is not reached.

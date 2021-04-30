@@ -146,6 +146,12 @@ bool BareCoreInterface::resetEncoderError(size_t index)
 
 bool BareCoreInterface::resetEncoderError(void)
 {
+    std::map<int32_t, Axis*>::iterator it;
+    for (it = axis_group_ptr_->begin(); it != axis_group_ptr_->end(); ++it)
+    {
+        if (it->second->rtmResetEncoder() != SUCCESS)
+            return false;
+    }
     return true;
 }
 

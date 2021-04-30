@@ -388,6 +388,17 @@ uint8_t* Axis::rtmReadAxisFdbPdoPtr(int32_t* size)
     return fdb_.getFdbPdoPtr(size);
 }
 
+ErrorCode Axis::rtmResetEncoder(void)
+{
+    AxisStatus_e axis_status = sm_.getAxisStatus();  
+    if (axis_status != AXIS_STATUS_ERRORSTOP || axis_status != AXIS_STATUS_DISABLED)
+    {
+        LogProducer::warn("Axis", "Axis[%d] rtmResetEncoder called failed when axis_status is %s", id_, sm_.getAxisStateString(axis_status).c_str());
+		return AXIS_STATE_TRANSFER_INVALID;
+    }
+    return servo_comm_ptr_->doServoCmdResetEncoder();
+}
+
 bool Axis::rtmIsTargetReached(void)
 {
     return fdb_.isTargetReached();

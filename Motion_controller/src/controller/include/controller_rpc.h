@@ -166,6 +166,8 @@ private:
     void handleRpc0x0000E4B7(void* request_data_ptr, void* response_data_ptr);
     //"/rpc/axis/rtmReadAxisFdbPdoPtr"	
     void handleRpc0x0000A632(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/axis/rtmResetEncoder"	
+    void handleRpc0x00000BA2(void* request_data_ptr, void* response_data_ptr);
 
     //"/rpc/group/mcGroupReset"	
     void handleRpc0x00016FF4(void* request_data_ptr, void* response_data_ptr);

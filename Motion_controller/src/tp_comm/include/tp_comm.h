@@ -292,6 +292,8 @@ private:
     void handleRequest0x0000E4B7(int recv_bytes);
     /********rpc/axis/rtmReadAxisFdbPdoPtr, RequestMessageType_Int32**********/	
     void handleRequest0x0000A632(int recv_bytes);
+    /********rpc/axis/rtmResetEncoder, RequestMessageType_Int32**********/
+    void handleRequest0x00000BA2(int recv_bytes);
         
     /********rpc/group/mcGroupReset, RequestMessageType_Int32**********/	
     void handleRequest0x00016FF4(int recv_bytes);
@@ -487,6 +489,8 @@ private:
     void handleResponse0x0000E4B7(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
     /********rpc/axis/rtmReadAxisFdbPdoPtr, ResponseMessageType_Uint64_Int32List**********/	
     void handleResponse0x0000A632(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/axis/rtmResetEncoder, ResponseMessageType_Uint64**********/	
+    void handleResponse0x00000BA2(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
 
     /********rpc/group/mcGroupReset, ResponseMessageType_Uint64**********/	
     void handleResponse0x00016FF4(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);

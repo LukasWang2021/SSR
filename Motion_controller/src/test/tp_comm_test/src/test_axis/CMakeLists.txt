@@ -86,3 +86,7 @@ target_link_libraries(test_axis_rtmAbortHoming ${rtm_LIBRARIES} pb tp_comm_test 
 ######### test_axis_rtmReadAxisFdbPdoPtr #########
 add_executable(test_axis_rtmReadAxisFdbPdoPtr  test_axis_rtmReadAxisFdbPdoPtr.cpp)
 target_link_libraries(test_axis_rtmReadAxisFdbPdoPtr ${rtm_LIBRARIES} pb tp_comm_test protos)
+
+######### test_axis_rtmResetEncoder #########
+add_executable(test_axis_rtmResetEncoder  test_axis_rtmResetEncoder.cpp)
+target_link_libraries(test_axis_rtmResetEncoder ${rtm_LIBRARIES} pb tp_comm_test protos)

@@ -40,6 +40,7 @@ void ControllerRpc::initRpcTable()
     rpc_service =	{	"/rpc/axis/mcHome",	0x000059B5,	&ControllerRpc::handleRpc0x000059B5	};	rpc_table_.push_back(rpc_service);
     rpc_service =	{	"/rpc/axis/rtmAbortHoming",	0x0000E4B7,	&ControllerRpc::handleRpc0x0000E4B7	};	rpc_table_.push_back(rpc_service);
     rpc_service =	{	"/rpc/axis/rtmReadAxisFdbPdoPtr",	0x0000A632,	&ControllerRpc::handleRpc0x0000A632	};	rpc_table_.push_back(rpc_service);
+    rpc_service =	{	"/rpc/axis/rtmResetEncoder",	0x00000BA2,	&ControllerRpc::handleRpc0x00000BA2	};	rpc_table_.push_back(rpc_service);
 
     rpc_service =	{	"/rpc/group/mcGroupReset",	0x00016FF4,	&ControllerRpc::handleRpc0x00016FF4	};	rpc_table_.push_back(rpc_service);
     rpc_service =	{	"/rpc/group/mcGroupEnable",	0x00003615,	&ControllerRpc::handleRpc0x00003615	};	rpc_table_.push_back(rpc_service);

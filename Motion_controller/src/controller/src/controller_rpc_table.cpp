@@ -46,7 +46,7 @@ void ControllerRpc::initRpcTable()
     rpc_service =	{	"/rpc/group/mcGroupDisable",	0x0000D185,	&ControllerRpc::handleRpc0x0000D185	};	rpc_table_.push_back(rpc_service);
     rpc_service =	{	"/rpc/group/mcGroupReadError",	0x00004BE2,	&ControllerRpc::handleRpc0x00004BE2	};	rpc_table_.push_back(rpc_service);
     rpc_service =	{	"/rpc/group/mcGroupReadStatus",	0x00002A83,	&ControllerRpc::handleRpc0x00002A83	};	rpc_table_.push_back(rpc_service);
-
+    rpc_service =	{	"/rpc/group/resetAllEncoder",	0x000019D2,	&ControllerRpc::handleRpc0x000019D2	};	rpc_table_.push_back(rpc_service);
 
     rpc_service =	{	"/rpc/servo_sampling/setSamplingConfiguration",	0x0000845E,	&ControllerRpc::handleRpc0x0000845E	};	rpc_table_.push_back(rpc_service);
     rpc_service =	{	"/rpc/servo_sampling/getSamplingConfiguration",	0x000106EE,	&ControllerRpc::handleRpc0x000106EE	};	rpc_table_.push_back(rpc_service);
@@ -78,6 +78,7 @@ void ControllerRpc::initRpcTable()
     rpc_service =	{	"/rpc/servo1001/servo/getCommState",	0x0000F485,	&ControllerRpc::handleRpc0x0000F485	};	rpc_table_.push_back(rpc_service);
     rpc_service =	{	"/rpc/servo1001/servo/getServoState",	0x000032F5,	&ControllerRpc::handleRpc0x000032F5	};	rpc_table_.push_back(rpc_service);
     rpc_service =	{	"/rpc/servo1001/servo/mcMoveRelative",	0x000172C5,	&ControllerRpc::handleRpc0x000172C5	};	rpc_table_.push_back(rpc_service);
+    rpc_service =	{	"/rpc/servo1001/servo/resetEncoder",	0x0000EFE2,	&ControllerRpc::handleRpc0x0000EFE2	};	rpc_table_.push_back(rpc_service);
     rpc_service =	{	"/rpc/servo1001/servo/goHome",	0x00013BB5,	&ControllerRpc::handleRpc0x00013BB5	};	rpc_table_.push_back(rpc_service);
     rpc_service =	{	"/rpc/servo1001/servo/abortHoming",	0x00015AB7,	&ControllerRpc::handleRpc0x00015AB7	};	rpc_table_.push_back(rpc_service);
     rpc_service =	{	"/rpc/servo1001/servo/getServoCommInfo",	0x0000BF1F,	&ControllerRpc::handleRpc0x0000BF1F	};	rpc_table_.push_back(rpc_service);

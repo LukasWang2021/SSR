@@ -303,6 +303,8 @@ private:
     void handleRequest0x00004BE2(int recv_bytes);
     /********rpc/group/mcGroupReadStatus, RequestMessageType_Int32**********/	
     void handleRequest0x00002A83(int recv_bytes);
+    /********rpc/group/resetAllEncoder, RequestMessageType_Int32**********/	
+    void handleRequest0x000019D2(int recv_bytes);
 
     /********rpc/servo_sampling/setSamplingConfiguration, RequestMessageType_Int32_Uint32List(count=2)**********/	
     void handleRequest0x0000845E(int recv_bytes);
@@ -363,6 +365,8 @@ private:
     void handleRequest0x000032F5(int recv_bytes);
     /********rpc/servo1001/servo/moveRelative, RequestMessageType_Int32_DoubleList(count=5)**********/	
     void handleRequest0x000172C5(int recv_bytes);
+    /********rpc/servo1001/servo/resetEncoder, RequestMessageType_Int32List(count=2)**********/	
+    void handleRequest0x0000EFE2(int recv_bytes);
     /********rpc/servo1001/servo/goHome, RequestMessageType_Int32**********/	
     void handleRequest0x00013BB5(int recv_bytes);
     /********rpc/servo1001/servo/abortHoming, RequestMessageType_Int32**********/	
@@ -494,7 +498,8 @@ private:
     void handleResponse0x00004BE2(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
     /********rpc/group/mcGroupReadStatus, ResponseMessageType_Uint64_GroupStatus**********/	
     void handleResponse0x00002A83(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
-
+    /********rpc/group/resetAllEncoder, ResponseMessageType_Uint64**********/	
+    void handleResponse0x000019D2(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
 
     /********rpc/servo_sampling/setSamplingConfiguration, ResponseMessageType_Uint64**********/	
     void handleResponse0x0000845E(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
@@ -555,6 +560,8 @@ private:
     void handleResponse0x000032F5(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
     /********rpc/servo1001/servo/servo/moveRelative, ResponseMessageType_Uint64**********/	
     void handleResponse0x000172C5(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/servo1001/servo/resetEncoder, ResponseMessageType_Uint64**********/	
+    void handleResponse0x0000EFE2(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
     /********rpc/servo1001/servo/goHome, ResponseMessageType_Uint64**********/	
     void handleResponse0x00013BB5(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
     /********rpc/servo1001/servo/abortHoming, ResponseMessageType_Uint64**********/	

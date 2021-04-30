@@ -90,6 +90,10 @@ target_link_libraries(test_servo1001_servo_getServoState ${rtm_LIBRARIES} pb tp_
 add_executable(test_servo1001_servo_moveRelative test_servo1001_servo_moveRelative.cpp)
 target_link_libraries(test_servo1001_servo_moveRelative ${rtm_LIBRARIES} pb tp_comm_test protos)
 
+######### test_servo1001_servo_resetEncoder #########
+add_executable(test_servo1001_servo_resetEncoder test_servo1001_servo_resetEncoder.cpp)
+target_link_libraries(test_servo1001_servo_resetEncoder ${rtm_LIBRARIES} pb tp_comm_test protos)
+
 ######### test_servo1001_servo_goHome #########
 add_executable(test_servo1001_servo_goHome test_servo1001_servo_goHome.cpp)
 target_link_libraries(test_servo1001_servo_goHome ${rtm_LIBRARIES} pb tp_comm_test protos)

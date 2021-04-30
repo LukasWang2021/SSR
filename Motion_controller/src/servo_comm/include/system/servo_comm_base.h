@@ -255,6 +255,15 @@ public:
     ErrorCode doServoCmdHalt(void);
 
     /**
+     * @brief Command reset encoder error.
+     * @details Servo response is expected.\n
+     * @retval SUCCESS Execute the process successfully.
+     * @retval CORE_COMM_SEND_CORE_PROCESS_CALL_FAILED Failed to send request.
+     * @retval CORE_COMM_EXEC_CORE_PROCESS_CALL_FAILED Failed to execute the process.
+     */ 
+    ErrorCode doServoCmdResetEncoder(void);
+
+    /**
      * @brief Command to get servo defined info.
      * @details Servo response is expected.\n
      * @retval SUCCESS Execute the process successfully.

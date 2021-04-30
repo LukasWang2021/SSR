@@ -149,3 +149,24 @@ void ControllerRpc::handleRpc0x00002A83(void* request_data_ptr, void* response_d
         LogProducer::error("rpc", "/rpc/group/mcGroupReadStatus for group[%d] failed. Error = 0x%llx", group_id, rs_data_ptr->error_code.data);
 }
 
+//"/rpc/group/resetAllEncoder"	
+void ControllerRpc::handleRpc0x000019D2(void* request_data_ptr, void* response_data_ptr)
+{
+    RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
+    ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
+    int32_t group_id = rq_data_ptr->data.data;
+    if(group_id < GROUP_NUM && group_id >= 0)
+    {
+        rs_data_ptr->data.data = group_ptr_[group_id]->resetEncoderMultiTurnValue();
+    }
+    else
+    {
+        rs_data_ptr->data.data = RPC_PARAM_INVALID;
+        LogProducer::error("rpc", "/rpc/group/resetAllEncoder input invalid params group_id = %d", group_id);
+    }
+
+    if (rs_data_ptr->data.data == SUCCESS)
+        LogProducer::info("rpc", "/rpc/group/resetAllEncoder for group[%d] success, error_code = %llx", group_id, rs_data_ptr->data.data);
+    else
+        LogProducer::error("rpc", "/rpc/group/resetAllEncoder for group[%d] failed. Error = 0x%llx", group_id, rs_data_ptr->data.data);
+}

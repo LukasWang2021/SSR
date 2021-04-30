@@ -362,6 +362,24 @@ void TpComm::handleResponse0x000172C5(std::vector<TpRequestResponse>::iterator& 
     }
 }
 
+/********rpc/servo1001/servo/resetEncoder, ResponseMessageType_Uint64**********/
+void TpComm::handleResponse0x0000EFE2(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size)
+{
+    if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_fields, task->response_data_ptr, send_buffer_size))
+    {
+        LogProducer::error("rpc", "handleResponse0x0000EFE2: failed to encode response package");
+    }
+    if(task->request_data_ptr != NULL)
+    {
+        delete (RequestMessageType_Int32List*)task->request_data_ptr;
+    }
+    if(task->response_data_ptr != NULL)
+    {
+        delete (ResponseMessageType_Uint64*)task->response_data_ptr;
+    }
+}		
+
+
 /********rpc/servo1001/servo/goHome, ResponseMessageType_Uint64**********/	
 void TpComm::handleResponse0x00013BB5(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size)
 {

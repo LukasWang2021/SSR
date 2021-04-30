@@ -239,38 +239,12 @@ ErrorCode ServoCommBase::doServoCmdMoveRelative(int64_t target_position, int32_t
 
 ErrorCode ServoCommBase::doServoCmdHoming(void)
 {
-    CoreProcessCallAppData1000_t req_data, res_data;
-    memset(&req_data, 0, sizeof(req_data));
-    memset(&res_data, 0, sizeof(res_data));
-    req_data.cmd = SERVO_CMD_SEARCH_HOME;
-    bool ret = doServoCmdNormalService(comm_ptr_->service_ptr, &req_data, &res_data);
-    if(!ret)
-    {
-        return CORE_COMM_SEND_CORE_PROCESS_CALL_FAILED;
-    }
-    if(res_data.param1 != 0)
-    {
-        return CORE_COMM_EXEC_CORE_PROCESS_CALL_FAILED;
-    }
-    return SUCCESS;
+    return CORE_COMM_SEND_CORE_PROCESS_CALL_FAILED;
 }
 
 ErrorCode ServoCommBase::doServoCmdAbortHoming(void)
 {
-    CoreProcessCallAppData1000_t req_data, res_data;
-    memset(&req_data, 0, sizeof(req_data));
-    memset(&res_data, 0, sizeof(res_data));
-    req_data.cmd = SERVO_CMD_MOVE_ABORT_HOMING;
-    bool ret = doServoCmdNormalService(comm_ptr_->service_ptr, &req_data, &res_data);
-    if(!ret)
-    {
-        return CORE_COMM_SEND_CORE_PROCESS_CALL_FAILED;
-    }
-    if(res_data.param1 != 0)
-    {
-        return CORE_COMM_EXEC_CORE_PROCESS_CALL_FAILED;
-    }
-    return SUCCESS;
+    return CORE_COMM_SEND_CORE_PROCESS_CALL_FAILED;
 }
 
 ErrorCode ServoCommBase::doServoCmdHalt(void)
@@ -279,6 +253,24 @@ ErrorCode ServoCommBase::doServoCmdHalt(void)
     memset(&req_data, 0, sizeof(req_data));
     memset(&res_data, 0, sizeof(res_data));
     req_data.cmd = SERVO_CMD_HALT;
+    bool ret = doServoCmdNormalService(comm_ptr_->service_ptr, &req_data, &res_data);
+    if(!ret)
+    {
+        return CORE_COMM_SEND_CORE_PROCESS_CALL_FAILED;
+    }
+    if(res_data.param1 != 0)
+    {
+        return CORE_COMM_EXEC_CORE_PROCESS_CALL_FAILED;
+    }
+    return SUCCESS;
+}
+
+ErrorCode ServoCommBase::doServoCmdResetEncoder(void)
+{
+    CoreProcessCallAppData1000_t req_data, res_data;
+    memset(&req_data, 0, sizeof(req_data));
+    memset(&res_data, 0, sizeof(res_data));
+    req_data.cmd = SERVO_CMD_RESET_ENCODER;
     bool ret = doServoCmdNormalService(comm_ptr_->service_ptr, &req_data, &res_data);
     if(!ret)
     {

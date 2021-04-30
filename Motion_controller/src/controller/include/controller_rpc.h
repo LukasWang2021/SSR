@@ -177,6 +177,8 @@ private:
     void handleRpc0x00004BE2(void* request_data_ptr, void* response_data_ptr);
     //"/rpc/group/mcGroupReadStatus"	
     void handleRpc0x00002A83(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/group/resetAllEncoder"	
+    void handleRpc0x000019D2(void* request_data_ptr, void* response_data_ptr);
 
     //"/rpc/servo_sampling/setSamplingConfiguration"	
     void handleRpc0x0000845E(void* request_data_ptr, void* response_data_ptr);
@@ -237,6 +239,8 @@ private:
     void handleRpc0x000032F5(void* request_data_ptr, void* response_data_ptr);
     //"/rpc/servo1001/servo/mcMoveRelative"	
     void handleRpc0x000172C5(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/servo1001/servo/resetEncoder"	
+    void handleRpc0x0000EFE2(void* request_data_ptr, void* response_data_ptr);
     //"/rpc/servo1001/servo/goHome"	
     void handleRpc0x00013BB5(void* request_data_ptr, void* response_data_ptr);
     //"/rpc/servo1001/servo/abortHoming"	

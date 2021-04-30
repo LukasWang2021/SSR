@@ -25,3 +25,7 @@ target_link_libraries(test_group_mcGroupReadError ${rtm_LIBRARIES} pb tp_comm_te
 ######### test_group_mcGroupReadStatus #########
 add_executable(test_group_mcGroupReadStatus test_group_mcGroupReadStatus.cpp)
 target_link_libraries(test_group_mcGroupReadStatus ${rtm_LIBRARIES} pb tp_comm_test protos)
+
+######### test_group_resetAllEncoder #########
+add_executable(test_group_resetAllEncoder test_group_resetAllEncoder.cpp)
+target_link_libraries(test_group_resetAllEncoder ${rtm_LIBRARIES} pb tp_comm_test protos)

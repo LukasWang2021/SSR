@@ -42,11 +42,10 @@ typedef enum
     SERVO_CMD_MOVE_VELOCITY = 14,                   /**< Ask servo move with specified velocity.*/
     SERVO_CMD_MOVE_ABSOLUTE = 15,                   /**< Ask servo move to specified position.*/
     SERVO_CMD_MOVE_RELATIVE = 16,                   /**< Ask servo move to a relative position.*/
-    SERVO_CMD_SEARCH_HOME = 17,                     /**< Ask servo search home.*/
-    SERVO_CMD_MOVE_ABORT_HOMING = 18,               /**< Ask servo stop homing process, back to standstill.*/
-    SERVO_CMD_HALT = 19,                            /**< Ask servo stop current motion, back to standstill.*/
-    SERVO_CMD_SERVO_DEFINED = 20,                   /**< Servo self defined data.*/
-    SERVO_CMD_MAX = 21,                             /**< Number of servo command type.*/
+    SERVO_CMD_HALT = 17,                            /**< Ask servo stop current motion, back to standstill.*/
+    SERVO_CMD_RESET_ENCODER = 18,                   /**< Reset encoder error.*/
+    SERVO_CMD_SERVO_DEFINED = 19,                   /**< Servo self defined data.*/
+    SERVO_CMD_MAX = 20,                             /**< Number of servo command type.*/
     SERVO_CMD_UNKNOWN = 0xFF,                       /**< Invalid servo command.*/
 }ServoCmd_e;
 /**

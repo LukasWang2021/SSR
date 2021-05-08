@@ -9,7 +9,7 @@ void TpComm::handleResponse0x000093EE(std::vector<TpRequestResponse>::iterator& 
 {
     if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_Uint32List_fields, task->response_data_ptr, send_buffer_size))
     {
-        LogProducer::error("rpc", "handleResponse0x000093EE: failed to encode response package");
+        LogProducer::error("comm", "handleResponse0x000093EE: failed to encode response package");
     }
     if(task->request_data_ptr != NULL)
     {
@@ -27,7 +27,7 @@ void TpComm::handleResponse0x000167C5(std::vector<TpRequestResponse>::iterator& 
 {
     if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_fields, task->response_data_ptr, send_buffer_size))
     {
-        LogProducer::error("rpc", "handleResponse0x000167C5: failed to encode response package");
+        LogProducer::error("comm", "handleResponse0x000167C5: failed to encode response package");
     }
     if(task->request_data_ptr != NULL)
     {
@@ -44,7 +44,7 @@ void TpComm::handleResponse0x000003F5(std::vector<TpRequestResponse>::iterator& 
 {
     if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_Uint64_fields, task->response_data_ptr, send_buffer_size))
     {
-        LogProducer::error("rpc", "handleResponse0x000003F5: failed to encode response package");
+        LogProducer::error("comm", "handleResponse0x000003F5: failed to encode response package");
     }
     if(task->request_data_ptr != NULL)
     {
@@ -61,7 +61,7 @@ void TpComm::handleResponse0x00006825(std::vector<TpRequestResponse>::iterator& 
 {    
     if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_fields, task->response_data_ptr, send_buffer_size))
     {
-        LogProducer::error("rpc", "handleResponse0x00006825: failed to encode response package");
+        LogProducer::error("comm", "handleResponse0x00006825: failed to encode response package");
     }
     if(task->request_data_ptr != NULL)
     {
@@ -77,7 +77,7 @@ void TpComm::handleResponse0x00003325(std::vector<TpRequestResponse>::iterator& 
 {
     if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_Uint32_fields, task->response_data_ptr, send_buffer_size))
     {
-        LogProducer::error("rpc", "handleResponse0x00003325: failed to encode response package");
+        LogProducer::error("comm", "handleResponse0x00003325: failed to encode response package");
     }
     if(task->request_data_ptr != NULL)
     {

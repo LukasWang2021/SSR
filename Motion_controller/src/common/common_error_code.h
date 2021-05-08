@@ -35,6 +35,25 @@ typedef unsigned long long int ErrorCode;
 #define CONTROLLER_PUBLISH_EXIST 0x2011   /*the publishing element of request is exist*/
 #define CONTROLLER_INVALID_OPERATION 0x2012   /*Controller failed to operate command because of invalid pre-condition*/
 #define CONTROLLER_PUBLISH_NONE 0x2013   /*Controller failed to find the publishing elements of request*/
+//#define CONTROLLER_INVALID_OPERATION_SET_TIME (unsigned long long int)0x0001000200A8000A    /* Controller模块不能设置系统时间因运行状态不满足，使控制器进入ESTOP状态后设置 */
+//#define CONTROLLER_INVALID_OPERATION_START (unsigned long long int)0x0001000200A8000B    /* Controller模块不能start程序因运行状态不满足，使控制器进入ENGAGE状态并且解释器IDLE状态 */
+//#define CONTROLLER_INVALID_OPERATION_LAUNCH (unsigned long long int)0x0001000200A8000C    /* Controller模块不能launch程序因运行状态不满足，使控制器进入ENGAGE状态并且解释器IDLE状态 */
+//#define CONTROLLER_INVALID_OPERATION_FORWARD (unsigned long long int)0x0001000200A8000D    /* Controller模块不能前进一步程序因运行状态不满足，使控制器进入ENGAGE状态并且用户模式为手动 */
+//#define CONTROLLER_INVALID_OPERATION_BACKWARD (unsigned long long int)0x0001000200A8000E    /* Controller模块不能后退一步执行程序因运行状态不满足，使控制器进入ENGAGE状态并且用户模式为手动 */
+//#define CONTROLLER_INVALID_OPERATION_JUMP (unsigned long long int)0x0001000200A8000F    /* Controller模块不能跳行执行程序因运行状态不满足，使控制器进入ENGAGE状态并且用户模式为手动 */
+#define CONTROLLER_INVALID_OPERATION_PAUSE (unsigned long long int)0x0001000200A80010    /* Controller模块不能暂停程序因运行状态不满足，控制器在ENGAGE状态并且解释器在执行状态才能执行暂停操作 */
+#define CONTROLLER_INVALID_OPERATION_RESUME (unsigned long long int)0x0001000200A80011    /* Controller模块不能重新执行程序因运行状态不满足，控制器在ENGAGE状态、解释器在暂停状态并且机器人进入IDLE状态 */
+//#define CONTROLLER_INVALID_OPERATION_SET_IO (unsigned long long int)0x0001000200A80012    /* Controller模块不能设置IO因运行状态不满足，检查参数（是否允许自动模式下设置IO）：false->不可执行;true->可执行。 */
+//#define CONTROLLER_INVALID_OPERATION_SET_LAUNCH (unsigned long long int)0x0001000200A80013    /* Controller模块不能设置启动模式因运行状态不满足，使控制器进入ESTOP状态后设置 */
+//#define CONTROLLER_INVALID_OPERATION_SET_VEL (unsigned long long int)0x0001000200A80014    /* Controller模块不能设置全局速度比率因运行状态不满足，检查参数（是否允许在自动模式下设置速度）和限速手动模式的速度限值 */
+//#define CONTROLLER_INVALID_OPERATION_SET_ACC (unsigned long long int)0x0001000200A80015    /* Controller模块不能设置全局加速度比率因运行状态不满足，限速手动模式的加速度限值 */
+#define CONTROLLER_INVALID_OPERATION_MOVE_STEP (unsigned long long int)0x0001000200A80016    /* Controller模块不能执行步进因运行状态不满足，使控制器进入ENAGED，机器人进入IDLE状态，解释器非执行状态，手动模式。 */
+#define CONTROLLER_INVALID_OPERATION_MOVE_CONTINUOUS (unsigned long long int)0x0001000200A80017    /* Controller模块不能执行连续运动因运行状态不满足，使控制器进入ENAGED，解释器非执行状态，手动模式。 */
+#define CONTROLLER_INVALID_OPERATION_GOTO_CARTESIAN (unsigned long long int)0x0001000200A80018    /* Controller模块不能执行到笛卡尔坐标的运动因运行状态不满足，使控制器进入ENAGED，解释器非执行状态，手动模式。 */
+#define CONTROLLER_INVALID_OPERATION_GOTO_JOINT (unsigned long long int)0x0001000200A80019    /* Controller模块不能执行到关节坐标的运动因运行状态不满足，使控制器进入ENAGED，解释器非执行状态，手动模式。 */
+#define CONTROLLER_INVALID_OPERATION_MANUAL_STOP (unsigned long long int)0x0001000200A8001A    /* Controller模块不能执行停止因运行状态不满足，使控制器进入ENAGED，手动模式。 */
+//#define CONTROLLER_INVALID_OPERATION_RESET (unsigned long long int)0x0001000200A8001B    /* Controller模块不能执行RESET因运行状态不满足，控制器在INIT，ENAGED，ESTOP状态下可做RESET操作 */
+
 
 #define TP_COMM_LOAD_PARAM_FAILED 0x3001   /*TpComm loading param is failed in initialization phase*/
 #define TP_COMM_INIT_OBJECT_FAILED 0x3002   /*TpComm failed to initialize internal variables*/
@@ -48,7 +67,7 @@ typedef unsigned long long int ErrorCode;
 #define TP_COMM_RECEIVE_FAILED 0x300A   /*TpComm failed to receive a package*/
 #define TP_COMM_RPC_OVERLOAD 0x300B   /*TpComm failed to handle too much rpc request*/
 
-#define RPC_PARAM_INVALID 0x4001
+#define RPC_PARAM_INVALID  0x4001
 #define RPC_EXECUTE_FAILED 0x4002
 
 #define AXIS_STATE_TRANSFER_INVALID 0x5001

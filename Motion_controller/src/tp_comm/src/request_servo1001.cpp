@@ -17,14 +17,14 @@ void TpComm::handleRequest0x0000863E(int recv_bytes)
     if(request_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "rpc/servo1001/servo/shutDown: can't allocate memory for request_data");
+        LogProducer::error("comm", "rpc/servo1001/servo/shutDown: can't allocate memory for request_data");
         return;
     }
     ResponseMessageType_Uint64* response_data_ptr = new ResponseMessageType_Uint64;
     if(response_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "rpc/servo1001/servo/shutDown: can't allocate memory for response_data");
+        LogProducer::error("comm", "rpc/servo1001/servo/shutDown: can't allocate memory for response_data");
         delete request_data_ptr;
         return;
     }
@@ -40,14 +40,14 @@ void TpComm::handleRequest0x0000E5CE(int recv_bytes)
     if(request_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "rpc/servo1001/servo/switchOn: can't allocate memory for request_data");
+        LogProducer::error("comm", "rpc/servo1001/servo/switchOn: can't allocate memory for request_data");
         return;
     }
     ResponseMessageType_Uint64* response_data_ptr = new ResponseMessageType_Uint64;
     if(response_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "rpc/servo1001/servo/switchOn: can't allocate memory for response_data");
+        LogProducer::error("comm", "rpc/servo1001/servo/switchOn: can't allocate memory for response_data");
         delete request_data_ptr;
         return;
     }
@@ -63,14 +63,14 @@ void TpComm::handleRequest0x00004755(int recv_bytes)
     if(request_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "rpc/servo1001/servo/disableVoltage: can't allocate memory for request_data");
+        LogProducer::error("comm", "rpc/servo1001/servo/disableVoltage: can't allocate memory for request_data");
         return;
     }
     ResponseMessageType_Uint64* response_data_ptr = new ResponseMessageType_Uint64;
     if(response_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "rpc/servo1001/servo/disableVoltage: can't allocate memory for response_data");
+        LogProducer::error("comm", "rpc/servo1001/servo/disableVoltage: can't allocate memory for response_data");
         delete request_data_ptr;
         return;
     }
@@ -86,14 +86,14 @@ void TpComm::handleRequest0x0000313E(int recv_bytes)
     if(request_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "rpc/servo1001/servo/enableOperation: can't allocate memory for request_data");
+        LogProducer::error("comm", "rpc/servo1001/servo/enableOperation: can't allocate memory for request_data");
         return;
     }
     ResponseMessageType_Uint64* response_data_ptr = new ResponseMessageType_Uint64;
     if(response_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "rpc/servo1001/servo/enableOperation: can't allocate memory for response_data");
+        LogProducer::error("comm", "rpc/servo1001/servo/enableOperation: can't allocate memory for response_data");
         delete request_data_ptr;
         return;
     }
@@ -109,14 +109,14 @@ void TpComm::handleRequest0x000177CE(int recv_bytes)
     if(request_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "rpc/servo1001/servo/switchOnAndEnableOperation: can't allocate memory for request_data");
+        LogProducer::error("comm", "rpc/servo1001/servo/switchOnAndEnableOperation: can't allocate memory for request_data");
         return;
     }
     ResponseMessageType_Uint64* response_data_ptr = new ResponseMessageType_Uint64;
     if(response_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "rpc/servo1001/servo/switchOnAndEnableOperation: can't allocate memory for response_data");
+        LogProducer::error("comm", "rpc/servo1001/servo/switchOnAndEnableOperation: can't allocate memory for response_data");
         delete request_data_ptr;
         return;
     }
@@ -132,14 +132,14 @@ void TpComm::handleRequest0x000026AE(int recv_bytes)
     if(request_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "rpc/servo1001/servo/disableOperation: can't allocate memory for request_data");
+        LogProducer::error("comm", "rpc/servo1001/servo/disableOperation: can't allocate memory for request_data");
         return;
     }
     ResponseMessageType_Uint64* response_data_ptr = new ResponseMessageType_Uint64;
     if(response_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "rpc/servo1001/servo/disableOperation: can't allocate memory for response_data");
+        LogProducer::error("comm", "rpc/servo1001/servo/disableOperation: can't allocate memory for response_data");
         delete request_data_ptr;
         return;
     }
@@ -155,14 +155,14 @@ void TpComm::handleRequest0x00000580(int recv_bytes)
     if(request_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "rpc/servo1001/servo/quickStop: can't allocate memory for request_data");
+        LogProducer::error("comm", "rpc/servo1001/servo/quickStop: can't allocate memory for request_data");
         return;
     }
     ResponseMessageType_Uint64* response_data_ptr = new ResponseMessageType_Uint64;
     if(response_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "rpc/servo1001/servo/quickStop: can't allocate memory for response_data");
+        LogProducer::error("comm", "rpc/servo1001/servo/quickStop: can't allocate memory for response_data");
         delete request_data_ptr;
         return;
     }
@@ -178,14 +178,14 @@ void TpComm::handleRequest0x00010584(int recv_bytes)
     if(request_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "rpc/servo1001/servo/resetFault: can't allocate memory for request_data");
+        LogProducer::error("comm", "rpc/servo1001/servo/resetFault: can't allocate memory for request_data");
         return;
     }
     ResponseMessageType_Uint64* response_data_ptr = new ResponseMessageType_Uint64;
     if(response_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "rpc/servo1001/servo/resetFault: can't allocate memory for response_data");
+        LogProducer::error("comm", "rpc/servo1001/servo/resetFault: can't allocate memory for response_data");
         delete request_data_ptr;
         return;
     }
@@ -201,14 +201,14 @@ void TpComm::handleRequest0x000153C5(int recv_bytes)
     if(request_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "rpc/servo1001/servo/transCommState: can't allocate memory for request_data");
+        LogProducer::error("comm", "rpc/servo1001/servo/transCommState: can't allocate memory for request_data");
         return;
     }
     ResponseMessageType_Uint64* response_data_ptr = new ResponseMessageType_Uint64;
     if(response_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "rpc/servo1001/servo/transCommState: can't allocate memory for response_data");
+        LogProducer::error("comm", "rpc/servo1001/servo/transCommState: can't allocate memory for response_data");
         delete request_data_ptr;
         return;
     }
@@ -224,14 +224,14 @@ void TpComm::handleRequest0x00006892(int recv_bytes)
     if(request_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "rpc/servo1001/servo/readParameter: can't allocate memory for request_data");
+        LogProducer::error("comm", "rpc/servo1001/servo/readParameter: can't allocate memory for request_data");
         return;
     }
     ResponseMessageType_Uint64_Int32* response_data_ptr = new ResponseMessageType_Uint64_Int32;
     if(response_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "rpc/servo1001/servo/readParameter: can't allocate memory for response_data");
+        LogProducer::error("comm", "rpc/servo1001/servo/readParameter: can't allocate memory for response_data");
         delete request_data_ptr;
         return;
     }
@@ -247,14 +247,14 @@ void TpComm::handleRequest0x00007C32(int recv_bytes)
     if(request_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "rpc/servo1001/servo/writeParameter: can't allocate memory for request_data");
+        LogProducer::error("comm", "rpc/servo1001/servo/writeParameter: can't allocate memory for request_data");
         return;
     }
     ResponseMessageType_Uint64* response_data_ptr = new ResponseMessageType_Uint64;
     if(response_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "rpc/servo1001/servo/writeParameter: can't allocate memory for response_data");
+        LogProducer::error("comm", "rpc/servo1001/servo/writeParameter: can't allocate memory for response_data");
         delete request_data_ptr;
         return;
     }
@@ -270,14 +270,14 @@ void TpComm::handleRequest0x000164D9(int recv_bytes)
     if(request_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "rpc/servo1001/servo/moveVelocity: can't allocate memory for request_data");
+        LogProducer::error("comm", "rpc/servo1001/servo/moveVelocity: can't allocate memory for request_data");
         return;
     }
     ResponseMessageType_Uint64* response_data_ptr = new ResponseMessageType_Uint64;
     if(response_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "rpc/servo1001/servo/moveVelocity: can't allocate memory for response_data");
+        LogProducer::error("comm", "rpc/servo1001/servo/moveVelocity: can't allocate memory for response_data");
         delete request_data_ptr;
         return;
     }
@@ -293,14 +293,14 @@ void TpComm::handleRequest0x00004DD5(int recv_bytes)
     if(request_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "rpc/servo1001/servo/moveAbsolute: can't allocate memory for request_data");
+        LogProducer::error("comm", "rpc/servo1001/servo/moveAbsolute: can't allocate memory for request_data");
         return;
     }
     ResponseMessageType_Uint64* response_data_ptr = new ResponseMessageType_Uint64;
     if(response_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "rpc/servo1001/servo/moveAbsolute: can't allocate memory for response_data");
+        LogProducer::error("comm", "rpc/servo1001/servo/moveAbsolute: can't allocate memory for response_data");
         delete request_data_ptr;
         return;
     }
@@ -316,14 +316,14 @@ void TpComm::handleRequest0x000020B3(int recv_bytes)
     if(request_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "rpc/servo1001/servo/triggerUploadParameter: can't allocate memory for request_data");
+        LogProducer::error("comm", "rpc/servo1001/servo/triggerUploadParameter: can't allocate memory for request_data");
         return;
     }
     ResponseMessageType_Uint64* response_data_ptr = new ResponseMessageType_Uint64;
     if(response_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "rpc/servo1001/servo/triggerUploadParameter: can't allocate memory for response_data");
+        LogProducer::error("comm", "rpc/servo1001/servo/triggerUploadParameter: can't allocate memory for response_data");
         delete request_data_ptr;
         return;
     }
@@ -339,14 +339,14 @@ void TpComm::handleRequest0x0000E003(int recv_bytes)
     if(request_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "rpc/servo1001/servo/uploadParameters: can't allocate memory for request_data");
+        LogProducer::error("comm", "rpc/servo1001/servo/uploadParameters: can't allocate memory for request_data");
         return;
     }
     ResponseMessageType_Uint64_ParamDetailList* response_data_ptr = new ResponseMessageType_Uint64_ParamDetailList;
     if(response_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "rpc/servo1001/servo/uploadParameters: can't allocate memory for response_data");
+        LogProducer::error("comm", "rpc/servo1001/servo/uploadParameters: can't allocate memory for response_data");
         delete request_data_ptr;
         return;
     }
@@ -362,14 +362,14 @@ void TpComm::handleRequest0x00011C53(int recv_bytes)
     if(request_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "rpc/servo1001/servo/triggerDownloadParameters: can't allocate memory for request_data");
+        LogProducer::error("comm", "rpc/servo1001/servo/triggerDownloadParameters: can't allocate memory for request_data");
         return;
     }
     ResponseMessageType_Uint64* response_data_ptr = new ResponseMessageType_Uint64;
     if(response_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "rpc/servo1001/servo/triggerDownloadParameters: can't allocate memory for response_data");
+        LogProducer::error("comm", "rpc/servo1001/servo/triggerDownloadParameters: can't allocate memory for response_data");
         delete request_data_ptr;
         return;
     }
@@ -385,14 +385,14 @@ void TpComm::handleRequest0x00017063(int recv_bytes)
     if(request_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "rpc/servo1001/servo/downloadParameters: can't allocate memory for request_data");
+        LogProducer::error("comm", "rpc/servo1001/servo/downloadParameters: can't allocate memory for request_data");
         return;
     }
     ResponseMessageType_Uint64* response_data_ptr = new ResponseMessageType_Uint64;
     if(response_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "rpc/servo1001/servo/downloadParameters: can't allocate memory for response_data");
+        LogProducer::error("comm", "rpc/servo1001/servo/downloadParameters: can't allocate memory for response_data");
         delete request_data_ptr;
         return;
     }
@@ -408,14 +408,14 @@ void TpComm::handleRequest0x000043B8(int recv_bytes)
     if(request_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "rpc/servo1001/servo/isAsyncServiceFinish: can't allocate memory for request_data");
+        LogProducer::error("comm", "rpc/servo1001/servo/isAsyncServiceFinish: can't allocate memory for request_data");
         return;
     }
     ResponseMessageType_Uint64_Bool* response_data_ptr = new ResponseMessageType_Uint64_Bool;
     if(response_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "rpc/servo1001/servo/isAsyncServiceFinish: can't allocate memory for response_data");
+        LogProducer::error("comm", "rpc/servo1001/servo/isAsyncServiceFinish: can't allocate memory for response_data");
         delete request_data_ptr;
         return;
     }
@@ -431,14 +431,14 @@ void TpComm::handleRequest0x0000F485(int recv_bytes)
     if(request_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "rpc/servo1001/servo/getCommState: can't allocate memory for request_data");
+        LogProducer::error("comm", "rpc/servo1001/servo/getCommState: can't allocate memory for request_data");
         return;
     }
     ResponseMessageType_Uint64_CoreCommState* response_data_ptr = new ResponseMessageType_Uint64_CoreCommState;
     if(response_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "rpc/servo1001/servo/getCommState: can't allocate memory for response_data");
+        LogProducer::error("comm", "rpc/servo1001/servo/getCommState: can't allocate memory for response_data");
         delete request_data_ptr;
         return;
     }
@@ -454,14 +454,14 @@ void TpComm::handleRequest0x000032F5(int recv_bytes)
     if(request_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "rpc/servo1001/servo/getServoState: can't allocate memory for request_data");
+        LogProducer::error("comm", "rpc/servo1001/servo/getServoState: can't allocate memory for request_data");
         return;
     }
     ResponseMessageType_Uint64_Int32* response_data_ptr = new ResponseMessageType_Uint64_Int32;
     if(response_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "rpc/servo1001/servo/getServoState: can't allocate memory for response_data");
+        LogProducer::error("comm", "rpc/servo1001/servo/getServoState: can't allocate memory for response_data");
         delete request_data_ptr;
         return;
     }
@@ -477,14 +477,14 @@ void TpComm::handleRequest0x000172C5(int recv_bytes)
     if(request_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "rpc/servo1001/servo/moveRelative: can't allocate memory for request_data");
+        LogProducer::error("comm", "rpc/servo1001/servo/moveRelative: can't allocate memory for request_data");
         return;
     }
     ResponseMessageType_Uint64* response_data_ptr = new ResponseMessageType_Uint64;
     if(response_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "rpc/servo1001/servo/moveRelative: can't allocate memory for response_data");
+        LogProducer::error("comm", "rpc/servo1001/servo/moveRelative: can't allocate memory for response_data");
         delete request_data_ptr;
         return;
     }
@@ -500,14 +500,14 @@ void TpComm::handleRequest0x0000EFE2(int recv_bytes)
     if(request_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "rpc/servo1001/servo/resetEncoder: can't allocate memory for request_data");
+        LogProducer::error("comm", "rpc/servo1001/servo/resetEncoder: can't allocate memory for request_data");
         return;
     }
     ResponseMessageType_Uint64* response_data_ptr = new ResponseMessageType_Uint64;
     if(response_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "rpc/servo1001/servo/resetEncoder: can't allocate memory for response_data");
+        LogProducer::error("comm", "rpc/servo1001/servo/resetEncoder: can't allocate memory for response_data");
         delete request_data_ptr;
         return;
     }
@@ -524,14 +524,14 @@ void TpComm::handleRequest0x00013BB5(int recv_bytes)
     if(request_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "rpc/servo1001/servo/goHome: can't allocate memory for request_data");
+        LogProducer::error("comm", "rpc/servo1001/servo/goHome: can't allocate memory for request_data");
         return;
     }
     ResponseMessageType_Uint64* response_data_ptr = new ResponseMessageType_Uint64;
     if(response_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "rpc/servo1001/servo/goHome: can't allocate memory for response_data");
+        LogProducer::error("comm", "rpc/servo1001/servo/goHome: can't allocate memory for response_data");
         delete request_data_ptr;
         return;
     }
@@ -547,14 +547,14 @@ void TpComm::handleRequest0x00015AB7(int recv_bytes)
     if(request_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "rpc/servo1001/servo/abortHoming: can't allocate memory for request_data");
+        LogProducer::error("comm", "rpc/servo1001/servo/abortHoming: can't allocate memory for request_data");
         return;
     }
     ResponseMessageType_Uint64* response_data_ptr = new ResponseMessageType_Uint64;
     if(response_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "rpc/servo1001/servo/abortHoming: can't allocate memory for response_data");
+        LogProducer::error("comm", "rpc/servo1001/servo/abortHoming: can't allocate memory for response_data");
         delete request_data_ptr;
         return;
     }
@@ -570,14 +570,14 @@ void TpComm::handleRequest0x0000C87F(int recv_bytes)
     if(request_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "rpc/servo1001/servo/getServoDefinedInfo: can't allocate memory for request_data");
+        LogProducer::error("comm", "rpc/servo1001/servo/getServoDefinedInfo: can't allocate memory for request_data");
         return;
     }
     ResponseMessageType_Uint64_Int32List* response_data_ptr = new ResponseMessageType_Uint64_Int32List;
     if(response_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "rpc/servo1001/servo/aborgetServoDefinedInfotHoming: can't allocate memory for response_data");
+        LogProducer::error("comm", "rpc/servo1001/servo/aborgetServoDefinedInfotHoming: can't allocate memory for response_data");
         delete request_data_ptr;
         return;
     }
@@ -593,14 +593,14 @@ void TpComm::handleRequest0x0001192E(int recv_bytes)
     if(request_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "rpc/servo1001/cpu/getVersion: can't allocate memory for request_data");
+        LogProducer::error("comm", "rpc/servo1001/cpu/getVersion: can't allocate memory for request_data");
         return;
     }
     ResponseMessageType_Uint64_Uint32List* response_data_ptr = new ResponseMessageType_Uint64_Uint32List;
     if(response_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "rpc/servo1001/cpu/getVersion: can't allocate memory for response_data");
+        LogProducer::error("comm", "rpc/servo1001/cpu/getVersion: can't allocate memory for response_data");
         delete request_data_ptr;
         return;
     }
@@ -616,14 +616,14 @@ void TpComm::handleRequest0x00005123(int recv_bytes)
     if(request_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "rpc/servo1001/cpu/setCtrlPdoSync: can't allocate memory for request_data");
+        LogProducer::error("comm", "rpc/servo1001/cpu/setCtrlPdoSync: can't allocate memory for request_data");
         return;
     }
     ResponseMessageType_Uint64* response_data_ptr = new ResponseMessageType_Uint64;
     if(response_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "rpc/servo1001/cpu/setCtrlPdoSync: can't allocate memory for response_data");
+        LogProducer::error("comm", "rpc/servo1001/cpu/setCtrlPdoSync: can't allocate memory for response_data");
         delete request_data_ptr;
         return;
     }
@@ -639,14 +639,14 @@ void TpComm::handleRequest0x00005463(int recv_bytes)
     if(request_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "rpc/servo1001/cpu/getCtrlPdoSync: can't allocate memory for request_data");
+        LogProducer::error("comm", "rpc/servo1001/cpu/getCtrlPdoSync: can't allocate memory for request_data");
         return;
     }
     ResponseMessageType_Uint64_Int32_Uint32* response_data_ptr = new ResponseMessageType_Uint64_Int32_Uint32;
     if(response_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "rpc/servo1001/cpu/getCtrlPdoSync: can't allocate memory for response_data");
+        LogProducer::error("comm", "rpc/servo1001/cpu/getCtrlPdoSync: can't allocate memory for response_data");
         delete request_data_ptr;
         return;
     }
@@ -662,14 +662,14 @@ void TpComm::handleRequest0x00004023(int recv_bytes)
     if(request_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "rpc/servo1001/cpu/setSamplingSync: can't allocate memory for request_data");
+        LogProducer::error("comm", "rpc/servo1001/cpu/setSamplingSync: can't allocate memory for request_data");
         return;
     }
     ResponseMessageType_Uint64* response_data_ptr = new ResponseMessageType_Uint64;
     if(response_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "rpc/servo1001/cpu/setSamplingSync: can't allocate memory for response_data");
+        LogProducer::error("comm", "rpc/servo1001/cpu/setSamplingSync: can't allocate memory for response_data");
         delete request_data_ptr;
         return;
     }
@@ -685,14 +685,14 @@ void TpComm::handleRequest0x00006C23(int recv_bytes)
     if(request_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "rpc/servo1001/cpu/getSamplingSync: can't allocate memory for request_data");
+        LogProducer::error("comm", "rpc/servo1001/cpu/getSamplingSync: can't allocate memory for request_data");
         return;
     }
     ResponseMessageType_Uint64_Uint32* response_data_ptr = new ResponseMessageType_Uint64_Uint32;
     if(response_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "rpc/servo1001/cpu/getSamplingSync: can't allocate memory for response_data");
+        LogProducer::error("comm", "rpc/servo1001/cpu/getSamplingSync: can't allocate memory for response_data");
         delete request_data_ptr;
         return;
     }
@@ -708,14 +708,14 @@ void TpComm::handleRequest0x00003EEC(int recv_bytes)
     if(request_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "rpc/servo1001/cpu/setSamplingInterval: can't allocate memory for request_data");
+        LogProducer::error("comm", "rpc/servo1001/cpu/setSamplingInterval: can't allocate memory for request_data");
         return;
     }
     ResponseMessageType_Uint64* response_data_ptr = new ResponseMessageType_Uint64;
     if(response_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "rpc/servo1001/cpu/setSamplingInterval: can't allocate memory for response_data");
+        LogProducer::error("comm", "rpc/servo1001/cpu/setSamplingInterval: can't allocate memory for response_data");
         delete request_data_ptr;
         return;
     }
@@ -731,14 +731,14 @@ void TpComm::handleRequest0x00001C2C(int recv_bytes)
     if(request_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "rpc/servo1001/cpu/getSamplingInterval: can't allocate memory for request_data");
+        LogProducer::error("comm", "rpc/servo1001/cpu/getSamplingInterval: can't allocate memory for request_data");
         return;
     }
     ResponseMessageType_Uint64_Uint32* response_data_ptr = new ResponseMessageType_Uint64_Uint32;
     if(response_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "rpc/servo1001/cpu/getSamplingInterval: can't allocate memory for response_data");
+        LogProducer::error("comm", "rpc/servo1001/cpu/getSamplingInterval: can't allocate memory for response_data");
         delete request_data_ptr;
         return;
     }
@@ -754,14 +754,14 @@ void TpComm::handleRequest0x000110A3(int recv_bytes)
     if(request_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "rpc/servo1001/cpu/setSamplingMaxTimes: can't allocate memory for request_data");
+        LogProducer::error("comm", "rpc/servo1001/cpu/setSamplingMaxTimes: can't allocate memory for request_data");
         return;
     }
     ResponseMessageType_Uint64* response_data_ptr = new ResponseMessageType_Uint64;
     if(response_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "rpc/servo1001/cpu/setSamplingMaxTimes: can't allocate memory for response_data");
+        LogProducer::error("comm", "rpc/servo1001/cpu/setSamplingMaxTimes: can't allocate memory for response_data");
         delete request_data_ptr;
         return;
     }
@@ -777,14 +777,14 @@ void TpComm::handleRequest0x00013363(int recv_bytes)
     if(request_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "rpc/servo1001/cpu/getSamplingMaxTimes: can't allocate memory for request_data");
+        LogProducer::error("comm", "rpc/servo1001/cpu/getSamplingMaxTimes: can't allocate memory for request_data");
         return;
     }
     ResponseMessageType_Uint64_Uint32* response_data_ptr = new ResponseMessageType_Uint64_Uint32;
     if(response_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "rpc/servo1001/cpu/getSamplingMaxTimes: can't allocate memory for response_data");
+        LogProducer::error("comm", "rpc/servo1001/cpu/getSamplingMaxTimes: can't allocate memory for response_data");
         delete request_data_ptr;
         return;
     }
@@ -800,14 +800,14 @@ void TpComm::handleRequest0x00008E5C(int recv_bytes)
     if(request_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "rpc/servo1001/cpu/setSamplingChannel: can't allocate memory for request_data");
+        LogProducer::error("comm", "rpc/servo1001/cpu/setSamplingChannel: can't allocate memory for request_data");
         return;
     }
     ResponseMessageType_Uint64* response_data_ptr = new ResponseMessageType_Uint64;
     if(response_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "rpc/servo1001/cpu/setSamplingChannel: can't allocate memory for response_data");
+        LogProducer::error("comm", "rpc/servo1001/cpu/setSamplingChannel: can't allocate memory for response_data");
         delete request_data_ptr;
         return;
     }
@@ -823,14 +823,14 @@ void TpComm::handleRequest0x0000FD9C(int recv_bytes)
     if(request_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "rpc/servo1001/cpu/getSamplingChannel: can't allocate memory for request_data");
+        LogProducer::error("comm", "rpc/servo1001/cpu/getSamplingChannel: can't allocate memory for request_data");
         return;
     }
     ResponseMessageType_Uint64_Uint32List* response_data_ptr = new ResponseMessageType_Uint64_Uint32List;
     if(response_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "rpc/servo1001/cpu/getSamplingChannel: can't allocate memory for response_data");
+        LogProducer::error("comm", "rpc/servo1001/cpu/getSamplingChannel: can't allocate memory for response_data");
         delete request_data_ptr;
         return;
     }
@@ -846,14 +846,14 @@ void TpComm::handleRequest0x0000939E(int recv_bytes)
     if(request_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "rpc/servo1001/cpu/activateSamplingConfiguration: can't allocate memory for request_data");
+        LogProducer::error("comm", "rpc/servo1001/cpu/activateSamplingConfiguration: can't allocate memory for request_data");
         return;
     }
     ResponseMessageType_Uint64* response_data_ptr = new ResponseMessageType_Uint64;
     if(response_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "rpc/servo1001/cpu/activateSamplingConfiguration: can't allocate memory for response_data");
+        LogProducer::error("comm", "rpc/servo1001/cpu/activateSamplingConfiguration: can't allocate memory for response_data");
         delete request_data_ptr;
         return;
     }
@@ -870,14 +870,14 @@ void TpComm::handleRequest0x00015621(int recv_bytes)
     if(request_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "rpc/servo1001/cpu/saveSamplingBufferData: can't allocate memory for request_data");
+        LogProducer::error("comm", "rpc/servo1001/cpu/saveSamplingBufferData: can't allocate memory for request_data");
         return;
     }
     ResponseMessageType_Uint64* response_data_ptr = new ResponseMessageType_Uint64;
     if(response_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "rpc/servo1001/cpu/saveSamplingBufferData: can't allocate memory for response_data");
+        LogProducer::error("comm", "rpc/servo1001/cpu/saveSamplingBufferData: can't allocate memory for response_data");
         delete request_data_ptr;
         return;
     }
@@ -893,14 +893,14 @@ void TpComm::handleRequest0x0000BF1F(int recv_bytes)
     if(request_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "rpc/servo1001/servo/getServoCommInfo: can't allocate memory for request_data");
+        LogProducer::error("comm", "rpc/servo1001/servo/getServoCommInfo: can't allocate memory for request_data");
         return;
     }
     ResponseMessageType_Uint64_Int32List* response_data_ptr = new ResponseMessageType_Uint64_Int32List;
     if(response_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "rpc/servo1001/servo/getServoCommInfo: can't allocate memory for response_data");
+        LogProducer::error("comm", "rpc/servo1001/servo/getServoCommInfo: can't allocate memory for response_data");
         delete request_data_ptr;
         return;
     }
@@ -916,14 +916,14 @@ void TpComm::handleRequest0x0000FE5F(int recv_bytes)
     if(request_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "rpc/servo1001/cpu/getServoCpuCommInfo: can't allocate memory for request_data");
+        LogProducer::error("comm", "rpc/servo1001/cpu/getServoCpuCommInfo: can't allocate memory for request_data");
         return;
     }
     ResponseMessageType_Uint64_Int32List* response_data_ptr = new ResponseMessageType_Uint64_Int32List;
     if(response_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "rpc/servo1001/cpu/getServoCpuCommInfo: can't allocate memory for response_data");
+        LogProducer::error("comm", "rpc/servo1001/cpu/getServoCpuCommInfo: can't allocate memory for response_data");
         delete request_data_ptr;
         return;
     }

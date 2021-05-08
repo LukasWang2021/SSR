@@ -20,6 +20,8 @@
 #include "axis.h"
 #include "io_1000.h"
 #include "motion_control.h"
+#include "tool_manager.h"
+#include "coordinate_manager.h"
 
 /**
  * @brief user_space includes the user level implementation.
@@ -58,7 +60,8 @@ public:
     void init(TpComm* tp_comm_ptr, ControllerPublish* publish_ptr, servo_comm_space::ServoCpuCommBase* cpu_comm_ptr, 
         servo_comm_space::ServoCommBase* servo_comm_ptr[], axis_space::Axis* axis_ptr[AXIS_NUM],
         system_model_space::AxisModel_t* axis_model_ptr[AXIS_NUM], group_space::MotionControl* group_ptr[GROUP_NUM],
-        base_space::FileManager* file_manager_ptr, hal_space::Io1000* io_dev_ptr);
+        base_space::FileManager* file_manager_ptr, hal_space::Io1000* io_dev_ptr,
+        fst_ctrl::ToolManager* tool_manager_ptr, fst_ctrl::CoordinateManager* coordinate_manager_ptr);
 
     /**
      * @brief Process the service request in case the rpc comes.
@@ -78,6 +81,8 @@ private:
     int32_t* sync_ack_ptr_;
     hal_space::Io1000* io_dev_ptr_;
     DeviceVersion device_version_;
+    fst_ctrl::ToolManager* tool_manager_ptr_;
+    fst_ctrl::CoordinateManager* coordinate_manager_ptr_;
 
     group_space::MotionControl* group_ptr_[GROUP_NUM];
 
@@ -288,6 +293,125 @@ private:
     //"/rpc/io/writeDO"	
     void handleRpc0x00000C1F(void* request_data_ptr, void* response_data_ptr);
     
+    //"/rpc/tool_manager/addTool"	
+    void handleRpc0x0000A22C(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/tool_manager/deleteTool"	
+    void handleRpc0x00010E4C(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/tool_manager/updateTool"	
+    void handleRpc0x0000C78C(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/tool_manager/moveTool"	
+    void handleRpc0x000085FC(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/tool_manager/getToolInfoById"	
+    void handleRpc0x00009E34(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/tool_manager/getAllValidToolSummaryInfo"	
+    void handleRpc0x0001104F(void* request_data_ptr, void* response_data_ptr);
+
+    //"/rpc/coordinate_manager/addUserCoord"	
+    void handleRpc0x00016764(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/coordinate_manager/deleteUserCoord"	
+    void handleRpc0x0000BAF4(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/coordinate_manager/updateUserCoord"	
+    void handleRpc0x0000EC14(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/coordinate_manager/moveUserCoord"	
+    void handleRpc0x0000E104(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/coordinate_manager/getUserCoordInfoById"	
+    void handleRpc0x00004324(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/coordinate_manager/getAllValidUserCoordSummaryInfo"	
+    void handleRpc0x0001838F(void* request_data_ptr, void* response_data_ptr);
+
+    //"/rpc/motion_control/setGlobalVelRatio"	
+    void handleRpc0x000005EF(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/motion_control/getGlobalVelRatio"	
+    void handleRpc0x0001578F(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/motion_control/setGlobalAccRatio"	
+    void handleRpc0x0000271F(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/motion_control/getGlobalAccRatio"	
+    void handleRpc0x00016D9F(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/motion_control/axis_group/doStepManualMove"	
+    void handleRpc0x000085D5(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/motion_control/axis_group/doContinuousManualMove"	
+    void handleRpc0x0000D3F5(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/motion_control/axis_group/doGotoCartesianPointManualMove"	
+    void handleRpc0x00010C05(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/motion_control/axis_group/doGotoJointPointManualMove"	
+    void handleRpc0x00008075(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/motion_control/axis_group/doManualStop"	
+    void handleRpc0x0000A9A0(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/motion_control/axis_group/getJointsFeedBack"	
+    void handleRpc0x0000DFBB(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/motion_control/axis_group/setUserSoftLimit"	
+    void handleRpc0x000114A4(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/motion_control/axis_group/getUserSoftLimit"	
+    void handleRpc0x0000C764(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/motion_control/axis_group/setManuSoftLimit"	
+    void handleRpc0x000108E4(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/motion_control/axis_group/getManuSoftLimit"	
+    void handleRpc0x0000C244(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/motion_control/axis_group/setHardLimit"	
+    void handleRpc0x0000C454(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/motion_control/axis_group/getHardLimit"	
+    void handleRpc0x00013394(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/motion_control/axis_group/setCoordinate"	
+    void handleRpc0x0000A845(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/motion_control/axis_group/getCoordinate"	
+    void handleRpc0x00008595(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/motion_control/axis_group/setUserCoordId"	
+    void handleRpc0x00005CF4(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/motion_control/axis_group/getUserCoordId"	
+    void handleRpc0x00005BB4(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/motion_control/axis_group/setTool"	
+    void handleRpc0x0001581C(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/motion_control/axis_group/getTool"	
+    void handleRpc0x0001354C(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/motion_control/axis_group/convertCartToJoint"	
+    void handleRpc0x00010FD4(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/motion_control/axis_group/convertJointToCart"	
+    void handleRpc0x0000B6D4(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/motion_control/axis_group/ignoreLostZeroError"	
+    void handleRpc0x00014952(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/motion_control/axis_group/setSingleZeroPointOffset"	
+    void handleRpc0x00012404(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/motion_control/axis_group/setAllZeroPointOffsets"	
+    void handleRpc0x00011853(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/motion_control/axis_group/getAllZeroPointOffsets"	
+    void handleRpc0x00012353(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/motion_control/axis_group/getAllZeroErrorMaskStatus"	
+    void handleRpc0x0000C183(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/motion_control/axis_group/setSingleZeroPointStatus"	
+    void handleRpc0x00010E43(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/motion_control/axis_group/getAllZeroPointStatus"	
+    void handleRpc0x000102F3(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/motion_control/axis_group/calibrateAllZeroPointOffsets"	
+    void handleRpc0x00011B03(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/motion_control/axis_group/calibrateSingleZeroPointOffset"	
+    void handleRpc0x000131D4(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/motion_control/axis_group/calibrateZeroPointOffsets"	
+    void handleRpc0x00005AE3(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/motion_control/axis_group/setJointManualStep"	
+    void handleRpc0x00018470(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/motion_control/axis_group/getJointManualStep"	
+    void handleRpc0x00006D10(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/motion_control/axis_group/setCartesianManualStep"	
+    void handleRpc0x0000A420(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/motion_control/axis_group/getCartesianManualStep"	
+    void handleRpc0x0000EAC0(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/motion_control/axis_group/setOrientationManualStep"	
+    void handleRpc0x00002940(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/motion_control/axis_group/getOrientationManualStep"	
+    void handleRpc0x00016D20(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/motion_control/axis_group/getFcpBasePose"	
+    void handleRpc0x000016B5(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/motion_control/axis_group/getTcpCurrentPose"	
+    void handleRpc0x00003B45(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/motion_control/getPostureByJoint"	
+    void handleRpc0x0000EC64(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/motion_control/axis_group/setOfflineTrajectoryFile"	
+    void handleRpc0x00011275(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/motion_control/axis_group/PrepareOfflineTrajectory"	
+    void handleRpc0x000051E9(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/motion_control/axis_group/moveOfflineTrajectory"	
+    void handleRpc0x0000C4D9(void* request_data_ptr, void* response_data_ptr);
+
 
 };
 

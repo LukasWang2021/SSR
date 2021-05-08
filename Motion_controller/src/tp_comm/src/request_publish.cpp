@@ -18,14 +18,14 @@ void TpComm::handleRequest0x000050E3(int recv_bytes)
     if(request_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "/rpc/publish/addTopic: can't allocate memory for request_data");
+        LogProducer::error("comm", "/rpc/publish/addTopic: can't allocate memory for request_data");
         return;
     }
     ResponseMessageType_Uint64* response_data_ptr = new ResponseMessageType_Uint64;
     if(response_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "/rpc/publish/addTopic: can't allocate memory for response_data");
+        LogProducer::error("comm", "/rpc/publish/addTopic: can't allocate memory for response_data");
         delete request_data_ptr;
         return;
     }
@@ -42,14 +42,14 @@ void TpComm::handleRequest0x00004403(int recv_bytes)
     if(request_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "/rpc/publish/deleteTopic: can't allocate memory for request_data");
+        LogProducer::error("comm", "/rpc/publish/deleteTopic: can't allocate memory for request_data");
         return;
     }
     ResponseMessageType_Uint64* response_data_ptr = new ResponseMessageType_Uint64;
     if(response_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "/rpc/publish/deleteTopic: can't allocate memory for response_data");
+        LogProducer::error("comm", "/rpc/publish/deleteTopic: can't allocate memory for response_data");
         delete request_data_ptr;
         return;
     }

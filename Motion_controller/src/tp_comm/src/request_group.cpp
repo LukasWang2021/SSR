@@ -17,14 +17,14 @@ void TpComm::handleRequest0x00016FF4(int recv_bytes)
     if(request_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "rpc/group/mcGroupReset: can't allocate memory for request_data");
+        LogProducer::error("comm", "rpc/group/mcGroupReset: can't allocate memory for request_data");
         return;
     }
     ResponseMessageType_Uint64* response_data_ptr = new ResponseMessageType_Uint64;
     if(response_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "rpc/group/mcGroupReset: can't allocate memory for response_data");
+        LogProducer::error("comm", "rpc/group/mcGroupReset: can't allocate memory for response_data");
         delete request_data_ptr;
         return;
     }
@@ -40,14 +40,14 @@ void TpComm::handleRequest0x00003615(int recv_bytes)
     if(request_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "rpc/group/mcGroupEnable: can't allocate memory for request_data");
+        LogProducer::error("comm", "rpc/group/mcGroupEnable: can't allocate memory for request_data");
         return;
     }
     ResponseMessageType_Uint64* response_data_ptr = new ResponseMessageType_Uint64;
     if(response_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "rpc/group/mcGroupEnable: can't allocate memory for response_data");
+        LogProducer::error("comm", "rpc/group/mcGroupEnable: can't allocate memory for response_data");
         delete request_data_ptr;
         return;
     }
@@ -63,14 +63,14 @@ void TpComm::handleRequest0x0000D185(int recv_bytes)
     if(request_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "rpc/group/mcGroupDisable: can't allocate memory for request_data");
+        LogProducer::error("comm", "rpc/group/mcGroupDisable: can't allocate memory for request_data");
         return;
     }
     ResponseMessageType_Uint64* response_data_ptr = new ResponseMessageType_Uint64;
     if(response_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "rpc/group/mcGroupDisable: can't allocate memory for response_data");
+        LogProducer::error("comm", "rpc/group/mcGroupDisable: can't allocate memory for response_data");
         delete request_data_ptr;
         return;
     }
@@ -87,14 +87,14 @@ void TpComm::handleRequest0x00004BE2(int recv_bytes)
     if(request_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "rpc/group/mcGroupReadError: can't allocate memory for request_data");
+        LogProducer::error("comm", "rpc/group/mcGroupReadError: can't allocate memory for request_data");
         return;
     }
     ResponseMessageType_Uint64_Uint64* response_data_ptr = new ResponseMessageType_Uint64_Uint64;
     if(response_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "rpc/group/mcGroupReadError: can't allocate memory for response_data");
+        LogProducer::error("comm", "rpc/group/mcGroupReadError: can't allocate memory for response_data");
         delete request_data_ptr;
         return;
     }
@@ -110,14 +110,14 @@ void TpComm::handleRequest0x00002A83(int recv_bytes)
     if(request_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "rpc/group/mcGroupReadStatus: can't allocate memory for request_data");
+        LogProducer::error("comm", "rpc/group/mcGroupReadStatus: can't allocate memory for request_data");
         return;
     }
     ResponseMessageType_Uint64_GroupStatus_Bool* response_data_ptr = new ResponseMessageType_Uint64_GroupStatus_Bool;
     if(response_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "rpc/group/mcGroupReadStatus: can't allocate memory for response_data");
+        LogProducer::error("comm", "rpc/group/mcGroupReadStatus: can't allocate memory for response_data");
         delete request_data_ptr;
         return;
     }
@@ -133,14 +133,14 @@ void TpComm::handleRequest0x000019D2(int recv_bytes)
     if(request_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "rpc/group/resetAllEncoder: can't allocate memory for request_data");
+        LogProducer::error("comm", "rpc/group/resetAllEncoder: can't allocate memory for request_data");
         return;
     }
     ResponseMessageType_Uint64* response_data_ptr = new ResponseMessageType_Uint64;
     if(response_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "rpc/group/resetAllEncoder: can't allocate memory for response_data");
+        LogProducer::error("comm", "rpc/group/resetAllEncoder: can't allocate memory for response_data");
         delete request_data_ptr;
         return;
     }

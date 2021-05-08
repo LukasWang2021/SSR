@@ -93,7 +93,7 @@ void ControllerRpc::handleRpc0x00004BE2(void* request_data_ptr, void* response_d
     }
     
     if (rs_data_ptr->error_code.data == SUCCESS)
-        LogProducer::info("rpc", "/rpc/group/mcGroupReadError for group[%d] success, error_code = %llx", group_id, rs_data_ptr->data.data);
+        LogProducer::info("rpc", "/rpc/group/mcGroupReadError for group[%d] success", group_id);
     else
         LogProducer::error("rpc", "/rpc/group/mcGroupReadError for group[%d] failed. Error = 0x%llx", group_id, rs_data_ptr->error_code.data);
 }
@@ -166,7 +166,7 @@ void ControllerRpc::handleRpc0x000019D2(void* request_data_ptr, void* response_d
     }
 
     if (rs_data_ptr->data.data == SUCCESS)
-        LogProducer::info("rpc", "/rpc/group/resetAllEncoder for group[%d] success, error_code = %llx", group_id, rs_data_ptr->data.data);
+        LogProducer::info("rpc", "/rpc/group/resetAllEncoder for group[%d] success", group_id);
     else
         LogProducer::error("rpc", "/rpc/group/resetAllEncoder for group[%d] failed. Error = 0x%llx", group_id, rs_data_ptr->data.data);
 }

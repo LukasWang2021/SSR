@@ -570,3 +570,25 @@ void ControllerRpc::handleRpc0x0000A632(void* request_data_ptr, void* response_d
     else
         LogProducer::error("rpc", "/rpc/axis/rtmReadAxisFdbPdoPtr for axis[%d] failed. Error = 0x%llx", axis_id, rs_data_ptr->data.data);  
 }
+
+//"/rpc/axis/rtmResetEncoder"	
+void ControllerRpc::handleRpc0x00000BA2(void* request_data_ptr, void* response_data_ptr)
+{
+    RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
+    ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
+
+    int32_t axis_id = rq_data_ptr->data.data;
+    if(axis_id < AXIS_NUM && axis_id >= 0)
+    {
+        rs_data_ptr->data.data = axis_ptr_[axis_id]->rtmResetEncoder();
+    }
+    else
+    {
+        rs_data_ptr->data.data = RPC_PARAM_INVALID;
+    }
+
+    if (rs_data_ptr->data.data == SUCCESS)
+        LogProducer::info("rpc", "/rpc/axis/rtmResetEncoder for axis[%d] success", axis_id);
+    else
+        LogProducer::error("rpc", "/rpc/axis/rtmResetEncoder for axis[%d] failed. Error = 0x%llx", axis_id, rs_data_ptr->data.data);  
+}

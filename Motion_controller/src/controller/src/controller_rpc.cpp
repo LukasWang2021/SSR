@@ -19,6 +19,11 @@ ControllerRpc::ControllerRpc():
     {
         axis_ptr_[i] = NULL;
     }
+    for(size_t i = 0; i < GROUP_NUM; ++i)
+    {
+        group_ptr_[i] = NULL;
+    }
+
 }
 
 ControllerRpc::~ControllerRpc()
@@ -28,9 +33,9 @@ ControllerRpc::~ControllerRpc()
 
 void ControllerRpc::init(TpComm* tp_comm_ptr, ControllerPublish* publish_ptr, servo_comm_space::ServoCpuCommBase* cpu_comm_ptr,
         servo_comm_space::ServoCommBase* servo_comm_ptr[], axis_space::Axis* axis_ptr[AXIS_NUM],
-        system_model_space::AxisModel_t* axis_model_ptr[AXIS_NUM], 
-        base_space::FileManager* file_manager_ptr, 
-        hal_space::Io1000* io_dev_ptr)
+        system_model_space::AxisModel_t* axis_model_ptr[AXIS_NUM], group_space::MotionControl* group_ptr[GROUP_NUM],
+        base_space::FileManager* file_manager_ptr, hal_space::Io1000* io_dev_ptr,
+        fst_ctrl::ToolManager* tool_manager_ptr, fst_ctrl::CoordinateManager* coordinate_manager_ptr)
 {
     tp_comm_ptr_ = tp_comm_ptr;
 	publish_ptr_ = publish_ptr;
@@ -41,9 +46,15 @@ void ControllerRpc::init(TpComm* tp_comm_ptr, ControllerPublish* publish_ptr, se
         axis_ptr_[i] = axis_ptr[i];
         axis_model_ptr_[i] = axis_model_ptr[i];
     }
+    for(size_t i = 0; i < GROUP_NUM; ++i)
+    {
+        group_ptr_[i] = group_ptr[i];
+    }
 
     file_manager_ptr_ = file_manager_ptr;
     io_dev_ptr_ = io_dev_ptr;
+    tool_manager_ptr_ =  tool_manager_ptr;
+    coordinate_manager_ptr_ = coordinate_manager_ptr;
 
     device_version_.init();
 

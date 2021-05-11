@@ -1,6 +1,7 @@
 #ifndef MOTION_CONTROL_H
 #define MOTION_CONTROL_H
 
+#include <unistd.h> 
 #include <queue>
 #include <coordinate_manager.h>
 #include <tool_manager.h>
@@ -8,21 +9,20 @@
 #include <motion_control_datatype.h>
 #include <motion_control_param.h>
 #include <motion_control_arm_group.h>
-#include <interpreter_common.h>
 #include "log_manager_producer.h"
 #include "common_error_code.h"
+#include "group.h"
 
-
-namespace fst_mc
+namespace group_space
 {
 
-class MotionControl
+class MotionControl : public group_space::Group 
 {
 public:
-    MotionControl();
+    MotionControl(int32_t id);
     ~MotionControl();
 
-    ErrorCode init(fst_ctrl::CoordinateManager *coordinate_manager_ptr, fst_ctrl::ToolManager *tool_manager_ptr);
+    ErrorCode initApplication(fst_ctrl::CoordinateManager *coordinate_manager_ptr, fst_ctrl::ToolManager *tool_manager_ptr);
 
     // API for teaching
     ManualFrame getManualFrame(void);
@@ -40,7 +40,7 @@ public:
     ErrorCode doGotoPointManualMove(const PoseAndPosture &pose, int user_frame_id, int tool_frame_id);
 
     // API for auto run
-    ErrorCode autoMove(const Instruction &instruction);
+    ErrorCode autoMove(const struct Instruction &instruction);
     ErrorCode restartMove(void);
     ErrorCode pauseMove(void);
     bool isMoving(void);
@@ -112,7 +112,6 @@ public:
     basic_alg::Posture getPostureFromJoint(const basic_alg::Joint &joint);
     basic_alg::Turn getTurnFromJoint(const basic_alg::Joint &joint);
 
-    ErrorCode   getServoVersion(std::string &version);
     GroupState  getGroupState(void);
     ServoState  getServoState(void);
     basic_alg::PoseEuler getCurrentPose(void);
@@ -145,6 +144,10 @@ public:
     std::vector<basic_alg::PayloadSummaryInfo> getAllValidPayloadSummaryInfo(void);
     void getAllValidPayloadSummaryInfo(std::vector<basic_alg::PayloadSummaryInfo>& info_list);
 
+    //ssr
+    void setWorkMode(UserOpMode mode);
+    UserOpMode getWorkMode(void);
+
     // parameter access
     // ...
 
@@ -152,6 +155,25 @@ public:
     void ringPlannerTask(void);
     void ringRealTimeTask(void);
     void ringPriorityTask(void);
+
+    //pure function no realization
+    virtual ErrorCode mcGroupHalt(double dec, double jerk);
+    virtual ErrorCode mcGroupInterrupt(double dec, double jerk);
+    virtual ErrorCode mcGroupContinue(void);
+    virtual ErrorCode mcGroupSetPosition(const std::vector<double> &position, bool relative, CoordType_e coord_type);
+    virtual ErrorCode mcMoveDirectAbsolute(const std::vector<double> &position, CoordType_e coord_type,
+        double vel_pct, double acc_pct, double jerk);
+    virtual ErrorCode mcMoveLinearAbsolute(const std::vector<double> &position, CoordType_e coord_type, 
+        double velocity, double acc, double dec, double jerk);
+    virtual ErrorCode mcGroupReadActualPosition(CoordType_e coord_type, std::vector<double> &position);
+    virtual ErrorCode mcGroupReadActualVelocity(CoordType_e coord_type, std::vector<double> &velocity);
+    virtual bool initApplication(void);
+    virtual bool reloadSystemModel(void);
+    virtual bool pushBackFB(void* fb_ptr);
+    virtual base_space::FBQueueStatus_e getFBQStatus();
+    virtual void processFBQ();
+    virtual void processTBQ();
+    virtual void clearBQ();
     
 private:
     ErrorCode autoMove(const MotionTarget &target);
@@ -163,13 +185,15 @@ private:
     int  user_frame_id_;
     int  tool_frame_id_;
 
+    UserOpMode work_mode_;
+
     bool realtime_thread_running_;
     bool priority_thread_running_;
     bool planner_thread_running_;
     bool common_thread_running_;
     bool motion_error_flag_;
 
-    std::queue<Instruction> instruction_fifo_;
+    std::queue<struct Instruction> instruction_fifo_;
     pthread_mutex_t  instruction_mutex_;
     uint32_t instructions_recv_counter_;
     uint32_t instructions_handle_counter_;
@@ -182,6 +206,7 @@ private:
     base_space::ThreadHelp priority_thread_;
     base_space::ThreadHelp planner_thread_;
     base_space::ThreadHelp common_thread_;
+
 
 };
 

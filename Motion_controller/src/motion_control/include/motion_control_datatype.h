@@ -14,7 +14,7 @@
 #include <common_enum.h>
 #include <kinematics.h>
 
-namespace fst_mc
+namespace group_space
 {
 
 typedef unsigned int Tick;
@@ -145,7 +145,53 @@ struct ManualAxisBlock
     AxisCoeff coeff[7];
 };
 
+//interpreter interface
+typedef enum _InstType
+{
+    COMMON = 1,
+    LOGIC_TOK,
+    END_TOK,
+    MOTION,
+    SET_UF,
+    SET_TF,
+    SET_OVC,
+    SET_OAC,
+    STE_PAYLOAD,
+    END_PROG,
+}InstType;
 
+typedef void (*PauseCallBack_fp)(bool);
+typedef void (*SetLineNumCallBack_fp)(int32_t);
+//typedef struct
+struct Instruction
+{
+
+    char            line[512];
+
+    int             line_num;
+
+    InstType        type;
+    group_space::UserOpMode user_op_mode;
+
+    MotionTarget    target;
+    int  loop_cnt;
+
+	int  current_uf ;
+	int  current_tf ;
+	double  current_ovc ;
+	double  current_oac ;
+    int payload_id;
+    bool is_additional;
+    int add_num;
+    // motion control can tell interpreter whether the command is failed or success
+    PauseCallBack_fp interp_pause;
+    SetLineNumCallBack_fp set_line_num;
+    char additional[0]; //malloc other memory
+
+    //add some other additional statement
+    //.....
+    //.....
+};
 
 }
 

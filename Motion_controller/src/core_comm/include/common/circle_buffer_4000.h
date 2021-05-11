@@ -28,8 +28,10 @@
 typedef struct
 {
     int64_t cmd_position;           /**< Stores the servo position command, unit in encoder pulse.*/
-    int32_t feedforward_velocity;   /**< Stores the servo velocity feedforward, not used.*/
-    int32_t feedforward_torque;     /**< Stores the servo torque feedforward, not used.*/
+    int32_t feedforward_velocity;   /**< Stores the servo velocity feedforward.*/
+    int32_t feedforward_acc;        /**< Stores the servo acceleration feedforward, not used.*/
+    int32_t feedforward_torque;     /**< Stores the servo torque feedforward.*/
+    int32_t dummy;
 }CircleBufferAppData4000_t;
 
 /**

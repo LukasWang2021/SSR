@@ -110,49 +110,5 @@
 			<Servo>servo_1000.Standard512</Servo>
 		</Actuator>		
 	</AxisConfig>
-	<AxisConfig>
-		<AxisId>10</AxisId>
-		<CoreId>2</CoreId>
-		<ServoId>10</ServoId>
-		<ServoType>ServoDevice1000</ServoType>
-		<RootDir>/root/install/runtime/system_model/axis/axis10</RootDir>
-		<Application>axis_application_1001.PP-Y</Application>
-		<Actuator>
-			<Servo>servo_1001.Standard512</Servo>
-		</Actuator>	
-	</AxisConfig>
-	<AxisConfig>
-		<AxisId>11</AxisId>
-		<CoreId>2</CoreId>
-		<ServoId>11</ServoId>
-		<ServoType>ServoDevice1000</ServoType>
-		<RootDir>/root/install/runtime/system_model/axis/axis11</RootDir>
-		<Application>axis_application_1001.Loader-Z1</Application>
-		<Actuator>
-			<Servo>servo_1001.Standard512</Servo>
-		</Actuator>		
-	</AxisConfig>
-	<AxisConfig>
-		<AxisId>12</AxisId>
-		<CoreId>2</CoreId>
-		<ServoId>12</ServoId>
-		<ServoType>ServoDevice1000</ServoType>
-		<RootDir>/root/install/runtime/system_model/axis/axis12</RootDir>
-		<Application>axis_application_1001.Loader-Z2</Application>
-		<Actuator>
-			<Servo>servo_1001.Standard512</Servo>
-		</Actuator>		
-	</AxisConfig>
-	<AxisConfig>
-		<AxisId>13</AxisId>
-		<CoreId>2</CoreId>
-		<ServoId>13</ServoId>
-		<ServoType>ServoDevice1000</ServoType>
-		<RootDir>/root/install/runtime/system_model/axis/axis13</RootDir>
-		<Application>axis_application_1001.Loader-Y</Application>
-		<Actuator>
-			<Servo>servo_1001.Standard512</Servo>
-		</Actuator>		
-	</AxisConfig>
 </AxesConfig>
 

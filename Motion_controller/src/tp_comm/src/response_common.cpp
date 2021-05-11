@@ -10,7 +10,7 @@ void TpComm::handleResponse0x00004FA5(std::vector<TpRequestResponse>::iterator& 
 {
     if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_RpcTable_fields, task->response_data_ptr, send_buffer_size))
     {
-        LogProducer::error("rpc", "handleResponse0x00004FA5: failed to encode response package");
+        LogProducer::error("comm", "handleResponse0x00004FA5: failed to encode response package");
     }
     if(task->request_data_ptr != NULL)
     {
@@ -27,7 +27,7 @@ void TpComm::handleResponse0x000147A5(std::vector<TpRequestResponse>::iterator& 
 {
     if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_PublishTable_fields, task->response_data_ptr, send_buffer_size))
     {
-        LogProducer::error("rpc", "handleResponse0x000147A5: failed to encode response package");
+        LogProducer::error("comm", "handleResponse0x000147A5: failed to encode response package");
     }
     if(task->request_data_ptr != NULL)
     {
@@ -43,7 +43,7 @@ void TpComm::handleResponseNonexistentHash(std::vector<TpRequestResponse>::itera
 {
     if(!encodeResponsePackage(task->hash, ResponseMessageType_Void_fields, task->response_data_ptr, send_buffer_size))
     {
-        LogProducer::error("rpc", "handleResponse0xffffffff: failed to encode response package");
+        LogProducer::error("comm", "handleResponse0xffffffff: failed to encode response package");
     }
     if(task->request_data_ptr != NULL)
     {

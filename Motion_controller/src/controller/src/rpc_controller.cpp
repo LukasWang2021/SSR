@@ -39,7 +39,7 @@ void ControllerRpc::handleRpc0x000167C5(void* request_data_ptr, void* response_d
     else
     {
         rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
-        LogProducer::error("rpc", "/rpc/axis/setSystemTime failed");
+        LogProducer::error("rpc", "/rpc/controller/setSystemTime failed");
     }
 }
 
@@ -52,24 +52,34 @@ void ControllerRpc::handleRpc0x000003F5(void* request_data_ptr, void* response_d
     gettimeofday(&time_val, NULL);
     rs_data_ptr->data.data = time_val.tv_sec;
     rs_data_ptr->error_code.data = SUCCESS;
-    LogProducer::info("rpc", "/rpc/axis/getSystemTime: %llu", rs_data_ptr->data.data);
+    LogProducer::info("rpc", "/rpc/controller/getSystemTime: %llu", rs_data_ptr->data.data);
 }
 
 //"/rpc/controller/setWorkMode"	
 void ControllerRpc::handleRpc0x00006825(void* request_data_ptr, void* response_data_ptr)
 {
-    //RequestMessageType_WorkMode* rq_data_ptr = static_cast<RequestMessageType_WorkMode*>(request_data_ptr);
-    //ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
+    RequestMessageType_Uint32* rq_data_ptr = static_cast<RequestMessageType_Uint32*>(request_data_ptr);
+    ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
-    //todo
+    for(size_t i = 0; i < GROUP_NUM; ++i)
+    {
+        group_ptr_[i]->setWorkMode((group_space::UserOpMode)rq_data_ptr->data.data);
+    }
+    rs_data_ptr->data.data = SUCCESS;
+    LogProducer::info("rpc", "/rpc/controller/setWorkMode: %u", rq_data_ptr->data.data);
 }
 
 //"/rpc/controller/getWorkMode"	
 void ControllerRpc::handleRpc0x00003325(void* request_data_ptr, void* response_data_ptr)
 {
-    //ResponseMessageType_Uint64_WorkMode* rs_data_ptr = static_cast<ResponseMessageType_Uint64_WorkMode*>(response_data_ptr);
+    ResponseMessageType_Uint64_Uint32* rs_data_ptr = static_cast<ResponseMessageType_Uint64_Uint32*>(response_data_ptr);
 
-    //todo
+    for(size_t i = 0; i < GROUP_NUM; ++i)
+    {
+        rs_data_ptr->data.data = group_ptr_[i]->getWorkMode();
+    }
+    rs_data_ptr->error_code.data = SUCCESS;
+    LogProducer::info("rpc", "/rpc/controller/getWorkMode: %u", rs_data_ptr->data.data);
 }
 
 

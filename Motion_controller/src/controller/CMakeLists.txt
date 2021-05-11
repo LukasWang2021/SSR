@@ -17,8 +17,8 @@ set(${PROJECT_NAME}_VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}.$
 file(WRITE ${PROJECT_BINARY_DIR}/${PROJECT_NAME}_version "${PROJECT_NAME}:${${PROJECT_NAME}_VERSION}\n")
 
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D PB_FIELD_32BIT")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D PB_FIELD_32BIT")
+#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D PB_FIELD_32BIT")
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D PB_FIELD_32BIT")
 
 include_directories(
 	include
@@ -42,6 +42,18 @@ include_directories(
     ../axis1000/include
     ../axis1001/include
     ../io_1000/include
+    ../group/include
+    ../rtm_spi/include
+    ../nvram/include 
+    ../reg_manager/include
+    ../joint_constraint/include
+    ../kinematics_alg/include
+    ../dynamic_alg/include
+    ../transformation/include
+    ../coordinate_manager/include
+    ../tool_manager/include
+    ../trajectory_planner/include
+    ../motion_control/include
     ${PROJECT_BINARY_DIR}
 	${rtm_INCLUDE_DIRS}
 )
@@ -71,9 +83,20 @@ target_link_libraries(controller
     axis
     error_queue
     axis1000
-    axis1001
     base_device
     io_1000
+    group
+    rtm_spi
+    nvram_handler
+    reg_manager
+    joint_constraint
+    kinematics_alg
+    dynamic_alg
+    transformation
+    tool_manager
+    coordinate_manager
+    trajectory_planner
+    motion_control
 )
 install(FILES ./config/controller.yaml 
     DESTINATION ${CONFIG_FILE_OUTPUT_PATH}/component/

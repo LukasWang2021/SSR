@@ -30,6 +30,7 @@ typedef struct
     uint32_t time_stamp;     /**< Stores the current isr count of the servo. It must be the first element!*/
     ServoState_u state_word; /**< Stores the current servo state word.*/
     int32_t actual_op_mode;  /**< Stores the current servo operation mode.*/
+    int32_t encoder_state;
     int64_t fdb_position;    /**< Stores the current servo position feedback, unit in encoder pulse.*/
     int32_t fdb_velocity;    /**< Stores the current servo velocity feedback, not used.*/
     int32_t fdb_torque;      /**< Stores the current servo torque feedback, not used.*/

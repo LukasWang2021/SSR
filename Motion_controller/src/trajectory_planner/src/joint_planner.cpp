@@ -9,7 +9,7 @@
 #include <basic_alg.h>
 #include <joint_planner.h>
 
-using namespace fst_mc;
+using namespace group_space;
 using namespace basic_alg;
 
 JointPlanner::JointPlanner(void)

@@ -23,8 +23,9 @@
 #include "axis.h"
 #include "error_queue.h"
 #include "axis1000.h"
-#include "axis1001.h"
 #include "io_1000.h"
+#include "group.h"
+#include "motion_control.h"
 
 /**
  * @brief user_space includes the user level implementation.
@@ -120,10 +121,18 @@ private:
     system_model_space::SystemModelManager model_manager_;
     std::vector<hal_space::BaseDevice*> dev_ptr_list;
     hal_space::Io1000* io_digital_dev_ptr_;
+
     system_model_space::AxisModel_t* axis_model_ptr_[AXIS_NUM];
     axis_space::Axis* axis_ptr_[AXIS_NUM];
     std::vector<system_model_space::AxisConfig_t> axes_config_;
     
+    //group related
+    fst_ctrl::ToolManager tool_manager_;
+    fst_ctrl::CoordinateManager coordinate_manager_;
+    system_model_space::GroupModel_t* group_model_ptr_[GROUP_NUM];
+    group_space::MotionControl* group_ptr_[GROUP_NUM];
+    std::vector<system_model_space::GroupConfig_t> group_config_;
+
     uint32_t fdb_current_time_stamp_;
 
     void uploadErrorCode(void);

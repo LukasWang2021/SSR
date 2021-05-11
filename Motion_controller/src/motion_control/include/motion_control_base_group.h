@@ -26,7 +26,7 @@
 #include <smooth_planner.h>
 #include <lock_free_fifo.h>
 #include "pause_resume_planner.h"
-
+#include "group.h"
 
 
 #define TRAJECTORY_CACHE_SIZE     8
@@ -34,7 +34,7 @@
 #define TRAJECTORY_LOG_CONTROL_SIZE 1024    // 1KB
 #define TRAJECTORY_LOG_DATA_SIZE 67108864   // 64MB
 
-namespace fst_mc
+namespace group_space
 {
 
 struct TrajectoryCache
@@ -65,16 +65,15 @@ class BaseGroup
     BaseGroup();
     virtual ~BaseGroup();
 
-    virtual ErrorCode initGroup(fst_ctrl::CoordinateManager *coordinate_manager_ptr, fst_ctrl::ToolManager *tool_manager_ptr) = 0;
+    virtual ErrorCode initGroup(fst_ctrl::CoordinateManager *coordinate_manager_ptr, fst_ctrl::ToolManager *tool_manager_ptr, 
+        std::map<int32_t, axis_space::Axis*>* axis_group_ptr, GroupSm* sm_ptr,servo_comm_space::ServoCpuCommBase* cpu_comm_ptr) = 0;
     virtual ErrorCode stopGroup(void);
-    virtual ErrorCode resetGroup(void);
     virtual ErrorCode clearGroup(void);
     virtual ErrorCode clearTeachGroup(void);
 
     basic_alg::Joint getLatestJoint(void);
     GroupState getGroupState(void);
     ServoState getServoState(void);
-    ErrorCode  getServoVersion(std::string &version);
 
     // Auto move APIs:
     virtual ErrorCode autoMove(const MotionInfo &info);
@@ -213,7 +212,6 @@ class BaseGroup
     ErrorCode sendOfflineTrajectoryFlow(void);
     ErrorCode pickPointsFromOfflineCache(TrajectoryPoint *points, size_t &length);
     
-    ErrorCode downloadServoParam(const char *file_name);
     bool initTrajectoryLogSpace(void);
     
     int id_;
@@ -292,9 +290,7 @@ class BaseGroup
     pthread_mutex_t     manual_traj_mutex_;
     pthread_mutex_t     servo_mutex_;
     pthread_mutex_t     offline_mutex_;
-    
-    bool stop_request_;
-    bool reset_request_;
+
     bool clear_request_;
     bool stop_barecore_;
     bool clear_teach_request_;
@@ -330,7 +326,9 @@ class BaseGroup
     TrajectoryPoint* traj_log_data_ptr_;
     TrajectoryLogControl *traj_log_ctrl_ptr_;
 
-
+    std::map<int32_t, axis_space::Axis*>* axis_group_ptr_;  /**< The list of the axes in the group.*/
+	  GroupSm* sm_ptr_;                                       /**< The state machine of the group.*/
+    servo_comm_space::ServoCpuCommBase* cpu_comm_ptr_;      /**< The pointer to communicate with the other cpu.*/
 };
 
 

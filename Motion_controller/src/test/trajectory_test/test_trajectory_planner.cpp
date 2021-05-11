@@ -18,8 +18,6 @@
 #include "smooth_planner.h"
 
 using namespace basic_alg;
-
-using namespace fst_mc;
 using namespace basic_alg;
 using namespace std;
 

@@ -29,7 +29,7 @@
  */
 typedef struct
 {
-    ParamDetail_t param[SERVO_PARAM_BUFFER_SIZE];   /**< Servo parameter list.*/
+    int32_t param[SERVO_PARAM_BUFFER_SIZE];   /**< Servo parameter list.*/
 }BufferAppData2002_t;
 
 /**

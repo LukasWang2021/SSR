@@ -11,6 +11,9 @@ add_library(yaml_help SHARED
 	${SRC}
 )
 
+link_directories(
+	../../install/lib
+)
 target_link_libraries(yaml_help
 	${rtm_LIBRARIES}
 )

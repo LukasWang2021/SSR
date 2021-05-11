@@ -14,3 +14,6 @@ add_library(algorithm_base SHARED
 	${SRC}
 )
 
+target_link_libraries(algorithm_base
+    ${rtm_LIBRARIES}
+)

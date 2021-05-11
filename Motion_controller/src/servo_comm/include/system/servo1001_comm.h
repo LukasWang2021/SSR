@@ -9,6 +9,7 @@
 
 #include "system/servo_comm_base.h"
 #include "system/servo_cpu_comm_base.h"
+#include "common_datatype.h"
 /**
  * @brief servo_comm_space includes all servo device related implementation.
  */
@@ -16,7 +17,7 @@ namespace servo_comm_space
 {
 /**
  * @brief Servo1001 is the abstract device of the real servo1001 device. 
- * @details A Servo1001 device consists of 1 servo cpu 8 stepper device and 8 servo device. 
+ * @details A Servo1001 device consists of 1 servo cpu 10 servo device. 
  */
 class Servo1001
 {
@@ -107,12 +108,10 @@ public:
     bool isAllServosInExpectedCommState(CoreCommState_e expected_comm_state);
 
 private:
-    enum {SERVO_NUMBER = 16};
-    enum {PMSM_NUMBER = 10};
 
     bool is_valid_;                 /**< Flag to show if the Servo1001 is valid.*/
     ServoCpuCommBase* cpu_ptr_;     /**< Pointer of the configuration object of the servo cpu.*/
-    ServoCommBase* servo_ptr_[SERVO_NUMBER];   /**< Pointer of the configuration object of some servo.*/
+    ServoCommBase* servo_ptr_[AXIS_NUM];   /**< Pointer of the configuration object of some servo.*/
         
     Servo1001();
 };

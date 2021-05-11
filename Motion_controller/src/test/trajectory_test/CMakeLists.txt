@@ -15,6 +15,10 @@ include_directories(
   ${rtm_INCLUDE_DIRS}
 )
 
+link_directories(
+	../../../install/lib
+)
+
 add_executable(test_trajectory_planner
     test_trajectory_planner.cpp
 )
@@ -25,6 +29,10 @@ add_executable(test_ds_curve
 
 target_link_libraries(test_trajectory_planner
     ${rtm_LIBRARIES}
+    yaml_help
+    joint_constraint
+    kinematics_alg
+    dynamic_alg
     trajectory_planner
 )
 

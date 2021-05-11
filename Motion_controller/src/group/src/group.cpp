@@ -69,7 +69,7 @@ ErrorCode Group::mcAddAxisToGroup(int32_t id_in_group, axis_space::Axis &axis_re
         LogProducer::error("Group", "Group[%d] mcAddAxisToGroup failed to add existed axis, id_in_group is %d", id_, id_in_group);
         return GROUP_ADD_AXIS_FAILED;
     }
-    axis_ref.setAxisInGroup(true);
+    //axis_ref.setAxisInGroup(true);
     LogProducer::info("Group", "Group[%d] mcAddAxisToGroup success, id_in_group is %d, axis_id is %d", id_, id_in_group, axis_ref.getID());
     return SUCCESS;
 }

@@ -378,7 +378,7 @@ int64_t LogComsumer::getLogDirSize(const char *dir_path)
 	
 	while ((entry = readdir(dp)) != NULL)
 	{
-		char subdir[256];
+		char subdir[512];
 		sprintf(subdir, "%s/%s", dir_path, entry->d_name);
 		lstat(subdir, &info);
 	

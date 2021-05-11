@@ -15,7 +15,6 @@
 #include "protoc.h"
 #include <time.h>
 #include "tp_comm.h"
-#include "common_log.h"
 
 #include "tp_comm_test.h"
 
@@ -23,7 +22,7 @@
 #define MAX_REQ_BUFFER_SIZE     (65535)
 
 using namespace std;
-
+/*
 int main()
 {
     TpComm yy_tp_comm_;
@@ -36,7 +35,7 @@ int main()
     if(!yy_tp_comm_.init()
         || !yy_tp_comm_.open())
     {
-        FST_ERROR("failed to open tp_comm");
+        LogProducer::error("rpc", "failed to open tp_comm");
     }
 
     while(1)
@@ -268,3 +267,4 @@ int main()
     usleep(10000);
     }
 }
+*/

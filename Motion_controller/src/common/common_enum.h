@@ -5,8 +5,16 @@
 #ifndef COMMON_ENUM_H
 #define COMMON_ENUM_H
 
-namespace fst_mc
+namespace group_space
 {
+
+typedef enum
+{
+    USER_OP_MODE_NONE             = 0,
+    USER_OP_MODE_AUTO             = 1,
+    USER_OP_MODE_SLOWLY_MANUAL    = 2,
+    USER_OP_MODE_MANUAL = 3,
+}UserOpMode;
 
 enum ServiceID
 {
@@ -69,12 +77,12 @@ enum ManualFrame
 
 enum ServoState 
 {
+    SERVO_INIT = 0,
     SERVO_IDLE = 1,
     SERVO_RUNNING = 2,
     SERVO_DISABLE = 3,
     SERVO_WAIT_READY = 4,
-    SERVO_WAIT_DOWN = 5,
-    SERVO_INIT = 10,
+    SERVO_WAIT_DOWN = 5, 
 };
 
 enum PointProperty

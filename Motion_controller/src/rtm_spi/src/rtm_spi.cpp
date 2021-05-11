@@ -12,8 +12,7 @@
 #include <sys/mman.h>
 #include <iostream>
 #include "rtm_spi.h"
-
-#define RTM_SPI_BASE_ADDRESS 0xFF250000
+#define RTM_SPI_BASE_ADDRESS 0x400a0000
 #define RTM_SPI_BIT_SOFT_CS 0x00000020
 #define RTM_SPI_BIT_CS_CTRL 0x00000010
 #define RTM_SPI_BIT_ENABLE 0x00000001
@@ -97,7 +96,9 @@ int initSpi(void)
 	s_spi_reg->ctrl = RTM_SPI_BIT_ENABLE | RTM_SPI_BIT_CS_CTRL | RTM_SPI_BIT_SOFT_CS;
 	//disableCS();
 	uint32_t dummy;
+
 	while (!isRxBufferEmpty()) dummy = s_spi_reg->rw_byte;
+
     return 0;
 }
 

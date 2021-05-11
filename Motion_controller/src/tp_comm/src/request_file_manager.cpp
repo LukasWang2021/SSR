@@ -18,14 +18,14 @@ void TpComm::handleRequest0x0000A545(int recv_bytes)
     if(request_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "/rpc/file_manager/readFile: can't allocate memory for request_data");
+        LogProducer::error("comm", "/rpc/file_manager/readFile: can't allocate memory for request_data");
         return;
     }
     ResponseMessageType_Uint64_Bytes* response_data_ptr = new ResponseMessageType_Uint64_Bytes;
     if(response_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "/rpc/file_manager/readFile: can't allocate memory for response_data");
+        LogProducer::error("comm", "/rpc/file_manager/readFile: can't allocate memory for response_data");
         delete request_data_ptr;
         return;
     }
@@ -42,14 +42,14 @@ void TpComm::handleRequest0x00010D95(int recv_bytes)
     if(request_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "/rpc/file_manager/writeFile: can't allocate memory for request_data");
+        LogProducer::error("comm", "/rpc/file_manager/writeFile: can't allocate memory for request_data");
         return;
     }
     ResponseMessageType_Uint64* response_data_ptr = new ResponseMessageType_Uint64;
     if(response_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "/rpc/file_manager/writeFile: can't allocate memory for response_data");
+        LogProducer::error("comm", "/rpc/file_manager/writeFile: can't allocate memory for response_data");
         delete request_data_ptr;
         return;
     }

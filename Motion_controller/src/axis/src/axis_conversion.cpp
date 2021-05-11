@@ -56,8 +56,7 @@ bool AxisConversion::init(int32_t id, system_model_space::AxisModel_t* db_ptr)
         id_, class_, gear_ratio_numerator_, gear_ratio_denominator_, pitch_, pulse_per_unit_, rated_torque_);
 
     //compute factor
-    if (!computerFactor())
-        return false;
+    if (!computerFactor()) return false;
 
 	return true;
 }

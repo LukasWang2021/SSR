@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(nvram)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -g -pthread -DPB_FIELD_32BIT")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
 
 include_directories(
   include
@@ -14,21 +14,24 @@ include_directories(
 
 aux_source_directory(src SRC)
 
-add_executable(nvram_server
-    src/nvram_server.cpp
-)
+#add_executable(nvram_server
+#    src/nvram_server.cpp
+#)
 
+link_directories(
+	../../install/lib
+)
 add_library(nvram_handler SHARED
     src/nvram_handler.cpp
 )
 
-target_link_libraries(nvram_server
-    ${rtm_LIBRARIES}
-    yaml_help
-    log_manager_producer
-    thread_help
-    rtm_spi
-)
+#target_link_libraries(nvram_server
+#    ${rtm_LIBRARIES}
+#    yaml_help
+#    log_manager_producer
+#    thread_help
+#    rtm_spi
+#)
 
 target_link_libraries(nvram_handler 
     ${rtm_LIBRARIES}

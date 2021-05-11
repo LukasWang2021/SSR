@@ -21,6 +21,13 @@ include_directories(
   ../../joint_constraint/include
   ../../trajectory_planner/include
   ../../motion_control/include
+  ../../group/include
+  ../../system_model_manager/include
+  ../../axis/include
+  ../../core_comm/include 
+  ../../servo_comm/include
+  ../../algorithm_base/include  
+  ../../xml_help/include
   ${rtm_INCLUDE_DIRS}
 )
 

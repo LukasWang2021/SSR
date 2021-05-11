@@ -16,14 +16,14 @@ void TpComm::handleRequest0x000093EE(int recv_bytes)
     if(request_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "handleRequest: can't allocate memory for request_data\n");
+        LogProducer::error("comm", "handleRequest: can't allocate memory for request_data\n");
         return;
     }
     ResponseMessageType_Uint64_Uint32List* response_data_ptr = new ResponseMessageType_Uint64_Uint32List;
     if(response_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "handleRequest: can't allocate memory for response_data\n");
+        LogProducer::error("comm", "handleRequest: can't allocate memory for response_data\n");
         delete request_data_ptr;
         return;
     }
@@ -39,14 +39,14 @@ void TpComm::handleRequest0x000167C5(int recv_bytes)
     if(request_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "handleRequest: can't allocate memory for request_data\n");
+        LogProducer::error("comm", "handleRequest: can't allocate memory for request_data\n");
         return;
     }
     ResponseMessageType_Uint64* response_data_ptr = new ResponseMessageType_Uint64;
     if(response_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "handleRequest: can't allocate memory for response_data\n");
+        LogProducer::error("comm", "handleRequest: can't allocate memory for response_data\n");
         delete request_data_ptr;
         return;
     }
@@ -62,14 +62,14 @@ void TpComm::handleRequest0x000003F5(int recv_bytes)
     if(request_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "handleRequest: can't allocate memory for request_data\n");
+        LogProducer::error("comm", "handleRequest: can't allocate memory for request_data\n");
         return;
     }
     ResponseMessageType_Uint64_Uint64* response_data_ptr = new ResponseMessageType_Uint64_Uint64;
     if(response_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "handleRequest: can't allocate memory for response_data\n");
+        LogProducer::error("comm", "handleRequest: can't allocate memory for response_data\n");
         delete request_data_ptr;
         return;
     }
@@ -81,24 +81,24 @@ void TpComm::handleRequest0x000003F5(int recv_bytes)
 //"/rpc/controller/setWorkMode"
 void TpComm::handleRequest0x00006825(int recv_bytes)
 {
-    RequestMessageType_WorkMode* request_data_ptr = new RequestMessageType_WorkMode;
+    RequestMessageType_Uint32* request_data_ptr = new RequestMessageType_Uint32;
     if(request_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "handleRequest: can't allocate memory for request_data\n");
+        LogProducer::error("comm", "handleRequest: can't allocate memory for request_data\n");
         return;
     }
     ResponseMessageType_Uint64* response_data_ptr = new ResponseMessageType_Uint64;
     if(response_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "handleRequest: can't allocate memory for response_data\n");
+        LogProducer::error("comm", "handleRequest: can't allocate memory for response_data\n");
         delete request_data_ptr;
         return;
     }
     
     handleRequestPackage(0x00006825, (void*)request_data_ptr, (void*)response_data_ptr, 
-        recv_bytes, RequestMessageType_WorkMode_fields, -1);
+        recv_bytes, RequestMessageType_Uint32_fields, -1);
 }
 
 //"/rpc/controller/getWorkMode"
@@ -108,14 +108,14 @@ void TpComm::handleRequest0x00003325(int recv_bytes)
     if(request_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "handleRequest: can't allocate memory for request_data\n");
+        LogProducer::error("comm", "handleRequest: can't allocate memory for request_data\n");
         return;
     }
-    ResponseMessageType_Uint64_WorkMode* response_data_ptr = new ResponseMessageType_Uint64_WorkMode;
+    ResponseMessageType_Uint64_Uint32* response_data_ptr = new ResponseMessageType_Uint64_Uint32;
     if(response_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "handleRequest: can't allocate memory for response_data\n");
+        LogProducer::error("comm", "handleRequest: can't allocate memory for response_data\n");
         delete request_data_ptr;
         return;
     }

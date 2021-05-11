@@ -14,64 +14,60 @@
 
 using namespace std;
 using namespace basic_alg;
-using namespace fst_mc;
+using namespace group_space;
 using namespace fst_ctrl;
 using namespace base_space;
 using namespace log_space;
-
+using namespace group_space;
 
 static void* runRealTimeTask(void *mc)
 {
+    log_space::LogProducer log_manager;
+    uint32_t g_isr = 0;
+    log_manager.init("MC_RT", &g_isr);
     ((MotionControl*)mc)->ringRealTimeTask();
     return NULL;
 }
 
 static void* runPriorityTask(void *mc)
 {
+    log_space::LogProducer log_manager;
+    uint32_t g_isr = 0;
+    log_manager.init("MC_Priority", &g_isr);
     ((MotionControl*)mc)->ringPriorityTask();
     return NULL;
 }
 
 static void* runPlannerTask(void *mc)
 {
+    log_space::LogProducer log_manager;
+    uint32_t g_isr = 0;
+    log_manager.init("MC_Planner", &g_isr);
     ((MotionControl*)mc)->ringPlannerTask();
     return NULL;
 }
 
 static void* runCommonTask(void *mc)
 {
+    log_space::LogProducer log_manager;
+    uint32_t g_isr = 0;
+    log_manager.init("MC_Common", &g_isr);
     ((MotionControl*)mc)->ringCommonTask();
     return NULL;
 }
 
 void MotionControl::ringCommonTask(void)
 {
-    Joint servo_joint;
-    int ros_publish_cnt = 0;
-    memset(&servo_joint, 0, sizeof(servo_joint));
-
-    LogProducer::warn("mc","Common task start.");
     LogProducer::warn("mc","ThreadMotionControlCommon TID is %ld", syscall(SYS_gettid));
 
     while (common_thread_running_)
     {
         group_ptr_->doCommonLoop();
-        
-        if (param_ptr_->enable_ros_publish_)
-        {
-            ros_publish_cnt ++;
-
-            if (ros_publish_cnt >= param_ptr_->cycle_per_publish_)
-            {
-                ros_publish_cnt = 0;
-                servo_joint = group_ptr_->getLatestJoint();
-            }
-        }
 
         usleep(param_ptr_->common_cycle_time_ * 1000);
     }
 
-    LogProducer::warn("mc","Common task quit.");
+    printf("Common task quit.\n");
 }
 
 #define MAIN_PRIORITY 80
@@ -103,16 +99,7 @@ void MotionControl::ringRealTimeTask(void)
 {
     float duration_1, duration_2;
     struct timeval start_time, middle_time, end_time;
-    /*
-    float *start_to_end = new float[1000000];
-    size_t cycle = 0;
-    size_t zone_0_5 = 0;
-    size_t zone_5_10 = 0;
-    size_t zone_10_15 = 0;
-    size_t zone_15_20 = 0;
-    size_t zone_over_20 = 0;
-    */
-    
+
     if (mlockall(MCL_CURRENT|MCL_FUTURE) == -1) 
     {
         LogProducer::error("mc","mlockall failed");
@@ -122,7 +109,6 @@ void MotionControl::ringRealTimeTask(void)
     //Pre-fault our stack
     stack_prefault();
 
-    LogProducer::warn("mc","Realtime task start.");
     LogProducer::warn("mc","ThreadMotionControlRealtime TID is %ld", syscall(SYS_gettid));
 
     while (realtime_thread_running_)
@@ -144,128 +130,28 @@ void MotionControl::ringRealTimeTask(void)
         {
             LogProducer::error("mc","RT task second stage duration over limit: %.6f", duration_2);
         }
-        //start_to_end[cycle] = (float)(end_time.tv_sec - start_time.tv_sec) + (float)(end_time.tv_usec - start_time.tv_usec) / 1000000;
-        
-        /*
-        if (start_to_end[cycle] < 0.005)
-        {
-            zone_0_5++;
-        }
-        else if (start_to_end[cycle] < 0.01)
-        {
-            zone_5_10++;
-        }
-        else if (start_to_end[cycle] < 0.015)
-        {
-            zone_10_15++;
-        }
-        else if (start_to_end[cycle] < 0.02)
-        {
-            zone_15_20++;
-        }
-        else
-        {
-            zone_over_20++;
-            LogProducer::error("mc","ringRealTimeTask sleep over 20 ms: %.6f", start_to_end[cycle]);
-        }
-
-        cycle = (cycle + 1 == 1000000) ? 0 : cycle + 1;
-        */
+  
     }
 
-    LogProducer::warn("mc","Realtime task quit.");
-    /*
-    LogProducer::warn("mc","ringRealTimeTask: 0-5: %d", zone_0_5);
-    LogProducer::warn("mc","ringRealTimeTask: 5-10: %d", zone_5_10);
-    LogProducer::warn("mc","ringRealTimeTask: 10-15: %d", zone_10_15);
-    LogProducer::warn("mc","ringRealTimeTask: 15-20: %d", zone_15_20);
-    LogProducer::warn("mc","ringRealTimeTask: over 20: %d", zone_over_20);
-
-    ofstream  time_out("/root/realtime.csv");
-
-    for (size_t i = 0; i < 1000000; i++)
-    {
-        time_out << start_to_end[i] << endl;
-    }
-
-    time_out.close();
-    delete [] start_to_end;
-    */
+    printf("Realtime task quit.\n");
 }
 
 void MotionControl::ringPriorityTask(void)
 {
-    /*
-    struct timeval start_time, end_time;
-    float *start_to_end = new float[1000000];
-    size_t cycle = 0;
-    size_t zone_0_5 = 0;
-    size_t zone_5_10 = 0;
-    size_t zone_10_15 = 0;
-    size_t zone_15_20 = 0;
-    size_t zone_over_20 = 0;
-    */
-
-    LogProducer::warn("mc","Priority task start.");
     LogProducer::warn("mc","ThreadMotionControlPriority TID is %ld", syscall(SYS_gettid));
 
     while (priority_thread_running_)
     {
         group_ptr_->doPriorityLoop();
-        //gettimeofday(&start_time, NULL);
+
         usleep(param_ptr_->priority_cycle_time_ * 1000);
-        //gettimeofday(&end_time, NULL);
-        //start_to_end[cycle] = (float)(end_time.tv_sec - start_time.tv_sec) + (float)(end_time.tv_usec - start_time.tv_usec) / 1000000;
-        
-        /*
-        if (start_to_end[cycle] < 0.005)
-        {
-            zone_0_5++;
-        }
-        else if (start_to_end[cycle] < 0.01)
-        {
-            zone_5_10++;
-        }
-        else if (start_to_end[cycle] < 0.015)
-        {
-            zone_10_15++;
-        }
-        else if (start_to_end[cycle] < 0.02)
-        {
-            zone_15_20++;
-        }
-        else
-        {
-            zone_over_20++;
-        }
-
-        cycle = (cycle + 1 == 1000000) ? 0 : cycle + 1;
-        */
     }
 
-    LogProducer::warn("mc","Priority task quit.");
-    /*
-    LogProducer::warn("mc","ringPriorityTask: 0-5: %d", zone_0_5);
-    LogProducer::warn("mc","ringPriorityTask: 5-10: %d", zone_5_10);
-    LogProducer::warn("mc","ringPriorityTask: 10-15: %d", zone_10_15);
-    LogProducer::warn("mc","ringPriorityTask: 15-20: %d", zone_15_20);
-    LogProducer::warn("mc","ringPriorityTask: over 20: %d", zone_over_20);
-
-    ofstream  time_out("/root/priority.csv");
-
-    for (size_t i = 0; i < 1000000; i++)
-    {
-        time_out << start_to_end[i] << endl;
-    }
-
-    time_out.close();
-    delete [] start_to_end;
-    */
+    printf("Priority task quit.\n");
 }
 
 void MotionControl::ringPlannerTask(void)
 {
-    LogProducer::warn("mc","Planner task start.");
     LogProducer::warn("mc","ThreadMotionControlPriority TID is %ld", syscall(SYS_gettid));
 
     while (planner_thread_running_)
@@ -346,16 +232,18 @@ void MotionControl::ringPlannerTask(void)
         usleep(param_ptr_->planner_cycle_time_ * 1000);
     }
 
-    LogProducer::info("mc","Received instruction: %d, handled instruction: %d, instruction list size: %d", instructions_recv_counter_, instructions_handle_counter_, instruction_fifo_.size());
-    LogProducer::warn("mc","Planner task quit.");
+    //printf("Received instruction: %d, handled instruction: %d, instruction list size: %d\n", instructions_recv_counter_, instructions_handle_counter_, instruction_fifo_.size());
+    printf("Planner task quit.\n");
 }
 
 
-MotionControl::MotionControl()
+MotionControl::MotionControl(int32_t id):
+    Group(id)
 {
     coordinate_manager_ptr_ = NULL;
     tool_manager_ptr_ = NULL;
     param_ptr_ = NULL;
+    group_ptr_ = NULL;
 
     common_thread_running_ = false;
     planner_thread_running_ = false;
@@ -365,6 +253,8 @@ MotionControl::MotionControl()
     motion_error_flag_ = false;
     instructions_recv_counter_ = 0;
     instructions_handle_counter_ = 0;
+
+    work_mode_ = group_space::USER_OP_MODE_MANUAL;
 }
 
 MotionControl::~MotionControl()
@@ -383,7 +273,7 @@ MotionControl::~MotionControl()
     if (param_ptr_ != NULL)     {delete param_ptr_; param_ptr_ = NULL;};
 }
 
-ErrorCode MotionControl::init(fst_ctrl::CoordinateManager* coordinate_manager_ptr, fst_ctrl::ToolManager* tool_manager_ptr)
+ErrorCode MotionControl::initApplication(fst_ctrl::CoordinateManager* coordinate_manager_ptr, fst_ctrl::ToolManager* tool_manager_ptr)
 {
     param_ptr_ = new MotionControlParam();
     
@@ -404,21 +294,7 @@ ErrorCode MotionControl::init(fst_ctrl::CoordinateManager* coordinate_manager_pt
         return MC_INTERNAL_FAULT;
     }
 
-    if (param_ptr_->model_name_ == "RTM-P7A")
-    {
-        group_ptr_ = new ArmGroup();
-    }
-    else if (param_ptr_->model_name_ == "SCARA")
-    {
-        //group_ptr_ = new ScaraGroup(log_ptr_);
-        LogProducer::error("mc","Invalid model name: %s", param_ptr_->model_name_.c_str());
-        return MC_INTERNAL_FAULT;
-    }
-    else
-    {
-        LogProducer::error("mc","Invalid model name: %s", param_ptr_->model_name_.c_str());
-        return MC_INTERNAL_FAULT;
-    }
+    group_ptr_ = new ArmGroup();
 
     if (group_ptr_ == NULL)
     {
@@ -442,7 +318,7 @@ ErrorCode MotionControl::init(fst_ctrl::CoordinateManager* coordinate_manager_pt
     user_frame_id_ = 0;
     tool_frame_id_ = 0;
 
-    ErrorCode  err = group_ptr_->initGroup(coordinate_manager_ptr_, tool_manager_ptr_);
+    ErrorCode  err = group_ptr_->initGroup(coordinate_manager_ptr_, tool_manager_ptr_, &axis_group_, &sm_, cpu_comm_ptr_);
 
     if (err == SUCCESS)
     {
@@ -695,7 +571,7 @@ void MotionControl::clearErrorFlag(void)
     motion_error_flag_ = false;
 }
 
-ErrorCode MotionControl::autoMove(const Instruction &instruction)
+ErrorCode MotionControl::autoMove(const struct Instruction &instruction)
 {
     /*
     GroupState state = group_ptr_->getGroupState();
@@ -1346,7 +1222,7 @@ ErrorCode MotionControl::stopGroup(void)
 ErrorCode MotionControl::resetGroup(void)
 {
     motion_error_flag_ = false;
-    return group_ptr_->resetGroup();
+    return SUCCESS;
 }
 
 ErrorCode MotionControl::clearGroup(void)
@@ -1774,10 +1650,6 @@ ServoState MotionControl::getServoState(void)
     return group_ptr_->getServoState();
 }
 
-ErrorCode MotionControl::getServoVersion(std::string &version)
-{
-    return group_ptr_->getServoVersion(version);
-}
 
 PoseEuler MotionControl::getCurrentPose(void)
 {
@@ -1956,3 +1828,77 @@ void MotionControl::getAllValidPayloadSummaryInfo(vector<PayloadSummaryInfo>& in
     group_ptr_->getAllValidPayloadSummaryInfo(info_list);
 }
 
+//ssr
+void MotionControl::setWorkMode(UserOpMode mode)
+{
+    work_mode_ = mode;
+}
+
+UserOpMode MotionControl::getWorkMode(void)
+{
+    return work_mode_;
+}
+
+//pure function no realization
+ErrorCode MotionControl::mcGroupHalt(double dec, double jerk)
+{
+    return GROUP_INVALID_PARAM;
+}
+ErrorCode MotionControl::mcGroupInterrupt(double dec, double jerk)
+{
+    return GROUP_INVALID_PARAM;
+}
+ErrorCode MotionControl::mcGroupContinue(void)
+{
+    return GROUP_INVALID_PARAM;
+}
+ErrorCode MotionControl::mcGroupSetPosition(const std::vector<double> &position, bool relative, CoordType_e coord_type)
+{
+    return GROUP_INVALID_PARAM;
+}
+ErrorCode MotionControl::mcMoveDirectAbsolute(const std::vector<double> &position, CoordType_e coord_type,
+        double vel_pct, double acc_pct, double jerk)
+{
+    return GROUP_INVALID_PARAM;
+}
+ErrorCode MotionControl::mcMoveLinearAbsolute(const std::vector<double> &position, CoordType_e coord_type, 
+        double velocity, double acc, double dec, double jerk)
+{
+    return GROUP_INVALID_PARAM;
+}
+ErrorCode MotionControl::mcGroupReadActualPosition(CoordType_e coord_type, std::vector<double> &position)
+{
+    return GROUP_INVALID_PARAM;
+}
+ErrorCode MotionControl::mcGroupReadActualVelocity(CoordType_e coord_type, std::vector<double> &velocity)
+{
+    return GROUP_INVALID_PARAM;
+}
+bool MotionControl::initApplication(void)
+{
+    return false;
+}
+bool MotionControl::reloadSystemModel(void)
+{
+    return true;
+}
+bool MotionControl::pushBackFB(void* fb_ptr)
+{
+    return false;
+}
+base_space::FBQueueStatus_e MotionControl::getFBQStatus()
+{
+    return FBQ_STATUS_FULL;
+}
+void MotionControl::processFBQ()
+{
+    
+}
+void MotionControl::processTBQ()
+{
+    
+}
+void MotionControl::clearBQ()
+{
+    
+}

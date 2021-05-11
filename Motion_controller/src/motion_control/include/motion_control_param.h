@@ -3,7 +3,7 @@
 
 #include "yaml_help.h"
 
-namespace fst_mc
+namespace group_space
 {
 
 class MotionControlParam

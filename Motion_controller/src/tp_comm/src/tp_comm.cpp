@@ -369,7 +369,7 @@ void TpComm::handleRequest()
         if(recv_bytes == -1)
         {
             ErrorQueue::instance().push(TP_COMM_RECEIVE_FAILED);
-            LogProducer::error("rpc", "Failed to receive request");
+            LogProducer::error("comm", "Failed to receive request");
             return;
         }
         is_received_ = true;
@@ -382,7 +382,7 @@ void TpComm::handleRequest()
     if(request_list_.size() > static_cast<unsigned int>(param_ptr_->rpc_list_max_size_))
     {
         ErrorQueue::instance().push(TP_COMM_RPC_OVERLOAD);
-        LogProducer::error("rpc", "Too much rpc to handle");
+        LogProducer::error("comm", "Too much rpc to handle");
         return;
     }
 
@@ -443,7 +443,7 @@ void TpComm::handleResponseList()
         if(send_bytes == -1)
         {
             ErrorQueue::instance().push(TP_COMM_SEND_FAILED);
-            LogProducer::error("rpc", "Send response failed, nn_error = %s", nn_strerror(nn_errno()));
+            LogProducer::error("comm", "Send response failed, nn_error = %s", nn_strerror(nn_errno()));
         }
     }
     is_received_ = false;
@@ -478,7 +478,7 @@ void TpComm::handlePublishList()
             int send_buffer_size = 0;
             if(!encodePublishPackage(it->package, it->hash, time_val, send_buffer_size))
             {
-                LogProducer::error("rpc", "Encode data failed");
+                LogProducer::error("comm", "Encode data failed");
                 ErrorQueue::instance().push(TP_COMM_ENCODE_FAILED);
                 break;
             }
@@ -487,7 +487,7 @@ void TpComm::handlePublishList()
             if(send_bytes == -1)
             {
                 ErrorQueue::instance().push(TP_COMM_SEND_FAILED);
-                LogProducer::error("rpc", "Send publish failed, error = %d", nn_errno());
+                LogProducer::error("comm", "Send publish failed, error = %d", nn_errno());
                 break;
             }
             it->is_element_changed = false;
@@ -573,7 +573,7 @@ void TpComm::handleRequestPackage(unsigned int hash, void* request_data_ptr, voi
     if(!decodeRequestPackage(fields, (void*)request_data_ptr, recv_bytes))
     {
         ErrorQueue::instance().push(TP_COMM_DECODE_FAILED);
-        LogProducer::error("rpc", "handleRequestPackage:  decode data failed");
+        LogProducer::error("comm", "handleRequestPackage:  decode data failed");
         initDecodeFailedResponsePackage(request_data_ptr, response_data_ptr);
         pushTaskToRequestList(hash, request_data_ptr, response_data_ptr);
         return;
@@ -607,7 +607,7 @@ bool TpComm::encodeResponsePackage(unsigned int hash, const pb_field_t fields[],
     if(!pb_encode(&stream, fields, response_data_ptr))
     {
         ErrorQueue::instance().push(TP_COMM_ENCODE_FAILED);
-        LogProducer::error("rpc", "encodeResponsePackage: encode data failed");
+        LogProducer::error("comm", "encodeResponsePackage: encode data failed");
 
         send_buffer_size = 0;
         return false;

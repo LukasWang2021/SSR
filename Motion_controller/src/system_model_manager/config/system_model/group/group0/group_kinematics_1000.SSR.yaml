@@ -4,7 +4,7 @@ model_id:
     default_value: 1000
     upper_limit_value: 0 
     lower_limit_value: 0
-    unit: NULL
+    unit: None
     attr: 1
     validity: 0
 BaseD:

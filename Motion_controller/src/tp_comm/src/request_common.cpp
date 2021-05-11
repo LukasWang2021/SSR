@@ -19,7 +19,7 @@ void TpComm::handleRequest0x00004FA5(int recv_bytes)
     if(request_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "/rpc/tp_comm/getRpcTable: Can't allocate memory for request_data");
+        LogProducer::error("comm", "/rpc/tp_comm/getRpcTable: Can't allocate memory for request_data");
         return;
     }
 
@@ -27,7 +27,7 @@ void TpComm::handleRequest0x00004FA5(int recv_bytes)
     if(response_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "/rpc/tp_comm/getRpcTable: Can't allocate memory for response_data");
+        LogProducer::error("comm", "/rpc/tp_comm/getRpcTable: Can't allocate memory for response_data");
         delete request_data_ptr;
         return;
     }
@@ -35,7 +35,7 @@ void TpComm::handleRequest0x00004FA5(int recv_bytes)
     if(!decodeRequestPackage(RequestMessageType_Void_fields, (void*)request_data_ptr, recv_bytes))
     {
         ErrorQueue::instance().push(TP_COMM_DECODE_FAILED);
-        LogProducer::error("rpc", "/rpc/tp_comm/getRpcTable: Decode data failed");
+        LogProducer::error("comm", "/rpc/tp_comm/getRpcTable: Decode data failed");
         return ;
     }
 
@@ -73,7 +73,7 @@ void TpComm::handleRequest0x00004FA5(int recv_bytes)
     else
     {
         ErrorQueue::instance().push(TP_COMM_AUTHORITY_CHECK_FAILED);
-        LogProducer::error("rpc", "/rpc/tp_comm/getRpcTable: Authority check failed");
+        LogProducer::error("comm", "/rpc/tp_comm/getRpcTable: Authority check failed");
         initCommFailedResponsePackage(request_data_ptr, response_data_ptr);
     }
 
@@ -96,7 +96,7 @@ void TpComm::handleRequest0x000147A5(int recv_bytes)
     if(request_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "/rpc/tp_comm/getPublishTable: Can't allocate memory for request_data");
+        LogProducer::error("comm", "/rpc/tp_comm/getPublishTable: Can't allocate memory for request_data");
         return;
     }
 
@@ -104,7 +104,7 @@ void TpComm::handleRequest0x000147A5(int recv_bytes)
     if(response_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
-        LogProducer::error("rpc", "/rpc/tp_comm/getPublishTable: Can't allocate memory for response_data");
+        LogProducer::error("comm", "/rpc/tp_comm/getPublishTable: Can't allocate memory for response_data");
         delete request_data_ptr;
         return;
     }
@@ -112,7 +112,7 @@ void TpComm::handleRequest0x000147A5(int recv_bytes)
     if(!decodeRequestPackage(RequestMessageType_Void_fields, (void*)request_data_ptr, recv_bytes))
     {
         ErrorQueue::instance().push(TP_COMM_DECODE_FAILED);
-        LogProducer::error("rpc", "/rpc/tp_comm/getPublishTable: Decode data failed");
+        LogProducer::error("comm", "/rpc/tp_comm/getPublishTable: Decode data failed");
         return ;
     }
 
@@ -142,7 +142,7 @@ void TpComm::handleRequest0x000147A5(int recv_bytes)
     else
     {
         ErrorQueue::instance().push(TP_COMM_AUTHORITY_CHECK_FAILED);
-        LogProducer::error("rpc", "/rpc/tp_comm/getPublishTable: Authority check failed");
+        LogProducer::error("comm", "/rpc/tp_comm/getPublishTable: Authority check failed");
         initCommFailedResponsePackage(request_data_ptr, response_data_ptr);
     }
 
@@ -163,14 +163,14 @@ void TpComm::handleRequestNonexistentHash(int hash, int recv_bytes)
 
     if(request_data_ptr == NULL)
     {
-        LogProducer::error("rpc", "nonexistent rpc: Can't allocate memory for request_data\n");
+        LogProducer::error("comm", "nonexistent rpc: Can't allocate memory for request_data\n");
         return;
     }
 
     ResponseMessageType_Void* response_data_ptr = new ResponseMessageType_Void;
     if(response_data_ptr == NULL)
     {
-        LogProducer::error("rpc", "nonexistent rpc: Can't allocate memory for response_data\n");
+        LogProducer::error("comm", "nonexistent rpc: Can't allocate memory for response_data\n");
         delete request_data_ptr;
         return;
     }

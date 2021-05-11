@@ -33,6 +33,7 @@ void GroupFdb::processAxesFdb()
 
     std::map<int, Axis*>::reverse_iterator it;
     
+    /*repeated with axis fdb pdo.
     uint32_t time_stamp = 0;    
     for (it = axis_group_ptr_->rbegin(); it != axis_group_ptr_->rend(); ++it)
     {        
@@ -44,7 +45,7 @@ void GroupFdb::processAxesFdb()
         {
             it->second->processFdbPdoSync(time_stamp);
         }
-    }
+    }*/
     
     ServoSm_e status = SERVO_SM_SWITCH_ON_DISABLED;
     int32_t error = 0;

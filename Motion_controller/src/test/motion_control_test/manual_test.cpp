@@ -22,12 +22,11 @@
 #include <basic_alg.h>
 #include <motion_control_arm_group.h>
 #include "thread_help.h"
-#include <motion_control_cache_pool.h>
 #include <transformation.h>
 
 
 using namespace std;
-using namespace fst_mc;
+using namespace group_space;
 using namespace log_space;
 using namespace base_space;
 using namespace basic_alg;
@@ -111,7 +110,7 @@ void test0(void)
 void test1(void)
 {
     ArmGroup arm;
-    arm.initGroup(NULL, NULL);
+    arm.initGroup(NULL, NULL, NULL,NULL, NULL);
 
     double data[] = {0, 0, 0, 0, 0, PI / 2, 0, 0, 0};
     //Joint joint = {PI / 2, PI / 4, PI / 8, PI / 16, PI / 16, PI / 16, 0, 0, 0};
@@ -196,7 +195,7 @@ void test2(void)
     ThreadHelp rt_thread, nrt_thread;
     cout << "begin" << endl;
 
-    arm.initGroup(NULL, NULL);
+    arm.initGroup(NULL, NULL,NULL,NULL, NULL);
     g_thread_running = true;
     rt_thread.run(rtTask, &arm, 80);
     nrt_thread.run(nrtTask, &arm, 78);
@@ -206,7 +205,7 @@ void test2(void)
     arm.setManualFrame(JOINT);
     double steps[9] = {0.15, 0.15, 0.15, 0.15, 0.15, 0.15, 0, 0, 0};
     arm.setManualStepAxis(steps);
-    arm.resetGroup();
+    //arm.resetGroup();
     usleep(100 * 1000);
 
     //ManualDirection dirs[9] = {STANDING, STANDING, INCREASE, STANDING, STANDING, STANDING, STANDING, STANDING, STANDING};
@@ -412,7 +411,7 @@ void test6(void)
     ArmGroup arm;
     ThreadHelp rt_thread;
 
-    arm.initGroup(NULL, NULL);
+    arm.initGroup(NULL, NULL, NULL, NULL, NULL);
 
     p.point_.x_ = -29.04;
     p.point_.y_ = 167.96;
@@ -813,7 +812,7 @@ int main(int argc, char **argv)
     //test10();
     //test15();
     /*
-    int fd = open("/dev/fst_shmem", O_RDWR);
+    int fd = open("/devmem", O_RDWR);
     static TestBuffer* test_buffer = (TestBuffer *) mmap(NULL, 1000 * 1024, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0x3B000000);
     if (test_buffer == MAP_FAILED) 
     {
@@ -849,7 +848,7 @@ int main(int argc, char **argv)
     cout << "offset of last_fragment: " << (uint32_t)(&seg.last_fragment) - (uint32_t)(&seg) << endl;
 
     ofstream  shm_out("/root/share_memory.dump");
-    int fd = open("/dev/fst_shmem", O_RDWR);
+    int fd = open("/dev/mem", O_RDWR);
     void *ptr = mmap(NULL, 524288, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0x38100000);
     uint32_t *pdata = (uint32_t*)ptr;
     char buffer[1024];

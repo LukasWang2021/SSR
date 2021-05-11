@@ -24,17 +24,19 @@ using namespace basic_alg;
 using namespace log_space;
 
 
-namespace fst_mc
+namespace group_space
 {
 
-ErrorCode ArmGroup::initGroup(CoordinateManager *coordinate_manager_ptr, ToolManager *tool_manager_ptr)
+ErrorCode ArmGroup::initGroup(CoordinateManager *coordinate_manager_ptr, ToolManager *tool_manager_ptr,
+    std::map<int32_t,axis_space::Axis*>* axis_group_ptr, GroupSm* sm_ptr, servo_comm_space::ServoCpuCommBase* cpu_comm_ptr)
 {
     vel_ratio_ = 0.1;
     acc_ratio_ = 1.0;
     cycle_time_ = 0.001;
     id_ = 1;
 
-    if (coordinate_manager_ptr == NULL || tool_manager_ptr == NULL)
+    if (coordinate_manager_ptr == NULL || tool_manager_ptr == NULL || axis_group_ptr == NULL 
+        || sm_ptr == NULL || cpu_comm_ptr == NULL)
     {
         LogProducer::error("mc_arm_group","Invalid pointer of error-monitor or coordinate-manager or tool-manager.");
         return MC_INTERNAL_FAULT;
@@ -42,8 +44,10 @@ ErrorCode ArmGroup::initGroup(CoordinateManager *coordinate_manager_ptr, ToolMan
 
     coordinate_manager_ptr_ = coordinate_manager_ptr;
     tool_manager_ptr_ = tool_manager_ptr;
+    axis_group_ptr_ = axis_group_ptr;
+    sm_ptr_ = sm_ptr;
+    cpu_comm_ptr_ = cpu_comm_ptr;
 
-    LogProducer::info("mc_arm_group","Initializing mutex ...");
     if (pthread_mutex_init(&planner_list_mutex_, NULL) != 0 ||
         pthread_mutex_init(&manual_traj_mutex_, NULL) != 0 ||
         pthread_mutex_init(&servo_mutex_, NULL) != 0 ||
@@ -60,7 +64,7 @@ ErrorCode ArmGroup::initGroup(CoordinateManager *coordinate_manager_ptr, ToolMan
 
     if (kinematics_ptr_ == NULL || !kinematics_ptr_->isValid())
     {
-        LogProducer::error("mc_arm_group","Fail to create kinematics for this Group.");
+        LogProducer::error("mc_arm_group","Fail to create kinematics(%p, %d) for this Group.",kinematics_ptr_, kinematics_ptr_->isValid());
         return MC_INTERNAL_FAULT;
     }
 
@@ -92,7 +96,10 @@ ErrorCode ArmGroup::initGroup(CoordinateManager *coordinate_manager_ptr, ToolMan
     result = LoadArmGroupParameters(path);
     if (result != SUCCESS) return result;
 
+    LogProducer::info("mc_arm_group","Load parameters success.");
+
     // 初始化轨迹缓存
+    LogProducer::info("mc_arm_group","Initializing trajectory planner.");
     trajectory_a_.prev = &trajectory_b_;
     trajectory_a_.next = &trajectory_b_;
     trajectory_b_.prev = &trajectory_a_;
@@ -132,23 +139,15 @@ ErrorCode ArmGroup::initGroup(CoordinateManager *coordinate_manager_ptr, ToolMan
     // 初始化裸核通信句柄
     LogProducer::info("mc_arm_group","Initializing interface to bare core ...");
 
-    if (!bare_core_.initInterface(JOINT_OF_ARM))
+    if (!bare_core_.initInterface(JOINT_OF_ARM, axis_group_ptr_, sm_ptr_, cpu_comm_ptr_))
     {
         LogProducer::error("mc_arm_group","Fail to create communication with bare core.");
         return MC_FAIL_IN_INIT;
     }
 
-    // 下发伺服参数
-    ErrorCode err = downloadServoParam("/root/install/share/configuration/machine/servo_param.yaml");
-    if (err != SUCCESS)
-    {
-        LogProducer::error("mc_arm_group","Fail to download servo parameter");
-        return err;
-    }
-
     // 初始化零位校验模块
     LogProducer::info("mc_arm_group","Initializing calibrator of ArmGroup ...");
-    err = calibrator_.initCalibrator(JOINT_OF_ARM, &bare_core_);
+    ErrorCode err = calibrator_.initCalibrator(JOINT_OF_ARM, &bare_core_);
 
     if (err != SUCCESS)
     {
@@ -575,64 +574,6 @@ ErrorCode ArmGroup::LoadBaseGroupParameters(std::string dir_path)
 
     memcpy(&joint_tracking_accuracy_.j1_, tracking_accuracy, sizeof(tracking_accuracy));
 
-    // 下发速度滤波器参数
-    vector<double> data_front, data_back;
-    double weight_current;
-    int filter_half_length;
-    bool filter_enable;
-
-    if (!base_group_param.getParam("omega_filter/filter_enable", filter_enable))
-    {
-        LogProducer::error("mc_arm_group","Fail to load omega filter enable");
-        return MC_LOAD_PARAM_FAILED;
-    }
-
-    if (filter_enable)
-    {
-        LogProducer::info("mc_arm_group","Enable filter, setup omega filter ...");
-
-        if (!base_group_param.getParam("omega_filter/filter_half_length", filter_half_length))
-        {
-            LogProducer::error("mc_arm_group","Fail to load omega filter length");
-            return MC_LOAD_PARAM_FAILED;
-        }
-
-        if (!base_group_param.getParam("omega_filter/filter_weight_current", weight_current))
-        {
-            LogProducer::error("mc_arm_group","Fail to load omega filter weight");
-            return MC_LOAD_PARAM_FAILED;
-        }
-
-        if (!base_group_param.getParam("omega_filter/filter_weight_front", data_front) || !base_group_param.getParam("omega_filter/filter_weight_back", data_back))
-        {
-            LogProducer::error("mc_arm_group","Fail to load omega filter weights");
-            return MC_LOAD_PARAM_FAILED;
-        }
-
-        if (filter_half_length < 0 || static_cast<uint32_t>(filter_half_length) != data_front.size() ||  static_cast<uint32_t>(filter_half_length) != data_back.size())
-        {
-            LogProducer::error("mc_arm_group","Invalid omega filter parameter: half-length: %d, front-weight-size: %d, back-weight-size: %d", filter_half_length, data_front.size(), data_back.size());
-            return MC_FAIL_IN_INIT;
-        }
-
-        uint32_t half_length = static_cast<uint32_t>(filter_half_length);
-        uint32_t weight_size = half_length * 2 + 1;
-        double *weights = new double[weight_size];
-        memcpy(weights, &data_back[0], half_length * sizeof(double));
-        memcpy(weights + half_length + 1, &data_front[0], half_length * sizeof(double));
-        weights[half_length] = weight_current;
-
-        if (!bare_core_.setOmegaFilter(half_length, weights, weight_size))
-        {
-            LogProducer::error("mc_arm_group","Fail to download omega filter, code = 0x%llx", MC_FAIL_IN_INIT);
-            return MC_FAIL_IN_INIT;
-        }
-
-        delete [] weights;
-        LogProducer::info("mc_arm_group","Setup omega filter success");
-    }
-
-    LogProducer::info("mc_arm_group","LoadBaseGrouParameters Success.");
     return SUCCESS;
 }
 ErrorCode ArmGroup::LoadArmGroupParameters(std::string dir_path)

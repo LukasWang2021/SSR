@@ -23,12 +23,13 @@ typedef enum{
  */
 typedef enum{
     GROUP_STATUS_UNKNOWN = 0,
-    GROUP_STATUS_ERROR_STOP = 1,  /**< If any axis has error.*/
-    GROUP_STATUS_DISABLED = 2,    /**< If the power stage of any axis is off.*/
-    GROUP_STATUS_STANDBY = 3,     /**< If the power stage of all axes are on.*/
-    GROUP_STATUS_STOPPING = 4,    /**< If the group goes stopping.*/
-    GROUP_STATUS_HOMING = 5,      /**< If the group is in homing motion.*/
-    GROUP_STATUS_MOVING = 6,      /**< If the group is in moving motion.*/
+    GROUP_STATUS_STANDBY = 1,     /**< If the power stage of all axes are on.*/
+    GROUP_STATUS_MOVING = 2,      /**< If the group is in moving motion.*/
+    GROUP_STATUS_DISABLED = 3,    /**< If the power stage of any axis is off.*/
+    GROUP_STATUS_ERROR_STOP = 4,  /**< If any axis has error.*/
+    GROUP_STATUS_STOPPING = 5,    /**< If the group goes stopping.*/
+    GROUP_STATUS_HOMING = 6,      /**< If the group is in homing motion.*/
+    
 }GroupStatus_e;
 
 

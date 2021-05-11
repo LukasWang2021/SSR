@@ -8,7 +8,7 @@
 #include "ds_planner/ds_planner_two_jerk.h"
 #include "ds_planner/ds_planner_three_jerk.h"
 
-void test_ds_curve(int jerk_num, double vel_ratio)
+bool test_ds_curve(int jerk_num, double vel_ratio)
 {
    //  int jerk_num = 2;
     DSCurvePlanner *ds_curve;

@@ -518,13 +518,13 @@ void ControllerRpc::handleRpc0x0000E003(void* request_data_ptr, void* response_d
         rs_data_ptr->data.data_count = 512;
         for (size_t i = 0; i < rs_data_ptr->data.data_count; ++i)
         {
-            rs_data_ptr->data.data[i].operation_value = params.param[i].operation_value;
-            rs_data_ptr->data.data[i].default_value = params.param[i].default_value;
-            rs_data_ptr->data.data[i].upper_limit_value = params.param[i].upper_limit_value;
-            rs_data_ptr->data.data[i].lower_limit_value = params.param[i].lower_limit_value;
-            rs_data_ptr->data.data[i].attr = params.param[i].attr.all;
-            rs_data_ptr->data.data[i].validity = params.param[i].validity.all;
-            memcpy(rs_data_ptr->data.data[i].unit, params.param[i].unit, 16);
+            rs_data_ptr->data.data[i].operation_value = params.param[i];
+            rs_data_ptr->data.data[i].default_value = 0;
+            rs_data_ptr->data.data[i].upper_limit_value = 0;
+            rs_data_ptr->data.data[i].lower_limit_value = 0;
+            rs_data_ptr->data.data[i].attr = 0;
+            rs_data_ptr->data.data[i].validity = 0;
+            //memcpy(rs_data_ptr->data.data[i].unit, "", 16);
         }
         rs_data_ptr->error_code.data = SUCCESS;
         LogProducer::info("rpc", "/rpc/servo1001/servo/uploadParameters for axis(%d) success", axis_id);
@@ -762,6 +762,37 @@ void ControllerRpc::handleRpc0x000172C5(void* request_data_ptr, void* response_d
     }
 }
 
+//"/rpc/servo1001/servo/resetEncoder"	
+void ControllerRpc::handleRpc0x0000EFE2(void* request_data_ptr, void* response_data_ptr)
+{
+    RequestMessageType_Int32List* rq_data_ptr = static_cast<RequestMessageType_Int32List*>(request_data_ptr);
+    ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
+    if (rq_data_ptr->data.data_count != 2)
+    {
+        rs_data_ptr->data.data = RPC_PARAM_INVALID;
+        LogProducer::error("rpc", "/rpc/servo1001/servo/resetEncoder input invalid params");
+        return;
+    }
+    //int32_t cpu = rq_data_ptr->data.data[0];//todo with axis_manager
+    int32_t axis_id = rq_data_ptr->data.data[1];
+    if(axis_id >= AXIS_NUM || axis_id < 0)
+    {
+        rs_data_ptr->data.data = RPC_PARAM_INVALID;
+        LogProducer::error("rpc", "/rpc/servo1001/servo/resetEncoder input invalid params for axis[%d]", axis_id);        
+        return;
+    }
+        
+    rs_data_ptr->data.data = servo_comm_ptr_[axis_id]->doServoCmdResetEncoder();   
+    if(rs_data_ptr->data.data == SUCCESS)
+    {
+        LogProducer::info("rpc", "/rpc/servo1001/servo/resetEncoder for axis(%d) success", axis_id);
+    }
+    else
+    {
+        LogProducer::error("rpc", "/rpc/servo1001/servo/resetEncoder for axis(%d) failed: 0x%llx", axis_id, rs_data_ptr->data.data);
+    }
+}
+
 //"/rpc/servo1001/servo/goHome"  
 void ControllerRpc::handleRpc0x00013BB5(void* request_data_ptr, void* response_data_ptr)
 {
@@ -823,7 +854,6 @@ void ControllerRpc::handleRpc0x00015AB7(void* request_data_ptr, void* response_d
         LogProducer::error("rpc", "/rpc/servo1001/servo/abortHoming for axis(%d) failed", axis_id);
     }
 }
-
 
 //"/rpc/servo1001/servo/getServoDefinedInfo"	
 void ControllerRpc::handleRpc0x0000C87F(void* request_data_ptr, void* response_data_ptr)

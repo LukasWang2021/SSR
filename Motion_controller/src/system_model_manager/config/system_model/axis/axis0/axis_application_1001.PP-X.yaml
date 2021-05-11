@@ -4,7 +4,7 @@ param_model_id:
     default_value: 1001
     upper_limit_value: 0 
     lower_limit_value: 0
-    unit: NULL
+    unit: None
     attr: 1
     validity: 0
 model_class: 
@@ -12,7 +12,7 @@ model_class:
     default_value: 0
     upper_limit_value: 2 
     lower_limit_value: 0
-    unit: NULL
+    unit: None
     attr: 1
     validity: 0
 model_gear_ratio_numerator: 
@@ -20,7 +20,7 @@ model_gear_ratio_numerator:
     default_value: 1
     upper_limit_value: 1000 
     lower_limit_value: 1
-    unit: NULL
+    unit: None
     attr: 1
     validity: 0
 model_gear_ratio_denominator: 
@@ -28,7 +28,7 @@ model_gear_ratio_denominator:
     default_value: 1
     upper_limit_value: 1000 
     lower_limit_value: 1
-    unit: NULL
+    unit: None
     attr: 1
     validity: 0
 model_pitch: 
@@ -52,7 +52,7 @@ model_direction:
     default_value: 1
     upper_limit_value: 1 
     lower_limit_value: 0
-    unit: NULL
+    unit: None
     attr: 3
     validity: 1
 model_hw_limit_enable: 
@@ -60,7 +60,7 @@ model_hw_limit_enable:
     default_value: 0
     upper_limit_value: 1 
     lower_limit_value: 0
-    unit: NULL
+    unit: None
     attr: 3
     validity: 1
 model_hw_positive_limit: 
@@ -84,7 +84,7 @@ encoder_pulse_per_revolution:
     default_value: 8388608
     upper_limit_value: 10000000 
     lower_limit_value: 1
-    unit: NULL
+    unit: None
     attr: 1
     validity: 0
 motor_rated_torque:
@@ -148,7 +148,7 @@ app_sf_limit_enable:
     default_value: 0
     upper_limit_value: 1 
     lower_limit_value: 0
-    unit: NULL
+    unit: None
     attr: 3
     validity: 3
 app_sf_positive_limit: 

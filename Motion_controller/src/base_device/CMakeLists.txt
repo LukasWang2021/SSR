@@ -12,3 +12,6 @@ add_library(base_device SHARED
     ${SRC}
 )
 
+target_link_libraries(base_device
+	${rtm_LIBRARIES}
+)

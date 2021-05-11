@@ -104,7 +104,7 @@
 		<From>2</From>
 		<To>1</To>
 		<Param1>0</Param1>
-		<Param2>20480</Param2>
+		<Param2>2048</Param2>
 		<Param3>0</Param3>
 		<Param4>0</Param4>
 	</CommBlock>
@@ -177,7 +177,7 @@
 		<From>2</From>
 		<To>1</To>
 		<Param1>1</Param1>
-		<Param2>20480</Param2>
+		<Param2>2048</Param2>
 		<Param3>0</Param3>
 		<Param4>0</Param4>
 	</CommBlock>
@@ -250,7 +250,7 @@
 		<From>2</From>
 		<To>1</To>
 		<Param1>2</Param1>
-		<Param2>20480</Param2>
+		<Param2>2048</Param2>
 		<Param3>0</Param3>
 		<Param4>0</Param4>
 	</CommBlock>
@@ -323,7 +323,7 @@
 		<From>2</From>
 		<To>1</To>
 		<Param1>3</Param1>
-		<Param2>20480</Param2>
+		<Param2>2048</Param2>
 		<Param3>0</Param3>
 		<Param4>0</Param4>
 	</CommBlock>
@@ -396,7 +396,7 @@
 		<From>2</From>
 		<To>1</To>
 		<Param1>4</Param1>
-		<Param2>20480</Param2>
+		<Param2>2048</Param2>
 		<Param3>0</Param3>
 		<Param4>0</Param4>
 	</CommBlock>
@@ -469,7 +469,7 @@
 		<From>2</From>
 		<To>1</To>
 		<Param1>5</Param1>
-		<Param2>20480</Param2>
+		<Param2>2048</Param2>
 		<Param3>0</Param3>
 		<Param4>0</Param4>
 	</CommBlock>
@@ -542,7 +542,7 @@
 		<From>2</From>
 		<To>1</To>
 		<Param1>6</Param1>
-		<Param2>20480</Param2>
+		<Param2>2048</Param2>
 		<Param3>0</Param3>
 		<Param4>0</Param4>
 	</CommBlock>
@@ -615,7 +615,7 @@
 		<From>2</From>
 		<To>1</To>
 		<Param1>7</Param1>
-		<Param2>20480</Param2>
+		<Param2>2048</Param2>
 		<Param3>0</Param3>
 		<Param4>0</Param4>
 	</CommBlock>
@@ -688,7 +688,7 @@
 		<From>2</From>
 		<To>1</To>
 		<Param1>8</Param1>
-		<Param2>20480</Param2>
+		<Param2>2048</Param2>
 		<Param3>0</Param3>
 		<Param4>0</Param4>
 	</CommBlock>
@@ -761,7 +761,7 @@
 		<From>2</From>
 		<To>1</To>
 		<Param1>9</Param1>
-		<Param2>20480</Param2>
+		<Param2>2048</Param2>
 		<Param3>0</Param3>
 		<Param4>0</Param4>
 	</CommBlock>

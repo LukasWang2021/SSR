@@ -8,6 +8,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <stdio.h>
 #endif
 
 void initCoreProcessCallMemoryByFrom(CommBlockData_t* block_ptr, CoreProcessCallCommData_t* data_ptr)
@@ -29,7 +30,7 @@ bool sendCoreProcessCallRequest(CommBlockData_t* block_ptr, uint8_t* data_ptr, i
     assert(block_ptr != NULL);
     assert(data_ptr != NULL);
     assert(data_size > 0);
-
+    
     if(!isCoreProcessCallChannelIdle(block_ptr)
         || data_size > CORE_PROCESS_CALL_MAX_BYTE_OFFSET)
     {

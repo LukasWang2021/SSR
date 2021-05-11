@@ -518,13 +518,13 @@ void ControllerRpc::handleRpc0x0000E003(void* request_data_ptr, void* response_d
         rs_data_ptr->data.data_count = 512;
         for (size_t i = 0; i < rs_data_ptr->data.data_count; ++i)
         {
-            rs_data_ptr->data.data[i].operation_value = params.param[i].operation_value;
-            rs_data_ptr->data.data[i].default_value = params.param[i].default_value;
-            rs_data_ptr->data.data[i].upper_limit_value = params.param[i].upper_limit_value;
-            rs_data_ptr->data.data[i].lower_limit_value = params.param[i].lower_limit_value;
-            rs_data_ptr->data.data[i].attr = params.param[i].attr.all;
-            rs_data_ptr->data.data[i].validity = params.param[i].validity.all;
-            memcpy(rs_data_ptr->data.data[i].unit, params.param[i].unit, 16);
+            rs_data_ptr->data.data[i].operation_value = params.param[i];
+            rs_data_ptr->data.data[i].default_value = 0;
+            rs_data_ptr->data.data[i].upper_limit_value = 0;
+            rs_data_ptr->data.data[i].lower_limit_value = 0;
+            rs_data_ptr->data.data[i].attr = 0;
+            rs_data_ptr->data.data[i].validity = 0;
+            //memcpy(rs_data_ptr->data.data[i].unit, "", 16);
         }
         rs_data_ptr->error_code.data = SUCCESS;
         LogProducer::info("rpc", "/rpc/servo1001/servo/uploadParameters for axis(%d) success", axis_id);

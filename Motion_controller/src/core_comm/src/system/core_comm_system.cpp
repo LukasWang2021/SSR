@@ -231,7 +231,6 @@ CommBlockData_t* CoreCommSystem::getToCommBlockDataPtrList(size_t& to_block_numb
 
 bool CoreCommSystem::openDevice(std::string device_path, uint32_t base_address, size_t byte_size, Device_t& device)
 {
-    printf("CoreCommSystem::openDevice:%s, addr=0x%x, len=0x%x\n",device_path.c_str(),base_address,byte_size);
     int device_fd = open(device_path.c_str(), O_RDWR|O_SYNC);
     if(device_fd < 0) return false;
     device.device_ptr = (char*)mmap(NULL, 0x10000000, PROT_READ|PROT_WRITE, MAP_SHARED, device_fd, 0x30000000);

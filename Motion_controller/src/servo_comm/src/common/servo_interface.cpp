@@ -16,6 +16,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <stdio.h>
 #endif
 
 ServoComm_t* createServoCommByController(int32_t controller_id, int32_t servo_id, int32_t servo_index)

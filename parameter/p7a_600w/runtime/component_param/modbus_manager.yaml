@@ -1,7 +1,0 @@
-log_level: 1
-start_mode: 2 #client:1 server:2
-server_file_name: server.yaml
-server_config_file_name: server_config.yaml
-client_file_name: client.yaml
-client_config_file_name: client_config.yaml
-#END

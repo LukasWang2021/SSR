@@ -262,7 +262,7 @@ ErrorCode Calibrator::initCalibrator(size_t joint_num, BareCoreInterface *pcore)
         LogProducer::error("mc_calib","Fail to read coupling coefficient config file");
         return MC_LOAD_PARAM_FAILED;
     }
-
+*/
     // 加载零位配置文件，并检查数据
     // 检查无误后将数据下发到裸核，注意只有裸核处于DISABLE状态零位才能生效
     data.clear();
@@ -273,12 +273,12 @@ ErrorCode Calibrator::initCalibrator(size_t joint_num, BareCoreInterface *pcore)
         LogProducer::error("mc_calib","Loading offset param file(group_offset.yaml) failed");
         return MC_LOAD_PARAM_FAILED;
     }
-
+    int id = 0; 
     if (offset_param_.getParam("zero_offset/id", id) && offset_param_.getParam("zero_offset/data", data))
     {
         LogProducer::info("mc_calib","ID of offset: 0x%x", id);
         LogProducer::info("mc_calib","Send offset: %s", printDBLine(&data[0], buffer, LOG_TEXT_SIZE));
-        result = sendConfigData(id, data);
+        ErrorCode result = sendConfigData(id, data);
 
         if (result == SUCCESS)
         {
@@ -303,7 +303,7 @@ ErrorCode Calibrator::initCalibrator(size_t joint_num, BareCoreInterface *pcore)
         LogProducer::error("mc_calib","Fail to read zero offset config file");
         return MC_LOAD_PARAM_FAILED;
     }
-    */
+    
     return SUCCESS;
 }
 
@@ -659,7 +659,7 @@ ErrorCode Calibrator::updateOffset(uint32_t index, double offset)
 
     // 更新配置文件
     vector<double> data;
-    LogProducer::info("mc_calib","Update config file ...");
+    //LogProducer::info("mc_calib","Update config file ...");
 
     if (!offset_param_.getParam("zero_offset/data", data))
     {
@@ -679,7 +679,7 @@ ErrorCode Calibrator::updateOffset(uint32_t index, double offset)
     }
 
     // 更新裸核零位
-    LogProducer::info("mc_calib","Offset saved, update offset in core1 ...");
+    //LogProducer::info("mc_calib","Offset saved, update offset in core1 ...");
     ErrorCode err = sendOffsetToBareCore();
 
     if (err != SUCCESS)
@@ -689,12 +689,8 @@ ErrorCode Calibrator::updateOffset(uint32_t index, double offset)
     }
 
     // 此处usleep为了等待裸核的零位生效，考虑是否有更好的实现方式
-    usleep(200 * 1000);
-    LogProducer::info("mc_calib","Core1 offset updated, update recorder ...");
-
-    // Joint cur_joint, old_joint;
-    // ServoState  state;
-    // uint32_t encoder_state[NUM_OF_JOINT];
+    //usleep(200 * 1000);
+    //LogProducer::info("mc_calib","Core1 offset updated, update recorder ...");
 
     OffsetMask  offset_mask[NUM_OF_JOINT];
     OffsetState offset_stat[NUM_OF_JOINT];
@@ -745,7 +741,7 @@ ErrorCode Calibrator::updateOffset(uint32_t index, double offset)
     zero_offset_[index] = offset;
     offset_mask_[index] = OFFSET_UNMASK;
     offset_stat_[index] = OFFSET_NORMAL;
-    LogProducer::info("mc_calib","Success!");
+    LogProducer::info("mc_calib","updateOffset Success!");
     return SUCCESS;
 }
 

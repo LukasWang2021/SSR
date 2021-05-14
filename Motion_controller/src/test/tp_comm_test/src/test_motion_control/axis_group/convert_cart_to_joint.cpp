@@ -45,7 +45,7 @@ int main(int argc, char* argv[])
 
     RequestMessageType_Int32_UFTF_PoseAndPosture msg;
     msg.header.time_stamp = 122;
-    msg.property.authority = Comm_Authority_TP;
+    msg.property.authority = Comm_Authority_TP_SIMMULATOR;
     msg.data1.data = atoi(argv[1]);
     msg.data2.tf_id.data = atoi(argv[2]);
     msg.data2.uf_id.data = atoi(argv[3]);

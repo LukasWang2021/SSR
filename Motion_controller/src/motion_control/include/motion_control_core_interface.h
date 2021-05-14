@@ -17,27 +17,34 @@
 namespace group_space
 {
 #define JC_POINT_NUM 10
+#define JOINT_IN_GROUP 6
 #define START_POINT 1
 #define END_POINT 2
 #define MID_POINT 0
+// typedef struct 
+// {
+//     double angle[6];
+//     double omega[6];
+//     double alpha[6];
+//     double inertia[6];
+//     int point_position;
+// }Points;
+// typedef struct 
+// {
+//     Points points[JC_POINT_NUM];
+//     int total_points;
+// }JointCommand;
 typedef struct 
 {
-    double angle[6];
-    double omega[6];
-    double alpha[6];
-    double inertia[6];
-    int point_position;
-}Points;
-typedef struct 
-{
-    Points points[JC_POINT_NUM];
+    CircleBufferAppData4000_t set_point[JC_POINT_NUM];
+    int current_point;
     int total_points;
-}JointCommand;
-
+}AxisPoints;
 struct PointCache
 {
     bool is_empty;
-    JointCommand cache;
+    AxisPoints axis[JOINT_IN_GROUP];
+    bool is_start;
     PointProperty property;
 };
 
@@ -72,6 +79,9 @@ class BareCoreInterface
     std::map<int32_t, axis_space::Axis*>* axis_group_ptr_;  /**< The list of the axes in the group.*/
 	  GroupSm* sm_ptr_;                                       /**< The state machine of the group.*/
     servo_comm_space::ServoCpuCommBase* cpu_comm_ptr_;      /**< The pointer to communicate with the other cpu.*/
+
+    int32_t sync_index_;
+    bool WriteShareMem(PointCache& jc, unsigned int valid_level);
 };
 
 

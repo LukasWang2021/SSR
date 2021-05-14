@@ -42,7 +42,7 @@ int main()
         unsigned int hash_value = 0x00012353;
         RequestMessageType_Int32 msg;
         msg.header.time_stamp = 122;
-        msg.property.authority = Comm_Authority_TP;
+        msg.property.authority = Comm_Authority_TP_SIMMULATOR;
         
         msg.data.data = group_id;
 
@@ -82,7 +82,7 @@ int main()
         cout << "Reply : msg.header.package_left = " << recv_msg.header.package_left << endl;
         cout << "Reply : msg.header.error_code = " << recv_msg.header.error_code << endl;
         cout << "Reply : msg.property.authority = " << recv_msg.property.authority << endl;
-        cout << "Reply : msg.error_code = " << recv_msg.error_code.data << endl;
+        cout << "Reply : msg.error_code = " << hex<<recv_msg.error_code.data <<dec<< endl;
         cout << "Reply : msg.data.data_count = " << recv_msg.data.data_count << endl;
 
         for (size_t i = 0; i != recv_msg.data.data_count; ++i)
@@ -97,7 +97,7 @@ int main()
     unsigned int hash_value = 0x00011853;
     RequestMessageType_Int32_DoubleList msg;
     msg.header.time_stamp = 122;
-    msg.property.authority = Comm_Authority_TP;
+    msg.property.authority = Comm_Authority_TP_SIMMULATOR;
     msg.data1.data = group_id;
     msg.data2.data_count = 9;
     memcpy(msg.data2.data, offsets, 9 * sizeof(double));

@@ -46,7 +46,7 @@ int main()
         unsigned int hash_value = 0x000131D4;
         RequestMessageType_Int32List msg;
         msg.header.time_stamp = 122;
-        msg.property.authority = Comm_Authority_TP;
+        msg.property.authority = Comm_Authority_TP_SIMMULATOR;
         msg.data.data_count = 2;
         msg.data.data[0] = group_id;
         msg.data.data[1] = axis_id;
@@ -122,7 +122,7 @@ int main()
     unsigned int hash_value = 0x00012404;
     RequestMessageType_Int32List_Double msg;
     msg.header.time_stamp = 122;
-    msg.property.authority = Comm_Authority_TP;
+    msg.property.authority = Comm_Authority_TP_SIMMULATOR;
     msg.data1.data[0] = group_id;
     msg.data1.data[1] = axis_id;
     msg.data1.data_count = 2;
@@ -164,7 +164,7 @@ int main()
     cout << "Reply : msg.header.package_left = " << recv_msg.header.package_left << endl;
     cout << "Reply : msg.header.error_code = " << recv_msg.header.error_code << endl;
     cout << "Reply : msg.property.authority = " << recv_msg.property.authority << endl;
-    cout << "Reply : msg.error_code.data = " << recv_msg.data.data << endl;
+    cout << "Reply : msg.error_code.data = " << hex << recv_msg.data.data << dec << endl;
 
     if (recv_msg.data.data == 0)
     {

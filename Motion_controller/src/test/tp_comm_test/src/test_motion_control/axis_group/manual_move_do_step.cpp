@@ -44,7 +44,7 @@ int main(int argc, char* argv[])
 
     RequestMessageType_Int32_Int32List msg;
     msg.header.time_stamp = 122;
-    msg.property.authority = Comm_Authority_TP;
+    msg.property.authority = Comm_Authority_TP_SIMMULATOR;
     msg.data1.data = 0;
     msg.data2.data_count = 9;
     msg.data2.data[0] = atoi(argv[1]);

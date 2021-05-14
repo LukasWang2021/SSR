@@ -389,6 +389,16 @@ ErrorCode Controller::bootUp(void)
         sleep(1);
     }
 
+    // connect command pdo channel to self
+    if(servo_1001_ptr_->prepareSafeOp2Op(from_block_ptr, from_block_number))
+    {
+        LogProducer::info("main", "servo_1001_ptr_ prepareSafeOp2Op success");
+    }
+    else
+    {
+        LogProducer::error("main", "servo_1001_ptr_ prepareSafeOp2Op failed");
+        return CONTROLLER_INIT_FAILED;
+    }
     // transfer all servos to OP
     if(!servo_1001_ptr_->doServoCmdTransCommState(CORE_COMM_STATE_OP))
     {

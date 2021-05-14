@@ -38,7 +38,7 @@ int main()
 
     RequestMessageType_Int32 msg;
     msg.header.time_stamp = 122;
-    msg.property.authority = Comm_Authority_TP;
+    msg.property.authority = Comm_Authority_TP_SIMMULATOR;
     msg.data.data = 0;
 
     if (!test.generateRequestMessageType(hash_value, (void*)&msg, RequestMessageType_Int32_fields, buf, buf_size))
@@ -77,7 +77,7 @@ int main()
     cout << "Reply : msg.header.package_left = " << recv_msg.header.package_left << endl;
     cout << "Reply : msg.header.error_code = " << recv_msg.header.error_code << endl;
     cout << "Reply : msg.property.authority = " << recv_msg.property.authority << endl;
-    cout << "Reply : msg.error_code = " << recv_msg.error_code.data << endl;
+    cout << "Reply : msg.error_code = " << hex << recv_msg.error_code.data << dec << endl;
     cout << "Reply : msg.limit.positive_limit.data_count = " << recv_msg.limit.positive_limit.data_count << endl;
     cout << "Reply : msg.limit.negative_limit.data_count = " << recv_msg.limit.negative_limit.data_count << endl;
 

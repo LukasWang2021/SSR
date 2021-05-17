@@ -348,7 +348,8 @@ ErrorCode BaseGroup::manualMoveToPoint(const IntactPoint &point)
 
     if ((group_state != STANDBY && group_state != PAUSE) || servo_state != SERVO_IDLE)
     {
-        LogProducer::error("mc_base","Cannot manual to target in current group-state = %d, servo-state = %d", group_state, servo_state);
+        LogProducer::error("mc_base","Cannot manual to target in current MC-state = %s, servo-state = %s", 
+            getMontionControlStatusString(group_state).c_str(), getMCServoStatusString(servo_state).c_str());
         return MC_FAIL_MANUAL_TO_POINT;
     }
 
@@ -401,7 +402,8 @@ ErrorCode BaseGroup::manualMoveStep(const ManualDirection *direction)
 
     if ((group_state != STANDBY && group_state != PAUSE) || servo_state != SERVO_IDLE)
     {
-        LogProducer::error("mc_base","Cannot manual step in current group-state = %d, servo-state = %d", group_state, servo_state);
+        LogProducer::error("mc_base","Cannot manual step in current MC-state = %s, servo-state = %s", 
+            getMontionControlStatusString(group_state).c_str(), getMCServoStatusString(servo_state).c_str());
         return MC_FAIL_MANUAL_STEP;
     }
 
@@ -462,7 +464,7 @@ ErrorCode BaseGroup::manualMoveContinuous(const ManualDirection *direction)
 
     if ((group_state != STANDBY && group_state != MANUAL && group_state != PAUSE && group_state != PAUSE_MANUAL) || ((group_state == STANDBY || group_state == PAUSE) && servo_state != SERVO_IDLE))
     {
-        LogProducer::error("mc_base","Cannot manual continuous in current grp-state = %d, servo-state = %d", group_state, servo_state);
+        LogProducer::error("mc_base","Cannot manual continuous in current grp-state = %d, servo-state = %s", group_state, getMCServoStatusString(servo_state).c_str());
         return MC_FAIL_MANUAL_CONTINUOUS;
     }
 
@@ -583,7 +585,7 @@ ErrorCode BaseGroup::manualMoveContinuous(const ManualDirection *direction)
     }
     else
     {
-        LogProducer::error("mc_base","Cannot manual continuous in current grp-state = %d, servo-state = %d", group_state_, servo_state_);
+        LogProducer::error("mc_base","Cannot manual continuous in current grp-state = %d, servo-state = %s", group_state_, getMCServoStatusString(servo_state_).c_str());
         return MC_FAIL_MANUAL_CONTINUOUS;
     }
 }
@@ -609,7 +611,8 @@ void BaseGroup::manualStop(void)
     }
     else
     {
-        LogProducer::info("mc_base","The group is not in manual state, group-state: 0x%x, manual-time: %.6f, manual-duration: %.6f", group_state, manual_time_, manual_teach_.getDuration());
+        LogProducer::info("mc_base","The group is not in manual state, MC-state: %s, manual-time: %.6f, manual-duration: %.6f", 
+            getMontionControlStatusString(group_state).c_str(), manual_time_, manual_teach_.getDuration());
     }
 }
 
@@ -645,7 +648,7 @@ ErrorCode BaseGroup::pauseMove(void)
     else
     {}
 
-    LogProducer::warn("mc_base","Group state is %d, pause request refused.", group_state);
+    LogProducer::warn("mc_base","MC-state is %s, pause request refused.", getMontionControlStatusString(group_state).c_str());
     return INVALID_SEQUENCE;
 }
 
@@ -1578,8 +1581,8 @@ bool BaseGroup::nextMovePermitted(void)
 
     if (branch == 0)
     {
-        LogProducer::warn("mc_base","Next motion permitted: state=0x%x, servo-state=0x%x, pick->valid=%d, plan->valid=%d, pick->start_from_smooth=%d, pick->end_with_smooth=%d, auto_time=%.6f, pick->smooth_time=%.6f", 
-            state, servo_state, pick_traj_ptr_->valid, plan_traj_ptr_->valid, pick_traj_ptr_->start_from_smooth, pick_traj_ptr_->end_with_smooth, auto_time_, pick_traj_ptr_->smooth_time);
+        LogProducer::warn("mc_base","Next motion permitted: state=0x%x, servo-state=%s, pick->valid=%d, plan->valid=%d, pick->start_from_smooth=%d, pick->end_with_smooth=%d, auto_time=%.6f, pick->smooth_time=%.6f", 
+            state, getMCServoStatusString(servo_state).c_str(), pick_traj_ptr_->valid, plan_traj_ptr_->valid, pick_traj_ptr_->start_from_smooth, pick_traj_ptr_->end_with_smooth, auto_time_, pick_traj_ptr_->smooth_time);
     }
     else
     {
@@ -2033,13 +2036,13 @@ void BaseGroup::fillTrajectoryFifo(void)
         if (err != SUCCESS)
         {
             group_state_ = AUTO;
-            LogProducer::info("mc_base","Group-state switch to auto.");
+            LogProducer::info("mc_base","MC-state switch to MC_AUTO.");
             reportError(err);
         }
         else
         {
             group_state_ = PAUSING;
-            LogProducer::info("mc_base","Group-state switch to pausing.");
+            LogProducer::info("mc_base","MC-state switch to MC_PAUSING.");
         }
     }
     else if (group_state_ == PAUSING)
@@ -2201,12 +2204,13 @@ void BaseGroup::updateServoStateAndJoint(void)
 
         if (last_servo_state != servo_state_)
         {
-            LogProducer::info("mc_base","Servo-state switch %d to %d", last_servo_state, servo_state_);
+            LogProducer::info("mc_base","Servo-state switch %s to %s", getMCServoStatusString(last_servo_state).c_str(),
+                getMCServoStatusString(servo_state_).c_str());
 
             if ((last_servo_state == SERVO_RUNNING) && (servo_state_ != SERVO_IDLE))
             {
-                LogProducer::error("mc_base","Group-state: 0x%x, point-cache-empty: %d, auto_to_standby_request: %d, auto_to_pause_request: %d", 
-                group_state_, bare_core_.isPointCacheEmpty(), auto_to_standby_request_, auto_to_pause_request_);
+                LogProducer::error("mc_base","MC-state: %s, point-cache-empty: %d, auto_to_standby_request: %d, auto_to_pause_request: %d", 
+                getMontionControlStatusString(group_state_).c_str(), bare_core_.isPointCacheEmpty(), auto_to_standby_request_, auto_to_pause_request_);
                 LogProducer::info("mc_base","Dump share memory ...");
                 dumpShareMemory();
                 LogProducer::info("mc_base","Done.");
@@ -2725,6 +2729,52 @@ ErrorCode BaseGroup::setHardConstraint(const JointConstraint &hard_constraint)
     {
         LogProducer::error("mc_base","Fail dumping hard constraint to config file");
         return MC_SET_PARAM_FAILED;
+    }
+}
+
+std::string BaseGroup::getMCServoStatusString(ServoState servo_status)
+{
+    switch(servo_status)
+    {
+        case SERVO_INIT:              return std::string("UNKNOWN");
+        case SERVO_IDLE:              return std::string("MC_SERVO_IDLE");
+        case SERVO_RUNNING:           return std::string("MC_SERVO_RUNNING");
+        case SERVO_DISABLE:           return std::string("MC_SERVO_DISABLE");
+        case SERVO_WAIT_READY:        return std::string("MC_SERVO_WAIT_READY");
+        case SERVO_WAIT_DOWN:         return std::string("MC_SERVO_WAIT_DOWN");
+        default:                      return std::string("Unknown");
+    }
+}
+
+std::string BaseGroup::getMontionControlStatusString(GroupState mc_status)
+{
+    switch(mc_status)
+    {
+        case STANDBY:               return std::string("MC_STANDBY");
+        case MANUAL:                return std::string("MC_MANUAL");
+        case AUTO:                  return std::string("MC_AUTO");
+        case PAUSE:                 return std::string("MC_PAUSE");
+        case PAUSE_RETURN:          return std::string("MC_PAUSE_RETURN");
+        case PAUSE_MANUAL:          return std::string("MC_PAUSE_MANUAL");
+        case PAUSING:               return std::string("MC_PAUSING");
+        case OFFLINE:               return std::string("MC_OFFLINE");
+        case RESUME:                return std::string("MC_RESUME");
+        case PREPARE_RESUME:        return std::string("MC_PREPARE_RESUME");
+
+        case MANUAL_TO_STANDBY:     return std::string("MC_MANUAL_TO_STANDBY");
+        case STANDBY_TO_MANUAL:     return std::string("MC_STANDBY_TO_MANUAL");
+        case AUTO_TO_STANDBY:       return std::string("MC_AUTO_TO_STANDBY");
+        case STANDBY_TO_AUTO:       return std::string("MC_STANDBY_TO_AUTO");
+        case STANDBY_TO_OFFLINE:    return std::string("MC_STANDBY_TO_OFFLINE");
+        case OFFLINE_TO_STANDBY:    return std::string("MC_OFFLINE_TO_STANDBY");
+        case AUTO_TO_PAUSING:       return std::string("MC_AUTO_TO_PAUSING");
+        case PAUSING_TO_PAUSE:      return std::string("MC_PAUSING_TO_PAUSE");
+        case PAUSE_TO_RESUME:       return std::string("MC_PAUSE_TO_RESUME");
+        case PAUSE_RETURN_TO_PAUSE: return std::string("MC_PAUSE_RETURN_TO_PAUSE");
+        case PAUSE_TO_PAUSE_RETURN: return std::string("MC_PAUSE_TO_PAUSE_RETURN");
+        case PAUSE_TO_PAUSE_MANUAL: return std::string("MC_PAUSE_TO_PAUSE_MANUAL");
+        case PAUSE_MANUAL_TO_PAUSE: return std::string("MC_PAUSE_MANUAL_TO_PAUSE");
+        default:                    return std::string("MC_Unknown");
     }
 }
 

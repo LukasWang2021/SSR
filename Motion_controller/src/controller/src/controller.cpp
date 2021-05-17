@@ -358,7 +358,7 @@ ErrorCode Controller::bootUp(void)
     // set all opeartion_mode for all servos
     for(size_t i = 0; i < axes_config_.size(); ++i)
     {
-        if(servo_comm_ptr_[i]->doServoCmdWriteParameter(SERVO_PARAM_OP_MODE, (int32_t)SERVO_OP_MODE_PROFILE_POSITION_MODE) != SUCCESS)
+        if(servo_comm_ptr_[i]->doServoCmdWriteParameter(SERVO_PARAM_OP_MODE, (int32_t)SERVO_OP_MODE_INTERPOLATED_POSITION_MODE) != SUCCESS)
         {
             LogProducer::error("main", "servo_comm_ptr[%d] write op_mode failed", i);
             return CONTROLLER_INIT_FAILED;

@@ -213,6 +213,8 @@ class BaseGroup
     ErrorCode pickPointsFromOfflineCache(TrajectoryPoint *points, size_t &length);
     
     bool initTrajectoryLogSpace(void);
+    std::string getMCServoStatusString(ServoState servo_status);
+    std::string getMontionControlStatusString(GroupState mc_status);
     
     int id_;
     JointPlanner joint_planner_;

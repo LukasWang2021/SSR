@@ -95,6 +95,7 @@ bool BareCoreInterface::fillPointCache(TrajectoryPoint *points, size_t length, P
         }
         point_cache_.axis[i].current_point = 0;
         point_cache_.axis[i].total_points = length;
+        point_cache_.is_start = false;
         if(points[0].level == POINT_START)
         {
             point_cache_.is_start = true;

@@ -45,6 +45,7 @@ void AxisFdb::handleFdbSyncCircleBuffer3000(uint32_t expect_time_stamp)
     position_ = fdb_pdo_ptr->fdb_position;
     velocity_ = fdb_pdo_ptr->fdb_velocity;
     torque_ = fdb_pdo_ptr->fdb_torque;
+    state_word_ = fdb_pdo_ptr->state_word;
     servo_op_mode_ = (ServoOpMode_e)(fdb_pdo_ptr->actual_op_mode);
 }
 

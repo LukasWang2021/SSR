@@ -24,10 +24,10 @@ using namespace std;
 
 int main(int argc, char* argv[])
 {
-    int needed_data_count = 8;
+    int needed_data_count = 6;
     if (argc < needed_data_count + 1)
     {
-        cout << "more parameters are needed: joint[1~9]_step_direction" << endl;
+        cout << "more parameters are needed: joint[1~6]_step_direction" << endl;
         return -1;
     }
     TpCommTest test;
@@ -53,9 +53,9 @@ int main(int argc, char* argv[])
     msg.data2.data[3] = atoi(argv[4]);
     msg.data2.data[4] = atoi(argv[5]);
     msg.data2.data[5] = atoi(argv[6]);
-    msg.data2.data[6] = atoi(argv[7]);
-    msg.data2.data[7] = atoi(argv[8]);
-    msg.data2.data[8] = atoi(argv[9]);
+    msg.data2.data[6] = 0;
+    msg.data2.data[7] = 0;
+    msg.data2.data[8] = 0;
 
     if (!test.generateRequestMessageType(hash_value, (void*)&msg, RequestMessageType_Int32_Int32List_fields, buf, buf_size))
     {

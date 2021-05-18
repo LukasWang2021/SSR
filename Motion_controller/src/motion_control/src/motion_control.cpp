@@ -128,7 +128,7 @@ void MotionControl::ringRealTimeTask(void)
 
         if (duration_2 > 0.02)
         {
-            LogProducer::error("mc","RT task second stage duration over limit: %.6f", duration_2);
+            //LogProducer::error("mc","RT task second stage duration over limit: %.6f", duration_2);
         }
   
     }

@@ -230,7 +230,23 @@ bool BareCoreInterface::getControlPosition(double *data, size_t size)
     return true;
 }
 
+ErrorCode BareCoreInterface::setOffsetPositions(uint32_t index, double offset)
+{
+    if (index >= axis_group_ptr_->size())
+    {
+        LogProducer::error("mc_core", "setOffsetPositions, axis index(%d) is invalid.", index);
+        return MC_LOAD_PARAM_FAILED;
+    }
 
+    std::map<int32_t, Axis*>::iterator it = axis_group_ptr_->find(index);
+    if (it != axis_group_ptr_->end())
+    {      
+        return it->second->mcSetPosition(offset);
+    }
+
+    LogProducer::error("mc_core", "setOffsetPositions, axis index(%d) not found in group.", index);
+    return MC_LOAD_PARAM_FAILED;
+}
 
 }
 

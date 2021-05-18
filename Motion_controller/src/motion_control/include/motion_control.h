@@ -112,7 +112,7 @@ public:
     basic_alg::Posture getPostureFromJoint(const basic_alg::Joint &joint);
     basic_alg::Turn getTurnFromJoint(const basic_alg::Joint &joint);
 
-    GroupState  getGroupState(void);
+    MotionControlState  getMotionControlState(void);
     ServoState  getServoState(void);
     basic_alg::PoseEuler getCurrentPose(void);
     void    getCurrentPose(basic_alg::PoseEuler &pose);

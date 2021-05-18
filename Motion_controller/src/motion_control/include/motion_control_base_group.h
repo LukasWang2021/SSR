@@ -72,7 +72,7 @@ class BaseGroup
     virtual ErrorCode clearTeachGroup(void);
 
     basic_alg::Joint getLatestJoint(void);
-    GroupState getGroupState(void);
+    MotionControlState getMotionControlState(void);
     ServoState getServoState(void);
 
     // Auto move APIs:
@@ -214,7 +214,7 @@ class BaseGroup
     
     bool initTrajectoryLogSpace(void);
     std::string getMCServoStatusString(ServoState servo_status);
-    std::string getMontionControlStatusString(GroupState mc_status);
+    std::string getMontionControlStatusString(MotionControlState mc_status);
     
     int id_;
     JointPlanner joint_planner_;
@@ -260,7 +260,7 @@ class BaseGroup
     basic_alg::Joint servo_joint_;
     basic_alg::Joint start_joint_;
     ServoState  servo_state_;
-    GroupState  group_state_;
+    MotionControlState  mc_state_;
     uint32_t    encoder_state_[NUM_OF_JOINT];
     AxisType    type_of_axis_[NUM_OF_JOINT];
     

@@ -130,7 +130,7 @@ enum EncoderState
     INVALID = 16,
 };
 
-enum GroupState
+enum MotionControlState
 {
     STANDBY = 0x2,
     MANUAL  = 0x3,

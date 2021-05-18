@@ -680,17 +680,13 @@ ErrorCode Calibrator::updateOffset(uint32_t index, double offset)
 
     // 更新裸核零位
     //LogProducer::info("mc_calib","Offset saved, update offset in core1 ...");
-    ErrorCode err = sendOffsetToBareCore();
+    ErrorCode err = bare_core_ptr_->setOffsetPositions(index, offset);
 
     if (err != SUCCESS)
     {
         LogProducer::error("mc_calib","Cannot update offset in core1, code = 0x%llx", err);
         return err;
     }
-
-    // 此处usleep为了等待裸核的零位生效，考虑是否有更好的实现方式
-    //usleep(200 * 1000);
-    //LogProducer::info("mc_calib","Core1 offset updated, update recorder ...");
 
     OffsetMask  offset_mask[NUM_OF_JOINT];
     OffsetState offset_stat[NUM_OF_JOINT];
@@ -1423,12 +1419,11 @@ ErrorCode Calibrator::sendConfigData(int id, const vector<int> &data)
 //------------------------------------------------------------------------------
 ErrorCode Calibrator::sendOffsetToBareCore(void)
 {
-    int id;
     vector<double> data;
 
-    if (offset_param_.getParam("zero_offset/id", id) && offset_param_.getParam("zero_offset/data", data))
+    if (offset_param_.getParam("zero_offset/data", data))
     {
-        return sendConfigData(id, data);
+        //return bare_core_ptr_->setOffsetPositions(data);
     }
     else
     {

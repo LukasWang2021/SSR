@@ -544,9 +544,9 @@ ErrorCode MotionControl::setOfflineTrajectory(const std::string &offline_traject
 
 ErrorCode MotionControl::prepairOfflineTrajectory(void)
 {
-    if (group_ptr_->getGroupState() != STANDBY)
+    if (group_ptr_->getMotionControlState() != STANDBY)
     {
-        LogProducer::error("mc","Fail to prepair offline trajectory, state = 0x%x", group_ptr_->getGroupState());
+        LogProducer::error("mc","Fail to prepair offline trajectory, state = 0x%x", group_ptr_->getMotionControlState());
         return INVALID_SEQUENCE;
     }
 
@@ -574,7 +574,7 @@ void MotionControl::clearErrorFlag(void)
 ErrorCode MotionControl::autoMove(const struct Instruction &instruction)
 {
     /*
-    GroupState state = group_ptr_->getGroupState();
+    MotionControlState state = group_ptr_->getMotionControlState();
     ServoState servo_state = group_ptr_->getServoState();
 
     if (state != STANDBY && state != STANDBY_TO_AUTO && state != AUTO)
@@ -1640,9 +1640,9 @@ int MotionControl::getGroupID(void)
     return group_ptr_->getID();
 }
 
-GroupState MotionControl::getGroupState(void)
+MotionControlState MotionControl::getMotionControlState(void)
 {
-    return group_ptr_->getGroupState();
+    return group_ptr_->getMotionControlState();
 }
 
 ServoState MotionControl::getServoState(void)
@@ -1770,12 +1770,12 @@ ErrorCode MotionControl::setUserFrame(int id)
 // payload
 ErrorCode MotionControl::setPayload(int id)
 {
-    GroupState group_state = group_ptr_->getGroupState();
+    MotionControlState mc_state = group_ptr_->getMotionControlState();
     ServoState servo_state = group_ptr_->getServoState();
 
-    if (group_state != STANDBY)
+    if (mc_state != STANDBY)
     {
-        LogProducer::error("mc","Cannot set payload while group-state: %d", group_state);
+        LogProducer::error("mc","Cannot set payload while group-state: %d", mc_state);
         return INVALID_SEQUENCE;
     }
 

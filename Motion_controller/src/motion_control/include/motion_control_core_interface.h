@@ -73,6 +73,8 @@ class BareCoreInterface
     bool resetEncoderError(void);
     bool getControlPosition(double *data, size_t len);
 
+    ErrorCode setOffsetPositions(uint32_t index, double offset);
+
   private:
     uint32_t joint_num_;
     PointCache  point_cache_;

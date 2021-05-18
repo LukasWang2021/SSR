@@ -113,6 +113,8 @@ class AxisFdb {
      */
     ServoOpMode_e getServoOpMode(void);
 
+    int32_t getEncoderState(void);
+
     /**
      * @brief Check if the target position is reached.
      * @retval false The target position is not reached.
@@ -155,6 +157,7 @@ class AxisFdb {
 	int32_t torque_;
     ServoState_u state_word_;
     ServoOpMode_e servo_op_mode_;
+    int32_t encoder_state_;
     int32_t digital_input_;
 
     int32_t stepper_currentA_;

@@ -353,6 +353,7 @@ ErrorCode BaseGroup::manualMoveToPoint(const IntactPoint &point)
         return MC_FAIL_MANUAL_TO_POINT;
     }
 
+    start_joint_ = getLatestJoint();
     Joint start_joint = start_joint_;
     LogProducer::info("mc_base","Joint: %s", printDBLine(&point.joint[0], buffer, LOG_TEXT_SIZE));
     LogProducer::info("mc_base","Pose: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", point.pose.pose.point_.x_, point.pose.pose.point_.y_, point.pose.pose.point_.z_, point.pose.pose.euler_.a_, point.pose.pose.euler_.b_, point.pose.pose.euler_.c_);
@@ -375,7 +376,7 @@ ErrorCode BaseGroup::manualMoveToPoint(const IntactPoint &point)
 
     manual_time_ = 0;
     pthread_mutex_lock(&manual_traj_mutex_);
-    ErrorCode err = manual_teach_.manualToJoint(start_joint_, point.joint);
+    ErrorCode err = manual_teach_.manualToJoint(start_joint, point.joint);
     double duration = manual_teach_.getDuration();
     pthread_mutex_unlock(&manual_traj_mutex_);
 
@@ -407,6 +408,7 @@ ErrorCode BaseGroup::manualMoveStep(const ManualDirection *direction)
         return MC_FAIL_MANUAL_STEP;
     }
 
+    start_joint_ = getLatestJoint();
     Joint start_joint = start_joint_;
 
     if (!soft_constraint_.isJointInConstraint(start_joint, MINIMUM_E3))
@@ -474,6 +476,7 @@ ErrorCode BaseGroup::manualMoveContinuous(const ManualDirection *direction)
         return MC_FAIL_MANUAL_CONTINUOUS;
     }
 
+    start_joint_ = getLatestJoint();
     Joint start_joint = start_joint_;
 
     if (!soft_constraint_.isJointInConstraint(start_joint, MINIMUM_E3))
@@ -1822,34 +1825,11 @@ ErrorCode BaseGroup::pickManualPoint(TrajectoryPoint &point)
 
 bool BaseGroup::updateStartJoint(void)
 {
+    start_joint_ = getLatestJoint();
+
     char buffer[LOG_TEXT_SIZE];
-    Joint control_joint;
-    Joint current_joint = getLatestJoint();
-
-    if (bare_core_.getControlPosition(&control_joint[0], getNumberOfJoint()))
-    {
-        LogProducer::info("mc_base","Control-position: %s", printDBLine(&control_joint[0], buffer, LOG_TEXT_SIZE));
-        LogProducer::info("mc_base","Current-position: %s", printDBLine(&current_joint[0], buffer, LOG_TEXT_SIZE));
-
-        //if (isSameJoint(current_joint, control_joint, MINIMUM_E3))
-        if (isSameJoint(current_joint, control_joint, joint_tracking_accuracy_))
-        {
-            start_joint_ = control_joint;
-            memset(&start_joint_[getNumberOfJoint()], 0, (NUM_OF_JOINT - getNumberOfJoint()) * sizeof(double));
-            LogProducer::info("mc_base","Update start joint success");
-            return true;
-        }
-        else
-        {
-            LogProducer::error("mc_base","Control-position different with current-position.");
-            return false;
-        }
-    }
-    else
-    {
-        LogProducer::error("mc_base","Cannot get control position from bare core.");
-        return false;
-    }
+    LogProducer::info("mc_base","Update Start-position: %s", printDBLine(&start_joint_[0], buffer, LOG_TEXT_SIZE));
+    return true;
 }
 
 void BaseGroup::fillTrajectoryFifo(void)

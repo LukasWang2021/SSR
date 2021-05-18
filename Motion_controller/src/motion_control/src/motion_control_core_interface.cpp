@@ -176,42 +176,16 @@ bool BareCoreInterface::getLatestJoint(Joint &joint, uint32_t (&encoder_state)[N
     for (it = axis_group_ptr_->begin(); it != axis_group_ptr_->end(); ++it, ++i)
     {
         it->second->mcReadActualPosition(joint[i]);
-        encoder_state[i] = 0;
+        encoder_state[i] = it->second->rtmGetEncoderState();
     }
     state = (ServoState)sm_ptr_->getGroupStatus();
 
     return true;
 }
 
-
-bool BareCoreInterface::setConfigData(int id, const vector<double> &data)
-{
-    return true;
-}
-
-bool BareCoreInterface::setConfigData(int id, const vector<int> &data)
-{
-    return true;
-}
-
-bool BareCoreInterface::getConfigData(int id, vector<double> &data)
-{
-    return true;
-}
-
 bool BareCoreInterface::getEncoder(vector<int> &data)
 {
     return  true;
-}
-
-bool BareCoreInterface::getEncoderError(vector<int> &data)
-{
-    return true;
-}
-
-bool BareCoreInterface::resetEncoderError(size_t index)
-{
-    return true;
 }
 
 bool BareCoreInterface::resetEncoderError(void)
@@ -222,11 +196,6 @@ bool BareCoreInterface::resetEncoderError(void)
         if (it->second->rtmResetEncoder() != SUCCESS)
             return false;
     }
-    return true;
-}
-
-bool BareCoreInterface::getControlPosition(double *data, size_t size)
-{
     return true;
 }
 

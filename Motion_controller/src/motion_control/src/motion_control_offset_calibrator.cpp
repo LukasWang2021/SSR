@@ -1401,7 +1401,7 @@ double Calibrator::calculateOffsetEasy(double gear_ratio, double ref_offset,
 //------------------------------------------------------------------------------
 ErrorCode Calibrator::sendConfigData(int id, const vector<double> &data)
 {
-    return bare_core_ptr_->setConfigData(id, data) ? SUCCESS : MC_COMMUNICATION_WITH_BARECORE_FAIL;
+    return SUCCESS;
 }
 
 //------------------------------------------------------------------------------
@@ -1410,7 +1410,7 @@ ErrorCode Calibrator::sendConfigData(int id, const vector<double> &data)
 //------------------------------------------------------------------------------
 ErrorCode Calibrator::sendConfigData(int id, const vector<int> &data)
 {
-    return bare_core_ptr_->setConfigData(id, data) ? SUCCESS : MC_COMMUNICATION_WITH_BARECORE_FAIL;
+    return SUCCESS;
 }
 
 //------------------------------------------------------------------------------
@@ -1424,6 +1424,7 @@ ErrorCode Calibrator::sendOffsetToBareCore(void)
     if (offset_param_.getParam("zero_offset/data", data))
     {
         //return bare_core_ptr_->setOffsetPositions(data);
+        return SUCCESS;
     }
     else
     {
@@ -1441,7 +1442,7 @@ ErrorCode Calibrator::getOffsetFromBareCore(vector<double> &data)
 
     if (offset_param_.getParam("zero_offset/id", id) && offset_param_.getParam("zero_offset/data", data))
     {
-        return bare_core_ptr_->getConfigData(id, data) ? SUCCESS : MC_COMMUNICATION_WITH_BARECORE_FAIL;
+        return SUCCESS;
     }
     else
     {

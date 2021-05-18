@@ -1134,35 +1134,6 @@ ErrorCode MotionControl::calibrateOffset(const size_t *pindex, size_t length, do
     return group_ptr_->getCalibratorPtr()->calibrateOffset(pindex, length, offset);
 }
 
-bool MotionControl::isReferenceAvailable(void)
-{
-    return group_ptr_->getCalibratorPtr()->isReferenceAvailable();
-}
-
-ErrorCode MotionControl::deleteReference(void)
-{
-    return group_ptr_->getCalibratorPtr()->deleteReference();
-}
-
-ErrorCode MotionControl::saveReference(void)
-{
-    return group_ptr_->getCalibratorPtr()->saveReference();
-}
-
-ErrorCode MotionControl::fastCalibrate(void)
-{
-    return group_ptr_->getCalibratorPtr()->fastCalibrate();
-}
-
-ErrorCode MotionControl::fastCalibrate(size_t index)
-{
-    return group_ptr_->getCalibratorPtr()->fastCalibrate(index);
-}
-
-ErrorCode MotionControl::fastCalibrate(const size_t *pindex, size_t length)
-{
-    return group_ptr_->getCalibratorPtr()->fastCalibrate(pindex, length);
-}
 
 ErrorCode MotionControl::resetEncoderMultiTurnValue(void)
 {

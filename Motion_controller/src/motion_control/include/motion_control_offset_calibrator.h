@@ -212,7 +212,6 @@ class Calibrator
     void checkOffset(basic_alg::Joint curr_jnt, basic_alg::Joint last_jnt, OffsetState *offset_stat, const uint32_t (&encoder_state)[NUM_OF_JOINT]);
     void checkCalibrateState(void);
     double calculateOffset(double current_offset, double current_joint, double target_joint);
-    double calculateOffsetEasy(double gear_ratio, double ref_offset, unsigned int ref_encoder, unsigned int cur_encoder);
     ErrorCode updateOffset(uint32_t index, double offset);
     ErrorCode sendConfigData(int id, const std::vector<int> &data);
     ErrorCode sendConfigData(int id, const std::vector<double> &data);

@@ -183,11 +183,6 @@ bool BareCoreInterface::getLatestJoint(Joint &joint, uint32_t (&encoder_state)[N
     return true;
 }
 
-bool BareCoreInterface::getEncoder(vector<int> &data)
-{
-    return  true;
-}
-
 bool BareCoreInterface::resetEncoderError(void)
 {
     std::map<int32_t, Axis*>::iterator it;

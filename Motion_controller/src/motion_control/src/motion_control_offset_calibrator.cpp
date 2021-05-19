@@ -577,18 +577,11 @@ ErrorCode Calibrator::calibrateOffset(const size_t *pindex, uint32_t length, dou
     ServoState servo_state;
     vector<double> cur_offset;
     uint32_t encoder_state[NUM_OF_JOINT];
-    vector<int> cur_encoder;
-    cur_encoder.resize(joint_num_);
 
-    if (!bare_core_ptr_->getLatestJoint(cur_joint, encoder_state, servo_state) || !bare_core_ptr_->getEncoder(cur_encoder) || getOffsetFromBareCore(cur_offset) != SUCCESS)
+    if (!bare_core_ptr_->getLatestJoint(cur_joint, encoder_state, servo_state) || getOffsetFromBareCore(cur_offset) != SUCCESS)
     {
         LogProducer::error("mc_calib","Fail to get current offset, joint or encoder state from Core1");
         return MC_COMMUNICATION_WITH_BARECORE_FAIL;
-    }
-
-    for (uint32_t i = 0; i < joint_num_; i++)
-    {
-        LogProducer::info("mc_calib","Encoder %d: roll is 0x%x, pulse is 0x%x", i, (cur_encoder[i] >> 16) & 0xFFFF, cur_encoder[i] & 0xFFFF);
     }
 
     for (uint32_t i = 0; i < joint_num_; i++)
@@ -1094,37 +1087,6 @@ ErrorCode Calibrator::resetEncoderMultiTurnValue()
     ErrorCode err = writeOffsetState(offset_stat_);
 
     return err;
-}
-
-//------------------------------------------------------------------------------
-// 方法：  calculateOffsetEasy
-// 摘要：  根据记录中的参考点和当前编码器读数计算新零位；
-//------------------------------------------------------------------------------
-double Calibrator::calculateOffsetEasy(double gear_ratio, double ref_offset,
-                                       unsigned int ref_encoder, unsigned int cur_encoder)
-{
-    LogProducer::info("mc_calib","Reference-offset = %.6f, reference-encoder = 0x%x, current-encoder = 0x%x, gear-ratio = %.6f",
-             ref_offset, ref_encoder, cur_encoder, gear_ratio);
-
-    double new_offset;
-    unsigned int cur_rolls = (cur_encoder >> 16) & 0xFFFF;
-    unsigned int ref_rolls = (ref_encoder >> 16) & 0xFFFF;
-
-    if (cur_rolls > ref_rolls)
-    {
-        new_offset = ref_offset + PI * 2 * (cur_rolls - ref_rolls) / gear_ratio;
-    }
-    else if (cur_rolls < ref_rolls)
-    {
-        new_offset = ref_offset - PI * 2 * (ref_rolls - cur_rolls) / gear_ratio;
-    }
-    else
-    {
-        new_offset = ref_offset;
-    }
-
-    LogProducer::info("mc_calib","Reference-rolls = 0x%x, current-rolls = 0x%x, new-offset = %.6f", ref_rolls, cur_rolls, new_offset);
-    return new_offset;
 }
 
 //------------------------------------------------------------------------------

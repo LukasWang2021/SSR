@@ -64,7 +64,6 @@ class BareCoreInterface
 
     bool getLatestJoint(basic_alg::Joint &joint, uint32_t (&encoder_state)[NUM_OF_JOINT], ServoState &state);
 
-    bool getEncoder(std::vector<int> &data);
     bool resetEncoderError(void);
 
     ErrorCode setOffsetPositions(uint32_t index, double offset);

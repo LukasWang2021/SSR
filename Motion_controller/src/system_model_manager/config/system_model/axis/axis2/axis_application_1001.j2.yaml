@@ -16,8 +16,8 @@ model_class:
     attr: 1
     validity: 0
 model_gear_ratio_numerator: 
-    operation_value: 10
-    default_value: 10
+    operation_value: 81
+    default_value: 81
     upper_limit_value: 1000 
     lower_limit_value: 1
     unit: None
@@ -48,8 +48,8 @@ model_linear_range:
     attr: 1
     validity: 0
 model_direction: 
-    operation_value: 1
-    default_value: 1
+    operation_value: 0
+    default_value: 0
     upper_limit_value: 1 
     lower_limit_value: 0
     unit: None
@@ -64,19 +64,19 @@ model_hw_limit_enable:
     attr: 3
     validity: 1
 model_hw_positive_limit: 
-    operation_value: 18000
-    default_value: 18000
+    operation_value: 2000
+    default_value: 2000
     upper_limit_value: 0 
     lower_limit_value: 0
-    unit: pulse
+    unit: 0.1deg
     attr: 3
     validity: 1
 model_hw_negative_limit: 
-    operation_value: -18000
-    default_value: -18000
+    operation_value: -700
+    default_value: -700
     upper_limit_value: 0 
     lower_limit_value: 0
-    unit: pulse
+    unit: 0.1deg
     attr: 3
     validity: 1
 encoder_pulse_per_revolution: 
@@ -88,16 +88,16 @@ encoder_pulse_per_revolution:
     attr: 1
     validity: 0
 motor_rated_torque:
-    operation_value: 64
-    default_value: 64
+    operation_value: 446
+    default_value: 446
     upper_limit_value: 100000
     lower_limit_value: 0
     unit: 0.01N*m
     attr: 1
     validity: 0
 app_max_vel: 
-    operation_value: 5
-    default_value: 5
+    operation_value: 50
+    default_value: 50
     upper_limit_value: 1000000000 
     lower_limit_value: 0
     unit: rps
@@ -119,30 +119,6 @@ app_dec_time:
     unit: ms
     attr: 3
     validity: 3
-app_home_high_speed: 
-    operation_value: 5
-    default_value: 5
-    upper_limit_value: 1000000000 
-    lower_limit_value: 0
-    unit: rps
-    attr: 3
-    validity: 3
-app_home_low_speed: 
-    operation_value: 5
-    default_value: 5
-    upper_limit_value: 1000000000 
-    lower_limit_value: 0
-    unit: rps
-    attr: 3
-    validity: 3
-app_home_acc_time: 
-    operation_value: 500
-    default_value: 500
-    upper_limit_value: 100000 
-    lower_limit_value: 0
-    unit: ms
-    attr: 3
-    validity: 3
 app_sf_limit_enable: 
     operation_value: 1
     default_value: 1
@@ -152,26 +128,18 @@ app_sf_limit_enable:
     attr: 3
     validity: 3
 app_sf_positive_limit: 
-    operation_value: 18000
-    default_value: 18000
+    operation_value: 2000
+    default_value: 2000
     upper_limit_value: 0
     lower_limit_value: 0
-    unit: pulse
+    unit: 0.1deg
     attr: 3
     validity: 3
 app_sf_negative_limit:
-    operation_value: -18000
-    default_value: -18000
+    operation_value: -700
+    default_value: -700
     upper_limit_value: 0
     lower_limit_value: 0
-    unit: pulse
-    attr: 3
-    validity: 3
-app_home_position:
-    operation_value: -500
-    default_value: -500
-    upper_limit_value: 0
-    lower_limit_value: 0
-    unit: pulse
+    unit: 0.1deg
     attr: 3
     validity: 3

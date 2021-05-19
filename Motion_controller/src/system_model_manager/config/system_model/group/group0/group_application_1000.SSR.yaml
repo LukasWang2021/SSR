@@ -15,83 +15,27 @@ target_reached_count_max:
     unit: None
     attr: 3
     validity: 1
-pdo_timeout_count_max:
-    operation_value: 10
-    default_value: 10
+coupling_numerator_5to6:
+    operation_value: 2
+    default_value: 2
     upper_limit_value: 1000
     lower_limit_value: 1
     unit: None
     attr: 3
     validity: 2
-fbq_size:
-    operation_value: 10
-    default_value: 10
-    upper_limit_value: 1000
-    lower_limit_value: 1
-    unit: None
-    attr: 3
-    validity: 1
-tbq_size:
-    operation_value: 10
-    default_value: 10
-    upper_limit_value: 1000
-    lower_limit_value: 1
-    unit: None
-    attr: 3
-    validity: 1
-coupling_numerator_4to3:
-    operation_value: 20
-    default_value: 20
+coupling_denominator_5to6:
+    operation_value: 100
+    default_value: 100
     upper_limit_value: 1000
     lower_limit_value: 1
     unit: None
     attr: 3
     validity: 2
-coupling_denominator_4to3:
-    operation_value: 1
-    default_value: 1
-    upper_limit_value: 1000
-    lower_limit_value: 1
-    unit: None
-    attr: 3
-    validity: 2
-coupling_direction_4to3:
-    operation_value: 1
-    default_value: 1
+coupling_direction_5to6:
+    operation_value: 0
+    default_value: 0
     upper_limit_value: 1
     lower_limit_value: 0
     unit: None
-    attr: 3
-    validity: 2
-max_cartesian_acc_time:
-    operation_value: 200
-    default_value: 200
-    upper_limit_value: 0
-    lower_limit_value: 1000
-    unit: ms
-    attr: 3
-    validity: 2
-max_cartesian_vel:
-    operation_value: 68000
-    default_value: 68000
-    upper_limit_value: 0
-    lower_limit_value: 100000
-    unit: 0.1mm/s
-    attr: 3
-    validity: 2
-max_angular_acc_time:
-    operation_value: 200
-    default_value: 200
-    upper_limit_value: 0
-    lower_limit_value: 1000
-    unit: ms
-    attr: 3
-    validity: 2
-max_angular_vel:
-    operation_value: 1800
-    default_value: 1800
-    upper_limit_value: 0
-    lower_limit_value: 100000
-    unit: 0.1D/s
     attr: 3
     validity: 2

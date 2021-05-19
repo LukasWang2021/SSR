@@ -20,17 +20,10 @@ typedef enum
 {
     GroupApplication1000__model_id = 0,
     GroupApplication1000__target_reached_count_max = 1,
-    GroupApplication1000__pdo_timeout_count_max = 2,
-    GroupApplication1000__fbq_size = 3,
-    GroupApplication1000__tbq_size = 4,
-    GroupApplication1000__coupling_numerator_4to3 = 5,
-    GroupApplication1000__coupling_denominator_4to3 = 6,
-    GroupApplication1000__coupling_direction_4to3 = 7,
-    GroupApplication1000__max_cartesian_acc_time = 8,
-    GroupApplication1000__max_cartesian_vel = 9,
-    GroupApplication1000__max_angular_acc_time = 10,
-    GroupApplication1000__max_angular_vel = 11,    
-    GroupApplication1000__number = 12,
+    GroupApplication1000__coupling_numerator_5to6 = 2,
+    GroupApplication1000__coupling_denominator_5to6 = 3,
+    GroupApplication1000__coupling_direction_5to6 = 4, 
+    GroupApplication1000__number = 5,
 }GroupApplicationParam1000_e;
 /**
  * @brief Defines the group_application_1000 model.

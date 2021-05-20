@@ -66,7 +66,8 @@ class BaseGroup
     virtual ~BaseGroup();
 
     virtual ErrorCode initGroup(fst_ctrl::CoordinateManager *coordinate_manager_ptr, fst_ctrl::ToolManager *tool_manager_ptr, 
-        std::map<int32_t, axis_space::Axis*>* axis_group_ptr, GroupSm* sm_ptr,servo_comm_space::ServoCpuCommBase* cpu_comm_ptr) = 0;
+        std::map<int32_t, axis_space::Axis*>* axis_group_ptr, GroupSm* sm_ptr,servo_comm_space::ServoCpuCommBase* cpu_comm_ptr,
+        system_model_space::GroupModel_t* db_ptr) = 0;
     virtual ErrorCode stopGroup(void);
     virtual ErrorCode clearGroup(void);
     virtual ErrorCode clearTeachGroup(void);
@@ -148,6 +149,8 @@ class BaseGroup
     ErrorCode convertCartToJoint(const basic_alg::PoseEuler &pose, basic_alg::Joint &joint);
     ErrorCode convertJointToCart(const basic_alg::Joint &joint, basic_alg::PoseEuler &pose);
     ErrorCode isLinearPathReachable(const IntactPoint &start, const IntactPoint &target);
+
+    double decouplingAxis6ByRad(double fifth_pos, double sixth_pos);
     
     virtual basic_alg::Transformation* getTransformationPtr(void);
     virtual basic_alg::Kinematics* getKinematicsPtr(void);
@@ -331,6 +334,7 @@ class BaseGroup
     std::map<int32_t, axis_space::Axis*>* axis_group_ptr_;  /**< The list of the axes in the group.*/
 	  GroupSm* sm_ptr_;                                       /**< The state machine of the group.*/
     servo_comm_space::ServoCpuCommBase* cpu_comm_ptr_;      /**< The pointer to communicate with the other cpu.*/
+    system_model_space::GroupModel_t* db_ptr_;              /**< The pointer of the parameters of the group model.*/
 };
 
 

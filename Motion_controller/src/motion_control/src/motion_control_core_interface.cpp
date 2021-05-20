@@ -14,6 +14,7 @@ using namespace axis_space;
 using namespace group_space;
 using namespace log_space;
 using namespace servo_comm_space;
+using namespace system_model_space;
 
 namespace group_space
 {
@@ -30,15 +31,37 @@ BareCoreInterface::~BareCoreInterface(void)
 {}
 
 bool BareCoreInterface::initInterface(uint32_t joint_num, std::map<int32_t, axis_space::Axis*>* axis_group_ptr, GroupSm* sm_ptr,
-    servo_comm_space::ServoCpuCommBase* cpu_comm_ptr)
+    servo_comm_space::ServoCpuCommBase* cpu_comm_ptr, system_model_space::GroupModel_t* db_ptr)
 {
     joint_num_ = joint_num;
     axis_group_ptr_ = axis_group_ptr;
     sm_ptr_ = sm_ptr;
     cpu_comm_ptr_ = cpu_comm_ptr;
+    db_ptr_ = db_ptr;
     if (joint_num_ != axis_group_ptr->size())
         return false;
+
+    //compute coupling factor from 5 to 6 axis.
+    int32_t coupling_numerator_5to6 = 0;
+    if (!db_ptr_->application_ptr->get(GroupApplication1000__coupling_numerator_5to6, &coupling_numerator_5to6))
+		return false;
+    int32_t coupling_denominator_5to6 = 0;
+    if (!db_ptr_->application_ptr->get(GroupApplication1000__coupling_denominator_5to6, &coupling_denominator_5to6))
+		return false;
+    int32_t coupling_direction_5to6 = 0;
+    if (!db_ptr_->application_ptr->get(GroupApplication1000__coupling_direction_5to6, &coupling_direction_5to6))
+		return false;
+    coupling_factor_ = ((double)coupling_numerator_5to6) / coupling_denominator_5to6;
+
+    // 0: positive effect; 1: negative effect
+    if (0 == coupling_direction_5to6)
+    {
+        // use opposite to compensate the positive effect of axis4 on axis3.
+        coupling_factor_ = -coupling_factor_;
+    }
+    LogProducer::info("mc_core", "group coupling_factor_ is %lf", coupling_factor_);
     
+
     //setting pdo_sync index
     std::map<int, Axis*>::iterator it;
     int32_t param_value = 0;
@@ -85,11 +108,20 @@ bool BareCoreInterface::fillPointCache(TrajectoryPoint *points, size_t length, P
 
     std::map<int, Axis*>::iterator it;
     int32_t i = 0;
+    double coupling_pos = 0;
     for (it = axis_group_ptr_->begin(), i = 0; it != axis_group_ptr_->end(); ++it, ++i)
     {
         for (unsigned int j = 0; j < length; ++j)
         {
-            point_cache_.axis[i].set_point[j].cmd_position = it->second->getAxisConvPtr()->convertPosA2M(points[j].state.angle[i]);
+            if (INDEX_JOINT6 == i)
+            {
+                coupling_pos = couplingAxis5To6ByRad(points[j].state.angle[i - 1], points[j].state.angle[i]);
+                point_cache_.axis[i].set_point[j].cmd_position = it->second->getAxisConvPtr()->convertPosA2M(coupling_pos);
+            }
+            else
+            {
+                point_cache_.axis[i].set_point[j].cmd_position = it->second->getAxisConvPtr()->convertPosA2M(points[j].state.angle[i]);
+            }
             point_cache_.axis[i].set_point[j].feedforward_velocity = it->second->getAxisConvPtr()->convertVelA2M(points[j].state.omega[i]);
             point_cache_.axis[i].set_point[j].feedforward_acc = it->second->getAxisConvPtr()->convertAccA2M(points[j].state.alpha[i]);
         }
@@ -105,6 +137,17 @@ bool BareCoreInterface::fillPointCache(TrajectoryPoint *points, size_t length, P
     point_cache_.is_empty = false;
     point_cache_.property = property;
     return true;
+}
+
+double BareCoreInterface::couplingAxis5To6ByRad(double fifth_pos, double sixth_pos)
+{
+    // Coupling: turn of axis5 outputs to axis6. The unit is rad.
+    return sixth_pos + coupling_factor_*fifth_pos;
+}
+
+double BareCoreInterface::decouplingAxis6ByRad(double fifth_pos, double sixth_pos)
+{
+    return sixth_pos - coupling_factor_ * fifth_pos;
 }
 
 bool BareCoreInterface::sendPoint(void)

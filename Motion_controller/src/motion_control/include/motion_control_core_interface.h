@@ -55,7 +55,7 @@ class BareCoreInterface
     ~BareCoreInterface();
 
     bool initInterface(uint32_t joint_num, std::map<int32_t, axis_space::Axis*>* axis_group_ptr, GroupSm* sm_ptr,
-        servo_comm_space::ServoCpuCommBase* cpu_comm_ptr);
+        servo_comm_space::ServoCpuCommBase* cpu_comm_ptr, system_model_space::GroupModel_t* db_ptr);
     
     bool sendPoint(void);
     bool isPointCacheEmpty(void);
@@ -68,14 +68,19 @@ class BareCoreInterface
 
     ErrorCode setOffsetPositions(uint32_t index, double offset);
 
+    double decouplingAxis6ByRad(double fifth_pos, double sixth_pos);
+
   private:
     uint32_t joint_num_;
     PointCache  point_cache_;
     std::map<int32_t, axis_space::Axis*>* axis_group_ptr_;  /**< The list of the axes in the group.*/
 	  GroupSm* sm_ptr_;                                       /**< The state machine of the group.*/
     servo_comm_space::ServoCpuCommBase* cpu_comm_ptr_;      /**< The pointer to communicate with the other cpu.*/
+    system_model_space::GroupModel_t* db_ptr_;              /**< The pointer of the parameters of the group model.*/
 
     int32_t sync_index_;
+    double coupling_factor_;
+    double couplingAxis5To6ByRad(double fifth_pos, double sixth_pos);
     bool WriteShareMem(PointCache& jc, unsigned int valid_level);
 };
 

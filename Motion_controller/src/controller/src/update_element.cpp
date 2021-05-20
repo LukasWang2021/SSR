@@ -4,6 +4,7 @@
 using namespace user_space;
 using namespace basic_alg;
 using namespace axis_space;
+using namespace group_space;
 
 extern uint32_t* g_isr_ptr_;
 
@@ -16,10 +17,23 @@ void ControllerPublish::updateAxisFdb()
     
     axis_fdb_.data_count = AXIS_NUM;
 
+    //because of coupling between the fifth and sixth axis, the positions should come from group.
+    std::vector<double> pos;
+    if (group_ptr_[0]->mcGroupReadActualPosition(COORD_TYPE_ACS, pos) == SUCCESS)
+    {
+        for(size_t i = 0; i < pos.size(); ++i)
+        {
+            position[i] = pos[i];
+        }
+    }
+
     for (size_t i = 0; i < AXIS_NUM; ++i)
     {
         axis_ptr_[i]->mcReadStatus(status[i]);
-        axis_ptr_[i]->mcReadActualPosition(position[i]);
+        if (!axis_ptr_[i]->isAxisInGroup())
+        {
+            axis_ptr_[i]->mcReadActualPosition(position[i]);
+        }
         axis_ptr_[i]->mcReadActualVelocity(velocity[i]);
         axis_ptr_[i]->mcReadActualTorque(torque[i]);
 

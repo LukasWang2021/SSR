@@ -1010,6 +1010,11 @@ ErrorCode BaseGroup::isLinearPathReachable(const IntactPoint &start, const Intac
 }
 
 
+double BaseGroup::decouplingAxis6ByRad(double fifth_pos, double sixth_pos)
+{
+    return bare_core_.decouplingAxis6ByRad(fifth_pos, sixth_pos);
+}
+
 ErrorCode BaseGroup::autoMove(const MotionInfo &info)
 {
     char buffer[LOG_TEXT_SIZE];

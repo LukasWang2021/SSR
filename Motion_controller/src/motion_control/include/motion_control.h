@@ -177,13 +177,7 @@ private:
 
     int  user_frame_id_;
     int  tool_frame_id_;
-
     UserOpMode work_mode_;
-
-    bool realtime_thread_running_;
-    bool priority_thread_running_;
-    bool planner_thread_running_;
-    bool common_thread_running_;
     bool motion_error_flag_;
 
     std::queue<struct Instruction> instruction_fifo_;
@@ -195,10 +189,6 @@ private:
     fst_ctrl::CoordinateManager* coordinate_manager_ptr_;
     fst_ctrl::ToolManager* tool_manager_ptr_;
     BaseGroup *group_ptr_;
-    base_space::ThreadHelp realtime_thread_;
-    base_space::ThreadHelp priority_thread_;
-    base_space::ThreadHelp planner_thread_;
-    base_space::ThreadHelp common_thread_;
 
 
 };

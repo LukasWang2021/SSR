@@ -85,7 +85,9 @@ public:
      * @details Deal with Function Block Queue.\n
      * @return void
      */
-    void runAlgorithmThreadFunc();
+    void runPlannerThreadFunc();
+
+    void runPriorityThreadFunc();
 
     /**
      * @brief The realtime thread function.
@@ -107,6 +109,8 @@ private:
 
     core_comm_space::CoreCommSystem core_comm_system_;
     base_space::ThreadHelp routine_thread_;
+    base_space::ThreadHelp planner_thread_;
+    base_space::ThreadHelp priority_thread_;
     base_space::ThreadHelp rt_thread_;
 
     servo_comm_space::Servo1001* servo_1001_ptr_;
@@ -143,7 +147,8 @@ private:
 }
 
 void* controllerRoutineThreadFunc(void* arg);
-void* controllerAlgorithmThreadFunc(void* arg);
+void* controllerPlannerThreadFunc(void* arg);
+void* controllerPriorityThreadFunc(void* arg);
 void* controllerRealTimeThreadFunc(void* arg);
 
 

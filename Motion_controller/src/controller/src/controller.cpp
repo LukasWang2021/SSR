@@ -1,6 +1,7 @@
 #include "controller.h"
 #include "system/core_comm_system.h"
 #include "common/core_comm_servo_datatype.h"
+#include <sys/syscall.h>
 #include <unistd.h>
 #include <iostream>
 
@@ -39,11 +40,13 @@ Controller::Controller():
 Controller::~Controller()
 {
     rt_thread_.join();
+    planner_thread_.join();
+    priority_thread_.join();
     routine_thread_.join();
 
-    for (size_t i = 0; i < GROUP_NUM; ++i)
+    for(size_t i = 0; i < GROUP_NUM; ++i)
     {
-        if (group_ptr_[i] != NULL)
+        if(group_ptr_[i] != NULL)
         {
             delete group_ptr_[i];
             group_ptr_[i] = NULL;
@@ -52,23 +55,15 @@ Controller::~Controller()
 
     for(size_t i = 0; i < AXIS_NUM; ++i)
     {
-        if (axis_ptr_[i] != NULL)
+        if(axis_ptr_[i] != NULL)
         {
-            size_t dot_pos = axes_config_[i].actuator.servo.find_first_of('.');
-            if(dot_pos != std::string::npos)
-            {
-                std::string name_str = axes_config_[i].actuator.servo.substr(0, dot_pos);
-                if(name_str.compare("servo_1000") == 0)
-                {
-                    axis_space::Axis1000* axis_ptr = static_cast<axis_space::Axis1000*>(axis_ptr_[i]);
-                    delete axis_ptr;
-                    axis_ptr_[i] = NULL;
-                }
-            }
+            axis_space::Axis1000* axis_ptr = static_cast<axis_space::Axis1000*>(axis_ptr_[i]);
+            delete axis_ptr;
+            axis_ptr_[i] = NULL;
         }
     }
 
-    if (servo_1001_ptr_ != NULL)
+    if(servo_1001_ptr_ != NULL)
     {
         delete servo_1001_ptr_;
         servo_1001_ptr_ = NULL;
@@ -80,7 +75,7 @@ Controller::~Controller()
         config_ptr_ = NULL;
     }
 
-    if(io_digital_dev_ptr_ != NULL)
+    if (io_digital_dev_ptr_ != NULL)
     {
         delete io_digital_dev_ptr_;
         io_digital_dev_ptr_ = NULL;
@@ -196,6 +191,16 @@ ErrorCode Controller::init()
         return CONTROLLER_CREATE_ROUTINE_THREAD_FAILED;
     } 
 
+    if(!planner_thread_.run(&controllerPlannerThreadFunc, this, config_ptr_->planner_thread_priority_))
+    {
+        return CONTROLLER_CREATE_ROUTINE_THREAD_FAILED;
+    } 
+
+    if(!priority_thread_.run(&controllerPriorityThreadFunc, this, config_ptr_->priority_thread_priority_))
+    {
+        return CONTROLLER_CREATE_ROUTINE_THREAD_FAILED;
+    } 
+
     if(!rt_thread_.run(&controllerRealTimeThreadFunc, this, config_ptr_->realtime_thread_priority_))
     {
         return CONTROLLER_CREATE_RT_THREAD_FAILED;
@@ -218,14 +223,22 @@ void Controller::setExit()
 void Controller::runRoutineThreadFunc()
 {
     usleep(config_ptr_->routine_cycle_time_);
+    group_ptr_[0]->ringCommonTask();
 	publish_.processPublish();
     uploadErrorCode();
 }
 
-void Controller::runRtThreadFunc()
+void Controller::runPlannerThreadFunc()
 {
-    usleep(config_ptr_->realtime_cycle_time_);
- 
+    usleep(config_ptr_->planner_cycle_time_);
+    group_ptr_[0]->ringPlannerTask();
+}
+
+void Controller::runPriorityThreadFunc()
+{
+    usleep(config_ptr_->priority_cycle_time_);
+    group_ptr_[0]->ringPriorityTask();
+
     axis_ptr_[9]->processFdbPdoCurrent(&fdb_current_time_stamp_);
     axis_ptr_[0]->processFdbPdoSync(fdb_current_time_stamp_);
     axis_ptr_[1]->processFdbPdoSync(fdb_current_time_stamp_);
@@ -248,6 +261,12 @@ void Controller::runRtThreadFunc()
         group_ptr_[i]->processStateMachine();
     }
     rpc_.processRpc();
+}
+
+void Controller::runRtThreadFunc()
+{
+    usleep(config_ptr_->realtime_cycle_time_);
+    group_ptr_[0]->ringRealTimeTask();
 }
 
 
@@ -487,6 +506,7 @@ void* controllerRoutineThreadFunc(void* arg)
     Controller* controller_ptr = static_cast<Controller*>(arg);
     log_space::LogProducer log_manager;
     log_manager.init("controller_routine", g_isr_ptr_);
+    LogProducer::warn("main","controller_routine TID is %ld", syscall(SYS_gettid));
     while(!controller_ptr->isExit())
     {
         controller_ptr->runRoutineThreadFunc();
@@ -495,12 +515,53 @@ void* controllerRoutineThreadFunc(void* arg)
     return NULL;
 }
 
+void* controllerPlannerThreadFunc(void* arg)
+{
+    Controller* controller_ptr = static_cast<Controller*>(arg);
+    log_space::LogProducer log_manager;
+    log_manager.init("controller_planner", g_isr_ptr_);
+    LogProducer::warn("main","controller_planner TID is %ld", syscall(SYS_gettid));
+    while(!controller_ptr->isExit())
+    {
+        controller_ptr->runPlannerThreadFunc();
+    }
+    std::cout<<"controller_planner exit"<<std::endl;
+    return NULL;
+}
+
+void* controllerPriorityThreadFunc(void* arg)
+{
+    Controller* controller_ptr = static_cast<Controller*>(arg);
+    log_space::LogProducer log_manager;
+    log_manager.init("controller_priority", g_isr_ptr_);
+    LogProducer::warn("main","controller_priority TID is %ld", syscall(SYS_gettid));
+    while(!controller_ptr->isExit())
+    {
+        controller_ptr->runPriorityThreadFunc();
+    }
+    std::cout<<"controller_priority exit"<<std::endl;
+    return NULL;
+}
+
+void stack_prefault(void) {
+    unsigned char dummy[1024 * 1024];//The maximum stack size which is guaranteed safe to access without faulting
+    memset(dummy, 0, 1024 * 1024);
+}
 
 void* controllerRealTimeThreadFunc(void* arg)
 {
     Controller* controller_ptr = static_cast<Controller*>(arg);
     log_space::LogProducer log_manager;
     log_manager.init("controller_RT", g_isr_ptr_);
+    LogProducer::warn("main","controller_RT TID is %ld", syscall(SYS_gettid));
+    
+    if (mlockall(MCL_CURRENT|MCL_FUTURE) == -1) 
+    {
+        LogProducer::error("main","controller_RT mlockall failed");
+    }
+    //Pre-fault our stack
+    stack_prefault();
+
     while(!controller_ptr->isExit())
     {
         controller_ptr->runRtThreadFunc();
@@ -508,4 +569,5 @@ void* controllerRealTimeThreadFunc(void* arg)
     std::cout<<"controller_RT exit"<<std::endl;
     return NULL;
 }
+
 

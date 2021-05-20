@@ -182,7 +182,7 @@ bool BareCoreInterface::WriteShareMem(PointCache& cache, unsigned int valid_leve
         //同步信号还是１，未被伺服置为０，说明上条轨迹的buffer数据未取完。
         if (cpu_comm_ptr_->getCtrlPdoSync(sync_index_) == 1)
         {
-            //LogProducer::warn("mc_core","WriteShareMem: Last trajectory is not finished.");
+            LogProducer::warn("mc_core","WriteShareMem: Last trajectory is not finished.");
             return false;
         }
     }

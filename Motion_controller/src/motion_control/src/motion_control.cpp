@@ -128,7 +128,7 @@ void MotionControl::ringRealTimeTask(void)
 
         if (duration_2 > 0.02)
         {
-            LogProducer::error("mc","RT task second stage duration over limit: %.6f", duration_2);
+            //LogProducer::error("mc","RT task second stage duration over limit: %.6f", duration_2);
         }
   
     }
@@ -318,7 +318,7 @@ ErrorCode MotionControl::initApplication(fst_ctrl::CoordinateManager* coordinate
     user_frame_id_ = 0;
     tool_frame_id_ = 0;
 
-    ErrorCode  err = group_ptr_->initGroup(coordinate_manager_ptr_, tool_manager_ptr_, &axis_group_, &sm_, cpu_comm_ptr_);
+    ErrorCode  err = group_ptr_->initGroup(coordinate_manager_ptr_, tool_manager_ptr_, &axis_group_, &sm_, cpu_comm_ptr_, db_ptr_);
 
     if (err == SUCCESS)
     {
@@ -544,9 +544,9 @@ ErrorCode MotionControl::setOfflineTrajectory(const std::string &offline_traject
 
 ErrorCode MotionControl::prepairOfflineTrajectory(void)
 {
-    if (group_ptr_->getGroupState() != STANDBY)
+    if (group_ptr_->getMotionControlState() != STANDBY)
     {
-        LogProducer::error("mc","Fail to prepair offline trajectory, state = 0x%x", group_ptr_->getGroupState());
+        LogProducer::error("mc","Fail to prepair offline trajectory, state = 0x%x", group_ptr_->getMotionControlState());
         return INVALID_SEQUENCE;
     }
 
@@ -574,7 +574,7 @@ void MotionControl::clearErrorFlag(void)
 ErrorCode MotionControl::autoMove(const struct Instruction &instruction)
 {
     /*
-    GroupState state = group_ptr_->getGroupState();
+    MotionControlState state = group_ptr_->getMotionControlState();
     ServoState servo_state = group_ptr_->getServoState();
 
     if (state != STANDBY && state != STANDBY_TO_AUTO && state != AUTO)
@@ -1134,35 +1134,6 @@ ErrorCode MotionControl::calibrateOffset(const size_t *pindex, size_t length, do
     return group_ptr_->getCalibratorPtr()->calibrateOffset(pindex, length, offset);
 }
 
-bool MotionControl::isReferenceAvailable(void)
-{
-    return group_ptr_->getCalibratorPtr()->isReferenceAvailable();
-}
-
-ErrorCode MotionControl::deleteReference(void)
-{
-    return group_ptr_->getCalibratorPtr()->deleteReference();
-}
-
-ErrorCode MotionControl::saveReference(void)
-{
-    return group_ptr_->getCalibratorPtr()->saveReference();
-}
-
-ErrorCode MotionControl::fastCalibrate(void)
-{
-    return group_ptr_->getCalibratorPtr()->fastCalibrate();
-}
-
-ErrorCode MotionControl::fastCalibrate(size_t index)
-{
-    return group_ptr_->getCalibratorPtr()->fastCalibrate(index);
-}
-
-ErrorCode MotionControl::fastCalibrate(const size_t *pindex, size_t length)
-{
-    return group_ptr_->getCalibratorPtr()->fastCalibrate(pindex, length);
-}
 
 ErrorCode MotionControl::resetEncoderMultiTurnValue(void)
 {
@@ -1640,9 +1611,9 @@ int MotionControl::getGroupID(void)
     return group_ptr_->getID();
 }
 
-GroupState MotionControl::getGroupState(void)
+MotionControlState MotionControl::getMotionControlState(void)
 {
-    return group_ptr_->getGroupState();
+    return group_ptr_->getMotionControlState();
 }
 
 ServoState MotionControl::getServoState(void)
@@ -1770,12 +1741,12 @@ ErrorCode MotionControl::setUserFrame(int id)
 // payload
 ErrorCode MotionControl::setPayload(int id)
 {
-    GroupState group_state = group_ptr_->getGroupState();
+    MotionControlState mc_state = group_ptr_->getMotionControlState();
     ServoState servo_state = group_ptr_->getServoState();
 
-    if (group_state != STANDBY)
+    if (mc_state != STANDBY)
     {
-        LogProducer::error("mc","Cannot set payload while group-state: %d", group_state);
+        LogProducer::error("mc","Cannot set payload while group-state: %d", mc_state);
         return INVALID_SEQUENCE;
     }
 
@@ -1868,11 +1839,66 @@ ErrorCode MotionControl::mcMoveLinearAbsolute(const std::vector<double> &positio
 }
 ErrorCode MotionControl::mcGroupReadActualPosition(CoordType_e coord_type, std::vector<double> &position)
 {
-    return GROUP_INVALID_PARAM;
+    position.clear();
+    ErrorCode result = SUCCESS;
+    if (coord_type == COORD_TYPE_ACS)
+    {
+        std::map<int32_t, axis_space::Axis*>::iterator it;
+        size_t i = 0;
+        for (it = axis_group_.begin(), i = INDEX_JOINT1; it != axis_group_.end(); ++it, ++i)
+        {
+            double pos = 0;
+            ErrorCode err = it->second->mcReadActualPosition(pos);
+            if (err != SUCCESS)
+                result = err;
+
+            if (INDEX_JOINT6 == i)
+            {
+                pos = group_ptr_->decouplingAxis6ByRad(position[INDEX_JOINT5], position[INDEX_JOINT6]);
+            }
+            position.push_back(pos);
+        }
+    }
+    else 
+    {    
+        result = GROUP_INVALID_PARAM;  
+        LogProducer::error("mc", "Group[%d] mcGroupReadActualPosition failed, coord = %d, err = 0x%llx", getID(), coord_type, result);
+    }
+
+    if (result != SUCCESS)
+    {
+        LogProducer::error("mc", "Group[%d] mcGroupReadActualPosition failed, err = 0x%llx", getID(), result);
+    }   
+    return result;
 }
 ErrorCode MotionControl::mcGroupReadActualVelocity(CoordType_e coord_type, std::vector<double> &velocity)
 {
-    return GROUP_INVALID_PARAM;
+    velocity.clear();
+    ErrorCode result = SUCCESS;
+    if (coord_type == COORD_TYPE_ACS)
+    {
+        std::map<int, axis_space::Axis*>::iterator it;
+        for (it = axis_group_.begin(); it != axis_group_.end(); ++it)
+        {
+            double vel = 0;
+            ErrorCode err = it->second->mcReadActualVelocity(vel);
+            if (err != SUCCESS)
+                result = err;
+
+            velocity.push_back(vel);
+        }
+    }
+    else 
+    {     
+        result = GROUP_INVALID_PARAM;
+        LogProducer::error("mc", "Group[%d] mcGroupReadActualVelocity failed, coord = %d, err = 0x%llx", getID(), coord_type, result);
+    }
+
+    if (result != SUCCESS)
+    {
+        LogProducer::error("mc", "Group[%d] mcGroupReadActualVelocity failed, err = 0x%llx", getID(), result);
+    }   
+    return result;
 }
 bool MotionControl::initApplication(void)
 {

@@ -91,6 +91,11 @@ ServoOpMode_e AxisFdb::getServoOpMode(void)
     return servo_op_mode_;
 }
 
+int32_t AxisFdb::getEncoderState(void)
+{
+	return encoder_state_;
+}
+
 bool AxisFdb::isTargetReached(void)
 {
     return (bool)(state_word_.bit.target_reached);

@@ -86,10 +86,6 @@ install(FILES ./config/arm_group.yaml
     DESTINATION ${CONFIG_FILE_OUTPUT_PATH}/robot/axis_group
 )
 
-install(FILES ./config/scara_group.yaml
-    DESTINATION ${CONFIG_FILE_OUTPUT_PATH}/robot/axis_group
-)
-
 install(FILES ./config/hard_constraint.yaml
     DESTINATION ${CONFIG_FILE_OUTPUT_PATH}/robot/axis_group
 )
@@ -106,27 +102,7 @@ install(FILES ./config/group_offset.yaml
     DESTINATION ${CONFIG_FILE_OUTPUT_PATH}/robot/axis_group
 )
 
-install(FILES ./config/arm_group_offset_reference.yaml
-    DESTINATION ${CONFIG_FILE_OUTPUT_PATH}/robot/axis_group
-)
-
-install(FILES ./config/group_gear_ratio.yaml
-    DESTINATION ${CONFIG_FILE_OUTPUT_PATH}/robot/axis_group
-)
-
-install(FILES ./config/group_coupling_coeff.yaml
-    DESTINATION ${CONFIG_FILE_OUTPUT_PATH}/robot/axis_group
-)
-
 install(FILES ./config/arm_manual_teach.yaml
     DESTINATION ${CONFIG_FILE_OUTPUT_PATH}/robot/axis_group
-)
-
-install(FILES ./config/scara_manual_teach.yaml
-    DESTINATION ${CONFIG_FILE_OUTPUT_PATH}/robot/axis_group
-)
-
-install(FILES ./config/segment_alg.yaml
-    DESTINATION ${CONFIG_FILE_OUTPUT_PATH}/component
 )
 

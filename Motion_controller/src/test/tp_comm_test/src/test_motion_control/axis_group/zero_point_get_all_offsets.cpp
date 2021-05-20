@@ -38,7 +38,7 @@ int main()
 
     RequestMessageType_Int32 msg;
     msg.header.time_stamp = 122;
-    msg.property.authority = Comm_Authority_TP;
+    msg.property.authority = Comm_Authority_TP_SIMMULATOR;
     int cin_data = 0;
     cout << "Please input data/id you want to set:" << endl;
     cin >> cin_data;
@@ -80,7 +80,7 @@ int main()
     cout << "Reply : msg.header.package_left = " << recv_msg.header.package_left << endl;
     cout << "Reply : msg.header.error_code = " << recv_msg.header.error_code << endl;
     cout << "Reply : msg.property.authority = " << recv_msg.property.authority << endl;
-    cout << "Reply : msg.error_code = " << recv_msg.error_code.data << endl;
+    cout << "Reply : msg.error_code = " <<hex<< recv_msg.error_code.data <<dec<< endl;
     cout << "Reply : msg.data.data_count = " << recv_msg.data.data_count << endl;
 
     for (size_t i = 0; i != recv_msg.data.data_count; ++i)

@@ -27,13 +27,13 @@ void BaseGroup::doStateMachine(void)
     static uint32_t pause_manual_to_pause_cnt = 0;
     static uint32_t fine_counter = 0;
 
-    GroupState group_state = group_state_;
+    MotionControlState mc_state = mc_state_;
     ServoState servo_state = getServoState();
 
-    if (clear_request_ && (group_state == STANDBY || group_state == PAUSE))
+    if (clear_request_ && (mc_state == STANDBY || mc_state == PAUSE))
     {
-        LogProducer::info("mc_sm","Clear group, group-state = %d", group_state);
-        group_state_ = STANDBY;
+        LogProducer::info("mc_sm","Clear group, MC-state = %s", getMontionControlStatusString(mc_state).c_str());
+        mc_state_ = STANDBY;
         
         pthread_mutex_lock(&planner_list_mutex_);
         auto_time_ = 0;
@@ -72,76 +72,76 @@ void BaseGroup::doStateMachine(void)
 
     if (clear_teach_request_)
     {
-        LogProducer::info("mc_sm","Clear teach group, group-state = 0x%x", group_state);
+        LogProducer::info("mc_sm","Clear teach group, MC-state = %s", getMontionControlStatusString(mc_state).c_str());
         pthread_mutex_lock(&manual_traj_mutex_);
         manual_time_ = 0;
         clear_teach_request_ = false;
         manual_trajectory_check_fail_ = false;
 
-        if (group_state == STANDBY || group_state == MANUAL || group_state == MANUAL_TO_STANDBY || group_state == STANDBY_TO_MANUAL)
+        if (mc_state == STANDBY || mc_state == MANUAL || mc_state == MANUAL_TO_STANDBY || mc_state == STANDBY_TO_MANUAL)
         {
-            group_state_ = STANDBY;
+            mc_state_ = STANDBY;
             standby_to_manual_request_ = false;
             manual_to_standby_request_ = false;
             bare_core_.clearPointCache();
         }
-        else if (group_state == PAUSE || group_state == PAUSE_MANUAL || group_state == PAUSE_TO_PAUSE_MANUAL || group_state == PAUSE_MANUAL_TO_PAUSE)
+        else if (mc_state == PAUSE || mc_state == PAUSE_MANUAL || mc_state == PAUSE_TO_PAUSE_MANUAL || mc_state == PAUSE_MANUAL_TO_PAUSE)
         {
-            group_state_ = PAUSE;
+            mc_state_ = PAUSE;
             pause_to_manual_request_ = false;
             manual_to_pause_request_ = false;
             bare_core_.clearPointCache();
         }
         pthread_mutex_unlock(&manual_traj_mutex_);
-        LogProducer::info("mc_sm","Teach group cleared, group-state = 0x%x", group_state);
+        LogProducer::info("mc_sm","Teach group cleared, MC-state = %s", getMontionControlStatusString(mc_state).c_str());
     }
 
-    if (standby_to_offline_request_ && group_state != STANDBY)
+    if (standby_to_offline_request_ && mc_state != STANDBY)
     {
         standby_to_offline_request_ = false;
     }
 
-    if (offline_to_standby_request_ && group_state != OFFLINE)
+    if (offline_to_standby_request_ && mc_state != OFFLINE)
     {
         offline_to_standby_request_ = false;
     }
 
-    if (standby_to_auto_request_ && group_state != STANDBY)
+    if (standby_to_auto_request_ && mc_state != STANDBY)
     {
         standby_to_auto_request_ = false;
     }
 
-    if (auto_to_standby_request_ && group_state != AUTO)
+    if (auto_to_standby_request_ && mc_state != AUTO)
     {
         auto_to_standby_request_ = false;
     }
 
-    if (standby_to_manual_request_ && group_state != STANDBY)
+    if (standby_to_manual_request_ && mc_state != STANDBY)
     {
         standby_to_manual_request_ = false;
     }
 
-    if (manual_to_standby_request_ && group_state != MANUAL)
+    if (manual_to_standby_request_ && mc_state != MANUAL)
     {
         manual_to_standby_request_ = false;
     }
 
-    if (pause_to_manual_request_ && group_state != PAUSE)
+    if (pause_to_manual_request_ && mc_state != PAUSE)
     {
         pause_to_manual_request_ = false;
     }
 
-    if (manual_to_pause_request_ && group_state != PAUSE_MANUAL)
+    if (manual_to_pause_request_ && mc_state != PAUSE_MANUAL)
     {
         manual_to_pause_request_ = false;
     }
 
-    if (auto_to_pause_request_ && group_state != AUTO)
+    if (auto_to_pause_request_ && mc_state != AUTO)
     {
         auto_to_pause_request_ = false;
     }
 
-    if (pause_to_auto_request_ && group_state != PAUSE && group_state != PAUSE_TO_PAUSE_RETURN && group_state != PAUSE_RETURN && group_state != PAUSE_RETURN_TO_PAUSE)
+    if (pause_to_auto_request_ && mc_state != PAUSE && mc_state != PAUSE_TO_PAUSE_RETURN && mc_state != PAUSE_RETURN && mc_state != PAUSE_RETURN_TO_PAUSE)
     {
         pause_to_auto_request_ = false;
     }
@@ -149,44 +149,44 @@ void BaseGroup::doStateMachine(void)
 
     if (stop_barecore_ && (servo_state == SERVO_DISABLE))
     {
-        LogProducer::info("mc_sm","Barecore stop, group-state = 0x%x, servo-state = 0x%x", group_state, servo_state);
+        LogProducer::info("mc_sm","Barecore stop, MC-state = %s, servo-state = %s", getMontionControlStatusString(mc_state).c_str(), getMCServoStatusString(servo_state).c_str());
         stop_barecore_ = false;
 
         if (pause_to_auto_request_) pause_to_auto_request_ = false;
 
-        if (group_state == MANUAL || group_state == MANUAL_TO_STANDBY || group_state == STANDBY_TO_MANUAL ||
-            group_state == OFFLINE || group_state == OFFLINE_TO_STANDBY || group_state == STANDBY_TO_OFFLINE)
+        if (mc_state == MANUAL || mc_state == MANUAL_TO_STANDBY || mc_state == STANDBY_TO_MANUAL ||
+            mc_state == OFFLINE || mc_state == OFFLINE_TO_STANDBY || mc_state == STANDBY_TO_OFFLINE)
         {
-            group_state_ = STANDBY;
+            mc_state_ = STANDBY;
             clear_request_ = true;
-            LogProducer::warn("mc_sm","Group state switch to STANDBY.");
+            LogProducer::warn("mc_sm","MC-state switch to MC_STANDBY.");
         }
-        else if (group_state == PAUSE_MANUAL || group_state == PAUSE_TO_PAUSE_MANUAL || group_state == PAUSE_MANUAL_TO_PAUSE ||
-                 group_state == PAUSING_TO_PAUSE || group_state == PAUSE_RETURN_TO_PAUSE || group_state == PREPARE_RESUME)
+        else if (mc_state == PAUSE_MANUAL || mc_state == PAUSE_TO_PAUSE_MANUAL || mc_state == PAUSE_MANUAL_TO_PAUSE ||
+                 mc_state == PAUSING_TO_PAUSE || mc_state == PAUSE_RETURN_TO_PAUSE || mc_state == PREPARE_RESUME)
         {
-            group_state_ = PAUSE;
-            LogProducer::warn("mc_sm","Group state switch to PAUSE.");
+            mc_state_ = PAUSE;
+            LogProducer::warn("mc_sm","MC-state switch to MC_PAUSE.");
         }
-        else if (group_state == PAUSING)
+        else if (mc_state == PAUSING)
         {
             pause_trajectory_.clear();
             traj_fifo_.clear();
             bare_core_.clearPointCache();
-            group_state_ = PAUSE;
-            LogProducer::warn("mc_sm","Group state switch to PAUSE.");
+            mc_state_ = PAUSE;
+            LogProducer::warn("mc_sm","MC-state switch to MC_PAUSE.");
         }
-        else if (group_state == PAUSE_RETURN)
+        else if (mc_state == PAUSE_RETURN)
         {
             resume_trajectory_.clear();
             traj_fifo_.clear();
             bare_core_.clearPointCache();
-            group_state_ = PAUSE;
-            LogProducer::warn("mc_sm","Group state switch to PAUSE.");
+            mc_state_ = PAUSE;
+            LogProducer::warn("mc_sm","MC-state switch to MC_PAUSE.");
         }
-        else if (group_state == RESUME)
+        else if (mc_state == RESUME)
         {
-            group_state_ = PAUSE;
-            LogProducer::warn("mc_sm","Group state switch to PAUSE.");
+            mc_state_ = PAUSE;
+            LogProducer::warn("mc_sm","MC-state switch to MC_PAUSE.");
             remain_trajectory_.assign(origin_trajectory_.begin(), origin_trajectory_.end());
             start_joint_before_pause_ = start_joint_;
             pause_joint_ = remain_trajectory_.front().angle;
@@ -194,23 +194,23 @@ void BaseGroup::doStateMachine(void)
             traj_fifo_.clear();
             bare_core_.clearPointCache();
         }
-        else if (group_state == AUTO_TO_PAUSING || group_state == PAUSE_TO_RESUME || group_state == PAUSE_TO_PAUSE_RETURN)
+        else if (mc_state == AUTO_TO_PAUSING || mc_state == PAUSE_TO_RESUME || mc_state == PAUSE_TO_PAUSE_RETURN)
         {}
-        else if (group_state == AUTO_TO_STANDBY)
+        else if (mc_state == AUTO_TO_STANDBY)
         {
-            group_state_ = STANDBY;
-            LogProducer::warn("mc_sm","Group state switch to STANDBY.");
+            mc_state_ = STANDBY;
+            LogProducer::warn("mc_sm","MC-state switch to MC_STANDBY.");
         }
-        else if (group_state == AUTO && auto_to_standby_request_ == true)
+        else if (mc_state == AUTO && auto_to_standby_request_ == true)
         {
-            group_state_ = STANDBY;
+            mc_state_ = STANDBY;
             bare_core_.clearPointCache();
-            LogProducer::warn("mc_sm","Group state switch to STANDBY.");
+            LogProducer::warn("mc_sm","MC-state switch to MC_STANDBY.");
         }
-        else if (group_state == AUTO || group_state == STANDBY_TO_AUTO)
+        else if (mc_state == AUTO || mc_state == STANDBY_TO_AUTO)
         {
-            group_state_ = PAUSE;
-            LogProducer::warn("mc_sm","Group state switch to PAUSE.");
+            mc_state_ = PAUSE;
+            LogProducer::warn("mc_sm","MC-state switch to MC_PAUSE.");
             start_joint_before_pause_ = start_joint_;
             remain_trajectory_.clear();
             TrajectoryPoint point;
@@ -239,7 +239,7 @@ void BaseGroup::doStateMachine(void)
         }
     }
 
-    switch (group_state)
+    switch (mc_state)
     {
         case STANDBY:
         {
@@ -247,7 +247,7 @@ void BaseGroup::doStateMachine(void)
 
             if (pick_traj_ptr_->valid && standby_to_auto_request_ == false)
             {
-                LogProducer::info("mc_sm","Group state: standby, pick_traj_ptr_->valid is true but standby_to_auto_request_ is false, set request");
+                LogProducer::info("mc_sm","MC-state: MC_STANDBY, pick_traj_ptr_->valid is true but standby_to_auto_request_ is false, set request");
                 standby_to_auto_request_ = true;
             }
     
@@ -258,20 +258,20 @@ void BaseGroup::doStateMachine(void)
                 standby_to_auto_cnt = 0;
                 auto_time_ = cycle_time_;
                 start_of_motion_ = true;
-                group_state_ = STANDBY_TO_AUTO;
+                mc_state_ = STANDBY_TO_AUTO;
                 standby_to_auto_request_ = false;
-                LogProducer::warn("mc_sm","Group state switch to STANDBY_TO_AUTO");
+                LogProducer::warn("mc_sm","MC-state switch to MC_STANDBY_TO_AUTO");
             }
             else if (standby_to_manual_request_)
             {
-                group_state_ = STANDBY_TO_MANUAL;
+                mc_state_ = STANDBY_TO_MANUAL;
                 standby_to_manual_request_ = false;
-                LogProducer::warn("mc_sm","Group state switch to STANDBY_TO_MANUAL");
+                LogProducer::warn("mc_sm","MC-state switch to MC_STANDBY_TO_MANUAL");
             }
             else if (standby_to_offline_request_)
             {
-                group_state_ = STANDBY_TO_OFFLINE;
-                LogProducer::warn("mc_sm","Group state switch to STANDBY_TO_OFFLINE");
+                mc_state_ = STANDBY_TO_OFFLINE;
+                LogProducer::warn("mc_sm","MC-state switch to MC_STANDBY_TO_OFFLINE");
             }
 
             break;
@@ -283,16 +283,16 @@ void BaseGroup::doStateMachine(void)
             {
                 fine_counter = 0;
                 auto_to_standby_cnt = 0;
-                group_state_ = AUTO_TO_STANDBY;
+                mc_state_ = AUTO_TO_STANDBY;
                 auto_to_standby_request_ = false;
-                LogProducer::warn("mc_sm","Group state switch to AUTO_TO_STANDBY");
+                LogProducer::warn("mc_sm","MC-state switch to MC_AUTO_TO_STANDBY");
             }
 
             if (auto_to_pause_request_ && traj_fifo_.size() > 250)
             {
-                group_state_ = AUTO_TO_PAUSING;
+                mc_state_ = AUTO_TO_PAUSING;
                 auto_to_pause_request_ = false;
-                LogProducer::warn("mc_sm","Group state switch to AUTO_TO_PAUSING");
+                LogProducer::warn("mc_sm","MC-state switch to MC_AUTO_TO_PAUSING");
             }
 
             break;
@@ -303,9 +303,9 @@ void BaseGroup::doStateMachine(void)
             if (pausing_to_pause_request_)
             {
                 pausing_to_pause_cnt = 0;
-                group_state_ = PAUSING_TO_PAUSE;
+                mc_state_ = PAUSING_TO_PAUSE;
                 pausing_to_pause_request_ = false;
-                LogProducer::warn("mc_sm","Group state switch to PAUSING_TO_PAUSE");
+                LogProducer::warn("mc_sm","MC-state switch to MC_PAUSING_TO_PAUSE");
             }
 
             break;
@@ -316,9 +316,9 @@ void BaseGroup::doStateMachine(void)
             if (manual_to_standby_request_)
             {
                 manual_to_standby_cnt = 0;
-                group_state_ = MANUAL_TO_STANDBY;
+                mc_state_ = MANUAL_TO_STANDBY;
                 manual_to_standby_request_ = false;
-                LogProducer::warn("mc_sm","Group state state switch to MANUAL_TO_STANDBY");
+                LogProducer::warn("mc_sm","MC-state state switch to MC_MANUAL_TO_STANDBY");
             }
 
             break;
@@ -331,9 +331,9 @@ void BaseGroup::doStateMachine(void)
             if (offline_to_standby_request_)
             {
                 offline_to_standby_cnt = 0;
-                group_state_ = OFFLINE_TO_STANDBY;
+                mc_state_ = OFFLINE_TO_STANDBY;
                 offline_to_standby_request_ = false;
-                LogProducer::warn("mc_sm","Group state switch to OFFLINE_TO_STANDBY");
+                LogProducer::warn("mc_sm","MC-state switch to MC_OFFLINE_TO_STANDBY");
             }
 
             break;
@@ -370,14 +370,14 @@ void BaseGroup::doStateMachine(void)
                     
                     start_joint_ = start_joint_before_pause_;
                     prepare_resume_cnt = 0;
-                    group_state_ = PREPARE_RESUME;
+                    mc_state_ = PREPARE_RESUME;
                     pause_to_auto_request_ = false;
-                    LogProducer::warn("mc_sm","Group state switch to PREPARE_RESUME");
+                    LogProducer::warn("mc_sm","MC-state switch to MC_PREPARE_RESUME");
                 }
                 else
                 {
-                    group_state_ = PAUSE_TO_PAUSE_RETURN;
-                    LogProducer::warn("mc_sm","Group state switch to PAUSE_TO_PAUSE_RETURN");
+                    mc_state_ = PAUSE_TO_PAUSE_RETURN;
+                    LogProducer::warn("mc_sm","MC-state switch to MC_PAUSE_TO_PAUSE_RETURN");
                 }
             }
 
@@ -385,9 +385,9 @@ void BaseGroup::doStateMachine(void)
             {
                 manual_time_ = cycle_time_;
                 start_of_motion_ = true;
-                group_state_ = PAUSE_TO_PAUSE_MANUAL;
+                mc_state_ = PAUSE_TO_PAUSE_MANUAL;
                 pause_to_manual_request_ = false;
-                LogProducer::warn("mc_sm","Group state switch to PAUSE_TO_PAUSE_MANUAL");
+                LogProducer::warn("mc_sm","MC-state switch to MC_PAUSE_TO_PAUSE_MANUAL");
             }
 
             break;
@@ -398,9 +398,9 @@ void BaseGroup::doStateMachine(void)
             if (manual_to_pause_request_)
             {
                 pause_manual_to_pause_cnt = 0;
-                group_state_ = PAUSE_MANUAL_TO_PAUSE;
+                mc_state_ = PAUSE_MANUAL_TO_PAUSE;
                 manual_to_pause_request_ = false;
-                LogProducer::warn("mc_sm","Group state switch to PAUSE_MANUAL_TO_PAUSE");
+                LogProducer::warn("mc_sm","MC-state switch to MC_PAUSE_MANUAL_TO_PAUSE");
             }
 
             break;
@@ -410,8 +410,8 @@ void BaseGroup::doStateMachine(void)
         {
             if (resume_trajectory_.size() == 0)
             {
-                group_state_ = AUTO;
-                LogProducer::warn("mc_sm","Group state switch to AUTO.");
+                mc_state_ = AUTO;
+                LogProducer::warn("mc_sm","MC-state switch to MC_AUTO.");
             }
 
             break;
@@ -421,9 +421,9 @@ void BaseGroup::doStateMachine(void)
         {
             if ((traj_fifo_.size() > 250) || (prepare_resume_cnt > 250 && !traj_fifo_.empty()))
             {
-                group_state_ = PAUSE_TO_RESUME;
+                mc_state_ = PAUSE_TO_RESUME;
                 LogProducer::info("mc_sm","PREPARE_RESUME: traj fifo size is %d", traj_fifo_.size());
-                LogProducer::warn("mc_sm","Group state switch to PAUSE_TO_RESUME.");
+                LogProducer::warn("mc_sm","MC-state switch to MC_PAUSE_TO_RESUME.");
             }
             else
             {
@@ -431,8 +431,8 @@ void BaseGroup::doStateMachine(void)
 
                 if (prepare_resume_cnt > 300)
                 {
-                    group_state_ = PAUSE;
-                    LogProducer::warn("mc_sm","Group state switch to PAUSE.");
+                    mc_state_ = PAUSE;
+                    LogProducer::warn("mc_sm","MC-state switch to MC_PAUSE.");
                     LogProducer::warn("mc_sm","Pause to prepare resume time-out but trajectory-fifo still empty.");
                 }
             }
@@ -446,14 +446,14 @@ void BaseGroup::doStateMachine(void)
 
             if (err == SUCCESS)
             {
-                group_state_ = RESUME;
-                LogProducer::warn("mc_sm","Group state switch to RESUME.");
+                mc_state_ = RESUME;
+                LogProducer::warn("mc_sm","MC-state switch to MC_RESUME.");
             }
             else
             {
                 reportError(err);
-                group_state_ = PAUSE;
-                LogProducer::warn("mc_sm","Group state switch to PAUSE.");
+                mc_state_ = PAUSE;
+                LogProducer::warn("mc_sm","MC-state switch to MC_PAUSE.");
             }
 
             break;
@@ -464,9 +464,9 @@ void BaseGroup::doStateMachine(void)
             if (pause_return_to_pause_request_)
             {
                 pause_return_to_pause_cnt = 0;
-                group_state_ = PAUSE_RETURN_TO_PAUSE;
+                mc_state_ = PAUSE_RETURN_TO_PAUSE;
                 pause_return_to_pause_request_ = false;
-                LogProducer::warn("mc_sm","Group state switch to PAUSE_RETURN_TO_PAUSE.");
+                LogProducer::warn("mc_sm","MC-state switch to MC_PAUSE_RETURN_TO_PAUSE.");
             }
 
             break;
@@ -476,8 +476,8 @@ void BaseGroup::doStateMachine(void)
         {
             if (servo_state == SERVO_IDLE)
             {
-                group_state_ = PAUSE;
-                LogProducer::warn("mc_sm","Group state switch to PAUSE.");
+                mc_state_ = PAUSE;
+                LogProducer::warn("mc_sm","MC-state switch to PAUSE.");
             }
             else
             {
@@ -487,7 +487,7 @@ void BaseGroup::doStateMachine(void)
                 {
                     LogProducer::error("mc_sm","Pause return to pause timeout.");
                     reportError(MC_SWITCH_STATE_TIMEOUT);
-                    group_state_ = PAUSE;
+                    mc_state_ = PAUSE;
                 }
             }
 
@@ -500,13 +500,13 @@ void BaseGroup::doStateMachine(void)
 
             if (err == SUCCESS)
             {
-                group_state_ = PAUSE_RETURN;
-                LogProducer::warn("mc_sm","Group state switch to PAUSE_RETURN.");
+                mc_state_ = PAUSE_RETURN;
+                LogProducer::warn("mc_sm","MC-state switch to MC_PAUSE_RETURN.");
             }
             else
             {
-                group_state_ = PAUSE;
-                LogProducer::warn("mc_sm","Group state switch to PAUSE.");
+                mc_state_ = PAUSE;
+                LogProducer::warn("mc_sm","MC-state switch to MC_PAUSE.");
             }
             
             break;
@@ -573,14 +573,14 @@ void BaseGroup::doStateMachine(void)
 
             if (err != SUCCESS)
             {
-                group_state_ = AUTO;
-                LogProducer::info("mc_sm","Group-state switch to auto.");
+                mc_state_ = AUTO;
+                LogProducer::info("mc_sm","MC-state switch to MC_AUTO.");
                 reportError(err);
             }
             else
             {
-                group_state_ = PAUSING;
-                LogProducer::info("mc_sm","Group-state switch to pausing.");
+                mc_state_ = PAUSING;
+                LogProducer::info("mc_sm","MC-state switch to MC_PAUSING.");
             }
             */
 
@@ -589,7 +589,7 @@ void BaseGroup::doStateMachine(void)
 
         default:
         {
-            LogProducer::error("mc_sm","Group-state is invalid: 0x%x", group_state);
+            LogProducer::error("mc_sm","MC-state is invalid: 0x%x", getMontionControlStatusString(mc_state).c_str());
             reportError(MC_INTERNAL_FAULT);
             break;
         }
@@ -601,8 +601,8 @@ void BaseGroup::doPausingToPause(const ServoState &servo_state, uint32_t &fail_c
 {
 	if (servo_state == SERVO_IDLE)
 	{
-		group_state_ = PAUSE;
-        LogProducer::warn("mc_sm","Group state switch to pause.");
+		mc_state_ = PAUSE;
+        LogProducer::warn("mc_sm","MC-state switch to MC_PAUSE.");
         return;
 	}
 
@@ -610,7 +610,7 @@ void BaseGroup::doPausingToPause(const ServoState &servo_state, uint32_t &fail_c
 
 	if (fail_counter > auto_to_pause_timeout_)
 	{
-        group_state_ = PAUSE;
+        mc_state_ = PAUSE;
 		reportError(MC_SWITCH_STATE_TIMEOUT);
         LogProducer::error("mc_sm","Pausing to pause timeout.");
 	}
@@ -625,23 +625,23 @@ void BaseGroup::doStandbyToOffline(void)
 	offline_trajectory_last_point_ = false;
 	pthread_mutex_unlock(&offline_mutex_);
 	while (fillOfflineCache());
-    group_state_ = OFFLINE;
-	LogProducer::warn("mc_sm","Group state switch to OFFLINE");
+    mc_state_ = OFFLINE;
+	LogProducer::warn("mc_sm","MC-state switch to MC_OFFLINE");
 }
 
 void BaseGroup::doOfflineToStandby(const ServoState &servo_state, uint32_t &fail_counter)
 {
 	if (servo_state == SERVO_IDLE)
 	{
-		group_state_ = STANDBY;
-		LogProducer::warn("mc_sm","Group state switch to STANDBY.");
+		mc_state_ = STANDBY;
+		LogProducer::warn("mc_sm","MC-state switch to MC_STANDBY.");
 	}
 
 	fail_counter ++;
 
 	if (fail_counter > offline_to_standby_timeout_)
 	{
-        group_state_ = STANDBY;
+        mc_state_ = STANDBY;
 		reportError(MC_SWITCH_STATE_TIMEOUT);
         LogProducer::error("mc_sm","Offline to standby timeout.");
 	}
@@ -651,16 +651,16 @@ void BaseGroup::doStandbyToAuto(const ServoState &servo_state, uint32_t &fail_co
 {
 	if (traj_fifo_.full() || (fail_counter > 100 && !traj_fifo_.empty()))
 	{
-		group_state_ = AUTO;
-		LogProducer::warn("mc_sm","Group state switch to AUTO, fifo-size = %d, counter = %d", traj_fifo_.size(), fail_counter);
+		mc_state_ = AUTO;
+		LogProducer::warn("mc_sm","MC-state switch to MC_AUTO, fifo-size = %d, counter = %d", traj_fifo_.size(), fail_counter);
 	}
 
 	fail_counter ++;
 	
 	if (fail_counter > standby_to_auto_timeout_ && traj_fifo_.empty())
 	{
-		group_state_ = STANDBY;
-		LogProducer::warn("mc_sm","Group state switch to standby.");
+		mc_state_ = STANDBY;
+		LogProducer::warn("mc_sm","MC-state switch to MC_STANDBY.");
 		LogProducer::warn("mc_sm","Standby to auto time-out but trajectory-fifo still empty.");
 	}
 }
@@ -680,8 +680,8 @@ void BaseGroup::doAutoToStandby(const ServoState &servo_state, uint32_t &fail_co
 
             if (fine_counter >= fine_cycle_)
             {
-                group_state_ = STANDBY;
-                LogProducer::warn("mc_sm","Group state switch to STANDBY.");
+                mc_state_ = STANDBY;
+                LogProducer::warn("mc_sm","MC-state switch to MC_STANDBY.");
                 return;
             }
         }
@@ -695,9 +695,9 @@ void BaseGroup::doAutoToStandby(const ServoState &servo_state, uint32_t &fail_co
 
     if (fail_counter > auto_to_standby_timeout_)
     {
-        group_state_ = STANDBY;
+        mc_state_ = STANDBY;
         reportError(MC_SWITCH_STATE_TIMEOUT);
-        LogProducer::error("mc_sm","Auto to standby timeout.");
+        LogProducer::error("mc_sm","MC_AUTO to MC_STANDBY timeout.");
         
         if (servo_state == SERVO_IDLE)
         {
@@ -712,7 +712,7 @@ void BaseGroup::doAutoToStandby(const ServoState &servo_state, uint32_t &fail_co
         }
         else
         {
-            LogProducer::error("mc_sm","Servo-state: %d", servo_state);
+            LogProducer::error("mc_sm","Servo-state: %s", getMCServoStatusString(servo_state).c_str());
         }
     }
 }
@@ -727,8 +727,8 @@ void BaseGroup::doStandbyToManual(void)
         manual_trajectory_check_fail_ = false;
         manual_fifo_.clear();
         fillManualFIFO();
-        group_state_ = MANUAL;
-	    LogProducer::warn("mc_sm","Group state switch to MANUAL.");
+        mc_state_ = MANUAL;
+	    LogProducer::warn("mc_sm","MC-state switch to MC_MANUAL.");
         return;
     }
     
@@ -742,8 +742,8 @@ void BaseGroup::doStandbyToManual(void)
         if (err != SUCCESS)
         {
             reportError(err);
-            group_state_ = STANDBY;
-            LogProducer::warn("mc_sm","Group state switch to STANDBY.");
+            mc_state_ = STANDBY;
+            LogProducer::warn("mc_sm","MC-state switch to MC_STANDBY.");
             return;
         }
     }
@@ -756,8 +756,8 @@ void BaseGroup::doStandbyToManual(void)
         if (err != SUCCESS)
         {
             reportError(err);
-            group_state_ = STANDBY;
-            LogProducer::warn("mc_sm","Group state switch to STANDBY.");
+            mc_state_ = STANDBY;
+            LogProducer::warn("mc_sm","MC-state switch to MC_STANDBY.");
             return;
         }
     }
@@ -769,8 +769,8 @@ void BaseGroup::doStandbyToManual(void)
     manual_trajectory_check_fail_ = false;
     manual_fifo_.clear();
     fillManualFIFO();
-    group_state_ = MANUAL;
-    LogProducer::warn("mc_sm","Group state switch to MANUAL.");
+    mc_state_ = MANUAL;
+    LogProducer::warn("mc_sm","MC-state switch to MC_MANUAL.");
 }
 
 void BaseGroup::doPauseToManual(void)
@@ -783,8 +783,8 @@ void BaseGroup::doPauseToManual(void)
         manual_trajectory_check_fail_ = false;
         manual_fifo_.clear();
         fillManualFIFO();
-        group_state_ = PAUSE_MANUAL;
-	    LogProducer::warn("mc_sm","Group state switch to PAUSE_MANUAL.");
+        mc_state_ = PAUSE_MANUAL;
+	    LogProducer::warn("mc_sm","MC-state switch to MC_PAUSE_MANUAL.");
         return;
     }
     
@@ -798,8 +798,8 @@ void BaseGroup::doPauseToManual(void)
         if (err != SUCCESS)
         {
             reportError(err);
-            group_state_ = PAUSE;
-            LogProducer::warn("mc_sm","Group state switch to PAUSE.");
+            mc_state_ = PAUSE;
+            LogProducer::warn("mc_sm","MC-state switch to MC_PAUSE.");
             return;
         }
     }
@@ -812,8 +812,8 @@ void BaseGroup::doPauseToManual(void)
         if (err != SUCCESS)
         {
             reportError(err);
-            group_state_ = PAUSE;
-            LogProducer::warn("mc_sm","Group state switch to PAUSE.");
+            mc_state_ = PAUSE;
+            LogProducer::warn("mc_sm","MC-state switch to MC_PAUSE.");
             return;
         }
     }
@@ -825,23 +825,23 @@ void BaseGroup::doPauseToManual(void)
     manual_trajectory_check_fail_ = false;
     manual_fifo_.clear();
     fillManualFIFO();
-    group_state_ = PAUSE_MANUAL;
-    LogProducer::warn("mc_sm","Group state switch to PAUSE_MANUAL.");
+    mc_state_ = PAUSE_MANUAL;
+    LogProducer::warn("mc_sm","MC-state switch to MC_PAUSE_MANUAL.");
 }
 
 void BaseGroup::doManualToStandby(const ServoState &servo_state, uint32_t &fail_counter)
 {
 	if (servo_state == SERVO_IDLE)
 	{
-		group_state_ = STANDBY;
-		LogProducer::warn("mc_sm","Group state switch to STANDBY.");
+		mc_state_ = STANDBY;
+		LogProducer::warn("mc_sm","MC-state switch to MC_STANDBY.");
 	}
 
 	fail_counter ++;
 
 	if (fail_counter > manual_to_standby_timeout_)
 	{
-        group_state_ = STANDBY;
+        mc_state_ = STANDBY;
         reportError(MC_SWITCH_STATE_TIMEOUT);
 		LogProducer::error("mc_sm","Manual to standby timeou.");
 	}
@@ -851,15 +851,15 @@ void BaseGroup::doPauseManualToPause(const ServoState &servo_state, uint32_t &fa
 {
 	if (servo_state == SERVO_IDLE)
 	{
-		group_state_ = PAUSE;
-		LogProducer::warn("mc_sm","Group state switch to PAUSE.");
+		mc_state_ = PAUSE;
+		LogProducer::warn("mc_sm","MC-state switch to MC_PAUSE.");
 	}
 
 	fail_counter ++;
 
 	if (fail_counter > manual_to_standby_timeout_)
 	{
-        group_state_ = PAUSE;
+        mc_state_ = PAUSE;
         reportError(MC_SWITCH_STATE_TIMEOUT);
 		LogProducer::error("mc_sm","Manual to pause timeout.");
 	}
@@ -868,21 +868,21 @@ void BaseGroup::doPauseManualToPause(const ServoState &servo_state, uint32_t &fa
 
 ErrorCode BaseGroup::stopGroup(void)
 {
-    LogProducer::info("mc_sm","Stop request received, group-state = 0x%x", group_state_);
+    LogProducer::info("mc_sm","Stop request received, MC-state = %s", getMontionControlStatusString(mc_state_).c_str());
     stop_barecore_ = true;
     return SUCCESS;
 }
 
 ErrorCode BaseGroup::clearGroup(void)
 {
-    LogProducer::info("mc_sm","Clear request received, group-state = 0x%x", group_state_);
+    LogProducer::info("mc_sm","Clear request received, MC-state = %s", getMontionControlStatusString(mc_state_).c_str());
     clear_request_ = true;
     return SUCCESS;
 }
 
 ErrorCode BaseGroup::clearTeachGroup(void)
 {
-    LogProducer::info("mc_sm","Clear teach request received, group-state = 0x%x", group_state_);
+    LogProducer::info("mc_sm","Clear teach request received, MC-state = %s", getMontionControlStatusString(mc_state_).c_str());
     clear_teach_request_ = true;
     return SUCCESS;
 }

@@ -99,11 +99,11 @@ bool Servo1001::preparePreOp2SafeOp(CommBlockData_t* to_block_ptr, size_t to_blo
     return true;
 }
 
-bool Servo1001::prepareSafeOp2Op(CommBlockData_t* to_block_ptr, size_t to_block_number)
+bool Servo1001::prepareSafeOp2Op(CommBlockData_t* from_block_ptr, size_t from_block_number)
 {
     for(uint32_t i = 0; i < AXIS_NUM; ++i)
     {
-        if(!servo_ptr_[i]->prepareSafeOp2Op(to_block_ptr, to_block_number, 4000))
+        if(!servo_ptr_[i]->prepareSafeOp2Op(from_block_ptr, from_block_number, 4000))
         {
             LogProducer::error("servo1001", "servo_ptr_[%d] prepareSafeOp2Op failed", i);
             return false;

@@ -70,13 +70,6 @@ public:
     ErrorCode calibrateOffset(size_t index, double (&offset)[NUM_OF_JOINT]);
     ErrorCode calibrateOffset(const size_t *pindex, size_t length, double (&offset)[NUM_OF_JOINT]);
 
-    bool isReferenceAvailable(void);
-    ErrorCode deleteReference(void);
-    ErrorCode saveReference(void);
-    ErrorCode fastCalibrate(void);
-    ErrorCode fastCalibrate(size_t index);
-    ErrorCode fastCalibrate(const size_t *pindex, size_t length);
-
     ErrorCode resetEncoderMultiTurnValue(void);
     void getUsingCoord(basic_alg::PoseEuler &usingcool);
     void getUsingTool(basic_alg::PoseEuler &usingtool);
@@ -112,7 +105,7 @@ public:
     basic_alg::Posture getPostureFromJoint(const basic_alg::Joint &joint);
     basic_alg::Turn getTurnFromJoint(const basic_alg::Joint &joint);
 
-    GroupState  getGroupState(void);
+    MotionControlState  getMotionControlState(void);
     ServoState  getServoState(void);
     basic_alg::PoseEuler getCurrentPose(void);
     void    getCurrentPose(basic_alg::PoseEuler &pose);

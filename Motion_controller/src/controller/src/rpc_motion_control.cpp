@@ -107,10 +107,6 @@ void ControllerRpc::handleRpc0x000085D5(void* request_data_ptr, void* response_d
         direction.axis8 = (ManualDirection)rq_data_ptr->data2.data[7];
         direction.axis9 = (ManualDirection)rq_data_ptr->data2.data[8];
         rs_data_ptr->data.data = group_ptr_[group_id]->doStepManualMove(direction);
-        //TODO if(rs_data_ptr->data.data == SUCCESS)
-        // {
-        //     state_machine_ptr_->transferRobotStateToTeaching();
-        // }
     }
     else
     {
@@ -265,7 +261,7 @@ void ControllerRpc::handleRpc0x00008075(void* request_data_ptr, void* response_d
         || group_ptr_[group_id]->getWorkMode() == USER_OP_MODE_NONE
         || status != GROUP_STATUS_STANDBY)
     {
-        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION_GOTO_CARTESIAN;
+        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION_GOTO_JOINT;
         return;
     }
 
@@ -282,10 +278,6 @@ void ControllerRpc::handleRpc0x00008075(void* request_data_ptr, void* response_d
         joint.j8_ = rq_data_ptr->data2.data[7];
         joint.j9_ = rq_data_ptr->data2.data[8];
         rs_data_ptr->data.data = group_ptr_[group_id]->doGotoPointManualMove(joint);
-        //TODO if(rs_data_ptr->data.data == SUCCESS)
-        // {
-        //     state_machine_ptr_->transferRobotStateToTeaching();
-        // }
     }
     else
     {
@@ -320,7 +312,7 @@ void ControllerRpc::handleRpc0x0000A9A0(void* request_data_ptr, void* response_d
         || group_ptr_[group_id]->getWorkMode() == USER_OP_MODE_NONE
         || status == GROUP_STATUS_DISABLED || status == GROUP_STATUS_ERROR_STOP)
     {
-        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION_GOTO_CARTESIAN;
+        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION_MANUAL_STOP;
         return;
     }
 

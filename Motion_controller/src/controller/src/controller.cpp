@@ -188,7 +188,7 @@ ErrorCode Controller::init()
         return error_code;
     }
 
-	publish_.init(&tp_comm_, cpu_comm_ptr_, axis_ptr_, io_digital_dev_ptr_);
+	publish_.init(&tp_comm_, cpu_comm_ptr_, axis_ptr_, group_ptr_, io_digital_dev_ptr_);
 	rpc_.init(&tp_comm_, &publish_, cpu_comm_ptr_, servo_comm_ptr_, axis_ptr_, axis_model_ptr_, group_ptr_, &file_manager_, io_digital_dev_ptr_, &tool_manager_, &coordinate_manager_);
 
     if(!routine_thread_.run(&controllerRoutineThreadFunc, this, config_ptr_->routine_thread_priority_))
@@ -358,7 +358,7 @@ ErrorCode Controller::bootUp(void)
     // set all opeartion_mode for all servos
     for(size_t i = 0; i < axes_config_.size(); ++i)
     {
-        if(servo_comm_ptr_[i]->doServoCmdWriteParameter(SERVO_PARAM_OP_MODE, (int32_t)SERVO_OP_MODE_PROFILE_POSITION_MODE) != SUCCESS)
+        if(servo_comm_ptr_[i]->doServoCmdWriteParameter(SERVO_PARAM_OP_MODE, (int32_t)SERVO_OP_MODE_INTERPOLATED_POSITION_MODE) != SUCCESS)
         {
             LogProducer::error("main", "servo_comm_ptr[%d] write op_mode failed", i);
             return CONTROLLER_INIT_FAILED;
@@ -389,6 +389,16 @@ ErrorCode Controller::bootUp(void)
         sleep(1);
     }
 
+    // connect command pdo channel to self
+    if(servo_1001_ptr_->prepareSafeOp2Op(from_block_ptr, from_block_number))
+    {
+        LogProducer::info("main", "servo_1001_ptr_ prepareSafeOp2Op success");
+    }
+    else
+    {
+        LogProducer::error("main", "servo_1001_ptr_ prepareSafeOp2Op failed");
+        return CONTROLLER_INIT_FAILED;
+    }
     // transfer all servos to OP
     if(!servo_1001_ptr_->doServoCmdTransCommState(CORE_COMM_STATE_OP))
     {

@@ -1,4 +1,0 @@
-file_manager:
-    programs_path: '/root/service_on_controller/tp_py/files_manager/data'
-    data_path: '/robot_data'
-#END

@@ -193,6 +193,16 @@ struct Instruction
     //.....
 };
 
+enum AxisIndex
+{
+    INDEX_JOINT1 = 0,
+    INDEX_JOINT2 = 1,
+    INDEX_JOINT3 = 2,
+    INDEX_JOINT4 = 3,
+    INDEX_JOINT5 = 4,
+    INDEX_JOINT6 = 5,
+};
+
 }
 
 #endif

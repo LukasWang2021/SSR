@@ -431,7 +431,7 @@
 		<ApplicationID>4000</ApplicationID>
 		<ByteOffset>0x2F200</ByteOffset>
 		<From>1</From>
-		<To>5</To>
+		<To>2</To>
 		<Param1>5</Param1>
 		<Param2>24</Param2>
 		<Param3>1200</Param3>

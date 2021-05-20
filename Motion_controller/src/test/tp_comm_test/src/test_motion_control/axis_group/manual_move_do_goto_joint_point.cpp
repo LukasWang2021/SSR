@@ -24,10 +24,10 @@ using namespace std;
 
 int main(int argc, char* argv[])
 {
-    int needed_data_count = 8;
+    int needed_data_count = 6;
     if (argc < needed_data_count + 1)
     {
-        cout << "more parameters are needed: joint[1~9]_pos" << endl;
+        cout << "more parameters are needed: joint[1~6]_pos" << endl;
         return -1;
     }
     TpCommTest test;
@@ -44,7 +44,7 @@ int main(int argc, char* argv[])
 
     RequestMessageType_Int32_DoubleList msg;
     msg.header.time_stamp = 122;
-    msg.property.authority = Comm_Authority_TP;
+    msg.property.authority = Comm_Authority_TP_SIMMULATOR;
     msg.data1.data = 0;
     msg.data2.data_count = 9;
     msg.data2.data[0] = atof(argv[1]);
@@ -53,9 +53,9 @@ int main(int argc, char* argv[])
     msg.data2.data[3] = atof(argv[4]);
     msg.data2.data[4] = atof(argv[5]);
     msg.data2.data[5] = atof(argv[6]);
-    msg.data2.data[6] = atof(argv[7]);
-    msg.data2.data[7] = atof(argv[8]);
-    msg.data2.data[8] = atof(argv[9]);
+    msg.data2.data[6] = 0;
+    msg.data2.data[7] = 0;
+    msg.data2.data[8] = 0;
     if (!test.generateRequestMessageType(hash_value, (void*)&msg, RequestMessageType_Int32_DoubleList_fields, buf, buf_size))
     {
         cout << "Request : encode buf failed" << endl;
@@ -92,7 +92,7 @@ int main(int argc, char* argv[])
     cout << "Reply : msg.header.package_left = " << recv_msg.header.package_left << endl;
     cout << "Reply : msg.header.error_code = " << recv_msg.header.error_code << endl;
     cout << "Reply : msg.property.authority = " << recv_msg.property.authority << endl;
-    cout << "Reply : msg.data.data = " << recv_msg.data.data << endl;
+    cout << "Reply : msg.data.data = " << hex<< recv_msg.data.data << dec << endl;
 
     usleep(200000);
 

@@ -388,6 +388,11 @@ uint8_t* Axis::rtmReadAxisFdbPdoPtr(int32_t* size)
     return fdb_.getFdbPdoPtr(size);
 }
 
+int32_t Axis::rtmGetEncoderState(void)
+{
+    return fdb_.getEncoderState();
+}
+
 ErrorCode Axis::rtmResetEncoder(void)
 {
     AxisStatus_e axis_status = sm_.getAxisStatus();  

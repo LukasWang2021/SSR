@@ -17,27 +17,34 @@
 namespace group_space
 {
 #define JC_POINT_NUM 10
+#define JOINT_IN_GROUP 6
 #define START_POINT 1
 #define END_POINT 2
 #define MID_POINT 0
+// typedef struct 
+// {
+//     double angle[6];
+//     double omega[6];
+//     double alpha[6];
+//     double inertia[6];
+//     int point_position;
+// }Points;
+// typedef struct 
+// {
+//     Points points[JC_POINT_NUM];
+//     int total_points;
+// }JointCommand;
 typedef struct 
 {
-    double angle[6];
-    double omega[6];
-    double alpha[6];
-    double inertia[6];
-    int point_position;
-}Points;
-typedef struct 
-{
-    Points points[JC_POINT_NUM];
+    CircleBufferAppData4000_t set_point[JC_POINT_NUM];
+    int current_point;
     int total_points;
-}JointCommand;
-
+}AxisPoints;
 struct PointCache
 {
     bool is_empty;
-    JointCommand cache;
+    AxisPoints axis[JOINT_IN_GROUP];
+    bool is_start;
     PointProperty property;
 };
 
@@ -48,7 +55,7 @@ class BareCoreInterface
     ~BareCoreInterface();
 
     bool initInterface(uint32_t joint_num, std::map<int32_t, axis_space::Axis*>* axis_group_ptr, GroupSm* sm_ptr,
-        servo_comm_space::ServoCpuCommBase* cpu_comm_ptr);
+        servo_comm_space::ServoCpuCommBase* cpu_comm_ptr, system_model_space::GroupModel_t* db_ptr);
     
     bool sendPoint(void);
     bool isPointCacheEmpty(void);
@@ -57,14 +64,11 @@ class BareCoreInterface
 
     bool getLatestJoint(basic_alg::Joint &joint, uint32_t (&encoder_state)[NUM_OF_JOINT], ServoState &state);
 
-    bool setConfigData(int id, const std::vector<int> &data);
-    bool setConfigData(int id, const std::vector<double> &data);
-    bool getConfigData(int id, std::vector<double> &data);
-    bool getEncoder(std::vector<int> &data);
-    bool getEncoderError(std::vector<int> &data);
-    bool resetEncoderError(size_t index);
     bool resetEncoderError(void);
-    bool getControlPosition(double *data, size_t len);
+
+    ErrorCode setOffsetPositions(uint32_t index, double offset);
+
+    double decouplingAxis6ByRad(double fifth_pos, double sixth_pos);
 
   private:
     uint32_t joint_num_;
@@ -72,6 +76,12 @@ class BareCoreInterface
     std::map<int32_t, axis_space::Axis*>* axis_group_ptr_;  /**< The list of the axes in the group.*/
 	  GroupSm* sm_ptr_;                                       /**< The state machine of the group.*/
     servo_comm_space::ServoCpuCommBase* cpu_comm_ptr_;      /**< The pointer to communicate with the other cpu.*/
+    system_model_space::GroupModel_t* db_ptr_;              /**< The pointer of the parameters of the group model.*/
+
+    int32_t sync_index_;
+    double coupling_factor_;
+    double couplingAxis5To6ByRad(double fifth_pos, double sixth_pos);
+    bool WriteShareMem(PointCache& jc, unsigned int valid_level);
 };
 
 

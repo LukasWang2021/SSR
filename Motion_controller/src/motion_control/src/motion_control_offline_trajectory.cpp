@@ -20,9 +20,9 @@ namespace group_space
 
 ErrorCode BaseGroup::setOfflineTrajectory(const std::string &offline_trajectory)
 {
-    if (group_state_ == OFFLINE || group_state_ == OFFLINE_TO_STANDBY || group_state_ == STANDBY_TO_OFFLINE)
+    if (mc_state_ == OFFLINE || mc_state_ == OFFLINE_TO_STANDBY || mc_state_ == STANDBY_TO_OFFLINE)
     {
-        LogProducer::error("mc_offline_traj","Fail to set offline trajectory, state = 0x%x", group_state_);
+        LogProducer::error("mc_offline_traj","Fail to set offline trajectory, state = 0x%x", mc_state_);
         return INVALID_SEQUENCE;
     }
 
@@ -247,7 +247,7 @@ ErrorCode BaseGroup::sendOfflineTrajectoryFlow(void)
         if (points[length - 1].level == POINT_ENDING)
         {
             // 取到了ENDING-POINT，意味着轨迹FIFO已经取完,必须要切换状态机
-            if (group_state_ == OFFLINE)
+            if (mc_state_ == OFFLINE)
             {
                 offline_to_standby_request_ = true;
             }

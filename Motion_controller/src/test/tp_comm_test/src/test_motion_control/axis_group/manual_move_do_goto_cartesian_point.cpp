@@ -45,7 +45,7 @@ int main(int argc, char* argv[])
 
     RequestMessageType_Int32_UFTF_PoseAndPosture msg;
     msg.header.time_stamp = 122;
-    msg.property.authority = Comm_Authority_TP;
+    msg.property.authority = Comm_Authority_TP_SIMMULATOR;
     msg.data1.data = 0;
     msg.data2.uf_id.data = atoi(argv[1]);
     msg.data2.tf_id.data = atoi(argv[2]);
@@ -109,7 +109,7 @@ int main(int argc, char* argv[])
     cout << "Reply : msg.header.package_left = " << recv_msg.header.package_left << endl;
     cout << "Reply : msg.header.error_code = " << recv_msg.header.error_code << endl;
     cout << "Reply : msg.property.authority = " << recv_msg.property.authority << endl;
-    cout << "Reply : msg.data.data = " << recv_msg.data.data << endl;
+    cout << "Reply : msg.data.data = " << hex << recv_msg.data.data << endl;
 
     usleep(200000);
 

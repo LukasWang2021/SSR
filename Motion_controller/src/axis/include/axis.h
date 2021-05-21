@@ -109,7 +109,7 @@ class Axis {
      * @param [in] position The actual position value of the axis. The unit is angle pulse.
      * @return error_code
      */
-	ErrorCode mcSetPosition(double position);
+	ErrorCode mcSetPosition(double position = 0);
 
     /**
      * @brief Read the value of a specific parameter.

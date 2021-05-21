@@ -273,6 +273,15 @@ public:
     ErrorCode doServoCmdGetServoDefinedInfo(int32_t* req_data_ptr, int32_t* res_data_ptr);
 
     /**
+     * @brief Command to set zero position.
+     * @details Servo response is expected.\n
+     * @retval SUCCESS Execute the process successfully.
+     * @retval CORE_COMM_SEND_CORE_PROCESS_CALL_FAILED Failed to send request.
+     * @retval CORE_COMM_EXEC_CORE_PROCESS_CALL_FAILED Failed to execute the process.
+     */ 
+    ErrorCode doServoCmdSetZeroOffset(void);
+
+    /**
      * @brief Command servo to upload all its parameters to upload buffer channel.
      * @details It is an asynchronize core process call. Servo's response should return at once after controller sponsor the request.\n
      *          Servo will notify the controller by asynchronize flag after it uploads all its parameters to the upload buffer channel.\n

@@ -248,7 +248,7 @@ ErrorCode BareCoreInterface::setOffsetPositions(uint32_t index, double offset)
     std::map<int32_t, Axis*>::iterator it = axis_group_ptr_->find(index);
     if (it != axis_group_ptr_->end())
     {      
-        return it->second->mcSetPosition(offset);
+        return it->second->mcSetPosition();
     }
 
     LogProducer::error("mc_core", "setOffsetPositions, axis index(%d) not found in group.", index);

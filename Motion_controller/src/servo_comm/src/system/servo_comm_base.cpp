@@ -317,6 +317,24 @@ ErrorCode ServoCommBase::doServoCmdGetServoDefinedInfo(int32_t* req_data_ptr, in
     return SUCCESS;
 }
 
+ErrorCode ServoCommBase::doServoCmdSetZeroOffset(void)
+{
+    CoreProcessCallAppData1000_t req_data, res_data;
+    memset(&req_data, 0, sizeof(req_data));
+    memset(&res_data, 0, sizeof(res_data));
+    req_data.cmd = SERVO_CMD_SET_ZERO_OFFSET;
+    bool ret = doServoCmdNormalService(comm_ptr_->service_ptr, &req_data, &res_data);
+    if(!ret)
+    {
+        return CORE_COMM_SEND_CORE_PROCESS_CALL_FAILED;
+    }
+    if(res_data.param1 != 0)
+    {
+        return CORE_COMM_EXEC_CORE_PROCESS_CALL_FAILED;
+    }
+    return SUCCESS;
+}
+
 ErrorCode ServoCommBase::triggerServoCmdUploadParameters(int32_t** async_ack_ptr_ptr)
 {
     CoreProcessCallAppData1000_t req_data, res_data;

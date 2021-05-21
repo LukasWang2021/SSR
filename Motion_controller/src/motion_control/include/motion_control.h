@@ -7,7 +7,6 @@
 #include <tool_manager.h>
 #include <thread_help.h>
 #include <motion_control_datatype.h>
-#include <motion_control_param.h>
 #include <motion_control_arm_group.h>
 #include "log_manager_producer.h"
 #include "common_error_code.h"
@@ -185,7 +184,6 @@ private:
     uint32_t instructions_recv_counter_;
     uint32_t instructions_handle_counter_;
 
-    MotionControlParam* param_ptr_;
     fst_ctrl::CoordinateManager* coordinate_manager_ptr_;
     fst_ctrl::ToolManager* tool_manager_ptr_;
     BaseGroup *group_ptr_;

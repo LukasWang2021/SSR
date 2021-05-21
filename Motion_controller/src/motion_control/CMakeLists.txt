@@ -35,7 +35,6 @@ include_directories(
 
 add_library(motion_control SHARED
     src/motion_control.cpp
-    src/motion_control_param.cpp
     src/motion_control_arm_group.cpp
     src/motion_control_base_group.cpp
     src/motion_control_state_machine.cpp

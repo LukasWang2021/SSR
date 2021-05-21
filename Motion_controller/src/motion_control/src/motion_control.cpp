@@ -120,7 +120,6 @@ MotionControl::MotionControl(int32_t id):
 {
     coordinate_manager_ptr_ = NULL;
     tool_manager_ptr_ = NULL;
-    param_ptr_ = NULL;
     group_ptr_ = NULL;
 
     motion_error_flag_ = false;
@@ -133,35 +132,20 @@ MotionControl::MotionControl(int32_t id):
 MotionControl::~MotionControl()
 {
     if (group_ptr_ != NULL)     {delete group_ptr_; group_ptr_ = NULL;};
-    if (param_ptr_ != NULL)     {delete param_ptr_; param_ptr_ = NULL;};
 }
 
 ErrorCode MotionControl::initApplication(fst_ctrl::CoordinateManager* coordinate_manager_ptr, fst_ctrl::ToolManager* tool_manager_ptr)
 {
-    param_ptr_ = new MotionControlParam();
-    
-    if (param_ptr_ == NULL)
-    {
-        return MC_INTERNAL_FAULT;
-    }
-
     if (pthread_mutex_init(&instruction_mutex_, NULL) != 0)
     {
         LogProducer::error("mc","Fail to initialize motion mutex.");
         return MC_INTERNAL_FAULT;
     }
 
-    if(!param_ptr_->loadParam())
-    {
-        LogProducer::error("mc","Failed to load MotionControl component parameters");
-        return MC_INTERNAL_FAULT;
-    }
-
     group_ptr_ = new ArmGroup();
-
     if (group_ptr_ == NULL)
     {
-        LogProducer::error("mc","Fail to create control group of %s", param_ptr_->model_name_.c_str());
+        LogProducer::error("mc","Fail to create motion control group.");
         return MC_INTERNAL_FAULT;
     }
 
@@ -1391,7 +1375,7 @@ Turn MotionControl::getTurnFromJoint(const Joint &joint)
 
 string MotionControl::getModelName(void)
 {
-    return param_ptr_->model_name_;
+    return "RTM-P7A";
 }
 
 size_t MotionControl::getNumberOfAxis(void)

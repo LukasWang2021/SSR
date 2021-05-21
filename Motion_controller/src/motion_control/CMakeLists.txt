@@ -73,10 +73,6 @@ target_link_libraries(motion_control
     trajectory_planner
 )
 
-install(FILES ./config/motion_control.yaml 
-    DESTINATION ${CONFIG_FILE_OUTPUT_PATH}/component/
-)
-
 install(FILES ./config/base_group.yaml
     DESTINATION ${CONFIG_FILE_OUTPUT_PATH}/robot/axis_group
 )

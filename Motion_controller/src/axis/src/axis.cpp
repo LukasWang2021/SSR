@@ -179,17 +179,31 @@ ErrorCode Axis::mcSetPosition(double position)
         return AXIS_STATE_TRANSFER_INVALID;
     }
 
-    int64_t pos = conv_.convertPosA2M(position);
-    int32_t pos_lsb = (pos & 0xFFFFFFFF);
-    int32_t pos_msb = ((pos >> 32) & 0xFFFFFFFF);
-    
-    ErrorCode ret = SUCCESS;
-    ret = servo_comm_ptr_->doServoCmdWriteParameter(SERVO_PARAM_ENCODER_OFFSET_LSB, pos_lsb);
+    int32_t encoder_val = fdb_.getEncoderValue();
+    ErrorCode ret = servo_comm_ptr_->doServoCmdWriteParameter(SERVO_PARAM_ENCODER_OFFSET_LSB, encoder_val);
     if(ret != SUCCESS)
+    {
+        LogProducer::warn("Axis", "Axis[%d] mcSetPosition write servo param failed", id_);
         return ret;
-    ret = servo_comm_ptr_->doServoCmdWriteParameter(SERVO_PARAM_ENCODER_OFFSET_MSB, pos_msb);
+    }
+
+    if(!db_ptr_->actuator.servo_ptr->set(SERVO_PARAM_ENCODER_OFFSET_LSB, encoder_val))
+    {
+        LogProducer::warn("Axis", "Axis[%d] mcSetPosition set servo param file failed", id_);
+        return AXIS_SET_ZERO_FAILED;
+    }  
+    if(!db_ptr_->actuator.servo_ptr->save())
+    {
+        LogProducer::warn("Axis", "Axis[%d] mcSetPosition save servo param file failed", id_);
+        return AXIS_SET_ZERO_FAILED;
+    }
+
+    ret = servo_comm_ptr_->doServoCmdSetZeroOffset();
     if(ret != SUCCESS)
+    {
+        LogProducer::warn("Axis", "Axis[%d] mcSetPosition info servo to set zero failed", id_);
         return ret;
+    }
 
     return SUCCESS;
 }
@@ -344,7 +358,7 @@ ErrorCode Axis::mcHome(void)
 	    if (ret != SUCCESS)
 	    {
 	    	LogProducer::warn("Axis", "Axis[%d] mcHome called failed when emitServoCmdHoming", id_);
-		    return AXIS_SEND_CORE_HOMING_FAILED;
+		    return ret;
 	    }
 
 		LogProducer::info("Axis", "mcHome called success");
@@ -363,7 +377,7 @@ ErrorCode Axis::rtmAbortHoming()
 	    if (ret != SUCCESS)
         {   
             LogProducer::warn("Axis", "Axis[%d] rtmAbortHoming called failed when emitServoCmdAbortHoming", id_);
-		    return AXIS_SEND_CORE_ABORT_HOMING_FAILED;
+		    return ret;
         }
 		return SUCCESS;
 	}

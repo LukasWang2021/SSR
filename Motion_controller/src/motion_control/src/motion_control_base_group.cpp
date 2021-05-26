@@ -2459,7 +2459,7 @@ void BaseGroup::sendTrajectoryFlow(void)
             {
                 error_cnt = 0;
                 reportError(MC_SEND_TRAJECTORY_FAIL);
-                LogProducer::error("mc_base","sendTrajectoryFlow: bare core time-out, servo state: 0x%x.", servo_state);
+                LogProducer::error("mc_base","sendTrajectoryFlow: bare core time-out, servo state: %s.", getMCServoStatusString(servo_state).c_str());
             }
         }
         else

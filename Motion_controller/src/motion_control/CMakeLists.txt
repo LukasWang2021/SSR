@@ -35,7 +35,6 @@ include_directories(
 
 add_library(motion_control SHARED
     src/motion_control.cpp
-    src/motion_control_param.cpp
     src/motion_control_arm_group.cpp
     src/motion_control_base_group.cpp
     src/motion_control_state_machine.cpp
@@ -72,10 +71,6 @@ target_link_libraries(motion_control
     kinematics_alg
     transformation
     trajectory_planner
-)
-
-install(FILES ./config/motion_control.yaml 
-    DESTINATION ${CONFIG_FILE_OUTPUT_PATH}/component/
 )
 
 install(FILES ./config/base_group.yaml

@@ -47,8 +47,12 @@ public:
 
     int log_level_;                 /**< The level of the log information.*/
     int routine_cycle_time_;        /**< The cycle time of the routine thread. The unit is us.*/
+    int planner_cycle_time_;       
+    int priority_cycle_time_;       
     int realtime_cycle_time_;       /**< The cycle time of the realtime thread. The unit is us.*/
     int routine_thread_priority_;   /**< The priority of the routine thread.*/
+    int planner_thread_priority_;   
+    int priority_thread_priority_;  
     int realtime_thread_priority_;  /**< The priority of the realtime thread.*/
     bool dio_exist_;
 

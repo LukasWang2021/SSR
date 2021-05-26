@@ -25,6 +25,7 @@ void AxisFdb::handleFdbCurrentCircleBuffer3000(uint32_t* current_time_stamp_ptr)
 	state_word_ = fdb_pdo_ptr->state_word;
     servo_op_mode_ = (ServoOpMode_e)(fdb_pdo_ptr->actual_op_mode);
     encoder_state_ = fdb_pdo_ptr->encoder_state;
+    encoder_value_ = fdb_pdo_ptr->encoder_value;
 }
 
 void AxisFdb::handleFdbSyncCircleBuffer3000(uint32_t expect_time_stamp)
@@ -41,6 +42,7 @@ void AxisFdb::handleFdbSyncCircleBuffer3000(uint32_t expect_time_stamp)
     state_word_ = fdb_pdo_ptr->state_word;
     servo_op_mode_ = (ServoOpMode_e)(fdb_pdo_ptr->actual_op_mode);
     encoder_state_ = fdb_pdo_ptr->encoder_state;
+    encoder_value_ = fdb_pdo_ptr->encoder_value;
 }
 
 void AxisFdb::handleFdbCurrentCircleBuffer3001(uint32_t* current_time_stamp_ptr)

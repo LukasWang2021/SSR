@@ -223,10 +223,6 @@ void ControllerRpc::handleRpc0x00010C05(void* request_data_ptr, void* response_d
         int user_frame_id = rq_data_ptr->data2.uf_id.data;
         int tool_frame_id = rq_data_ptr->data2.tf_id.data;
         rs_data_ptr->data.data = group_ptr_[group_id]->doGotoPointManualMove(pose_postrue, user_frame_id, tool_frame_id);
-        //TODO if(rs_data_ptr->data.data == SUCCESS)
-        // {
-        //     state_machine_ptr_->transferRobotStateToTeaching();
-        // }
     }
     else
     {

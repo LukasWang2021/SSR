@@ -53,7 +53,8 @@ ErrorCode ArmGroup::initGroup(CoordinateManager *coordinate_manager_ptr, ToolMan
     if (pthread_mutex_init(&planner_list_mutex_, NULL) != 0 ||
         pthread_mutex_init(&manual_traj_mutex_, NULL) != 0 ||
         pthread_mutex_init(&servo_mutex_, NULL) != 0 ||
-        pthread_mutex_init(&offline_mutex_, NULL) != 0)
+        pthread_mutex_init(&offline_mutex_, NULL) != 0 ||
+        pthread_mutex_init(&manual_rpc_mutex_, NULL) != 0)
     {
         LogProducer::error("mc_arm_group","Fail to initialize mutex.");
         return MC_INTERNAL_FAULT;

@@ -8,6 +8,7 @@
 #ifndef _MOTION_CONTROL_BASE_GROUP_H
 #define _MOTION_CONTROL_BASE_GROUP_H
 
+#include <sys/time.h>
 #include <fstream>
 #include <error_queue.h>
 #include <common_error_code.h>
@@ -100,8 +101,8 @@ class BaseGroup
     virtual ErrorCode manualMoveStep(const ManualDirection *direction);
     virtual ErrorCode manualMoveContinuous(const ManualDirection *direction);
     virtual ErrorCode manualMoveToPoint(const IntactPoint &point);
-    
-
+    virtual bool updateContinuousManualMoveRpcTime();
+    virtual void handleContinueousManualRpcTimeOut();
 
     // Constraints handle APIs:
     virtual ErrorCode setSoftConstraint(const JointConstraint &soft_constraint);
@@ -293,6 +294,7 @@ class BaseGroup
 
     pthread_mutex_t     planner_list_mutex_;
     pthread_mutex_t     manual_traj_mutex_;
+    pthread_mutex_t     manual_rpc_mutex_;
     pthread_mutex_t     servo_mutex_;
     pthread_mutex_t     offline_mutex_;
 
@@ -326,6 +328,9 @@ class BaseGroup
     size_t  servo_update_timeout_;
     size_t  joint_record_update_timeout_;
     size_t  joint_record_update_cycle_;
+    bool is_continuous_manual_move_timeout_;
+    bool is_continuous_manual_time_count_valid_;
+    struct timeval last_continuous_manual_move_rpc_time_; 
 
     bool traj_log_enable_;
     TrajectoryPoint* traj_log_data_ptr_;

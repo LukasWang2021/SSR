@@ -320,7 +320,7 @@ void BaseGroup::doStateMachine(void)
                 manual_to_standby_request_ = false;
                 LogProducer::warn("mc_sm","MC-state state switch to MC_MANUAL_TO_STANDBY");
             }
-
+            handleContinueousManualRpcTimeOut();
             break;
         }
 
@@ -834,6 +834,9 @@ void BaseGroup::doManualToStandby(const ServoState &servo_state, uint32_t &fail_
 	if (servo_state == SERVO_IDLE)
 	{
 		mc_state_ = STANDBY;
+        is_continuous_manual_move_timeout_ = false;
+        is_continuous_manual_time_count_valid_ = false;
+        clearTeachGroup();
 		LogProducer::warn("mc_sm","MC-state switch to MC_STANDBY.");
 	}
 

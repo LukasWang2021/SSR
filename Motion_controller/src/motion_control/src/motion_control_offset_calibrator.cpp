@@ -1070,10 +1070,11 @@ ErrorCode Calibrator::resetEncoderMultiTurnValue()
 {
     LogProducer::info("mc_calib","reset encoder multi-turn value of all joints.");
 
-    if (!bare_core_ptr_->resetEncoderError())
+    ErrorCode result = bare_core_ptr_->resetEncoderError();
+    if (result != SUCCESS)
     {
         LogProducer::error("mc_calib","Fail to reset encoder errors.");
-        return MC_COMMUNICATION_WITH_BARECORE_FAIL;
+        return result;
     }
 
     usleep(250 * 1000);
@@ -1084,9 +1085,9 @@ ErrorCode Calibrator::resetEncoderMultiTurnValue()
         offset_stat_[i] = OFFSET_LOST;
     }
 
-    ErrorCode err = writeOffsetState(offset_stat_);
+    result = writeOffsetState(offset_stat_);
 
-    return err;
+    return result;
 }
 
 //------------------------------------------------------------------------------

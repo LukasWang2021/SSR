@@ -72,7 +72,6 @@ void BaseGroup::doStateMachine(void)
 
     if (clear_teach_request_)
     {
-        LogProducer::info("mc_sm","Clear teach group, MC-state = %s", getMontionControlStatusString(mc_state).c_str());
         pthread_mutex_lock(&manual_traj_mutex_);
         manual_time_ = 0;
         clear_teach_request_ = false;

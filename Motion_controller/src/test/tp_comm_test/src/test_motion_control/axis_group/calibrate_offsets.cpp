@@ -28,7 +28,7 @@ bool calibrateSingleOffset(uint32_t group_id, uint32_t axis_id)
     if (!test.initRpcSocket())
     {
         cout << "Request : socket init failed" << endl;
-        return -1;
+        return false;
     }
 
     cout << "Calibrate offset of axis " << axis_id << " in group " << group_id << endl;

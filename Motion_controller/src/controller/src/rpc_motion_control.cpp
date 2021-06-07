@@ -123,7 +123,6 @@ void ControllerRpc::handleRpc0x000085D5(void* request_data_ptr, void* response_d
 // "/rpc/motion_control/axis_group/doContinuousManualMove"
 void ControllerRpc::handleRpc0x0000D3F5(void* request_data_ptr, void* response_data_ptr)
 {
-    LogProducer::info("rpc", "/rpc/motion_control/axis_group/doContinuousManualMove received");
     RequestMessageType_Int32_Int32List* rq_data_ptr = static_cast<RequestMessageType_Int32_Int32List*>(request_data_ptr);
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 

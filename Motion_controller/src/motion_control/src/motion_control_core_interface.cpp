@@ -226,15 +226,17 @@ bool BareCoreInterface::getLatestJoint(Joint &joint, uint32_t (&encoder_state)[N
     return true;
 }
 
-bool BareCoreInterface::resetEncoderError(void)
+ErrorCode BareCoreInterface::resetEncoderError(void)
 {
+    ErrorCode result = SUCCESS;
     std::map<int32_t, Axis*>::iterator it;
     for (it = axis_group_ptr_->begin(); it != axis_group_ptr_->end(); ++it)
     {
-        if (it->second->rtmResetEncoder() != SUCCESS)
-            return false;
+        result = it->second->rtmResetEncoder();
+        if (result != SUCCESS)
+            return result;
     }
-    return true;
+    return result;
 }
 
 ErrorCode BareCoreInterface::setOffsetPositions(uint32_t index, double offset)

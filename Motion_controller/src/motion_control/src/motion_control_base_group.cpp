@@ -91,6 +91,9 @@ BaseGroup::BaseGroup()
     memset(&user_frame_, 0, sizeof(user_frame_));
     memset(&tool_frame_, 0, sizeof(tool_frame_));
     memset(&world_frame_, 0, sizeof(world_frame_));
+    is_continuous_manual_move_timeout_ = false;
+    is_continuous_manual_time_count_valid_ = false;
+    memset(&last_continuous_manual_move_rpc_time_, 0, sizeof(struct timeval));
 }
 
 BaseGroup::~BaseGroup()
@@ -460,6 +463,12 @@ ErrorCode BaseGroup::manualMoveStep(const ManualDirection *direction)
 
 ErrorCode BaseGroup::manualMoveContinuous(const ManualDirection *direction)
 {
+    if (!updateContinuousManualMoveRpcTime())
+    {
+        LogProducer::error("mc_base","Cannot manual continuous for last movement timeout");
+        return MC_FAIL_MANUAL_CONTINUOUS;
+    }
+
     MotionControlState mc_state = mc_state_;
     ServoState servo_state = getServoState();
     size_t joint_num = getNumberOfJoint();
@@ -590,6 +599,64 @@ ErrorCode BaseGroup::manualMoveContinuous(const ManualDirection *direction)
     {
         LogProducer::error("mc_base","Cannot manual continuous in current grp-state = %s, servo-state = %s", getMontionControlStatusString(mc_state_).c_str(), getMCServoStatusString(servo_state_).c_str());
         return MC_FAIL_MANUAL_CONTINUOUS;
+    }
+}
+
+bool BaseGroup::updateContinuousManualMoveRpcTime()
+{
+    if(is_continuous_manual_move_timeout_)
+    {
+        return false;
+    }
+    is_continuous_manual_time_count_valid_ = true;
+    
+    struct timeval current_time;
+    gettimeofday(&current_time, NULL);
+    pthread_mutex_lock(&manual_rpc_mutex_);
+    last_continuous_manual_move_rpc_time_.tv_sec = current_time.tv_sec;
+    last_continuous_manual_move_rpc_time_.tv_usec = current_time.tv_usec;
+    pthread_mutex_unlock(&manual_rpc_mutex_);
+    return true;
+}
+
+void BaseGroup::handleContinueousManualRpcTimeOut()
+{
+    if(is_continuous_manual_move_timeout_)
+    {
+        return;
+    }
+
+    if(!is_continuous_manual_time_count_valid_)
+    {
+        return;
+    }
+    
+    struct timeval current_time;
+    gettimeofday(&current_time, NULL);
+    pthread_mutex_lock(&manual_rpc_mutex_);
+    long long delta_tv_sec = current_time.tv_sec - last_continuous_manual_move_rpc_time_.tv_sec;
+    long long delta_tv_usec = current_time.tv_usec - last_continuous_manual_move_rpc_time_.tv_usec;
+    pthread_mutex_unlock(&manual_rpc_mutex_);
+    long long time_elapse = delta_tv_sec * 1000000 + delta_tv_usec;
+    if(time_elapse > 1000000)//1 second
+    {
+        LogProducer::warn("mc_base","doContinuousManualMove receive time out, do manual to standstill.");
+        is_continuous_manual_move_timeout_ = true;
+        GroupDirection direction;
+        direction.axis1 = STANDING;
+        direction.axis2 = STANDING;
+        direction.axis3 = STANDING;
+        direction.axis4 = STANDING;
+        direction.axis5 = STANDING;
+        direction.axis6 = STANDING;
+        direction.axis7 = STANDING;
+        direction.axis8 = STANDING;
+        direction.axis9 = STANDING;        
+        ErrorCode error_code = manualMoveContinuous(&direction[0]);
+        if(error_code != SUCCESS)
+        {
+            ErrorQueue::instance().push(error_code);
+        }
     }
 }
 

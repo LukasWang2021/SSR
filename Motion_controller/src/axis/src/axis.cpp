@@ -410,7 +410,7 @@ int32_t Axis::rtmGetEncoderState(void)
 ErrorCode Axis::rtmResetEncoder(void)
 {
     AxisStatus_e axis_status = sm_.getAxisStatus();  
-    if (axis_status != AXIS_STATUS_ERRORSTOP || axis_status != AXIS_STATUS_DISABLED)
+    if (axis_status != AXIS_STATUS_ERRORSTOP && axis_status != AXIS_STATUS_DISABLED)
     {
         LogProducer::warn("Axis", "Axis[%d] rtmResetEncoder called failed when axis_status is %s", id_, sm_.getAxisStateString(axis_status).c_str());
 		return AXIS_STATE_TRANSFER_INVALID;

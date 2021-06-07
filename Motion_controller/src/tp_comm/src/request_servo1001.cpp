@@ -342,7 +342,7 @@ void TpComm::handleRequest0x0000E003(int recv_bytes)
         LogProducer::error("comm", "rpc/servo1001/servo/uploadParameters: can't allocate memory for request_data");
         return;
     }
-    ResponseMessageType_Uint64_ParamDetailList* response_data_ptr = new ResponseMessageType_Uint64_ParamDetailList;
+    ResponseMessageType_Uint64_Int32List* response_data_ptr = new ResponseMessageType_Uint64_Int32List;
     if(response_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);

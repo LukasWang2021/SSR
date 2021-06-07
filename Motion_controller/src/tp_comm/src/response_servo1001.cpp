@@ -243,10 +243,10 @@ void TpComm::handleResponse0x000020B3(std::vector<TpRequestResponse>::iterator& 
     }
 }
 
-/********rpc/servo1001/servo/uploadParameters, ResponseMessageType_Uint64_ParamDetailList**********/   
+/********rpc/servo1001/servo/uploadParameters, ResponseMessageType_Uint64_Int32List**********/   
 void TpComm::handleResponse0x0000E003(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size)
 {
-    if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_ParamDetailList_fields, task->response_data_ptr, send_buffer_size))
+    if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_Int32List_fields, task->response_data_ptr, send_buffer_size))
     {
         LogProducer::error("comm", "handleResponse0x0000E003: failed to encode response package");
     }
@@ -256,7 +256,7 @@ void TpComm::handleResponse0x0000E003(std::vector<TpRequestResponse>::iterator& 
     }
     if(task->response_data_ptr != NULL)
     {
-        delete (ResponseMessageType_Uint64_ParamDetailList*)task->response_data_ptr;
+        delete (ResponseMessageType_Uint64_Int32List*)task->response_data_ptr;
     }
 }
 

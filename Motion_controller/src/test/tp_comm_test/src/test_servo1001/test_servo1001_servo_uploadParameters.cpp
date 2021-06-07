@@ -68,9 +68,9 @@ int main(int argc, char* argv[])
         return -1;
     }
 
-    ResponseMessageType_Uint64_ParamDetailList recv_msg;
+    ResponseMessageType_Uint64_Int32List recv_msg;
     unsigned int recv_hash = 0;
-    if (!test.decodeResponseMessageType(recv_hash, (void*)&recv_msg, ResponseMessageType_Uint64_ParamDetailList_fields, buf, buf_size))
+    if (!test.decodeResponseMessageType(recv_hash, (void*)&recv_msg, ResponseMessageType_Uint64_Int32List_fields, buf, buf_size))
     {
         cout << "Reply : recv msg decode failed" << endl;
         return -1;
@@ -88,9 +88,7 @@ int main(int argc, char* argv[])
     cout << "Reply : msg.error.data = 0x" <<std::hex<<recv_msg.error_code.data <<std::dec<< endl;
     for (int i = 0; i < 512; ++i)
     {
-        printf("Reply : msg.data.data[%d].operation_value=%d,default=%d,upper=%d,lower=%d,atr=0x%x,validity=0x%x,unit=%s\n",
-            i, recv_msg.data.data[i].operation_value, recv_msg.data.data[i].default_value, recv_msg.data.data[i].upper_limit_value,
-            recv_msg.data.data[i].lower_limit_value, recv_msg.data.data[i].attr, recv_msg.data.data[i].validity, recv_msg.data.data[i].unit);
+        printf("Reply : msg.data.data[%d].operation_value=%d\n", i, recv_msg.data.data[i]);
     }
     
     usleep(200000);

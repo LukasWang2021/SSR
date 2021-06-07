@@ -666,7 +666,7 @@ private:
     void handleResponse0x00004DD5(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
     /********rpc/servo1001/servo/triggerUploadParameters, ResponseMessageType_Uint64**********/	
     void handleResponse0x000020B3(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
-    /********rpc/servo1001/servo/uploadParameters, ResponseMessageType_Uint64_ParamDetailList**********/	
+    /********rpc/servo1001/servo/uploadParameters, ResponseMessageType_Uint64_Int32List**********/	
     void handleResponse0x0000E003(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
     /********rpc/servo1001/servo/triggerDownloadParameters, ResponseMessageType_Uint64**********/	
     void handleResponse0x00011C53(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);

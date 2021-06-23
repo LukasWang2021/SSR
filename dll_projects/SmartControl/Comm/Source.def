@@ -1,0 +1,129 @@
+LIBRARY
+EXPORTS
+c_initRpc @1
+c_initSub @2
+c_addTopic @3
+c_deleteTopic @4
+c_getTopicAxisFeedback @5
+c_getTopicServoFeedback @6
+c_getTopicCpuFeedback @7
+c_getAxisFeedBackByIsrCount @8
+c_exitSub @10
+
+c_getVersion @20
+c_getSystemTime @21
+c_setWorkMode @22
+c_getWorkMode @23
+c_readFile @24
+c_writeFile @25
+
+c_axisPower @30
+c_axisReset @31
+c_axisStop @32
+c_axisHalt @33
+c_axisSetPosition @34
+c_axisReadParameter @35
+c_axisWriteParameter @36
+c_axisMoveAbsolute @37
+c_axisMoveVelocity @38
+c_axisReadActualPosition @39
+c_axisReadActualVelocity @40
+c_axisReadActualTorque @41
+c_axisReadAxisInfo @42
+c_axisReadAxisStatus @43
+c_axisReadAxisError @44
+c_axisReadAxisErrorHistory @ 45
+c_axisMoveRelative @ 46
+c_axisHome @47
+c_axisAbortHoming @48
+c_axisResetEncoder @49
+
+c_groupReset @50
+c_groupEnable @51
+c_groupDisable @52
+c_groupReadError @53
+c_groupReadStatus @54
+c_groupResetAllEncoder @55
+
+c_setSamplingConfiguration @60
+c_getSamplingConfiguration @61
+c_activateSamplingConfiguration @62
+c_setSamplingSync @63
+c_getSamplingSync @64
+c_setSamplingChannel @65
+c_getSamplingChannel @66
+c_saveSamplingBufferData @67
+
+c_servo1001ServoShutDown @80
+c_servo1001ServoSwitchOn @81
+c_servo1001ServoDisableVoltage @82
+c_servo1001ServoEnableOperation @83
+c_servo1001ServoSwitchOnAndEnableOperation @84
+c_servo1001ServoDisableOperation @85
+c_servo1001ServoQuickStop @86
+c_servo1001ServoResetFault @87
+c_servo1001ServoTransCommState @88
+c_servo1001ServoReadParameter @89
+c_servo1001ServoWriteParameter @90
+c_servo1001ServoMoveVelocity @91
+c_servo1001ServoMoveAbsolute @92
+c_servo1001ServoTriggerUploadParameters @93
+c_servo1001ServoUploadParameters @94
+c_servo1001ServoTriggerDownloadParameters @95
+c_servo1001ServoDownloadParameters @96
+c_servo1001ServoIsAsyncServiceFinish @97
+c_servo1001ServoGetCommState @98
+c_servo1001ServoGetServoDefinedInfo @99
+
+c_servo1001CpuGetVersion @110
+c_servo1001CpuSetCtrlPdoSync @111
+c_servo1001CpuGetCtrlPdoSync @112
+c_servo1001CpuSetSamplingSync @113
+c_servo1001CpuGetSamplingSync @114
+c_servo1001CpuSetSamplingInterval @115
+c_servo1001CpuGetSamplingInterval @116
+c_servo1001CpuSetSamplingMaxTimes @117
+c_servo1001CpuGetSamplingMaxTimes @118
+c_servo1001CpuSetSamplingChannel @119
+c_servo1001CpuGetSamplingChannel @120
+c_servo1001CpuActivateSamplingConfiguration @121
+c_servo1001CpuSaveSamplingBufferData @122
+c_servo1001ServoGetServoCommInfo @123
+c_servo1001CpuGetServoCpuCommInfo @124
+
+c_getErrorCodeDetail @130
+c_setSamplingChannelGroup @131
+
+c_initEvent @140
+c_exitEvent @141
+c_getEventErrorList @142
+
+c_ioReadDI @150
+c_ioReadDO @151
+c_ioWriteDO @152
+
+c_tfUploadToolFrame @160
+c_tfDownloadToolFrame @161
+c_tfDeleteToolFrame @162
+
+c_ufUploadUserFrame @170
+c_ufDownloadUserFrame @171
+c_ufDeleteUserFrame @172
+
+
+c_mcSetGlobalVelRatio @180
+c_mcSetGlobalAccRatio @181
+c_mcDoStepManualMove @182
+c_mcDoContinuousManualMove @183
+c_mcDoContinuousManualToStandstill @184
+c_mcDoGotoCartesianMove @185
+c_mcDoGotoJointMove @186
+c_mcSetCoordinate @187
+c_mcSetUserCoordId @188
+c_mcSetToolId @189
+c_mcIgnoreLostZeroError @190
+c_mcSetAllZeroPointOffsets @191
+c_mcCalibrateAllZero @192
+c_mcSetStep @193
+c_mcGetPostureByJoint @194
+

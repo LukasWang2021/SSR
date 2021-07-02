@@ -119,6 +119,15 @@ void ServoCpuCommBase::getServoCpuCommInfo(ServoCpuCommInfo_t* info)
     }
 }
 
+void ServoCpuCommBase::setServoControlMode(ServoControlMode control_mode)
+{
+    setServoCpuCommControlMode(comm_ptr_, control_mode);
+}
+
+uint32_t ServoCpuCommBase::getServoControlMode()
+{
+    return getServoCpuCommControlMode(comm_ptr_);
+}
 
 ServoCpuCommBase::ServoCpuCommBase():
     comm_ptr_(NULL)

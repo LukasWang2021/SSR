@@ -25,3 +25,12 @@ target_link_libraries(test_controller_set_work_mode ${rtm_LIBRARIES} pb tp_comm_
 ######### test_controller_get_work_mode #########
 add_executable(test_controller_get_work_mode test_controller_get_work_mode.cpp)
 target_link_libraries(test_controller_get_work_mode ${rtm_LIBRARIES} pb tp_comm_test protos)
+
+######### test_controller_set_control_mode #########
+add_executable(test_controller_set_control_mode test_controller_set_control_mode.cpp)
+target_link_libraries(test_controller_set_control_mode ${rtm_LIBRARIES} pb tp_comm_test protos)
+
+######### test_controller_get_control_mode #########
+add_executable(test_controller_get_control_mode test_controller_get_control_mode.cpp)
+target_link_libraries(test_controller_get_control_mode ${rtm_LIBRARIES} pb tp_comm_test protos)
+

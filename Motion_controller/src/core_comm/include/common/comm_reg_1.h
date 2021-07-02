@@ -26,6 +26,7 @@
 #define COMM_REG1_SAMPLING_MAX_TIMES_PTR             ((int8_t*)(block_ptr->memory_ptr + 20))    /**< The address to store the max sampling times.*/
 #define COMM_REG1_SAMPLING_CHANNEL_PTR               ((int8_t*)(block_ptr->memory_ptr + 24))    /**< The address to store the configuration of 16 sampling channels.*/
 #define COMM_REG1_CTRL_PDO_SYNC_PTR                  ((int8_t*)(block_ptr->memory_ptr + 88))    /**< The address to store the pdo synchronization control words.*/
+#define COMM_REG1_CONTROL_MODE_PTR               ((int8_t*)(block_ptr->memory_ptr + 152))
 
 /**
  * @brief Defines the data structure for standard servo cpu level communication.
@@ -41,6 +42,7 @@ typedef struct
     uint32_t sampling_max_times;    /**< The max sampling times.*/
     uint32_t sampling_channel[COMM_REG1_SAMPLING_CHANNEL_NUMBER];   /**< The configurations of sampling channel.*/ 
     uint32_t ctrl_pdo_sync[COMM_REG1_CTRL_PDO_SYNC_NUMBER];         /**< The pdo sync control words.*/
+    uint32_t control_mode;           /**< The control words to define position or force.*/
 }CommRegAppData1_t;
 
 /**
@@ -167,6 +169,20 @@ void setCommReg1SamplingChannel(CommBlockData_t* block_ptr, uint32_t channel_ind
  */
 void getCommReg1SamplingChannel(CommBlockData_t* block_ptr, uint32_t channel_index, uint32_t* channel_value_ptr);
 
+/**
+ * @brief Set the control mode.
+ * @param [in] block_ptr Pointer of the configuration data of the channel.
+ * @param [in] control_mode The control mode.
+ * @return void
+ */
+void setCommReg1ControlMode(CommBlockData_t* block_ptr, uint32_t control_mode);
+/**
+ * @brief Get the control mode.
+ * @param [in] block_ptr Pointer of the configuration data of the channel.
+ * @param [out] control_mode_ptr Pointer to the value of the control mode.
+ * @return void
+ */
+void getCommReg1ControlMode(CommBlockData_t* block_ptr, uint32_t* control_mode_ptr);
 
 
 #endif

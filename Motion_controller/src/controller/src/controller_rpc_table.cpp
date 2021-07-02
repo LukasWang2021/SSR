@@ -19,6 +19,8 @@ void ControllerRpc::initRpcTable()
     rpc_service =	{	"/rpc/controller/getSystemTime",	0x000003F5,	&ControllerRpc::handleRpc0x000003F5	};	rpc_table_.push_back(rpc_service);
     rpc_service =	{	"/rpc/controller/setWorkMode",	0x00006825,	&ControllerRpc::handleRpc0x00006825	};	rpc_table_.push_back(rpc_service);
     rpc_service =	{	"/rpc/controller/getWorkMode",	0x00003325,	&ControllerRpc::handleRpc0x00003325	};	rpc_table_.push_back(rpc_service);
+    rpc_service =	{	"/rpc/controller/setControlMode",	0x0000B555,	&ControllerRpc::handleRpc0x0000B555	};	rpc_table_.push_back(rpc_service);
+    rpc_service =	{	"/rpc/controller/getControlMode",	0x0000B695,	&ControllerRpc::handleRpc0x0000B695	};	rpc_table_.push_back(rpc_service);
 
     rpc_service =	{	"/rpc/axis/mcPower",	0x000053E2,	&ControllerRpc::handleRpc0x000053E2	};	rpc_table_.push_back(rpc_service);
     rpc_service =	{	"/rpc/axis/mcReset",	0x000180C4,	&ControllerRpc::handleRpc0x000180C4	};	rpc_table_.push_back(rpc_service);

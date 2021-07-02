@@ -130,6 +130,10 @@ private:
     void handleRpc0x00006825(void* request_data_ptr, void* response_data_ptr);
     //"/rpc/controller/getWorkMode"	
     void handleRpc0x00003325(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/controller/setControlMode"	
+    void handleRpc0x0000B555(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/controller/getControlMode"	
+    void handleRpc0x0000B695(void* request_data_ptr, void* response_data_ptr);
 
     //"/rpc/axis/mcPower"	
     void handleRpc0x000053E2(void* request_data_ptr, void* response_data_ptr);

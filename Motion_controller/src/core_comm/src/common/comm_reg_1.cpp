@@ -138,3 +138,16 @@ void getCommReg1SamplingChannel(CommBlockData_t* block_ptr, uint32_t channel_ind
     memcpy(channel_value_ptr, COMM_REG1_SAMPLING_CHANNEL_PTR + (channel_index<<2), sizeof(uint32_t));
 }
 
+void setCommReg1ControlMode(CommBlockData_t* block_ptr, uint32_t control_mode)
+{
+    assert(block_ptr != NULL);
+    memcpy(COMM_REG1_CONTROL_MODE_PTR, &control_mode, sizeof(uint32_t));
+}
+
+void getCommReg1ControlMode(CommBlockData_t* block_ptr, uint32_t* control_mode_ptr)
+{
+    assert(block_ptr != NULL);
+    assert(control_mode_ptr != NULL);
+    memcpy(control_mode_ptr, COMM_REG1_CONTROL_MODE_PTR, sizeof(uint32_t));
+}
+

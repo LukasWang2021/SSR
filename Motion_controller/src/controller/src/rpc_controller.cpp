@@ -6,6 +6,7 @@
 using namespace user_space;
 using namespace base_space;
 using namespace log_space;
+using namespace servo_comm_space;
 
 // "/rpc/controller/getVersion"
 void ControllerRpc::handleRpc0x000093EE(void* request_data_ptr, void* response_data_ptr)
@@ -82,5 +83,42 @@ void ControllerRpc::handleRpc0x00003325(void* request_data_ptr, void* response_d
     LogProducer::info("rpc", "/rpc/controller/getWorkMode: %u", rs_data_ptr->data.data);
 }
 
+//"/rpc/controller/setControlMode"	
+void ControllerRpc::handleRpc0x0000B555(void* request_data_ptr, void* response_data_ptr)
+{
+    RequestMessageType_Uint32* rq_data_ptr = static_cast<RequestMessageType_Uint32*>(request_data_ptr);
+    ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
+
+    uint32_t mode = rq_data_ptr->data.data;
+    ServoControlMode control_mode = CONTROL_MODE_POSITION;
+    switch (mode)
+    {
+        case 0:
+            control_mode = CONTROL_MODE_POSITION;
+            break;
+        case 1:
+            control_mode = CONTROL_MODE_FORCE;
+            break;
+        default:
+            rs_data_ptr->data.data = RPC_PARAM_INVALID;
+            LogProducer::error("rpc", "/rpc/controller/setControlMode to be invalid(%u)", mode);
+            return;
+    }
+    cpu_comm_ptr_->setServoControlMode(control_mode);
+
+    rs_data_ptr->data.data = SUCCESS;
+    LogProducer::info("rpc", "/rpc/controller/setControlMode to be %u", rq_data_ptr->data.data);
+}
+
+//"/rpc/controller/getControlMode"	
+void ControllerRpc::handleRpc0x0000B695(void* request_data_ptr, void* response_data_ptr)
+{
+    //RequestMessageType_Void* rq_data_ptr = static_cast<RequestMessageType_Void*>(request_data_ptr);
+    ResponseMessageType_Uint64_Uint32* rs_data_ptr = static_cast<ResponseMessageType_Uint64_Uint32*>(response_data_ptr);
+
+    rs_data_ptr->data.data = cpu_comm_ptr_->getServoControlMode();
+    rs_data_ptr->error_code.data = SUCCESS;
+    LogProducer::info("rpc", "/rpc/controller/getControlMode is %u", rs_data_ptr->data.data);
+}
 
 

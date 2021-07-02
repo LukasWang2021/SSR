@@ -71,7 +71,21 @@ COMM_INTERFACE_API uint64_t c_setWorkMode(uint32_t mode);
  */
 COMM_INTERFACE_API uint64_t c_getWorkMode(uint32_t* mode);
 
+/**
+ * @brief Set the servo control mode of Controller.
+ * @details 0-position, 1-force
+ * @param [in] mode The control mode of the controller.
+ * @return error_code
+ */
+COMM_INTERFACE_API uint64_t c_setControlMode(uint32_t mode);
 
+/**
+ * @brief Get the servo control mode of Controller.
+ * @details 0-position, 1-force
+ * @param [out] mode The control mode of the controller.
+ * @return error_code
+ */
+COMM_INTERFACE_API uint64_t c_getControlMode(uint32_t* mode);
 
 /**
  * @brief The the text description of a specified error code.

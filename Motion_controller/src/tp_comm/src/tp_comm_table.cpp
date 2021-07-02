@@ -18,6 +18,9 @@ void TpComm::initRpcTable()
     rpc_service =	{	"/rpc/controller/getSystemTime",	0x000003F5,	"RequestMessageType.Void",	"ResponseMessageType.Uint64_Uint64",	&TpComm::handleRequest0x000003F5,	&TpComm::handleResponse0x000003F5,	Comm_Authority_TP_SIMMULATOR,	};	 rpc_table_.push_back(rpc_service);
     rpc_service =	{	"/rpc/controller/setWorkMode",	0x00006825,	"RequestMessageType.Uint32",	"ResponseMessageType.Uint64",	&TpComm::handleRequest0x00006825,	&TpComm::handleResponse0x00006825,	Comm_Authority_TP_SIMMULATOR,	};	 rpc_table_.push_back(rpc_service);
     rpc_service =	{	"/rpc/controller/getWorkMode",	0x00003325,	"RequestMessageType.Void",	"ResponseMessageType.Uint64_Uint32",	&TpComm::handleRequest0x00003325,	&TpComm::handleResponse0x00003325,	Comm_Authority_TP_SIMMULATOR,	};	 rpc_table_.push_back(rpc_service);
+    rpc_service =	{	"/rpc/controller/setControlMode",	0x0000B555,	"RequestMessageType.Uint32",	"ResponseMessageType.Uint64",	&TpComm::handleRequest0x0000B555,	&TpComm::handleResponse0x0000B555,	Comm_Authority_TP_SIMMULATOR,	};	 rpc_table_.push_back(rpc_service);
+    rpc_service =	{	"/rpc/controller/getControlMode",	0x0000B695,	"RequestMessageType.Void",	"ResponseMessageType.Uint64_Uint32",	&TpComm::handleRequest0x0000B695,	&TpComm::handleResponse0x0000B695,	Comm_Authority_TP_SIMMULATOR,	};	 rpc_table_.push_back(rpc_service);
+
 
     rpc_service =	{	"/rpc/axis/mcPower",	0x000053E2,	"RequestMessageType.Int32_Bool",	"ResponseMessageType.Uint64",	&TpComm::handleRequest0x000053E2,	&TpComm::handleResponse0x000053E2,	Comm_Authority_TP_SIMMULATOR,	};	 rpc_table_.push_back(rpc_service);
     rpc_service =	{	"/rpc/axis/mcReset",	0x000180C4,	"RequestMessageType.Int32",	"ResponseMessageType.Uint64",	&TpComm::handleRequest0x000180C4,	&TpComm::handleResponse0x000180C4,	Comm_Authority_TP_SIMMULATOR,	};	 rpc_table_.push_back(rpc_service);

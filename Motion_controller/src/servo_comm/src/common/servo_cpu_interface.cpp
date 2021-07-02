@@ -242,6 +242,18 @@ uint32_t getServoCpuCommSamplingCfg(ServoCpuComm_t* comm_ptr)
     return sampling_cfg;
 }
 
+void setServoCpuCommControlMode(ServoCpuComm_t* comm_ptr, uint32_t control_mode)
+{
+    setCommReg1ControlMode(comm_ptr->comm_reg_ptr, control_mode);
+}
+
+uint32_t getServoCpuCommControlMode(ServoCpuComm_t* comm_ptr)
+{
+    uint32_t control_mode;
+    getCommReg1ControlMode(comm_ptr->comm_reg_ptr, &control_mode);
+    return control_mode;
+}
+
 void freeServoCpuComm(ServoCpuComm_t* comm_ptr)
 {
     if(comm_ptr != NULL)

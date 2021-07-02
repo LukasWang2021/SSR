@@ -251,6 +251,11 @@ private:
     void handleRequest0x00006825(int recv_bytes);
     /********rpc/controller/getWorkMode, RequestMessageType_Void**********/	
     void handleRequest0x00003325(int recv_bytes);
+    /********rpc/controller/setControlMode, RequestMessageType_Uint32**********/	
+    void handleRequest0x0000B555(int recv_bytes);
+    /********rpc/controller/getControlMode, RequestMessageType_Void**********/	
+    void handleRequest0x0000B695(int recv_bytes);
+
         
     /********rpc/axis/mcPower, RequestMessageType_Int32_Bool**********/	
     void handleRequest0x000053E2(int recv_bytes);
@@ -564,7 +569,11 @@ private:
     void handleResponse0x00006825(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
     /********rpc/controller/getWorkMode, ResponseMessageType_Uint64_Uint32**********/	
     void handleResponse0x00003325(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
-        
+    /********rpc/controller/setControlMode, ResponseMessageType_Uint64**********/	
+    void handleResponse0x0000B555(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/controller/getControlMode, ResponseMessageType_Uint64_Uint32**********/	
+    void handleResponse0x0000B695(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+
     /********rpc/axis/mcPower, ResponseMessageType_Uint64**********/	
     void handleResponse0x000053E2(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
     /********rpc/axis/mcReset, ResponseMessageType_Uint64**********/	

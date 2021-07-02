@@ -95,6 +95,43 @@ uint64_t c_getWorkMode(uint32_t* mode)
 }
 
 
+uint64_t c_setControlMode(uint32_t mode)
+{
+	if (!rpc_valid)
+		return HANDLE_RPC_FAILED;
+	RpcBasic* rpc_ptr = RpcBasic::getInstance();
+	RequestMessageType_Uint32 req_data;
+	ResponseMessageType_Uint64 rep_data;
+
+	req_data.header.time_stamp = 122;
+	req_data.data.data = mode;
+	req_data.property.authority = Comm_Authority_TP;
+	if (!rpc_ptr->handleRpc(0x0000B555, &req_data, RequestMessageType_Uint32_fields, &rep_data, ResponseMessageType_Uint64_fields))
+	{
+		return HANDLE_RPC_FAILED;
+	}
+	return rep_data.data.data;
+}
+
+uint64_t c_getControlMode(uint32_t* mode)
+{
+	if (!rpc_valid)
+		return HANDLE_RPC_FAILED;
+	RpcBasic* rpc_ptr = RpcBasic::getInstance();
+	RequestMessageType_Void req_data;
+	ResponseMessageType_Uint64_Uint32 rep_data;
+
+	req_data.header.time_stamp = 122;
+	req_data.property.authority = Comm_Authority_TP;
+	if (!rpc_ptr->handleRpc(0x0000B695, &req_data, RequestMessageType_Void_fields, &rep_data, ResponseMessageType_Uint64_Uint32_fields))
+	{
+		return HANDLE_RPC_FAILED;
+	}
+	*mode = rep_data.data.data;
+	return rep_data.error_code.data;
+}
+
+
 uint64_t c_getErrorCodeDetail(uint64_t error_code, char* text_ptr, int* size)
 {
 	int target_index;

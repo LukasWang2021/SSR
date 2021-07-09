@@ -16,6 +16,8 @@ c_setWorkMode @22
 c_getWorkMode @23
 c_readFile @24
 c_writeFile @25
+c_setControlMode @26
+c_getControlMode @27
 
 c_axisPower @30
 c_axisReset @31

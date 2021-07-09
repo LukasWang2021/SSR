@@ -13,6 +13,7 @@ using namespace log_space;
 using namespace base_space;
 using namespace system_model_space;
 using namespace hal_space;
+using namespace group_space;
 
 Controller* Controller::instance_ = NULL;
 uint32_t* g_isr_ptr_ = NULL;
@@ -442,6 +443,21 @@ void Controller::uploadErrorCode(void)
     {
         tp_comm_.sendEvent(event);
         LogProducer::error("Upload", "Error: 0x%llx", event.event_data);
+        DisableControllerByErrorCode(event.event_data);
+    }
+}
+
+void Controller::DisableControllerByErrorCode(ErrorCode err)
+{
+    for (size_t i = 0; i < GROUP_NUM; ++i)
+    {
+        GroupStatus_e status = GROUP_STATUS_UNKNOWN;
+        bool in_pos = false;
+        group_ptr_[i]->mcGroupReadStatus(status, in_pos);
+        if (status != GROUP_STATUS_ERROR_STOP && status != GROUP_STATUS_DISABLED)
+        {
+            group_ptr_[i]->mcGroupDisable();
+        }
     }
 }
 

@@ -140,6 +140,7 @@ private:
     uint32_t fdb_current_time_stamp_;
 
     void uploadErrorCode(void);
+    void DisableControllerByErrorCode(ErrorCode err);
     void processDevice(void);
     bool downloadServoParams(int32_t axis_id);
 };

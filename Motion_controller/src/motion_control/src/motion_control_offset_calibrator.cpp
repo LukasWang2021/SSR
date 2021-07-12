@@ -434,27 +434,6 @@ ErrorCode Calibrator::checkOffset(CalibrateState &cali_stat, OffsetState (&offse
         }
     }
 
-    // bool limited = false;
-    // bool forbidden = false;
-
-    // // 综合各轴校验结果和零位错误屏蔽标志，给出允许运行标志
-    //         // 函数？？？
-    // for (size_t i = 0; i < joint_num_; i++)
-    // {
-    //     if (offset_mask_[i] == OFFSET_UNMASK)
-    //     {
-    //         if (state[i] != OFFSET_NORMAL /*&& state[i] != OFFSET_INVALID*/)
-    //         {
-    //             forbidden = true;
-    //         }
-    //     }
-    //     else
-    //     {
-    //         limited = true;
-    //     }
-    // }
-
-    // current_state_ = forbidden ? MOTION_FORBIDDEN : (limited ? MOTION_LIMITED : MOTION_NORMAL);
     checkCalibrateState();
     cali_stat = current_state_;
     memcpy(offset_stat, offset_stat_, sizeof(offset_stat));

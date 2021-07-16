@@ -50,14 +50,15 @@ COMM_INTERFACE_API uint64_t c_getTopicAxisFeedback(uint32_t array_size, uint32_t
 	return 0;
 }
 
-COMM_INTERFACE_API uint64_t c_getTopicServoFeedback(int32_t data[AXIS_NUM][32])
+COMM_INTERFACE_API uint64_t c_getTopicServoFeedback(uint32_t axis_size, int32_t data[AXIS_NUM][32])
 {
 	SubBasic* sub_ptr = SubBasic::getInstance();
 	if (sub_ptr == NULL)
 		return HANDLE_SUB_FAILED;
 	TopicData* data_ptr = sub_ptr->getTopicDataPtr();
 	sub_ptr->lockTopicData();
-	for (uint32_t i = 0; i < data_ptr->servo_feedback.data_count; ++i)
+	uint32_t size = axis_size < data_ptr->servo_feedback.data_count ? axis_size : data_ptr->servo_feedback.data_count;
+	for (uint32_t i = 0; i < size; ++i)
 	{
 		for (uint32_t j = 0; j < data_ptr->servo_feedback.data->data_count; ++j)
 		{

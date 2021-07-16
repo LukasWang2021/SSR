@@ -51,11 +51,12 @@ COMM_INTERFACE_API uint64_t c_getTopicAxisFeedback(uint32_t array_size, uint32_t
 /**
  * @brief Get all the servos raw data.
  * @details Array for servos.
+ * @param [int] array_size The lengh of the array.
  * @param [out] data The raw data of servo feedback. Each servo has 32 Int array.
  * @retval 0 Success.
  * @retval -1 Failure.
  */
-COMM_INTERFACE_API uint64_t c_getTopicServoFeedback(int32_t data[AXIS_NUM][32]);
+COMM_INTERFACE_API uint64_t c_getTopicServoFeedback(uint32_t axis_size, int32_t data[AXIS_NUM][32]);
 
 /**
  * @brief Get CPU related feedback.

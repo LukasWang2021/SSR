@@ -68,6 +68,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="FormAxis.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormAxis.Designer.cs">
+      <DependentUpon>FormAxis.cs</DependentUpon>
+    </Compile>
     <Compile Include="FormMain.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -84,6 +90,9 @@
     <Compile Include="ProcessMotionCtrl.import.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <EmbeddedResource Include="FormAxis.resx">
+      <DependentUpon>FormAxis.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="FormGroup.resx">
       <DependentUpon>FormGroup.cs</DependentUpon>
     </EmbeddedResource>

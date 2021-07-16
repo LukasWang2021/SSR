@@ -22,7 +22,14 @@ namespace WindowsFormsSSR
 
         private void axisToolStripMenuItem_Click(object sender, EventArgs e)
         {
-
+            if (!isValid)
+            {
+                MessageBox.Show("Please connect first!!!");
+                return;
+            }
+            FormAxis form = new FormAxis();
+            form.MdiParent = this;
+            form.Show();
         }
 
         private void groupToolStripMenuItem_Click(object sender, EventArgs e)

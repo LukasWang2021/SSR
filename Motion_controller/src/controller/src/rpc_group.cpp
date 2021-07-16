@@ -39,10 +39,19 @@ void ControllerRpc::handleRpc0x00003615(void* request_data_ptr, void* response_d
         GroupStatus_e status = GROUP_STATUS_UNKNOWN;
         bool in_pos = false;
         group_ptr_[group_id]->mcGroupReadStatus(status, in_pos);
+        //clear trajectory buffer
         if (status == GROUP_STATUS_ERROR_STOP || status == GROUP_STATUS_DISABLED)
         {
             group_ptr_[group_id]->clearGroup();
             group_ptr_[group_id]->clearTeachGroup();
+        }
+        //check if the zero offset is valid.
+        if(group_ptr_[group_id]->getCalibrateState() == MOTION_FORBIDDEN)
+        {			
+            group_ptr_[group_id]->stopGroup();
+            group_ptr_[group_id]->clearGroup();
+            LogProducer::error("rpc","/rpc/group/mcGroupEnable check offset failure");
+            return CONTROLLER_INVALID_OPERATION;
         }
         rs_data_ptr->data.data = group_ptr_[group_id]->mcGroupEnable();
     }

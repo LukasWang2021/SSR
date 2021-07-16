@@ -49,7 +49,7 @@ uint64_t c_getSystemTime(uint64_t* time)
 	ResponseMessageType_Uint64_Uint64 rep_data;
 
 	req_data.header.time_stamp = 122;
-	req_data.property.authority = Comm_Authority_TP;
+	req_data.property.authority = Comm_Authority_TP_SIMMULATOR;
 	if (!rpc_ptr->handleRpc(0x000003F5, &req_data, RequestMessageType_Void_fields, &rep_data, ResponseMessageType_Uint64_Uint64_fields))
 	{
 		return HANDLE_RPC_FAILED;
@@ -68,7 +68,7 @@ uint64_t c_setWorkMode(uint32_t mode)
 
 	req_data.header.time_stamp = 122;
 	req_data.data.data = mode;
-	req_data.property.authority = Comm_Authority_TP;
+	req_data.property.authority = Comm_Authority_TP_SIMMULATOR;
 	if (!rpc_ptr->handleRpc(0x00006825, &req_data, RequestMessageType_Uint32_fields, &rep_data, ResponseMessageType_Uint64_fields))
 	{
 		return HANDLE_RPC_FAILED;
@@ -85,7 +85,7 @@ uint64_t c_getWorkMode(uint32_t* mode)
 	ResponseMessageType_Uint64_Uint32 rep_data;
 
 	req_data.header.time_stamp = 122;
-	req_data.property.authority = Comm_Authority_TP;
+	req_data.property.authority = Comm_Authority_TP_SIMMULATOR;
 	if (!rpc_ptr->handleRpc(0x00003325, &req_data, RequestMessageType_Void_fields, &rep_data, ResponseMessageType_Uint64_Uint32_fields))
 	{
 		return HANDLE_RPC_FAILED;
@@ -105,7 +105,7 @@ uint64_t c_setControlMode(uint32_t mode)
 
 	req_data.header.time_stamp = 122;
 	req_data.data.data = mode;
-	req_data.property.authority = Comm_Authority_TP;
+	req_data.property.authority = Comm_Authority_TP_SIMMULATOR;
 	if (!rpc_ptr->handleRpc(0x0000B555, &req_data, RequestMessageType_Uint32_fields, &rep_data, ResponseMessageType_Uint64_fields))
 	{
 		return HANDLE_RPC_FAILED;
@@ -122,7 +122,7 @@ uint64_t c_getControlMode(uint32_t* mode)
 	ResponseMessageType_Uint64_Uint32 rep_data;
 
 	req_data.header.time_stamp = 122;
-	req_data.property.authority = Comm_Authority_TP;
+	req_data.property.authority = Comm_Authority_TP_SIMMULATOR;
 	if (!rpc_ptr->handleRpc(0x0000B695, &req_data, RequestMessageType_Void_fields, &rep_data, ResponseMessageType_Uint64_Uint32_fields))
 	{
 		return HANDLE_RPC_FAILED;

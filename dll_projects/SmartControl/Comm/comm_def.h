@@ -7,7 +7,7 @@
 #define COMM_BUFFER_SIZE 65535	//byte size
 #define TOPIC_HASH	0x12345678
 #define MAX_EVENT_NUMBER 8
-#define AXIS_NUM 14
-#define GROUP_NUM 0
+#define AXIS_NUM 10
+#define GROUP_NUM 1
 #define TOPIC_ELEM_NUM 3
 typedef uint64_t ErrorCode;

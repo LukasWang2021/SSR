@@ -833,8 +833,6 @@ void BaseGroup::doManualToStandby(const ServoState &servo_state, uint32_t &fail_
 	if (servo_state == SERVO_IDLE)
 	{
 		mc_state_ = STANDBY;
-        is_continuous_manual_move_timeout_ = false;
-        is_continuous_manual_time_count_valid_ = false;
         clearTeachGroup();
 		LogProducer::warn("mc_sm","MC-state switch to MC_STANDBY.");
 	}
@@ -845,7 +843,7 @@ void BaseGroup::doManualToStandby(const ServoState &servo_state, uint32_t &fail_
 	{
         mc_state_ = STANDBY;
         reportError(MC_SWITCH_STATE_TIMEOUT);
-		LogProducer::error("mc_sm","Manual to standby timeou.");
+		LogProducer::error("mc_sm","Manual to standby timeout. servo_state=%d", servo_state);
 	}
 }
 
@@ -886,6 +884,8 @@ ErrorCode BaseGroup::clearTeachGroup(void)
 {
     LogProducer::info("mc_sm","Clear teach request received, MC-state = %s", getMontionControlStatusString(mc_state_).c_str());
     clear_teach_request_ = true;
+    is_continuous_manual_move_timeout_ = false;
+    is_continuous_manual_time_count_valid_ = false;
     return SUCCESS;
 }
 

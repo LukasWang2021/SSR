@@ -80,8 +80,8 @@ model_hw_negative_limit:
     attr: 3
     validity: 1
 encoder_pulse_per_revolution: 
-    operation_value: 8388608
-    default_value: 8388608
+    operation_value: 65536
+    default_value: 65536
     upper_limit_value: 10000000 
     lower_limit_value: 1
     unit: None

@@ -54,7 +54,7 @@
             this.textBoxIP.Name = "textBoxIP";
             this.textBoxIP.Size = new System.Drawing.Size(107, 21);
             this.textBoxIP.TabIndex = 1;
-            this.textBoxIP.Text = "192.168.30.107";
+            this.textBoxIP.Text = "192.168.110.2";
             // 
             // menuStrip1
             // 

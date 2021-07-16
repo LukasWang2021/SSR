@@ -201,6 +201,8 @@ bool BareCoreInterface::WriteShareMem(PointCache& cache, unsigned int valid_leve
         {
             result = false;
         }
+        if (actual_element_number == 0)
+            LogProducer::info("mc_core","WriteShareMem:i=%d, actual=%d, current=%d, total=%d",i,actual_element_number,cache.axis[i].current_point,cache.axis[i].total_points);
     }
     //如果是新轨迹，置各轴同步信号
     if (cache.is_start)

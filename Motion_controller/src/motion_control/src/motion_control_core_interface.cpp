@@ -97,6 +97,12 @@ bool BareCoreInterface::isPointCacheEmpty(void)
 bool BareCoreInterface::clearPointCache(void)
 {
     point_cache_.is_empty = true;
+    std::map<int, axis_space::Axis*>::iterator it;
+    int32_t i = 0;
+    for (it = axis_group_ptr_->begin(), i = 0; it != axis_group_ptr_->end(); ++it, ++i)
+    {
+        it->second->getServoCommPtr()->clearCtrlPdoBuffer();
+    }
     return true;
 }
 

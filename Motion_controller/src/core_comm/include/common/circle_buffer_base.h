@@ -118,6 +118,13 @@ bool pullCircleBufferType2ByHead(CommBlockData_t* block_ptr, uint8_t* domain_ptr
  */
 bool pullCircleBufferType2ByTimeStamp(CommBlockData_t* block_ptr, uint8_t* domain_ptr, uint32_t time_stamp);
 
+/**
+ * @brief Clear the circle buffer section.
+ * @details 
+ * @param [in] block_ptr Pointer of the configuration of a communication channel.
+ */
+void clearCircleBufferByFrom(CommBlockData_t* block_ptr);
+
 
 #endif
 

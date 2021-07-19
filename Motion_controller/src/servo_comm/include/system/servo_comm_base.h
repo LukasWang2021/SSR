@@ -345,6 +345,11 @@ public:
      */ 
     void processCtrlPdoBufferMode(uint8_t* pdo_data_ptr, int32_t expect_element_number, int32_t* actual_element_number_ptr);
     /**
+     * @brief Clear data in control circle buffer channel.
+     * @return void
+     */ 
+    void clearCtrlPdoBuffer();
+    /**
      * @brief Get servo state and state word.
      * @param [out] state_word Servo state word.
      * @return Servo state.

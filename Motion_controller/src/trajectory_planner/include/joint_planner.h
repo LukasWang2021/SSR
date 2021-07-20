@@ -13,7 +13,7 @@
 #include "ds_planner/ds_planner_single_jerk.h"
 #include "ds_planner/ds_planner_three_jerk.h"
 #include "ds_planner/ds_planner_two_jerk.h"
-#include "motion_control_datatype.h"
+#include "trajectory_datatype.h"
 #include "basic_alg_datatype.h"
 
 class JointPlanner

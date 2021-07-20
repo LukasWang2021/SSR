@@ -8,15 +8,14 @@
 #ifndef _MOTION_CONTROL_DATATYPE_H
 #define _MOTION_CONTROL_DATATYPE_H
 
-#include <assert.h>
 #include <basic_alg_datatype.h>
 #include <basic_constants.h>
 #include <common_enum.h>
-#include <kinematics.h>
+#include "trajectory_datatype.h"
 
 namespace group_space
 {
-
+/*
 typedef unsigned int Tick;
 typedef double  MotionTime;
 
@@ -144,7 +143,7 @@ struct ManualAxisBlock
     MotionTime time_stamp[8];
     AxisCoeff coeff[7];
 };
-
+*/
 //interpreter interface
 typedef enum _InstType
 {

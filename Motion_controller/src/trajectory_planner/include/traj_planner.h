@@ -13,7 +13,7 @@
 #include <dynamic_alg.h>
 #include <joint_constraint.h>
 #include <common_error_code.h>
-#include <motion_control_datatype.h>
+#include <trajectory_datatype.h>
 #include <line_planner.h>
 #include <joint_planner.h>
 #include <circle_planner.h>

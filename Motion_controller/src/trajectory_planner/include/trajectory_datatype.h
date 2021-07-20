@@ -1,12 +1,12 @@
 /*************************************************************************
-	> File Name: motion_control_datatype.h
+	> File Name: trajectory_datatype.h
 	> Author: 
 	> Mail: 
 	> Created Time: 2018年08月08日 星期三 09时26分40秒
  ************************************************************************/
 
-#ifndef _MOTION_CONTROL_DATATYPE_H
-#define _MOTION_CONTROL_DATATYPE_H
+#ifndef _TRAJECTORY_DATATYPE_H
+#define _TRAJECTORY_DATATYPE_H
 
 #include <assert.h>
 #include <basic_alg_datatype.h>

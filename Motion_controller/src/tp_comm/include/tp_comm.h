@@ -539,6 +539,20 @@ private:
     /********rpc/motion_control/axis_group/moveOfflineTrajectory, RequestMessageType_Void**********/	
     void handleRequest0x0000C4D9(int recv_bytes);
 
+    /********rpc/reg_manager/pr/addReg, RequestMessageType_PrRegData**********/	
+    void handleRequest0x000154E7(int recv_bytes);
+    /********rpc/reg_manager/pr/deleteReg, RequestMessageType_Int32**********/	
+    void handleRequest0x00001097(int recv_bytes);
+    /********rpc/reg_manager/pr/updateReg, RequestMessageType_PrRegData**********/	
+    void handleRequest0x00009EF7(int recv_bytes);
+    /********rpc/reg_manager/pr/getReg, RequestMessageType_Int32**********/	
+    void handleRequest0x00017207(int recv_bytes);
+    /********rpc/reg_manager/pr/moveReg, RequestMessageType_Int32List(count = 2) **********/	
+    void handleRequest0x0000D7C7(int recv_bytes);
+    /********rpc/reg_manager/pr/getChangedList, RequestMessageType_Int32List(count = 2) **********/	
+    void handleRequest0x0000B454(int recv_bytes);
+    /********rpc/reg_manager/pr/getValidList, RequestMessageType_Int32List(count = 2) **********/	
+    void handleRequest0x00009354(int recv_bytes);
 
 
 
@@ -857,7 +871,20 @@ private:
     /********rpc/motion_control/axis_group/moveOfflineTrajectory, ResponseMessageType_Uint64**********/	
     void handleResponse0x0000C4D9(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
 
-
+    /********rpc/reg_manager/pr/addReg, ResponseMessageType_Uint64**********/	
+    void handleResponse0x000154E7(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/reg_manager/pr/deleteReg, ResponseMessageType_Uint64**********/	
+    void handleResponse0x00001097(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/reg_manager/pr/updateReg, ResponseMessageType_Uint64**********/	
+    void handleResponse0x00009EF7(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/reg_manager/pr/getReg, ResponseMessageType_Uint64_PrRegData**********/	
+    void handleResponse0x00017207(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/reg_manager/pr/moveReg, ResponseMessageType_Uint64**********/	
+    void handleResponse0x0000D7C7(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/reg_manager/pr/getChangedList, ResponseMessageType_Uint64_BaseRegSummaryList**********/	
+    void handleResponse0x0000B454(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/reg_manager/pr/getValidList, ResponseMessageType_Uint64_BaseRegSummaryList**********/	
+    void handleResponse0x00009354(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
 
     
     /********publish/axis/feedback, MessageType_AxisFeedbackList(count=14)**********/    

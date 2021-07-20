@@ -32,7 +32,11 @@
 #include "request/request_coord_user.pb.h"
 #include "request/request_int32_uftf_pose_and_posture.pb.h"
 #include "request/request_int32_jointlimit.pb.h"
-
+#include "request/request_reg_pr.pb.h"
+#include "request/request_reg_mr.pb.h"
+#include "request/request_reg_hr.pb.h"
+#include "request/request_reg_sr.pb.h"
+#include "request/request_reg_r.pb.h"
 
 #include "message_type/base.pb.h"
 #include "message_type/axis_info.pb.h"
@@ -60,7 +64,11 @@
 #include "message_type/pose_and_posture.pb.h"
 #include "message_type/uftf_pose_and_posture.pb.h"
 #include "message_type/joint_limit.pb.h"
-
+#include "message_type/reg_pr.pb.h"
+#include "message_type/reg_mr.pb.h"
+#include "message_type/reg_hr.pb.h"
+#include "message_type/reg_sr.pb.h"
+#include "message_type/reg_r.pb.h"
 
 #include "response/response_base.pb.h"
 #include "response/response_bool_int32.pb.h"
@@ -90,6 +98,12 @@
 #include "response/response_uint64_posture.pb.h"
 #include "response/response_uint64_pose_and_posture.pb.h"
 #include "response/response_uint64_jointlimit.pb.h"
+#include "response/response_reg_pr.pb.h"
+#include "response/response_reg_mr.pb.h"
+#include "response/response_reg_hr.pb.h"
+#include "response/response_reg_sr.pb.h"
+#include "response/response_reg_r.pb.h"
+#include "response/response_reg_base_summary.pb.h"
 
 #include "event/event_base.pb.h"
 

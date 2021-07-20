@@ -437,6 +437,11 @@ void ServoCommBase::processCtrlPdoBufferMode(uint8_t* pdo_data_ptr, int32_t expe
     pushCircleBufferType1(comm_ptr_->ctrl_pdo_ptr, pdo_data_ptr, *actual_element_number_ptr);
 }
 
+void ServoCommBase::clearCtrlPdoBuffer()
+{
+    clearCircleBufferByFrom(comm_ptr_->ctrl_pdo_ptr);
+}
+
 ServoSm_e ServoCommBase::getServoState(ServoState_u& state_word)
 {
     if(state_word.bit.ready_to_switch_on == 0)  // XXXX XXX0

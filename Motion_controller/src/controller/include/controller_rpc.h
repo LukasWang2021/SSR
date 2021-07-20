@@ -22,6 +22,7 @@
 #include "motion_control.h"
 #include "tool_manager.h"
 #include "coordinate_manager.h"
+#include "reg_manager.h"
 
 /**
  * @brief user_space includes the user level implementation.
@@ -61,7 +62,7 @@ public:
         servo_comm_space::ServoCommBase* servo_comm_ptr[], axis_space::Axis* axis_ptr[AXIS_NUM],
         system_model_space::AxisModel_t* axis_model_ptr[AXIS_NUM], group_space::MotionControl* group_ptr[GROUP_NUM],
         base_space::FileManager* file_manager_ptr, hal_space::Io1000* io_dev_ptr,
-        fst_ctrl::ToolManager* tool_manager_ptr, fst_ctrl::CoordinateManager* coordinate_manager_ptr);
+        fst_ctrl::ToolManager* tool_manager_ptr, fst_ctrl::CoordinateManager* coordinate_manager_ptr, fst_ctrl::RegManager* reg_manager_ptr);
 
     /**
      * @brief Process the service request in case the rpc comes.
@@ -83,6 +84,7 @@ private:
     DeviceVersion device_version_;
     fst_ctrl::ToolManager* tool_manager_ptr_;
     fst_ctrl::CoordinateManager* coordinate_manager_ptr_;
+    fst_ctrl::RegManager* reg_manager_ptr_;
 
     group_space::MotionControl* group_ptr_[GROUP_NUM];
 
@@ -415,6 +417,21 @@ private:
     void handleRpc0x000051E9(void* request_data_ptr, void* response_data_ptr);
     //"/rpc/motion_control/axis_group/moveOfflineTrajectory"	
     void handleRpc0x0000C4D9(void* request_data_ptr, void* response_data_ptr);
+
+    //"/rpc/reg_manager/pr/addReg"	
+    void handleRpc0x000154E7(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/reg_manager/pr/deleteReg"	
+    void handleRpc0x00001097(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/reg_manager/pr/updateReg"	
+    void handleRpc0x00009EF7(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/reg_manager/pr/getReg"	
+    void handleRpc0x00017207(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/reg_manager/pr/moveReg"	
+    void handleRpc0x0000D7C7(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/reg_manager/pr/getChangedList"	
+    void handleRpc0x0000B454(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/reg_manager/pr/getValidList"	
+    void handleRpc0x00009354(void* request_data_ptr, void* response_data_ptr);
 
 
 };

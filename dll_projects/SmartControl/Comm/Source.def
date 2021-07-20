@@ -129,3 +129,8 @@ c_mcCalibrateAllZero @192
 c_mcSetStep @193
 c_mcGetPostureByJoint @194
 
+c_getPrRegValidList @210
+c_addPrReg @211
+c_setPrReg @212
+c_deletePrReg @213
+c_getPrReg @214

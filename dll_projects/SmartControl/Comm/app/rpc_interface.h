@@ -1061,6 +1061,25 @@ COMM_INTERFACE_API uint64_t c_mcGetPostureByJoint(int32_t group_index, double j1
 
 
 
+// rpc register
+COMM_INTERFACE_API uint64_t c_getPrRegValidList(int32_t start_id, int32_t max_list_size, char* valid_list_str);
+COMM_INTERFACE_API uint64_t c_addPrReg(int32_t id, char* name, char* comment, int32_t pos_type,
+	double j1, double j2, double j3, double j4, double j5, double j6, double j7, double j8, double j9,
+	int32_t p_left_right, int32_t p_back_front, int32_t p_up_down, int32_t p_wrist_flip,
+	int32_t group_id);
+COMM_INTERFACE_API uint64_t c_setPrReg(int32_t id, char* name, char* comment, int32_t pos_type,
+	double j1, double j2, double j3, double j4, double j5, double j6, double j7, double j8, double j9,
+	int32_t p_left_right, int32_t p_back_front, int32_t p_up_down, int32_t p_wrist_flip,
+	int32_t group_id);
+COMM_INTERFACE_API uint64_t c_deletePrReg(int32_t id);
+COMM_INTERFACE_API uint64_t c_getPrReg(int32_t id, char* name, char* comment, int32_t* pos_type,
+	double* j1, double* j2, double* j3, double* j4, double* j5, double* j6, double* j7, double* j8, double* j9,
+	int32_t* p_left_right, int32_t* p_back_front, int32_t* p_up_down, int32_t* p_wrist_flip,
+	int32_t* group_id);
+
+
+
+
 #ifdef __cplusplus
 }
 #endif

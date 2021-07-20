@@ -137,16 +137,25 @@ ErrorCode Controller::init()
             return ret;
         }
     }
-    if(SUCCESS != tool_manager_.init())
+    error_code = tool_manager_.init();
+    if(SUCCESS != error_code)
     {
         LogProducer::error("main", "Controller tool manager initialization failed");
         return error_code;
     }
-    if(SUCCESS != coordinate_manager_.init())
+    error_code = coordinate_manager_.init();
+    if(SUCCESS != error_code)
     {
         LogProducer::error("main", "Controller coord manager initialization failed");
         return error_code;
     }
+    error_code = reg_manager_.init();
+    if(SUCCESS != error_code)
+    {
+        LogProducer::error("main", "Controller reg manager initialization failed");
+        return error_code;
+    }
+
     //add axis to group according config.xml
     for (unsigned int i = 0; i < group_config_.size(); ++i)
     {
@@ -185,7 +194,7 @@ ErrorCode Controller::init()
     }
 
 	publish_.init(&tp_comm_, cpu_comm_ptr_, axis_ptr_, group_ptr_, io_digital_dev_ptr_);
-	rpc_.init(&tp_comm_, &publish_, cpu_comm_ptr_, servo_comm_ptr_, axis_ptr_, axis_model_ptr_, group_ptr_, &file_manager_, io_digital_dev_ptr_, &tool_manager_, &coordinate_manager_);
+	rpc_.init(&tp_comm_, &publish_, cpu_comm_ptr_, servo_comm_ptr_, axis_ptr_, axis_model_ptr_, group_ptr_, &file_manager_, io_digital_dev_ptr_, &tool_manager_, &coordinate_manager_, &reg_manager_);
 
     if(!routine_thread_.run(&controllerRoutineThreadFunc, this, config_ptr_->routine_thread_priority_))
     {

@@ -167,6 +167,13 @@ void ControllerRpc::initRpcTable()
     rpc_service =	{	"/rpc/motion_control/axis_group/PrepareOfflineTrajectory",	0x000051E9,	&ControllerRpc::handleRpc0x000051E9	};	rpc_table_.push_back(rpc_service);
     rpc_service =	{	"/rpc/motion_control/axis_group/moveOfflineTrajectory",	0x0000C4D9,	&ControllerRpc::handleRpc0x0000C4D9	};	rpc_table_.push_back(rpc_service);
 
+    rpc_service =	{	"/rpc/reg_manager/pr/addReg",	0x000154E7,	&ControllerRpc::handleRpc0x000154E7	};	rpc_table_.push_back(rpc_service);
+    rpc_service =	{	"/rpc/reg_manager/pr/deleteReg",	0x00001097,	&ControllerRpc::handleRpc0x00001097	};	rpc_table_.push_back(rpc_service);
+    rpc_service =	{	"/rpc/reg_manager/pr/updateReg",	0x00009EF7,	&ControllerRpc::handleRpc0x00009EF7	};	rpc_table_.push_back(rpc_service);
+    rpc_service =	{	"/rpc/reg_manager/pr/getReg",	0x00017207,	&ControllerRpc::handleRpc0x00017207	};	rpc_table_.push_back(rpc_service);
+    rpc_service =	{	"/rpc/reg_manager/pr/moveReg",	0x0000D7C7,	&ControllerRpc::handleRpc0x0000D7C7	};	rpc_table_.push_back(rpc_service);
+    rpc_service =	{	"/rpc/reg_manager/pr/getChangedList",	0x0000B454,	&ControllerRpc::handleRpc0x0000B454	};	rpc_table_.push_back(rpc_service);
+    rpc_service =	{	"/rpc/reg_manager/pr/getValidList",	0x00009354,	&ControllerRpc::handleRpc0x00009354	};	rpc_table_.push_back(rpc_service);
 
 }
 

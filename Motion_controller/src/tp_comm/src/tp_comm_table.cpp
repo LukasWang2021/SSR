@@ -167,6 +167,13 @@ void TpComm::initRpcTable()
     rpc_service =	{	"/rpc/motion_control/axis_group/PrepareOfflineTrajectory",	0x000051E9,	"RequestMessageType.Void",	"ResponseMessageType.Uint64",	&TpComm::handleRequest0x000051E9,	&TpComm::handleResponse0x000051E9,	Comm_Authority_TP_SIMMULATOR,	};	 rpc_table_.push_back(rpc_service);
     rpc_service =	{	"/rpc/motion_control/axis_group/moveOfflineTrajectory",	0x0000C4D9,	"RequestMessageType.Void",	"ResponseMessageType.Uint64",	&TpComm::handleRequest0x0000C4D9,	&TpComm::handleResponse0x0000C4D9,	Comm_Authority_TP_SIMMULATOR,	};	 rpc_table_.push_back(rpc_service);
 
+    rpc_service =	{	"/rpc/reg_manager/pr/addReg",	0x000154E7,	"RequestMessageType.PrRegData",	"ResponseMessageType.Uint64",	&TpComm::handleRequest0x000154E7,	&TpComm::handleResponse0x000154E7,	Comm_Authority_TP_SIMMULATOR,	};	 rpc_table_.push_back(rpc_service);
+    rpc_service =	{	"/rpc/reg_manager/pr/deleteReg",	0x00001097,	"RequestMessageType.Int32",	"ResponseMessageType.Uint64",	&TpComm::handleRequest0x00001097,	&TpComm::handleResponse0x00001097,	Comm_Authority_TP_SIMMULATOR,	};	 rpc_table_.push_back(rpc_service);
+    rpc_service =	{	"/rpc/reg_manager/pr/updateReg",	0x00009EF7,	"RequestMessageType.PrRegData",	"ResponseMessageType.Uint64",	&TpComm::handleRequest0x00009EF7,	&TpComm::handleResponse0x00009EF7,	Comm_Authority_TP_SIMMULATOR,	};	 rpc_table_.push_back(rpc_service);
+    rpc_service =	{	"/rpc/reg_manager/pr/getReg",	0x00017207,	"RequestMessageType.Int32",	"ResponseMessageType.Uint64_PrRegData",	&TpComm::handleRequest0x00017207,	&TpComm::handleResponse0x00017207,	Comm_Authority_TP_SIMMULATOR,	};	 rpc_table_.push_back(rpc_service);
+    rpc_service =	{	"/rpc/reg_manager/pr/moveReg",	0x0000D7C7,	"RequestMessageType.Int32List(count = 2) ",	"ResponseMessageType.Uint64",	&TpComm::handleRequest0x0000D7C7,	&TpComm::handleResponse0x0000D7C7,	Comm_Authority_TP_SIMMULATOR,	};	 rpc_table_.push_back(rpc_service);
+    rpc_service =	{	"/rpc/reg_manager/pr/getChangedList",	0x0000B454,	"RequestMessageType.Int32List(count = 2) ",	"ResponseMessageType.Uint64_BaseRegSummaryList",	&TpComm::handleRequest0x0000B454,	&TpComm::handleResponse0x0000B454,	Comm_Authority_TP_SIMMULATOR,	};	 rpc_table_.push_back(rpc_service);
+    rpc_service =	{	"/rpc/reg_manager/pr/getValidList",	0x00009354,	"RequestMessageType.Int32List(count = 2) ",	"ResponseMessageType.Uint64_BaseRegSummaryList",	&TpComm::handleRequest0x00009354,	&TpComm::handleResponse0x00009354,	Comm_Authority_TP_SIMMULATOR,	};	 rpc_table_.push_back(rpc_service);
 
 }
 

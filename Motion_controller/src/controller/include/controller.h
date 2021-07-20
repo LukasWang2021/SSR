@@ -26,6 +26,7 @@
 #include "io_1000.h"
 #include "group.h"
 #include "motion_control.h"
+#include "reg_manager.h"
 
 /**
  * @brief user_space includes the user level implementation.
@@ -133,6 +134,7 @@ private:
     //group related
     fst_ctrl::ToolManager tool_manager_;
     fst_ctrl::CoordinateManager coordinate_manager_;
+    fst_ctrl::RegManager reg_manager_;
     system_model_space::GroupModel_t* group_model_ptr_[GROUP_NUM];
     group_space::MotionControl* group_ptr_[GROUP_NUM];
     std::vector<system_model_space::GroupConfig_t> group_config_;

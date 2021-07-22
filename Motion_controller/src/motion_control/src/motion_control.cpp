@@ -65,21 +65,21 @@ void MotionControl::ringPlannerTask(void)
         }
         else if (instruction.type == SET_UF)
         {
-            err = setUserFrame(instruction.current_uf);
+            err = setUserFrame(instruction.uf_id);
         }
         else if (instruction.type == SET_TF)
         {
-            err = setToolFrame(instruction.current_tf);
+            err = setToolFrame(instruction.tf_id);
         }
         else if (instruction.type == SET_OVC)
         {
-            err = group_ptr_->setGlobalVelRatio(instruction.current_ovc);
+            err = group_ptr_->setGlobalVelRatio(instruction.ovc);
         }
         else if (instruction.type == SET_OAC)
         {
-            err = group_ptr_->setGlobalAccRatio(instruction.current_oac);
+            err = group_ptr_->setGlobalAccRatio(instruction.oac);
         }
-        else if (instruction.type == STE_PAYLOAD)
+        else if (instruction.type == SET_PAYLOAD)
         {
             err = setPayload(instruction.payload_id);
         }
@@ -101,9 +101,9 @@ void MotionControl::ringPlannerTask(void)
 
             if (err_level >= 3 && err_level <= 7)
             {
-                LogProducer::error("mc","Call interpreter pause, line: %d", instruction.line_num);
-                (*instruction.interp_pause)(true);
-                (*instruction.set_line_num)(instruction.line_num);
+                // LogProducer::error("mc","Call interpreter pause, line: %d", instruction.line_num);
+                // (*instruction.interp_pause)(true);
+                // (*instruction.set_line_num)(instruction.line_num);
             }
             
             ErrorQueue::instance().push(err);

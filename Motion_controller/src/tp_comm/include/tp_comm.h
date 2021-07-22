@@ -554,6 +554,20 @@ private:
     /********rpc/reg_manager/pr/getValidList, RequestMessageType_Int32List(count = 2) **********/	
     void handleRequest0x00009354(int recv_bytes);
 
+    /********rpc/interpreter/start, RequestMessageType_String**********/	
+    void handleRequest0x00006154(int recv_bytes);
+    /********rpc/interpreter/pause, RequestMessageType_Int32**********/	
+    void handleRequest0x0000BA55(int recv_bytes);
+    /********rpc/interpreter/resume, RequestMessageType_Int32**********/	
+    void handleRequest0x0000CF55(int recv_bytes);
+    /********rpc/interpreter/abort, RequestMessageType_Int32**********/	
+    void handleRequest0x000086F4(int recv_bytes);
+    /********rpc/interpreter/forward, RequestMessageType_Int32**********/	
+    void handleRequest0x0000D974(int recv_bytes);
+    /********rpc/interpreter/backward, RequestMessageType_Int32**********/	
+    void handleRequest0x00008E74(int recv_bytes);
+    /********rpc/interpreter/jump, RequestMessageType_Int32**********/	
+    void handleRequest0x00015930(int recv_bytes);
 
 
 /* request end */
@@ -886,7 +900,21 @@ private:
     /********rpc/reg_manager/pr/getValidList, ResponseMessageType_Uint64_BaseRegSummaryList**********/	
     void handleResponse0x00009354(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
 
-    
+    /********rpc/interpreter/start, ResponseMessageType_Uint64**********/	
+    void handleResponse0x00006154(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/interpreter/pause, ResponseMessageType_Uint64**********/	
+    void handleResponse0x0000BA55(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/interpreter/resume, ResponseMessageType_Uint64**********/	
+    void handleResponse0x0000CF55(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/interpreter/abort, ResponseMessageType_Uint64**********/	
+    void handleResponse0x000086F4(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/interpreter/forward, ResponseMessageType_Uint64**********/	
+    void handleResponse0x0000D974(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/interpreter/backward, ResponseMessageType_Uint64**********/	
+    void handleResponse0x00008E74(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/interpreter/jump, ResponseMessageType_Uint64**********/	
+    void handleResponse0x00015930(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+
     /********publish/axis/feedback, MessageType_AxisFeedbackList(count=14)**********/    
     void handlePublishElement0x0001715B(Comm_Publish& package, int element_index, TpPublishElement& list_element);
     /********publish/servo1001/servo/feedback, MessageType_Servo100servoFeedbackList(count=14)**********/    

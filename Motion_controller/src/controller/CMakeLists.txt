@@ -25,6 +25,7 @@ include_directories(
 	../common
 	../yaml_help/include
 	../xml_help/include
+    ../sem_help/include
 	../thread_help/include 
 	../core_comm/include
 	../servo_comm/include
@@ -54,6 +55,7 @@ include_directories(
     ../tool_manager/include
     ../trajectory_planner/include
     ../motion_control/include
+    ../embed_python/include
     ${PROJECT_BINARY_DIR}
 	${rtm_INCLUDE_DIRS}
 )
@@ -70,6 +72,7 @@ target_link_libraries(controller
 	${rtm_LIBRARIES}
 	yaml_help
 	xml_help
+    sem_help
 	thread_help
 	core_comm_system
 	servo_comm
@@ -97,6 +100,7 @@ target_link_libraries(controller
     coordinate_manager
     trajectory_planner
     motion_control
+    embed_python
 )
 install(FILES ./config/controller.yaml 
     DESTINATION ${CONFIG_FILE_OUTPUT_PATH}/component/

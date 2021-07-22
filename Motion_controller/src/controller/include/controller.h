@@ -27,6 +27,7 @@
 #include "group.h"
 #include "motion_control.h"
 #include "reg_manager.h"
+#include "interpreter_control.h"
 
 /**
  * @brief user_space includes the user level implementation.

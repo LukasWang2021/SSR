@@ -27,41 +27,28 @@ typedef enum _InstType
     SET_TF,
     SET_OVC,
     SET_OAC,
-    STE_PAYLOAD,
+    SET_PAYLOAD,
     END_PROG,
 }InstType;
 
 typedef void (*PauseCallBack_fp)(bool);
 typedef void (*SetLineNumCallBack_fp)(int32_t);
-//typedef struct
+
 struct Instruction
 {
-
-    char            line[512];
-
-    int             line_num;
-
-    InstType        type;
-    group_space::UserOpMode user_op_mode;
-
-    MotionTarget    target;
-    int  loop_cnt;
-
-	int  current_uf ;
-	int  current_tf ;
-	double  current_ovc ;
-	double  current_oac ;
-    int payload_id;
-    bool is_additional;
-    int add_num;
-    // motion control can tell interpreter whether the command is failed or success
+    InstType type;
+    UserOpMode user_op_mode;
+    union
+    {
+        int uf_id;
+        int tf_id;
+        int payload_id;
+        double ovc;
+        double oac;
+        MotionTarget target;
+    };
     PauseCallBack_fp interp_pause;
     SetLineNumCallBack_fp set_line_num;
-    char additional[0]; //malloc other memory
-
-    //add some other additional statement
-    //.....
-    //.....
 };
 
 enum AxisIndex

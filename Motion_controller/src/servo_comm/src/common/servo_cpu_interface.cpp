@@ -26,6 +26,7 @@ ServoCpuComm_t* createServoCpuCommByController(int32_t controller_id, int32_t se
     comm_ptr->to = servo_id;
     comm_ptr->comm_reg_ptr = NULL;
     comm_ptr->sampling_buffer_ptr = NULL;
+    comm_ptr->param_reg_ptr = NULL;
     return comm_ptr;
 }
 
@@ -47,6 +48,17 @@ bool initServoCpuCommByController(ServoCpuComm_t* comm_ptr,
             && from_block_ptr[i].application_id == SERVO_CPU_COMM_APP_ID_COMM_REG)
         {
             comm_ptr->comm_reg_ptr = &from_block_ptr[i];
+            continue;
+        }        
+    }
+
+    for(size_t i = 0; i < from_block_number; ++i)
+    {
+        if(from_block_ptr[i].from == comm_ptr->from
+            && from_block_ptr[i].to == comm_ptr->to
+            && from_block_ptr[i].application_id == SERVO_CPU_COMM_APP_ID_PARAM_REG)
+        {
+            comm_ptr->param_reg_ptr = &from_block_ptr[i];
             continue;
         }        
     }
@@ -135,6 +147,7 @@ ServoCpuComm_t* createServoCpuCommByServo(int32_t servo_id)
     comm_ptr->to = -1;  // don't care
     comm_ptr->comm_reg_ptr = NULL;
     comm_ptr->sampling_buffer_ptr = NULL;
+    comm_ptr->param_reg_ptr = NULL;
     return comm_ptr;
 }
 
@@ -167,9 +180,20 @@ bool initServoCpuCommByServo(ServoCpuComm_t* comm_ptr,
             continue;
         }                       
     }
+
+    for(size_t i = 0; i < to_block_number; ++i)
+    {
+        if(to_block_ptr[i].to == comm_ptr->from
+            && to_block_ptr[i].application_id == SERVO_CPU_COMM_APP_ID_PARAM_REG)
+        {
+            comm_ptr->param_reg_ptr = &to_block_ptr[i];
+            continue;
+        }                       
+    }
      
     if(comm_ptr->comm_reg_ptr == NULL
-        || comm_ptr->sampling_buffer_ptr == NULL)     
+        || comm_ptr->sampling_buffer_ptr == NULL
+        || comm_ptr->param_reg_ptr == NULL)     
     {
         return false;
     }
@@ -252,6 +276,23 @@ uint32_t getServoCpuCommControlMode(ServoCpuComm_t* comm_ptr)
     uint32_t control_mode;
     getCommReg1ControlMode(comm_ptr->comm_reg_ptr, &control_mode);
     return control_mode;
+}
+
+bool setServoCpuCommForceControlUpdateFlag(ServoCpuComm_t* comm_ptr, uint32_t value)
+{
+    return setCommReg2UpdateFlag(comm_ptr->param_reg_ptr, value);
+}
+bool getServoCpuCommForceControlUpdateFlag(ServoCpuComm_t* comm_ptr, uint32_t* value_ptr)
+{
+    return getCommReg2UpdateFlag(comm_ptr->param_reg_ptr, value_ptr);
+}
+bool setServoCpuCommForceControlParameters(ServoCpuComm_t* comm_ptr, uint8_t* data_ptr, uint32_t data_byte_size)
+{
+    return setCommReg2Parameters(comm_ptr->param_reg_ptr, data_ptr, data_byte_size);
+}
+bool getServoCpuCommForceControlParameters(ServoCpuComm_t* comm_ptr, uint8_t* data_ptr, uint32_t* data_byte_size_ptr)
+{
+    return getCommReg2Parameters(comm_ptr->param_reg_ptr, data_ptr, data_byte_size_ptr);
 }
 
 void freeServoCpuComm(ServoCpuComm_t* comm_ptr)

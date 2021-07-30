@@ -25,6 +25,7 @@ typedef struct
 {
 	int32_t comm_reg_id;           /**< Application ID of the register channel of the servo cpu.*/ 
 	int32_t sampling_buffer_id;    /**< Application ID of the sampling buffer channel of the servo cpu.*/
+    int32_t param_reg_id;          /**< Application ID of the external parameter channel of the servo cpu.*/
 }ServoCpuCommInfo_t;
 
 typedef enum
@@ -163,6 +164,20 @@ public:
      */  
     uint32_t getServoControlMode();
 
+    /**
+     * @brief Download the external parameter.
+     * @param [in] data_ptr The parameters.
+     * @return bool
+     */
+    bool setForceControlParameters(const CommRegForceControlParam_t* data_ptr);
+
+    /**
+     * @brief Read the external parameter.
+     * @param [out] data_ptr The output values of parameters.
+     * @return bool
+     */
+
+    bool getForceControlParameters(CommRegForceControlParam_t* data_ptr);
 
 private:
     ServoCpuCommBase();

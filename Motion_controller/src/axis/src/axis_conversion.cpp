@@ -134,7 +134,7 @@ bool AxisConversion::computerFactor(void)
 
         // velocity * ratio 
         factor_vel_a2m_ = ((double)gear_ratio_numerator_ * pulse_per_unit_)/ (gear_ratio_denominator_*2*M_PI);
-        factor_acc_a2m_ = (double)gear_ratio_numerator_ / gear_ratio_denominator_;
+        factor_acc_a2m_ = ((double)gear_ratio_numerator_ * pulse_per_unit_)/ gear_ratio_denominator_;
         factor_dec_a2m_ = (double)gear_ratio_numerator_ / gear_ratio_denominator_;
         factor_jerk_a2m_ = (double)gear_ratio_numerator_ / gear_ratio_denominator_;
     }   

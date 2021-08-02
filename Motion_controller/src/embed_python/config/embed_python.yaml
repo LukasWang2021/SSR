@@ -1,0 +1,5 @@
+# PYTHONPATH import lib path
+# module path
+program_path: /root/robot_data/python/
+module_path: ':/root/install/lib/module/:/root/install/lib/module/packages/:'
+interp_thread_priority: 50

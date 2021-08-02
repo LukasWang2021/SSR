@@ -177,6 +177,13 @@ void TpComm::initRpcTable()
     rpc_service =	{	"/rpc/reg_manager/pr/getChangedList",	0x0000B454,	"RequestMessageType.Int32List(count = 2) ",	"ResponseMessageType.Uint64_BaseRegSummaryList",	&TpComm::handleRequest0x0000B454,	&TpComm::handleResponse0x0000B454,	Comm_Authority_TP_SIMMULATOR,	};	 rpc_table_.push_back(rpc_service);
     rpc_service =	{	"/rpc/reg_manager/pr/getValidList",	0x00009354,	"RequestMessageType.Int32List(count = 2) ",	"ResponseMessageType.Uint64_BaseRegSummaryList",	&TpComm::handleRequest0x00009354,	&TpComm::handleResponse0x00009354,	Comm_Authority_TP_SIMMULATOR,	};	 rpc_table_.push_back(rpc_service);
 
+	rpc_service =	{	"/rpc/interpreter/start",	0x00006154,	"RequestMessageType.String",	"ResponseMessageType.Uint64",	&TpComm::handleRequest0x00006154,	&TpComm::handleResponse0x00006154,	Comm_Authority_TP_SIMMULATOR,	};	 rpc_table_.push_back(rpc_service);
+	rpc_service =	{	"/rpc/interpreter/pause",	0x0000BA55,	"RequestMessageType.Int32",	"ResponseMessageType.Uint64",	&TpComm::handleRequest0x0000BA55,	&TpComm::handleResponse0x0000BA55,	Comm_Authority_TP_SIMMULATOR,	};	 rpc_table_.push_back(rpc_service);
+	rpc_service =	{	"/rpc/interpreter/resume",	0x0000CF55,	"RequestMessageType.Int32",	"ResponseMessageType.Uint64",	&TpComm::handleRequest0x0000CF55,	&TpComm::handleResponse0x0000CF55,	Comm_Authority_TP_SIMMULATOR,	};	 rpc_table_.push_back(rpc_service);
+	rpc_service =	{	"/rpc/interpreter/abort",	0x000086F4,	"RequestMessageType.Int32",	"ResponseMessageType.Uint64",	&TpComm::handleRequest0x000086F4,	&TpComm::handleResponse0x000086F4,	Comm_Authority_TP_SIMMULATOR,	};	 rpc_table_.push_back(rpc_service);
+	rpc_service =	{	"/rpc/interpreter/forward",	0x0000D974,	"RequestMessageType.Int32",	"ResponseMessageType.Uint64",	&TpComm::handleRequest0x0000D974,	&TpComm::handleResponse0x0000D974,	Comm_Authority_TP_SIMMULATOR,	};	 rpc_table_.push_back(rpc_service);
+	rpc_service =	{	"/rpc/interpreter/backward",	0x00008E74,	"RequestMessageType.Int32",	"ResponseMessageType.Uint64",	&TpComm::handleRequest0x00008E74,	&TpComm::handleResponse0x00008E74,	Comm_Authority_TP_SIMMULATOR,	};	 rpc_table_.push_back(rpc_service);
+	rpc_service =	{	"/rpc/interpreter/jump",	0x00015930,	"RequestMessageType.Int32",	"ResponseMessageType.Uint64",	&TpComm::handleRequest0x00015930,	&TpComm::handleResponse0x00015930,	Comm_Authority_TP_SIMMULATOR,	};	 rpc_table_.push_back(rpc_service);
 }
 
 

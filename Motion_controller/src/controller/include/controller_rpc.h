@@ -440,6 +440,20 @@ private:
     //"/rpc/reg_manager/pr/getValidList"	
     void handleRpc0x00009354(void* request_data_ptr, void* response_data_ptr);
 
+	//"/rpc/interpreter/start"	
+    void handleRpc0x00006154(void* request_data_ptr, void* response_data_ptr);	
+	//"/rpc/interpreter/pause"	
+    void handleRpc0x0000BA55(void* request_data_ptr, void* response_data_ptr);	
+	//"/rpc/interpreter/resume"	
+    void handleRpc0x0000CF55(void* request_data_ptr, void* response_data_ptr);	
+	//"/rpc/interpreter/abort"	
+    void handleRpc0x000086F4(void* request_data_ptr, void* response_data_ptr);	
+	//"/rpc/interpreter/forward"	
+    void handleRpc0x0000D974(void* request_data_ptr, void* response_data_ptr);	
+	//"/rpc/interpreter/backward"	
+    void handleRpc0x00008E74(void* request_data_ptr, void* response_data_ptr);	
+	//"/rpc/interpreter/jump"	
+    void handleRpc0x00015930(void* request_data_ptr, void* response_data_ptr);	
 
 };
 

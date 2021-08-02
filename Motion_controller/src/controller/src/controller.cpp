@@ -203,7 +203,19 @@ ErrorCode Controller::init()
 
 	publish_.init(&tp_comm_, cpu_comm_ptr_, axis_ptr_, group_ptr_, io_digital_dev_ptr_);
 	rpc_.init(&tp_comm_, &publish_, cpu_comm_ptr_, servo_comm_ptr_, axis_ptr_, axis_model_ptr_, group_ptr_, &file_manager_, io_digital_dev_ptr_, &tool_manager_, &coordinate_manager_, &reg_manager_, force_model_ptr_);
-
+    
+    if(!InterpCtrl::instance().setApi(group_ptr_) ||
+       !InterpCtrl::instance().init())
+    {
+        LogProducer::error("main", "Controller interpreter initialization failed");
+        return CONTROLLER_INIT_FAILED;
+    }
+    else if(!InterpCtrl::instance().run())
+    {
+        LogProducer::error("main", "Controller interpreter start failed");
+        return CONTROLLER_INIT_FAILED;
+    }
+    
     if(!routine_thread_.run(&controllerRoutineThreadFunc, this, config_ptr_->routine_thread_priority_))
     {
         return CONTROLLER_CREATE_ROUTINE_THREAD_FAILED;

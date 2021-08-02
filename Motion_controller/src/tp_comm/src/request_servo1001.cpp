@@ -932,3 +932,48 @@ void TpComm::handleRequest0x0000FE5F(int recv_bytes)
         recv_bytes, RequestMessageType_Int32_fields, -1);
 }
 
+/********rpc/servo1001/cpu/setForceControlParameters, RequestMessageType_Int32_Int32List(count=512)**********/	
+void TpComm::handleRequest0x00005F53(int recv_bytes)
+{
+     RequestMessageType_Int32_Int32List* request_data_ptr = new RequestMessageType_Int32_Int32List;
+    if(request_data_ptr == NULL)
+    {
+        ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
+        LogProducer::error("rpc", "rpc/servo1001/cpu/setForceControlParameters: can't allocate memory for request_data");
+        return;
+    }
+    ResponseMessageType_Uint64* response_data_ptr = new ResponseMessageType_Uint64;
+    if(response_data_ptr == NULL)
+    {
+        ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
+        LogProducer::error("rpc", "rpc/servo1001/cpu/setForceControlParameters: can't allocate memory for response_data");
+        delete request_data_ptr;
+        return;
+    }
+	
+    handleRequestPackage(0x00005F53, (void*)request_data_ptr, (void*)response_data_ptr, 
+        recv_bytes, RequestMessageType_Int32_Int32List_fields, -1);
+}
+/********rpc/servo1001/cpu/getForceControlParameters, RequestMessageType_Int32**********/
+void TpComm::handleRequest0x00008203(int recv_bytes)
+{
+    RequestMessageType_Int32* request_data_ptr = new RequestMessageType_Int32;
+    if(request_data_ptr == NULL)
+    {
+        ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
+        LogProducer::error("rpc", "rpc/servo1001/cpu/getForceControlParameters: can't allocate memory for request_data");
+        return;
+    }
+    ResponseMessageType_Uint64_Int32List* response_data_ptr = new ResponseMessageType_Uint64_Int32List;
+    if(response_data_ptr == NULL)
+    {
+        ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
+        LogProducer::error("rpc", "rpc/servo1001/cpu/getForceControlParameters: can't allocate memory for response_data");
+        delete request_data_ptr;
+        return;
+    }
+	
+    handleRequestPackage(0x00008203, (void*)request_data_ptr, (void*)response_data_ptr, 
+        recv_bytes, RequestMessageType_Int32_fields, -1);
+}
+

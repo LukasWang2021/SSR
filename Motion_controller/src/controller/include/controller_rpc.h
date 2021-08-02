@@ -291,6 +291,11 @@ private:
     void handleRpc0x00015621(void* request_data_ptr, void* response_data_ptr);
     //"/rpc/servo1001/cpu/getServoCpuCommInfo"	
     void handleRpc0x0000FE5F(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/servo1001/cpu/setForceControlParameters"	
+    void handleRpc0x00005F53(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/servo1001/cpu/getForceControlParameters"	
+    void handleRpc0x00008203(void* request_data_ptr, void* response_data_ptr);
+
 
     //"/rpc/io/readDI"	
     void handleRpc0x000185A9(void* request_data_ptr, void* response_data_ptr);

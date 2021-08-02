@@ -101,6 +101,8 @@ void ControllerRpc::initRpcTable()
     rpc_service =	{	"/rpc/servo1001/cpu/activateSamplingConfiguration",	0x0000939E,	&ControllerRpc::handleRpc0x0000939E	};	rpc_table_.push_back(rpc_service);
     rpc_service =	{	"/rpc/servo1001/cpu/saveSamplingBufferData",	0x00015621,	&ControllerRpc::handleRpc0x00015621	};	rpc_table_.push_back(rpc_service);
     rpc_service =	{	"/rpc/servo1001/cpu/getServoCpuCommInfo",	0x0000FE5F,	&ControllerRpc::handleRpc0x0000FE5F	};	rpc_table_.push_back(rpc_service);
+    rpc_service =	{	"/rpc/servo1001/cpu/setForceControlParameters",	0x00005F53,	&ControllerRpc::handleRpc0x00005F53	};	rpc_table_.push_back(rpc_service);
+    rpc_service =	{	"/rpc/servo1001/cpu/getForceControlParameters",	0x00008203,	&ControllerRpc::handleRpc0x00008203	};	rpc_table_.push_back(rpc_service);
 
     rpc_service =	{	"/rpc/io/readDI",	0x000185A9,	&ControllerRpc::handleRpc0x000185A9	};	rpc_table_.push_back(rpc_service);
     rpc_service =	{	"/rpc/io/readDO",	0x000185AF,	&ControllerRpc::handleRpc0x000185AF	};	rpc_table_.push_back(rpc_service);

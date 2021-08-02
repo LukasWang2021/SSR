@@ -411,7 +411,11 @@ private:
     void handleRequest0x0000FE5F(int recv_bytes);
     /********rpc/servo1001/servo/getServoDefinedInfo, RequestMessageType_Int32_Int32List(count=9)**********/	
     void handleRequest0x0000C87F(int recv_bytes);	
-    
+    /********rpc/servo1001/cpu/setForceControlParameters, RequestMessageType_Int32_Int32List(count=512)**********/	
+    void handleRequest0x00005F53(int recv_bytes);
+    /********rpc/servo1001/cpu/getForceControlParameters, RequestMessageType_Int32**********/	
+    void handleRequest0x00008203(int recv_bytes);
+
     /********rpc/io/readDI, RequestMessageType_Int32**********/	
     void handleRequest0x000185A9(int recv_bytes);
     /********rpc/io/readDO, RequestMessageType_Int32**********/	
@@ -742,6 +746,10 @@ private:
     void handleResponse0x0000FE5F(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);	
     /********rpc/servo1001/servo/getServoDefinedInfo, ResponseMessageType_Uint64_Int32List(count=9)**********/	
     void handleResponse0x0000C87F(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/servo1001/cpu/setForceControlParameters, ResponseMessageType_Uint64**********/	
+    void handleResponse0x00005F53(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/servo1001/cpu/getForceControlParameters, ResponseMessageType_Uint64_Int32List(count=512)**********/	
+    void handleResponse0x00008203(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
 
 
     /********rpc/io/readDI, ResponseMessageType_Uint64_Int32**********/	

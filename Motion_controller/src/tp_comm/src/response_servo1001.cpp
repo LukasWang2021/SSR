@@ -684,6 +684,37 @@ void TpComm::handleResponse0x0000FE5F(std::vector<TpRequestResponse>::iterator& 
         delete (ResponseMessageType_Uint64_Int32List*)task->response_data_ptr;
     }
 }
-
+/********rpc/servo1001/cpu/setForceControlParameters, ResponseMessageType_Uint64**********/	
+void TpComm::handleResponse0x00005F53(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size)
+{
+    if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_fields, task->response_data_ptr, send_buffer_size))
+    {
+        LogProducer::error("rpc", "handleResponse0x00005F53: failed to encode response package");
+    }
+    if(task->request_data_ptr != NULL)
+    {
+        delete (RequestMessageType_Int32_Int32List*)task->request_data_ptr;
+    }
+    if(task->response_data_ptr != NULL)
+    {
+        delete (ResponseMessageType_Uint64*)task->response_data_ptr;
+    }
+}
+/********rpc/servo1001/cpu/getForceControlParameters, ResponseMessageType_Uint64_Int32List(count=512)**********/
+void TpComm::handleResponse0x00008203(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size)
+{
+    if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_Int32List_fields, task->response_data_ptr, send_buffer_size))
+    {
+        LogProducer::error("rpc", "handleResponse0x00008203: failed to encode response package");
+    }
+    if(task->request_data_ptr != NULL)
+    {
+        delete (RequestMessageType_Int32*)task->request_data_ptr;
+    }
+    if(task->response_data_ptr != NULL)
+    {
+        delete (ResponseMessageType_Uint64_Int32List*)task->response_data_ptr;
+    }
+}
 
 

@@ -165,3 +165,11 @@ target_link_libraries(test_servo1001_cpu_getServoCpuCommInfo ${rtm_LIBRARIES} pb
 ######### test_servo1001_servo_getServoDefinedInfo #########
 add_executable(test_servo1001_servo_getServoDefinedInfo test_servo1001_servo_getServoDefinedInfo.cpp)
 target_link_libraries(test_servo1001_servo_getServoDefinedInfo ${rtm_LIBRARIES} pb tp_comm_test protos)
+
+######### test_servo1001_cpu_setForceControlParam #########
+add_executable(test_servo1001_cpu_setForceControlParam test_servo1001_cpu_setForceControlParam.cpp)
+target_link_libraries(test_servo1001_cpu_setForceControlParam ${rtm_LIBRARIES} pb tp_comm_test protos)
+
+######### test_servo1001_cpu_getForceControlParam #########
+add_executable(test_servo1001_cpu_getForceControlParam test_servo1001_cpu_getForceControlParam.cpp)
+target_link_libraries(test_servo1001_cpu_getForceControlParam ${rtm_LIBRARIES} pb tp_comm_test protos)

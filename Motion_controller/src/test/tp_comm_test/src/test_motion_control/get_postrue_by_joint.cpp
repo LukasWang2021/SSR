@@ -45,7 +45,7 @@ int main(int argc, char* argv[])
 
     RequestMessageType_Int32_DoubleList send_msg;
     send_msg.header.time_stamp = 122;
-    send_msg.property.authority = Comm_Authority_TP;
+    send_msg.property.authority = Comm_Authority_TP_SIMMULATOR;
     send_msg.data1.data = 0;
     send_msg.data2.data_count = 9;
     send_msg.data2.data[0] = atof(argv[1]);

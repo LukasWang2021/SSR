@@ -262,7 +262,7 @@ ErrorCode Calibrator::initCalibrator(size_t joint_num, BareCoreInterface *pcore)
         LogProducer::error("mc_calib","Fail to read coupling coefficient config file");
         return MC_LOAD_PARAM_FAILED;
     }
-
+*/
     // 加载零位配置文件，并检查数据
     // 检查无误后将数据下发到裸核，注意只有裸核处于DISABLE状态零位才能生效
     data.clear();
@@ -273,12 +273,12 @@ ErrorCode Calibrator::initCalibrator(size_t joint_num, BareCoreInterface *pcore)
         LogProducer::error("mc_calib","Loading offset param file(group_offset.yaml) failed");
         return MC_LOAD_PARAM_FAILED;
     }
-
+    int id = 0; 
     if (offset_param_.getParam("zero_offset/id", id) && offset_param_.getParam("zero_offset/data", data))
     {
         LogProducer::info("mc_calib","ID of offset: 0x%x", id);
         LogProducer::info("mc_calib","Send offset: %s", printDBLine(&data[0], buffer, LOG_TEXT_SIZE));
-        result = sendConfigData(id, data);
+        ErrorCode result = sendConfigData(id, data);
 
         if (result == SUCCESS)
         {
@@ -303,7 +303,7 @@ ErrorCode Calibrator::initCalibrator(size_t joint_num, BareCoreInterface *pcore)
         LogProducer::error("mc_calib","Fail to read zero offset config file");
         return MC_LOAD_PARAM_FAILED;
     }
-    */
+    
     return SUCCESS;
 }
 
@@ -434,27 +434,6 @@ ErrorCode Calibrator::checkOffset(CalibrateState &cali_stat, OffsetState (&offse
         }
     }
 
-    // bool limited = false;
-    // bool forbidden = false;
-
-    // // 综合各轴校验结果和零位错误屏蔽标志，给出允许运行标志
-    //         // 函数？？？
-    // for (size_t i = 0; i < joint_num_; i++)
-    // {
-    //     if (offset_mask_[i] == OFFSET_UNMASK)
-    //     {
-    //         if (state[i] != OFFSET_NORMAL /*&& state[i] != OFFSET_INVALID*/)
-    //         {
-    //             forbidden = true;
-    //         }
-    //     }
-    //     else
-    //     {
-    //         limited = true;
-    //     }
-    // }
-
-    // current_state_ = forbidden ? MOTION_FORBIDDEN : (limited ? MOTION_LIMITED : MOTION_NORMAL);
     checkCalibrateState();
     cali_stat = current_state_;
     memcpy(offset_stat, offset_stat_, sizeof(offset_stat));
@@ -577,18 +556,11 @@ ErrorCode Calibrator::calibrateOffset(const size_t *pindex, uint32_t length, dou
     ServoState servo_state;
     vector<double> cur_offset;
     uint32_t encoder_state[NUM_OF_JOINT];
-    vector<int> cur_encoder;
-    cur_encoder.resize(joint_num_);
 
-    if (!bare_core_ptr_->getLatestJoint(cur_joint, encoder_state, servo_state) || !bare_core_ptr_->getEncoder(cur_encoder) || getOffsetFromBareCore(cur_offset) != SUCCESS)
+    if (!bare_core_ptr_->getLatestJoint(cur_joint, encoder_state, servo_state) || getOffsetFromBareCore(cur_offset) != SUCCESS)
     {
         LogProducer::error("mc_calib","Fail to get current offset, joint or encoder state from Core1");
         return MC_COMMUNICATION_WITH_BARECORE_FAIL;
-    }
-
-    for (uint32_t i = 0; i < joint_num_; i++)
-    {
-        LogProducer::info("mc_calib","Encoder %d: roll is 0x%x, pulse is 0x%x", i, (cur_encoder[i] >> 16) & 0xFFFF, cur_encoder[i] & 0xFFFF);
     }
 
     for (uint32_t i = 0; i < joint_num_; i++)
@@ -659,7 +631,7 @@ ErrorCode Calibrator::updateOffset(uint32_t index, double offset)
 
     // 更新配置文件
     vector<double> data;
-    LogProducer::info("mc_calib","Update config file ...");
+    //LogProducer::info("mc_calib","Update config file ...");
 
     if (!offset_param_.getParam("zero_offset/data", data))
     {
@@ -679,22 +651,14 @@ ErrorCode Calibrator::updateOffset(uint32_t index, double offset)
     }
 
     // 更新裸核零位
-    LogProducer::info("mc_calib","Offset saved, update offset in core1 ...");
-    ErrorCode err = sendOffsetToBareCore();
+    //LogProducer::info("mc_calib","Offset saved, update offset in core1 ...");
+    ErrorCode err = bare_core_ptr_->setOffsetPositions(index, offset);
 
     if (err != SUCCESS)
     {
         LogProducer::error("mc_calib","Cannot update offset in core1, code = 0x%llx", err);
         return err;
     }
-
-    // 此处usleep为了等待裸核的零位生效，考虑是否有更好的实现方式
-    usleep(200 * 1000);
-    LogProducer::info("mc_calib","Core1 offset updated, update recorder ...");
-
-    // Joint cur_joint, old_joint;
-    // ServoState  state;
-    // uint32_t encoder_state[NUM_OF_JOINT];
 
     OffsetMask  offset_mask[NUM_OF_JOINT];
     OffsetState offset_stat[NUM_OF_JOINT];
@@ -745,7 +709,7 @@ ErrorCode Calibrator::updateOffset(uint32_t index, double offset)
     zero_offset_[index] = offset;
     offset_mask_[index] = OFFSET_UNMASK;
     offset_stat_[index] = OFFSET_NORMAL;
-    LogProducer::info("mc_calib","Success!");
+    LogProducer::info("mc_calib","updateOffset Success!");
     return SUCCESS;
 }
 
@@ -1080,283 +1044,16 @@ CalibrateState Calibrator::getCalibrateState(void)
     return current_state_;
 }
 
-//------------------------------------------------------------------------------
-// 方法：  isReferenceAvailable
-// 摘要：  获取快速标定是否可用的标志，如果之前标记过参考点，可通过快速标定接口进行标定；
-//------------------------------------------------------------------------------
-bool Calibrator::isReferenceAvailable(void)
-{
-    base_space::YamlHelp params;
-
-    if (params.loadParamFile(AXIS_GROUP_DIR"arm_group_offset_reference.yaml"))
-    {
-        bool is_available = false;
-
-        if (params.getParam("reference_available", is_available))
-        {
-            LogProducer::info("mc_calib","Reference point is %s", (is_available ? "available" : "inavailable"));
-            return is_available;
-        }
-        else
-        {
-            LogProducer::error("mc_calib","Fail to get item from config file");
-            return false;
-        }
-    }
-    else
-    {
-        LogProducer::error("mc_calib","Fail to load config file(arm_group_offset_reference.yaml)");
-        return false;
-    }
-}
-
-//------------------------------------------------------------------------------
-// 方法：  deleteReference
-// 摘要：  删除用于快速标定的记录参考点；
-//------------------------------------------------------------------------------
-ErrorCode Calibrator::deleteReference(void)
-{
-    LogProducer::info("mc_calib","Delete reference point.");
-    base_space::YamlHelp params;
-
-    if (params.loadParamFile(AXIS_GROUP_DIR"arm_group_offset_reference.yaml"))
-    {
-        bool is_available = false;
-
-        if (params.getParam("reference_available", is_available))
-        {
-            if (is_available)
-            {
-                is_available = false;
-
-                if (params.setParam("reference_available", is_available) && params.dumpParamFile(AXIS_GROUP_DIR"arm_group_offset_reference.yaml"))
-                {
-                    LogProducer::info("mc_calib","Inactive reference point success.");
-                    return SUCCESS;
-                }
-                else
-                {
-                    LogProducer::error("mc_calib","Error while modifying reference point");
-                    return MC_LOAD_PARAM_FAILED;
-                }
-            }
-            else
-            {
-                LogProducer::info("mc_calib","Reference point is inavailable, nothing to do.");
-                return SUCCESS;
-            }
-        }
-        else
-        {
-            LogProducer::error("mc_calib","Fail to get item from config file");
-            return MC_LOAD_PARAM_FAILED;
-        }
-    }
-    else
-    {
-        LogProducer::error("mc_calib","Fail to load config file(arm_group_offset_reference.yaml)");
-        return MC_LOAD_PARAM_FAILED;
-    }
-}
-
-//------------------------------------------------------------------------------
-// 方法：  saveReference
-// 摘要：  将当前位置记录为快速标定参考点，标定过参考点的机器人可通过快速标定对零位进行标定；
-//------------------------------------------------------------------------------
-ErrorCode Calibrator::saveReference(void)
-{
-    Joint joint;
-    ServoState state;
-    uint32_t encoder_state[NUM_OF_JOINT];
-    char buffer[LOG_TEXT_SIZE];
-
-    LogProducer::info("mc_calib","Save referenece point");
-    base_space::YamlHelp params;
-
-    if (!params.loadParamFile(AXIS_GROUP_DIR"arm_group_offset_reference.yaml"))
-    {
-        LogProducer::error("mc_calib","Error while load reference file(arm_group_offset_reference.yaml)");
-        return MC_LOAD_PARAM_FAILED;
-    }
-
-    if (!bare_core_ptr_->getLatestJoint(joint, encoder_state, state))
-    {
-        LogProducer::error("mc_calib","Fail to get current joint from bare core");
-        return MC_COMMUNICATION_WITH_BARECORE_FAIL;
-    }
-
-    vector<double> ref_joint(&joint[0], &joint[0] + joint_num_);
-    LogProducer::info("mc_calib","  joint:  %s", printDBLine(&ref_joint[0], buffer, LOG_TEXT_SIZE));
-
-    vector<double> ref_offset;
-    ErrorCode err = getOffsetFromBareCore(ref_offset);
-
-    if (err != SUCCESS)
-    {
-        LogProducer::error("mc_calib","Fail to get current offset from bare core, code = 0x%llx", err);
-        return err;
-    }
-
-    LogProducer::info("mc_calib","  offset: %s", printDBLine(&ref_offset[0], buffer, LOG_TEXT_SIZE));
-
-    vector<int> ref_encoder;
-    ref_encoder.resize(joint_num_);
-
-    if(!bare_core_ptr_->getEncoder(ref_encoder))
-    {
-        LogProducer::error("mc_calib","Fail to get current encoder from bare core");
-        return MC_COMMUNICATION_WITH_BARECORE_FAIL;
-    }
-
-    LogProducer::info("mc_calib","  encoder: %s", printDBLine(&ref_encoder[0], buffer, LOG_TEXT_SIZE));
-    bool valid = true;
-    if (!params.setParam("reference_joint", ref_joint) || !params.setParam("reference_offset", ref_offset) ||
-        !params.setParam("reference_encoder", ref_encoder) || !params.setParam("reference_available", valid) ||
-        !params.dumpParamFile(AXIS_GROUP_DIR"arm_group_offset_reference.yaml"))
-    {
-        LogProducer::error("mc_calib","Error while saving reference point");
-        return MC_SET_PARAM_FAILED;
-    }
-
-    LogProducer::info("mc_calib","Success.");
-    return SUCCESS;
-}
-
-//------------------------------------------------------------------------------
-// 方法：  fastCalibrate
-// 摘要：  快速标定所有轴，注意标定完成后需要调用saveOffset进行保存；
-//------------------------------------------------------------------------------
-ErrorCode Calibrator::fastCalibrate(void)
-{
-    LogProducer::info("mc_calib","Easy calibrate of all joints.");
-    size_t indexs[NUM_OF_JOINT] = {0, 1, 2, 3, 4, 5, 6, 7, 8};
-    return fastCalibrate(indexs, joint_num_);
-}
-
-//------------------------------------------------------------------------------
-// 方法：  fastCalibrate
-// 摘要：  对某个轴进行快速标定，注意标定完成后需要调用saveOffset进行保存；
-//------------------------------------------------------------------------------
-ErrorCode Calibrator::fastCalibrate(size_t index)
-{
-    LogProducer::info("mc_calib","Fsst calibrate index = %d", index);
-    return fastCalibrate(&index, 1);
-}
-
-//------------------------------------------------------------------------------
-// 方法：  fastCalibrate
-// 摘要：  对某几个轴进行快速标定，注意标定完成后需要调用saveOffset进行保存；
-//------------------------------------------------------------------------------
-ErrorCode Calibrator::fastCalibrate(const size_t *pindex, size_t length)
-{
-    LogProducer::info("mc_calib","Fast calibrate offset");
-    return INVALID_PARAMETER;//NOT USED.
-
-    for (size_t i = 0; i < length; i++)
-    {
-        if (pindex[i] < joint_num_)
-        {
-            LogProducer::info("mc_calib","  joint index = %d", pindex[i]);
-        }
-        else
-        {
-            LogProducer::error("mc_calib","  joint index = %d, index out of range", pindex[i]);
-            return INVALID_AXIS_ID;
-        }
-    }
-
-    vector<int>     ref_encoder;
-    vector<double>  ref_offset;
-    vector<double>  gear_ratio;
-
-    base_space::YamlHelp params;
-    base_space::YamlHelp jtac;
-
-    if (params.loadParamFile(AXIS_GROUP_DIR"arm_group_offset_reference.yaml") && 
-        jtac.loadParamFile("share/configuration/machine/jtac.yaml"))
-    {
-        if (params.getParam("reference_offset", ref_offset) &&
-            params.getParam("reference_encoder", ref_encoder) &&
-            jtac.getParam("gear_ratio/data", gear_ratio))
-        {
-            if (ref_offset.size() == joint_num_ && ref_encoder.size() == joint_num_ && gear_ratio.size() == joint_num_)
-            {
-                char buffer[LOG_TEXT_SIZE];
-                vector<int> cur_encoder; cur_encoder.resize(joint_num_);
-
-                LogProducer::info("mc_calib","Reference offset: %s", printDBLine(&ref_offset[0], buffer, LOG_TEXT_SIZE));
-                LogProducer::info("mc_calib","Reference encoder: %s", printDBLine(&ref_encoder[0], buffer, LOG_TEXT_SIZE));
-                LogProducer::info("mc_calib","Gear ratio: %s", printDBLine(&gear_ratio[0], buffer, LOG_TEXT_SIZE));
-
-                if (bare_core_ptr_->getEncoder(cur_encoder))
-                {
-                    size_t index;
-                    LogProducer::info("mc_calib","Current encoder: %s", printDBLine(&cur_encoder[0], buffer, LOG_TEXT_SIZE));
-
-                    Joint cur_joint;
-                    ServoState  state;
-                    uint32_t encoder_state[NUM_OF_JOINT];
-                    if (!bare_core_ptr_->getLatestJoint(cur_joint, encoder_state, state))
-                    {
-                        LogProducer::error("mc_calib","Fail to get current joint from core1.");
-                        return MC_COMMUNICATION_WITH_BARECORE_FAIL;
-                    }
-
-                    for (size_t i = 0; i < length; i++)
-                    {
-                        index = pindex[i];
-                        if(((encoder_state[index]>>4)&1) != 0)
-                        {
-                            LogProducer::info("mc_calib","encoder communication unnormal,axis: %d, do not fast calculate & need save Offset",index+1);
-                            //offset_need_save_[index] = UNNEED_SAVE;
-                        }
-                        else
-                        {
-                            zero_offset_[index] = calculateOffsetEasy(gear_ratio[index], ref_offset[index], ref_encoder[index], cur_encoder[index]);
-                            //offset_need_save_[index] = NEED_SAVE;
-                        }
-                    }
-
-                    LogProducer::info("mc_calib","New offset: %s", printDBLine(zero_offset_, buffer, LOG_TEXT_SIZE));
-                    return SUCCESS;
-                }
-                else
-                {
-                    LogProducer::error("mc_calib","Fail to get current encoders.");
-                    return MC_COMMUNICATION_WITH_BARECORE_FAIL;
-                }
-            }
-            else
-            {
-                if (ref_offset.size() != joint_num_)
-                    LogProducer::error("mc_calib","Invalid array size of reference offset, size is %d but %d wanted.", ref_offset.size(), joint_num_);
-                else if (ref_encoder.size() != joint_num_)
-                    LogProducer::error("mc_calib","Invalid array size of reference encoder, size is %d but %d wanted.", ref_encoder.size(), joint_num_);
-                else
-                    LogProducer::error("mc_calib","Invalid array size of gear ratio, size is %d but %d wanted.", gear_ratio.size(), joint_num_);
-
-                return INVALID_PARAMETER;
-            }
-        }
-        else
-        {
-            return MC_LOAD_PARAM_FAILED;
-        }
-    }
-    else
-    {
-        return MC_LOAD_PARAM_FAILED;
-    }
-}
 
 ErrorCode Calibrator::resetEncoderMultiTurnValue()
 {
     LogProducer::info("mc_calib","reset encoder multi-turn value of all joints.");
 
-    if (!bare_core_ptr_->resetEncoderError())
+    ErrorCode result = bare_core_ptr_->resetEncoderError();
+    if (result != SUCCESS)
     {
         LogProducer::error("mc_calib","Fail to reset encoder errors.");
-        return MC_COMMUNICATION_WITH_BARECORE_FAIL;
+        return result;
     }
 
     usleep(250 * 1000);
@@ -1367,40 +1064,9 @@ ErrorCode Calibrator::resetEncoderMultiTurnValue()
         offset_stat_[i] = OFFSET_LOST;
     }
 
-    ErrorCode err = writeOffsetState(offset_stat_);
+    result = writeOffsetState(offset_stat_);
 
-    return err;
-}
-
-//------------------------------------------------------------------------------
-// 方法：  calculateOffsetEasy
-// 摘要：  根据记录中的参考点和当前编码器读数计算新零位；
-//------------------------------------------------------------------------------
-double Calibrator::calculateOffsetEasy(double gear_ratio, double ref_offset,
-                                       unsigned int ref_encoder, unsigned int cur_encoder)
-{
-    LogProducer::info("mc_calib","Reference-offset = %.6f, reference-encoder = 0x%x, current-encoder = 0x%x, gear-ratio = %.6f",
-             ref_offset, ref_encoder, cur_encoder, gear_ratio);
-
-    double new_offset;
-    unsigned int cur_rolls = (cur_encoder >> 16) & 0xFFFF;
-    unsigned int ref_rolls = (ref_encoder >> 16) & 0xFFFF;
-
-    if (cur_rolls > ref_rolls)
-    {
-        new_offset = ref_offset + PI * 2 * (cur_rolls - ref_rolls) / gear_ratio;
-    }
-    else if (cur_rolls < ref_rolls)
-    {
-        new_offset = ref_offset - PI * 2 * (ref_rolls - cur_rolls) / gear_ratio;
-    }
-    else
-    {
-        new_offset = ref_offset;
-    }
-
-    LogProducer::info("mc_calib","Reference-rolls = 0x%x, current-rolls = 0x%x, new-offset = %.6f", ref_rolls, cur_rolls, new_offset);
-    return new_offset;
+    return result;
 }
 
 //------------------------------------------------------------------------------
@@ -1409,7 +1075,7 @@ double Calibrator::calculateOffsetEasy(double gear_ratio, double ref_offset,
 //------------------------------------------------------------------------------
 ErrorCode Calibrator::sendConfigData(int id, const vector<double> &data)
 {
-    return bare_core_ptr_->setConfigData(id, data) ? SUCCESS : MC_COMMUNICATION_WITH_BARECORE_FAIL;
+    return SUCCESS;
 }
 
 //------------------------------------------------------------------------------
@@ -1418,7 +1084,7 @@ ErrorCode Calibrator::sendConfigData(int id, const vector<double> &data)
 //------------------------------------------------------------------------------
 ErrorCode Calibrator::sendConfigData(int id, const vector<int> &data)
 {
-    return bare_core_ptr_->setConfigData(id, data) ? SUCCESS : MC_COMMUNICATION_WITH_BARECORE_FAIL;
+    return SUCCESS;
 }
 
 //------------------------------------------------------------------------------
@@ -1427,12 +1093,12 @@ ErrorCode Calibrator::sendConfigData(int id, const vector<int> &data)
 //------------------------------------------------------------------------------
 ErrorCode Calibrator::sendOffsetToBareCore(void)
 {
-    int id;
     vector<double> data;
 
-    if (offset_param_.getParam("zero_offset/id", id) && offset_param_.getParam("zero_offset/data", data))
+    if (offset_param_.getParam("zero_offset/data", data))
     {
-        return sendConfigData(id, data);
+        //return bare_core_ptr_->setOffsetPositions(data);
+        return SUCCESS;
     }
     else
     {
@@ -1450,7 +1116,7 @@ ErrorCode Calibrator::getOffsetFromBareCore(vector<double> &data)
 
     if (offset_param_.getParam("zero_offset/id", id) && offset_param_.getParam("zero_offset/data", data))
     {
-        return bare_core_ptr_->getConfigData(id, data) ? SUCCESS : MC_COMMUNICATION_WITH_BARECORE_FAIL;
+        return SUCCESS;
     }
     else
     {

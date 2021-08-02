@@ -7,7 +7,6 @@
 #include <tool_manager.h>
 #include <thread_help.h>
 #include <motion_control_datatype.h>
-#include <motion_control_param.h>
 #include <motion_control_arm_group.h>
 #include "log_manager_producer.h"
 #include "common_error_code.h"
@@ -70,13 +69,6 @@ public:
     ErrorCode calibrateOffset(size_t index, double (&offset)[NUM_OF_JOINT]);
     ErrorCode calibrateOffset(const size_t *pindex, size_t length, double (&offset)[NUM_OF_JOINT]);
 
-    bool isReferenceAvailable(void);
-    ErrorCode deleteReference(void);
-    ErrorCode saveReference(void);
-    ErrorCode fastCalibrate(void);
-    ErrorCode fastCalibrate(size_t index);
-    ErrorCode fastCalibrate(const size_t *pindex, size_t length);
-
     ErrorCode resetEncoderMultiTurnValue(void);
     void getUsingCoord(basic_alg::PoseEuler &usingcool);
     void getUsingTool(basic_alg::PoseEuler &usingtool);
@@ -112,7 +104,7 @@ public:
     basic_alg::Posture getPostureFromJoint(const basic_alg::Joint &joint);
     basic_alg::Turn getTurnFromJoint(const basic_alg::Joint &joint);
 
-    GroupState  getGroupState(void);
+    MotionControlState  getMotionControlState(void);
     ServoState  getServoState(void);
     basic_alg::PoseEuler getCurrentPose(void);
     void    getCurrentPose(basic_alg::PoseEuler &pose);
@@ -184,13 +176,7 @@ private:
 
     int  user_frame_id_;
     int  tool_frame_id_;
-
     UserOpMode work_mode_;
-
-    bool realtime_thread_running_;
-    bool priority_thread_running_;
-    bool planner_thread_running_;
-    bool common_thread_running_;
     bool motion_error_flag_;
 
     std::queue<struct Instruction> instruction_fifo_;
@@ -198,14 +184,9 @@ private:
     uint32_t instructions_recv_counter_;
     uint32_t instructions_handle_counter_;
 
-    MotionControlParam* param_ptr_;
     fst_ctrl::CoordinateManager* coordinate_manager_ptr_;
     fst_ctrl::ToolManager* tool_manager_ptr_;
     BaseGroup *group_ptr_;
-    base_space::ThreadHelp realtime_thread_;
-    base_space::ThreadHelp priority_thread_;
-    base_space::ThreadHelp planner_thread_;
-    base_space::ThreadHelp common_thread_;
 
 
 };

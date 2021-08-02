@@ -35,6 +35,18 @@
 		<Param3>0</Param3>
 		<Param4>0</Param4>		
 	</CommBlock>
+	<CommBlock>
+		<!--cpu2 force_control parameter reg-->
+		<Type>comm_reg</Type>
+		<ApplicationID>2</ApplicationID>
+		<ByteOffset>0x1100000</ByteOffset>
+		<From>1</From>
+		<To>2</To>
+		<Param1>0</Param1>
+		<Param2>0</Param2>
+		<Param3>0</Param3>
+		<Param4>0</Param4>		
+	</CommBlock>
 	<!--axis0 is PMSM-J1-->
 	<CommBlock>	
 		<!--axis0 comm reg-->
@@ -80,8 +92,8 @@
 		<From>2</From>
 		<To>1</To>
 		<Param1>0</Param1>
-		<Param2>32</Param2>
-		<Param3>1600</Param3>
+		<Param2>40</Param2>
+		<Param3>2000</Param3>
 		<Param4>0</Param4>
 	</CommBlock>	
 	<CommBlock>
@@ -153,8 +165,8 @@
 		<From>2</From>
 		<To>1</To>
 		<Param1>1</Param1>
-		<Param2>32</Param2>
-		<Param3>1600</Param3>
+		<Param2>40</Param2>
+		<Param3>2000</Param3>
 		<Param4>0</Param4>
 	</CommBlock>	
 	<CommBlock>
@@ -226,8 +238,8 @@
 		<From>2</From>
 		<To>1</To>
 		<Param1>2</Param1>
-		<Param2>32</Param2>
-		<Param3>1600</Param3>
+		<Param2>40</Param2>
+		<Param3>2000</Param3>
 		<Param4>0</Param4>
 	</CommBlock>	
 	<CommBlock>
@@ -299,8 +311,8 @@
 		<From>2</From>
 		<To>1</To>
 		<Param1>3</Param1>
-		<Param2>32</Param2>
-		<Param3>1600</Param3>
+		<Param2>40</Param2>
+		<Param3>2000</Param3>
 		<Param4>0</Param4>
 	</CommBlock>	
 	<CommBlock>
@@ -372,8 +384,8 @@
 		<From>2</From>
 		<To>1</To>
 		<Param1>4</Param1>
-		<Param2>32</Param2>
-		<Param3>1600</Param3>
+		<Param2>40</Param2>
+		<Param3>2000</Param3>
 		<Param4>0</Param4>
 	</CommBlock>	
 	<CommBlock>
@@ -431,7 +443,7 @@
 		<ApplicationID>4000</ApplicationID>
 		<ByteOffset>0x2F200</ByteOffset>
 		<From>1</From>
-		<To>5</To>
+		<To>2</To>
 		<Param1>5</Param1>
 		<Param2>24</Param2>
 		<Param3>1200</Param3>
@@ -445,8 +457,8 @@
 		<From>2</From>
 		<To>1</To>
 		<Param1>5</Param1>
-		<Param2>32</Param2>
-		<Param3>1600</Param3>
+		<Param2>40</Param2>
+		<Param3>2000</Param3>
 		<Param4>0</Param4>
 	</CommBlock>	
 	<CommBlock>
@@ -518,8 +530,8 @@
 		<From>2</From>
 		<To>1</To>
 		<Param1>6</Param1>
-		<Param2>32</Param2>
-		<Param3>1600</Param3>
+		<Param2>40</Param2>
+		<Param3>2000</Param3>
 		<Param4>0</Param4>
 	</CommBlock>	
 	<CommBlock>
@@ -591,8 +603,8 @@
 		<From>2</From>
 		<To>1</To>
 		<Param1>7</Param1>
-		<Param2>32</Param2>
-		<Param3>1600</Param3>
+		<Param2>40</Param2>
+		<Param3>2000</Param3>
 		<Param4>0</Param4>
 	</CommBlock>	
 	<CommBlock>
@@ -664,8 +676,8 @@
 		<From>2</From>
 		<To>1</To>
 		<Param1>8</Param1>
-		<Param2>32</Param2>
-		<Param3>1600</Param3>
+		<Param2>40</Param2>
+		<Param3>2000</Param3>
 		<Param4>0</Param4>
 	</CommBlock>	
 	<CommBlock>
@@ -737,8 +749,8 @@
 		<From>2</From>
 		<To>1</To>
 		<Param1>9</Param1>
-		<Param2>32</Param2>
-		<Param3>1600</Param3>
+		<Param2>40</Param2>
+		<Param3>2000</Param3>
 		<Param4>0</Param4>
 	</CommBlock>	
 	<CommBlock>

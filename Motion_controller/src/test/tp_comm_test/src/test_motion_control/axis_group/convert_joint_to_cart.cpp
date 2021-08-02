@@ -45,7 +45,7 @@ int main(int argc, char* argv[])
 
     RequestMessageType_Int32List_DoubleList msg;
     msg.header.time_stamp = 122;
-    msg.property.authority = Comm_Authority_TP;
+    msg.property.authority = Comm_Authority_TP_SIMMULATOR;
     msg.data1.data_count = 3;
     msg.data2.data_count = 9;
 

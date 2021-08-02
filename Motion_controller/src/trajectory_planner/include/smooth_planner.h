@@ -9,7 +9,7 @@
 #define _SMOOTH_PLANNER_H
 
 #include <joint.h>
-#include <motion_control_datatype.h>
+#include <trajectory_datatype.h>
 #include <common_error_code.h>
 #include "traj_planner.h"
 

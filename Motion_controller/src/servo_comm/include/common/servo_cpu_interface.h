@@ -10,16 +10,19 @@
 #ifdef COMPILE_IN_BARE
 #include "./core_protocal_inc/core_comm_datatype.h"
 #include "./core_protocal_inc/comm_reg_1.h"
+#include "./core_protocal_inc/comm_reg_2.h"
 #include <stdint.h>
 #else
 #include "common/core_comm_datatype.h"
 #include "common/comm_reg_1.h"
+#include "common/comm_reg_2.h"
 #include <stdint.h>
 #endif
 
 
 #define SERVO_CPU_COMM_APP_ID_COMM_REG  1       /**< The application id of the register channel for Servo CPU communication.*/
 #define SERVO_CPU_COMM_APP_ID_SAMPLING  2000    /**< The application id of the buffer channel for Servo CPU sampling.*/
+#define SERVO_CPU_COMM_APP_ID_PARAM_REG  2      /**< The application id of the register channel for external parameter communication.*/
 
 /**
  * @brief Defines configuration of communication channels of a servo cpu.
@@ -30,6 +33,7 @@ typedef struct
     int32_t to;     /**< CPU id of the servo cpu.*/
     CommBlockData_t* comm_reg_ptr;          /**< Pointer of register channel.*/
     CommBlockData_t* sampling_buffer_ptr;   /**< Pointer of sampling buffer channel.*/
+    CommBlockData_t* param_reg_ptr;         /**< Pointer of the external parameter channel.*/
 }ServoCpuComm_t;
 /**
  * @brief Create configuration object to handling servo cpu communication on controller side.
@@ -216,6 +220,28 @@ void setServoCpuCommSamplingSync(ServoCpuComm_t* comm_ptr, uint32_t sampling_syn
  * @return The value of sampling synchronization control word.
  */
 uint32_t getServoCpuCommSamplingSync(ServoCpuComm_t* comm_ptr);
+
+/**
+ * @brief Set the control mode
+ * @details The API should only be called on the controller side.\n
+ * @param [in] comm_ptr The configuration object of a servo cpu.
+ * @param [in] control_mode The value of the control mode.
+ * @return void
+ */
+void setServoCpuCommControlMode(ServoCpuComm_t* comm_ptr, uint32_t control_mode);
+/**
+ * @brief Get the control mode.
+ * @details The API should only be called on the servo cpu side.\n
+ * @param [in] comm_ptr The configuration object of a servo cpu.
+ * @return The control value.
+ */
+uint32_t getServoCpuCommControlMode(ServoCpuComm_t* comm_ptr);
+
+bool setServoCpuCommForceControlUpdateFlag(ServoCpuComm_t* comm_ptr, uint32_t value);
+bool getServoCpuCommForceControlUpdateFlag(ServoCpuComm_t* comm_ptr, uint32_t* value_ptr);
+bool setServoCpuCommForceControlParameters(ServoCpuComm_t* comm_ptr, uint8_t* data_ptr, uint32_t data_byte_size);
+bool getServoCpuCommForceControlParameters(ServoCpuComm_t* comm_ptr, uint8_t* data_ptr, uint32_t* data_byte_size_ptr);
+
 /**
  * @brief Free the configuration object of a servo cpu.
  * @details The API can be called on both controller and servo cpu sides.\n

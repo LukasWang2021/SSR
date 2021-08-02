@@ -217,9 +217,9 @@ void test2(void)
     //arm.manualMoveToPoint(target);
     usleep(100 * 1000);
 
-    while (arm.getGroupState() != STANDBY)
+    while (arm.getMotionControlState() != STANDBY)
     {
-        cout << "Group-state = " << arm.getGroupState() << endl;
+        cout << "Group-state = " << arm.getMotionControlState() << endl;
         usleep(100 * 1000);
     }
 

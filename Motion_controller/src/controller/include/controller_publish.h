@@ -18,6 +18,7 @@
 #include "system/core_comm_system.h"
 #include "system/servo_cpu_comm_base.h"
 #include "axis.h"
+#include "motion_control.h"
 #include "io_1000.h"
 
 /**
@@ -52,7 +53,7 @@ public:
      * @return void.
      */
     void init(user_space::TpComm* tp_comm_ptr, servo_comm_space::ServoCpuCommBase* cpu_comm_ptr, 
-        axis_space::Axis* axis_ptr[AXIS_NUM], hal_space::Io1000* io_dev_ptr);
+        axis_space::Axis* axis_ptr[AXIS_NUM], group_space::MotionControl* group_ptr[GROUP_NUM], hal_space::Io1000* io_dev_ptr);
 
     /**
      * @brief Gets the pointer of the publishing value.
@@ -126,6 +127,7 @@ private:
     user_space::TpComm* tp_comm_ptr_; 
     servo_comm_space::ServoCpuCommBase* cpu_comm_ptr_;
     axis_space::Axis* axis_ptr_[AXIS_NUM];
+    group_space::MotionControl* group_ptr_[GROUP_NUM];
     hal_space::Io1000* io_dev_ptr_;
 
     enum {HASH_BYTE_SIZE = 4,};

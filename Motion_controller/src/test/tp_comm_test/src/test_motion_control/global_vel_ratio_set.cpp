@@ -45,7 +45,7 @@ int main(int argc, char* argv[])
 
     RequestMessageType_Double msg;
     msg.header.time_stamp = 122;
-    msg.property.authority = Comm_Authority_TP;
+    msg.property.authority = Comm_Authority_TP_SIMMULATOR;
     msg.data.data = atof(argv[1]);
 
     if(1 < msg.data.data || msg.data.data < 0)

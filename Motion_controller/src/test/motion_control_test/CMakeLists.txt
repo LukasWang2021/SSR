@@ -31,9 +31,9 @@ include_directories(
   ${rtm_INCLUDE_DIRS}
 )
 
-add_executable(manual_test
-    manual_test.cpp
-)
+#add_executable(manual_test
+#    manual_test.cpp
+#)
 
 add_executable(output_trajectory
     output_trajectory.cpp
@@ -43,10 +43,10 @@ add_executable(print_trajectory
     print_trajectory.cpp
 )
 
-target_link_libraries(manual_test
-    ${rtm_LIBRARIES}
-    motion_control
-)
+#target_link_libraries(manual_test
+#    ${rtm_LIBRARIES}
+#    motion_control
+#)
 
 target_link_libraries(output_trajectory
     ${rtm_LIBRARIES}

@@ -1,6 +1,7 @@
 #include "controller.h"
 #include "system/core_comm_system.h"
 #include "common/core_comm_servo_datatype.h"
+#include <sys/syscall.h>
 #include <unistd.h>
 #include <iostream>
 
@@ -12,6 +13,7 @@ using namespace log_space;
 using namespace base_space;
 using namespace system_model_space;
 using namespace hal_space;
+using namespace group_space;
 
 Controller* Controller::instance_ = NULL;
 uint32_t* g_isr_ptr_ = NULL;
@@ -39,11 +41,13 @@ Controller::Controller():
 Controller::~Controller()
 {
     rt_thread_.join();
+    planner_thread_.join();
+    priority_thread_.join();
     routine_thread_.join();
 
-    for (size_t i = 0; i < GROUP_NUM; ++i)
+    for(size_t i = 0; i < GROUP_NUM; ++i)
     {
-        if (group_ptr_[i] != NULL)
+        if(group_ptr_[i] != NULL)
         {
             delete group_ptr_[i];
             group_ptr_[i] = NULL;
@@ -52,23 +56,15 @@ Controller::~Controller()
 
     for(size_t i = 0; i < AXIS_NUM; ++i)
     {
-        if (axis_ptr_[i] != NULL)
+        if(axis_ptr_[i] != NULL)
         {
-            size_t dot_pos = axes_config_[i].actuator.servo.find_first_of('.');
-            if(dot_pos != std::string::npos)
-            {
-                std::string name_str = axes_config_[i].actuator.servo.substr(0, dot_pos);
-                if(name_str.compare("servo_1000") == 0)
-                {
-                    axis_space::Axis1000* axis_ptr = static_cast<axis_space::Axis1000*>(axis_ptr_[i]);
-                    delete axis_ptr;
-                    axis_ptr_[i] = NULL;
-                }
-            }
+            axis_space::Axis1000* axis_ptr = static_cast<axis_space::Axis1000*>(axis_ptr_[i]);
+            delete axis_ptr;
+            axis_ptr_[i] = NULL;
         }
     }
 
-    if (servo_1001_ptr_ != NULL)
+    if(servo_1001_ptr_ != NULL)
     {
         delete servo_1001_ptr_;
         servo_1001_ptr_ = NULL;
@@ -80,7 +76,7 @@ Controller::~Controller()
         config_ptr_ = NULL;
     }
 
-    if(io_digital_dev_ptr_ != NULL)
+    if (io_digital_dev_ptr_ != NULL)
     {
         delete io_digital_dev_ptr_;
         io_digital_dev_ptr_ = NULL;
@@ -141,16 +137,33 @@ ErrorCode Controller::init()
             return ret;
         }
     }
-    if(SUCCESS != tool_manager_.init())
+
+
+    force_model_ptr_ = model_manager_.getForceModel(forces_config_[0].force_id);
+    //download force control parameters
+    if (!downloadForceControlParams())
+        return CONTROLLER_INIT_FAILED;
+
+
+    error_code = tool_manager_.init();
+    if(SUCCESS != error_code)
     {
         LogProducer::error("main", "Controller tool manager initialization failed");
         return error_code;
     }
-    if(SUCCESS != coordinate_manager_.init())
+    error_code = coordinate_manager_.init();
+    if(SUCCESS != error_code)
     {
         LogProducer::error("main", "Controller coord manager initialization failed");
         return error_code;
     }
+    error_code = reg_manager_.init();
+    if(SUCCESS != error_code)
+    {
+        LogProducer::error("main", "Controller reg manager initialization failed");
+        return error_code;
+    }
+
     //add axis to group according config.xml
     for (unsigned int i = 0; i < group_config_.size(); ++i)
     {
@@ -188,10 +201,20 @@ ErrorCode Controller::init()
         return error_code;
     }
 
-	publish_.init(&tp_comm_, cpu_comm_ptr_, axis_ptr_, io_digital_dev_ptr_);
-	rpc_.init(&tp_comm_, &publish_, cpu_comm_ptr_, servo_comm_ptr_, axis_ptr_, axis_model_ptr_, group_ptr_, &file_manager_, io_digital_dev_ptr_, &tool_manager_, &coordinate_manager_);
+	publish_.init(&tp_comm_, cpu_comm_ptr_, axis_ptr_, group_ptr_, io_digital_dev_ptr_);
+	rpc_.init(&tp_comm_, &publish_, cpu_comm_ptr_, servo_comm_ptr_, axis_ptr_, axis_model_ptr_, group_ptr_, &file_manager_, io_digital_dev_ptr_, &tool_manager_, &coordinate_manager_, &reg_manager_, force_model_ptr_);
 
     if(!routine_thread_.run(&controllerRoutineThreadFunc, this, config_ptr_->routine_thread_priority_))
+    {
+        return CONTROLLER_CREATE_ROUTINE_THREAD_FAILED;
+    } 
+
+    if(!planner_thread_.run(&controllerPlannerThreadFunc, this, config_ptr_->planner_thread_priority_))
+    {
+        return CONTROLLER_CREATE_ROUTINE_THREAD_FAILED;
+    } 
+
+    if(!priority_thread_.run(&controllerPriorityThreadFunc, this, config_ptr_->priority_thread_priority_))
     {
         return CONTROLLER_CREATE_ROUTINE_THREAD_FAILED;
     } 
@@ -218,14 +241,22 @@ void Controller::setExit()
 void Controller::runRoutineThreadFunc()
 {
     usleep(config_ptr_->routine_cycle_time_);
+    group_ptr_[0]->ringCommonTask();
 	publish_.processPublish();
     uploadErrorCode();
 }
 
-void Controller::runRtThreadFunc()
+void Controller::runPlannerThreadFunc()
 {
-    usleep(config_ptr_->realtime_cycle_time_);
- 
+    usleep(config_ptr_->planner_cycle_time_);
+    group_ptr_[0]->ringPlannerTask();
+}
+
+void Controller::runPriorityThreadFunc()
+{
+    usleep(config_ptr_->priority_cycle_time_);
+    group_ptr_[0]->ringPriorityTask();
+
     axis_ptr_[9]->processFdbPdoCurrent(&fdb_current_time_stamp_);
     axis_ptr_[0]->processFdbPdoSync(fdb_current_time_stamp_);
     axis_ptr_[1]->processFdbPdoSync(fdb_current_time_stamp_);
@@ -248,6 +279,12 @@ void Controller::runRtThreadFunc()
         group_ptr_[i]->processStateMachine();
     }
     rpc_.processRpc();
+}
+
+void Controller::runRtThreadFunc()
+{
+    usleep(config_ptr_->realtime_cycle_time_);
+    group_ptr_[0]->ringRealTimeTask();
 }
 
 
@@ -287,6 +324,14 @@ ErrorCode Controller::bootUp(void)
         return CONTROLLER_INIT_FAILED;
     }
     group_config_ = group_config_ptr->getRef();
+
+    ForcesConfig* forces_config_ptr = model_manager_.getForcesConfig();
+    if (!forces_config_ptr->load())
+    {
+        LogProducer::error("main", "Controller forces config load failed");
+        return CONTROLLER_INIT_FAILED;
+    }
+    forces_config_ = forces_config_ptr->getRef();
 
     //boot up
     ErrorCode error_code;
@@ -358,7 +403,7 @@ ErrorCode Controller::bootUp(void)
     // set all opeartion_mode for all servos
     for(size_t i = 0; i < axes_config_.size(); ++i)
     {
-        if(servo_comm_ptr_[i]->doServoCmdWriteParameter(SERVO_PARAM_OP_MODE, (int32_t)SERVO_OP_MODE_PROFILE_POSITION_MODE) != SUCCESS)
+        if(servo_comm_ptr_[i]->doServoCmdWriteParameter(SERVO_PARAM_OP_MODE, (int32_t)SERVO_OP_MODE_INTERPOLATED_POSITION_MODE) != SUCCESS)
         {
             LogProducer::error("main", "servo_comm_ptr[%d] write op_mode failed", i);
             return CONTROLLER_INIT_FAILED;
@@ -389,6 +434,16 @@ ErrorCode Controller::bootUp(void)
         sleep(1);
     }
 
+    // connect command pdo channel to self
+    if(servo_1001_ptr_->prepareSafeOp2Op(from_block_ptr, from_block_number))
+    {
+        LogProducer::info("main", "servo_1001_ptr_ prepareSafeOp2Op success");
+    }
+    else
+    {
+        LogProducer::error("main", "servo_1001_ptr_ prepareSafeOp2Op failed");
+        return CONTROLLER_INIT_FAILED;
+    }
     // transfer all servos to OP
     if(!servo_1001_ptr_->doServoCmdTransCommState(CORE_COMM_STATE_OP))
     {
@@ -413,6 +468,21 @@ void Controller::uploadErrorCode(void)
     {
         tp_comm_.sendEvent(event);
         LogProducer::error("Upload", "Error: 0x%llx", event.event_data);
+        DisableControllerByErrorCode(event.event_data);
+    }
+}
+
+void Controller::DisableControllerByErrorCode(ErrorCode err)
+{
+    for (size_t i = 0; i < GROUP_NUM; ++i)
+    {
+        GroupStatus_e status = GROUP_STATUS_UNKNOWN;
+        bool in_pos = false;
+        group_ptr_[i]->mcGroupReadStatus(status, in_pos);
+        if (status != GROUP_STATUS_ERROR_STOP && status != GROUP_STATUS_DISABLED)
+        {
+            group_ptr_[i]->mcGroupDisable();
+        }
     }
 }
 
@@ -472,11 +542,40 @@ bool Controller::downloadServoParams(int32_t axis_id)
     return true;
 }
 
+bool Controller::downloadForceControlParams()
+{
+    CommRegForceControlParam_t params;
+    memset(&params, 0, sizeof(CommRegForceControlParam_t));
+    int32_t value = 0;
+    for(size_t i = 0; i < COMM_REG2_PARAMETER_NUMBER; ++i)
+    {
+        if (force_model_ptr_->force_param_ptr->get(i, &value))
+        {
+            params.parameter[i] = value;
+        }
+        else
+        {
+            LogProducer::error("main", "Controller force_control get parameter[%d] failed", i);
+            return false;
+        }
+    }
+
+    if (!cpu_comm_ptr_->setForceControlParameters(&params))
+    {
+        LogProducer::error("main", "Controller force_control download parameter failed");
+        return false;
+    }
+    LogProducer::info("main", "Controller force_control download parameter success");
+    
+    return true;
+}
+
 void* controllerRoutineThreadFunc(void* arg)
 {
     Controller* controller_ptr = static_cast<Controller*>(arg);
     log_space::LogProducer log_manager;
     log_manager.init("controller_routine", g_isr_ptr_);
+    LogProducer::warn("main","controller_routine TID is %ld", syscall(SYS_gettid));
     while(!controller_ptr->isExit())
     {
         controller_ptr->runRoutineThreadFunc();
@@ -485,12 +584,53 @@ void* controllerRoutineThreadFunc(void* arg)
     return NULL;
 }
 
+void* controllerPlannerThreadFunc(void* arg)
+{
+    Controller* controller_ptr = static_cast<Controller*>(arg);
+    log_space::LogProducer log_manager;
+    log_manager.init("controller_planner", g_isr_ptr_);
+    LogProducer::warn("main","controller_planner TID is %ld", syscall(SYS_gettid));
+    while(!controller_ptr->isExit())
+    {
+        controller_ptr->runPlannerThreadFunc();
+    }
+    std::cout<<"controller_planner exit"<<std::endl;
+    return NULL;
+}
+
+void* controllerPriorityThreadFunc(void* arg)
+{
+    Controller* controller_ptr = static_cast<Controller*>(arg);
+    log_space::LogProducer log_manager;
+    log_manager.init("controller_priority", g_isr_ptr_);
+    LogProducer::warn("main","controller_priority TID is %ld", syscall(SYS_gettid));
+    while(!controller_ptr->isExit())
+    {
+        controller_ptr->runPriorityThreadFunc();
+    }
+    std::cout<<"controller_priority exit"<<std::endl;
+    return NULL;
+}
+
+void stack_prefault(void) {
+    unsigned char dummy[1024 * 1024];//The maximum stack size which is guaranteed safe to access without faulting
+    memset(dummy, 0, 1024 * 1024);
+}
 
 void* controllerRealTimeThreadFunc(void* arg)
 {
     Controller* controller_ptr = static_cast<Controller*>(arg);
     log_space::LogProducer log_manager;
     log_manager.init("controller_RT", g_isr_ptr_);
+    LogProducer::warn("main","controller_RT TID is %ld", syscall(SYS_gettid));
+    
+    if (mlockall(MCL_CURRENT|MCL_FUTURE) == -1) 
+    {
+        LogProducer::error("main","controller_RT mlockall failed");
+    }
+    //Pre-fault our stack
+    stack_prefault();
+
     while(!controller_ptr->isExit())
     {
         controller_ptr->runRtThreadFunc();
@@ -498,4 +638,5 @@ void* controllerRealTimeThreadFunc(void* arg)
     std::cout<<"controller_RT exit"<<std::endl;
     return NULL;
 }
+
 

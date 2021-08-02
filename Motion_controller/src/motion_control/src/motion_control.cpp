@@ -20,220 +20,98 @@ using namespace base_space;
 using namespace log_space;
 using namespace group_space;
 
-static void* runRealTimeTask(void *mc)
-{
-    log_space::LogProducer log_manager;
-    uint32_t g_isr = 0;
-    log_manager.init("MC_RT", &g_isr);
-    ((MotionControl*)mc)->ringRealTimeTask();
-    return NULL;
-}
-
-static void* runPriorityTask(void *mc)
-{
-    log_space::LogProducer log_manager;
-    uint32_t g_isr = 0;
-    log_manager.init("MC_Priority", &g_isr);
-    ((MotionControl*)mc)->ringPriorityTask();
-    return NULL;
-}
-
-static void* runPlannerTask(void *mc)
-{
-    log_space::LogProducer log_manager;
-    uint32_t g_isr = 0;
-    log_manager.init("MC_Planner", &g_isr);
-    ((MotionControl*)mc)->ringPlannerTask();
-    return NULL;
-}
-
-static void* runCommonTask(void *mc)
-{
-    log_space::LogProducer log_manager;
-    uint32_t g_isr = 0;
-    log_manager.init("MC_Common", &g_isr);
-    ((MotionControl*)mc)->ringCommonTask();
-    return NULL;
-}
 
 void MotionControl::ringCommonTask(void)
 {
-    LogProducer::warn("mc","ThreadMotionControlCommon TID is %ld", syscall(SYS_gettid));
-
-    while (common_thread_running_)
-    {
-        group_ptr_->doCommonLoop();
-
-        usleep(param_ptr_->common_cycle_time_ * 1000);
-    }
-
-    printf("Common task quit.\n");
+    group_ptr_->doCommonLoop();
 }
-
-#define MAIN_PRIORITY 80
-#define MAX_SAFE_STACK (1 * 1024 * 1024)    /* The maximum stack size which is
-                                                guaranteed safe to access without
-                                                faulting */
-
-
-bool setPriority(int prio)
-{
-    struct sched_param param;
-    param.sched_priority = prio; 
-    if (sched_setscheduler(getpid(), SCHED_RR, &param) == -1) //set priority
-    { 
-        //LogProducer::error("mc","sched_setscheduler() failed"); 
-        return false;  
-    } 
-    return true;
-}
-
-void stack_prefault(void) {
-        unsigned char dummy[MAX_SAFE_STACK];
-        memset(dummy, 0, MAX_SAFE_STACK);
-        return;
-}
-
 
 void MotionControl::ringRealTimeTask(void)
 {
-    float duration_1, duration_2;
-    struct timeval start_time, middle_time, end_time;
-
-    if (mlockall(MCL_CURRENT|MCL_FUTURE) == -1) 
-    {
-        LogProducer::error("mc","mlockall failed");
-        return; 
-    }
-
-    //Pre-fault our stack
-    stack_prefault();
-
-    LogProducer::warn("mc","ThreadMotionControlRealtime TID is %ld", syscall(SYS_gettid));
-
-    while (realtime_thread_running_)
-    {
-        gettimeofday(&start_time, NULL);
-        group_ptr_->doRealtimeLoop();
-        gettimeofday(&middle_time, NULL);
-        usleep(param_ptr_->realtime_cycle_time_ * 1000);
-        gettimeofday(&end_time, NULL);
-        duration_1 = (float)(middle_time.tv_sec - start_time.tv_sec) + (float)(middle_time.tv_usec - start_time.tv_usec) / 1000000;
-        duration_2 = (float)(end_time.tv_sec - middle_time.tv_sec) + (float)(end_time.tv_usec - middle_time.tv_usec) / 1000000;
-
-        if (duration_1 > 0.02)
-        {
-            LogProducer::error("mc","RT task first stage duration over limit: %.6f", duration_1);
-        }
-
-        if (duration_2 > 0.02)
-        {
-            LogProducer::error("mc","RT task second stage duration over limit: %.6f", duration_2);
-        }
-  
-    }
-
-    printf("Realtime task quit.\n");
+    group_ptr_->doRealtimeLoop();
 }
 
 void MotionControl::ringPriorityTask(void)
 {
-    LogProducer::warn("mc","ThreadMotionControlPriority TID is %ld", syscall(SYS_gettid));
-
-    while (priority_thread_running_)
-    {
-        group_ptr_->doPriorityLoop();
-
-        usleep(param_ptr_->priority_cycle_time_ * 1000);
-    }
-
-    printf("Priority task quit.\n");
+    group_ptr_->doPriorityLoop();
 }
 
 void MotionControl::ringPlannerTask(void)
 {
-    LogProducer::warn("mc","ThreadMotionControlPriority TID is %ld", syscall(SYS_gettid));
-
-    while (planner_thread_running_)
-    {
-        pthread_mutex_lock(&instruction_mutex_);
+    pthread_mutex_lock(&instruction_mutex_);
         
-        if (!instruction_fifo_.empty() && group_ptr_->nextMovePermitted())
+    if (!instruction_fifo_.empty() && group_ptr_->nextMovePermitted())
+    {
+        ErrorCode err = SUCCESS;
+        Instruction instruction = instruction_fifo_.front();
+        instruction_fifo_.pop();
+        instructions_handle_counter_ ++;
+
+        if (instruction.type == MOTION)
         {
-            ErrorCode err = SUCCESS;
-            Instruction instruction = instruction_fifo_.front();
-            instruction_fifo_.pop();
-            instructions_handle_counter_ ++;
-
-            if (instruction.type == MOTION)
+            if (instruction.user_op_mode == USER_OP_MODE_SLOWLY_MANUAL)
             {
-                if (instruction.user_op_mode == USER_OP_MODE_SLOWLY_MANUAL)
+                if (instruction.target.type == MOTION_JOINT)
                 {
-                    if (instruction.target.type == MOTION_JOINT)
-                    {
-                        instruction.target.vel = instruction.target.vel > 0.322886 ? 0.322886 : instruction.target.vel;
-                    }
-                    else if (instruction.target.type == MOTION_LINE || instruction.target.type == MOTION_CIRCLE)
-                    {
-                        instruction.target.vel = instruction.target.vel > 250 ? 250 : instruction.target.vel;
-                    }
+                    instruction.target.vel = instruction.target.vel > 0.322886 ? 0.322886 : instruction.target.vel;
                 }
-
-                err = autoMove(instruction.target);
-            }
-            else if (instruction.type == SET_UF)
-            {
-                err = setUserFrame(instruction.current_uf);
-            }
-            else if (instruction.type == SET_TF)
-            {
-                err = setToolFrame(instruction.current_tf);
-            }
-            else if (instruction.type == SET_OVC)
-            {
-                err = group_ptr_->setGlobalVelRatio(instruction.current_ovc);
-            }
-            else if (instruction.type == SET_OAC)
-            {
-                err = group_ptr_->setGlobalAccRatio(instruction.current_oac);
-            }
-            else if (instruction.type == STE_PAYLOAD)
-            {
-                err = setPayload(instruction.payload_id);
-            }
-            else
-            {
-                LogProducer::error("mc","Invalid instruction type: %d", instruction.type);
-                err = INVALID_PARAMETER;
-            }
-
-            if (err != SUCCESS)
-            {
-                LogProducer::error("mc","Execute instruction error, code: 0x%llx", err);
-                uint32_t err_level = ((err >> 32) & 0xFFFF);
-
-                if (err_level > 2)
+                else if (instruction.target.type == MOTION_LINE || instruction.target.type == MOTION_CIRCLE)
                 {
-                    motion_error_flag_ = true;
+                    instruction.target.vel = instruction.target.vel > 250 ? 250 : instruction.target.vel;
                 }
-
-                if (err_level >= 3 && err_level <= 7)
-                {
-                    LogProducer::error("mc","Call interpreter pause, line: %d", instruction.line_num);
-                    (*instruction.interp_pause)(true);
-                    (*instruction.set_line_num)(instruction.line_num);
-                }
-                
-                ErrorQueue::instance().push(err);
             }
+
+            err = autoMove(instruction.target);
+        }
+        else if (instruction.type == SET_UF)
+        {
+            err = setUserFrame(instruction.current_uf);
+        }
+        else if (instruction.type == SET_TF)
+        {
+            err = setToolFrame(instruction.current_tf);
+        }
+        else if (instruction.type == SET_OVC)
+        {
+            err = group_ptr_->setGlobalVelRatio(instruction.current_ovc);
+        }
+        else if (instruction.type == SET_OAC)
+        {
+            err = group_ptr_->setGlobalAccRatio(instruction.current_oac);
+        }
+        else if (instruction.type == STE_PAYLOAD)
+        {
+            err = setPayload(instruction.payload_id);
+        }
+        else
+        {
+            LogProducer::error("mc","Invalid instruction type: %d", instruction.type);
+            err = INVALID_PARAMETER;
         }
 
-        pthread_mutex_unlock(&instruction_mutex_);
-        usleep(param_ptr_->planner_cycle_time_ * 1000);
+        if (err != SUCCESS)
+        {
+            LogProducer::error("mc","Execute instruction error, code: 0x%llx", err);
+            uint32_t err_level = ((err >> 32) & 0xFFFF);
+
+            if (err_level > 2)
+            {
+                motion_error_flag_ = true;
+            }
+
+            if (err_level >= 3 && err_level <= 7)
+            {
+                LogProducer::error("mc","Call interpreter pause, line: %d", instruction.line_num);
+                (*instruction.interp_pause)(true);
+                (*instruction.set_line_num)(instruction.line_num);
+            }
+            
+            ErrorQueue::instance().push(err);
+        }
     }
 
+    pthread_mutex_unlock(&instruction_mutex_);
     //printf("Received instruction: %d, handled instruction: %d, instruction list size: %d\n", instructions_recv_counter_, instructions_handle_counter_, instruction_fifo_.size());
-    printf("Planner task quit.\n");
 }
 
 
@@ -242,13 +120,7 @@ MotionControl::MotionControl(int32_t id):
 {
     coordinate_manager_ptr_ = NULL;
     tool_manager_ptr_ = NULL;
-    param_ptr_ = NULL;
     group_ptr_ = NULL;
-
-    common_thread_running_ = false;
-    planner_thread_running_ = false;
-    priority_thread_running_ = false;
-    realtime_thread_running_ = false;
 
     motion_error_flag_ = false;
     instructions_recv_counter_ = 0;
@@ -259,127 +131,37 @@ MotionControl::MotionControl(int32_t id):
 
 MotionControl::~MotionControl()
 {
-    realtime_thread_running_ = false;
-    priority_thread_running_ = false;
-    planner_thread_running_ = false;
-    common_thread_running_ = false;
-
-    realtime_thread_.join();
-    priority_thread_.join();
-    planner_thread_.join();
-    common_thread_.join();
-
     if (group_ptr_ != NULL)     {delete group_ptr_; group_ptr_ = NULL;};
-    if (param_ptr_ != NULL)     {delete param_ptr_; param_ptr_ = NULL;};
 }
 
 ErrorCode MotionControl::initApplication(fst_ctrl::CoordinateManager* coordinate_manager_ptr, fst_ctrl::ToolManager* tool_manager_ptr)
 {
-    param_ptr_ = new MotionControlParam();
-    
-    if (param_ptr_ == NULL)
-    {
-        return MC_INTERNAL_FAULT;
-    }
-
     if (pthread_mutex_init(&instruction_mutex_, NULL) != 0)
     {
         LogProducer::error("mc","Fail to initialize motion mutex.");
         return MC_INTERNAL_FAULT;
     }
 
-    if(!param_ptr_->loadParam())
-    {
-        LogProducer::error("mc","Failed to load MotionControl component parameters");
-        return MC_INTERNAL_FAULT;
-    }
-
     group_ptr_ = new ArmGroup();
-
     if (group_ptr_ == NULL)
     {
-        LogProducer::error("mc","Fail to create control group of %s", param_ptr_->model_name_.c_str());
+        LogProducer::error("mc","Fail to create motion control group.");
         return MC_INTERNAL_FAULT;
     }
 
-    if (coordinate_manager_ptr && tool_manager_ptr)
-    {
-        coordinate_manager_ptr_ = coordinate_manager_ptr;
-        tool_manager_ptr_ = tool_manager_ptr;
-    }
-    else
+    if (coordinate_manager_ptr == NULL || tool_manager_ptr == NULL)
     {
         LogProducer::error("mc","coordinate-manager: %x, tool-manager: %x",
-                   coordinate_manager_ptr, tool_manager_ptr);
+        coordinate_manager_ptr, tool_manager_ptr);
         return INVALID_PARAMETER;
     }
-
-
+    coordinate_manager_ptr_ = coordinate_manager_ptr;
+    tool_manager_ptr_ = tool_manager_ptr;
     user_frame_id_ = 0;
     tool_frame_id_ = 0;
 
-    ErrorCode  err = group_ptr_->initGroup(coordinate_manager_ptr_, tool_manager_ptr_, &axis_group_, &sm_, cpu_comm_ptr_);
-
-    if (err == SUCCESS)
-    {
-        realtime_thread_running_ = true;
-
-        if (realtime_thread_.run(runRealTimeTask, this, 80))
-        {
-            LogProducer::info("mc","Startup real-time task success.");
-        }
-        else
-        {
-            LogProducer::error("mc","Fail to create real-time task.");
-            realtime_thread_running_ = false;
-            return MC_INTERNAL_FAULT;
-        }
-
-        usleep(50 * 1000);
-        priority_thread_running_ = true;
-
-        if (priority_thread_.run(runPriorityTask, this, 70))
-        {
-            LogProducer::info("mc","Startup priority task success.");
-        }
-        else
-        {
-            LogProducer::error("mc","Fail to create priority task.");
-            priority_thread_running_ = false;
-            return MC_INTERNAL_FAULT;
-        }
-
-        usleep(50 * 1000);
-        planner_thread_running_ = true;
-
-        if (planner_thread_.run(runPlannerTask, this, 60))
-        {
-            LogProducer::info("mc","Startup planner task success.");
-        }
-        else
-        {
-            LogProducer::error("mc","Fail to create planner task.");
-            planner_thread_running_ = false;
-            return MC_INTERNAL_FAULT;
-        }
-
-        usleep(50 * 1000);
-        common_thread_running_ = true;
-
-        if (common_thread_.run(runCommonTask, this, 40))
-        {
-            LogProducer::info("mc","Startup common task success.");
-        }
-        else
-        {
-            LogProducer::error("mc","Fail to create common task.");
-            common_thread_running_ = false;
-            return MC_INTERNAL_FAULT;
-        }
-
-        LogProducer::info("mc","Initialize motion group success.");
-    }
-    else
+    ErrorCode  err = group_ptr_->initGroup(coordinate_manager_ptr_, tool_manager_ptr_, &axis_group_, &sm_, cpu_comm_ptr_, db_ptr_);
+    if (err != SUCCESS)
     {
         LogProducer::error("mc","Fail to init motion group");
         return err;
@@ -544,9 +326,9 @@ ErrorCode MotionControl::setOfflineTrajectory(const std::string &offline_traject
 
 ErrorCode MotionControl::prepairOfflineTrajectory(void)
 {
-    if (group_ptr_->getGroupState() != STANDBY)
+    if (group_ptr_->getMotionControlState() != STANDBY)
     {
-        LogProducer::error("mc","Fail to prepair offline trajectory, state = 0x%x", group_ptr_->getGroupState());
+        LogProducer::error("mc","Fail to prepair offline trajectory, state = 0x%x", group_ptr_->getMotionControlState());
         return INVALID_SEQUENCE;
     }
 
@@ -574,7 +356,7 @@ void MotionControl::clearErrorFlag(void)
 ErrorCode MotionControl::autoMove(const struct Instruction &instruction)
 {
     /*
-    GroupState state = group_ptr_->getGroupState();
+    MotionControlState state = group_ptr_->getMotionControlState();
     ServoState servo_state = group_ptr_->getServoState();
 
     if (state != STANDBY && state != STANDBY_TO_AUTO && state != AUTO)
@@ -1134,35 +916,6 @@ ErrorCode MotionControl::calibrateOffset(const size_t *pindex, size_t length, do
     return group_ptr_->getCalibratorPtr()->calibrateOffset(pindex, length, offset);
 }
 
-bool MotionControl::isReferenceAvailable(void)
-{
-    return group_ptr_->getCalibratorPtr()->isReferenceAvailable();
-}
-
-ErrorCode MotionControl::deleteReference(void)
-{
-    return group_ptr_->getCalibratorPtr()->deleteReference();
-}
-
-ErrorCode MotionControl::saveReference(void)
-{
-    return group_ptr_->getCalibratorPtr()->saveReference();
-}
-
-ErrorCode MotionControl::fastCalibrate(void)
-{
-    return group_ptr_->getCalibratorPtr()->fastCalibrate();
-}
-
-ErrorCode MotionControl::fastCalibrate(size_t index)
-{
-    return group_ptr_->getCalibratorPtr()->fastCalibrate(index);
-}
-
-ErrorCode MotionControl::fastCalibrate(const size_t *pindex, size_t length)
-{
-    return group_ptr_->getCalibratorPtr()->fastCalibrate(pindex, length);
-}
 
 ErrorCode MotionControl::resetEncoderMultiTurnValue(void)
 {
@@ -1622,7 +1375,7 @@ Turn MotionControl::getTurnFromJoint(const Joint &joint)
 
 string MotionControl::getModelName(void)
 {
-    return param_ptr_->model_name_;
+    return "RTM-P7A";
 }
 
 size_t MotionControl::getNumberOfAxis(void)
@@ -1640,9 +1393,9 @@ int MotionControl::getGroupID(void)
     return group_ptr_->getID();
 }
 
-GroupState MotionControl::getGroupState(void)
+MotionControlState MotionControl::getMotionControlState(void)
 {
-    return group_ptr_->getGroupState();
+    return group_ptr_->getMotionControlState();
 }
 
 ServoState MotionControl::getServoState(void)
@@ -1770,12 +1523,12 @@ ErrorCode MotionControl::setUserFrame(int id)
 // payload
 ErrorCode MotionControl::setPayload(int id)
 {
-    GroupState group_state = group_ptr_->getGroupState();
+    MotionControlState mc_state = group_ptr_->getMotionControlState();
     ServoState servo_state = group_ptr_->getServoState();
 
-    if (group_state != STANDBY)
+    if (mc_state != STANDBY)
     {
-        LogProducer::error("mc","Cannot set payload while group-state: %d", group_state);
+        LogProducer::error("mc","Cannot set payload while group-state: %d", mc_state);
         return INVALID_SEQUENCE;
     }
 
@@ -1868,11 +1621,66 @@ ErrorCode MotionControl::mcMoveLinearAbsolute(const std::vector<double> &positio
 }
 ErrorCode MotionControl::mcGroupReadActualPosition(CoordType_e coord_type, std::vector<double> &position)
 {
-    return GROUP_INVALID_PARAM;
+    position.clear();
+    ErrorCode result = SUCCESS;
+    if (coord_type == COORD_TYPE_ACS)
+    {
+        std::map<int32_t, axis_space::Axis*>::iterator it;
+        size_t i = 0;
+        for (it = axis_group_.begin(), i = INDEX_JOINT1; it != axis_group_.end(); ++it, ++i)
+        {
+            double pos = 0;
+            ErrorCode err = it->second->mcReadActualPosition(pos);
+            if (err != SUCCESS)
+                result = err;
+
+            if (INDEX_JOINT6 == i)
+            {
+                pos = group_ptr_->decouplingAxis6ByRad(position[INDEX_JOINT5], position[INDEX_JOINT6]);
+            }
+            position.push_back(pos);
+        }
+    }
+    else 
+    {    
+        result = GROUP_INVALID_PARAM;  
+        LogProducer::error("mc", "Group[%d] mcGroupReadActualPosition failed, coord = %d, err = 0x%llx", getID(), coord_type, result);
+    }
+
+    if (result != SUCCESS)
+    {
+        LogProducer::error("mc", "Group[%d] mcGroupReadActualPosition failed, err = 0x%llx", getID(), result);
+    }   
+    return result;
 }
 ErrorCode MotionControl::mcGroupReadActualVelocity(CoordType_e coord_type, std::vector<double> &velocity)
 {
-    return GROUP_INVALID_PARAM;
+    velocity.clear();
+    ErrorCode result = SUCCESS;
+    if (coord_type == COORD_TYPE_ACS)
+    {
+        std::map<int, axis_space::Axis*>::iterator it;
+        for (it = axis_group_.begin(); it != axis_group_.end(); ++it)
+        {
+            double vel = 0;
+            ErrorCode err = it->second->mcReadActualVelocity(vel);
+            if (err != SUCCESS)
+                result = err;
+
+            velocity.push_back(vel);
+        }
+    }
+    else 
+    {     
+        result = GROUP_INVALID_PARAM;
+        LogProducer::error("mc", "Group[%d] mcGroupReadActualVelocity failed, coord = %d, err = 0x%llx", getID(), coord_type, result);
+    }
+
+    if (result != SUCCESS)
+    {
+        LogProducer::error("mc", "Group[%d] mcGroupReadActualVelocity failed, err = 0x%llx", getID(), result);
+    }   
+    return result;
 }
 bool MotionControl::initApplication(void)
 {

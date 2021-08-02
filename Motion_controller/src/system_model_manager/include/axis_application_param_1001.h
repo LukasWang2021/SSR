@@ -33,14 +33,10 @@ typedef enum
     AxisApplication1001__app_max_vel = 12,
     AxisApplication1001__app_acc_time = 13,
     AxisApplication1001__app_dec_time = 14,
-    AxisApplication1001__app_home_high_speed = 15,
-    AxisApplication1001__app_home_low_speed = 16,
-    AxisApplication1001__app_home_acc_time = 17,
-    AxisApplication1001__app_sf_limit_enable = 18,
-    AxisApplication1001__app_sf_positive_limit = 19,
-    AxisApplication1001__app_sf_negative_limit = 20,
-    AxisApplication1001__app_home_position = 21,
-    AxisApplication1001__number = 22,
+    AxisApplication1001__app_sf_limit_enable = 15,
+    AxisApplication1001__app_sf_positive_limit = 16,
+    AxisApplication1001__app_sf_negative_limit = 17,
+    AxisApplication1001__number = 18,
 }AxisApplicationParam1001_e;
 /**
  * @brief Defines the axis_application_1001 model.

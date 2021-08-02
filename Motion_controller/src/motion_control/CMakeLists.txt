@@ -35,7 +35,6 @@ include_directories(
 
 add_library(motion_control SHARED
     src/motion_control.cpp
-    src/motion_control_param.cpp
     src/motion_control_arm_group.cpp
     src/motion_control_base_group.cpp
     src/motion_control_state_machine.cpp
@@ -74,19 +73,11 @@ target_link_libraries(motion_control
     trajectory_planner
 )
 
-install(FILES ./config/motion_control.yaml 
-    DESTINATION ${CONFIG_FILE_OUTPUT_PATH}/component/
-)
-
 install(FILES ./config/base_group.yaml
     DESTINATION ${CONFIG_FILE_OUTPUT_PATH}/robot/axis_group
 )
 
 install(FILES ./config/arm_group.yaml
-    DESTINATION ${CONFIG_FILE_OUTPUT_PATH}/robot/axis_group
-)
-
-install(FILES ./config/scara_group.yaml
     DESTINATION ${CONFIG_FILE_OUTPUT_PATH}/robot/axis_group
 )
 
@@ -106,27 +97,7 @@ install(FILES ./config/group_offset.yaml
     DESTINATION ${CONFIG_FILE_OUTPUT_PATH}/robot/axis_group
 )
 
-install(FILES ./config/arm_group_offset_reference.yaml
-    DESTINATION ${CONFIG_FILE_OUTPUT_PATH}/robot/axis_group
-)
-
-install(FILES ./config/group_gear_ratio.yaml
-    DESTINATION ${CONFIG_FILE_OUTPUT_PATH}/robot/axis_group
-)
-
-install(FILES ./config/group_coupling_coeff.yaml
-    DESTINATION ${CONFIG_FILE_OUTPUT_PATH}/robot/axis_group
-)
-
 install(FILES ./config/arm_manual_teach.yaml
     DESTINATION ${CONFIG_FILE_OUTPUT_PATH}/robot/axis_group
-)
-
-install(FILES ./config/scara_manual_teach.yaml
-    DESTINATION ${CONFIG_FILE_OUTPUT_PATH}/robot/axis_group
-)
-
-install(FILES ./config/segment_alg.yaml
-    DESTINATION ${CONFIG_FILE_OUTPUT_PATH}/component
 )
 

@@ -25,13 +25,9 @@ AxisApplicationParam1001::AxisApplicationParam1001(std::string style_str, std::s
     addParam("app_max_vel",                        AxisApplication1001__app_max_vel);
     addParam("app_acc_time",                       AxisApplication1001__app_acc_time);
     addParam("app_dec_time",                       AxisApplication1001__app_dec_time);
-    addParam("app_home_high_speed",                AxisApplication1001__app_home_high_speed);
-    addParam("app_home_low_speed",                 AxisApplication1001__app_home_low_speed);
-    addParam("app_home_acc_time",                  AxisApplication1001__app_home_acc_time);
     addParam("app_sf_limit_enable",                AxisApplication1001__app_sf_limit_enable);
     addParam("app_sf_positive_limit",              AxisApplication1001__app_sf_positive_limit);
     addParam("app_sf_negative_limit",              AxisApplication1001__app_sf_negative_limit);
-    addParam("app_home_position",                  AxisApplication1001__app_home_position);
 }
 
 AxisApplicationParam1001::~AxisApplicationParam1001()

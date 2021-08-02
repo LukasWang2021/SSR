@@ -22,6 +22,7 @@
 #include "motion_control.h"
 #include "tool_manager.h"
 #include "coordinate_manager.h"
+#include "reg_manager.h"
 
 /**
  * @brief user_space includes the user level implementation.
@@ -61,7 +62,8 @@ public:
         servo_comm_space::ServoCommBase* servo_comm_ptr[], axis_space::Axis* axis_ptr[AXIS_NUM],
         system_model_space::AxisModel_t* axis_model_ptr[AXIS_NUM], group_space::MotionControl* group_ptr[GROUP_NUM],
         base_space::FileManager* file_manager_ptr, hal_space::Io1000* io_dev_ptr,
-        fst_ctrl::ToolManager* tool_manager_ptr, fst_ctrl::CoordinateManager* coordinate_manager_ptr);
+        fst_ctrl::ToolManager* tool_manager_ptr, fst_ctrl::CoordinateManager* coordinate_manager_ptr, fst_ctrl::RegManager* reg_manager_ptr,
+        system_model_space::ForceModel_t* force_model_ptr);
 
     /**
      * @brief Process the service request in case the rpc comes.
@@ -76,6 +78,7 @@ private:
     servo_comm_space::ServoCpuCommBase* cpu_comm_ptr_;
     servo_comm_space::ServoCommBase** servo_comm_ptr_;
     system_model_space::AxisModel_t* axis_model_ptr_[AXIS_NUM];
+    system_model_space::ForceModel_t* force_model_ptr_;
     axis_space::Axis* axis_ptr_[AXIS_NUM];
     base_space::FileManager* file_manager_ptr_;
     int32_t* sync_ack_ptr_;
@@ -83,6 +86,7 @@ private:
     DeviceVersion device_version_;
     fst_ctrl::ToolManager* tool_manager_ptr_;
     fst_ctrl::CoordinateManager* coordinate_manager_ptr_;
+    fst_ctrl::RegManager* reg_manager_ptr_;
 
     group_space::MotionControl* group_ptr_[GROUP_NUM];
 
@@ -130,6 +134,10 @@ private:
     void handleRpc0x00006825(void* request_data_ptr, void* response_data_ptr);
     //"/rpc/controller/getWorkMode"	
     void handleRpc0x00003325(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/controller/setControlMode"	
+    void handleRpc0x0000B555(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/controller/getControlMode"	
+    void handleRpc0x0000B695(void* request_data_ptr, void* response_data_ptr);
 
     //"/rpc/axis/mcPower"	
     void handleRpc0x000053E2(void* request_data_ptr, void* response_data_ptr);
@@ -285,6 +293,11 @@ private:
     void handleRpc0x00015621(void* request_data_ptr, void* response_data_ptr);
     //"/rpc/servo1001/cpu/getServoCpuCommInfo"	
     void handleRpc0x0000FE5F(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/servo1001/cpu/setForceControlParameters"	
+    void handleRpc0x00005F53(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/servo1001/cpu/getForceControlParameters"	
+    void handleRpc0x00008203(void* request_data_ptr, void* response_data_ptr);
+
 
     //"/rpc/io/readDI"	
     void handleRpc0x000185A9(void* request_data_ptr, void* response_data_ptr);
@@ -411,6 +424,21 @@ private:
     void handleRpc0x000051E9(void* request_data_ptr, void* response_data_ptr);
     //"/rpc/motion_control/axis_group/moveOfflineTrajectory"	
     void handleRpc0x0000C4D9(void* request_data_ptr, void* response_data_ptr);
+
+    //"/rpc/reg_manager/pr/addReg"	
+    void handleRpc0x000154E7(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/reg_manager/pr/deleteReg"	
+    void handleRpc0x00001097(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/reg_manager/pr/updateReg"	
+    void handleRpc0x00009EF7(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/reg_manager/pr/getReg"	
+    void handleRpc0x00017207(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/reg_manager/pr/moveReg"	
+    void handleRpc0x0000D7C7(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/reg_manager/pr/getChangedList"	
+    void handleRpc0x0000B454(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/reg_manager/pr/getValidList"	
+    void handleRpc0x00009354(void* request_data_ptr, void* response_data_ptr);
 
 
 };

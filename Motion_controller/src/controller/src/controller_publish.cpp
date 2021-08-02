@@ -19,13 +19,17 @@ ControllerPublish::~ControllerPublish()
 }
 
 void ControllerPublish::init(user_space::TpComm* tp_comm_ptr, servo_comm_space::ServoCpuCommBase* cpu_comm_ptr, 
-        axis_space::Axis* axis_ptr[AXIS_NUM], hal_space::Io1000* io_dev_ptr)
+        axis_space::Axis* axis_ptr[AXIS_NUM], group_space::MotionControl* group_ptr[GROUP_NUM], hal_space::Io1000* io_dev_ptr)
 {
     tp_comm_ptr_ = tp_comm_ptr; 
     cpu_comm_ptr_ = cpu_comm_ptr;
     for(size_t i = 0; i < AXIS_NUM; ++i)
     {
         axis_ptr_[i] = axis_ptr[i];
+    }
+    for(size_t i = 0; i < GROUP_NUM; ++i)
+    {
+        group_ptr_[i] = group_ptr[i];
     }
     io_dev_ptr_ = io_dev_ptr;
 

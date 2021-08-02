@@ -584,7 +584,7 @@ void TpComm::handleRequestPackage(unsigned int hash, void* request_data_ptr, voi
     if(!checkAuthority(((RequestMessageType_Int32*)request_data_ptr)->property.authority, controller_authority))
     {
         ErrorQueue::instance().push(TP_COMM_AUTHORITY_CHECK_FAILED);    
-        printf("Operation is not authorized\n");
+        printf("handleRequestPackage: Operation is not authorized\n");
         // If operation not authorized, don't throw a response to response list directly but reuse the normal channel,
         // that is throwing the task to request list. User should judge if response_data_ptr.header.succeed is false.
         // If it is false, then don't process anything, throw it to response list directly caling by pushTaskToRequestList().

@@ -45,7 +45,8 @@ typedef enum
     SERVO_CMD_HALT = 17,                            /**< Ask servo stop current motion, back to standstill.*/
     SERVO_CMD_RESET_ENCODER = 18,                   /**< Reset encoder error.*/
     SERVO_CMD_SERVO_DEFINED = 19,                   /**< Servo self defined data.*/
-    SERVO_CMD_MAX = 20,                             /**< Number of servo command type.*/
+    SERVO_CMD_SET_ZERO_OFFSET = 20,                 /**< Ask servo to take encoder value as zero position.*/
+    SERVO_CMD_MAX = 21,                             /**< Number of servo command type.*/
     SERVO_CMD_UNKNOWN = 0xFF,                       /**< Invalid servo command.*/
 }ServoCmd_e;
 /**

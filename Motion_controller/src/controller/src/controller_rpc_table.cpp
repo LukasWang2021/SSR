@@ -19,6 +19,8 @@ void ControllerRpc::initRpcTable()
     rpc_service =	{	"/rpc/controller/getSystemTime",	0x000003F5,	&ControllerRpc::handleRpc0x000003F5	};	rpc_table_.push_back(rpc_service);
     rpc_service =	{	"/rpc/controller/setWorkMode",	0x00006825,	&ControllerRpc::handleRpc0x00006825	};	rpc_table_.push_back(rpc_service);
     rpc_service =	{	"/rpc/controller/getWorkMode",	0x00003325,	&ControllerRpc::handleRpc0x00003325	};	rpc_table_.push_back(rpc_service);
+    rpc_service =	{	"/rpc/controller/setControlMode",	0x0000B555,	&ControllerRpc::handleRpc0x0000B555	};	rpc_table_.push_back(rpc_service);
+    rpc_service =	{	"/rpc/controller/getControlMode",	0x0000B695,	&ControllerRpc::handleRpc0x0000B695	};	rpc_table_.push_back(rpc_service);
 
     rpc_service =	{	"/rpc/axis/mcPower",	0x000053E2,	&ControllerRpc::handleRpc0x000053E2	};	rpc_table_.push_back(rpc_service);
     rpc_service =	{	"/rpc/axis/mcReset",	0x000180C4,	&ControllerRpc::handleRpc0x000180C4	};	rpc_table_.push_back(rpc_service);
@@ -99,6 +101,8 @@ void ControllerRpc::initRpcTable()
     rpc_service =	{	"/rpc/servo1001/cpu/activateSamplingConfiguration",	0x0000939E,	&ControllerRpc::handleRpc0x0000939E	};	rpc_table_.push_back(rpc_service);
     rpc_service =	{	"/rpc/servo1001/cpu/saveSamplingBufferData",	0x00015621,	&ControllerRpc::handleRpc0x00015621	};	rpc_table_.push_back(rpc_service);
     rpc_service =	{	"/rpc/servo1001/cpu/getServoCpuCommInfo",	0x0000FE5F,	&ControllerRpc::handleRpc0x0000FE5F	};	rpc_table_.push_back(rpc_service);
+    rpc_service =	{	"/rpc/servo1001/cpu/setForceControlParameters",	0x00005F53,	&ControllerRpc::handleRpc0x00005F53	};	rpc_table_.push_back(rpc_service);
+    rpc_service =	{	"/rpc/servo1001/cpu/getForceControlParameters",	0x00008203,	&ControllerRpc::handleRpc0x00008203	};	rpc_table_.push_back(rpc_service);
 
     rpc_service =	{	"/rpc/io/readDI",	0x000185A9,	&ControllerRpc::handleRpc0x000185A9	};	rpc_table_.push_back(rpc_service);
     rpc_service =	{	"/rpc/io/readDO",	0x000185AF,	&ControllerRpc::handleRpc0x000185AF	};	rpc_table_.push_back(rpc_service);
@@ -165,6 +169,13 @@ void ControllerRpc::initRpcTable()
     rpc_service =	{	"/rpc/motion_control/axis_group/PrepareOfflineTrajectory",	0x000051E9,	&ControllerRpc::handleRpc0x000051E9	};	rpc_table_.push_back(rpc_service);
     rpc_service =	{	"/rpc/motion_control/axis_group/moveOfflineTrajectory",	0x0000C4D9,	&ControllerRpc::handleRpc0x0000C4D9	};	rpc_table_.push_back(rpc_service);
 
+    rpc_service =	{	"/rpc/reg_manager/pr/addReg",	0x000154E7,	&ControllerRpc::handleRpc0x000154E7	};	rpc_table_.push_back(rpc_service);
+    rpc_service =	{	"/rpc/reg_manager/pr/deleteReg",	0x00001097,	&ControllerRpc::handleRpc0x00001097	};	rpc_table_.push_back(rpc_service);
+    rpc_service =	{	"/rpc/reg_manager/pr/updateReg",	0x00009EF7,	&ControllerRpc::handleRpc0x00009EF7	};	rpc_table_.push_back(rpc_service);
+    rpc_service =	{	"/rpc/reg_manager/pr/getReg",	0x00017207,	&ControllerRpc::handleRpc0x00017207	};	rpc_table_.push_back(rpc_service);
+    rpc_service =	{	"/rpc/reg_manager/pr/moveReg",	0x0000D7C7,	&ControllerRpc::handleRpc0x0000D7C7	};	rpc_table_.push_back(rpc_service);
+    rpc_service =	{	"/rpc/reg_manager/pr/getChangedList",	0x0000B454,	&ControllerRpc::handleRpc0x0000B454	};	rpc_table_.push_back(rpc_service);
+    rpc_service =	{	"/rpc/reg_manager/pr/getValidList",	0x00009354,	&ControllerRpc::handleRpc0x00009354	};	rpc_table_.push_back(rpc_service);
 
 }
 

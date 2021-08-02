@@ -30,7 +30,3 @@ target_link_libraries(kinematics_alg
 install(FILES ./config/arm_dh.yaml
     DESTINATION ${CONFIG_FILE_OUTPUT_PATH}/robot/axis_group
 )
-
-install(FILES ./config/toll_dh.yaml
-    DESTINATION ${CONFIG_FILE_OUTPUT_PATH}/robot/axis_group
-)

@@ -211,4 +211,11 @@ bool pullCircleBufferType2ByTimeStamp(CommBlockData_t* block_ptr, uint8_t* domai
     return true;
 }
 
+void clearCircleBufferByFrom(CommBlockData_t* block_ptr)
+{
+    assert(block_ptr != NULL);
+
+    int32_t current_tail_byte_offset = CIRCLE_BUFFER_TAIL_BYTE_OFFSET;
+    CIRCLE_BUFFER_HEAD_BYTE_OFFSET = current_tail_byte_offset;
+}
 

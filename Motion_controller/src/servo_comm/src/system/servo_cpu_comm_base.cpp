@@ -119,6 +119,39 @@ void ServoCpuCommBase::getServoCpuCommInfo(ServoCpuCommInfo_t* info)
     }
 }
 
+void ServoCpuCommBase::setServoControlMode(ServoControlMode control_mode)
+{
+    setServoCpuCommControlMode(comm_ptr_, control_mode);
+}
+
+uint32_t ServoCpuCommBase::getServoControlMode()
+{
+    return getServoCpuCommControlMode(comm_ptr_);
+}
+
+bool ServoCpuCommBase::setForceControlParameters(const CommRegForceControlParam_t* data_ptr)
+{
+    if(!setServoCpuCommForceControlParameters(comm_ptr_, (uint8_t*)data_ptr, sizeof(CommRegForceControlParam_t)))
+        return false;
+
+    uint32_t flag_value = 1;
+    if(!setServoCpuCommForceControlUpdateFlag(comm_ptr_, flag_value)) 
+        return false;
+
+    return true;
+}
+
+bool ServoCpuCommBase::getForceControlParameters(CommRegForceControlParam_t* data_ptr)
+{
+    uint32_t data_size = 0;
+    if(!getServoCpuCommForceControlParameters(comm_ptr_, (uint8_t*)data_ptr, &data_size))
+        return false;
+        
+    if(data_size != sizeof(CommRegForceControlParam_t))
+        return false;
+
+    return true;
+}
 
 ServoCpuCommBase::ServoCpuCommBase():
     comm_ptr_(NULL)

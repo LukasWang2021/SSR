@@ -495,7 +495,7 @@ void ControllerRpc::handleRpc0x000020B3(void* request_data_ptr, void* response_d
 void ControllerRpc::handleRpc0x0000E003(void* request_data_ptr, void* response_data_ptr)
 {
     RequestMessageType_Int32List* rq_data_ptr = static_cast<RequestMessageType_Int32List*>(request_data_ptr);
-    ResponseMessageType_Uint64_ParamDetailList* rs_data_ptr = static_cast<ResponseMessageType_Uint64_ParamDetailList*>(response_data_ptr);
+    ResponseMessageType_Uint64_Int32List* rs_data_ptr = static_cast<ResponseMessageType_Uint64_Int32List*>(response_data_ptr);
 
     if (rq_data_ptr->data.data_count != 2)
     {
@@ -518,13 +518,7 @@ void ControllerRpc::handleRpc0x0000E003(void* request_data_ptr, void* response_d
         rs_data_ptr->data.data_count = 512;
         for (size_t i = 0; i < rs_data_ptr->data.data_count; ++i)
         {
-            rs_data_ptr->data.data[i].operation_value = params.param[i];
-            rs_data_ptr->data.data[i].default_value = 0;
-            rs_data_ptr->data.data[i].upper_limit_value = 0;
-            rs_data_ptr->data.data[i].lower_limit_value = 0;
-            rs_data_ptr->data.data[i].attr = 0;
-            rs_data_ptr->data.data[i].validity = 0;
-            //memcpy(rs_data_ptr->data.data[i].unit, "", 16);
+            rs_data_ptr->data.data[i] = params.param[i];
         }
         rs_data_ptr->error_code.data = SUCCESS;
         LogProducer::info("rpc", "/rpc/servo1001/servo/uploadParameters for axis(%d) success", axis_id);
@@ -594,7 +588,7 @@ void ControllerRpc::handleRpc0x00017063(void* request_data_ptr, void* response_d
     if (servo_comm_ptr_[axis_id]->downloadServoParameters(&params))
     {
         rs_data_ptr->data.data = SUCCESS;
-        LogProducer::info("rpc", "/rpc/servo1001/servo/downloadParameters for axis(%d) success", axis_id);
+        //LogProducer::info("rpc", "/rpc/servo1001/servo/downloadParameters for axis(%d) success", axis_id);
     }
     else
     {
@@ -608,9 +602,9 @@ void ControllerRpc::handleRpc0x00017063(void* request_data_ptr, void* response_d
         axis_model_ptr_[axis_id]->actuator.servo_ptr->set(i, params.param[i]);
     }
     LogProducer::info("rpc", "/rpc/servo1001/servo/downloadParameters to save servo parameters for axis(%d) ", axis_id);
-    if (axis_model_ptr_[axis_id]->actuator.servo_ptr->save())
+    if (!axis_model_ptr_[axis_id]->actuator.servo_ptr->save())
     {
-        LogProducer::info("rpc", "/rpc/servo1001/servo/downloadParameters to save servo parameters for axis(%d) sucess", axis_id);
+        LogProducer::error("rpc", "/rpc/servo1001/servo/downloadParameters to save servo parameters for axis(%d) failed", axis_id);
     }
 }
 
@@ -1193,11 +1187,84 @@ void ControllerRpc::handleRpc0x0000FE5F(void* request_data_ptr, void* response_d
 
     servo_comm_space::ServoCpuCommInfo_t info;
     cpu_comm_ptr_->getServoCpuCommInfo(&info);
-    rs_data_ptr->data.data_count = 2;
+    rs_data_ptr->data.data_count = 3;
     rs_data_ptr->data.data[0] = info.comm_reg_id;
     rs_data_ptr->data.data[1] = info.sampling_buffer_id;
+    rs_data_ptr->data.data[2] = info.param_reg_id;
     rs_data_ptr->error_code.data = SUCCESS;
-    LogProducer::info("rpc", "/rpc/servo1001/cpu/getServoCpuCommInfo called cpu(%d) success, reg_id:%u, buffer_id:%u", 
-        cpu, info.comm_reg_id, info.sampling_buffer_id);
+    LogProducer::info("rpc", "/rpc/servo1001/cpu/getServoCpuCommInfo called cpu(%d) success, reg_id:%d, buffer_id:%d, param_reg_id:%d", 
+        cpu, info.comm_reg_id, info.sampling_buffer_id, info.param_reg_id);
 }
+
+//"/rpc/servo1001/cpu/setForceControlParameters"	
+void ControllerRpc::handleRpc0x00005F53(void* request_data_ptr, void* response_data_ptr)
+{
+    RequestMessageType_Int32_Int32List* rq_data_ptr = static_cast<RequestMessageType_Int32_Int32List*>(request_data_ptr);
+    ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
+
+    if (rq_data_ptr->data2.data_count != COMM_REG2_PARAMETER_NUMBER)
+    {
+        rs_data_ptr->data.data = RPC_PARAM_INVALID;
+        LogProducer::error("rpc", "/rpc/servo1001/cpu/setStatorParameters input invalid params");
+        return;
+    }
+    //int32_t cpu = rq_data_ptr->data1.data;
+
+    CommRegForceControlParam_t params;
+    for(size_t i = 0; i < rq_data_ptr->data2.data_count; ++i)
+    {
+        params.parameter[i] = rq_data_ptr->data2.data[i];
+    }
+
+    if (cpu_comm_ptr_->setForceControlParameters(&params))
+    {
+        rs_data_ptr->data.data = SUCCESS;
+        LogProducer::info("rpc", "/rpc/servo1001/cpu/setForceControlParameters success");
+    }
+    else
+    {
+        rs_data_ptr->data.data = RPC_EXECUTE_FAILED;
+        LogProducer::error("rpc", "/rpc/servo1001/cpu/setForceControlParameters failed");
+        return;
+    }
+
+    //save force_control parameters to files 
+    for (size_t i = 0; i < rq_data_ptr->data2.data_count; ++i)
+    {
+        force_model_ptr_->force_param_ptr->set(i, params.parameter[i]);
+    }
+    LogProducer::info("rpc", "/rpc/servo1001/cpu/setForceControlParameters to save parameters");
+    if (!force_model_ptr_->force_param_ptr->save())
+    {
+        LogProducer::error("rpc", "/rpc/servo1001/cpu/setForceControlParameters to save parameters failed");
+    }
+
+}
+//"/rpc/servo1001/cpu/getForceControlParameters"	
+void ControllerRpc::handleRpc0x00008203(void* request_data_ptr, void* response_data_ptr)
+{
+    //RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
+    ResponseMessageType_Uint64_Int32List* rs_data_ptr = static_cast<ResponseMessageType_Uint64_Int32List*>(response_data_ptr);
+
+    //int32_t cpu = rq_data_ptr->data.data;
+    CommRegForceControlParam_t params;
+    memset(&params, 0, sizeof(params));
+    if (cpu_comm_ptr_->getForceControlParameters(&params))
+    {
+        rs_data_ptr->data.data_count = COMM_REG2_PARAMETER_NUMBER;
+        for(size_t i = 0; i < rs_data_ptr->data.data_count; ++i)
+        {
+            rs_data_ptr->data.data[i] = params.parameter[i];
+        }
+        rs_data_ptr->error_code.data = SUCCESS;
+        LogProducer::info("rpc", "/rpc/servo1001/cpu/getForceControlParameters success");
+    }
+    else
+    {
+        rs_data_ptr->error_code.data = RPC_EXECUTE_FAILED;
+        LogProducer::error("rpc", "/rpc/servo1001/cpu/getForceControlParameters failed");
+        return;
+    }
+}
+
 

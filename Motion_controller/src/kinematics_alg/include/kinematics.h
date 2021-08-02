@@ -20,10 +20,10 @@ typedef struct
 
 typedef struct
 {
-    int arm;    // 1: right arm, -1:left arm
+    int arm;    // 1: face front, -1: face back
     int elbow;  // 1: elbow above wrist, -1:elbow below wrist
     int wrist;  // 1: wrist down, -1: wrist up
-    int flip;   // 0: not flip wrist, 1: flip wrist
+    int flip;   // 0: not flip wrist, 1: flip wrist, not used.
 }Posture;
 
 typedef struct

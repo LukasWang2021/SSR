@@ -25,7 +25,15 @@ typedef struct
 {
 	int32_t comm_reg_id;           /**< Application ID of the register channel of the servo cpu.*/ 
 	int32_t sampling_buffer_id;    /**< Application ID of the sampling buffer channel of the servo cpu.*/
+    int32_t param_reg_id;          /**< Application ID of the external parameter channel of the servo cpu.*/
 }ServoCpuCommInfo_t;
+
+typedef enum
+{
+    CONTROL_MODE_POSITION         = 0,
+    CONTROL_MODE_FORCE            = 1,
+}ServoControlMode;
+
 /**
  * @brief ServoCpuCommBase is the object to handle the servo cpu communication on controller side.
  */
@@ -144,6 +152,32 @@ public:
      * @return void
      */
 	void getServoCpuCommInfo(ServoCpuCommInfo_t* info);
+
+     /**
+     * @brief Ask servo switch to force/position control mode.
+     * @return void
+     */    
+    void setServoControlMode(ServoControlMode control_mode);
+    /**
+     * @brief Get the servo control mode.
+     * @return The value of the control mode.
+     */  
+    uint32_t getServoControlMode();
+
+    /**
+     * @brief Download the external parameter.
+     * @param [in] data_ptr The parameters.
+     * @return bool
+     */
+    bool setForceControlParameters(const CommRegForceControlParam_t* data_ptr);
+
+    /**
+     * @brief Read the external parameter.
+     * @param [out] data_ptr The output values of parameters.
+     * @return bool
+     */
+
+    bool getForceControlParameters(CommRegForceControlParam_t* data_ptr);
 
 private:
     ServoCpuCommBase();

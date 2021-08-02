@@ -28,7 +28,8 @@ namespace group_space
 {
 
 ErrorCode ArmGroup::initGroup(CoordinateManager *coordinate_manager_ptr, ToolManager *tool_manager_ptr,
-    std::map<int32_t,axis_space::Axis*>* axis_group_ptr, GroupSm* sm_ptr, servo_comm_space::ServoCpuCommBase* cpu_comm_ptr)
+    std::map<int32_t,axis_space::Axis*>* axis_group_ptr, GroupSm* sm_ptr, servo_comm_space::ServoCpuCommBase* cpu_comm_ptr,
+    system_model_space::GroupModel_t* db_ptr)
 {
     vel_ratio_ = 0.1;
     acc_ratio_ = 1.0;
@@ -47,11 +48,13 @@ ErrorCode ArmGroup::initGroup(CoordinateManager *coordinate_manager_ptr, ToolMan
     axis_group_ptr_ = axis_group_ptr;
     sm_ptr_ = sm_ptr;
     cpu_comm_ptr_ = cpu_comm_ptr;
+    db_ptr_ = db_ptr;
 
     if (pthread_mutex_init(&planner_list_mutex_, NULL) != 0 ||
         pthread_mutex_init(&manual_traj_mutex_, NULL) != 0 ||
         pthread_mutex_init(&servo_mutex_, NULL) != 0 ||
-        pthread_mutex_init(&offline_mutex_, NULL) != 0)
+        pthread_mutex_init(&offline_mutex_, NULL) != 0 ||
+        pthread_mutex_init(&manual_rpc_mutex_, NULL) != 0)
     {
         LogProducer::error("mc_arm_group","Fail to initialize mutex.");
         return MC_INTERNAL_FAULT;
@@ -139,7 +142,7 @@ ErrorCode ArmGroup::initGroup(CoordinateManager *coordinate_manager_ptr, ToolMan
     // 初始化裸核通信句柄
     LogProducer::info("mc_arm_group","Initializing interface to bare core ...");
 
-    if (!bare_core_.initInterface(JOINT_OF_ARM, axis_group_ptr_, sm_ptr_, cpu_comm_ptr_))
+    if (!bare_core_.initInterface(JOINT_OF_ARM, axis_group_ptr_, sm_ptr_, cpu_comm_ptr_, db_ptr_))
     {
         LogProducer::error("mc_arm_group","Fail to create communication with bare core.");
         return MC_FAIL_IN_INIT;
@@ -211,7 +214,6 @@ bool ArmGroup::isPostureMatch(const basic_alg::Posture &posture_1, const basic_a
 {
     return (posture_1.arm == posture_2.arm) && (posture_1.elbow == posture_2.elbow) && (posture_1.wrist == posture_2.wrist);
 }
-
 
 char* ArmGroup::printDBLine(const int *data, char *buffer, size_t length)
 {

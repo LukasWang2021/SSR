@@ -1,7 +1,0 @@
-log_level: 1
-device_type: VirtualIoBoard
-comm_type: virtual
-max_DI_number: 2000
-max_DO_number: 2000
-
-#END

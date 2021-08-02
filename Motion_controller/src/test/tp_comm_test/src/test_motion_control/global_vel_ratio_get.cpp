@@ -38,7 +38,7 @@ int main()
 
     RequestMessageType_Void void_msg;
     void_msg.header.time_stamp = 122;
-    void_msg.property.authority = Comm_Authority_TP;
+    void_msg.property.authority = Comm_Authority_TP_SIMMULATOR;
 
     if (!test.generateRequestMessageType(hash_value, (void*)&void_msg, RequestMessageType_Void_fields, buf, buf_size))
     {

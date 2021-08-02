@@ -24,14 +24,8 @@ void AxisFdb::handleFdbCurrentCircleBuffer3000(uint32_t* current_time_stamp_ptr)
 	torque_ = fdb_pdo_ptr->fdb_torque;
 	state_word_ = fdb_pdo_ptr->state_word;
     servo_op_mode_ = (ServoOpMode_e)(fdb_pdo_ptr->actual_op_mode);
-
-    //for debug
-	/*static uint32_t pre_state = 0;
-	if ((id_ == 0) && (pre_state != fdb_pdo_ptr->state_word.all))
-	{
-	    pre_state = fdb_pdo_ptr->state_word.all;
-		printf("aixs[0] current servo state change to 0x%x\n", pre_state);
-	}*/
+    encoder_state_ = fdb_pdo_ptr->encoder_state;
+    encoder_value_ = fdb_pdo_ptr->encoder_value;
 }
 
 void AxisFdb::handleFdbSyncCircleBuffer3000(uint32_t expect_time_stamp)
@@ -45,7 +39,10 @@ void AxisFdb::handleFdbSyncCircleBuffer3000(uint32_t expect_time_stamp)
     position_ = fdb_pdo_ptr->fdb_position;
     velocity_ = fdb_pdo_ptr->fdb_velocity;
     torque_ = fdb_pdo_ptr->fdb_torque;
+    state_word_ = fdb_pdo_ptr->state_word;
     servo_op_mode_ = (ServoOpMode_e)(fdb_pdo_ptr->actual_op_mode);
+    encoder_state_ = fdb_pdo_ptr->encoder_state;
+    encoder_value_ = fdb_pdo_ptr->encoder_value;
 }
 
 void AxisFdb::handleFdbCurrentCircleBuffer3001(uint32_t* current_time_stamp_ptr)

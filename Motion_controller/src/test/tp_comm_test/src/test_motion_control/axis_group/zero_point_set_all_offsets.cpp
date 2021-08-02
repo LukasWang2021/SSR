@@ -22,8 +22,15 @@
 
 using namespace std;
 
-int main()
+int main(int argc, char* argv[])
 {
+    // int needed_data_count = 6;
+    // if (argc < needed_data_count + 1)
+    // {
+    //     cout << "one parameters are needed: axie[1~6] offset" << endl;
+    //     return -1;
+    // }
+
     TpCommTest test;
     if (!test.initRpcSocket())
     {
@@ -38,33 +45,19 @@ int main()
 
     RequestMessageType_Int32_DoubleList msg;
     msg.header.time_stamp = 122;
-    msg.property.authority = Comm_Authority_TP;
-    int group_id;
-    double data[9];
-    cout << "Set all zero offsets" << endl;
-    cout << "Please input group id and 9 * offsets you want to set:" << endl;
-    cin >> group_id;
-    cin >> data[0];
-    cin >> data[1];
-    cin >> data[2];
-    cin >> data[3];
-    cin >> data[4];
-    cin >> data[5];
-    cin >> data[6];
-    cin >> data[7];
-    cin >> data[8];
+    msg.property.authority = Comm_Authority_TP_SIMMULATOR;
 
-    msg.data1.data = group_id;
+    msg.data1.data = 0;
     msg.data2.data_count = 9;
-    msg.data2.data[0] = data[0];
-    msg.data2.data[1] = data[1];
-    msg.data2.data[2] = data[2];
-    msg.data2.data[3] = data[3];
-    msg.data2.data[4] = data[4];
-    msg.data2.data[5] = data[5];
-    msg.data2.data[6] = data[6];
-    msg.data2.data[7] = data[7];
-    msg.data2.data[8] = data[8];
+    msg.data2.data[0] = 0;
+    msg.data2.data[1] = 0;
+    msg.data2.data[2] = 0;
+    msg.data2.data[3] = 0;
+    msg.data2.data[4] = 0;
+    msg.data2.data[5] = 0;
+    msg.data2.data[6] = 0;
+    msg.data2.data[7] = 0;
+    msg.data2.data[8] = 0;
 
     if (!test.generateRequestMessageType(hash_value, (void*)&msg, RequestMessageType_Int32_DoubleList_fields, buf, buf_size))
     {
@@ -102,7 +95,7 @@ int main()
     cout << "Reply : msg.header.package_left = " << recv_msg.header.package_left << endl;
     cout << "Reply : msg.header.error_code = " << recv_msg.header.error_code << endl;
     cout << "Reply : msg.property.authority = " << recv_msg.property.authority << endl;
-    cout << "Reply : msg.data.data = " <<recv_msg.data.data << endl;
+    cout << "Reply : msg.data.data = " <<hex<<recv_msg.data.data << endl;
 
     return 0;
 }

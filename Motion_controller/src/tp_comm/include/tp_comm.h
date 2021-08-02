@@ -251,6 +251,11 @@ private:
     void handleRequest0x00006825(int recv_bytes);
     /********rpc/controller/getWorkMode, RequestMessageType_Void**********/	
     void handleRequest0x00003325(int recv_bytes);
+    /********rpc/controller/setControlMode, RequestMessageType_Uint32**********/	
+    void handleRequest0x0000B555(int recv_bytes);
+    /********rpc/controller/getControlMode, RequestMessageType_Void**********/	
+    void handleRequest0x0000B695(int recv_bytes);
+
         
     /********rpc/axis/mcPower, RequestMessageType_Int32_Bool**********/	
     void handleRequest0x000053E2(int recv_bytes);
@@ -406,7 +411,11 @@ private:
     void handleRequest0x0000FE5F(int recv_bytes);
     /********rpc/servo1001/servo/getServoDefinedInfo, RequestMessageType_Int32_Int32List(count=9)**********/	
     void handleRequest0x0000C87F(int recv_bytes);	
-    
+    /********rpc/servo1001/cpu/setForceControlParameters, RequestMessageType_Int32_Int32List(count=512)**********/	
+    void handleRequest0x00005F53(int recv_bytes);
+    /********rpc/servo1001/cpu/getForceControlParameters, RequestMessageType_Int32**********/	
+    void handleRequest0x00008203(int recv_bytes);
+
     /********rpc/io/readDI, RequestMessageType_Int32**********/	
     void handleRequest0x000185A9(int recv_bytes);
     /********rpc/io/readDO, RequestMessageType_Int32**********/	
@@ -534,6 +543,20 @@ private:
     /********rpc/motion_control/axis_group/moveOfflineTrajectory, RequestMessageType_Void**********/	
     void handleRequest0x0000C4D9(int recv_bytes);
 
+    /********rpc/reg_manager/pr/addReg, RequestMessageType_PrRegData**********/	
+    void handleRequest0x000154E7(int recv_bytes);
+    /********rpc/reg_manager/pr/deleteReg, RequestMessageType_Int32**********/	
+    void handleRequest0x00001097(int recv_bytes);
+    /********rpc/reg_manager/pr/updateReg, RequestMessageType_PrRegData**********/	
+    void handleRequest0x00009EF7(int recv_bytes);
+    /********rpc/reg_manager/pr/getReg, RequestMessageType_Int32**********/	
+    void handleRequest0x00017207(int recv_bytes);
+    /********rpc/reg_manager/pr/moveReg, RequestMessageType_Int32List(count = 2) **********/	
+    void handleRequest0x0000D7C7(int recv_bytes);
+    /********rpc/reg_manager/pr/getChangedList, RequestMessageType_Int32List(count = 2) **********/	
+    void handleRequest0x0000B454(int recv_bytes);
+    /********rpc/reg_manager/pr/getValidList, RequestMessageType_Int32List(count = 2) **********/	
+    void handleRequest0x00009354(int recv_bytes);
 
 
 
@@ -564,7 +587,11 @@ private:
     void handleResponse0x00006825(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
     /********rpc/controller/getWorkMode, ResponseMessageType_Uint64_Uint32**********/	
     void handleResponse0x00003325(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
-        
+    /********rpc/controller/setControlMode, ResponseMessageType_Uint64**********/	
+    void handleResponse0x0000B555(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/controller/getControlMode, ResponseMessageType_Uint64_Uint32**********/	
+    void handleResponse0x0000B695(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+
     /********rpc/axis/mcPower, ResponseMessageType_Uint64**********/	
     void handleResponse0x000053E2(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
     /********rpc/axis/mcReset, ResponseMessageType_Uint64**********/	
@@ -666,7 +693,7 @@ private:
     void handleResponse0x00004DD5(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
     /********rpc/servo1001/servo/triggerUploadParameters, ResponseMessageType_Uint64**********/	
     void handleResponse0x000020B3(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
-    /********rpc/servo1001/servo/uploadParameters, ResponseMessageType_Uint64_ParamDetailList**********/	
+    /********rpc/servo1001/servo/uploadParameters, ResponseMessageType_Uint64_Int32List**********/	
     void handleResponse0x0000E003(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
     /********rpc/servo1001/servo/triggerDownloadParameters, ResponseMessageType_Uint64**********/	
     void handleResponse0x00011C53(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
@@ -719,6 +746,10 @@ private:
     void handleResponse0x0000FE5F(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);	
     /********rpc/servo1001/servo/getServoDefinedInfo, ResponseMessageType_Uint64_Int32List(count=9)**********/	
     void handleResponse0x0000C87F(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/servo1001/cpu/setForceControlParameters, ResponseMessageType_Uint64**********/	
+    void handleResponse0x00005F53(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/servo1001/cpu/getForceControlParameters, ResponseMessageType_Uint64_Int32List(count=512)**********/	
+    void handleResponse0x00008203(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
 
 
     /********rpc/io/readDI, ResponseMessageType_Uint64_Int32**********/	
@@ -848,7 +879,20 @@ private:
     /********rpc/motion_control/axis_group/moveOfflineTrajectory, ResponseMessageType_Uint64**********/	
     void handleResponse0x0000C4D9(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
 
-
+    /********rpc/reg_manager/pr/addReg, ResponseMessageType_Uint64**********/	
+    void handleResponse0x000154E7(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/reg_manager/pr/deleteReg, ResponseMessageType_Uint64**********/	
+    void handleResponse0x00001097(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/reg_manager/pr/updateReg, ResponseMessageType_Uint64**********/	
+    void handleResponse0x00009EF7(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/reg_manager/pr/getReg, ResponseMessageType_Uint64_PrRegData**********/	
+    void handleResponse0x00017207(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/reg_manager/pr/moveReg, ResponseMessageType_Uint64**********/	
+    void handleResponse0x0000D7C7(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/reg_manager/pr/getChangedList, ResponseMessageType_Uint64_BaseRegSummaryList**********/	
+    void handleResponse0x0000B454(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/reg_manager/pr/getValidList, ResponseMessageType_Uint64_BaseRegSummaryList**********/	
+    void handleResponse0x00009354(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
 
     
     /********publish/axis/feedback, MessageType_AxisFeedbackList(count=14)**********/    

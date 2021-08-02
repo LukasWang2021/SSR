@@ -45,7 +45,7 @@ int main(int argc, char* argv[])
     RequestMessageType_Uint32 msg;
     msg.header.time_stamp = 122;
     msg.property.authority = Comm_Authority_TP_SIMMULATOR;
-    msg.data.data = atol(argv[1]);
+    msg.data.data = atoi(argv[1]);
 
     if (!test.generateRequestMessageType(hash_value, (void*)&msg, RequestMessageType_Uint32_fields, buf, buf_size))
     {

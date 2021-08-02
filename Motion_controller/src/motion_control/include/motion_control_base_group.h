@@ -8,6 +8,7 @@
 #ifndef _MOTION_CONTROL_BASE_GROUP_H
 #define _MOTION_CONTROL_BASE_GROUP_H
 
+#include <sys/time.h>
 #include <fstream>
 #include <error_queue.h>
 #include <common_error_code.h>
@@ -66,13 +67,14 @@ class BaseGroup
     virtual ~BaseGroup();
 
     virtual ErrorCode initGroup(fst_ctrl::CoordinateManager *coordinate_manager_ptr, fst_ctrl::ToolManager *tool_manager_ptr, 
-        std::map<int32_t, axis_space::Axis*>* axis_group_ptr, GroupSm* sm_ptr,servo_comm_space::ServoCpuCommBase* cpu_comm_ptr) = 0;
+        std::map<int32_t, axis_space::Axis*>* axis_group_ptr, GroupSm* sm_ptr,servo_comm_space::ServoCpuCommBase* cpu_comm_ptr,
+        system_model_space::GroupModel_t* db_ptr) = 0;
     virtual ErrorCode stopGroup(void);
     virtual ErrorCode clearGroup(void);
     virtual ErrorCode clearTeachGroup(void);
 
     basic_alg::Joint getLatestJoint(void);
-    GroupState getGroupState(void);
+    MotionControlState getMotionControlState(void);
     ServoState getServoState(void);
 
     // Auto move APIs:
@@ -99,8 +101,8 @@ class BaseGroup
     virtual ErrorCode manualMoveStep(const ManualDirection *direction);
     virtual ErrorCode manualMoveContinuous(const ManualDirection *direction);
     virtual ErrorCode manualMoveToPoint(const IntactPoint &point);
-    
-
+    virtual bool updateContinuousManualMoveRpcTime();
+    virtual void handleContinueousManualRpcTimeOut();
 
     // Constraints handle APIs:
     virtual ErrorCode setSoftConstraint(const JointConstraint &soft_constraint);
@@ -148,6 +150,8 @@ class BaseGroup
     ErrorCode convertCartToJoint(const basic_alg::PoseEuler &pose, basic_alg::Joint &joint);
     ErrorCode convertJointToCart(const basic_alg::Joint &joint, basic_alg::PoseEuler &pose);
     ErrorCode isLinearPathReachable(const IntactPoint &start, const IntactPoint &target);
+
+    double decouplingAxis6ByRad(double fifth_pos, double sixth_pos);
     
     virtual basic_alg::Transformation* getTransformationPtr(void);
     virtual basic_alg::Kinematics* getKinematicsPtr(void);
@@ -213,6 +217,8 @@ class BaseGroup
     ErrorCode pickPointsFromOfflineCache(TrajectoryPoint *points, size_t &length);
     
     bool initTrajectoryLogSpace(void);
+    std::string getMCServoStatusString(ServoState servo_status);
+    std::string getMontionControlStatusString(MotionControlState mc_status);
     
     int id_;
     JointPlanner joint_planner_;
@@ -258,7 +264,7 @@ class BaseGroup
     basic_alg::Joint servo_joint_;
     basic_alg::Joint start_joint_;
     ServoState  servo_state_;
-    GroupState  group_state_;
+    MotionControlState  mc_state_;
     uint32_t    encoder_state_[NUM_OF_JOINT];
     AxisType    type_of_axis_[NUM_OF_JOINT];
     
@@ -288,6 +294,7 @@ class BaseGroup
 
     pthread_mutex_t     planner_list_mutex_;
     pthread_mutex_t     manual_traj_mutex_;
+    pthread_mutex_t     manual_rpc_mutex_;
     pthread_mutex_t     servo_mutex_;
     pthread_mutex_t     offline_mutex_;
 
@@ -321,6 +328,9 @@ class BaseGroup
     size_t  servo_update_timeout_;
     size_t  joint_record_update_timeout_;
     size_t  joint_record_update_cycle_;
+    bool is_continuous_manual_move_timeout_;
+    bool is_continuous_manual_time_count_valid_;
+    struct timeval last_continuous_manual_move_rpc_time_; 
 
     bool traj_log_enable_;
     TrajectoryPoint* traj_log_data_ptr_;
@@ -329,6 +339,7 @@ class BaseGroup
     std::map<int32_t, axis_space::Axis*>* axis_group_ptr_;  /**< The list of the axes in the group.*/
 	  GroupSm* sm_ptr_;                                       /**< The state machine of the group.*/
     servo_comm_space::ServoCpuCommBase* cpu_comm_ptr_;      /**< The pointer to communicate with the other cpu.*/
+    system_model_space::GroupModel_t* db_ptr_;              /**< The pointer of the parameters of the group model.*/
 };
 
 

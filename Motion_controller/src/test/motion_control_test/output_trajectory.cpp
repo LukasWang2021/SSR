@@ -53,11 +53,11 @@ int main(int argc, char** argv)
 
 	if (strcmp(ctrl_ptr->model_name, "RTM-P7A") == 0)
 	{
-		kinematics_ptr = new KinematicsRTM("/root/install/share/runtime/axis_group/");
+		kinematics_ptr = new KinematicsRTM("/root/install/runtime/robot/axis_group/");
 
 		if (kinematics_ptr == NULL || !kinematics_ptr->isValid())
 		{
-			printf("Fail to create kinematics for model: %s\n", ctrl_ptr->model_name);
+			printf("Fail to create kinematics for model: %s, no file\n", ctrl_ptr->model_name);
 			return -1;
 		}
 

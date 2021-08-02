@@ -55,7 +55,7 @@ namespace group_space
 BaseGroup::BaseGroup()
 {
     servo_state_ = SERVO_INIT;
-    group_state_ = STANDBY;
+    mc_state_ = STANDBY;
     auto_time_ = 0;
     manual_time_ = 0;
 
@@ -91,6 +91,9 @@ BaseGroup::BaseGroup()
     memset(&user_frame_, 0, sizeof(user_frame_));
     memset(&tool_frame_, 0, sizeof(tool_frame_));
     memset(&world_frame_, 0, sizeof(world_frame_));
+    is_continuous_manual_move_timeout_ = false;
+    is_continuous_manual_time_count_valid_ = false;
+    memset(&last_continuous_manual_move_rpc_time_, 0, sizeof(struct timeval));
 }
 
 BaseGroup::~BaseGroup()
@@ -279,11 +282,11 @@ ManualFrame BaseGroup::getManualFrame(void)
 ErrorCode BaseGroup::setManualFrame(ManualFrame frame)
 {
     LogProducer::info("mc_base","Set manual frame = %d, current frame is %d", frame, manual_teach_.getManualFrame());
-    GroupState group_state = group_state_;
+    MotionControlState mc_state = mc_state_;
 
-    if (group_state != STANDBY && group_state != PAUSE)
+    if (mc_state != STANDBY && mc_state != PAUSE)
     {
-        LogProducer::error("mc_base","Cannot set frame in current state = %d", group_state);
+        LogProducer::error("mc_base","Cannot set frame in current state = %s", getMontionControlStatusString(mc_state).c_str());
         return INVALID_SEQUENCE;
     }
 
@@ -343,15 +346,17 @@ ErrorCode BaseGroup::manualMoveToPoint(const IntactPoint &point)
 {
     char buffer[LOG_TEXT_SIZE];
     LogProducer::info("mc_base","Manual to target point");
-    GroupState group_state = group_state_;
+    MotionControlState mc_state = mc_state_;
     ServoState servo_state = getServoState();
 
-    if ((group_state != STANDBY && group_state != PAUSE) || servo_state != SERVO_IDLE)
+    if ((mc_state != STANDBY && mc_state != PAUSE) || servo_state != SERVO_IDLE)
     {
-        LogProducer::error("mc_base","Cannot manual to target in current group-state = %d, servo-state = %d", group_state, servo_state);
+        LogProducer::error("mc_base","Cannot manual to target in current MC-state = %s, servo-state = %s", 
+            getMontionControlStatusString(mc_state).c_str(), getMCServoStatusString(servo_state).c_str());
         return MC_FAIL_MANUAL_TO_POINT;
     }
 
+    start_joint_ = getLatestJoint();
     Joint start_joint = start_joint_;
     LogProducer::info("mc_base","Joint: %s", printDBLine(&point.joint[0], buffer, LOG_TEXT_SIZE));
     LogProducer::info("mc_base","Pose: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", point.pose.pose.point_.x_, point.pose.pose.point_.y_, point.pose.pose.point_.z_, point.pose.pose.euler_.a_, point.pose.pose.euler_.b_, point.pose.pose.euler_.c_);
@@ -374,7 +379,7 @@ ErrorCode BaseGroup::manualMoveToPoint(const IntactPoint &point)
 
     manual_time_ = 0;
     pthread_mutex_lock(&manual_traj_mutex_);
-    ErrorCode err = manual_teach_.manualToJoint(start_joint_, point.joint);
+    ErrorCode err = manual_teach_.manualToJoint(start_joint, point.joint);
     double duration = manual_teach_.getDuration();
     pthread_mutex_unlock(&manual_traj_mutex_);
 
@@ -382,8 +387,8 @@ ErrorCode BaseGroup::manualMoveToPoint(const IntactPoint &point)
     {
         LogProducer::info("mc_base","Manual move to target joint, total-duration = %.4f, Success.", duration);
 
-        if (duration > MINIMUM_E6 && group_state == STANDBY) standby_to_manual_request_ = true;
-        else if (duration > MINIMUM_E6 && group_state == PAUSE) pause_to_manual_request_ = true;
+        if (duration > MINIMUM_E6 && mc_state == STANDBY) standby_to_manual_request_ = true;
+        else if (duration > MINIMUM_E6 && mc_state == PAUSE) pause_to_manual_request_ = true;
         return SUCCESS;
     }
     else
@@ -396,15 +401,17 @@ ErrorCode BaseGroup::manualMoveToPoint(const IntactPoint &point)
 ErrorCode BaseGroup::manualMoveStep(const ManualDirection *direction)
 {
     LogProducer::info("mc_base","Manual step by direction.");
-    GroupState group_state = group_state_;
+    MotionControlState mc_state = mc_state_;
     ServoState servo_state = getServoState();
 
-    if ((group_state != STANDBY && group_state != PAUSE) || servo_state != SERVO_IDLE)
+    if ((mc_state != STANDBY && mc_state != PAUSE) || servo_state != SERVO_IDLE)
     {
-        LogProducer::error("mc_base","Cannot manual step in current group-state = %d, servo-state = %d", group_state, servo_state);
+        LogProducer::error("mc_base","Cannot manual step in current MC-state = %s, servo-state = %s", 
+            getMontionControlStatusString(mc_state).c_str(), getMCServoStatusString(servo_state).c_str());
         return MC_FAIL_MANUAL_STEP;
     }
 
+    start_joint_ = getLatestJoint();
     Joint start_joint = start_joint_;
 
     if (!soft_constraint_.isJointInConstraint(start_joint, MINIMUM_E3))
@@ -443,8 +450,8 @@ ErrorCode BaseGroup::manualMoveStep(const ManualDirection *direction)
     if (err == SUCCESS)
     {
         LogProducer::info("mc_base","Manual move step, total-duration = %.4f, Success.", duration);
-        if (duration > MINIMUM_E6 && group_state == STANDBY) standby_to_manual_request_ = true;
-        else if (duration > MINIMUM_E6 && group_state == PAUSE) pause_to_manual_request_ = true;
+        if (duration > MINIMUM_E6 && mc_state == STANDBY) standby_to_manual_request_ = true;
+        else if (duration > MINIMUM_E6 && mc_state == PAUSE) pause_to_manual_request_ = true;
         return SUCCESS;
     }
     else
@@ -456,22 +463,29 @@ ErrorCode BaseGroup::manualMoveStep(const ManualDirection *direction)
 
 ErrorCode BaseGroup::manualMoveContinuous(const ManualDirection *direction)
 {
-    GroupState group_state = group_state_;
+    if (!updateContinuousManualMoveRpcTime())
+    {
+        LogProducer::error("mc_base","Cannot manual continuous for last movement timeout");
+        return MC_FAIL_MANUAL_CONTINUOUS;
+    }
+
+    MotionControlState mc_state = mc_state_;
     ServoState servo_state = getServoState();
     size_t joint_num = getNumberOfJoint();
 
-    if ((group_state != STANDBY && group_state != MANUAL && group_state != PAUSE && group_state != PAUSE_MANUAL) || ((group_state == STANDBY || group_state == PAUSE) && servo_state != SERVO_IDLE))
+    if ((mc_state != STANDBY && mc_state != MANUAL && mc_state != PAUSE && mc_state != PAUSE_MANUAL) || ((mc_state == STANDBY || mc_state == PAUSE) && servo_state != SERVO_IDLE))
     {
-        LogProducer::error("mc_base","Cannot manual continuous in current grp-state = %d, servo-state = %d", group_state, servo_state);
+        LogProducer::error("mc_base","Cannot manual continuous in current mc-state = %s, servo-state = %s", getMontionControlStatusString(mc_state).c_str(), getMCServoStatusString(servo_state).c_str());
         return MC_FAIL_MANUAL_CONTINUOUS;
     }
 
-    if (group_state != STANDBY && group_state != PAUSE && manual_trajectory_check_fail_)
+    if (mc_state != STANDBY && mc_state != PAUSE && manual_trajectory_check_fail_)
     {
-        LogProducer::error("mc_base","Manual trajectory check failed, manual continuous refused", group_state, servo_state);
+        LogProducer::error("mc_base","Manual trajectory check failed, manual continuous refused");
         return MC_FAIL_MANUAL_CONTINUOUS;
     }
 
+    start_joint_ = getLatestJoint();
     Joint start_joint = start_joint_;
 
     if (!soft_constraint_.isJointInConstraint(start_joint, MINIMUM_E3))
@@ -501,7 +515,7 @@ ErrorCode BaseGroup::manualMoveContinuous(const ManualDirection *direction)
         }
     }
 
-    if (group_state_ == STANDBY || group_state == PAUSE)
+    if (mc_state_ == STANDBY || mc_state == PAUSE)
     {
         LogProducer::info("mc_base","Manual continuous by direction.");
         pthread_mutex_lock(&manual_traj_mutex_);
@@ -528,12 +542,12 @@ ErrorCode BaseGroup::manualMoveContinuous(const ManualDirection *direction)
         */
 
         LogProducer::info("mc_base","Manual move continuous, total-duration = %.4f, Success.", duration);
-        if (duration > MINIMUM_E6 && group_state == STANDBY) standby_to_manual_request_ = true;
-        else if (duration > MINIMUM_E6 && group_state == PAUSE) pause_to_manual_request_ = true;
+        if (duration > MINIMUM_E6 && mc_state == STANDBY) standby_to_manual_request_ = true;
+        else if (duration > MINIMUM_E6 && mc_state == PAUSE) pause_to_manual_request_ = true;
         return SUCCESS;
         
     }
-    else if (group_state_ == MANUAL || group_state == PAUSE_MANUAL)
+    else if (mc_state_ == MANUAL || mc_state == PAUSE_MANUAL)
     {
         //if (manual_time_ < 0.15)
         //{
@@ -583,8 +597,66 @@ ErrorCode BaseGroup::manualMoveContinuous(const ManualDirection *direction)
     }
     else
     {
-        LogProducer::error("mc_base","Cannot manual continuous in current grp-state = %d, servo-state = %d", group_state_, servo_state_);
+        LogProducer::error("mc_base","Cannot manual continuous in current grp-state = %s, servo-state = %s", getMontionControlStatusString(mc_state_).c_str(), getMCServoStatusString(servo_state_).c_str());
         return MC_FAIL_MANUAL_CONTINUOUS;
+    }
+}
+
+bool BaseGroup::updateContinuousManualMoveRpcTime()
+{
+    if(is_continuous_manual_move_timeout_)
+    {
+        return false;
+    }
+    is_continuous_manual_time_count_valid_ = true;
+    
+    struct timeval current_time;
+    gettimeofday(&current_time, NULL);
+    pthread_mutex_lock(&manual_rpc_mutex_);
+    last_continuous_manual_move_rpc_time_.tv_sec = current_time.tv_sec;
+    last_continuous_manual_move_rpc_time_.tv_usec = current_time.tv_usec;
+    pthread_mutex_unlock(&manual_rpc_mutex_);
+    return true;
+}
+
+void BaseGroup::handleContinueousManualRpcTimeOut()
+{
+    if(is_continuous_manual_move_timeout_)
+    {
+        return;
+    }
+
+    if(!is_continuous_manual_time_count_valid_)
+    {
+        return;
+    }
+    
+    struct timeval current_time;
+    gettimeofday(&current_time, NULL);
+    pthread_mutex_lock(&manual_rpc_mutex_);
+    long long delta_tv_sec = current_time.tv_sec - last_continuous_manual_move_rpc_time_.tv_sec;
+    long long delta_tv_usec = current_time.tv_usec - last_continuous_manual_move_rpc_time_.tv_usec;
+    pthread_mutex_unlock(&manual_rpc_mutex_);
+    long long time_elapse = delta_tv_sec * 1000000 + delta_tv_usec;
+    if(time_elapse > 1000000)//1 second
+    {
+        LogProducer::warn("mc_base","doContinuousManualMove receive time out, do manual to standstill.");
+        is_continuous_manual_move_timeout_ = true;
+        GroupDirection direction;
+        direction.axis1 = STANDING;
+        direction.axis2 = STANDING;
+        direction.axis3 = STANDING;
+        direction.axis4 = STANDING;
+        direction.axis5 = STANDING;
+        direction.axis6 = STANDING;
+        direction.axis7 = STANDING;
+        direction.axis8 = STANDING;
+        direction.axis9 = STANDING;        
+        ErrorCode error_code = manualMoveContinuous(&direction[0]);
+        if(error_code != SUCCESS)
+        {
+            ErrorQueue::instance().push(error_code);
+        }
     }
 }
 
@@ -599,45 +671,46 @@ void BaseGroup::manualStopWithLock(void)
 
 void BaseGroup::manualStop(void)
 {
-    GroupState group_state = group_state_;
-    LogProducer::info("mc_base","Stop manual teach, grp-state: 0x%x, manual-mode: %d, manual-frame: %d", group_state, manual_teach_.getManualMode(), manual_teach_.getManualFrame());
+    MotionControlState mc_state = mc_state_;
+    LogProducer::info("mc_base","Stop manual teach, grp-state: %s, manual-mode: %d, manual-frame: %d", getMontionControlStatusString(mc_state).c_str(), manual_teach_.getManualMode(), manual_teach_.getManualFrame());
 
-    if ((group_state == MANUAL || group_state == STANDBY_TO_MANUAL || group_state == PAUSE_MANUAL || group_state == PAUSE_TO_PAUSE_MANUAL) && manual_time_ < manual_teach_.getDuration())
+    if ((mc_state == MANUAL || mc_state == STANDBY_TO_MANUAL || mc_state == PAUSE_MANUAL || mc_state == PAUSE_TO_PAUSE_MANUAL) && manual_time_ < manual_teach_.getDuration())
     {
         manual_teach_.manualStop(manual_time_);
         LogProducer::info("mc_base","Success, the group will stop in %.4fs", manual_teach_.getDuration() - manual_time_);
     }
     else
     {
-        LogProducer::info("mc_base","The group is not in manual state, group-state: 0x%x, manual-time: %.6f, manual-duration: %.6f", group_state, manual_time_, manual_teach_.getDuration());
+        LogProducer::info("mc_base","The group is not in manual state, MC-state: %s, manual-time: %.6f, manual-duration: %.6f", 
+            getMontionControlStatusString(mc_state).c_str(), manual_time_, manual_teach_.getDuration());
     }
 }
 
 bool BaseGroup::isMoving(void)
 {
     ServoState servo_state = getServoState();
-    GroupState group_state = group_state_;
-    return servo_state == SERVO_RUNNING && (group_state == AUTO || group_state == AUTO_TO_PAUSING || group_state == PAUSING || 
-            group_state == PAUSE_RETURN || group_state == RESUME ||
-            group_state == MANUAL || group_state == PAUSE_MANUAL || group_state == OFFLINE);
+    MotionControlState mc_state = mc_state_;
+    return servo_state == SERVO_RUNNING && (mc_state == AUTO || mc_state == AUTO_TO_PAUSING || mc_state == PAUSING || 
+            mc_state == PAUSE_RETURN || mc_state == RESUME ||
+            mc_state == MANUAL || mc_state == PAUSE_MANUAL || mc_state == OFFLINE);
 }
 
 ErrorCode BaseGroup::pauseMove(void)
 {
-    GroupState group_state = group_state_;
+    MotionControlState mc_state = mc_state_;
     LogProducer::info("mc_base","Pause move request received.");
 
-    if (group_state == AUTO && !auto_to_standby_request_ && !auto_to_pause_request_)
+    if (mc_state == AUTO && !auto_to_standby_request_ && !auto_to_pause_request_)
     {
         auto_to_pause_request_ = true;
         return SUCCESS;
     }
-    else if (group_state == MANUAL || group_state == STANDBY_TO_MANUAL || group_state == PAUSE_MANUAL || group_state == PAUSE_TO_PAUSE_MANUAL)
+    else if (mc_state == MANUAL || mc_state == STANDBY_TO_MANUAL || mc_state == PAUSE_MANUAL || mc_state == PAUSE_TO_PAUSE_MANUAL)
     {
         manualStopWithLock();
         return SUCCESS;
     }
-    else if (group_state == PAUSE_RETURN || group_state == PAUSE_TO_PAUSE_RETURN)
+    else if (mc_state == PAUSE_RETURN || mc_state == PAUSE_TO_PAUSE_RETURN)
     {
         stop_barecore_ = true;
         return SUCCESS;
@@ -645,7 +718,7 @@ ErrorCode BaseGroup::pauseMove(void)
     else
     {}
 
-    LogProducer::warn("mc_base","Group state is %d, pause request refused.", group_state);
+    LogProducer::warn("mc_base","MC-state is %s, pause request refused.", getMontionControlStatusString(mc_state).c_str());
     return INVALID_SEQUENCE;
 }
 
@@ -905,15 +978,15 @@ ErrorCode BaseGroup::planResumeTrajectory(void)
 ErrorCode BaseGroup::restartMove(void)
 {
     LogProducer::info("mc_base","Restart move request received.");
-    GroupState group_state = group_state_;
+    MotionControlState mc_state = mc_state_;
     ServoState servo_state = getServoState();
     
-    if (group_state == PAUSE && servo_state == SERVO_IDLE)
+    if (mc_state == PAUSE && servo_state == SERVO_IDLE)
     {
         pause_to_auto_request_ = true;
         return SUCCESS;
     }
-    else if (group_state == STANDBY && servo_state == SERVO_IDLE)
+    else if (mc_state == STANDBY && servo_state == SERVO_IDLE)
     {
         return SUCCESS;
     }
@@ -1003,6 +1076,11 @@ ErrorCode BaseGroup::isLinearPathReachable(const IntactPoint &start, const Intac
     return SUCCESS;
 }
 
+
+double BaseGroup::decouplingAxis6ByRad(double fifth_pos, double sixth_pos)
+{
+    return bare_core_.decouplingAxis6ByRad(fifth_pos, sixth_pos);
+}
 
 ErrorCode BaseGroup::autoMove(const MotionInfo &info)
 {
@@ -1157,7 +1235,7 @@ ErrorCode BaseGroup::autoMove(const MotionInfo &info)
     plan_traj_ptr_ = plan_traj_ptr_->next;
     pthread_mutex_unlock(&planner_list_mutex_);
 
-    if (group_state_ == STANDBY)
+    if (mc_state_ == STANDBY)
     {
         standby_to_auto_request_ = true;
     }
@@ -1169,9 +1247,9 @@ ErrorCode BaseGroup::autoMove(const MotionInfo &info)
 /*
 ErrorCode BaseGroup::checkStartState(const Joint &start_joint)
 {
-    //if (group_state_ == STANDBY && servo_state_ == SERVO_IDLE && traj_list_ptr_ == NULL && path_list_ptr_ == NULL)
+    //if (mc_state_ == STANDBY && servo_state_ == SERVO_IDLE && traj_list_ptr_ == NULL && path_list_ptr_ == NULL)
     // FIXME
-    if (group_state_ == STANDBY && servo_state_ == SERVO_IDLE)
+    if (mc_state_ == STANDBY && servo_state_ == SERVO_IDLE)
     {
         Joint control_joint;
         Joint current_joint = getLatestJoint();
@@ -1500,7 +1578,7 @@ bool BaseGroup::nextMovePermitted(void)
 {
     // LogProducer::warn("mc_base","is-next-Move-Permitted ?");
     uint32_t branch = 0;
-    GroupState state = group_state_;
+    MotionControlState state = mc_state_;
     ServoState servo_state = getServoState();
     pthread_mutex_lock(&planner_list_mutex_);
     
@@ -1578,8 +1656,8 @@ bool BaseGroup::nextMovePermitted(void)
 
     if (branch == 0)
     {
-        LogProducer::warn("mc_base","Next motion permitted: state=0x%x, servo-state=0x%x, pick->valid=%d, plan->valid=%d, pick->start_from_smooth=%d, pick->end_with_smooth=%d, auto_time=%.6f, pick->smooth_time=%.6f", 
-            state, servo_state, pick_traj_ptr_->valid, plan_traj_ptr_->valid, pick_traj_ptr_->start_from_smooth, pick_traj_ptr_->end_with_smooth, auto_time_, pick_traj_ptr_->smooth_time);
+        LogProducer::warn("mc_base","Next motion permitted: state=0x%x, servo-state=%s, pick->valid=%d, plan->valid=%d, pick->start_from_smooth=%d, pick->end_with_smooth=%d, auto_time=%.6f, pick->smooth_time=%.6f", 
+            state, getMCServoStatusString(servo_state).c_str(), pick_traj_ptr_->valid, plan_traj_ptr_->valid, pick_traj_ptr_->start_from_smooth, pick_traj_ptr_->end_with_smooth, auto_time_, pick_traj_ptr_->smooth_time);
     }
     else
     {
@@ -1607,9 +1685,9 @@ ServoState BaseGroup::getServoState(void)
 }
 
 
-GroupState BaseGroup::getGroupState(void)
+MotionControlState BaseGroup::getMotionControlState(void)
 {
-    return group_state_;
+    return mc_state_;
 }
 
 ErrorCode BaseGroup::setGlobalVelRatio(double ratio)
@@ -1660,7 +1738,7 @@ ErrorCode BaseGroup::pickPointsFromManualTrajectory(TrajectoryPoint *points, siz
 {
     size_t picked = 0;
     ErrorCode err = SUCCESS;
-    GroupState group_state = group_state_;
+    MotionControlState mc_state = mc_state_;
 
     for (size_t i = 0; i < length; i++)
     {
@@ -1683,8 +1761,8 @@ ErrorCode BaseGroup::pickPointsFromManualTrajectory(TrajectoryPoint *points, siz
         if (points[length - 1].level == POINT_ENDING)
         {
             char buffer[LOG_TEXT_SIZE];
-            if (group_state == MANUAL) manual_to_standby_request_ = true;
-            else if (group_state == PAUSE_MANUAL) manual_to_pause_request_ = true;
+            if (mc_state == MANUAL) manual_to_standby_request_ = true;
+            else if (mc_state == PAUSE_MANUAL) manual_to_pause_request_ = true;
             LogProducer::info("mc_base","Get ending-point: %.4f - %s", manual_time_, printDBLine(&points[length - 1].state.angle[0], buffer, LOG_TEXT_SIZE));
             start_joint_ = points[length - 1].state.angle;
         }
@@ -1819,34 +1897,11 @@ ErrorCode BaseGroup::pickManualPoint(TrajectoryPoint &point)
 
 bool BaseGroup::updateStartJoint(void)
 {
+    start_joint_ = getLatestJoint();
+
     char buffer[LOG_TEXT_SIZE];
-    Joint control_joint;
-    Joint current_joint = getLatestJoint();
-
-    if (bare_core_.getControlPosition(&control_joint[0], getNumberOfJoint()))
-    {
-        LogProducer::info("mc_base","Control-position: %s", printDBLine(&control_joint[0], buffer, LOG_TEXT_SIZE));
-        LogProducer::info("mc_base","Current-position: %s", printDBLine(&current_joint[0], buffer, LOG_TEXT_SIZE));
-
-        //if (isSameJoint(current_joint, control_joint, MINIMUM_E3))
-        if (isSameJoint(current_joint, control_joint, joint_tracking_accuracy_))
-        {
-            start_joint_ = control_joint;
-            memset(&start_joint_[getNumberOfJoint()], 0, (NUM_OF_JOINT - getNumberOfJoint()) * sizeof(double));
-            LogProducer::info("mc_base","Update start joint success");
-            return true;
-        }
-        else
-        {
-            LogProducer::error("mc_base","Control-position different with current-position.");
-            return false;
-        }
-    }
-    else
-    {
-        LogProducer::error("mc_base","Cannot get control position from bare core.");
-        return false;
-    }
+    LogProducer::info("mc_base","Update Start-position: %s", printDBLine(&start_joint_[0], buffer, LOG_TEXT_SIZE));
+    return true;
 }
 
 void BaseGroup::fillTrajectoryFifo(void)
@@ -1857,7 +1912,7 @@ void BaseGroup::fillTrajectoryFifo(void)
     ErrorCode err = SUCCESS;
     filling_points_into_traj_fifo_ = true;
 
-    if ((group_state_ == AUTO && !auto_to_standby_request_) || group_state_ == STANDBY_TO_AUTO || group_state_ == PREPARE_RESUME)
+    if ((mc_state_ == AUTO && !auto_to_standby_request_) || mc_state_ == STANDBY_TO_AUTO || mc_state_ == PREPARE_RESUME)
     {
         TrajectoryPoint point;
         uint32_t num_of_point = 1;
@@ -1960,7 +2015,7 @@ void BaseGroup::fillTrajectoryFifo(void)
                             pick_traj_ptr_->smooth_distance = -1;
                             continue;
                         }
-                        else if (group_state_ == PREPARE_RESUME && waiting_smooth_cnt > 150)
+                        else if (mc_state_ == PREPARE_RESUME && waiting_smooth_cnt > 150)
                         {
                             // 在PREPARE_RESUME阶段FIFO只进不出，如果卡在圆滑切出点之前且点数大于限制值时上述条件恒不能达成，可能造成暂停恢复规划时点数不足的问题，
                             // 此处需要计时，当超时后下一条语句仍未介入则放弃平滑，保证恢复规划时点数足够
@@ -2026,23 +2081,23 @@ void BaseGroup::fillTrajectoryFifo(void)
 
         pthread_mutex_unlock(&planner_list_mutex_);
     }
-    else if (group_state_ == AUTO_TO_PAUSING)
+    else if (mc_state_ == AUTO_TO_PAUSING)
     {
         ErrorCode err = planPauseTrajectory();
 
         if (err != SUCCESS)
         {
-            group_state_ = AUTO;
-            LogProducer::info("mc_base","Group-state switch to auto.");
+            mc_state_ = AUTO;
+            LogProducer::info("mc_base","MC-state switch to MC_AUTO.");
             reportError(err);
         }
         else
         {
-            group_state_ = PAUSING;
-            LogProducer::info("mc_base","Group-state switch to pausing.");
+            mc_state_ = PAUSING;
+            LogProducer::info("mc_base","MC-state switch to MC_PAUSING.");
         }
     }
-    else if (group_state_ == PAUSING)
+    else if (mc_state_ == PAUSING)
     {
         uint32_t num = 0;
         uint32_t pause_trajectory_size = pause_trajectory_.size();
@@ -2064,7 +2119,7 @@ void BaseGroup::fillTrajectoryFifo(void)
             pause_trajectory_.erase(pause_trajectory_.begin(), pause_trajectory_.begin() + num);
         }
     }
-    else if (group_state_ == PAUSE_RETURN)
+    else if (mc_state_ == PAUSE_RETURN)
     {
         uint32_t num = 0;
         uint32_t return_trajectory_size = resume_trajectory_.size();
@@ -2086,7 +2141,7 @@ void BaseGroup::fillTrajectoryFifo(void)
             resume_trajectory_.erase(resume_trajectory_.begin(), resume_trajectory_.begin() + num);
         }
     }
-    else if (group_state_ == RESUME)
+    else if (mc_state_ == RESUME)
     {
         uint32_t num = 0;
         uint32_t resume_trajectory_size = resume_trajectory_.size();
@@ -2108,7 +2163,7 @@ void BaseGroup::fillTrajectoryFifo(void)
             resume_trajectory_.erase(resume_trajectory_.begin(), resume_trajectory_.begin() + num);
         }
     }
-    else if (group_state_ == MANUAL || group_state_ == PAUSE_MANUAL)
+    else if (mc_state_ == MANUAL || mc_state_ == PAUSE_MANUAL)
     {
         err = fillManualFIFO();
 
@@ -2201,12 +2256,13 @@ void BaseGroup::updateServoStateAndJoint(void)
 
         if (last_servo_state != servo_state_)
         {
-            LogProducer::info("mc_base","Servo-state switch %d to %d", last_servo_state, servo_state_);
+            LogProducer::info("mc_base","Servo-state switch %s to %s", getMCServoStatusString(last_servo_state).c_str(),
+                getMCServoStatusString(servo_state_).c_str());
 
             if ((last_servo_state == SERVO_RUNNING) && (servo_state_ != SERVO_IDLE))
             {
-                LogProducer::error("mc_base","Group-state: 0x%x, point-cache-empty: %d, auto_to_standby_request: %d, auto_to_pause_request: %d", 
-                group_state_, bare_core_.isPointCacheEmpty(), auto_to_standby_request_, auto_to_pause_request_);
+                LogProducer::error("mc_base","MC-state: %s, point-cache-empty: %d, auto_to_standby_request: %d, auto_to_pause_request: %d", 
+                getMontionControlStatusString(mc_state_).c_str(), bare_core_.isPointCacheEmpty(), auto_to_standby_request_, auto_to_pause_request_);
                 LogProducer::info("mc_base","Dump share memory ...");
                 dumpShareMemory();
                 LogProducer::info("mc_base","Done.");
@@ -2279,18 +2335,18 @@ ErrorCode BaseGroup::sendAutoTrajectoryFlow(void)
             LogProducer::info("mc_base","Get ending-point: %s", printDBLine(&points[length - 1].state.angle[0], buffer, LOG_TEXT_SIZE));
             LogProducer::info("mc_base","Length of this package: %d, fill result: %d", length, res);
 
-            if (group_state_ == AUTO)
+            if (mc_state_ == AUTO)
             {
                 PoseQuaternion fcp_in_base;
                 kinematics_ptr_->doFK(points[length - 1].state.angle, fcp_in_base);
                 transformation_.convertFcpToTcp(fcp_in_base, tool_frame_, fine_pose_);
                 auto_to_standby_request_ = true;
             }
-            else if (group_state_ == PAUSING)
+            else if (mc_state_ == PAUSING)
             {
                 pausing_to_pause_request_ = true;
             }
-            else if (group_state_ == PAUSE_RETURN)
+            else if (mc_state_ == PAUSE_RETURN)
             {
                 pause_return_to_pause_request_ = true;
             }
@@ -2372,18 +2428,18 @@ void BaseGroup::sendTrajectoryFlow(void)
     static size_t error_cnt = 0;
     ErrorCode err = SUCCESS;
     ServoState servo_state = getServoState();
-    GroupState group_state = group_state_;
+    MotionControlState mc_state = mc_state_;
 
     if (servo_state != SERVO_IDLE && servo_state != SERVO_RUNNING)
     {
         return;
     }
 
-    if (group_state == AUTO && !auto_to_standby_request_)
+    if (mc_state == AUTO && !auto_to_standby_request_)
     {
         err = sendAutoTrajectoryFlow();
     }
-    else if ((group_state == AUTO && auto_to_standby_request_) || group_state == AUTO_TO_STANDBY)
+    else if ((mc_state == AUTO && auto_to_standby_request_) || mc_state == AUTO_TO_STANDBY)
     {
         if (!bare_core_.isPointCacheEmpty())
         {
@@ -2391,11 +2447,11 @@ void BaseGroup::sendTrajectoryFlow(void)
         }
     }
 
-    else if (group_state == OFFLINE && !offline_to_standby_request_)
+    else if (mc_state == OFFLINE && !offline_to_standby_request_)
     {
         err = sendOfflineTrajectoryFlow();
     }
-    else if ((group_state == OFFLINE && offline_to_standby_request_) || group_state == OFFLINE_TO_STANDBY)
+    else if ((mc_state == OFFLINE && offline_to_standby_request_) || mc_state == OFFLINE_TO_STANDBY)
     {
         if (!bare_core_.isPointCacheEmpty())
         {
@@ -2403,11 +2459,11 @@ void BaseGroup::sendTrajectoryFlow(void)
         }
     }
 
-    else if (group_state == PAUSING && !pausing_to_pause_request_)
+    else if (mc_state == PAUSING && !pausing_to_pause_request_)
     {
         err = sendAutoTrajectoryFlow();
     }
-    else if ((group_state == PAUSING && pausing_to_pause_request_) || group_state == AUTO_TO_PAUSING || group_state == PAUSING_TO_PAUSE)
+    else if ((mc_state == PAUSING && pausing_to_pause_request_) || mc_state == AUTO_TO_PAUSING || mc_state == PAUSING_TO_PAUSE)
     {
         if (!bare_core_.isPointCacheEmpty())
         {
@@ -2415,11 +2471,11 @@ void BaseGroup::sendTrajectoryFlow(void)
         }
     }
 
-    else if (group_state == PAUSE_RETURN && !pause_return_to_pause_request_)
+    else if (mc_state == PAUSE_RETURN && !pause_return_to_pause_request_)
     {
         err = sendAutoTrajectoryFlow();
     }
-    else if ((group_state == PAUSE_RETURN && pause_return_to_pause_request_) || group_state == PAUSE_RETURN_TO_PAUSE)
+    else if ((mc_state == PAUSE_RETURN && pause_return_to_pause_request_) || mc_state == PAUSE_RETURN_TO_PAUSE)
     {
         if (!bare_core_.isPointCacheEmpty())
         {
@@ -2427,16 +2483,16 @@ void BaseGroup::sendTrajectoryFlow(void)
         }
     }
 
-    else if (group_state == RESUME)
+    else if (mc_state == RESUME)
     {
         err = sendAutoTrajectoryFlow();
     }
 
-    else if (group_state == MANUAL && !manual_to_standby_request_)
+    else if (mc_state == MANUAL && !manual_to_standby_request_)
     {
         err = sendManualTrajectoryFlow();
     }
-    else if ((group_state == MANUAL && manual_to_standby_request_) || group_state == MANUAL_TO_STANDBY)
+    else if ((mc_state == MANUAL && manual_to_standby_request_) || mc_state == MANUAL_TO_STANDBY)
     {
         if (!bare_core_.isPointCacheEmpty())
         {
@@ -2444,11 +2500,11 @@ void BaseGroup::sendTrajectoryFlow(void)
         }
     }
 
-    else if (group_state == PAUSE_MANUAL && !manual_to_pause_request_)
+    else if (mc_state == PAUSE_MANUAL && !manual_to_pause_request_)
     {
         err = sendManualTrajectoryFlow();
     }
-    else if ((group_state == PAUSE_MANUAL && manual_to_pause_request_) || group_state == PAUSE_MANUAL_TO_PAUSE)
+    else if ((mc_state == PAUSE_MANUAL && manual_to_pause_request_) || mc_state == PAUSE_MANUAL_TO_PAUSE)
     {
         if (!bare_core_.isPointCacheEmpty())
         {
@@ -2470,7 +2526,7 @@ void BaseGroup::sendTrajectoryFlow(void)
             {
                 error_cnt = 0;
                 reportError(MC_SEND_TRAJECTORY_FAIL);
-                LogProducer::error("mc_base","sendTrajectoryFlow: bare core time-out, servo state: 0x%x.", servo_state);
+                LogProducer::error("mc_base","sendTrajectoryFlow: bare core time-out, servo state: %s.", getMCServoStatusString(servo_state).c_str());
             }
         }
         else
@@ -2725,6 +2781,52 @@ ErrorCode BaseGroup::setHardConstraint(const JointConstraint &hard_constraint)
     {
         LogProducer::error("mc_base","Fail dumping hard constraint to config file");
         return MC_SET_PARAM_FAILED;
+    }
+}
+
+std::string BaseGroup::getMCServoStatusString(ServoState servo_status)
+{
+    switch(servo_status)
+    {
+        case SERVO_INIT:              return std::string("UNKNOWN");
+        case SERVO_IDLE:              return std::string("MC_SERVO_IDLE");
+        case SERVO_RUNNING:           return std::string("MC_SERVO_RUNNING");
+        case SERVO_DISABLE:           return std::string("MC_SERVO_DISABLE");
+        case SERVO_WAIT_READY:        return std::string("MC_SERVO_WAIT_READY");
+        case SERVO_WAIT_DOWN:         return std::string("MC_SERVO_WAIT_DOWN");
+        default:                      return std::string("Unknown");
+    }
+}
+
+std::string BaseGroup::getMontionControlStatusString(MotionControlState mc_status)
+{
+    switch(mc_status)
+    {
+        case STANDBY:               return std::string("MC_STANDBY");
+        case MANUAL:                return std::string("MC_MANUAL");
+        case AUTO:                  return std::string("MC_AUTO");
+        case PAUSE:                 return std::string("MC_PAUSE");
+        case PAUSE_RETURN:          return std::string("MC_PAUSE_RETURN");
+        case PAUSE_MANUAL:          return std::string("MC_PAUSE_MANUAL");
+        case PAUSING:               return std::string("MC_PAUSING");
+        case OFFLINE:               return std::string("MC_OFFLINE");
+        case RESUME:                return std::string("MC_RESUME");
+        case PREPARE_RESUME:        return std::string("MC_PREPARE_RESUME");
+
+        case MANUAL_TO_STANDBY:     return std::string("MC_MANUAL_TO_STANDBY");
+        case STANDBY_TO_MANUAL:     return std::string("MC_STANDBY_TO_MANUAL");
+        case AUTO_TO_STANDBY:       return std::string("MC_AUTO_TO_STANDBY");
+        case STANDBY_TO_AUTO:       return std::string("MC_STANDBY_TO_AUTO");
+        case STANDBY_TO_OFFLINE:    return std::string("MC_STANDBY_TO_OFFLINE");
+        case OFFLINE_TO_STANDBY:    return std::string("MC_OFFLINE_TO_STANDBY");
+        case AUTO_TO_PAUSING:       return std::string("MC_AUTO_TO_PAUSING");
+        case PAUSING_TO_PAUSE:      return std::string("MC_PAUSING_TO_PAUSE");
+        case PAUSE_TO_RESUME:       return std::string("MC_PAUSE_TO_RESUME");
+        case PAUSE_RETURN_TO_PAUSE: return std::string("MC_PAUSE_RETURN_TO_PAUSE");
+        case PAUSE_TO_PAUSE_RETURN: return std::string("MC_PAUSE_TO_PAUSE_RETURN");
+        case PAUSE_TO_PAUSE_MANUAL: return std::string("MC_PAUSE_TO_PAUSE_MANUAL");
+        case PAUSE_MANUAL_TO_PAUSE: return std::string("MC_PAUSE_MANUAL_TO_PAUSE");
+        default:                    return std::string("MC_Unknown");
     }
 }
 

@@ -109,7 +109,7 @@ class Axis {
      * @param [in] position The actual position value of the axis. The unit is angle pulse.
      * @return error_code
      */
-	ErrorCode mcSetPosition(double position);
+	ErrorCode mcSetPosition(double position = 0);
 
     /**
      * @brief Read the value of a specific parameter.
@@ -262,10 +262,16 @@ class Axis {
 	uint8_t* rtmReadAxisFdbPdoPtr(int32_t* size);
 
     /**
-     * @brief Get the pointer of the feedback PDO.
-     * @details It is used to be called in publishing feedback data.
-     * @param [out] size The valid size of the data.
-     * @return Pointer of the data.
+     * @brief Get the encoder state.
+     * @details 
+     * @return error_coder.
+     */
+     int32_t rtmGetEncoderState(void);
+
+    /**
+     * @brief Reset the encoder error.
+     * @details clear the Encoder errors.
+     * @return error_coder.
      */
 	ErrorCode rtmResetEncoder(void);
 

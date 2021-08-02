@@ -1,6 +1,0 @@
-log_level: 1
-max_name_length: 32
-max_comment_length: 32
-max_number_of_coords: 10
-coord_info_file_name: coord_info.yaml
-#END

@@ -1,7 +1,11 @@
 log_level: 0
-routine_cycle_time: 50000
-realtime_cycle_time: 10000 
+routine_cycle_time: 10000
+planner_cycle_time: 10000
+priority_cycle_time: 10000 
+realtime_cycle_time: 2000 
 routine_thread_priority: 50 
+planner_thread_priority: 60 
+priority_thread_priority: 70
 realtime_thread_priority: 80 
 dio_exist: false
 #END

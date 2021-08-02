@@ -14,7 +14,7 @@ void ControllerRpc::handleRpc0x0000A22C(void* request_data_ptr, void* response_d
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
     int32_t group_id = rq_data_ptr->data.group_id;
-    if(group_id >= GROUP_NUM && group_id < 0)
+    if(group_id >= GROUP_NUM || group_id < 0)
     {
         rs_data_ptr->data.data = RPC_PARAM_INVALID;
         LogProducer::error("rpc", "/rpc/tool_manager/addTool input invalid params group_id = %d", group_id);
@@ -80,7 +80,7 @@ void ControllerRpc::handleRpc0x0000C78C(void* request_data_ptr, void* response_d
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
     int32_t group_id = rq_data_ptr->data.group_id;
-    if(group_id >= GROUP_NUM && group_id < 0)
+    if(group_id >= GROUP_NUM || group_id < 0)
     {
         rs_data_ptr->data.data = RPC_PARAM_INVALID;
         LogProducer::error("rpc", "/rpc/tool_manager/addTool input invalid params group_id = %d", group_id);

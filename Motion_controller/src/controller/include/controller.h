@@ -139,12 +139,16 @@ private:
     group_space::MotionControl* group_ptr_[GROUP_NUM];
     std::vector<system_model_space::GroupConfig_t> group_config_;
 
+    system_model_space::ForceModel_t* force_model_ptr_;
+    std::vector<system_model_space::ForceConfig_t> forces_config_;
+
     uint32_t fdb_current_time_stamp_;
 
     void uploadErrorCode(void);
     void DisableControllerByErrorCode(ErrorCode err);
     void processDevice(void);
     bool downloadServoParams(int32_t axis_id);
+    bool downloadForceControlParams();
 };
 
 }

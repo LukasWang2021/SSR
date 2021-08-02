@@ -137,6 +137,14 @@ ErrorCode Controller::init()
             return ret;
         }
     }
+
+
+    force_model_ptr_ = model_manager_.getForceModel(forces_config_[0].force_id);
+    //download force control parameters
+    if (!downloadForceControlParams())
+        return CONTROLLER_INIT_FAILED;
+
+
     error_code = tool_manager_.init();
     if(SUCCESS != error_code)
     {
@@ -194,7 +202,7 @@ ErrorCode Controller::init()
     }
 
 	publish_.init(&tp_comm_, cpu_comm_ptr_, axis_ptr_, group_ptr_, io_digital_dev_ptr_);
-	rpc_.init(&tp_comm_, &publish_, cpu_comm_ptr_, servo_comm_ptr_, axis_ptr_, axis_model_ptr_, group_ptr_, &file_manager_, io_digital_dev_ptr_, &tool_manager_, &coordinate_manager_, &reg_manager_);
+	rpc_.init(&tp_comm_, &publish_, cpu_comm_ptr_, servo_comm_ptr_, axis_ptr_, axis_model_ptr_, group_ptr_, &file_manager_, io_digital_dev_ptr_, &tool_manager_, &coordinate_manager_, &reg_manager_, force_model_ptr_);
 
     if(!routine_thread_.run(&controllerRoutineThreadFunc, this, config_ptr_->routine_thread_priority_))
     {
@@ -316,6 +324,14 @@ ErrorCode Controller::bootUp(void)
         return CONTROLLER_INIT_FAILED;
     }
     group_config_ = group_config_ptr->getRef();
+
+    ForcesConfig* forces_config_ptr = model_manager_.getForcesConfig();
+    if (!forces_config_ptr->load())
+    {
+        LogProducer::error("main", "Controller forces config load failed");
+        return CONTROLLER_INIT_FAILED;
+    }
+    forces_config_ = forces_config_ptr->getRef();
 
     //boot up
     ErrorCode error_code;
@@ -523,6 +539,34 @@ bool Controller::downloadServoParams(int32_t axis_id)
         return false;
     }
     LogProducer::info("main", "Controller axis[%d] download servo parameter success", axis_id);
+    return true;
+}
+
+bool Controller::downloadForceControlParams()
+{
+    CommRegForceControlParam_t params;
+    memset(&params, 0, sizeof(CommRegForceControlParam_t));
+    int32_t value = 0;
+    for(size_t i = 0; i < COMM_REG2_PARAMETER_NUMBER; ++i)
+    {
+        if (force_model_ptr_->force_param_ptr->get(i, &value))
+        {
+            params.parameter[i] = value;
+        }
+        else
+        {
+            LogProducer::error("main", "Controller force_control get parameter[%d] failed", i);
+            return false;
+        }
+    }
+
+    if (!cpu_comm_ptr_->setForceControlParameters(&params))
+    {
+        LogProducer::error("main", "Controller force_control download parameter failed");
+        return false;
+    }
+    LogProducer::info("main", "Controller force_control download parameter success");
+    
     return true;
 }
 

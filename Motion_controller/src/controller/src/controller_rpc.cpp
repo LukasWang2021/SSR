@@ -35,7 +35,8 @@ void ControllerRpc::init(TpComm* tp_comm_ptr, ControllerPublish* publish_ptr, se
         servo_comm_space::ServoCommBase* servo_comm_ptr[], axis_space::Axis* axis_ptr[AXIS_NUM],
         system_model_space::AxisModel_t* axis_model_ptr[AXIS_NUM], group_space::MotionControl* group_ptr[GROUP_NUM],
         base_space::FileManager* file_manager_ptr, hal_space::Io1000* io_dev_ptr,
-        fst_ctrl::ToolManager* tool_manager_ptr, fst_ctrl::CoordinateManager* coordinate_manager_ptr, fst_ctrl::RegManager* reg_manager_ptr)
+        fst_ctrl::ToolManager* tool_manager_ptr, fst_ctrl::CoordinateManager* coordinate_manager_ptr, fst_ctrl::RegManager* reg_manager_ptr,
+        system_model_space::ForceModel_t* force_model_ptr)
 {
     tp_comm_ptr_ = tp_comm_ptr;
 	publish_ptr_ = publish_ptr;
@@ -50,6 +51,7 @@ void ControllerRpc::init(TpComm* tp_comm_ptr, ControllerPublish* publish_ptr, se
     {
         group_ptr_[i] = group_ptr[i];
     }
+    force_model_ptr_ = force_model_ptr;
 
     file_manager_ptr_ = file_manager_ptr;
     io_dev_ptr_ = io_dev_ptr;

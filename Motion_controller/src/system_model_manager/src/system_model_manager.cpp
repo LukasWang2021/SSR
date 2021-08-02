@@ -10,7 +10,9 @@ using namespace std;
 using namespace log_space;
 
 SystemModelManager::SystemModelManager():
-    axes_config_ptr_(NULL), groups_config_ptr_(NULL)
+    axes_config_ptr_(NULL), 
+    groups_config_ptr_(NULL),
+    forces_config_ptr_(NULL)
 {
 
 }
@@ -50,6 +52,17 @@ SystemModelManager::~SystemModelManager()
     }
     group_model_set_.clear();
 
+    std::map<int32_t, ForceModel_t>::iterator force_it;
+    for(force_it = force_model_set_.begin(); force_it != force_model_set_.end(); ++force_it)
+    {
+        if(force_it->second.force_param_ptr != NULL)
+        {
+            delete force_it->second.force_param_ptr;
+            force_it->second.force_param_ptr = NULL;
+        }        
+    }
+    force_model_set_.clear();
+
     if(axes_config_ptr_ != NULL)
     {
         delete axes_config_ptr_;
@@ -61,6 +74,12 @@ SystemModelManager::~SystemModelManager()
         delete groups_config_ptr_;
         groups_config_ptr_ = NULL;
     }    
+
+    if(forces_config_ptr_ != NULL)
+    {
+        delete forces_config_ptr_;
+        forces_config_ptr_ = NULL;
+    }
 }
 
 bool SystemModelManager::init()
@@ -102,6 +121,23 @@ bool SystemModelManager::load()
         LogProducer::error("SystemModel", "Loading groups_config failed.");
         return false;
     }
+    if(forces_config_ptr_ == NULL)
+    {
+        std::string forces_config_file_path;
+        forces_config_file_path.append(config_.system_model_root_dir_).append("/force/forces_config.xml");
+        forces_config_ptr_ = new ForcesConfig(forces_config_file_path);
+        if(forces_config_ptr_ == NULL)
+        {
+            LogProducer::error("SystemModel", "Initializing forces_config failed.");
+            return false;
+        }
+    }
+    if(!forces_config_ptr_->load())
+    {
+        LogProducer::error("SystemModel", "Loading forces_config failed.");
+        return false;
+    }
+
     // load axis info
     std::vector<AxisConfig_t>& axis_config_ref = axes_config_ptr_->getRef();
     for(size_t i = 0; i < axis_config_ref.size(); ++i)
@@ -164,13 +200,31 @@ bool SystemModelManager::load()
             AxisModel_t* axis_model_ptr = getAxisModel(group_config_ref[i].axis_id[j]);
             if(axis_model_ptr == NULL)
             {
-                LogProducer::error("SystemModel", "Get Axie model failed.");
+                LogProducer::error("SystemModel", "Get Axis model failed.");
                 return false;
             }
             group_model.axis_set.push_back(axis_model_ptr);
         }
         
         group_model_set_.insert(std::pair<int32_t, GroupModel_t>(group_config_ref[i].group_id, group_model));
+    }
+
+    // load forcee info
+    std::vector<ForceConfig_t>& force_config_ref = forces_config_ptr_->getRef();
+    for(size_t i = 0; i < force_config_ref.size(); ++i)
+    {
+        ForceModel_t force_model;
+        // stator param
+        std::string force_model_file_path;
+        force_model_file_path.append(force_config_ref[i].root_dir).append("/").append(force_config_ref[i].parameter).append(".yaml");  
+        force_model.force_param_ptr = ServoDb::newModel(force_config_ref[i].parameter, force_model_file_path);
+        if(force_model.force_param_ptr == NULL
+            || !force_model.force_param_ptr->load())
+        {
+            LogProducer::error("SystemModel", "Loading %s failed.", force_model_file_path.c_str());
+            return false;
+        }
+        force_model_set_.insert(std::pair<int32_t, ForceModel_t>(force_config_ref[i].force_id, force_model));
     }
 
     return true;
@@ -210,6 +264,11 @@ GroupsConfig* SystemModelManager::getGroupsConfig()
     return groups_config_ptr_;
 }
 
+ForcesConfig* SystemModelManager::getForcesConfig()
+{
+    return forces_config_ptr_;
+}
+
 AxisModel_t* SystemModelManager::getAxisModel(int32_t axis_id)
 {
     std::map<int32_t, AxisModel_t>::iterator it = axis_model_set_.find(axis_id);
@@ -236,5 +295,17 @@ GroupModel_t* SystemModelManager::getGroupModel(int32_t group_id)
     }
 }
 
+ForceModel_t* SystemModelManager::getForceModel(int32_t force_id)
+{
+    std::map<int32_t, ForceModel_t>::iterator it = force_model_set_.find(force_id);
+    if(it != force_model_set_.end())
+    {
+        return &it->second;
+    }
+    else
+    {
+        return NULL;
+    }
+}
 
 

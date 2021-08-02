@@ -1227,11 +1227,23 @@ void ControllerRpc::handleRpc0x00005F53(void* request_data_ptr, void* response_d
         LogProducer::error("rpc", "/rpc/servo1001/cpu/setForceControlParameters failed");
         return;
     }
+
+    //save force_control parameters to files 
+    for (size_t i = 0; i < rq_data_ptr->data2.data_count; ++i)
+    {
+        force_model_ptr_->force_param_ptr->set(i, params.parameter[i]);
+    }
+    LogProducer::info("rpc", "/rpc/servo1001/cpu/setForceControlParameters to save parameters");
+    if (!force_model_ptr_->force_param_ptr->save())
+    {
+        LogProducer::error("rpc", "/rpc/servo1001/cpu/setForceControlParameters to save parameters failed");
+    }
+
 }
 //"/rpc/servo1001/cpu/getForceControlParameters"	
 void ControllerRpc::handleRpc0x00008203(void* request_data_ptr, void* response_data_ptr)
 {
-    RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
+    //RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
     ResponseMessageType_Uint64_Int32List* rs_data_ptr = static_cast<ResponseMessageType_Uint64_Int32List*>(response_data_ptr);
 
     //int32_t cpu = rq_data_ptr->data.data;

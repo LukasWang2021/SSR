@@ -12,6 +12,7 @@
 #include "servo_base.h"
 #include "axes_config.h"
 #include "groups_config.h"
+#include "forces_config.h"
 #include "system_model_manager_config.h"
 #include <string>
 #include <vector>
@@ -45,6 +46,12 @@ typedef struct
     ModelBase* application_ptr;         /**< Pointer of group application model.*/
     std::vector<AxisModel_t*> axis_set; /**< Pointer of axis model.*/
 }GroupModel_t;
+
+typedef struct
+{
+    ServoBase* force_param_ptr;
+}ForceModel_t;
+
 /**
  * @brief SystemModelManager is the interface class for system model.
  */
@@ -89,6 +96,12 @@ public:
      */     
     GroupsConfig* getGroupsConfig();
     /**
+     * @brief Get the handler for ForcesConfig.
+     * @return Pointer of ForcesConfig object.
+     */ 
+    ForcesConfig* getForcesConfig();
+
+    /**
      * @brief Get the pointer of some axis model.
      * @param [in] axis_id Axis id.
      * @return Pointer of axis model.
@@ -100,12 +113,20 @@ public:
      * @return Pointer of group model.
      */ 
     GroupModel_t* getGroupModel(int32_t group_id);
+    /**
+     * @brief Get the pointer of some force model.
+     * @param [in] force_id force id.
+     * @return Pointer of force model.
+     */     
+    ForceModel_t* getForceModel(int32_t force_id);
     
 private:
     AxesConfig* axes_config_ptr_;
     GroupsConfig* groups_config_ptr_;
+    ForcesConfig* forces_config_ptr_;
     std::map<int32_t, AxisModel_t> axis_model_set_;
     std::map<int32_t, GroupModel_t> group_model_set_;
+    std::map<int32_t, ForceModel_t> force_model_set_;
     SystemModelManagerConfig config_;
 };
 

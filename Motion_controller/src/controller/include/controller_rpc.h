@@ -62,7 +62,8 @@ public:
         servo_comm_space::ServoCommBase* servo_comm_ptr[], axis_space::Axis* axis_ptr[AXIS_NUM],
         system_model_space::AxisModel_t* axis_model_ptr[AXIS_NUM], group_space::MotionControl* group_ptr[GROUP_NUM],
         base_space::FileManager* file_manager_ptr, hal_space::Io1000* io_dev_ptr,
-        fst_ctrl::ToolManager* tool_manager_ptr, fst_ctrl::CoordinateManager* coordinate_manager_ptr, fst_ctrl::RegManager* reg_manager_ptr);
+        fst_ctrl::ToolManager* tool_manager_ptr, fst_ctrl::CoordinateManager* coordinate_manager_ptr, fst_ctrl::RegManager* reg_manager_ptr,
+        system_model_space::ForceModel_t* force_model_ptr);
 
     /**
      * @brief Process the service request in case the rpc comes.
@@ -77,6 +78,7 @@ private:
     servo_comm_space::ServoCpuCommBase* cpu_comm_ptr_;
     servo_comm_space::ServoCommBase** servo_comm_ptr_;
     system_model_space::AxisModel_t* axis_model_ptr_[AXIS_NUM];
+    system_model_space::ForceModel_t* force_model_ptr_;
     axis_space::Axis* axis_ptr_[AXIS_NUM];
     base_space::FileManager* file_manager_ptr_;
     int32_t* sync_ack_ptr_;

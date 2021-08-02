@@ -823,6 +823,51 @@ uint64_t c_servo1001CpuGetServoCpuCommInfo(int32_t cpu_id, int32_t* comm_reg_id,
 	return rep_data.error_code.data;
 }
 
+uint64_t c_servo1001CpuSetForceControlParameters(int32_t cpu_id, int32_t param_value[512], int32_t param_size)
+{
+	if (!rpc_valid)
+		return HANDLE_RPC_FAILED;
+	RpcBasic* rpc_ptr = RpcBasic::getInstance();
+	RequestMessageType_Int32_Int32List req_data;
+	ResponseMessageType_Uint64 rep_data;
+
+	req_data.header.time_stamp = 122;
+	req_data.property.authority = Comm_Authority_TP_SIMMULATOR;
+	req_data.data1.data = cpu_id;
+	req_data.data2.data_count = param_size;
+	for (size_t i = 0; i < req_data.data2.data_count; ++i)
+	{
+		req_data.data2.data[i] = param_value[i];
+	}
+	if (!rpc_ptr->handleRpc(0x00005F53, &req_data, RequestMessageType_Int32_Int32List_fields, &rep_data, ResponseMessageType_Uint64_fields))
+	{
+		return HANDLE_RPC_FAILED;
+	}
+	return rep_data.data.data;
+}
+
+uint64_t c_servo1001CpuGetForceControlParameters(int32_t cpu_id, int32_t param_value[512], int32_t* param_size_ptr)
+{
+	if (!rpc_valid)
+		return HANDLE_RPC_FAILED;
+	RpcBasic* rpc_ptr = RpcBasic::getInstance();
+	RequestMessageType_Int32 req_data;
+	ResponseMessageType_Uint64_Int32List rep_data;
+
+	req_data.header.time_stamp = 122;
+	req_data.property.authority = Comm_Authority_TP_SIMMULATOR;
+	req_data.data.data = cpu_id;
+	if (!rpc_ptr->handleRpc(0x00008203, &req_data, RequestMessageType_Int32_fields, &rep_data, ResponseMessageType_Uint64_Int32List_fields))
+	{
+		return HANDLE_RPC_FAILED;
+	}
+	*param_size_ptr = rep_data.data.data_count;
+	for (size_t i = 0; i < rep_data.data.data_count; ++i)
+	{
+		param_value[i] = rep_data.data.data[i];
+	}
+	return rep_data.error_code.data;
+}
 
 
 

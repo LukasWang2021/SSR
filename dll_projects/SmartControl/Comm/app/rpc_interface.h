@@ -894,6 +894,27 @@ COMM_INTERFACE_API uint64_t c_servo1001CpuSaveSamplingBufferData(int32_t cpu_id,
  */
 COMM_INTERFACE_API uint64_t c_servo1001CpuGetServoCpuCommInfo(int32_t cpu_id, int32_t* comm_reg_id, int32_t* sampling_buffer_id);
 
+
+/**
+ * @brief Set the parameters of the force control.
+ * @details
+ * @param [in] cpu_id CPU_ID.
+ * @param [in] param_value The value array of the parameters.
+ * @param [in] param_size The array size input.
+ * @return error_code
+ */
+COMM_INTERFACE_API uint64_t c_servo1001CpuSetForceControlParameters(int32_t cpu_id, int32_t param_value[512], int32_t param_size);
+
+/**
+ * @brief Get the parameters of the force control.
+ * @details
+ * @param [in] cpu_id CPU_ID.
+ * @param [out] param_value The value array of the parameters.
+ * @param [out] param_size The array size input.
+ * @return error_code
+ */
+COMM_INTERFACE_API uint64_t c_servo1001CpuGetForceControlParameters(int32_t cpu_id, int32_t param_value[512], int32_t* param_size_ptr);
+
 //IO
 /**
  * @brief Get DI value.

@@ -4,7 +4,7 @@ using namespace base_space;
 
 SemHelp::SemHelp()
 {
-    sem_init(&sem_, 0, 1);
+    sem_init(&sem_, 0, 0);
     is_taken_ = false;
 }
 

@@ -71,7 +71,7 @@ bool InterpCtrl::init(void)
 {
     if(is_init_) return true;
 
-    state_sem_ptr_ = new SemHelp();
+    state_sem_ptr_ = new SemHelp(0, 1);
     prog_sem_ptr_ = new SemHelp(0, 0);
     if(state_sem_ptr_ == NULL || prog_sem_ptr_ == NULL)
     {
@@ -89,6 +89,12 @@ bool InterpCtrl::init(void)
     if(!config_.loadConfig())
     {
         LogProducer::error("interpctrl", "initialize failed with load configuration");
+        return false;
+    }
+
+    if(!interp_embed_ptr->pyUpdatePath())
+    {
+        LogProducer::error("interpctrl", "initialize failed with update path");
         return false;
     }
 
@@ -138,6 +144,7 @@ void InterpCtrl::interpProgThreadFunc(void)
         LogProducer::info("interpctrl", "interpreter recieved program %s", curr_prog_.c_str());
         interp_embed_ptr->pyRunFile(curr_prog_);
         LogProducer::info("interpctrl", "program %s exit", curr_prog_.c_str());
+        interp_embed_ptr->pyResetInterp();
         curr_state_ = INTERP_IDLE;
     }
 }
@@ -235,11 +242,11 @@ ErrorCode InterpCtrl::abort(interpid_t id)
 
     LogProducer::info("interpctrl", "abort program %d", id);
 
-    if(release() != 0)
-    {
-        LogProducer::error("interpctrl", "program %d abort failed while releasing", id);
-        return INTERPRETER_ERROR_RELEASE_FAILED;
-    }
+    // if(release() != 0)
+    // {
+    //     LogProducer::error("interpctrl", "program %d abort failed while releasing", id);
+    //     return INTERPRETER_ERROR_RELEASE_FAILED;
+    // }
     
     curr_state_ = INTERP_IDLE;
 

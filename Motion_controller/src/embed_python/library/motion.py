@@ -27,8 +27,8 @@ UF = 1
 """
 coordiante type
 """
-COOR_JOINT = 0
-COOR_CARTE = 1
+COORD_JOINT = 0
+COORD_CARTE = 1
 
 ##############################################
 # Move joint functions
@@ -65,14 +65,17 @@ def MoveL(target, vel, smooth_type, smooth_val):
 
 @overload(POSTURE,float,int,float,float)
 def MoveL(target, vel, smooth_type, smooth_val, acc):
+    group.MoveLwithAcc(target, vel, smooth_type, smooth_val, acc)
     pass
 
 @overload(POSTURE,float,int,float,int,POSTURE)
 def MoveL(target, vel, smooth_type, smooth_val, offset_type, offset_val):
+    group.MoveLwithOffset(target, vel, smooth_type, smooth_val, offset_type, offset_val)
     pass
 
 @overload(POSTURE,float,int,float,float,int,POSTURE)
 def MoveL(target, vel, smooth_type, smooth_val, acc, offset_type, offset_val):
+    group.MoveLwithAccOffset(target, vel, smooth_type, smooth_val, acc, offset_type, offset_val)
     pass
 
 
@@ -87,12 +90,15 @@ def MoveC(via, target, vel, smooth_type, smooth_val):
 
 @overload(POSTURE,POSTURE,float,int,float,float)
 def MoveC(via, target, vel, smooth_type, smooth_val, acc):
+    group.MoveCwithAcc(via, target, vel, smooth_type, smooth_val, acc)
     pass
 
 @overload(POSTURE,POSTURE,float,int,float,int,POSTURE)
 def MoveC(via, target, vel, smooth_type, smooth_val, offset_type, offset_val):
+    group.MoveCwithOffset(via, target, vel, smooth_type, smooth_val, offset_type, offset_val)
     pass
 
 @overload(POSTURE,POSTURE,float,int,float,float,int,POSTURE)
 def MoveC(via, target, vel, smooth_type, smooth_val, acc, offset_type, offset_val):
+    group.MoveCwithAccOffset(via, target, vel, smooth_type, smooth_val, acc, offset_type, offset_val)
     pass

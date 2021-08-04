@@ -54,6 +54,8 @@ static PyObject *group_MoveJwithOffset(PyObject *self, PyObject *args)
     if (!PyArg_ParseTuple(args, "w*didii", &buffer, &g_traj.vel, &g_traj.smooth_type, &g_traj.smooth_value, &offset_type, &offset_id))
             return PyLong_FromUnsignedLongLong(INTERPRETER_ERROR_MOD_INVALID_ARG);
 
+    if(offset_type == 0) g_traj.tf_id = offset_id;
+    if(offset_type == 1) g_traj.uf_id = offset_id;
     memcpy(&g_traj.tgt, buffer.buf, sizeof(PostureInfo));
     // call robot system interface
     ret = InterpGroup_MoveJoint(0, &g_traj);
@@ -65,11 +67,21 @@ static PyObject *group_MoveJwithOffset(PyObject *self, PyObject *args)
 
 static PyObject *group_MoveJwithAccOffset(PyObject *self, PyObject *args)
 {
-    int ret = 0, id = 0;
+    ErrorCode ret = 0;
+    int offset_type = -1, offset_id = -1;
+    Py_buffer buffer;
+
     /*see https://docs.python.org/3/c-api/arg.html#arg-parsing for PyArg_ParseTuple details*/
-    if (!PyArg_ParseTuple(args, "", &id)) // pos 
+    if (!PyArg_ParseTuple(args, "w*diddii", &buffer, &g_traj.vel, &g_traj.smooth_type, &g_traj.smooth_value, &g_traj.acc, &offset_type, &offset_id))
         return PyLong_FromUnsignedLongLong(INTERPRETER_ERROR_MOD_INVALID_ARG);
+
+    if(offset_type == 0) g_traj.tf_id = offset_id;
+    if(offset_type == 1) g_traj.uf_id = offset_id;
+    memcpy(&g_traj.tgt, buffer.buf, sizeof(PostureInfo));
+    // call robot system interface
     ret = InterpGroup_MoveJoint(0, &g_traj);
+    // free Py_buffer
+    PyBuffer_Release(&buffer);
 
     return PyLong_FromUnsignedLongLong(ret);
 }
@@ -94,33 +106,59 @@ static PyObject *group_MoveL(PyObject *self, PyObject *args)
 
 static PyObject *group_MoveLwithAcc(PyObject *self, PyObject *args)
 {
-    int ret = 0, id = 0;
+    ErrorCode ret = 0;
+    Py_buffer buffer;
     /*see https://docs.python.org/3/c-api/arg.html#arg-parsing for PyArg_ParseTuple details*/
-    if (!PyArg_ParseTuple(args, "i", &id))
+    if (!PyArg_ParseTuple(args, "w*didd", &buffer, &g_traj.vel, &g_traj.smooth_type, &g_traj.smooth_value, &g_traj.acc))
         return PyLong_FromUnsignedLongLong(INTERPRETER_ERROR_MOD_INVALID_ARG);
+
+    memcpy(&g_traj.tgt, buffer.buf, sizeof(PostureInfo));
+    // call robot system interface
     ret = InterpGroup_MoveLiner(0, &g_traj);
+    // free Py_buffer
+    PyBuffer_Release(&buffer);
 
     return PyLong_FromUnsignedLongLong(ret);
 }
 
 static PyObject *group_MoveLwithOffset(PyObject *self, PyObject *args)
 {
-    int ret = 0, id = 0;
+    ErrorCode ret = 0;
+    int offset_type = -1, offset_id = -1;
+    Py_buffer buffer;
+
     /*see https://docs.python.org/3/c-api/arg.html#arg-parsing for PyArg_ParseTuple details*/
-    if (!PyArg_ParseTuple(args, "i", &id))
+    if (!PyArg_ParseTuple(args, "w*didii", &buffer, &g_traj.vel, &g_traj.smooth_type, &g_traj.smooth_value, &offset_type, &offset_id))
         return PyLong_FromUnsignedLongLong(INTERPRETER_ERROR_MOD_INVALID_ARG);
+
+    if(offset_type == 0) g_traj.tf_id = offset_id;
+    if(offset_type == 1) g_traj.uf_id = offset_id;
+    memcpy(&g_traj.tgt, buffer.buf, sizeof(PostureInfo));
+    // call robot system interface
     ret = InterpGroup_MoveLiner(0, &g_traj);
+    // free Py_buffer
+    PyBuffer_Release(&buffer);
 
     return PyLong_FromUnsignedLongLong(ret);
 }
 
 static PyObject *group_MoveLwithAccOffset(PyObject *self, PyObject *args)
 {
-    int ret = 0, id = 0;
+    ErrorCode ret = 0;
+    int offset_type = -1, offset_id = -1;
+    Py_buffer buffer;
+
     /*see https://docs.python.org/3/c-api/arg.html#arg-parsing for PyArg_ParseTuple details*/
-    if (!PyArg_ParseTuple(args, "i", &id))
+    if (!PyArg_ParseTuple(args, "w*diddii", &buffer, &g_traj.vel, &g_traj.smooth_type, &g_traj.smooth_value, &g_traj.acc, &offset_type, &offset_id))
         return PyLong_FromUnsignedLongLong(INTERPRETER_ERROR_MOD_INVALID_ARG);
+
+    if(offset_type == 0) g_traj.tf_id = offset_id;
+    if(offset_type == 1) g_traj.uf_id = offset_id;
+    memcpy(&g_traj.tgt, buffer.buf, sizeof(PostureInfo));
+    // call robot system interface
     ret = InterpGroup_MoveLiner(0, &g_traj);
+    // free Py_buffer
+    PyBuffer_Release(&buffer);
 
     return PyLong_FromUnsignedLongLong(ret);
 }
@@ -148,34 +186,69 @@ static PyObject *group_MoveC(PyObject *self, PyObject *args)
 
 static PyObject *group_MoveCwithAcc(PyObject *self, PyObject *args)
 {
-    int ret = 0, id = 0;
+    ErrorCode ret = 0;
+    Py_buffer tgt_buffer;
+    Py_buffer aux_buffer;
+
     /*see https://docs.python.org/3/c-api/arg.html#arg-parsing for PyArg_ParseTuple details*/
-    if (!PyArg_ParseTuple(args, "i", &id))
+    if (!PyArg_ParseTuple(args, "w*w*didd", &aux_buffer, &tgt_buffer, &g_traj.vel, &g_traj.smooth_type, &g_traj.smooth_value, &g_traj.acc))
         return PyLong_FromUnsignedLongLong(INTERPRETER_ERROR_MOD_INVALID_ARG);
+
+    memcpy(&g_traj.aux, aux_buffer.buf, sizeof(PostureInfo));
+    memcpy(&g_traj.tgt, tgt_buffer.buf, sizeof(PostureInfo));
+    // call robot system interface
     ret = InterpGroup_MoveCircl(0, &g_traj);
+    // free Py_buffer
+    PyBuffer_Release(&tgt_buffer);
+    PyBuffer_Release(&aux_buffer);
 
     return PyLong_FromUnsignedLongLong(ret);
 }
 
 static PyObject *group_MoveCwithOffset(PyObject *self, PyObject *args)
 {
-    int ret = 0, id = 0;
+    ErrorCode ret = 0;
+    int offset_type = -1, offset_id = -1;
+    Py_buffer tgt_buffer;
+    Py_buffer aux_buffer;
+
     /*see https://docs.python.org/3/c-api/arg.html#arg-parsing for PyArg_ParseTuple details*/
-    if (!PyArg_ParseTuple(args, "i", &id))
+    if (!PyArg_ParseTuple(args, "w*w*didid", &aux_buffer, &tgt_buffer, &g_traj.vel, &g_traj.smooth_type, &g_traj.smooth_value, &offset_type, &offset_id))
         return PyLong_FromUnsignedLongLong(INTERPRETER_ERROR_MOD_INVALID_ARG);
 
+    if(offset_type == 0) g_traj.tf_id = offset_id;
+    if(offset_type == 1) g_traj.uf_id = offset_id;
+    memcpy(&g_traj.aux, aux_buffer.buf, sizeof(PostureInfo));
+    memcpy(&g_traj.tgt, tgt_buffer.buf, sizeof(PostureInfo));
+    // call robot system interface
     ret = InterpGroup_MoveCircl(0, &g_traj);
+    // free Py_buffer
+    PyBuffer_Release(&tgt_buffer);
+    PyBuffer_Release(&aux_buffer);
 
     return PyLong_FromUnsignedLongLong(ret);
 }
 
 static PyObject *group_MoveCwithAccOffset(PyObject *self, PyObject *args)
 {
-    int ret = 0, id = 0;
+    ErrorCode ret = 0;
+    int offset_type = -1, offset_id = -1;
+    Py_buffer tgt_buffer;
+    Py_buffer aux_buffer;
+
     /*see https://docs.python.org/3/c-api/arg.html#arg-parsing for PyArg_ParseTuple details*/
-    if (!PyArg_ParseTuple(args, "i", &id))
+    if (!PyArg_ParseTuple(args, "w*w*diddid", &aux_buffer, &tgt_buffer, &g_traj.vel, &g_traj.smooth_type, &g_traj.smooth_value, &g_traj.acc, &offset_type, &offset_id))
         return PyLong_FromUnsignedLongLong(INTERPRETER_ERROR_MOD_INVALID_ARG);
+
+    if(offset_type == 0) g_traj.tf_id = offset_id;
+    if(offset_type == 1) g_traj.uf_id = offset_id;
+    memcpy(&g_traj.aux, aux_buffer.buf, sizeof(PostureInfo));
+    memcpy(&g_traj.tgt, tgt_buffer.buf, sizeof(PostureInfo));
+    // call robot system interface
     ret = InterpGroup_MoveCircl(0, &g_traj);
+    // free Py_buffer
+    PyBuffer_Release(&tgt_buffer);
+    PyBuffer_Release(&aux_buffer);
 
     return PyLong_FromUnsignedLongLong(ret);
 }

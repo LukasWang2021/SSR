@@ -833,7 +833,7 @@ ErrorCode MotionControl::saveJoint(void)
 
 ErrorCode MotionControl::checkOffset(CalibrateState &cali_stat, OffsetState (&offset_stat)[NUM_OF_JOINT])
 {
-    if (group_ptr_->getServoState() != SERVO_DISABLE)
+    if (group_ptr_->getServoState() != SERVO_DISABLE && group_ptr_->getServoState() != SERVO_WAIT_READY)
     {
         return INVALID_SEQUENCE;
     }
@@ -843,7 +843,7 @@ ErrorCode MotionControl::checkOffset(CalibrateState &cali_stat, OffsetState (&of
 
 ErrorCode MotionControl::maskOffsetLostError(void)
 {
-    if (group_ptr_->getServoState() != SERVO_DISABLE)
+    if (group_ptr_->getServoState() != SERVO_DISABLE && group_ptr_->getServoState() != SERVO_WAIT_READY)
     {
         return INVALID_SEQUENCE;
     }
@@ -878,7 +878,7 @@ void MotionControl::getOffsetState(OffsetState (&offset_stat)[NUM_OF_JOINT])
 
 ErrorCode MotionControl::setOffsetState(size_t index, OffsetState stat)
 {
-    if (group_ptr_->getServoState() != SERVO_DISABLE)
+    if (group_ptr_->getServoState() != SERVO_DISABLE && group_ptr_->getServoState() != SERVO_WAIT_READY)
     {
         return INVALID_SEQUENCE;
     }
@@ -888,7 +888,7 @@ ErrorCode MotionControl::setOffsetState(size_t index, OffsetState stat)
 
 ErrorCode MotionControl::calibrateOffset(double (&offset)[NUM_OF_JOINT])
 {
-    if (group_ptr_->getServoState() != SERVO_DISABLE)
+    if (group_ptr_->getServoState() != SERVO_DISABLE && group_ptr_->getServoState() != SERVO_WAIT_READY)
     {
         return INVALID_SEQUENCE;
     }
@@ -898,7 +898,7 @@ ErrorCode MotionControl::calibrateOffset(double (&offset)[NUM_OF_JOINT])
 
 ErrorCode MotionControl::calibrateOffset(size_t index, double (&offset)[NUM_OF_JOINT])
 {
-    if (group_ptr_->getServoState() != SERVO_DISABLE)
+    if (group_ptr_->getServoState() != SERVO_DISABLE && group_ptr_->getServoState() != SERVO_WAIT_READY)
     {
         return INVALID_SEQUENCE;
     }
@@ -908,7 +908,7 @@ ErrorCode MotionControl::calibrateOffset(size_t index, double (&offset)[NUM_OF_J
 
 ErrorCode MotionControl::calibrateOffset(const size_t *pindex, size_t length, double (&offset)[NUM_OF_JOINT])
 {
-    if (group_ptr_->getServoState() != SERVO_DISABLE)
+    if (group_ptr_->getServoState() != SERVO_DISABLE && group_ptr_->getServoState() != SERVO_WAIT_READY)
     {
         return INVALID_SEQUENCE;
     }
@@ -919,7 +919,7 @@ ErrorCode MotionControl::calibrateOffset(const size_t *pindex, size_t length, do
 
 ErrorCode MotionControl::resetEncoderMultiTurnValue(void)
 {
-    if (group_ptr_->getServoState() != SERVO_DISABLE)
+    if (group_ptr_->getServoState() != SERVO_DISABLE && group_ptr_->getServoState() != SERVO_WAIT_READY)
     {
         return INVALID_SEQUENCE;
     }

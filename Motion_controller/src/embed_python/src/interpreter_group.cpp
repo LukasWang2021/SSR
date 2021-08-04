@@ -84,15 +84,15 @@ static void trajInfo2MoveInst(MoveTrajInfo *traj)
     if(mv_inst_->target.via.type == COORDINATE_JOINT)
     {
         LogProducer::info("InterpGroup", "Via JOINT:%f,%f,%f,%f,%f,%f,%f,%f,%f",
-        mv_inst_->target.target.joint.j1_ = traj->aux.pos[0],
-        mv_inst_->target.target.joint.j2_ = traj->aux.pos[1],
-        mv_inst_->target.target.joint.j3_ = traj->aux.pos[2],
-        mv_inst_->target.target.joint.j4_ = traj->aux.pos[3],
-        mv_inst_->target.target.joint.j5_ = traj->aux.pos[4],
-        mv_inst_->target.target.joint.j6_ = traj->aux.pos[5],
-        mv_inst_->target.target.joint.j7_ = traj->aux.pos[6],
-        mv_inst_->target.target.joint.j8_ = traj->aux.pos[7],
-        mv_inst_->target.target.joint.j9_ = traj->aux.pos[8]);
+        mv_inst_->target.via.joint.j1_ = traj->aux.pos[0],
+        mv_inst_->target.via.joint.j2_ = traj->aux.pos[1],
+        mv_inst_->target.via.joint.j3_ = traj->aux.pos[2],
+        mv_inst_->target.via.joint.j4_ = traj->aux.pos[3],
+        mv_inst_->target.via.joint.j5_ = traj->aux.pos[4],
+        mv_inst_->target.via.joint.j6_ = traj->aux.pos[5],
+        mv_inst_->target.via.joint.j7_ = traj->aux.pos[6],
+        mv_inst_->target.via.joint.j8_ = traj->aux.pos[7],
+        mv_inst_->target.via.joint.j9_ = traj->aux.pos[8]);
     }
     else if(mv_inst_->target.via.type == COORDINATE_CARTESIAN)
     {

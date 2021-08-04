@@ -29,12 +29,12 @@ static int tracer(PyObject *obj, PyFrameObject *frame, int what, PyObject *arg)
         InterpCtrl::instance().pause();
     }
 
-    PyCodeObject *code = PyFrame_GetCode(frame);
-    int line = PyFrame_GetLineNumber(frame);
-    const char *file = PyUnicode_AsUTF8(code->co_filename);
-    if(strstr(file, "<frozen") == NULL)
-        LogProducer::debug("interpembed", "executing program(%s) at line[%d]", file, line);
-    // printf("executing program(%s) at line[%d]\n", file, line);
+    // PyCodeObject *code = PyFrame_GetCode(frame);
+    // int line = PyFrame_GetLineNumber(frame);
+    // const char *file = PyUnicode_AsUTF8(code->co_filename);
+    // if(strstr(file, "<frozen") == NULL)
+    //     LogProducer::debug("interpembed", "executing program(%s) at line[%d]", file, line);
+    // printf("##########executing program(%s) at line[%d]\n", file, line);
 
     // if step state sem not give
     if(InterpCtrl::instance().getMode() != INTERP_AUTO)
@@ -49,14 +49,11 @@ bool InterpEmbed::pyResetInterp(void)
 {
     // uninitialize the python interpreter
     Py_Finalize();
-    // update runtime enviroment
-    pyUpdatePath();
-    // initialize the python interpreter
-    Py_Initialize();//void
+    // initialize the python interpreter and skip sighandler
+    Py_InitializeEx(0);
     // set the trace function.this function will call while ervery line execute
-    // PyObject arg;
     PyEval_SetTrace(tracer, &trace_obj_);
-    
+
     return true;
 }
 
@@ -91,7 +88,6 @@ bool InterpEmbed::pyUpdatePath(void)
         Py_SetPath(ws_curr_path.c_str());
     }
 
-
     // free the memory allocate by py-interface
     PyMem_Free(mod_path);
     Py_DECREF(py_mod_path);
@@ -116,5 +112,5 @@ void InterpEmbed::pyRunFile(const std::string& file)
         base_space::ErrorQueue::instance().push(INTERPRETER_ERROR_PROG_NOT_EXIST);
         return;
     }
-    PyRun_SimpleFile(fp, file.c_str());
+    PyRun_SimpleFileEx(fp, file.c_str(), 1);
 }

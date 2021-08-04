@@ -494,6 +494,9 @@ void Controller::DisableControllerByErrorCode(ErrorCode err)
         if (status != GROUP_STATUS_ERROR_STOP && status != GROUP_STATUS_DISABLED)
         {
             group_ptr_[i]->mcGroupDisable();
+            group_ptr_[i]->stopGroup();
+            group_ptr_[i]->clearGroup();
+            group_ptr_[i]->clearTeachGroup();
         }
     }
 }

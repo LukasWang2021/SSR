@@ -1099,7 +1099,20 @@ COMM_INTERFACE_API uint64_t c_getPrReg(int32_t id, char* name, char* comment, in
 	int32_t* group_id);
 
 
+//interpreter
+COMM_INTERFACE_API uint64_t c_interpreterStart(char* program_name);
 
+COMM_INTERFACE_API uint64_t c_interpreterPause(int program_id);
+
+COMM_INTERFACE_API uint64_t c_interpreterResume(int program_id);
+
+COMM_INTERFACE_API uint64_t c_interpreterAbort(int program_id);
+
+COMM_INTERFACE_API uint64_t c_interpreterForward(int program_id);
+
+COMM_INTERFACE_API uint64_t c_interpreterBackward(int program_id);
+
+COMM_INTERFACE_API uint64_t c_interpreterJump(int program_id);
 
 #ifdef __cplusplus
 }

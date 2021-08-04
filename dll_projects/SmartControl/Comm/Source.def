@@ -136,3 +136,11 @@ c_addPrReg @211
 c_setPrReg @212
 c_deletePrReg @213
 c_getPrReg @214
+
+c_interpreterStart @260
+c_interpreterPause @261
+c_interpreterResume @262
+c_interpreterAbort @263
+c_interpreterForward @264
+c_interpreterBackward @265
+c_interpreterJump @266

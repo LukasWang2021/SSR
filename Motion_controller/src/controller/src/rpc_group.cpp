@@ -77,6 +77,7 @@ void ControllerRpc::handleRpc0x0000D185(void* request_data_ptr, void* response_d
     if(group_id < GROUP_NUM && group_id >= 0)
     {
         rs_data_ptr->data.data = group_ptr_[group_id]->mcGroupDisable();
+        InterpCtrl::instance().abort();
         group_ptr_[group_id]->stopGroup();
         group_ptr_[group_id]->clearGroup();
         group_ptr_[group_id]->clearTeachGroup();

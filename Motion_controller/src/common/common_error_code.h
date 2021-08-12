@@ -36,7 +36,7 @@ typedef unsigned long long int ErrorCode;
 #define CONTROLLER_INVALID_OPERATION 0x2012   /*Controller failed to operate command because of invalid pre-condition*/
 #define CONTROLLER_PUBLISH_NONE 0x2013   /*Controller failed to find the publishing elements of request*/
 //#define CONTROLLER_INVALID_OPERATION_SET_TIME (unsigned long long int)0x0001000200A8000A    /* Controller模块不能设置系统时间因运行状态不满足，使控制器进入ESTOP状态后设置 */
-//#define CONTROLLER_INVALID_OPERATION_START (unsigned long long int)0x0001000200A8000B    /* Controller模块不能start程序因运行状态不满足，使控制器进入ENGAGE状态并且解释器IDLE状态 */
+#define CONTROLLER_INVALID_OPERATION_START (unsigned long long int)0x0001000200A8000B    /* Controller模块不能start程序因运行状态不满足，使控制器进入ENGAGE状态并且解释器IDLE状态 */
 //#define CONTROLLER_INVALID_OPERATION_LAUNCH (unsigned long long int)0x0001000200A8000C    /* Controller模块不能launch程序因运行状态不满足，使控制器进入ENGAGE状态并且解释器IDLE状态 */
 //#define CONTROLLER_INVALID_OPERATION_FORWARD (unsigned long long int)0x0001000200A8000D    /* Controller模块不能前进一步程序因运行状态不满足，使控制器进入ENGAGE状态并且用户模式为手动 */
 //#define CONTROLLER_INVALID_OPERATION_BACKWARD (unsigned long long int)0x0001000200A8000E    /* Controller模块不能后退一步执行程序因运行状态不满足，使控制器进入ENGAGE状态并且用户模式为手动 */
@@ -183,6 +183,8 @@ typedef unsigned long long int ErrorCode;
 #define INTERPRETER_ERROR_PROG_NOT_EXIST 0x90A00007
 #define INTERPRETER_ERROR_MOD_INVALID_ARG 0x50A00008
 #define INTERPRETER_ERROR_INVALID_COORD_TYPE 0x50A00009
+#define INTERPRETER_ERROR_SYNC_CALL_FAILED 0x50A0000A
+#define INTERPRETER_ERROR_TRAJ_INFO_INVALID 0x50A0000B
 
 #endif
 

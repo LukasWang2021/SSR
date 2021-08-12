@@ -24,3 +24,4 @@ class POSTURE(ctypes.Structure):
                 ('pos7',ctypes.c_double),
                 ('pos8',ctypes.c_double),
                 ('pos9',ctypes.c_double),]
+

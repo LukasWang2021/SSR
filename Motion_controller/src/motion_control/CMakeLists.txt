@@ -10,6 +10,7 @@ include_directories(
     ../log_manager/include
     ../yaml_help/include/
     ../xml_help/include
+    ../sem_help/include
     ../base_device/include 
     ../algorithm_base/include 
     ../core_comm/include 
@@ -51,6 +52,7 @@ target_link_libraries(motion_control
     ${rtm_LIBRARIES}
     yaml_help
     xml_help 
+    sem_help 
     log_manager_producer
     base_device
     algorithm_base

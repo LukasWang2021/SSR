@@ -19,21 +19,22 @@ InterpEmbed::~InterpEmbed()
 
 static int tracer(PyObject *obj, PyFrameObject *frame, int what, PyObject *arg)
 {
+    // need get thread id for isPause if multi-thread
+    if(InterpCtrl::instance().isAbort(0))
+    {
+        // is_stop = false;
+        PyErr_SetString(PyExc_EOFError, "user call abort to exit");
+        LogProducer::warn("interpembed","interpreter stop signal recieved");
+        return -1;
+    }
     // state sem take
     InterpCtrl::instance().hold();
 
-    // // run registered trace callback(s)
-    if(!InterpCtrl::instance().runSyncCallback())
-    {
-        LogProducer::error("interpembed","sync-call failed going to pause");
-        InterpCtrl::instance().pause();
-    }
-
-    // PyCodeObject *code = PyFrame_GetCode(frame);
-    // int line = PyFrame_GetLineNumber(frame);
-    // const char *file = PyUnicode_AsUTF8(code->co_filename);
-    // if(strstr(file, "<frozen") == NULL)
-    //     LogProducer::debug("interpembed", "executing program(%s) at line[%d]", file, line);
+    PyCodeObject *code = PyFrame_GetCode(frame);
+    int line = PyFrame_GetLineNumber(frame);
+    const char *file = PyUnicode_AsUTF8(code->co_filename);
+    if(strstr(file, "/root/robot_data/python") != NULL)
+        LogProducer::info("interpembed", "program(%s) line[%d]", file, line);
     // printf("##########executing program(%s) at line[%d]\n", file, line);
 
     // if step state sem not give
@@ -114,3 +115,4 @@ void InterpEmbed::pyRunFile(const std::string& file)
     }
     PyRun_SimpleFileEx(fp, file.c_str(), 1);
 }
+

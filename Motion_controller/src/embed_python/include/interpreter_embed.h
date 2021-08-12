@@ -10,7 +10,12 @@
 #include "string"
 #include "interpreter_config.h"
 
+// PyThreadState* Py_NewInterpreter()
+// uint64_t PyThreadState_GetID(PyThreadState *tstate)
 
+// PyInterpreterState* PyInterpreterState_New()
+// PyInterpreterState* PyInterpreterState_Get(void)
+// int64_t PyInterpreterState_GetID(PyInterpreterState *interp)
 class InterpEmbed
 {
 private:
@@ -29,6 +34,16 @@ public:
     void pyRunFile(const std::string& file); /*run the python script 'file'.
     The file is search from the path specified by configuration file 'program_path' item*/
     void pyRunString(const std::string& str); /*run the python script 'str'*/
+
+private:
+    bool is_pause_;
+    bool is_abort_;
+
+public:
+    void setPauseFlag(bool flag) { is_pause_ = flag; }
+    void setAbortFlag(bool flag) { is_abort_ = flag; }
+    bool getPauseFlag(void) { return is_pause_; }
+    bool getAbortFlag(void) { return is_abort_; }
 };
 
 

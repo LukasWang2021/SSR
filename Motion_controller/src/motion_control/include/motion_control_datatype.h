@@ -31,7 +31,7 @@ typedef enum _InstType
     END_PROG,
 }InstType;
 
-typedef void (*PauseCallBack_fp)(bool);
+typedef void (*PauseCallBack_fp)(void);
 typedef void (*SetLineNumCallBack_fp)(int32_t);
 
 struct Instruction
@@ -47,8 +47,9 @@ struct Instruction
         double oac;
         MotionTarget target;
     };
+    int line_num;
     PauseCallBack_fp interp_pause;
-    SetLineNumCallBack_fp set_line_num;
+    // SetLineNumCallBack_fp set_line_num;
 };
 
 enum AxisIndex

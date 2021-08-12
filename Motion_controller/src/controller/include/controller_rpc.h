@@ -23,6 +23,7 @@
 #include "tool_manager.h"
 #include "coordinate_manager.h"
 #include "reg_manager.h"
+#include "interpreter_control.h"
 
 /**
  * @brief user_space includes the user level implementation.

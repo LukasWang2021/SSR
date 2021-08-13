@@ -53,6 +53,7 @@ void ControllerRpc::handleRpc0x00003615(void* request_data_ptr, void* response_d
             rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
             LogProducer::error("rpc","/rpc/group/mcGroupEnable check offset failure");
         }
+        group_ptr_[group_id]->resetGroup();
         rs_data_ptr->data.data = group_ptr_[group_id]->mcGroupEnable();
     }
     else
@@ -77,6 +78,7 @@ void ControllerRpc::handleRpc0x0000D185(void* request_data_ptr, void* response_d
     if(group_id < GROUP_NUM && group_id >= 0)
     {
         rs_data_ptr->data.data = group_ptr_[group_id]->mcGroupDisable();
+        InterpCtrl::instance().abort();
         group_ptr_[group_id]->stopGroup();
         group_ptr_[group_id]->clearGroup();
         group_ptr_[group_id]->clearTeachGroup();

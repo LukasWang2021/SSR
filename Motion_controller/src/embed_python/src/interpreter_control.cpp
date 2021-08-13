@@ -71,7 +71,7 @@ bool InterpCtrl::init(void)
 {
     if(is_init_) return true;
 
-    state_sem_ptr_ = new SemHelp();
+    state_sem_ptr_ = new SemHelp(0, 1);
     prog_sem_ptr_ = new SemHelp(0, 0);
     if(state_sem_ptr_ == NULL || prog_sem_ptr_ == NULL)
     {
@@ -89,6 +89,12 @@ bool InterpCtrl::init(void)
     if(!config_.loadConfig())
     {
         LogProducer::error("interpctrl", "initialize failed with load configuration");
+        return false;
+    }
+
+    if(!interp_embed_ptr->pyUpdatePath())
+    {
+        LogProducer::error("interpctrl", "initialize failed with update path");
         return false;
     }
 
@@ -111,7 +117,7 @@ static void* interp_prog_thread_func(void* arg)
 
     LogProducer::info("interpctrl", "enter interpreter");
 
-    interp_ctrl->interpProgThreadFunc();
+    interp_ctrl->progThreadFunc();
 
     LogProducer::info("interpctrl", "interpreter exit");
 
@@ -124,12 +130,12 @@ static void* interp_state_thread_func(void* arg)
     log_space::LogProducer log_manager;
     log_manager.init("interpstate", &g_isr_ptr);
 
-    interp_ctrl->interpStateThreadFunc();
+    interp_ctrl->stateThreadFunc();
 
 	return NULL;
 }
 
-void InterpCtrl::interpProgThreadFunc(void)
+void InterpCtrl::progThreadFunc(void)
 {
     for(;;)
     {
@@ -138,11 +144,14 @@ void InterpCtrl::interpProgThreadFunc(void)
         LogProducer::info("interpctrl", "interpreter recieved program %s", curr_prog_.c_str());
         interp_embed_ptr->pyRunFile(curr_prog_);
         LogProducer::info("interpctrl", "program %s exit", curr_prog_.c_str());
+        interp_embed_ptr->pyResetInterp();
+        is_aborted_ = false;
+        interp_embed_ptr->setAbortFlag(false);
         curr_state_ = INTERP_IDLE;
     }
 }
 
-void InterpCtrl::interpStateThreadFunc(void)
+void InterpCtrl::stateThreadFunc(void)
 {
     for(;;)
     {
@@ -194,7 +203,8 @@ ErrorCode InterpCtrl::pause(interpid_t id)
         LogProducer::error("interpctrl", "program %d paused failed while holding", id);
         return INTERPRETER_ERROR_HOLD_FAILED;
     }
-
+    is_paused_ = true;
+    interp_embed_ptr->setPauseFlag(true);
     curr_state_ = INTERP_PAUSE;
 
     LogProducer::info("interpctrl", "program %d paused", id);
@@ -218,6 +228,8 @@ ErrorCode InterpCtrl::resume(interpid_t id)
         return INTERPRETER_ERROR_RELEASE_FAILED;
     }
 
+    is_paused_ = false;
+    interp_embed_ptr->setPauseFlag(false);
     curr_state_ = INTERP_RUNNING;
 
     LogProducer::info("interpctrl", "program %d resumed", id);
@@ -235,12 +247,8 @@ ErrorCode InterpCtrl::abort(interpid_t id)
 
     LogProducer::info("interpctrl", "abort program %d", id);
 
-    if(release() != 0)
-    {
-        LogProducer::error("interpctrl", "program %d abort failed while releasing", id);
-        return INTERPRETER_ERROR_RELEASE_FAILED;
-    }
-    
+    is_aborted_ = true;
+    interp_embed_ptr->setAbortFlag(true);
     curr_state_ = INTERP_IDLE;
 
     LogProducer::info("interpctrl", "program %d aborted", id);
@@ -292,10 +300,17 @@ bool InterpCtrl::regSyncCallback(const SyncCallback& callback)
 bool InterpCtrl::runSyncCallback(void)
 {
     bool ret = true;
+    LogProducer::info("interpctrl", "start sync calls all %d functions", sync_callbacks_.size());
     auto it = sync_callbacks_.begin();
-    for(; it != sync_callbacks_.end(); ++it)
+    for(int i = 0; it != sync_callbacks_.end(); ++it, ++i)
     {
-        ret &= (*it)();
+        LogProducer::info("interpctrl", "call sync function %d", i);
+        while(!(*it)() && ret)
+        {
+            if(is_aborted_ || is_paused_) { ret = false; break; }
+            usleep(1000);
+        }
+        LogProducer::info("interpctrl", "sync function %d called", i);
     }
 
     return ret;
@@ -324,4 +339,16 @@ int InterpCtrl::release(interpid_t id)
 void InterpCtrl::waitStart(void)
 {
     prog_sem_ptr_->take();
+}
+
+// find current thread id 
+// index current thread
+bool InterpCtrl::isPause(int64_t idx)
+{
+    return interp_embed_ptr->getPauseFlag();
+}
+
+bool InterpCtrl::isAbort(int64_t idx)
+{
+    return interp_embed_ptr->getAbortFlag();
 }

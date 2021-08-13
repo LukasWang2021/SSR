@@ -4,7 +4,7 @@
 #include "interpreter_control.h"
 
 
-typedef struct _InterpStatus
+typedef struct
 {
     int curr_line;
     std::string curr_prog;

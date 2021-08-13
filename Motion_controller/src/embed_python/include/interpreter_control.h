@@ -58,6 +58,8 @@ private:
 
     InterpConfig config_;
     bool is_init_;
+    bool is_paused_;
+    bool is_aborted_;
 
 private:
     base_space::ThreadHelp interp_thread_;
@@ -102,14 +104,15 @@ public:
     int release(interpid_t id=0);
 
     /* These synchronous functions registered by caller.
-       These functions must return bool(true/fase).
-       These functions are blocked(with semphore or mutex...) while condition is false.*/
+       These functions must return bool(true/fase).*/
     bool regSyncCallback(const SyncCallback& callback);
     bool runSyncCallback(void);
 
-    void interpProgThreadFunc(void);
-    void interpStateThreadFunc(void);
+    void progThreadFunc(void);
+    void stateThreadFunc(void);
 
+    bool isPause(int64_t idx);
+    bool isAbort(int64_t idx);
 private:
     InterpCtrl(/* args */);
 

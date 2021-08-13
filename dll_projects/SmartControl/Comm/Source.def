@@ -92,6 +92,8 @@ c_servo1001CpuActivateSamplingConfiguration @121
 c_servo1001CpuSaveSamplingBufferData @122
 c_servo1001ServoGetServoCommInfo @123
 c_servo1001CpuGetServoCpuCommInfo @124
+c_servo1001CpuSetForceControlParameters @125
+c_servo1001CpuGetForceControlParameters @126
 
 c_getErrorCodeDetail @130
 c_setSamplingChannelGroup @131
@@ -134,3 +136,11 @@ c_addPrReg @211
 c_setPrReg @212
 c_deletePrReg @213
 c_getPrReg @214
+
+c_interpreterStart @260
+c_interpreterPause @261
+c_interpreterResume @262
+c_interpreterAbort @263
+c_interpreterForward @264
+c_interpreterBackward @265
+c_interpreterJump @266

@@ -279,7 +279,7 @@ public:
      * @retval CORE_COMM_SEND_CORE_PROCESS_CALL_FAILED Failed to send request.
      * @retval CORE_COMM_EXEC_CORE_PROCESS_CALL_FAILED Failed to execute the process.
      */ 
-    ErrorCode doServoCmdSetZeroOffset(void);
+    ErrorCode doServoCmdSetZeroOffset(int32_t encoder_value);
 
     /**
      * @brief Command servo to upload all its parameters to upload buffer channel.

@@ -198,7 +198,7 @@ ErrorCode Axis::mcSetPosition(double position)
         return AXIS_SET_ZERO_FAILED;
     }
 
-    ret = servo_comm_ptr_->doServoCmdSetZeroOffset();
+    ret = servo_comm_ptr_->doServoCmdSetZeroOffset(encoder_val);
     if(ret != SUCCESS)
     {
         LogProducer::warn("Axis", "Axis[%d] mcSetPosition info servo to set zero failed", id_);

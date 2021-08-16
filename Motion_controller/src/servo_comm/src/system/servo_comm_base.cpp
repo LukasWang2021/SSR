@@ -317,12 +317,13 @@ ErrorCode ServoCommBase::doServoCmdGetServoDefinedInfo(int32_t* req_data_ptr, in
     return SUCCESS;
 }
 
-ErrorCode ServoCommBase::doServoCmdSetZeroOffset(void)
+ErrorCode ServoCommBase::doServoCmdSetZeroOffset(int32_t encoder_value)
 {
     CoreProcessCallAppData1000_t req_data, res_data;
     memset(&req_data, 0, sizeof(req_data));
     memset(&res_data, 0, sizeof(res_data));
     req_data.cmd = SERVO_CMD_SET_ZERO_OFFSET;
+    req_data.param1 = encoder_value;
     bool ret = doServoCmdNormalService(comm_ptr_->service_ptr, &req_data, &res_data);
     if(!ret)
     {

@@ -59,15 +59,9 @@ public:
     void getOffsetMask(OffsetMask (&mask)[NUM_OF_JOINT]);
     CalibrateState getCalibrateState(void);
 
-    //ErrorCode saveJoint(void);
-    ErrorCode checkOffset(CalibrateState &cali_stat, OffsetState (&offset_stat)[NUM_OF_JOINT]);
     ErrorCode maskOffsetLostError(void);
     ErrorCode setOffsetState(size_t index, OffsetState stat);
     void getOffsetState(OffsetState (&offset_stat)[NUM_OF_JOINT]);
-
-    ErrorCode calibrateOffset(double (&offset)[NUM_OF_JOINT]);
-    ErrorCode calibrateOffset(size_t index, double (&offset)[NUM_OF_JOINT]);
-    ErrorCode calibrateOffset(const size_t *pindex, size_t length, double (&offset)[NUM_OF_JOINT]);
 
     ErrorCode resetEncoderMultiTurnValue(void);
     void getUsingCoord(basic_alg::PoseEuler &usingcool);

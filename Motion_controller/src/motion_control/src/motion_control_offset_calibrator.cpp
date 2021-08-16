@@ -68,7 +68,7 @@ ErrorCode Calibrator::initCalibrator(size_t joint_num, BareCoreInterface *pcore)
     vector<double> data;
     char buffer[LOG_TEXT_SIZE];
     LogProducer::info("mc_calib","Initializing offset calibrator, number-of-joint = %d.", joint_num_);
-
+    //初始化操作Nvram，获取零点状态，零点错误屏蔽标志
     if (!nvram_handler_.init())
     {
         LogProducer::error("mc_calib","Fail to init NvRam.");
@@ -100,40 +100,33 @@ ErrorCode Calibrator::initCalibrator(size_t joint_num, BareCoreInterface *pcore)
     }
 
     ErrorCode err = readOffsetState(offset_stat_);
-
     if (err != SUCCESS)
     {
         LogProducer::error("mc_calib","Fail to read offset state, code = 0x%llx", err);
         return err;
     }
-
     LogProducer::info("mc_calib","Offset state: %s", printDBLine((int*)offset_stat_, buffer, LOG_TEXT_SIZE));
 
     err = readOffsetMask(offset_mask_);
-
     if (err != SUCCESS)
     {
         LogProducer::error("mc_calib","Fail to read offset mask, code = 0x%llx", err);
         return err;
     }
-
     LogProducer::info("mc_calib","Offset mask: %s", printDBLine((int*)offset_mask_, buffer, LOG_TEXT_SIZE));
 
     Joint offset_joint;
     err = readOffsetJoint(offset_joint);
-
     if (err != SUCCESS)
     {
         LogProducer::error("mc_calib","Fail to read offset joint, code = 0x%llx", err);
         return err;
     }
-
     LogProducer::info("mc_calib","Offset joint: %s", printDBLine(&offset_joint[0], buffer, LOG_TEXT_SIZE));
 
     // 加载零位偏移门限值和零位丢失门限值，并检查数据是否合法
     string config_file = AXIS_GROUP_DIR;
     base_space::YamlHelp params;
-
     if (!params.loadParamFile(config_file + "base_group.yaml"))
     {
         LogProducer::error("mc_calib","Fail to load thresholds config file(base_group.yaml)");
@@ -141,169 +134,31 @@ ErrorCode Calibrator::initCalibrator(size_t joint_num, BareCoreInterface *pcore)
     }
 
     data.clear();
-
     if (!params.getParam("calibrator/normal_offset_threshold", data))
     {
         LogProducer::error("mc_calib","Fail to read threshold from config file");
         return MC_LOAD_PARAM_FAILED;
     }
-
     if (data.size() != joint_num_)
     {
         LogProducer::error("mc_calib","Invalid array size of normal threshold, except %d but get %d", joint_num_, data.size());
         return INVALID_PARAMETER;
-    }
-    
+    }    
     LogProducer::info("mc_calib","Threshold-normal: %s", printDBLine(&data[0], buffer, LOG_TEXT_SIZE));
-
     for (size_t i = 0; i < joint_num_; i++)
         normal_threshold_[i] = data[i];
 
     data.clear();
     params.getParam("calibrator/lost_offset_threshold", data);
-
     if (data.size() != joint_num_)
     {
         LogProducer::error("mc_calib","Invalid array size of lost threshold, except %d but get %d", joint_num_, data.size());
         return INVALID_PARAMETER;
     }
-
     LogProducer::info("mc_calib","Threshold-lost: %s", printDBLine(&data[0], buffer, LOG_TEXT_SIZE));
-
     for (size_t i = 0; i < joint_num_; i++)
         lost_threshold_[i] = data[i];
-    
-    /*// 下发关节数量到裸核,SSR不用
-    LogProducer::info("mc_calib","ID of activated-motor-number: 0x%x", 0x0140);
-    LogProducer::info("mc_calib","Send activated-motor-number: %d", joint_num_);
-    vector<int> data_of_joint_num;
-    data_of_joint_num.push_back(joint_num_);
-    int id;
-    ErrorCode result = sendConfigData(0x0140, data_of_joint_num);
 
-    if (result != SUCCESS)
-    {
-        LogProducer::error("mc_calib","Fail to send gear-ratio to barecore, code = 0x%llx", result);
-        return result;
-    }
-    
-    usleep(50 * 1000);
-    
-    // 加载传动比配置文件，并检查数据
-    // 检查无误后将数据下发到裸核
-    data.clear();
-    gear_ratio_param_.loadParamFile(config_file + "group_gear_ratio.yaml");
-
-    if (!gear_ratio_param_.loadParamFile(config_file + "group_gear_ratio.yaml"))
-    {
-        LogProducer::error("mc_calib","Loading offset param file(group_gear_ratio.yaml) failed");
-        return MC_LOAD_PARAM_FAILED;
-    }
-
-    if (gear_ratio_param_.getParam("gear_ratio/id", id) && gear_ratio_param_.getParam("gear_ratio/data", data))
-    {
-        LogProducer::info("mc_calib","ID of gear ratio: 0x%x", id);
-        LogProducer::info("mc_calib","Send gear ratio: %s", printDBLine(&data[0], buffer, LOG_TEXT_SIZE));
-        result = sendConfigData(id, data);
-
-        if (result == SUCCESS)
-        {
-            LogProducer::info("mc_calib","Success.");
-            usleep(50 * 1000);
-        }
-        else
-        {
-            LogProducer::error("mc_calib","Fail to send gear-ratio to barecore, code = 0x%llx", result);
-            return result;
-        }
-    }
-    else
-    {
-        LogProducer::error("mc_calib","Fail to read gear ratio config file, err=0x%llx", result);
-        return MC_LOAD_PARAM_FAILED;
-    }
-
-    // 加载耦合系数配置文件，并检查数据
-    // 检查无误后将数据下发到裸核
-    data.clear();
-    coupling_param_.loadParamFile(config_file + "group_coupling_coeff.yaml");
-
-    if (!coupling_param_.loadParamFile(config_file + "group_coupling_coeff.yaml"))
-    {
-        LogProducer::error("mc_calib","Loading coupling coefficient param file(group_coupling_coeff.yaml) failed");
-        return MC_LOAD_PARAM_FAILED;
-    }
-
-    if (coupling_param_.getParam("coupling_coeff/id", id) && coupling_param_.getParam("coupling_coeff/data", data))
-    {
-        LogProducer::info("mc_calib","ID of coupling coefficient: 0x%x", id);
-        LogProducer::info("mc_calib","Send coupling coefficient:");
-
-        for (size_t i = 0; i < joint_num; i++)
-        {
-            LogProducer::info("mc_calib","  axis-%d: %s", i, printDBLine(&data[0] + 8 * i, buffer, LOG_TEXT_SIZE));
-        }
-        
-        result = sendConfigData(id, data);
-
-        if (result == SUCCESS)
-        {
-            LogProducer::info("mc_calib","Success.");
-            usleep(50 * 1000);
-        }
-        else
-        {
-            LogProducer::error("mc_calib","Fail to send coupling coefficient to barecore, code = 0x%llx", result);
-            return result;
-        }
-    }
-    else
-    {
-        LogProducer::error("mc_calib","Fail to read coupling coefficient config file");
-        return MC_LOAD_PARAM_FAILED;
-    }
-*/
-    // 加载零位配置文件，并检查数据
-    // 检查无误后将数据下发到裸核，注意只有裸核处于DISABLE状态零位才能生效
-    data.clear();
-    offset_param_.loadParamFile(config_file + "group_offset.yaml");
-
-    if (!offset_param_.loadParamFile(config_file + "group_offset.yaml"))
-    {
-        LogProducer::error("mc_calib","Loading offset param file(group_offset.yaml) failed");
-        return MC_LOAD_PARAM_FAILED;
-    }
-    int id = 0; 
-    if (offset_param_.getParam("zero_offset/id", id) && offset_param_.getParam("zero_offset/data", data))
-    {
-        LogProducer::info("mc_calib","ID of offset: 0x%x", id);
-        LogProducer::info("mc_calib","Send offset: %s", printDBLine(&data[0], buffer, LOG_TEXT_SIZE));
-        ErrorCode result = sendConfigData(id, data);
-
-        if (result == SUCCESS)
-        {
-            Joint cur_jnt;
-            ServoState servo_state;
-            uint32_t encoder_state[NUM_OF_JOINT];
-            char buffer[LOG_TEXT_SIZE];
-            usleep(256 * 1000);
-            bare_core_ptr_->getLatestJoint(cur_jnt, encoder_state, servo_state);
-            memcpy(zero_offset_, &data[0], joint_num_ * sizeof(data[0]));
-            LogProducer::info("mc_calib","Current joint: %s", printDBLine(&cur_jnt[0], buffer, LOG_TEXT_SIZE));
-            usleep(50 * 1000);
-        }
-        else
-        {
-            LogProducer::error("mc_calib","Fail to send offset to barecore, code = 0x%llx", result);
-            return result;
-        }
-    }
-    else
-    {
-        LogProducer::error("mc_calib","Fail to read zero offset config file");
-        return MC_LOAD_PARAM_FAILED;
-    }
-    
     return SUCCESS;
 }
 
@@ -322,7 +177,6 @@ ErrorCode Calibrator::checkOffset(CalibrateState &cali_stat, OffsetState (&offse
 
     // 获取NvRam中各关节的位置
     ErrorCode err = readOffsetJoint(old_jnt);
-
     if (err != SUCCESS)
     {
         LogProducer::error("mc_calib","Fail to get offset joint from NvRam, code = 0x%llx.", err);
@@ -334,7 +188,6 @@ ErrorCode Calibrator::checkOffset(CalibrateState &cali_stat, OffsetState (&offse
 
     OffsetState nvram_state[NUM_OF_JOINT];
     err = readOffsetState(nvram_state);
-
     if (err != SUCCESS)
     {
         LogProducer::error("mc_calib","Fail to get offset state from NvRam, code = 0x%llx.", err);
@@ -359,29 +212,14 @@ ErrorCode Calibrator::checkOffset(CalibrateState &cali_stat, OffsetState (&offse
     LogProducer::info("mc_calib","Mask-flags: %s", printDBLine((int*)offset_mask_, buffer, LOG_TEXT_SIZE));
     LogProducer::info("mc_calib","Nvram-state: %s", printDBLine((int*)nvram_state, buffer, LOG_TEXT_SIZE));
     LogProducer::info("mc_calib","encoder_state: %s", printDBLine((int*)encoder_state, buffer, LOG_TEXT_SIZE));
-    // for(size_t i = 0; i < joint_num_; i++)
-    // {
-    //     LogProducer::info("mc_calib","encoder_state 0 bit, axis: %d, %d", i,encoder_state[i]&1);
-    //     LogProducer::info("mc_calib","encoder_state 4 bit, axis: %d, %d", i,(encoder_state[i]>>4)&1);
-    // }
 
     // 当前各关节位置和记录文件中各关节位置进行比对
     OffsetState state[NUM_OF_JOINT];
-    checkOffset(cur_jnt, old_jnt, state, encoder_state);
-    // LogProducer::info("mc_calib","Curr-state: %s", printDBLine((int*)state, buffer, LOG_TEXT_SIZE));
-
-    // for (size_t i = 0; i < joint_num_; i++)
-    // {
-    //     OffsetState tmp_state = (encoder_err[i] == -1 || encoder_err[i] == -3) ? OFFSET_LOST : OFFSET_NORMAL;
-    //     state[i] = (state[i] >= tmp_state) ? state[i] : tmp_state;
-    // }
-
-    // LogProducer::info("mc_calib","Encoder-err: %s", printDBLine(&encoder_err[0], buffer, LOG_TEXT_SIZE));
+    checkOffsetStates(cur_jnt, old_jnt, state, encoder_state);
     LogProducer::info("mc_calib","New-state: %s", printDBLine((int*)state, buffer, LOG_TEXT_SIZE));
 
-    bool recorder_need_update = false;
-
     // 比对结果比记录文件中的状态标志更严重，则更新记录文件中的标志
+    bool recorder_need_update = false;
     for (size_t i = 0; i < joint_num_; i++)
     {
         if (state[i] == OFFSET_INVALID)
@@ -403,21 +241,12 @@ ErrorCode Calibrator::checkOffset(CalibrateState &cali_stat, OffsetState (&offse
             state[i] = offset_stat_[i];
         }
     }
-
     for (size_t i = joint_num_; i < NUM_OF_JOINT; i++)
     {
         offset_stat_[i] = OFFSET_LOST;
     }
-
     LogProducer::info("mc_calib","Offset-state: %s", printDBLine((int*)offset_stat_, buffer, LOG_TEXT_SIZE));
     LogProducer::info("mc_calib","Nvram-state: %s", printDBLine((int*)nvram_state, buffer, LOG_TEXT_SIZE));
-
-    // for (size_t i = joint_num_; i < NUM_OF_JOINT; i++)
-    // {
-    //     state[i] = OFFSET_LOST;
-    // }
-
-    // LogProducer::info("mc_calib","Offset-state: %s", printDBLine((int*)state, buffer, LOG_TEXT_SIZE));
 
     if (recorder_need_update)
     {
@@ -442,10 +271,10 @@ ErrorCode Calibrator::checkOffset(CalibrateState &cali_stat, OffsetState (&offse
 }
 
 //------------------------------------------------------------------------------
-// 方法：  checkOffset
+// 方法：  checkOffsetStates
 // 摘要：  对各个轴的当前读数和记录值进行比对，根据偏移门限和丢失门限给出比对结果；
 //------------------------------------------------------------------------------
-void Calibrator::checkOffset(Joint curr_jnt, Joint last_jnt, OffsetState *offset_stat, const uint32_t (&encoder_state)[NUM_OF_JOINT])
+void Calibrator::checkOffsetStates(Joint curr_jnt, Joint last_jnt, OffsetState *offset_stat, const uint32_t (&encoder_state)[NUM_OF_JOINT])
 {
     for (size_t i = 0; i < joint_num_; i++)
     {
@@ -506,107 +335,6 @@ void Calibrator::checkCalibrateState(void)
 }
 
 //------------------------------------------------------------------------------
-// 方法：  calibrateOffset
-// 摘要：  在当前位置，对所有轴进行零位标定；
-//        注意只有在机器人处于完全静止的状态下才能进行零位标定，否则标定结果不具有任何意义；
-//------------------------------------------------------------------------------
-ErrorCode Calibrator::calibrateOffset(double *new_offset)
-{
-    LogProducer::info("mc_calib","Calibrate offset of all joints.");
-    size_t indexs[NUM_OF_JOINT] = {0, 1, 2, 3, 4, 5, 6, 7, 8};
-    return calibrateOffset(indexs, joint_num_, new_offset);
-}
-
-//------------------------------------------------------------------------------
-// 方法：  calibrateOffset
-// 摘要：  在当前位置，对某一个轴进行零位标定；
-//        注意只有在机器人处于完全静止的状态下才能进行零位标定，否则标定结果不具有任何意义；
-//------------------------------------------------------------------------------
-ErrorCode Calibrator::calibrateOffset(size_t index, double *new_offset)
-{
-    LogProducer::info("mc_calib","Calibrate offset of joint %d", index);
-    return calibrateOffset(&index, 1, new_offset);
-}
-
-//------------------------------------------------------------------------------
-// 方法：  calibrateOffset
-// 摘要：  在当前位置，对某几个轴进行零位标定；
-//        注意只有在机器人处于完全静止的状态下才能进行零位标定，否则标定结果不具有任何意义；
-//------------------------------------------------------------------------------
-ErrorCode Calibrator::calibrateOffset(const size_t *pindex, uint32_t length, double *new_offset)
-{
-    char buf[64];
-    string str = "Calibrate offset of joint:";
-
-    // 检查需要标定的轴标号
-    for (uint32_t i = 0; i < length; i++)
-    {
-        snprintf(buf, sizeof(buf), " %zu", pindex[i]);
-        str += buf;
-
-        if (pindex[i] >= joint_num_)
-        {
-            LogProducer::error("mc_calib",str.c_str());
-            return INVALID_AXIS_ID;
-        }
-    }
-
-    LogProducer::info("mc_calib",str.c_str());
-    Joint cur_joint;
-    ServoState servo_state;
-    vector<double> cur_offset;
-    uint32_t encoder_state[NUM_OF_JOINT];
-
-    if (!bare_core_ptr_->getLatestJoint(cur_joint, encoder_state, servo_state) || getOffsetFromBareCore(cur_offset) != SUCCESS)
-    {
-        LogProducer::error("mc_calib","Fail to get current offset, joint or encoder state from Core1");
-        return MC_COMMUNICATION_WITH_BARECORE_FAIL;
-    }
-
-    for (uint32_t i = 0; i < joint_num_; i++)
-    {
-        new_offset[i] = zero_offset_[i];
-    }
-
-    for (uint32_t i = joint_num_; i < NUM_OF_JOINT; i++)
-    {
-        new_offset[i] = 0;
-    }
-
-    char buffer[LOG_TEXT_SIZE];
-    LogProducer::info("mc_calib","Current-offset: %s", printDBLine(&cur_joint[0], buffer, LOG_TEXT_SIZE));
-    LogProducer::info("mc_calib","Current-joint:  %s", printDBLine(&cur_offset[0], buffer, LOG_TEXT_SIZE));
-
-    // 计算新的零位值，暂存直到saveOffset方法被调用，新的零位值生效并被写入配置文件中
-    for (uint32_t i = 0; i < length; i++)
-    {
-        if (((encoder_state[pindex[i]] >> 4) & 0x1) != 0)
-        {
-            LogProducer::info("mc_calib","Lost communication to encoder of axis %d, can not calculate new offset", pindex[i]);
-        }
-        else
-        {
-            new_offset[pindex[i]] = calculateOffset(cur_offset[pindex[i]], cur_joint[pindex[i]], 0);
-        }
-    }
-
-    LogProducer::info("mc_calib","New-offset: %s", printDBLine(new_offset, buffer, LOG_TEXT_SIZE));
-    return SUCCESS;
-}
-
-//------------------------------------------------------------------------------
-// 方法：  calculateOffset
-// 摘要：  通过在当前的零位条件下的关节读数和在新零位条件下的目标读数计算零位；
-//        公式：编码器读数 = （旧读数 + 旧零位） * 转换系数 = （新读数 + 新零位） * 转换系数
-//------------------------------------------------------------------------------
-double Calibrator::calculateOffset(double current_offset, double current_joint, double target_joint)
-{
-    double new_offset = current_joint + current_offset - target_joint;
-    LogProducer::info("mc_calib","Current-offset=%.6f, current-joint=%.6f, target-joint=%.6f, new-offset=%.6f", current_offset, current_joint, target_joint, new_offset);
-    return new_offset;
-}
-
-//------------------------------------------------------------------------------
 // 方法：  updateOffset
 // 摘要：  将给定的零偏下发到裸核并写入配置文件,同时更新相关的状态；
 //------------------------------------------------------------------------------
@@ -616,44 +344,20 @@ ErrorCode Calibrator::updateOffset(uint32_t index, double offset)
     Joint cur_joint, old_joint;
     ServoState  state;
     uint32_t encoder_state[NUM_OF_JOINT];
-
+    //检查编码器状态，是否可更新零位
     if (!bare_core_ptr_->getLatestJoint(cur_joint, encoder_state, state))
     {
         LogProducer::error("mc_calib","Fail to get current joint from core1.");
         return MC_COMMUNICATION_WITH_BARECORE_FAIL;
     }
-
     if (((encoder_state[index] >> 4) & 0x1) != 0)
     {
         LogProducer::info("mc_calib","Lost communication to encoder of axis %d, can not update offset", index);
         return MC_COMMUNICATION_WITH_ENCODER_FAIL;
     }
 
-    // 更新配置文件
-    vector<double> data;
-    //LogProducer::info("mc_calib","Update config file ...");
-
-    if (!offset_param_.getParam("zero_offset/data", data))
-    {
-        LogProducer::error("mc_calib","Fail to get offset from config file;");
-        return MC_LOAD_PARAM_FAILED;
-    }
-
-    char buffer[LOG_TEXT_SIZE];
-    LogProducer::info("mc_calib","Old offset: %s", printDBLine(&data[0], buffer, LOG_TEXT_SIZE));
-    data[index] = offset;
-    LogProducer::info("mc_calib","New offset: %s", printDBLine(&data[0], buffer, LOG_TEXT_SIZE));
-
-    if (!offset_param_.setParam("zero_offset/data", data) || !offset_param_.dumpParamFile(AXIS_GROUP_DIR"group_offset.yaml"))
-    {
-        LogProducer::error("mc_calib","Fail to save offset");
-        return MC_LOAD_PARAM_FAILED;
-    }
-
     // 更新裸核零位
-    //LogProducer::info("mc_calib","Offset saved, update offset in core1 ...");
     ErrorCode err = bare_core_ptr_->setOffsetPositions(index, offset);
-
     if (err != SUCCESS)
     {
         LogProducer::error("mc_calib","Cannot update offset in core1, code = 0x%llx", err);
@@ -663,17 +367,16 @@ ErrorCode Calibrator::updateOffset(uint32_t index, double offset)
     OffsetMask  offset_mask[NUM_OF_JOINT];
     OffsetState offset_stat[NUM_OF_JOINT];
 
-    // 更新记录文件，清除零位丢失标志和错误屏蔽标志
+    // 获取当前轴位置
     if (!bare_core_ptr_->getLatestJoint(cur_joint, encoder_state, state))
     {
         LogProducer::error("mc_calib","Fail to get current joint from core1.");
         return MC_COMMUNICATION_WITH_BARECORE_FAIL;
     }
-
+    char buffer[LOG_TEXT_SIZE];
     LogProducer::info("mc_calib","Current joint: %s", printDBLine(&cur_joint[0], buffer, LOG_TEXT_SIZE));
 
     err = readOffsetJoint(old_joint);
-    
     if (err != SUCCESS)
     {
         LogProducer::error("mc_calib","Fail to get last joint from nvram.");
@@ -685,13 +388,12 @@ ErrorCode Calibrator::updateOffset(uint32_t index, double offset)
         offset_mask[i] = offset_mask_[i];
         offset_stat[i] = offset_stat_[i];
     }
-
     for (size_t i = joint_num_; i < NUM_OF_JOINT; i++)
     {
         offset_mask[i] = OFFSET_UNMASK;
         offset_stat[i] = OFFSET_LOST;
     }
-
+    //清除当前轴的零位丢失标志和错误屏蔽标志
     offset_stat[index] = OFFSET_NORMAL;
     offset_mask[index] = OFFSET_UNMASK;
     old_joint[index] = cur_joint[index];
@@ -699,7 +401,7 @@ ErrorCode Calibrator::updateOffset(uint32_t index, double offset)
     LogProducer::info("mc_calib","  flag = %s", printDBLine((int*)offset_stat, buffer, LOG_TEXT_SIZE));
     LogProducer::info("mc_calib","  mask = %s", printDBLine((int*)offset_mask, buffer, LOG_TEXT_SIZE));
     LogProducer::info("mc_calib","  joint = %s", printDBLine(&old_joint[0], buffer, LOG_TEXT_SIZE));
-
+    //更新存储的关节位置，零位丢失标志，错误屏蔽标志。
     if (writeOffsetJoint(old_joint) != SUCCESS || writeOffsetState(offset_stat) != SUCCESS || writeOffsetMask(offset_mask) != SUCCESS)
     {
         LogProducer::error("mc_calib","Fail to update recorder in nvram.");
@@ -709,7 +411,6 @@ ErrorCode Calibrator::updateOffset(uint32_t index, double offset)
     zero_offset_[index] = offset;
     offset_mask_[index] = OFFSET_UNMASK;
     offset_stat_[index] = OFFSET_NORMAL;
-    LogProducer::info("mc_calib","updateOffset Success!");
     return SUCCESS;
 }
 
@@ -732,7 +433,7 @@ ErrorCode Calibrator::saveJoint(void)
         LogProducer::error("mc_calib","Fail to get offset joint from NvRam, code = 0x%llx.", err);
         return err;
     }
-
+    //获取所有编码器状态
     if (!bare_core_ptr_->getLatestJoint(cur_jnt, encoder_state, state))
     {
         LogProducer::error("mc_calib","Fail to get current joint from share memory");
@@ -741,9 +442,6 @@ ErrorCode Calibrator::saveJoint(void)
 
     for (size_t i = 0; i < joint_num_; i++)
     {
-        // LogProducer::info("mc_calib","saveJoint encoder_state , axis: %d, %d", i, encoder_state[i]);
-        // LogProducer::info("mc_calib","saveJoint encoder_state 0 bit, axis: %d, %d", i, encoder_state[i]&1);
-        // LogProducer::info("mc_calib","saveJoint encoder_state 4 bit, axis: %d, %d", i, (encoder_state[i]>>4)&1);
         // if ((encoder_state[i] & 0x1) != 0)
         // {
             // LogProducer::error("mc_calib","encoder battery unnormal, axis: %d", i);
@@ -756,9 +454,10 @@ ErrorCode Calibrator::saveJoint(void)
             offset_stat_[i] = OFFSET_INVALID;
         }
     }
-
+    //检查编码器状态
     for (size_t i = 0; i < joint_num_; ++i)
     {
+        //编码器电量不足
         if (((encoder_state[i]) & 0x1) != 0)
         {
             if (!b_log_flag_[i])
@@ -768,7 +467,7 @@ ErrorCode Calibrator::saveJoint(void)
             }   
             cur_jnt[i] = read_nvram_jnt[i];
         }
-        else
+        else//编码器电量恢复
         {
             if (b_log_flag_[i])
             {
@@ -776,7 +475,7 @@ ErrorCode Calibrator::saveJoint(void)
                 b_log_flag_[i] = false;
             }   
         }
-
+        //编码器无通信
         if (((encoder_state[i] >> 4) & 0x1) != 0)
         {
             if (i_com_flag_[i] == NORMAL)
@@ -785,7 +484,7 @@ ErrorCode Calibrator::saveJoint(void)
             }           
             i_com_flag_[i] = UNNORMAL;
             cur_jnt[i] = read_nvram_jnt[i];
-        }
+        }//编码器通信恢复
         else if (i_com_flag_[i] == UNNORMAL)
         {
             LogProducer::info("mc_calib","encoder communication recovery axis: %d", i);
@@ -793,8 +492,8 @@ ErrorCode Calibrator::saveJoint(void)
         }
     }
 
+    //如果恢复通信，则checkoffset
     bool b_check_flag = false;
-
     for (size_t i = 0; i < joint_num_; ++i)
     {
         if (i_com_flag_[i] == RECOVERY)
@@ -803,7 +502,6 @@ ErrorCode Calibrator::saveJoint(void)
             b_check_flag = true;
         }
     }
-
     if (b_check_flag)
     {
         CalibrateState calibrate_stat;
@@ -811,6 +509,7 @@ ErrorCode Calibrator::saveJoint(void)
         return checkOffset(calibrate_stat, offset_stat);
     }
 
+    //如果持续无通信，维持当前关节位置
     for (size_t i = 0; i < joint_num_; i++)
     {
         if (offset_stat_[i] != OFFSET_NORMAL)
@@ -819,20 +518,14 @@ ErrorCode Calibrator::saveJoint(void)
             cur_jnt[i] = read_nvram_jnt[i];
         }
     }
-    
     err = writeOffsetJoint(cur_jnt);
-
     if (err != SUCCESS)
     {
         LogProducer::error("mc_calib","Fail to record joint, code = 0x%llx", err);
         return err;
     }
-
-    // LogProducer::info("mc_calib","write Offset Joint success");
-
     //char buffer[LOG_TEXT_SIZE];
     //LogProducer::info("mc_calib","Save current joint into record file: %s", printDBLine(&cur_jnt.j1_, buffer, LOG_TEXT_SIZE));
-    //LogProducer::info("mc_calib","Success.");
     return SUCCESS;
 }
 
@@ -863,7 +556,6 @@ ErrorCode Calibrator::maskOffsetLostError(void)
             need_save = true;
         }
     }
-
     for (size_t i = joint_num_; i < NUM_OF_JOINT; i++)
     {
         mask[i] = OFFSET_UNMASK;
@@ -876,9 +568,7 @@ ErrorCode Calibrator::maskOffsetLostError(void)
         return SUCCESS;
     }
 
-    LogProducer::info("mc_calib","Saving mask flags ...");
     ErrorCode err = writeOffsetMask(mask);
-
     if (err != SUCCESS)
     {
         LogProducer::error("mc_calib","Fail to save mask flags into recorder, code = 0x%llx", err);
@@ -929,7 +619,6 @@ ErrorCode Calibrator::setOffsetState(size_t index, OffsetState stat)
     ServoState servo_state;
     uint32_t encoder_state[NUM_OF_JOINT];
     ErrorCode err = readOffsetJoint(old_joint);
-
     if (err != SUCCESS)
     {
         LogProducer::error("mc_calib","Fail to get last joint from recorder, code = 0x%llx", err);
@@ -1069,61 +758,6 @@ ErrorCode Calibrator::resetEncoderMultiTurnValue()
     return result;
 }
 
-//------------------------------------------------------------------------------
-// 方法：  sendConfigData
-// 摘要：  使用service形式向裸核发送参数id和数据；
-//------------------------------------------------------------------------------
-ErrorCode Calibrator::sendConfigData(int id, const vector<double> &data)
-{
-    return SUCCESS;
-}
-
-//------------------------------------------------------------------------------
-// 方法：  sendConfigData
-// 摘要：  使用service形式向裸核发送参数id和数据；
-//------------------------------------------------------------------------------
-ErrorCode Calibrator::sendConfigData(int id, const vector<int> &data)
-{
-    return SUCCESS;
-}
-
-//------------------------------------------------------------------------------
-// 方法：  sendOffsetToBareCore
-// 摘要：  从配置文件中提取零位参数，并使用service形式向裸核发送这些参数；
-//------------------------------------------------------------------------------
-ErrorCode Calibrator::sendOffsetToBareCore(void)
-{
-    vector<double> data;
-
-    if (offset_param_.getParam("zero_offset/data", data))
-    {
-        //return bare_core_ptr_->setOffsetPositions(data);
-        return SUCCESS;
-    }
-    else
-    {
-        return MC_LOAD_PARAM_FAILED;
-    }
-}
-
-//------------------------------------------------------------------------------
-// 方法：  getOffsetFromBareCore
-// 摘要：  通过service形式，从裸核获取零位；
-//------------------------------------------------------------------------------
-ErrorCode Calibrator::getOffsetFromBareCore(vector<double> &data)
-{
-    int id;
-
-    if (offset_param_.getParam("zero_offset/id", id) && offset_param_.getParam("zero_offset/data", data))
-    {
-        return SUCCESS;
-    }
-    else
-    {
-        data.clear();
-        return MC_LOAD_PARAM_FAILED;
-    }
-}
 
 ErrorCode Calibrator::readOffsetState(OffsetState (&state)[NUM_OF_JOINT])
 {

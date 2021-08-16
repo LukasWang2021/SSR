@@ -95,10 +95,6 @@ install(FILES ./config/soft_constraint.yaml
     DESTINATION ${CONFIG_FILE_OUTPUT_PATH}/robot/axis_group
 )
 
-install(FILES ./config/group_offset.yaml
-    DESTINATION ${CONFIG_FILE_OUTPUT_PATH}/robot/axis_group
-)
-
 install(FILES ./config/arm_manual_teach.yaml
     DESTINATION ${CONFIG_FILE_OUTPUT_PATH}/robot/axis_group
 )

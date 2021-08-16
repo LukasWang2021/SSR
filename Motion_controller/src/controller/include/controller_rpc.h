@@ -395,12 +395,6 @@ private:
     void handleRpc0x00010E43(void* request_data_ptr, void* response_data_ptr);
     //"/rpc/motion_control/axis_group/getAllZeroPointStatus"	
     void handleRpc0x000102F3(void* request_data_ptr, void* response_data_ptr);
-    //"/rpc/motion_control/axis_group/calibrateAllZeroPointOffsets"	
-    void handleRpc0x00011B03(void* request_data_ptr, void* response_data_ptr);
-    //"/rpc/motion_control/axis_group/calibrateSingleZeroPointOffset"	
-    void handleRpc0x000131D4(void* request_data_ptr, void* response_data_ptr);
-    //"/rpc/motion_control/axis_group/calibrateZeroPointOffsets"	
-    void handleRpc0x00005AE3(void* request_data_ptr, void* response_data_ptr);
     //"/rpc/motion_control/axis_group/setJointManualStep"	
     void handleRpc0x00018470(void* request_data_ptr, void* response_data_ptr);
     //"/rpc/motion_control/axis_group/getJointManualStep"	

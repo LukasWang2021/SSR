@@ -28,18 +28,6 @@ target_link_libraries(get_postrue_by_joint ${rtm_LIBRARIES} pb tp_comm_test prot
 
 
 
-######### calibrate_all_offsets #########
-add_executable(calibrate_all_offsets ./axis_group/calibrate_all_offsets.cpp)
-target_link_libraries(calibrate_all_offsets ${rtm_LIBRARIES} pb tp_comm_test protos)
-
-######### calibrate_offsets #########
-add_executable(calibrate_offsets ./axis_group/calibrate_offsets.cpp)
-target_link_libraries(calibrate_offsets ${rtm_LIBRARIES} pb tp_comm_test protos)
-
-######### calibrate_single_offset #########
-add_executable(calibrate_single_offset ./axis_group/calibrate_single_offset.cpp)
-target_link_libraries(calibrate_single_offset ${rtm_LIBRARIES} pb tp_comm_test protos)
-
 ######### convert_cart_to_joint #########
 add_executable(convert_cart_to_joint ./axis_group/convert_cart_to_joint.cpp)
 target_link_libraries(convert_cart_to_joint ${rtm_LIBRARIES} pb tp_comm_test protos)

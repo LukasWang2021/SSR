@@ -297,23 +297,6 @@ uint64_t c_mcSetAllZeroPointOffsets()
 	return rep_data.data.data;
 }
 
-uint64_t c_mcCalibrateAllZero()
-{
-	if (!rpc_valid) return HANDLE_RPC_FAILED;
-	RpcBasic* rpc_ptr = RpcBasic::getInstance();
-	RequestMessageType_Int32 req_data;
-	ResponseMessageType_Uint64 rep_data;
-
-	req_data.property.authority = Comm_Authority_TP_SIMMULATOR;
-	req_data.data.data = 0;
-
-	if (!rpc_ptr->handleRpc(0x00011B03, &req_data, RequestMessageType_Int32_fields, &rep_data, ResponseMessageType_Uint64_fields))
-	{
-		return HANDLE_RPC_FAILED;
-	}
-	return rep_data.data.data;
-}
-
 
 uint64_t c_mcSetStep(double joint_step, double cartesian_step, double orientation_step)
 {

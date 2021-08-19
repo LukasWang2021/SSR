@@ -127,9 +127,8 @@ c_mcSetUserCoordId @188
 c_mcSetToolId @189
 c_mcIgnoreLostZeroError @190
 c_mcSetAllZeroPointOffsets @191
-c_mcCalibrateAllZero @192
-c_mcSetStep @193
-c_mcGetPostureByJoint @194
+c_mcSetStep @192
+c_mcGetPostureByJoint @193
 
 c_getPrRegValidList @210
 c_addPrReg @211

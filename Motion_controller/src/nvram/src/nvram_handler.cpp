@@ -48,11 +48,8 @@ bool NvramHandler::init(void)
         return false;
     }
 	close(fd);
-	memset(ptr, 0, sizeof(NvramImage));
 
 	image_ptr_ = (NvramImage*)ptr;
-	image_ptr_->magic_number = NVRAM_MAGIC_NUMBER;
-
     return true;
 }
 
@@ -74,7 +71,7 @@ bool NvramHandler::writeNvram(uint32_t address, const uint8_t *data, uint32_t le
 	uint32_t block_last = ((block_index + 1) << 10) - address;
 	uint32_t write_size = length <= block_last ? length : block_last;
 	pthread_mutex_lock(&image_ptr_->mutex);
-
+    //数据写入当前block，如果写满，写到下一个block.
 	while (write_size > 0)
 	{
 		memcpy(image_ptr_->data + address, data, write_size);

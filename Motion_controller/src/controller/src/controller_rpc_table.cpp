@@ -153,9 +153,6 @@ void ControllerRpc::initRpcTable()
     rpc_service =	{	"/rpc/motion_control/axis_group/getAllZeroErrorMaskStatus",	0x0000C183,	&ControllerRpc::handleRpc0x0000C183	};	rpc_table_.push_back(rpc_service);
     rpc_service =	{	"/rpc/motion_control/axis_group/setSingleZeroPointStatus",	0x00010E43,	&ControllerRpc::handleRpc0x00010E43	};	rpc_table_.push_back(rpc_service);
     rpc_service =	{	"/rpc/motion_control/axis_group/getAllZeroPointStatus",	0x000102F3,	&ControllerRpc::handleRpc0x000102F3	};	rpc_table_.push_back(rpc_service);
-    rpc_service =	{	"/rpc/motion_control/axis_group/calibrateAllZeroPointOffsets",	0x00011B03,	&ControllerRpc::handleRpc0x00011B03	};	rpc_table_.push_back(rpc_service);
-    rpc_service =	{	"/rpc/motion_control/axis_group/calibrateSingleZeroPointOffset",	0x000131D4,	&ControllerRpc::handleRpc0x000131D4	};	rpc_table_.push_back(rpc_service);
-    rpc_service =	{	"/rpc/motion_control/axis_group/calibrateZeroPointOffsets",	0x00005AE3,	&ControllerRpc::handleRpc0x00005AE3	};	rpc_table_.push_back(rpc_service);
     rpc_service =	{	"/rpc/motion_control/axis_group/setJointManualStep",	0x00018470,	&ControllerRpc::handleRpc0x00018470	};	rpc_table_.push_back(rpc_service);
     rpc_service =	{	"/rpc/motion_control/axis_group/getJointManualStep",	0x00006D10,	&ControllerRpc::handleRpc0x00006D10	};	rpc_table_.push_back(rpc_service);
     rpc_service =	{	"/rpc/motion_control/axis_group/setCartesianManualStep",	0x0000A420,	&ControllerRpc::handleRpc0x0000A420	};	rpc_table_.push_back(rpc_service);

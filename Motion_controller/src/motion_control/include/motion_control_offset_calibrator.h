@@ -84,37 +84,6 @@ class Calibrator
     ErrorCode checkOffset(CalibrateState &cali_stat, OffsetState (&offset_stat)[NUM_OF_JOINT]);
 
     //------------------------------------------------------------------------------
-    // 方法：  calibrateOffset
-    // 摘要：  在当前位置对所有轴进行一次零位标定，注意只有在机器人处于静止状态下才能进行零位标定；
-    //        标定的新零位需要调用saveOffset借口进行保存，否则重启后本次标定的零位将会丢失；
-    // 输入：  None
-    // 输出：  None
-    // 返回：  错误代码，详见报警代码表
-    //------------------------------------------------------------------------------
-    ErrorCode calibrateOffset(double *new_offset);
-
-    //------------------------------------------------------------------------------
-    // 方法：  calibrateOffset
-    // 摘要：  在当前位置对某个轴进行一次零位标定，注意只有在机器人处于静止状态下才能进行零位标定；
-    //        标定的新零位需要调用saveOffset借口进行保存，否则重启后本次标定的零位将会丢失；
-    // 输入：  index - 需要标定的轴标号，0 ~ NUM_OF_JOINT
-    // 输出：  None
-    // 返回：  错误代码，详见报警代码表
-    //------------------------------------------------------------------------------
-    ErrorCode calibrateOffset(size_t index, double *new_offset);
-
-    //------------------------------------------------------------------------------
-    // 方法：  calibrateOffset
-    // 摘要：  在当前位置对某几个轴进行一次零位标定，注意只有在机器人处于静止状态下才能进行零位标定；
-    //        标定的新零位需要调用saveOffset借口进行保存，否则重启后本次标定的零位将会丢失；
-    // 输入：  pindex - 需要标定的轴标号数组地址
-    //        length - 需要标定的轴标号数组长度
-    // 输出：  None
-    // 返回：  错误代码，详见报警代码表
-    //------------------------------------------------------------------------------
-    ErrorCode calibrateOffset(const size_t *pindex, uint32_t length, double *new_offset);
-
-    //------------------------------------------------------------------------------
     // 方法：  saveJoint
     // 摘要：  将当前的关节位置保存到零位记录文件中，将在下次零位校验时使用；
     // 输入：  None
@@ -209,14 +178,9 @@ class Calibrator
 
 //***************************************************************************************************************************//
   private:
-    void checkOffset(basic_alg::Joint curr_jnt, basic_alg::Joint last_jnt, OffsetState *offset_stat, const uint32_t (&encoder_state)[NUM_OF_JOINT]);
+    void checkOffsetStates(basic_alg::Joint curr_jnt, basic_alg::Joint last_jnt, OffsetState *offset_stat, const uint32_t (&encoder_state)[NUM_OF_JOINT]);
     void checkCalibrateState(void);
-    double calculateOffset(double current_offset, double current_joint, double target_joint);
     ErrorCode updateOffset(uint32_t index, double offset);
-    ErrorCode sendConfigData(int id, const std::vector<int> &data);
-    ErrorCode sendConfigData(int id, const std::vector<double> &data);
-    ErrorCode sendOffsetToBareCore(void);
-    ErrorCode getOffsetFromBareCore(std::vector<double> &data);
     ErrorCode writeOffsetJoint(const basic_alg::Joint &joint);
     ErrorCode writeOffsetMask(const OffsetMask (&mask)[NUM_OF_JOINT]);
     ErrorCode writeOffsetState(const OffsetState (&state)[NUM_OF_JOINT]);
@@ -231,7 +195,6 @@ class Calibrator
     CalibrateState              current_state_;
     base_space::YamlHelp   coupling_param_;
     base_space::YamlHelp   gear_ratio_param_;
-    base_space::YamlHelp   offset_param_;
     base_space::YamlHelp   robot_recorder_;
     rtm_nvram::NvramHandler     nvram_handler_;
 

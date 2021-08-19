@@ -53,7 +53,7 @@ typedef unsigned long long int ErrorCode;
 #define CONTROLLER_INVALID_OPERATION_GOTO_JOINT (unsigned long long int)0x0001000200A80019    /* Controller模块不能执行到关节坐标的运动因运行状态不满足，使控制器进入ENAGED，解释器非执行状态，手动模式。 */
 #define CONTROLLER_INVALID_OPERATION_MANUAL_STOP (unsigned long long int)0x0001000200A8001A    /* Controller模块不能执行停止因运行状态不满足，使控制器进入ENAGED，手动模式。 */
 //#define CONTROLLER_INVALID_OPERATION_RESET (unsigned long long int)0x0001000200A8001B    /* Controller模块不能执行RESET因运行状态不满足，控制器在INIT，ENAGED，ESTOP状态下可做RESET操作 */
-
+#define CONTROLLER_OFFSET_NEED_CALIBRATE (unsigned long long int)0x0001000200A8001C    /* Controller模块需要对零位进行重新标定 */
 
 #define TP_COMM_LOAD_PARAM_FAILED 0x3001   /*TpComm loading param is failed in initialization phase*/
 #define TP_COMM_INIT_OBJECT_FAILED 0x3002   /*TpComm failed to initialize internal variables*/

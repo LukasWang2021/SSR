@@ -511,13 +511,7 @@ private:
     /********rpc/motion_control/axis_group/setSingleZeroPointStatus, RequestMessageType_Int32List(count=3)**********/	
     void handleRequest0x00010E43(int recv_bytes);
     /********rpc/motion_control/axis_group/getAllZeroPointStatus, RequestMessageType_Int32**********/	
-    void handleRequest0x000102F3(int recv_bytes);
-    /********rpc/motion_control/axis_group/calibrateAllZeroPointOffsets, RequestMessageType_Int32**********/	
-    void handleRequest0x00011B03(int recv_bytes);
-    /********rpc/motion_control/axis_group/calibrateSingleZeroPointOffset, RequestMessageType_Int32List(count=2)**********/	
-    void handleRequest0x000131D4(int recv_bytes);
-    /********rpc/motion_control/axis_group/calibrateZeroPointOffsets, RequestMessageType_Int32_Int32List(count=9)**********/	
-    void handleRequest0x00005AE3(int recv_bytes);   
+    void handleRequest0x000102F3(int recv_bytes); 
     /********rpc/motion_control/axis_group/setJointManualStep, RequestMessageType_Int32_DoubleList(DoubleList_count=9)**********/	
     void handleRequest0x00018470(int recv_bytes);
     /********rpc/motion_control/axis_group/getJointManualStep, RequestMessageType_Int32**********/	
@@ -862,12 +856,6 @@ private:
     void handleResponse0x00010E43(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
     /********rpc/motion_control/axis_group/getAllZeroPointStatus, ResponseMessageType_Uint64_Int32List(count=9)**********/	
     void handleResponse0x000102F3(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
-    /********rpc/motion_control/axis_group/calibrateAllZeroPointOffsets, ResponseMessageType_Uint64**********/	
-    void handleResponse0x00011B03(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
-    /********rpc/motion_control/axis_group/calibrateSingleZeroPointOffset, ResponseMessageType_Uint64**********/	
-    void handleResponse0x000131D4(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
-    /********rpc/motion_control/axis_group/calibrateZeroPointOffsets, ResponseMessageType_Uint64**********/	
-    void handleResponse0x00005AE3(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
     /********rpc/motion_control/axis_group/setJointManualStep, ResponseMessageType_Uint64**********/	
     void handleResponse0x00018470(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
     /********rpc/motion_control/axis_group/getJointManualStep, ResponseMessageType_Uint64_DoubleList(DoubleList_count=9)**********/	

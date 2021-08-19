@@ -1073,8 +1073,6 @@ COMM_INTERFACE_API uint64_t c_mcIgnoreLostZeroError();
 
 COMM_INTERFACE_API uint64_t c_mcSetAllZeroPointOffsets();
 
-COMM_INTERFACE_API uint64_t c_mcCalibrateAllZero();
-
 COMM_INTERFACE_API uint64_t c_mcSetStep(double joint_step, double cartesian_step, double orientation_step);
 
 COMM_INTERFACE_API uint64_t c_mcGetPostureByJoint(int32_t group_index, double j1, double j2, double j3, double j4, double j5, double j6, double j7, double j8, double j9,

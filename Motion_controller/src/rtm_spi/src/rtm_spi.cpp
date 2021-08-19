@@ -12,7 +12,7 @@
 #include <sys/mman.h>
 #include <iostream>
 #include "rtm_spi.h"
-#define RTM_SPI_BASE_ADDRESS 0x400a0000
+#define RTM_SPI_BASE_ADDRESS 0xa0000000
 #define RTM_SPI_BIT_SOFT_CS 0x00000020
 #define RTM_SPI_BIT_CS_CTRL 0x00000010
 #define RTM_SPI_BIT_ENABLE 0x00000001

@@ -254,6 +254,9 @@ static void sigintHandle(int num)
 
 static void* server_func(void*)
 {
+	log_space::LogProducer log_manager;
+	uint32_t fake_isr = 0;
+    log_manager.init("nvram_server", &fake_isr);
 	LogProducer::info("nvramServer", "Server thread start");
 	NvramBlock block;
 	uint32_t address;

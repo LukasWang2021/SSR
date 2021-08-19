@@ -210,13 +210,13 @@ ErrorCode Calibrator::checkOffset(CalibrateState &cali_stat, OffsetState (&offse
     LogProducer::info("mc_calib","Curr-joint: %s", printDBLine(&cur_jnt[0], buffer, LOG_TEXT_SIZE));
     LogProducer::info("mc_calib","Last-joint: %s", printDBLine(&old_jnt[0], buffer, LOG_TEXT_SIZE));
     LogProducer::info("mc_calib","Mask-flags: %s", printDBLine((int*)offset_mask_, buffer, LOG_TEXT_SIZE));
-    LogProducer::info("mc_calib","Nvram-state: %s", printDBLine((int*)nvram_state, buffer, LOG_TEXT_SIZE));
+    LogProducer::info("mc_calib","Nvram-offset-state: %s", printDBLine((int*)nvram_state, buffer, LOG_TEXT_SIZE));
     LogProducer::info("mc_calib","encoder_state: %s", printDBLine((int*)encoder_state, buffer, LOG_TEXT_SIZE));
 
     // 当前各关节位置和记录文件中各关节位置进行比对
     OffsetState state[NUM_OF_JOINT];
     checkOffsetStates(cur_jnt, old_jnt, state, encoder_state);
-    LogProducer::info("mc_calib","New-state: %s", printDBLine((int*)state, buffer, LOG_TEXT_SIZE));
+    LogProducer::info("mc_calib","Check-state: %s", printDBLine((int*)state, buffer, LOG_TEXT_SIZE));
 
     // 比对结果比记录文件中的状态标志更严重，则更新记录文件中的标志
     bool recorder_need_update = false;
@@ -245,8 +245,8 @@ ErrorCode Calibrator::checkOffset(CalibrateState &cali_stat, OffsetState (&offse
     {
         offset_stat_[i] = OFFSET_LOST;
     }
-    LogProducer::info("mc_calib","Offset-state: %s", printDBLine((int*)offset_stat_, buffer, LOG_TEXT_SIZE));
-    LogProducer::info("mc_calib","Nvram-state: %s", printDBLine((int*)nvram_state, buffer, LOG_TEXT_SIZE));
+    LogProducer::info("mc_calib","Final-offset-state: %s", printDBLine((int*)offset_stat_, buffer, LOG_TEXT_SIZE));
+    LogProducer::info("mc_calib","Final-Nvram-state: %s", printDBLine((int*)nvram_state, buffer, LOG_TEXT_SIZE));
 
     if (recorder_need_update)
     {

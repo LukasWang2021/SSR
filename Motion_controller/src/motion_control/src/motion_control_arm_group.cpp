@@ -170,6 +170,39 @@ ErrorCode ArmGroup::initGroup(CoordinateManager *coordinate_manager_ptr, ToolMan
         }
     }
 
+    //启动检查零位是否跑偏
+    CalibrateState calib_state;
+    OffsetState offset_state[NUM_OF_JOINT];
+    LogProducer::info("mc_arm_group","calibrator checkOffset start");
+    err = calibrator_.checkOffset(calib_state, offset_state);
+    if (err != SUCCESS)
+    {
+        LogProducer::error("mc_arm_group","calibrator checkOffset failed, code = 0x%llx", err);
+        return err;
+    }
+    if(calib_state != MOTION_NORMAL)
+    {
+        for(int i=0; i < JOINT_OF_ARM; ++i)
+        {
+            if(offset_state[i] == OFFSET_LOST)
+            {
+                ErrorQueue::instance().push(ZERO_OFFSET_LOST);
+            }
+            else if(offset_state[i] == OFFSET_DEVIATE)
+            {
+                ErrorQueue::instance().push(ZERO_OFFSET_DEVIATE);
+            }
+            else if(offset_state[i] == OFFSET_INVALID)
+            {
+                ErrorQueue::instance().push(ZERO_OFFSET_INVALID);
+            }
+        }
+        if(calib_state == MOTION_FORBIDDEN)
+        {
+            ErrorQueue::instance().push(CONTROLLER_OFFSET_NEED_CALIBRATE);
+        }
+    }
+
     // 初始化坐标变换模块
     if (!transformation_.init(kinematics_ptr_))
     {

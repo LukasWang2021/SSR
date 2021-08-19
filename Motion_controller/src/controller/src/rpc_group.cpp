@@ -52,6 +52,7 @@ void ControllerRpc::handleRpc0x00003615(void* request_data_ptr, void* response_d
             group_ptr_[group_id]->clearGroup();
             rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
             LogProducer::error("rpc","/rpc/group/mcGroupEnable check offset failure");
+            return;
         }
         group_ptr_[group_id]->resetGroup();
         rs_data_ptr->data.data = group_ptr_[group_id]->mcGroupEnable();

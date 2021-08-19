@@ -188,10 +188,6 @@ ErrorCode ArmGroup::initGroup(CoordinateManager *coordinate_manager_ptr, ToolMan
             {
                 ErrorQueue::instance().push(ZERO_OFFSET_LOST);
             }
-            else if(offset_state[i] == OFFSET_DEVIATE)
-            {
-                ErrorQueue::instance().push(ZERO_OFFSET_DEVIATE);
-            }
             else if(offset_state[i] == OFFSET_INVALID)
             {
                 ErrorQueue::instance().push(ZERO_OFFSET_INVALID);

@@ -109,8 +109,9 @@ bool BareCoreInterface::clearPointCache(void)
 bool BareCoreInterface::fillPointCache(TrajectoryPoint *points, size_t length, PointProperty property)
 {
     if(!point_cache_.is_empty || length <= 0 || length > JC_POINT_NUM)
+    {
         return false;
-
+    }
 
     std::map<int, Axis*>::iterator it;
     int32_t i = 0;
@@ -208,7 +209,7 @@ bool BareCoreInterface::WriteShareMem(PointCache& cache, unsigned int valid_leve
             result = false;
         }
         // if (actual_element_number == 0)
-        //     LogProducer::info("mc_core","WriteShareMem:i=%d, actual=%d, current=%d, total=%d",i,actual_element_number,cache.axis[i].current_point,cache.axis[i].total_points);
+        //    LogProducer::info("mc_core","WriteShareMem:i=%d, actual=%d, current=%d, total=%d",i,actual_element_number,cache.axis[i].current_point,cache.axis[i].total_points);
     }
     //如果是新轨迹，置各轴同步信号
     if (cache.is_start)

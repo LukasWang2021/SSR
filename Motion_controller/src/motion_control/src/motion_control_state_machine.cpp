@@ -82,15 +82,15 @@ void BaseGroup::doStateMachine(void)
             mc_state_ = STANDBY;
             standby_to_manual_request_ = false;
             manual_to_standby_request_ = false;
-            bare_core_.clearPointCache();
         }
         else if (mc_state == PAUSE || mc_state == PAUSE_MANUAL || mc_state == PAUSE_TO_PAUSE_MANUAL || mc_state == PAUSE_MANUAL_TO_PAUSE)
         {
             mc_state_ = PAUSE;
             pause_to_manual_request_ = false;
             manual_to_pause_request_ = false;
-            bare_core_.clearPointCache();
         }
+        bare_core_.clearPointCache();
+
         pthread_mutex_unlock(&manual_traj_mutex_);
         LogProducer::info("mc_sm","Teach group cleared, MC-state = %s", getMontionControlStatusString(mc_state).c_str());
     }
@@ -833,7 +833,7 @@ void BaseGroup::doManualToStandby(const ServoState &servo_state, uint32_t &fail_
 	if (servo_state == SERVO_IDLE)
 	{
 		mc_state_ = STANDBY;
-        clearTeachGroup();
+        clearTeachGroup();//todo check
 		LogProducer::warn("mc_sm","MC-state switch to MC_STANDBY.");
 	}
 

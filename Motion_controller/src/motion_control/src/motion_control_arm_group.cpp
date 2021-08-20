@@ -562,18 +562,7 @@ ErrorCode ArmGroup::LoadBaseGroupParameters(std::string dir_path)
         return MC_LOAD_PARAM_FAILED;
     }
 
-    if (base_group_param.getParam("time_out_cycle/servo_update", time_out) && time_out > 0)
-    {
-        servo_update_timeout_ = time_out;
-    }
-    else
-    {
-        LogProducer::error("mc_arm_group","Fail loading servo update timeout from config file");
-        return MC_LOAD_PARAM_FAILED;
-    }
-
     int cycles;
-
     if (base_group_param.getParam("joint_record/update_cycle", cycles) && cycles > 0)
     {
         joint_record_update_cycle_ = cycles;

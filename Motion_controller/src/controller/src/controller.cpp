@@ -254,21 +254,6 @@ void Controller::setExit()
 void Controller::runRoutineThreadFunc()
 {
     usleep(config_ptr_->routine_cycle_time_);
-    group_ptr_[0]->ringCommonTask();
-	publish_.processPublish();
-    uploadErrorCode();
-}
-
-void Controller::runPlannerThreadFunc()
-{
-    usleep(config_ptr_->planner_cycle_time_);
-    group_ptr_[0]->ringPlannerTask();
-}
-
-void Controller::runPriorityThreadFunc()
-{
-    usleep(config_ptr_->priority_cycle_time_);
-    group_ptr_[0]->ringPriorityTask();
 
     axis_ptr_[9]->processFdbPdoCurrent(&fdb_current_time_stamp_);
     axis_ptr_[0]->processFdbPdoSync(fdb_current_time_stamp_);
@@ -292,6 +277,21 @@ void Controller::runPriorityThreadFunc()
         group_ptr_[i]->processStateMachine();
     }
     rpc_.processRpc();
+	publish_.processPublish();
+    uploadErrorCode();
+    group_ptr_[0]->ringCommonTask();
+}
+
+void Controller::runPlannerThreadFunc()
+{
+    usleep(config_ptr_->planner_cycle_time_);
+    group_ptr_[0]->ringPlannerTask();
+}
+
+void Controller::runPriorityThreadFunc()
+{
+    usleep(config_ptr_->priority_cycle_time_);
+    group_ptr_[0]->ringPriorityTask();
 }
 
 void Controller::runRtThreadFunc()

@@ -13,7 +13,9 @@ ControllerRpc::ControllerRpc():
     cpu_comm_ptr_(NULL),
     servo_comm_ptr_(NULL),
     file_manager_ptr_(NULL),
-    sync_ack_ptr_(NULL)
+    sync_ack_ptr_(NULL),
+    sampling_data_byte_size(),
+    sampling_file_path("")
 {
     for(size_t i = 0; i < AXIS_NUM; ++i)
     {
@@ -28,7 +30,7 @@ ControllerRpc::ControllerRpc():
 
 ControllerRpc::~ControllerRpc()
 {
-
+    save_file_thread_.join();
 }
 
 void ControllerRpc::init(TpComm* tp_comm_ptr, ControllerPublish* publish_ptr, servo_comm_space::ServoCpuCommBase* cpu_comm_ptr,

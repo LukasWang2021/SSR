@@ -121,34 +121,57 @@ void ControllerRpc::handleRpc0x0000556C(void* request_data_ptr, void* response_d
 }
 
 //"/rpc/servo_sampling/saveSamplingBufferData"  
-extern uint8_t g_sampling_data[];
+uint8_t g_sampling_data[16*1024*1024];
 void ControllerRpc::handleRpc0x00004E41(void* request_data_ptr, void* response_data_ptr)
 {
     RequestMessageType_Int32_String* rq_data_ptr = static_cast<RequestMessageType_Int32_String*>(request_data_ptr);
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
     int32_t cpu = rq_data_ptr->data1.data;//todo with axis_manager
-    std::string file_path = rq_data_ptr->data2.data;
+    sampling_file_path = rq_data_ptr->data2.data;
 
-    int32_t data_byte_size = 0;
-    cpu_comm_ptr_->getSamplingBufferData(&g_sampling_data[0], &data_byte_size);
-
-    FILE *fp = fopen(file_path.c_str(), "w+");
-    if (fp == NULL)
+    // check if destination directory is existed.
+    std::string dest = rq_data_ptr->data2.data;
+    dest = dest.substr(0, dest.rfind('/') + 1);                   
+    if (access(dest.c_str(), 0) == -1)
     {
         rs_data_ptr->data.data = RPC_EXECUTE_FAILED;
-        LogProducer::error("rpc", "/rpc/servo_sampling/saveSamplingBufferData called cpu(%d) failed", cpu);
+        LogProducer::error("rpc", "/rpc/servo_sampling/saveSamplingBufferData path not exist: %s", dest.c_str());
         return;
     }
-    LogProducer::info("rpc", "data_byte_size=%d", data_byte_size);
-    for(int32_t i = 0; i < data_byte_size; i += 4)
+
+    cpu_comm_ptr_->getSamplingBufferData(&g_sampling_data[0], &sampling_data_byte_size);
+   
+    if(!save_file_thread_.run(rpcSaveSamplingDataToFileThreadFunc, this, 20))
     {
-        fprintf(fp, "%d\n", *(int32_t*)(&g_sampling_data[i]));
-    }       
-    fflush(fp);
-    fclose(fp);
+        rs_data_ptr->data.data = RPC_EXECUTE_FAILED;
+        LogProducer::error("rpc", "/rpc/servo_sampling/saveSamplingBufferData start thread failed");
+        return;
+    }
+ 
     rs_data_ptr->data.data = SUCCESS;
     LogProducer::info("rpc", "/rpc/servo_sampling/saveSamplingBufferData called cpu(%d) success", cpu);
 }
 
+void ControllerRpc::saveSamplingDataToFile()
+{
+    FILE *fp = fopen(sampling_file_path.c_str(), "w+");
+    if (fp == NULL)
+    {
+        printf("saveSamplingDataToFile open file failed:%s",sampling_file_path.c_str());
+        return;
+    }
+    for(int32_t i = 0; i < sampling_data_byte_size; i += 4)
+    {
+        fprintf(fp, "%d\n", *(int32_t*)(&g_sampling_data[i]));
+    }   
+    fflush(fp);
+    fclose(fp);
+}
 
+void* rpcSaveSamplingDataToFileThreadFunc(void* arg)
+{
+    ControllerRpc* rpc_ptr = static_cast<ControllerRpc*>(arg);
+    rpc_ptr->saveSamplingDataToFile();
+    return NULL;
+}

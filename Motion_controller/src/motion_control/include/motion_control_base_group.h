@@ -325,7 +325,6 @@ class BaseGroup
     size_t  auto_to_pause_timeout_;
     size_t  pause_to_standby_timeout_;
     size_t  trajectory_flow_timeout_;
-    size_t  servo_update_timeout_;
     size_t  joint_record_update_timeout_;
     size_t  joint_record_update_cycle_;
     bool is_continuous_manual_move_timeout_;

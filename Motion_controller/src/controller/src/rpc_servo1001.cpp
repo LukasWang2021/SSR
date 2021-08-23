@@ -1114,31 +1114,34 @@ void ControllerRpc::handleRpc0x0000939E(void* request_data_ptr, void* response_d
 }
 
 //"/rpc/servo1001/cpu/saveSamplingBufferData"	
-uint8_t g_sampling_data[16*1024*1024];
+extern uint8_t g_sampling_data[];
 void ControllerRpc::handleRpc0x00015621(void* request_data_ptr, void* response_data_ptr)
 {
     RequestMessageType_Int32_String* rq_data_ptr = static_cast<RequestMessageType_Int32_String*>(request_data_ptr);
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
     int32_t cpu = rq_data_ptr->data1.data;//todo with axis_manager
-    std::string file_path = rq_data_ptr->data2.data;
-    
-    int32_t data_byte_size = 0;
-    cpu_comm_ptr_->getSamplingBufferData(&g_sampling_data[0], &data_byte_size);
+    sampling_file_path = rq_data_ptr->data2.data;
 
-    FILE *fp = fopen(file_path.c_str(), "w+");
-    if (fp == NULL)
+    // check if destination directory is existed.
+    std::string dest = rq_data_ptr->data2.data;
+    dest = dest.substr(0, dest.rfind('/') + 1);                   
+    if (access(dest.c_str(), 0) == -1)
     {
         rs_data_ptr->data.data = RPC_EXECUTE_FAILED;
-        LogProducer::error("rpc", "/rpc/servo1001/cpu/saveSamplingBufferData called cpu(%d) failed", cpu);
+        LogProducer::error("rpc", "/rpc/cpu/saveSamplingBufferData path not exist: %s", dest.c_str());
         return;
     }
-    for(int32_t i = 0; i < data_byte_size; i += 4)
+    
+    cpu_comm_ptr_->getSamplingBufferData(&g_sampling_data[0], &sampling_data_byte_size);
+
+    if(!save_file_thread_.run(rpcSaveSamplingDataToFileThreadFunc, this, 20))
     {
-        fprintf(fp, "%d\n", *(int32_t*)(&g_sampling_data[i]));
-    }   
-    fflush(fp);
-    fclose(fp);
+        rs_data_ptr->data.data = RPC_EXECUTE_FAILED;
+        LogProducer::error("rpc", "/rpc/cpu/saveSamplingBufferData start thread failed");
+        return;
+    }
+
     rs_data_ptr->data.data = SUCCESS;
     LogProducer::info("rpc", "/rpc/servo1001/cpu/saveSamplingBufferData called cpu(%d) success", cpu);
 }

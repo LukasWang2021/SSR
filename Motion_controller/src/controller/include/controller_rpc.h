@@ -10,6 +10,7 @@
 #include <vector>
 #include "tp_comm.h"
 #include "protoc.h"
+#include "thread_help.h"
 #include "file_manager.h"
 #include "device_version.h"
 #include "controller_publish.h"
@@ -73,6 +74,8 @@ public:
      */ 
     void processRpc();
 
+    void saveSamplingDataToFile(void);
+
 private:
     user_space::TpComm* tp_comm_ptr_;
 	user_space::ControllerPublish* publish_ptr_;
@@ -88,8 +91,11 @@ private:
     fst_ctrl::ToolManager* tool_manager_ptr_;
     fst_ctrl::CoordinateManager* coordinate_manager_ptr_;
     fst_ctrl::RegManager* reg_manager_ptr_;
-
     group_space::MotionControl* group_ptr_[GROUP_NUM];
+    //For sampling thread to save file
+    base_space::ThreadHelp save_file_thread_; 
+    int32_t sampling_data_byte_size;
+    std::string sampling_file_path;
 
     enum {HASH_BYTE_SIZE = 4,};
     enum {QUICK_SEARCH_TABLE_SIZE = 128,};
@@ -454,6 +460,7 @@ private:
 
 }
 
+void* rpcSaveSamplingDataToFileThreadFunc(void* arg);
 
 #endif
 

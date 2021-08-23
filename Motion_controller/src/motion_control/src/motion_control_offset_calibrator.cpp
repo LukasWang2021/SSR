@@ -33,7 +33,6 @@ Calibrator::Calibrator(void)
     current_state_ = MOTION_FORBIDDEN;
     memset(b_log_flag_, false, sizeof(b_log_flag_));
     memset(i_com_flag_, NORMAL, NUM_OF_JOINT * sizeof(int));
-    memset(normal_threshold_, 0, NUM_OF_JOINT * sizeof(double));
     memset(lost_threshold_, 0, NUM_OF_JOINT * sizeof(double));
     memset(zero_offset_, 0, NUM_OF_JOINT * sizeof(double));
     memset(offset_mask_, 0, NUM_OF_JOINT * sizeof(OffsetMask));
@@ -134,22 +133,11 @@ ErrorCode Calibrator::initCalibrator(size_t joint_num, BareCoreInterface *pcore)
     }
 
     data.clear();
-    if (!params.getParam("calibrator/normal_offset_threshold", data))
+    if (!params.getParam("calibrator/lost_offset_threshold", data))
     {
         LogProducer::error("mc_calib","Fail to read threshold from config file");
         return MC_LOAD_PARAM_FAILED;
     }
-    if (data.size() != joint_num_)
-    {
-        LogProducer::error("mc_calib","Invalid array size of normal threshold, except %d but get %d", joint_num_, data.size());
-        return INVALID_PARAMETER;
-    }    
-    LogProducer::info("mc_calib","Threshold-normal: %s", printDBLine(&data[0], buffer, LOG_TEXT_SIZE));
-    for (size_t i = 0; i < joint_num_; i++)
-        normal_threshold_[i] = data[i];
-
-    data.clear();
-    params.getParam("calibrator/lost_offset_threshold", data);
     if (data.size() != joint_num_)
     {
         LogProducer::error("mc_calib","Invalid array size of lost threshold, except %d but get %d", joint_num_, data.size());
@@ -295,10 +283,6 @@ void Calibrator::checkOffsetStates(Joint curr_jnt, Joint last_jnt, OffsetState *
                 if (fabs(curr_jnt[i] - last_jnt[i]) > lost_threshold_[i])
                 {
                     offset_stat[i] = OFFSET_LOST;
-                }
-                else if (fabs(curr_jnt[i] - last_jnt[i]) > normal_threshold_[i])
-                {
-                    offset_stat[i] = OFFSET_DEVIATE;
                 }
                 else
                 {

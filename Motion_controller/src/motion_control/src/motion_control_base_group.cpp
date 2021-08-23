@@ -348,14 +348,14 @@ ErrorCode BaseGroup::manualMoveToPoint(const IntactPoint &point)
     LogProducer::info("mc_base","Manual to target point");
     MotionControlState mc_state = mc_state_;
     ServoState servo_state = getServoState();
-
+    //检查可执行状态
     if ((mc_state != STANDBY && mc_state != PAUSE) || servo_state != SERVO_IDLE)
     {
         LogProducer::error("mc_base","Cannot manual to target in current MC-state = %s, servo-state = %s", 
             getMontionControlStatusString(mc_state).c_str(), getMCServoStatusString(servo_state).c_str());
         return MC_FAIL_MANUAL_TO_POINT;
     }
-
+    //如果起始点位和目标点位不在限位附近
     start_joint_ = getLatestJoint();
     Joint start_joint = start_joint_;
     LogProducer::info("mc_base","Joint: %s", printDBLine(&point.joint[0], buffer, LOG_TEXT_SIZE));
@@ -382,11 +382,10 @@ ErrorCode BaseGroup::manualMoveToPoint(const IntactPoint &point)
     ErrorCode err = manual_teach_.manualToJoint(start_joint, point.joint);
     double duration = manual_teach_.getDuration();
     pthread_mutex_unlock(&manual_traj_mutex_);
-
+    //切换MC状态机，到manual状态后由实时线程下发轨迹.
     if (err == SUCCESS)
     {
         LogProducer::info("mc_base","Manual move to target joint, total-duration = %.4f, Success.", duration);
-
         if (duration > MINIMUM_E6 && mc_state == STANDBY) standby_to_manual_request_ = true;
         else if (duration > MINIMUM_E6 && mc_state == PAUSE) pause_to_manual_request_ = true;
         return SUCCESS;
@@ -403,7 +402,7 @@ ErrorCode BaseGroup::manualMoveStep(const ManualDirection *direction)
     LogProducer::info("mc_base","Manual step by direction.");
     MotionControlState mc_state = mc_state_;
     ServoState servo_state = getServoState();
-
+    //检查可执行状态
     if ((mc_state != STANDBY && mc_state != PAUSE) || servo_state != SERVO_IDLE)
     {
         LogProducer::error("mc_base","Cannot manual step in current MC-state = %s, servo-state = %s", 
@@ -413,7 +412,7 @@ ErrorCode BaseGroup::manualMoveStep(const ManualDirection *direction)
 
     start_joint_ = getLatestJoint();
     Joint start_joint = start_joint_;
-
+    //如果在限位附近，只能关节坐标系，关节向内运动
     if (!soft_constraint_.isJointInConstraint(start_joint, MINIMUM_E3))
     {
         if (manual_teach_.getManualFrame() != JOINT)
@@ -440,13 +439,13 @@ ErrorCode BaseGroup::manualMoveStep(const ManualDirection *direction)
             }
         }
     }
-
+    //规划路径
     pthread_mutex_lock(&manual_traj_mutex_);
     manual_time_ = 0;
     ErrorCode err = manual_teach_.manualStep(direction, start_joint);
     double duration = manual_teach_.getDuration();
     pthread_mutex_unlock(&manual_traj_mutex_);
-
+    //切换MC状态机，到manual状态后由实时线程下发轨迹.
     if (err == SUCCESS)
     {
         LogProducer::info("mc_base","Manual move step, total-duration = %.4f, Success.", duration);
@@ -1816,6 +1815,7 @@ ErrorCode BaseGroup::checkManualTrajectory(double start_time, double end_time, d
 
 ErrorCode BaseGroup::pickManualPoint(TrajectoryPoint &point)
 {
+    //做标记，如果是轨迹起始
     if (start_of_motion_)
     {
         start_of_motion_ = false;
@@ -1871,7 +1871,7 @@ ErrorCode BaseGroup::pickManualPoint(TrajectoryPoint &point)
             reportError(err);
         }
     }
-
+    //更新下一个参考点，更新时间戳
     manaul_reference_ = point.state.angle;
     point.time_stamp = manual_time_;
     manual_time_ += cycle_time_;
@@ -2243,7 +2243,6 @@ void BaseGroup::updateServoStateAndJoint(void)
     static ServoState barecore_state = SERVO_INIT;
     static Joint barecore_joint = {0};
     static uint32_t encoder_state[NUM_OF_JOINT] = {0};
-    static uint32_t fail_cnt = 0;
 
     if (bare_core_.getLatestJoint(barecore_joint, encoder_state, barecore_state))
     {
@@ -2252,12 +2251,11 @@ void BaseGroup::updateServoStateAndJoint(void)
         servo_joint_ = barecore_joint;
         memcpy(encoder_state_, encoder_state, sizeof(encoder_state_));
         pthread_mutex_unlock(&servo_mutex_);
-        fail_cnt = 0;
 
         if (last_servo_state != servo_state_)
         {
-            LogProducer::info("mc_base","Servo-state switch %s to %s", getMCServoStatusString(last_servo_state).c_str(),
-                getMCServoStatusString(servo_state_).c_str());
+            // LogProducer::info("mc_base","Servo-state switch %s to %s", getMCServoStatusString(last_servo_state).c_str(),
+            //     getMCServoStatusString(servo_state_).c_str());
 
             if ((last_servo_state == SERVO_RUNNING) && (servo_state_ != SERVO_IDLE))
             {
@@ -2274,15 +2272,6 @@ void BaseGroup::updateServoStateAndJoint(void)
             }
 
             last_servo_state = servo_state_;
-        }
-    }
-    else
-    {
-        if (++fail_cnt > servo_update_timeout_)
-        {
-            fail_cnt = 0;
-            LogProducer::error("mc_base","Fail to update joint and state from bare core.");
-            reportError(MC_FAIL_GET_FEEDBACK_JOINT);
         }
     }
 }
@@ -2521,7 +2510,6 @@ void BaseGroup::sendTrajectoryFlow(void)
         if (err == MC_SEND_TRAJECTORY_FAIL)
         {
             error_cnt ++;
-
             if (error_cnt > trajectory_flow_timeout_)
             {
                 error_cnt = 0;

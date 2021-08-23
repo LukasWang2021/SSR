@@ -149,7 +149,6 @@ typedef unsigned long long int ErrorCode;
 #define INVALID_SEQUENCE (unsigned long long int)0x0001000400A903FE    /* 运控在当前状态下无法执行指定的指令 */
 // #define CALIBRATION_FAULT (unsigned long long int)0x0001000A00A907D1    /* 运控由于文件丢失或者程序错误导致的零位校验失败 */
 #define ZERO_OFFSET_LOST (unsigned long long int)0x0001000200A907D2    /* 运控检测到{0}轴零位丢失 */
-#define ZERO_OFFSET_DEVIATE (unsigned long long int)0x0001000200A907D3    /* 运控检测到{0}轴零位偏移 */
 #define ZERO_OFFSET_INVALID (unsigned long long int)0x0001000200A907D4    /* 运控检测到{0}轴零位异常 */
 #define MC_FAIL_GET_FEEDBACK_JOINT (unsigned long long int)0x0001000B00A907E6    /* 运控无法获取当前机器人的关节反馈值 */
 #define INVALID_AXIS_ID (unsigned long long int)0x0001000400A907E7    /* 使用了错误的轴ID标号 */

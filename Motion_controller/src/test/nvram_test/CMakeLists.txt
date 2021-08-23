@@ -21,3 +21,25 @@ target_link_libraries(nvram_test
     ${rtm_LIBRARIES}
     nvram_handler
 )
+
+add_executable(read_nvram
+    read_nvram.cpp
+)
+
+target_link_libraries(read_nvram
+    ${rtm_LIBRARIES}
+    nvram_handler
+    rtm_spi
+)
+
+
+add_executable(write_nvram
+    write_nvram.cpp
+)
+
+target_link_libraries(write_nvram
+    ${rtm_LIBRARIES}
+    nvram_handler
+    rtm_spi
+)
+

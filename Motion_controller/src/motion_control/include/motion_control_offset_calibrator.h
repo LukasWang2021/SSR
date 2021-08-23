@@ -31,7 +31,6 @@ enum CalibrateState
 enum OffsetState
 {
     OFFSET_NORMAL,          // 零位正常
-    OFFSET_DEVIATE,         // 零位偏移
     OFFSET_LOST,            // 零位丢失
     OFFSET_INVALID,         // 无效值
 };
@@ -198,7 +197,6 @@ class Calibrator
     base_space::YamlHelp   robot_recorder_;
     rtm_nvram::NvramHandler     nvram_handler_;
 
-    double      normal_threshold_[NUM_OF_JOINT];
     double      lost_threshold_[NUM_OF_JOINT];
     OffsetMask  offset_mask_[NUM_OF_JOINT];
     OffsetState offset_stat_[NUM_OF_JOINT];

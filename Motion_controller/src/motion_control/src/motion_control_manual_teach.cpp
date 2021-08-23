@@ -1450,7 +1450,7 @@ ErrorCode ManualTeach::manualToJoint(const Joint &start, const Joint &end)
     total_duration_ = ds_curve_.getDuration();
     motion_type_ = APOINT;
     stop_teach_ = false;
-    LogProducer::info("mc_manual","Success, duration: %.6f", total_duration_);
+    //LogProducer::info("mc_manual","Success, duration: %.6f", total_duration_);
     return SUCCESS;
 }
 

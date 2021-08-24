@@ -148,6 +148,7 @@ void ControllerRpc::handleRpc0x00004E41(void* request_data_ptr, void* response_d
         LogProducer::error("rpc", "/rpc/servo_sampling/saveSamplingBufferData start thread failed");
         return;
     }
+    save_file_thread_.detach();
  
     rs_data_ptr->data.data = SUCCESS;
     LogProducer::info("rpc", "/rpc/servo_sampling/saveSamplingBufferData called cpu(%d) success", cpu);

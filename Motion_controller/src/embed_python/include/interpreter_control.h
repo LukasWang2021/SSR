@@ -19,7 +19,7 @@
 #include "sem_help.h"
 #include "motion_control.h"
 
-typedef pthread_t interpid_t;
+typedef int64_t interpid_t;
 
 typedef enum
 {
@@ -47,9 +47,6 @@ private:
 
     /*Current running program*/
     std::string curr_prog_;
-    /*Current line number of current program*/
-    int curr_line_;
-    InterpMode curr_mode_;
     InterpState curr_state_;
     /*For synchronous with other thread.
     Register the sync-function use regSyncCallback function bellow.
@@ -58,12 +55,11 @@ private:
 
     InterpConfig config_;
     bool is_init_;
-    bool is_paused_;
-    bool is_aborted_;
+    bool is_exit_;
+    bool is_abort_;
 
 private:
-    base_space::ThreadHelp interp_thread_;
-    base_space::SemHelp *state_sem_ptr_;
+    base_space::ThreadHelp state_thread_;
     base_space::SemHelp *prog_sem_ptr_;
     ErrorCode curr_err_; // for state machine
 
@@ -87,36 +83,20 @@ public:
     ErrorCode forward(interpid_t id=0);
     // jump mode
     ErrorCode backward(interpid_t id=0);
-    ErrorCode jumpLine(interpid_t id=0);
+    ErrorCode jumpLine(interpid_t id=0, int line=-1);
 
-    // interpreter state
-    InterpState getState(interpid_t id=0){ return curr_state_; }
-    ErrorCode setState(InterpState state, interpid_t id=0){ curr_state_ = state; return 0; }
-    // interpreter mode
-    ErrorCode setMode(InterpMode mode, interpid_t id=0){ curr_mode_ = mode; return 0; }
-    InterpMode getMode(interpid_t id=0){ return curr_mode_; }
-    // curreen running program
-    std::string getProgName(interpid_t id=0){ return curr_prog_; }
-    /*Current line number of current program*/
-    int getLineNumber(interpid_t id=0){ return curr_line_; };
-
-    int hold(interpid_t id=0);
-    int release(interpid_t id=0);
+    InterpState getState(interpid_t id=0);
+    std::string getProgName(interpid_t id=0);
 
     /* These synchronous functions registered by caller.
        These functions must return bool(true/fase).*/
     bool regSyncCallback(const SyncCallback& callback);
-    bool runSyncCallback(void);
+    bool runSyncCallback(interpid_t id=0);
 
-    void progThreadFunc(void);
     void stateThreadFunc(void);
 
-    bool isPause(int64_t idx);
-    bool isAbort(int64_t idx);
 private:
     InterpCtrl(/* args */);
-
-    void waitStart(void);
 };
 
 #endif

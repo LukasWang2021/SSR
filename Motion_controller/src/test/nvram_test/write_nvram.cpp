@@ -41,13 +41,13 @@ bool writeNvram(uint32_t address, uint8_t *data, uint32_t length)
 	g_write_buffer[2] = (uint8_t)(address >> 8);
 	g_write_buffer[3] = (uint8_t)(address);
 	memcpy(&g_write_buffer[4], data, length);
-	/*
-	printf("writeNvram: 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x\n",
+	
+	printf("writeNvram, length(%d): 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x\n",length + 4,
 		g_write_buffer[0], g_write_buffer[1], g_write_buffer[2], g_write_buffer[3],
 		g_write_buffer[4], g_write_buffer[5], g_write_buffer[6], g_write_buffer[7],
 		g_write_buffer[8], g_write_buffer[9], g_write_buffer[10], g_write_buffer[11],
 		g_write_buffer[12], g_write_buffer[3], g_write_buffer[14], g_write_buffer[15]);
-	*/
+	
 	transferData(g_write_buffer, g_read_buffer, length + 4);
 	return true;
 }

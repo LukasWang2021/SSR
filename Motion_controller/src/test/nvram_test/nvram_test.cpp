@@ -19,10 +19,19 @@ int main(int argc, char **argv)
 
 	uint8_t data[] = {0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88};
 	uint8_t read[8];
-	nvram_handler.readNvram(0x600, read, sizeof(read));
+	if(!nvram_handler.readNvram(0x600, read, sizeof(read)))
+	{
+		printf("------readNvram original data failed.\n");
+	}
 	printf("%x,%x,%x,%x,%x,%x,%x,%x\n", read[0], read[1], read[2], read[3], read[4], read[5], read[6], read[7]);
-	nvram_handler.writeNvram(0x600, data, sizeof(data));
-	nvram_handler.readNvram(0x600, read, sizeof(read));
+	if(!nvram_handler.writeNvram(0x600, data, sizeof(data)))
+	{
+		printf("------writeNvram new data failed.\n");
+	}
+	if(!nvram_handler.readNvram(0x600, read, sizeof(read)))
+	{
+		printf("------readNvram update data failed.\n");
+	}
 	printf("%x,%x,%x,%x,%x,%x,%x,%x\n", read[0], read[1], read[2], read[3], read[4], read[5], read[6], read[7]);
 	return 0;
 }

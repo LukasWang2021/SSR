@@ -752,8 +752,8 @@ ErrorCode ManualTeach::manualContinuous(const ManualDirection *directions, const
 
     if (manual_index < 0)
     {
-        LogProducer::error("mc_manual","Manual continuous start directions invalid, no one is required to move");
-        return MC_FAIL_MANUAL_CONTINUOUS;
+        LogProducer::warn("mc_manual","Manual continuous start directions invalid, no one is required to move");
+        return SUCCESS;
     }
     
     switch (frame_type_)

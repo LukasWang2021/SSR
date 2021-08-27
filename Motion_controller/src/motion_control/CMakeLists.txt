@@ -34,15 +34,10 @@ include_directories(
     ${rtm_INCLUDE_DIRS}
 )
 
+aux_source_directory(src SRC)
+
 add_library(motion_control SHARED
-    src/motion_control.cpp
-    src/motion_control_arm_group.cpp
-    src/motion_control_base_group.cpp
-    src/motion_control_state_machine.cpp
-    src/motion_control_offline_trajectory.cpp
-    src/motion_control_manual_teach.cpp
-    src/motion_control_core_interface.cpp
-    src/motion_control_offset_calibrator.cpp
+    ${SRC}
 )
 
 link_directories(

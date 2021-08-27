@@ -889,4 +889,9 @@ ErrorCode BaseGroup::clearTeachGroup(void)
     return SUCCESS;
 }
 
+MotionControlState BaseGroup::getMotionControlState(void)
+{
+    return mc_state_;
+}
+
 }

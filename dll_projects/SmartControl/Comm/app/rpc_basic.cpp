@@ -45,7 +45,7 @@ bool RpcBasic::handleRpc(unsigned int hash, void* req_data_ptr, const pb_field_t
 {
 	ResponseMessageType_Uint64* head_data_ptr = static_cast<ResponseMessageType_Uint64*>(rep_data_ptr);
 	//initRequestPackage(req_data_ptr);
-
+	mutex_.lock();
 	int send_size, recv_size;
 	if (!encodeRequestPackage(hash, req_fields, req_data_ptr, send_size)
 		|| !send(send_size)
@@ -53,10 +53,12 @@ bool RpcBasic::handleRpc(unsigned int hash, void* req_data_ptr, const pb_field_t
 		|| !decodeReplyPackage(rep_fields, rep_data_ptr, recv_size)
 		|| head_data_ptr->header.error_code != 0)
 	{
+		mutex_.unlock();
 		return false;
 	}
 	else
 	{
+		mutex_.unlock();
 		return true;
 	}
 }

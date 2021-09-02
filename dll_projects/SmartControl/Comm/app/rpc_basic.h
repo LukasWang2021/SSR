@@ -7,6 +7,7 @@
 #include "pb_decode.h"
 #include "pb_encode.h"
 #include <string>
+#include <mutex>
 
 
 class RpcBasic
@@ -27,6 +28,7 @@ private:
 	int socket_;
 	uint8_t send_buffer_[COMM_BUFFER_SIZE];
 	uint8_t recv_buffer_[COMM_BUFFER_SIZE];
+	std::mutex mutex_;
 
 	bool send(int expect_size);
 	bool recv(int& recv_size);

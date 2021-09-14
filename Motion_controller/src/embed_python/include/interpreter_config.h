@@ -14,16 +14,20 @@ private:
     /*The robot system module path.This path will add to the python runtime.*/
     std::string module_path_;
     // thread priority
-    int interp_thread_priority_;
+    int prog_thread_priority_;
+    int state_thread_priority_;
+    int state_thread_cycle_time_;
 public:
     InterpConfig(/* args */);
     ~InterpConfig();
 
     bool loadConfig(void);
-    
+
     std::string getProgPath(void);
     std::string getModulePath(void);
-    int getThreadPriority(void);
+    int progThreadPriority(void);
+    int stateThreadPriority(void);
+    int stateCycleTime(void);
 };
 
 

@@ -9,7 +9,10 @@ static RegManager reg_manager;
 
 bool InterpReg_Init(void)
 {
-    return reg_manager.init();
+    if(reg_manager.init() != 0)
+        return false;
+
+    return true;
 }
 
 ErrorCode InterpReg_GetRR(int id, RegValue *val)
@@ -74,7 +77,7 @@ ErrorCode InterpReg_GetPR(int id, RegValue *val)
     PrValue value;
     reg_manager.getPrRegValueById(id, value);
     LogProducer::info("InterpReg", "get P register[%d] coord:%d,group:%d," \
-    "posture(%d,%d,%d,%d),turn(%d,%d,%d,%d%d,%d,%d,%d,%d),pos(%d,%d,%d,%d%d,%d,%d,%d,%d)", id, 
+    "posture(%d,%d,%d,%d),turn(%d,%d,%d,%d%d,%d,%d,%d,%d),pos(%f,%f,%f,%f,%f,%f,%f,%f,%f)", id, 
     val->pr.coord = value.pos_type,
     val->pr.group_id = value.group_id,
     val->pr.posture[0] = value.posture[0],
@@ -107,7 +110,7 @@ ErrorCode InterpReg_SetPR(int id, RegValue *val)
     PrRegDataIpc data;
 
     LogProducer::info("InterpReg", "set P register[%d] coord:%d,group:%d," \
-    "posture(%d,%d,%d,%d),turn(%d,%d,%d,%d%d,%d,%d,%d,%d),pos(%d,%d,%d,%d%d,%d,%d,%d,%d)", 
+    "posture(%d,%d,%d,%d),turn(%d,%d,%d,%d%d,%d,%d,%d,%d),pos(%f,%f,%f,%f,%f,%f,%f,%f,%f)", 
     data.id = id,
     data.value.pos_type = (uint8_t)val->pr.coord,
     data.value.group_id = val->pr.group_id,

@@ -41,8 +41,8 @@ typedef unsigned long long int ErrorCode;
 //#define CONTROLLER_INVALID_OPERATION_FORWARD (unsigned long long int)0x0001000200A8000D    /* Controller模块不能前进一步程序因运行状态不满足，使控制器进入ENGAGE状态并且用户模式为手动 */
 //#define CONTROLLER_INVALID_OPERATION_BACKWARD (unsigned long long int)0x0001000200A8000E    /* Controller模块不能后退一步执行程序因运行状态不满足，使控制器进入ENGAGE状态并且用户模式为手动 */
 //#define CONTROLLER_INVALID_OPERATION_JUMP (unsigned long long int)0x0001000200A8000F    /* Controller模块不能跳行执行程序因运行状态不满足，使控制器进入ENGAGE状态并且用户模式为手动 */
-#define CONTROLLER_INVALID_OPERATION_PAUSE (unsigned long long int)0x0001000200A80010    /* Controller模块不能暂停程序因运行状态不满足，控制器在ENGAGE状态并且解释器在执行状态才能执行暂停操作 */
-#define CONTROLLER_INVALID_OPERATION_RESUME (unsigned long long int)0x0001000200A80011    /* Controller模块不能重新执行程序因运行状态不满足，控制器在ENGAGE状态、解释器在暂停状态并且机器人进入IDLE状态 */
+// #define CONTROLLER_INVALID_OPERATION_PAUSE (unsigned long long int)0x0001000200A80010    /* Controller模块不能暂停程序因运行状态不满足，控制器在ENGAGE状态并且解释器在执行状态才能执行暂停操作 */
+// #define CONTROLLER_INVALID_OPERATION_RESUME (unsigned long long int)0x0001000200A80011    /* Controller模块不能重新执行程序因运行状态不满足，控制器在ENGAGE状态、解释器在暂停状态并且机器人进入IDLE状态 */
 //#define CONTROLLER_INVALID_OPERATION_SET_IO (unsigned long long int)0x0001000200A80012    /* Controller模块不能设置IO因运行状态不满足，检查参数（是否允许自动模式下设置IO）：false->不可执行;true->可执行。 */
 //#define CONTROLLER_INVALID_OPERATION_SET_LAUNCH (unsigned long long int)0x0001000200A80013    /* Controller模块不能设置启动模式因运行状态不满足，使控制器进入ESTOP状态后设置 */
 //#define CONTROLLER_INVALID_OPERATION_SET_VEL (unsigned long long int)0x0001000200A80014    /* Controller模块不能设置全局速度比率因运行状态不满足，检查参数（是否允许在自动模式下设置速度）和限速手动模式的速度限值 */
@@ -184,6 +184,10 @@ typedef unsigned long long int ErrorCode;
 #define INTERPRETER_ERROR_INVALID_COORD_TYPE 0x50A00009
 #define INTERPRETER_ERROR_SYNC_CALL_FAILED 0x50A0000A
 #define INTERPRETER_ERROR_TRAJ_INFO_INVALID 0x50A0000B
+#define INTERPRETER_ERROR_CONFIG_LOAD_FAILED 0x50A0000C
+#define INTERPRETER_ERROR_START_THREAD_FAILED 0x50A0000D
+#define INTERPRETER_ERROR_MEM_ALLOCATE_FAILED 0x50A0000E
+#define INTERPRETER_ERROR_CREATE_SUB_FAILED 0x50A0000F
 
 #endif
 

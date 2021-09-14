@@ -48,7 +48,7 @@ struct Instruction
         MotionTarget target;
     };
     int line_num;
-    PauseCallBack_fp interp_pause;
+    PauseCallBack_fp INTERP_STATE_PAUSE;
     // SetLineNumCallBack_fp set_line_num;
 };
 

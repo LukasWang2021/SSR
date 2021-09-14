@@ -1,26 +1,20 @@
 /* 2021.04.27 First try to embed the python to RTM-robot system
- * 2021.05.17 Learn how to create module
- *            Sub-inerpreter test
- * 2021.05.25 Multi-thread test
- * 2021.05.26 threading for multi-interpreter test
  * 2021.06.02 cross compile enviroment
  * 2021.06.09 axis module demo and cross compile for module
  * 2021.06.15 axis control wrapper
- * 2021.06.18 run python script success in embed-robot-system
  * 2021.06.22 make cross compile enviroment auto build and install
- *            rewrite some classes
- * 2021.06.23 rotor jump solution about the user-program
- *            axis module interface complete
- * 2021.06.24 group module interface complete
- * 2021.06.28 test module for interfaces----to be continue
- * 2021.06.28 io device module
+ * 2021.06.24 support group module
+ * 2021.06.28 support io device module
+ * 2021.08.13 support motion module
+ * 2021.08.18 fix thread exit bug for log
+ * 2021.08.23 modified class for multi-thread
  */
 #define PY_SSIZE_T_CLEAN
 #include "Python.h"
-
 #include "common_error_code.h"
 #include "interpreter_control.h"
 #include <unistd.h>
+#include <sys/syscall.h>
 #include "sem_help.h"
 #include "interpreter_embed.h"
 #include "error_queue.h"
@@ -29,29 +23,32 @@
 using namespace log_space;
 using namespace base_space;
 
-static uint32_t g_isr_ptr;
-
-// self instance
+// self instance definition
 InterpCtrl InterpCtrl::interp_ctrl_;
 
-static InterpEmbed *interp_embed_ptr = NULL;
+/* a global object not a member of InterpCtrl,
+   it is to avoid modify other modules' compile path */
+// static InterpEmbed *interp_embed_ptr = NULL;
+static std::map<interpid_t, InterpEmbed *> embed_ptr_map;
 
 InterpCtrl::InterpCtrl(/* args */)
 {
-    curr_line_ = 0;
-    curr_prog_ = "";
-    curr_state_ = INTERP_IDLE;
-    curr_mode_ = INTERP_AUTO;
+    curr_state_ = INTERP_STATE_IDLE;
+    is_exit_ = false;
+    index_ = 0;
     sync_callbacks_.clear();
 }
 
 InterpCtrl::~InterpCtrl()
 {
-    if(state_sem_ptr_ != NULL)
-        delete state_sem_ptr_;
-
-    if(interp_embed_ptr != NULL)
-        delete interp_embed_ptr;
+    is_exit_ = true;
+    state_thread_.join();
+    // abort(0);
+    // auto iter = embed_ptr_map.begin();
+    // for(; iter != embed_ptr_map.end(); ++iter)
+    // {
+    //     delete iter->second;
+    // }
 }
 
 bool InterpCtrl::setApi(group_space::MotionControl **group_ptr)
@@ -69,286 +66,320 @@ bool InterpCtrl::setApi(group_space::MotionControl **group_ptr)
 
 bool InterpCtrl::init(void)
 {
-    if(is_init_) return true;
-
-    state_sem_ptr_ = new SemHelp(0, 1);
-    prog_sem_ptr_ = new SemHelp(0, 0);
-    if(state_sem_ptr_ == NULL || prog_sem_ptr_ == NULL)
-    {
-        LogProducer::error("interpctrl", "control semphore allocate failed");
-        return false;
-    }
-    
-    interp_embed_ptr = new InterpEmbed();
-    if(interp_embed_ptr == NULL)
-    {
-        LogProducer::error("interpctrl", "embed object allocate failed");
-        return false;
-    }
+    embed_ptr_map.clear();
 
     if(!config_.loadConfig())
     {
         LogProducer::error("interpctrl", "initialize failed with load configuration");
         return false;
     }
+    InterpEmbed::config_ = config_;
 
-    if(!interp_embed_ptr->pyUpdatePath())
+    if(!InterpEmbed::pyUpdatePath(config_.getModulePath()))
     {
         LogProducer::error("interpctrl", "initialize failed with update path");
         return false;
     }
 
-    if(!interp_embed_ptr->pyResetInterp())
+    if(!InterpEmbed::pyResetInterp())
     {
         LogProducer::error("interpctrl", "initialize failed with reset");
         return false;
     }
 
-    is_init_ = true;
+    // here only create the main interpreter
+    InterpEmbed *embed_ptr = new InterpEmbed(index_);
+    if(embed_ptr == NULL)
+    {
+        LogProducer::error("interpctrl", "main interpreter object allocate failed");
+        return false;
+    }
+    // insert to embed_ptr_map and increase the index
+    embed_ptr_map.insert(std::make_pair(index_++, embed_ptr));
 
     return true;
 }
 
-static void* interp_prog_thread_func(void* arg)
-{
-    InterpCtrl* interp_ctrl = static_cast<InterpCtrl*>(arg);
-    log_space::LogProducer log_manager;
-    log_manager.init("interpctrl", &g_isr_ptr);
-
-    LogProducer::info("interpctrl", "enter interpreter");
-
-    interp_ctrl->progThreadFunc();
-
-    LogProducer::info("interpctrl", "interpreter exit");
-
-	return NULL;
-}
-
 static void* interp_state_thread_func(void* arg)
 {
+    uint32_t isr_ptr = 0;
     InterpCtrl* interp_ctrl = static_cast<InterpCtrl*>(arg);
     log_space::LogProducer log_manager;
-    log_manager.init("interpstate", &g_isr_ptr);
+
+    log_manager.init("interpstate", &isr_ptr);
+    LogProducer::warn("interpstate", "interpreter state thread TID is %ld", syscall(SYS_gettid));
 
     interp_ctrl->stateThreadFunc();
+    std::cout<<"interp_state_thread exit"<<std::endl;
 
 	return NULL;
-}
-
-void InterpCtrl::progThreadFunc(void)
-{
-    for(;;)
-    {
-        LogProducer::info("interpctrl", "interpreter waitting program");
-        waitStart();
-        LogProducer::info("interpctrl", "interpreter recieved program %s", curr_prog_.c_str());
-        interp_embed_ptr->pyRunFile(curr_prog_);
-        LogProducer::info("interpctrl", "program %s exit", curr_prog_.c_str());
-        interp_embed_ptr->pyResetInterp();
-        is_aborted_ = false;
-        interp_embed_ptr->setAbortFlag(false);
-        curr_state_ = INTERP_IDLE;
-    }
 }
 
 void InterpCtrl::stateThreadFunc(void)
 {
-    for(;;)
+    while(!is_exit_)
     {
-        sleep(1);
+        int state = 0;
+        auto iter = embed_ptr_map.begin();
+        for(; iter != embed_ptr_map.end(); ++iter)
+        {
+            state |= iter->second->getState();
+        }
+
+        switch (state)
+        {
+        case 0x00: // no program in process
+            curr_state_ = INTERP_STATE_IDLE;
+            break;
+        case 0x01: // b0001
+            curr_state_ = INTERP_STATE_IDLE;
+            break;
+        case 0x02: // b0010
+            curr_state_ = INTERP_STATE_RUNNING;
+            break;
+        case 0x03: // b0011 if one or more program is run state is running
+            curr_state_ = INTERP_STATE_RUNNING;
+            break;
+        case 0x04: // b0100
+            curr_state_ = INTERP_STATE_PAUSE;
+            break;
+        case 0x05: // b0101
+            curr_state_ = INTERP_STATE_PAUSE;
+            break;
+        case 0x06: // b0110
+            curr_state_ = INTERP_STATE_RUNNING;
+            break;
+        case 0x07: // b0111
+            curr_state_ = INTERP_STATE_RUNNING;
+            break;
+        default:
+            curr_state_ = INTERP_STATE_UNKNOWN;
+            break;
+        }
+
+        usleep(config_.stateCycleTime());
     }
 }
 
 bool InterpCtrl::run(void)
 {
-    bool ret1 = false, ret2 = false;
+    bool ret = false;//, ret2 = false;
     LogProducer::info("interpctrl", "starting interpreter");
-    ret1 = interp_thread_.run(interp_state_thread_func, this, config_.getThreadPriority());
-    ret2 = interp_thread_.run(interp_prog_thread_func, this, config_.getThreadPriority());
+    ret = state_thread_.run(interp_state_thread_func, this, config_.stateThreadPriority());
     LogProducer::info("interpctrl", "interpreter started");
-
-    return ret1 && ret2;
+    return ret;
 }
 
 ErrorCode InterpCtrl::start(const std::string& prog)
 {
-    // only in idle state
-    if(curr_state_ != INTERP_IDLE)
+    if(curr_state_ != INTERP_STATE_IDLE)
     {
-        LogProducer::error("interpctrl", "start program %s failed not in IDLE state", curr_prog_.c_str());
+        LogProducer::error("interpctrl", "can only start in IDLE state, currrent %d", curr_state_);
         return INTERPRETER_ERROR_INVALID_STATE;
     }
 
-    curr_prog_ = config_.getProgPath() + prog;
-    LogProducer::info("interpctrl", "start program %s", curr_prog_.c_str());
+    embed_ptr_map[0]->setMainName(prog);
 
-    curr_state_ = INTERP_RUNNING;
-    prog_sem_ptr_->give();
-
-    return 0;
+    return embed_ptr_map[0]->start();
 }
 
 ErrorCode InterpCtrl::pause(interpid_t id)
 {
-    if(curr_state_ != INTERP_RUNNING)
+    ErrorCode ret = 0;
+    if(!checkValid(id)) return INTERPRETER_ERROR_INVALID_ARG;
+    if(id == 0) // pause all
     {
-        LogProducer::error("interpctrl", "pause program %d failed not in RUNNING state", id);
-        return INTERPRETER_ERROR_INVALID_STATE;
+        auto iter = embed_ptr_map.begin();
+        for(; iter != embed_ptr_map.end(); ++iter)
+        {
+            ret = iter->second->pause();
+        }
+    }
+    else
+    {
+        ret = embed_ptr_map[id]->pause();
     }
 
-    LogProducer::info("interpctrl", "pause program %d", id);
-
-    if(hold(id) != 0)
-    {
-        LogProducer::error("interpctrl", "program %d paused failed while holding", id);
-        return INTERPRETER_ERROR_HOLD_FAILED;
-    }
-    is_paused_ = true;
-    interp_embed_ptr->setPauseFlag(true);
-    curr_state_ = INTERP_PAUSE;
-
-    LogProducer::info("interpctrl", "program %d paused", id);
-
-    return 0;
+    return ret;
 }
 
 ErrorCode InterpCtrl::resume(interpid_t id)
 {
-    if(curr_state_ != INTERP_PAUSE)
+    ErrorCode ret = 0;
+    if(!checkValid(id)) return INTERPRETER_ERROR_INVALID_ARG;
+    if(id == 0) // resume all
     {
-        LogProducer::error("interpctrl", "resume program %d failed not in PAUSE state", id);
-        return INTERPRETER_ERROR_INVALID_STATE;
+        auto iter = embed_ptr_map.begin();
+        for(; iter != embed_ptr_map.end(); ++iter)
+        {
+            ret = iter->second->resume();
+        }
     }
-
-    LogProducer::info("interpctrl", "resume program %d", id);
-
-    if(release() != 0)
+    else
     {
-        LogProducer::error("interpctrl", "program %d resume failed while releasing", id);
-        return INTERPRETER_ERROR_RELEASE_FAILED;
+        ret = embed_ptr_map[id]->resume();
     }
-
-    is_paused_ = false;
-    interp_embed_ptr->setPauseFlag(false);
-    curr_state_ = INTERP_RUNNING;
-
-    LogProducer::info("interpctrl", "program %d resumed", id);
-
-    return 0;
+    return ret;
 }
 
 ErrorCode InterpCtrl::abort(interpid_t id)
 {
-    if(curr_state_ == INTERP_IDLE)
+    ErrorCode ret = 0;
+    if(!checkValid(id)) return INTERPRETER_ERROR_INVALID_ARG;
+    if(id == 0) // abort all
     {
-        LogProducer::warn("interpctrl", "abort in state IDLE ignored");
-        return 0;
+        auto iter = embed_ptr_map.crbegin();
+        for(; iter != embed_ptr_map.crend(); ++iter)
+        {
+            ret = iter->second->abort();
+        }
+        // InterpEmbed::pyResetInterp();/* for reload program file */
     }
-
-    LogProducer::info("interpctrl", "abort program %d", id);
-
-    is_aborted_ = true;
-    interp_embed_ptr->setAbortFlag(true);
-    curr_state_ = INTERP_IDLE;
-
-    LogProducer::info("interpctrl", "program %d aborted", id);
-
-    return 0;
+    else
+    {
+        ret = embed_ptr_map[id]->abort();
+    }
+    return ret;
 }
 
 ErrorCode InterpCtrl::forward(interpid_t id)
 {
-    LogProducer::info("interpctrl", "program %d forward execution", id);
-
-    if(curr_mode_ != INTERP_STEP)
+    ErrorCode ret = 0;
+    if(id == 0) // forward all
     {
-        LogProducer::error("interpctrl", "program %d forward execution failed not in STEP mode", id);
-        return INTERPRETER_ERROR_INVALID_MODE;
+        auto iter = embed_ptr_map.begin();
+        for(; iter != embed_ptr_map.end(); ++iter)
+        {
+            ret = iter->second->forward();
+        }
     }
-
-    if(curr_state_ != INTERP_PAUSE)
+    else
     {
-        LogProducer::error("interpctrl", "program %d forward execution failed not in PAUSE state", id);
-        return INTERPRETER_ERROR_INVALID_STATE;
+        ret = embed_ptr_map[id]->forward();
     }
-
-    return 0;
+    return ret;
 }
 
 ErrorCode InterpCtrl::backward(interpid_t id)
 {
     LogProducer::info("interpctrl", "backward not support yet");
-    return 0;
+    ErrorCode ret = 0;
+    if(id == 0) // backward all
+    {
+        auto iter = embed_ptr_map.begin();
+        for(; iter != embed_ptr_map.end(); ++iter)
+        {
+            ret = iter->second->backward();
+        }
+    }
+    else
+    {
+        ret = embed_ptr_map[id]->backward();
+    }
+    return ret;
 }
 
-ErrorCode InterpCtrl::jumpLine(interpid_t id)
+// setjumpline -> jump
+ErrorCode InterpCtrl::jumpLine(interpid_t id, int line)
 {
-    LogProducer::info("interpctrl", "jumpLine not support yet");
+    if(!checkValid(id)) return INTERPRETER_ERROR_INVALID_ARG;
 
-    return 0;
+    LogProducer::info("interpctrl", "jumpLine not support yet");
+    ErrorCode ret = 0;
+    if(id == 0) // resume all
+    {
+        auto iter = embed_ptr_map.begin();
+        for(; iter != embed_ptr_map.end(); ++iter)
+        {
+            ret = iter->second->jump(line);
+        }
+    }
+    else
+    {
+        ret = embed_ptr_map[id]->jump(line);
+    }
+    return ret;
 }
 
 bool InterpCtrl::regSyncCallback(const SyncCallback& callback)
 {
-    if(curr_state_ != INTERP_IDLE) return false;
+    if(curr_state_ != INTERP_STATE_IDLE) return false;
 
     sync_callbacks_.push_back(callback);
     
     return true;
 }
 
-bool InterpCtrl::runSyncCallback(void)
+bool InterpCtrl::runSyncCallback(interpid_t id)
 {
-    bool ret = true;
     LogProducer::info("interpctrl", "start sync calls all %d functions", sync_callbacks_.size());
     auto it = sync_callbacks_.begin();
     for(int i = 0; it != sync_callbacks_.end(); ++it, ++i)
     {
         LogProducer::info("interpctrl", "call sync function %d", i);
-        while(!(*it)() && ret)
+        while(!(*it)()) // motion control nextMovePerimit
         {
-            if(is_aborted_ || is_paused_) { ret = false; break; }
+            if(embed_ptr_map[id]->getAbortFlag() || is_exit_)
+            {
+                LogProducer::info("interpctrl", "sync function %d call break", i);
+                return false;
+            }
             usleep(1000);
         }
         LogProducer::info("interpctrl", "sync function %d called", i);
     }
 
-    return ret;
+    return true;
 }
 
-int InterpCtrl::hold(interpid_t id)
+bool InterpCtrl::checkValid(interpid_t id)
 {
-    // LogProducer::info("interpctrl", "try to hold interpreter control of %d", id);
-    // semphore take is has ben hold by another this will block
-    int ret = state_sem_ptr_->take();
-    // LogProducer::info("interpctrl", "interpreter control of %d held return %d", id, ret);
-    return ret;
+    if(embed_ptr_map.find(id) == embed_ptr_map.end())
+    {
+        LogProducer::warn("interpctrl", "ID[%lu] of interpreter not found", id);
+        return false;
+    }
+    return true;
 }
 
-int InterpCtrl::release(interpid_t id)
+InterpState InterpCtrl::getState(interpid_t id)
 {
-    // LogProducer::info("interpctrl", "try to release interpreter control of %d", id);
-    int ret = 0;
-    // state semphore give
-    if(state_sem_ptr_->isTaken())
-        ret = state_sem_ptr_->give();
-    // LogProducer::info("interpctrl", "interpreter control of %d release return %d", id, ret);
-    return ret;
+    if(!checkValid(id)) return INTERP_STATE_UNKNOWN;
+
+    return embed_ptr_map[id]->getState();
 }
 
-void InterpCtrl::waitStart(void)
+std::string InterpCtrl::getProgName(interpid_t id)
 {
-    prog_sem_ptr_->take();
+    if(!checkValid(id)) return "##unknown##";
+
+    return embed_ptr_map[id]->getMainName();
 }
 
-// find current thread id 
-// index current thread
-bool InterpCtrl::isPause(int64_t idx)
+ErrorCode InterpCtrl::startNewFile(std::string file, bool in_real_thread)
 {
-    return interp_embed_ptr->getPauseFlag();
+    InterpEmbed *embed_ptr = new InterpEmbed(index_);
+    if(embed_ptr == NULL)
+    {
+        LogProducer::error("interpctrl", "new interpreter object allocate failed");
+        return INTERPRETER_ERROR_MEM_ALLOCATE_FAILED;
+    }
+    embed_ptr->setMainName(file);
+
+    if(!embed_ptr->pyStartThread())
+    {
+        delete embed_ptr;
+        LogProducer::error("interpctrl", "new interpreter start failed");
+        return INTERPRETER_ERROR_CREATE_SUB_FAILED;
+    }
+    // insert to embed_ptr_map and increase the index
+    embed_ptr_map.insert(std::make_pair(index_++, embed_ptr));
+
+    return 0;
 }
 
-bool InterpCtrl::isAbort(int64_t idx)
+ErrorCode InterpCtrl::startNewFunc(void *pyfunc, bool in_real_thread)
 {
-    return interp_embed_ptr->getAbortFlag();
+    return 0;
 }
+

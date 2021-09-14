@@ -19,22 +19,22 @@
 #include "sem_help.h"
 #include "motion_control.h"
 
-typedef pthread_t interpid_t;
+typedef uint64_t interpid_t;
 
 typedef enum
 {
-    INTERP_IDLE,
-    INTERP_RUNNING,
-    INTERP_PAUSE,
-    INTERP_WAITING,
-    INTERP_ERROR,
+    INTERP_STATE_IDLE = 0x01,
+    INTERP_STATE_RUNNING = 0x02,
+    INTERP_STATE_PAUSE = 0x04,
+    INTERP_STATE_UNKNOWN = 0x08,
 }InterpState;
 
 typedef enum
 {
-    INTERP_AUTO,
-    INTERP_STEP,
-    INTERP_JUMP,
+    INTERP_MODE_AUTO = 0x01,
+    INTERP_MODE_STEP = 0x02,
+    INTERP_MODE_JUMP = 0x04,
+    INTERP_MODE_UNKNOWN = 0x08,
 }InterpMode;
 
 class InterpCtrl
@@ -45,11 +45,6 @@ public:
 private:
     static InterpCtrl interp_ctrl_;
 
-    /*Current running program*/
-    std::string curr_prog_;
-    /*Current line number of current program*/
-    int curr_line_;
-    InterpMode curr_mode_;
     InterpState curr_state_;
     /*For synchronous with other thread.
     Register the sync-function use regSyncCallback function bellow.
@@ -58,14 +53,13 @@ private:
 
     InterpConfig config_;
     bool is_init_;
-    bool is_paused_;
-    bool is_aborted_;
+    bool is_exit_;
+    bool is_abort_;
+    /* the interpreter object index, 0 means the main */
+    interpid_t index_;
 
 private:
-    base_space::ThreadHelp interp_thread_;
-    base_space::SemHelp *state_sem_ptr_;
-    base_space::SemHelp *prog_sem_ptr_;
-    ErrorCode curr_err_; // for state machine
+    base_space::ThreadHelp state_thread_;
 
 public:
     ~InterpCtrl();
@@ -76,7 +70,9 @@ public:
     bool init(void);
     bool setApi(group_space::MotionControl **group_ptr);
     bool run(void);
-    void errorSet(ErrorCode err);
+
+    ErrorCode startNewFile(std::string file, bool in_real_thread=true);
+    ErrorCode startNewFunc(void *pyfunc, bool in_real_thread=true);
 
     // start and quit
     ErrorCode start(const std::string& prog);
@@ -87,36 +83,21 @@ public:
     ErrorCode forward(interpid_t id=0);
     // jump mode
     ErrorCode backward(interpid_t id=0);
-    ErrorCode jumpLine(interpid_t id=0);
+    ErrorCode jumpLine(interpid_t id=0, int line=-1);
 
-    // interpreter state
-    InterpState getState(interpid_t id=0){ return curr_state_; }
-    ErrorCode setState(InterpState state, interpid_t id=0){ curr_state_ = state; return 0; }
-    // interpreter mode
-    ErrorCode setMode(InterpMode mode, interpid_t id=0){ curr_mode_ = mode; return 0; }
-    InterpMode getMode(interpid_t id=0){ return curr_mode_; }
-    // curreen running program
-    std::string getProgName(interpid_t id=0){ return curr_prog_; }
-    /*Current line number of current program*/
-    int getLineNumber(interpid_t id=0){ return curr_line_; };
-
-    int hold(interpid_t id=0);
-    int release(interpid_t id=0);
+    InterpState getState(interpid_t id=0);
+    std::string getProgName(interpid_t id=0);
 
     /* These synchronous functions registered by caller.
        These functions must return bool(true/fase).*/
     bool regSyncCallback(const SyncCallback& callback);
-    bool runSyncCallback(void);
+    bool runSyncCallback(interpid_t id=0);
 
-    void progThreadFunc(void);
     void stateThreadFunc(void);
 
-    bool isPause(int64_t idx);
-    bool isAbort(int64_t idx);
 private:
     InterpCtrl(/* args */);
-
-    void waitStart(void);
+    bool checkValid(interpid_t id);
 };
 
 #endif

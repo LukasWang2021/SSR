@@ -37,11 +37,13 @@ bool ThreadHelp::run(threadFunc func_ptr, void* data, int priority)
 
 void ThreadHelp::join()
 {
+    if(pid_ == 0) return;
     pthread_join(pid_, NULL);
 }
 
 void ThreadHelp::detach()
 {
+    if(pid_ == 0) return;
     pthread_detach(pid_);
 }
 

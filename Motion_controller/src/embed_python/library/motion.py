@@ -63,6 +63,21 @@ def MoveL(target, vel, smooth_type, smooth_val):
     group.MoveL(target, vel, smooth_type, smooth_val)
     pass
 
+@overload(POSTURE,int,int,float)
+def MoveL(target, vel, smooth_type, smooth_val):
+    group.MoveL(target, float(vel), smooth_type, smooth_val)
+    pass
+
+@overload(POSTURE,float,int,int)
+def MoveL(target, vel, smooth_type, smooth_val):
+    group.MoveL(target, vel, smooth_type, float(smooth_val))
+    pass
+
+@overload(POSTURE,int,int,int)
+def MoveL(target, vel, smooth_type, smooth_val):
+    group.MoveL(target, float(vel), smooth_type, float(smooth_val))
+    pass
+
 @overload(POSTURE,float,int,float,float)
 def MoveL(target, vel, smooth_type, smooth_val, acc):
     group.MoveLwithAcc(target, vel, smooth_type, smooth_val, acc)

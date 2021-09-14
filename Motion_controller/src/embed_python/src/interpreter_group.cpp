@@ -30,7 +30,7 @@ bool InterpGroup_Init(MotionControl **group_ptr)
     mv_inst_->target.acc = 1.0;
     mv_inst_->target.user_frame_id = -1;
     mv_inst_->target.tool_frame_id = -1;
-    mv_inst_->interp_pause = InterpGroup_PauseCall;
+    mv_inst_->INTERP_STATE_PAUSE = InterpGroup_PauseCall;
 
     return true;
 }

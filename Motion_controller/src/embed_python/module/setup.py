@@ -51,12 +51,12 @@ INCLUDE_DIRS = [CROSS_ROOT + "/usr/include",
               "../../motion_control/include",]
 
 
-control_module = Extension('control',
+controller_module = Extension('controller',
                     define_macros = [('MAJOR_VERSION', '1'),('MINOR_VERSION', '0')],
                     include_dirs = INCLUDE_DIRS + ['..//include', ],
                     library_dirs = LIBRARY_DIRS + ['../../../install/lib'],
                     libraries = LIBRARIES,
-                    sources = ['controlmodule.cpp'])
+                    sources = ['controllermodule.cpp'])
 
 group_module = Extension('group',
                     define_macros = [('MAJOR_VERSION', '1'),('MINOR_VERSION', '0')],
@@ -75,7 +75,7 @@ setup(name = 'controller',
        Axis,group,hardware devices option interfaces.
        ''',
        platforms = 'aarch64-linux-gnu',
-       ext_modules = [control_module, group_module])
+       ext_modules = [controller_module, group_module])
 
 # export EXT_SUFFIX=.cpython-39-aarch64-linux-gnu.so
 

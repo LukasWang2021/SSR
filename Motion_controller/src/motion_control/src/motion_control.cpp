@@ -102,7 +102,7 @@ void MotionControl::ringPlannerTask(void)
             if (err_level >= 3 && err_level <= 7)
             {
                 LogProducer::error("mc", "Call interpreter pause, line: %d", instruction.line_num);
-                (*instruction.interp_pause)();
+                (*instruction.INTERP_STATE_PAUSE)();
                 // (*instruction.set_line_num)(instruction.line_num);
             }
             

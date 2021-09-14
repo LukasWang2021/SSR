@@ -7,9 +7,7 @@
  * This module can only use in another python process
  */
 
-static PyObject *ControlModuleError;
-
-static PyObject *control_Pause(PyObject *self, PyObject *args)
+static PyObject *controller_Pause(PyObject *self, PyObject *args)
 {
     ErrorCode ret = 0;
     int id = 0;
@@ -22,7 +20,7 @@ static PyObject *control_Pause(PyObject *self, PyObject *args)
     return PyLong_FromUnsignedLongLong(ret);
 }
 
-static PyObject *control_Abort(PyObject *self, PyObject *args)
+static PyObject *controller_Abort(PyObject *self, PyObject *args)
 {
     ErrorCode ret = 0;
     int id = 0;
@@ -35,38 +33,42 @@ static PyObject *control_Abort(PyObject *self, PyObject *args)
     return PyLong_FromUnsignedLongLong(ret);
 }
 
-static PyMethodDef controlMethods[] = {
-    {"Pause",      control_Pause,    METH_VARARGS, "pause the running user program."},
-    {"Abort",      control_Abort,    METH_VARARGS, "abort the running user program."},
+static PyObject* controller_ThreadRun(PyObject *self, PyObject *args)
+{
+    char *file;
+    int in_real = 0;
+    ErrorCode ret = 0;
+    if (!PyArg_ParseTuple(args, "si:thread run file", &file, &in_real))
+        return NULL;
+
+    ret = InterpCtrl::instance().startNewFile(file, in_real);
+
+    return PyLong_FromUnsignedLongLong(ret);
+}
+
+static PyMethodDef controllerMethods[] = {
+    {"Pause",      controller_Pause,     METH_VARARGS, "pause the running user program."},
+    {"Abort",      controller_Abort,     METH_VARARGS, "abort the running user program."},
+    {"ThreadRun",  controller_ThreadRun, METH_VARARGS, "run in another thread."},
     {NULL, NULL, 0, NULL}        /* Sentinel */
 };
 
-static struct PyModuleDef controlmodule = {
+static struct PyModuleDef controllermodule = {
     PyModuleDef_HEAD_INIT,
-    "control",   /* name of module */
+    "controller",   /* name of module */
     NULL, /* module documentation, may be NULL */
     -1,       /* size of per-interpreter state of the module,
                  or -1 if the module keeps state in global variables. */
-    controlMethods
+    controllerMethods
 };
 
-PyMODINIT_FUNC PyInit_control(void)
+PyMODINIT_FUNC PyInit_controller(void)
 {
     PyObject *m;
 
-    m = PyModule_Create(&controlmodule);
+    m = PyModule_Create(&controllermodule);
     if (m == NULL)
         return NULL;
-
-    ControlModuleError = PyErr_NewException("ControlModule.error", NULL, NULL);
-    Py_XINCREF(ControlModuleError);
-    if (PyModule_AddObject(m, "error", ControlModuleError) < 0)
-    {
-        Py_XDECREF(ControlModuleError);
-        Py_CLEAR(ControlModuleError);
-        Py_DECREF(m);
-        return NULL;
-    }
 
     return m;
 }

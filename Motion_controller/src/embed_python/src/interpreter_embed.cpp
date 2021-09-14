@@ -13,20 +13,12 @@ using namespace base_space;
 
 InterpConfig InterpEmbed::config_;
 
-InterpEmbed::InterpEmbed(/* args */)
+InterpEmbed::InterpEmbed(interpid_t id, std::string prog)
 {
-    exec_sem_ptr_ = new SemHelp(0, 1);
-    if(exec_sem_ptr_ == NULL)
-        LogProducer::error("interpembed","semphore alocate failed");
-    curr_mode_ = INTERP_AUTO;
-    curr_state_ = INTERP_IDLE;
-    id_ = 0;
-    is_paused_ = false;
-    is_abort_ = false;
-    is_exit_ = false;
-    curr_line_ = 0;
-    curr_prog_ = "";
-    curr_func_ = "";
+    curr_mode_ = INTERP_MODE_AUTO;
+    curr_state_ = INTERP_STATE_IDLE;
+    id_ = id;
+    main_prog_ = prog;
 }
 
 InterpEmbed::~InterpEmbed()
@@ -36,9 +28,16 @@ InterpEmbed::~InterpEmbed()
     prog_thread_.join();
     if(exec_sem_ptr_ != NULL)
         delete exec_sem_ptr_;
+
+    if(exit_sem_ptr_ != NULL)
+        delete exit_sem_ptr_;
+
+    if(trace_obj_ != NULL)
+        Py_DECREF(trace_obj_);
 }
 
 // the parameter 'obj' is passed by PyEval_SetTrace
+// if return not zero python will stop
 static int tracer(PyObject *obj, PyFrameObject *frame, int what, PyObject *arg)
 {
     Py_buffer obj_buff;
@@ -53,32 +52,37 @@ static int tracer(PyObject *obj, PyFrameObject *frame, int what, PyObject *arg)
     PyBuffer_Release(&obj_buff);
     if(embed_ptr->getAbortFlag())
     {
-        PyErr_SetString(PyExc_EOFError, "user call abort to exit");
+        PyErr_SetString(PyExc_EOFError, "user call abort to exit"); // exit python
         LogProducer::warn("interpembed","interpreter stop signal recieved");
         return -1;
     }
-
-    // exec sem take
-    embed_ptr->hold();
 
     // update execution info, python system lib will ignored
     PyCodeObject *code = PyFrame_GetCode(frame);
     const char *filename = PyUnicode_AsUTF8(code->co_filename);
     const char *funcname = PyUnicode_AsUTF8(code->co_name);
     int lineno = PyFrame_GetLineNumber(frame);
-    if(strstr(filename, "/root/robot_data/python") != NULL ||
-       strstr(filename, "/root/install/lib/module") != NULL)
+
+    // filter python system lib: while the filename string do not find module-path and prog-path
+    if(std::string(filename).find(InterpEmbed::config_.getProgPath()) == std::string::npos && 
+       std::string(filename).find(InterpEmbed::config_.getModulePath()) == std::string::npos )
     {
-        embed_ptr->setCurrLine(lineno);
-        embed_ptr->setCurrProg(filename);
-        embed_ptr->setCurrFunc(funcname);
-        LogProducer::info("interpembed", "program(%s) line[%d]", filename, lineno);
+        return 0;
     }
+
+    embed_ptr->setCurrLine(lineno);
+    embed_ptr->setCurrProg(filename);
+    embed_ptr->setCurrFunc(funcname);
+    LogProducer::info("interpembed", "program(%s) line[%d]", filename, lineno);
+    // exec sem take
+    Py_BEGIN_ALLOW_THREADS
+    embed_ptr->hold();
+    Py_END_ALLOW_THREADS
 
     embed_ptr->release();
 
     // if step mode goto pause
-    if(embed_ptr->getMode() != INTERP_AUTO)
+    if(embed_ptr->getMode() != INTERP_MODE_AUTO)
         embed_ptr->pause();
 
     return 0;
@@ -86,10 +90,10 @@ static int tracer(PyObject *obj, PyFrameObject *frame, int what, PyObject *arg)
 
 bool InterpEmbed::pyResetInterp(void)
 {
-    // uninitialize the python interpreter
+    /* uninitialize the python interpreter, this will destroy all interpreters*/
     Py_Finalize();
     /* prameter 0 means initialize the python interpreter and skip sighandler
-       if it's 1 some mistake will happen when ctrl-c the controller process */
+       if it's 1 some error will happen when ctrl-c the controller process */
     Py_InitializeEx(0);
 
     return true;
@@ -132,47 +136,64 @@ bool InterpEmbed::pyUpdatePath(std::string path)
     return true;
 }
 
-void InterpEmbed::pyRunFile(const std::string& file)
+void InterpEmbed::pyRunFile(void)
 {
-    LogProducer::info("interpembed", "program %s will open", file.c_str());
+    LogProducer::info("interpembed", "program %s will open", main_path_name_.c_str());
     // this is the interpreter control thread
-    FILE *fp = fopen(file.c_str(), "r");
+    FILE *fp = fopen(main_path_name_.c_str(), "r");
     if(NULL == fp)
     {
-        LogProducer::error("interpembed", "program %s open failed", file.c_str());
+        LogProducer::error("interpembed", "program %s open failed", main_path_name_.c_str());
         base_space::ErrorQueue::instance().push(INTERPRETER_ERROR_PROG_NOT_EXIST);
         return;
     }
-    LogProducer::info("interpembed", "start run program %s", file.c_str());
-    PyRun_SimpleFileEx(fp, file.c_str(), 1); // 1:return with close file, 0:return but not close file
+    LogProducer::info("interpembed", "start run program %s", main_path_name_.c_str());
+    PyRun_SimpleFileEx(fp, main_path_name_.c_str(), 1); // 1:return with close file, 0:return but not close file
 }
 
-bool InterpEmbed::pySetTrace(interpid_t idx, InterpEmbed *selfobj)
+bool InterpEmbed::pySetTrace(void)
 {
     Py_buffer buf;
+
     /* NOTE: the buffer needn't be released as its object is NULL. */
-    if (PyBuffer_FillInfo(&buf, NULL, (char *)selfobj, sizeof(*selfobj), 0, PyBUF_CONTIG) == -1)
+    if (PyBuffer_FillInfo(&buf, NULL, (char *)this, sizeof(*this), 0, PyBUF_CONTIG) == -1)
     {
         return false;
         LogProducer::error("interpembed", "fill object to buffer failed");
     }
+
     /* build InterpEmbed object to PyObject and pass to tracer */
     trace_obj_ = PyMemoryView_FromBuffer(&buf);
     if(trace_obj_ == NULL)
     {
-        LogProducer::error("interpembed", "set program[%ld] tracer failed", idx);
+        LogProducer::error("interpembed", "set program[%ld] tracer failed", id_);
         return false;
     }
-    id_ = idx;
+
     /* set the trace function.this function will call while ervery line execute */
-    // PyAPI_FUNC(int) _PyEval_SetTrace(PyThreadState *tstate, Py_tracefunc func, PyObject *arg);
     PyEval_SetTrace(tracer, trace_obj_);
+
+    return true;
+}
+
+bool InterpEmbed::inThreadInit(void)
+{
+    exec_sem_ptr_ = new SemHelp(0, 1); // init value 1
+    exit_sem_ptr_ = new SemHelp(0, 1); // init value 1
+    if(exec_sem_ptr_ == NULL || exit_sem_ptr_ == NULL)
+    {
+        LogProducer::error("interpembed","semphore alocate failed");
+        return false;
+    }
+    self_ts_ = PyThreadState_Get();  // python interpreter
+    pyid_    = PyThreadState_GetID(self_ts_);// python interpreter id
+    thread_id_ = pthread_self();
     return true;
 }
 
 int InterpEmbed::hold(void)
 {
-    /* semphore take is has ben hold by another this will block */
+    /* semphore has been hold by another this will block */
     return exec_sem_ptr_->take();
 }
 
@@ -184,16 +205,80 @@ int InterpEmbed::release(void)
     return 0;
 }
 
+
 void InterpEmbed::progThreadFunc(void)
 {
-    while(!is_exit_)
+    if(!inThreadInit())
     {
-        LogProducer::info("interpembed", "start program %s", main_prog_.c_str());
-        pyRunFile(main_path_name_);
-        LogProducer::info("interpembed", "program %s exit", main_prog_.c_str());
-        is_exit_ = true;
-        curr_state_ = INTERP_IDLE;
+        LogProducer::info("interpembed", "sub-interpreter thread init failed");
+        return;
     }
+
+    if(!pySetTrace())
+    {
+        LogProducer::info("interpembed", "tracer set failed");
+        return;
+    }
+    exit_sem_ptr_->take();
+
+    LogProducer::info("interpembed", "start program %s", main_prog_.c_str());
+
+    InterpEmbed::pyRunFile();
+    
+    exit_sem_ptr_->give();
+
+    LogProducer::info("interpembed", "program %s exit", main_prog_.c_str());
+
+
+    curr_state_ = INTERP_STATE_IDLE;
+}
+
+void InterpEmbed::pyThreadFunc(void)
+{
+    PyGILState_STATE gstate;
+    PyThreadState *substate, *mainstate;
+
+    gstate = PyGILState_Ensure();
+
+    mainstate = PyThreadState_Get();
+
+    PyThreadState_Swap(NULL); // now thread state is null
+
+    substate = Py_NewInterpreter(); // now thread state is 'substate'
+    if (substate == NULL)
+    {
+        PyThreadState_Swap(mainstate);
+        LogProducer::info("interpembed", "sub-interpreter creation failed");
+        return;
+    }
+
+    if(!inThreadInit())
+    {
+        LogProducer::info("interpembed", "sub-interpreter thread init failed");
+        return;
+    }
+
+    if(!pySetTrace())
+    {
+        LogProducer::info("interpembed", "tracer set failed");
+        return;
+    }
+
+    exit_sem_ptr_->take();
+
+    LogProducer::info("interpembed", "start program %s", main_prog_.c_str());
+
+    InterpEmbed::pyRunFile();
+
+    Py_EndInterpreter(substate);
+    PyThreadState_Swap(mainstate);
+    PyGILState_Release(gstate);
+
+    exit_sem_ptr_->give();
+
+    LogProducer::info("interpembed", "program %s exit", main_prog_.c_str());
+
+    curr_state_ = INTERP_STATE_IDLE;
 }
 
 static void* interp_prog_thread_func(void* arg)
@@ -202,47 +287,76 @@ static void* interp_prog_thread_func(void* arg)
     uint32_t isr_ptr = 0;
     log_space::LogProducer log_manager;
     InterpEmbed* interp_embed = static_cast<InterpEmbed*>(arg);
+    // log initialize
     sprintf(module_name, "interpembed_%ld", interp_embed->getId());
     log_manager.init(module_name, &isr_ptr);
-
     LogProducer::warn(module_name, "interpreter program thread TID is %ld", syscall(SYS_gettid));
     interp_embed->progThreadFunc();
-    std::cout<<"interp_prog_thread exit"<<std::endl;
+    std::cout<<"interp_prog_thread_func " << interp_embed->getId() << " exit"<<std::endl;
 
 	return NULL;
 }
 
-ErrorCode InterpEmbed::start(std::string prog)
+static void py_thread_func(void* arg)
+{
+    char module_name[32];
+    uint32_t isr_ptr = 0;
+    log_space::LogProducer log_manager;
+    InterpEmbed* interp_embed = static_cast<InterpEmbed*>(arg);
+    // log initialize
+    sprintf(module_name, "interpembed_%ld", interp_embed->getId());
+    log_manager.init(module_name, &isr_ptr);
+    LogProducer::warn(module_name, "interpreter program thread TID is %ld", syscall(SYS_gettid));
+    interp_embed->pyThreadFunc();
+    std::cout<<"py_thread_func exit"<<std::endl;
+
+	return NULL;
+}
+
+bool InterpEmbed::pyStartThread(void)
 {
     // only in idle state
-    if(curr_state_ != INTERP_IDLE)
+    if(curr_state_ != INTERP_STATE_IDLE)
     {
-        LogProducer::error("interpembed", "start program %s failed not in IDLE state", prog);
+        LogProducer::error("interpembed", "start program %s failed not in IDLE state", main_prog_);
+        return false;
+    }
+
+    is_exit_ = is_abort_ = is_paused_ = false;
+    unsigned long ident;
+    ident = PyThread_start_new_thread(py_thread_func, (void*)this);
+    if (ident == PYTHREAD_INVALID_THREAD_ID)
+    {
+        return false;
+    }
+
+    curr_state_ = INTERP_STATE_RUNNING;
+    return true;
+}
+
+ErrorCode InterpEmbed::start(void)
+{
+    // only in idle state
+    if(curr_state_ != INTERP_STATE_IDLE)
+    {
+        LogProducer::error("interpembed", "start program %s failed not in IDLE state", main_prog_);
         return INTERPRETER_ERROR_INVALID_STATE;
     }
-    if(!InterpEmbed::config_.loadConfig())
-    {
-        LogProducer::error("interpembed", "configuration file load failed");
-        return INTERPRETER_ERROR_CONFIG_LOAD_FAILED;
-    }
 
-    main_prog_ = prog;
-    main_path_name_ = config_.getProgPath() + prog;
     is_exit_ = is_abort_ = is_paused_ = false;
-    pyResetInterp();
-    pySetTrace(0, this);/* for reload program file */
 
-    if(!prog_thread_.run(interp_prog_thread_func, this, config_.getThreadPriority()))
+    if(!prog_thread_.run(interp_prog_thread_func, this, config_.progThreadPriority()))
     {
         return INTERPRETER_ERROR_START_THREAD_FAILED;
     }
-    curr_state_ = INTERP_RUNNING;
+
+    curr_state_ = INTERP_STATE_RUNNING;
     return 0;
 }
 
 ErrorCode InterpEmbed::pause(void)
 {
-    if(curr_state_ != INTERP_RUNNING)
+    if(curr_state_ != INTERP_STATE_RUNNING)
     {
         LogProducer::warn("interpembed", "pause program %d failed not in RUNNING state", id_);
         return INTERPRETER_ERROR_INVALID_STATE;
@@ -250,14 +364,14 @@ ErrorCode InterpEmbed::pause(void)
 
     LogProducer::info("interpembed", "try pause program %d", id_);
 
-    if(hold() != 0)
+    if(hold() != 0) // block in here
     {
         LogProducer::error("interpembed", "program %d paused failed while holding", id_);
         return INTERPRETER_ERROR_HOLD_FAILED;
     }
 
     is_paused_ = true;
-    curr_state_ = INTERP_PAUSE;
+    curr_state_ = INTERP_STATE_PAUSE;
 
     LogProducer::info("interpembed", "program %d paused", id_);
 
@@ -266,7 +380,7 @@ ErrorCode InterpEmbed::pause(void)
 
 ErrorCode InterpEmbed::resume(void)
 {
-    if(curr_state_ != INTERP_PAUSE)
+    if(curr_state_ != INTERP_STATE_PAUSE)
     {
         LogProducer::error("interpembed", "resume program %d failed not in PAUSE state", id_);
         return INTERPRETER_ERROR_INVALID_STATE;
@@ -280,7 +394,7 @@ ErrorCode InterpEmbed::resume(void)
         return INTERPRETER_ERROR_RELEASE_FAILED;
     }
     is_paused_ = false;
-    curr_state_ = INTERP_RUNNING;
+    curr_state_ = INTERP_STATE_RUNNING;
 
     LogProducer::info("interpembed", "program %d resumed", id_);
 
@@ -289,7 +403,7 @@ ErrorCode InterpEmbed::resume(void)
 
 ErrorCode InterpEmbed::abort(void)
 {
-    if(curr_state_ == INTERP_IDLE)
+    if(curr_state_ == INTERP_STATE_IDLE)
     {
         LogProducer::error("interpembed", "abort program %d failed in IDLE state", id_);
         return INTERPRETER_ERROR_INVALID_STATE;
@@ -298,8 +412,11 @@ ErrorCode InterpEmbed::abort(void)
     LogProducer::info("interpembed", "try abort program %d", id_);
 
     is_abort_ = true;
-    prog_thread_.join();
-    curr_state_ = INTERP_IDLE;
+    if(curr_state_ == INTERP_STATE_PAUSE)
+        release();
+    
+    waitAborted();
+    curr_state_ = INTERP_STATE_IDLE;
 
     LogProducer::info("interpembed", "program %d aborted", id_);
 
@@ -308,7 +425,7 @@ ErrorCode InterpEmbed::abort(void)
 
 ErrorCode InterpEmbed::forward(void)
 {
-    if(curr_state_ == INTERP_RUNNING)
+    if(curr_state_ == INTERP_STATE_RUNNING)
     {
         LogProducer::error("interpembed", "forward program %d failed in RUNNING state", id_);
         return INTERPRETER_ERROR_INVALID_STATE;
@@ -316,7 +433,7 @@ ErrorCode InterpEmbed::forward(void)
 
     LogProducer::info("interpembed", "try forward program %d", id_);
 
-    curr_mode_ = INTERP_STEP;
+    curr_mode_ = INTERP_MODE_STEP;
 
     LogProducer::info("interpembed", "program %d mode change to STEP", id_);
 
@@ -325,7 +442,7 @@ ErrorCode InterpEmbed::forward(void)
 
 ErrorCode InterpEmbed::backward(void)
 {
-    if(curr_state_ == INTERP_RUNNING)
+    if(curr_state_ == INTERP_STATE_RUNNING)
     {
         LogProducer::error("interpembed", "backward program %d failed in RUNNING state", id_);
         return INTERPRETER_ERROR_INVALID_STATE;
@@ -333,7 +450,7 @@ ErrorCode InterpEmbed::backward(void)
 
     LogProducer::info("interpembed", "try forward program %d", id_);
 
-    curr_mode_ = INTERP_JUMP;
+    curr_mode_ = INTERP_MODE_JUMP;
 
     LogProducer::info("interpembed", "program %d mode change to JUMP", id_);
 
@@ -342,7 +459,7 @@ ErrorCode InterpEmbed::backward(void)
 
 ErrorCode InterpEmbed::jump(int line)
 {
-    if(curr_state_ == INTERP_RUNNING)
+    if(curr_state_ == INTERP_STATE_RUNNING)
     {
         LogProducer::error("interpembed", "forward program %d failed in RUNNING state", id_);
         return INTERPRETER_ERROR_INVALID_STATE;
@@ -350,9 +467,16 @@ ErrorCode InterpEmbed::jump(int line)
 
     LogProducer::info("interpembed", "try jump program %d", id_);
 
-    curr_mode_ = INTERP_JUMP;
+    curr_mode_ = INTERP_MODE_JUMP;
 
     LogProducer::info("interpembed", "program %d mode change to JUMP", id_);
 
     return 0;
 }
+
+void InterpEmbed::waitAborted(void)
+{
+    exit_sem_ptr_->take();
+    exit_sem_ptr_->give();
+}
+

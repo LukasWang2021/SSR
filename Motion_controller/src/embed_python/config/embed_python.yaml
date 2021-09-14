@@ -2,4 +2,7 @@
 # module path
 program_path: /root/robot_data/python/
 module_path: ':/root/install/lib/module/:/root/install/lib/module/packages/:'
-interp_thread_priority: 50
+state_thread_priority: 50
+# us
+state_thread_cycle_time: 200000
+prog_thread_priority: 50

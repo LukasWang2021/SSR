@@ -12,61 +12,67 @@
 #include "interpreter_control.h"
 #include "thread_help.h"
 
-// PyThreadState* Py_NewInterpreter()
-// uint64_t PyThreadState_GetID(PyThreadState *tstate)
-
-// PyInterpreterState* PyInterpreterState_New()
-// PyInterpreterState* PyInterpreterState_Get(void)
-// int64_t PyInterpreterState_GetID(PyInterpreterState *interp)
 class InterpEmbed
 {
 private:
-    PyObject *trace_obj_;
+    PyObject      *trace_obj_;
+    PyThreadState *self_ts_;
 
 public:
-    InterpEmbed(/* args */);
+    InterpEmbed(interpid_t id=0, std::string prog="");
     ~InterpEmbed();
 
-    bool pyResetInterp(void); /*reset the python interpreter*/
-    
-    bool pyUpdatePath(std::string path); /*update the python module search path specified by config file*/
-
-    void pyRunFile(const std::string& file); /*run the python script 'file'.
-    The file is search from the path specified by configuration file 'program_path' item*/
-
-    void pyRunString(const std::string& str); /*run the python script 'str'*/
-
-    void pyErrTraceBack(void); /* error trace of python */
-
-    bool pySetTrace(interpid_t idx, InterpEmbed *selfobj);
-
-private:
+public:
     static InterpConfig config_;
 
+    /* update the python module search path specified by config file */
+    static bool pyUpdatePath(std::string path);
+
+    /* reset the all python interpreter */
+    static bool pyResetInterp(void);
+
+    bool pySetTrace(void);
+
+    void pyRunFile(void); /* run the python script 'file'.
+    The file is search from the path specified by configuration file 'program_path' item */
+
+    /* start a new file :
+       in real means this file will run in a real thread, 
+       if false will run in a virtual thread
+    */
+    bool pyStartThread(void);
+
 private:
+    base_space::SemHelp *exec_sem_ptr_;
+    base_space::SemHelp *exit_sem_ptr_;
     base_space::ThreadHelp prog_thread_;
-    interpid_t id_;
+    interpid_t id_;     // self index set by interpreter control
+    interpid_t pyid_;   // self index create by python
+    pthread_t  thread_id_;
     bool is_paused_;
     bool is_abort_;
     bool is_exit_;
-    base_space::SemHelp *exec_sem_ptr_;
+    bool in_real_; // start with real thread or not
 
     InterpMode curr_mode_;
     InterpState curr_state_;
 
     /*Current line number of current program*/
-    std::string main_prog_;
-    std::string main_path_name_;
+    std::string main_prog_;      // xxx.py
+    std::string main_path_name_; // robotdata/python/xxx.py
     int curr_line_;
     std::string curr_prog_;
     std::string curr_func_;
 
 public:
+    bool init(void);
     int hold(void);
     int release(void);
+    void waitAborted(void);
     void progThreadFunc(void);
+    void pyThreadFunc(void);
 
-    ErrorCode start(std::string prog);
+    ErrorCode start(void);
     ErrorCode pause(void);
     ErrorCode resume(void);
     ErrorCode abort(void);
@@ -78,7 +84,6 @@ public:
     void setAbortFlag(bool flag) { is_abort_ = flag; }
     bool getPauseFlag(void) { return is_paused_; }
     bool getAbortFlag(void) { return is_abort_; }
-
 
     InterpMode getMode(void) { return curr_mode_; }
     InterpState getState(void) { return curr_state_; }
@@ -94,7 +99,16 @@ public:
     void setCurrFunc(std::string func) { curr_func_ = func; }
 
     interpid_t getId(void) { return id_; }
+    interpid_t getPyId(void) { return pyid_; }
+
     std::string getMainName(void) { return main_prog_; }
+    void setMainName(std::string name)
+    {
+        main_prog_ = name;
+        main_path_name_ = config_.getProgPath() + main_prog_;
+    }
+private:
+    bool inThreadInit(void);
 };
 
 

@@ -21,7 +21,7 @@ void ControllerRpc::handleRpc0x00006154(void* request_data_ptr, void* response_d
     LogProducer::info("rpc", "/rpc/interpreter/start %s, state interpreter:%d, group:%d", 
     rq_data_ptr->data.data, InterpCtrl::instance().getState(0), status);
 
-    if(InterpCtrl::instance().getState(0) == INTERP_IDLE && status == group_space::GROUP_STATUS_STANDBY)
+    if(status == group_space::GROUP_STATUS_STANDBY)
     {
         rs_data_ptr->data.data = InterpCtrl::instance().start(rq_data_ptr->data.data);
     }
@@ -43,17 +43,9 @@ void ControllerRpc::handleRpc0x0000BA55(void* request_data_ptr, void* response_d
     group_space::GroupStatus_e status;
     group_ptr_[0]->mcGroupReadStatus(status, in_position);
 
-    LogProducer::info("rpc", "/rpc/interpreter/pause %s, state interpreter:%d, group:%d", 
-    rq_data_ptr->data.data, InterpCtrl::instance().getState(0), status);
-
-    if(InterpCtrl::instance().getState(rq_data_ptr->data.data) == INTERP_RUNNING)
-    {
-        rs_data_ptr->data.data = InterpCtrl::instance().pause(rq_data_ptr->data.data);
-    }
-    else
-    {
-        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION_PAUSE;
-    }
+    LogProducer::info("rpc", "/rpc/interpreter/pause %d, group state:%d", rq_data_ptr->data.data, status);
+ 
+    rs_data_ptr->data.data = InterpCtrl::instance().pause(rq_data_ptr->data.data);
 
     LogProducer::info("rpc", "/rpc/interpreter/pause %d, error:%llX", rq_data_ptr->data.data, rs_data_ptr->data.data);
 }
@@ -68,17 +60,9 @@ void ControllerRpc::handleRpc0x0000CF55(void* request_data_ptr, void* response_d
     group_space::GroupStatus_e status;
     group_ptr_[0]->mcGroupReadStatus(status, in_position);
 
-    LogProducer::info("rpc", "/rpc/interpreter/resume %d, state interpreter:%d, group:%d", 
-    rq_data_ptr->data.data, InterpCtrl::instance().getState(0), status);
+    LogProducer::info("rpc", "/rpc/interpreter/resume %d, group state:%d", rq_data_ptr->data.data, status);
 
-    if(InterpCtrl::instance().getState(rq_data_ptr->data.data) == INTERP_PAUSE)
-    {
-        rs_data_ptr->data.data = InterpCtrl::instance().resume(rq_data_ptr->data.data);
-    }
-    else
-    {
-        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION_RESUME;
-    }
+    rs_data_ptr->data.data = InterpCtrl::instance().resume(rq_data_ptr->data.data);
     
     LogProducer::info("rpc", "/rpc/interpreter/resume %d, error:%llX", rq_data_ptr->data.data, rs_data_ptr->data.data);
 }
@@ -93,18 +77,10 @@ void ControllerRpc::handleRpc0x000086F4(void* request_data_ptr, void* response_d
     group_space::GroupStatus_e status;
     group_ptr_[0]->mcGroupReadStatus(status, in_position);
 
-    LogProducer::info("rpc", "/rpc/interpreter/abort %d, state interpreter:%d, group:%d", 
-    rq_data_ptr->data.data, InterpCtrl::instance().getState(0), status);
+    LogProducer::info("rpc", "/rpc/interpreter/abort %d, group state:%d", rq_data_ptr->data.data, status);
 
-    if(InterpCtrl::instance().getState(rq_data_ptr->data.data) != INTERP_IDLE)
-    {
-        rs_data_ptr->data.data = InterpCtrl::instance().abort(rq_data_ptr->data.data);
-        group_ptr_[0]->clearGroup();
-    }
-    else
-    {
-        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION_RESUME;
-    }
+    rs_data_ptr->data.data = InterpCtrl::instance().abort(rq_data_ptr->data.data);
+    group_ptr_[0]->clearGroup();
     
     LogProducer::info("rpc", "/rpc/interpreter/abort %d, error:%llX", rq_data_ptr->data.data, rs_data_ptr->data.data);
 }

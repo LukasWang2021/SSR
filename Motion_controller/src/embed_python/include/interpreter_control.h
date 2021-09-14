@@ -19,22 +19,22 @@
 #include "sem_help.h"
 #include "motion_control.h"
 
-typedef int64_t interpid_t;
+typedef uint64_t interpid_t;
 
 typedef enum
 {
-    INTERP_IDLE,
-    INTERP_RUNNING,
-    INTERP_PAUSE,
-    INTERP_WAITING,
-    INTERP_ERROR,
+    INTERP_STATE_IDLE = 0x01,
+    INTERP_STATE_RUNNING = 0x02,
+    INTERP_STATE_PAUSE = 0x04,
+    INTERP_STATE_UNKNOWN = 0x08,
 }InterpState;
 
 typedef enum
 {
-    INTERP_AUTO,
-    INTERP_STEP,
-    INTERP_JUMP,
+    INTERP_MODE_AUTO = 0x01,
+    INTERP_MODE_STEP = 0x02,
+    INTERP_MODE_JUMP = 0x04,
+    INTERP_MODE_UNKNOWN = 0x08,
 }InterpMode;
 
 class InterpCtrl
@@ -45,8 +45,6 @@ public:
 private:
     static InterpCtrl interp_ctrl_;
 
-    /*Current running program*/
-    std::string curr_prog_;
     InterpState curr_state_;
     /*For synchronous with other thread.
     Register the sync-function use regSyncCallback function bellow.
@@ -57,11 +55,11 @@ private:
     bool is_init_;
     bool is_exit_;
     bool is_abort_;
+    /* the interpreter object index, 0 means the main */
+    interpid_t index_;
 
 private:
     base_space::ThreadHelp state_thread_;
-    base_space::SemHelp *prog_sem_ptr_;
-    ErrorCode curr_err_; // for state machine
 
 public:
     ~InterpCtrl();
@@ -72,7 +70,9 @@ public:
     bool init(void);
     bool setApi(group_space::MotionControl **group_ptr);
     bool run(void);
-    void errorSet(ErrorCode err);
+
+    ErrorCode startNewFile(std::string file, bool in_real_thread=true);
+    ErrorCode startNewFunc(void *pyfunc, bool in_real_thread=true);
 
     // start and quit
     ErrorCode start(const std::string& prog);
@@ -97,6 +97,7 @@ public:
 
 private:
     InterpCtrl(/* args */);
+    bool checkValid(interpid_t id);
 };
 
 #endif

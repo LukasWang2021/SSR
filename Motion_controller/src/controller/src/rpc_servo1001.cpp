@@ -1283,8 +1283,8 @@ void ControllerRpc::handleRpc0x000003E1(void* request_data_ptr, void* response_d
         rs_data_ptr->data.data_count = COMM_REG3_DATA_NUMBER;
         for(size_t i = 0; i < rs_data_ptr->data.data_count; ++i)
         {
-            rs_data_ptr->data.data[i] = t_data.data[i];
-            printf("data[%ld]===>%lf,%ld\n",i,rs_data_ptr->data.data[i],t_data.data[i]);
+            rs_data_ptr->data.data[i] = (double)t_data.data[i]/1024.0;
+            LogProducer::info("rpc","TorqueSensorData[%d]=%ld",i,rs_data_ptr->data.data[i]);
         }
 
         rs_data_ptr->error_code.data = SUCCESS;

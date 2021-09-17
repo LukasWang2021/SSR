@@ -24,7 +24,7 @@ void initCommReg3(CommBlockData_t* block_ptr)
 bool setCommReg3UpdateFlag(CommBlockData_t* block_ptr, uint32_t value)
 {
     assert(block_ptr != NULL);
-    memcpy(COMM_REG3_UPDATE_FLAG_PTR, &value, sizeof(uint32_t)); //  COMM_REG3_UPDATE_FLAG_PTR   <===>  ((int8_t*)(block_ptr->memory_ptr))
+    memcpy(COMM_REG3_UPDATE_FLAG_PTR, &value, sizeof(uint32_t)); //COMM_REG3_UPDATE_FLAG_PTR   <===>  ((int8_t*)(block_ptr->memory_ptr))
     return true;
 }
 

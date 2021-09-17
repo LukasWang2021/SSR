@@ -70,19 +70,11 @@ int main(int argc, char* argv[])
         cout << "Reply : hash error ,hash = " << recv_hash << endl;
         return -1;
     }
-
     cout << "Reply : msg.header.time_stamp = " << recv_msg.header.time_stamp << endl;
     cout << "Reply : msg.header.package_left = " << recv_msg.header.package_left << endl;
     cout << "Reply : msg.header.error_code = " << recv_msg.header.error_code << endl;
     cout << "Reply : msg.property.authority = " << recv_msg.property.authority << endl;
     cout << "Reply : msg.error_code.data = 0x" <<std::hex<<recv_msg.error_code.data <<std::dec<< endl;
-    /*
-    for(size_t i = 0; i < recv_msg.data.data_count; ++i)
-    {
-        printf("%d, ", recv_msg.data.data[i]);
-    }
-    printf("\n");
-    */
     cout << "Reply : msg.data.data[0] = " << recv_msg.data.data[0] << endl;
     cout << "Reply : msg.data.data[1] = " << recv_msg.data.data[1] << endl;
     cout << "Reply : msg.data.data[2] = " << recv_msg.data.data[2] << endl;

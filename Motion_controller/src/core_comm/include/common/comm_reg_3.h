@@ -18,7 +18,7 @@
 #define COMM_REG3_DATA_PTR            ((int8_t*)(block_ptr->memory_ptr + 4))     /**< The address to store the torque data.*/
 typedef struct
 {
-    int32_t data[COMM_REG3_DATA_NUMBER];//力矩数据数组
+    int64_t data[COMM_REG3_DATA_NUMBER];//力矩数据数组e
 }CommRegTorqueData_t;
 typedef struct
 {

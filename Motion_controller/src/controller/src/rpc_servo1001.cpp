@@ -1284,7 +1284,9 @@ void ControllerRpc::handleRpc0x000003E1(void* request_data_ptr, void* response_d
         for(size_t i = 0; i < rs_data_ptr->data.data_count; ++i)
         {
             rs_data_ptr->data.data[i] = t_data.data[i];
+            printf("data[%ld]===>%lf,%ld\n",i,rs_data_ptr->data.data[i],t_data.data[i]);
         }
+
         rs_data_ptr->error_code.data = SUCCESS;
         LogProducer::info("rpc", "/rpc/servo1001/cpu/getTorqueSensorData success");
     }

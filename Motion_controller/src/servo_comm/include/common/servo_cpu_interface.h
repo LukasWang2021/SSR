@@ -24,7 +24,7 @@
 #define SERVO_CPU_COMM_APP_ID_COMM_REG  1       /**< The application id of the register channel for Servo CPU communication.*/
 #define SERVO_CPU_COMM_APP_ID_SAMPLING  2000    /**< The application id of the buffer channel for Servo CPU sampling.*/
 #define SERVO_CPU_COMM_APP_ID_PARAM_REG  2      /**< The application id of the register channel for external parameter communication.*/
-
+#define SERVO_CPU_COMM_APP_ID_TSD_REG  3  //Torque Sensor Data---力矩传感器数据寄存器
 /**
  * @brief Defines configuration of communication channels of a servo cpu.
  */
@@ -35,6 +35,7 @@ typedef struct
     CommBlockData_t* comm_reg_ptr;          /**< Pointer of register channel.*/
     CommBlockData_t* sampling_buffer_ptr;   /**< Pointer of sampling buffer channel.*/
     CommBlockData_t* param_reg_ptr;         /**< Pointer of the external parameter channel.*/
+    CommBlockData_t* tsd_reg_pt;            /** <Pointer of the Torque sensor data channel.*/
 }ServoCpuComm_t;
 /**
  * @brief Create configuration object to handling servo cpu communication on controller side.

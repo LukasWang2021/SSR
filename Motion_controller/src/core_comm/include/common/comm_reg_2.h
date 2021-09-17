@@ -36,7 +36,7 @@ typedef struct
 }CommRegAppData2_t;
 
 /**
- * @brief Initialize the register 1 channel.
+ * @brief Initialize the register 2 channel.
  * @details block_ptr.param1~block_ptr.param8 is not used.
  * @param [in] block_ptr Pointer of the configuration data of the channel.
  * @return void

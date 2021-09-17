@@ -16,6 +16,7 @@
 #include "common/core_comm_datatype.h"
 #include "common/comm_reg_1.h"
 #include "common/comm_reg_2.h"
+#include "common/comm_reg_3.h"
 #include <stdint.h>
 #endif
 
@@ -242,6 +243,9 @@ bool getServoCpuCommForceControlUpdateFlag(ServoCpuComm_t* comm_ptr, uint32_t* v
 bool setServoCpuCommForceControlParameters(ServoCpuComm_t* comm_ptr, uint8_t* data_ptr, uint32_t data_byte_size);
 bool getServoCpuCommForceControlParameters(ServoCpuComm_t* comm_ptr, uint8_t* data_ptr, uint32_t* data_byte_size_ptr);
 
+bool setServoCpuCommTorqueSensorUpdateFlag(ServoCpuComm_t* comm_ptr, uint32_t value);
+bool getServoCpuCommTorqueSensorUpdateFlag(ServoCpuComm_t* comm_ptr, uint32_t* value_ptr);
+bool getServoCpuCommTorqueSensorData(ServoCpuComm_t* comm_ptr, uint8_t* data_ptr, uint32_t* data_byte_size_ptr);
 /**
  * @brief Free the configuration object of a servo cpu.
  * @details The API can be called on both controller and servo cpu sides.\n

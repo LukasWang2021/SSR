@@ -220,8 +220,7 @@ bool TpCommTest::generateRequestMessageType(unsigned int &hash,
     return true;
 }
 
-bool TpCommTest::decodeResponseMessageType(unsigned int &hash, 
-    void *response_ptr, const pb_field_t fields[], uint8_t* buf, int &buf_size)
+bool TpCommTest::decodeResponseMessageType(unsigned int &hash, void *response_ptr, const pb_field_t fields[], uint8_t* buf, int &buf_size)
 {
     memcpy(&hash, buf, HASH_BYTE_SIZE);
 

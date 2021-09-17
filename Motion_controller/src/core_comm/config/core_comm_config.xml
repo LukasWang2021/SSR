@@ -47,6 +47,18 @@
 		<Param3>0</Param3>
 		<Param4>0</Param4>		
 	</CommBlock>
+	<CommBlock>
+		<!--cpu3 torque reg-->
+		<Type>comm_reg</Type>
+		<ApplicationID>3</ApplicationID>
+		<ByteOffset>0x1200000</ByteOffset>
+		<From>1</From>
+		<To>2</To>
+		<Param1>0</Param1>
+		<Param2>0</Param2>
+		<Param3>0</Param3>
+		<Param4>0</Param4>		
+	</CommBlock>
 	<!--axis0 is PMSM-J1-->
 	<CommBlock>	
 		<!--axis0 comm reg-->

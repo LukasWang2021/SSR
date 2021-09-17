@@ -173,3 +173,15 @@ target_link_libraries(test_servo1001_cpu_setForceControlParam ${rtm_LIBRARIES} p
 ######### test_servo1001_cpu_getForceControlParam #########
 add_executable(test_servo1001_cpu_getForceControlParam test_servo1001_cpu_getForceControlParam.cpp)
 target_link_libraries(test_servo1001_cpu_getForceControlParam ${rtm_LIBRARIES} pb tp_comm_test protos)
+
+######### test_servo1001_cpu_getTorqueSensorData #########
+add_executable(test_servo1001_cpu_getTorqueSensorData test_servo1001_cpu_getTorqueSensorData.cpp)
+target_link_libraries(test_servo1001_cpu_getTorqueSensorData ${rtm_LIBRARIES} pb tp_comm_test protos)
+
+######### test_servo1001_cpu_setTorqueSensorUpdateFlag #########
+add_executable(test_servo1001_cpu_setTorqueSensorUpdateFlag test_servo1001_cpu_setTorqueSensorUpdateFlag.cpp)
+target_link_libraries(test_servo1001_cpu_setTorqueSensorUpdateFlag ${rtm_LIBRARIES} pb tp_comm_test protos)
+
+######### test_servo1001_cpu_getTorqueSensorUpdateFlag #########
+add_executable(test_servo1001_cpu_getTorqueSensorUpdateFlag test_servo1001_cpu_getTorqueSensorUpdateFlag.cpp)
+target_link_libraries(test_servo1001_cpu_getTorqueSensorUpdateFlag ${rtm_LIBRARIES} pb tp_comm_test protos)

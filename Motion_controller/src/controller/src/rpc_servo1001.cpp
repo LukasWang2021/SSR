@@ -1272,3 +1272,69 @@ void ControllerRpc::handleRpc0x00008203(void* request_data_ptr, void* response_d
 }
 
 
+//"/rpc/servo1001/cpu/getTorqueSensorData"	
+void ControllerRpc::handleRpc0x000003E1(void* request_data_ptr, void* response_data_ptr)
+{
+    ResponseMessageType_Uint64_DoubleList* rs_data_ptr = static_cast<ResponseMessageType_Uint64_DoubleList*>(response_data_ptr);
+    CommRegTorqueData_t   t_data;
+    memset(&t_data, 0, sizeof(t_data));
+    if (cpu_comm_ptr_->getTorqueSensorData(&t_data))
+    {
+        rs_data_ptr->data.data_count = COMM_REG3_DATA_NUMBER;
+        for(size_t i = 0; i < rs_data_ptr->data.data_count; ++i)
+        {
+            rs_data_ptr->data.data[i] = t_data.data[i];
+        }
+        rs_data_ptr->error_code.data = SUCCESS;
+        LogProducer::info("rpc", "/rpc/servo1001/cpu/getTorqueSensorData success");
+    }
+    else
+    {
+        rs_data_ptr->error_code.data = RPC_EXECUTE_FAILED;
+        LogProducer::error("rpc", "/rpc/servo1001/cpu/getTorqueSensorData failed");
+        return;
+    }
+}
+
+//"/rpc/servo1001/cpu/getTorqueSensorSync"	
+void ControllerRpc::handleRpc0x00010583(void* request_data_ptr, void* response_data_ptr)
+{
+    ResponseMessageType_Uint64_Int32* rs_data_ptr = static_cast<ResponseMessageType_Uint64_Int32*>(response_data_ptr);
+    uint32_t  t_data;
+    memset(&t_data, 0, sizeof(t_data));
+    if (cpu_comm_ptr_->getTorqueSensorSync(&t_data))//
+    {
+        //rs_data_ptr->data.data = SUCCESS;
+        rs_data_ptr->data.data = t_data;
+        LogProducer::info("rpc", "/rpc/servo1001/cpu/getTorqueSensorSync success");
+    }
+    else
+    {
+        rs_data_ptr->data.data = RPC_EXECUTE_FAILED;
+        LogProducer::error("rpc", "/rpc/servo1001/cpu/getTorqueSensorSync failed");
+        return;
+    }
+}
+//"/rpc/servo1001/cpu/setTorqueSensorSync"	
+void ControllerRpc::handleRpc0x00012853(void* request_data_ptr, void* response_data_ptr)
+{
+    ResponseMessageType_Uint64_Int32* rs_data_ptr = static_cast<ResponseMessageType_Uint64_Int32*>(response_data_ptr);
+    uint32_t   t_data;
+    memset(&t_data, 0, sizeof(t_data));
+    if (cpu_comm_ptr_->setTorqueSensorSync(&t_data))
+    {
+        rs_data_ptr->data.data = SUCCESS;
+        LogProducer::info("rpc", "/rpc/servo1001/cpu/setTorqueSensorSync success");
+    }
+    else
+    {
+        rs_data_ptr->data.data = RPC_EXECUTE_FAILED;
+        LogProducer::error("rpc", "/rpc/servo1001/cpu/setTorqueSensorSync failed");
+        return;
+    }
+}
+
+
+
+
+

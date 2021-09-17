@@ -295,6 +295,19 @@ bool getServoCpuCommForceControlParameters(ServoCpuComm_t* comm_ptr, uint8_t* da
     return getCommReg2Parameters(comm_ptr->param_reg_ptr, data_ptr, data_byte_size_ptr);
 }
 
+
+bool setServoCpuCommTorqueSensorUpdateFlag(ServoCpuComm_t* comm_ptr, uint32_t value)
+{
+ return setCommReg3UpdateFlag(comm_ptr->param_reg_ptr, value);
+}
+bool getServoCpuCommTorqueSensorUpdateFlag(ServoCpuComm_t* comm_ptr, uint32_t* value_ptr)
+{
+    return getCommReg3UpdateFlag(comm_ptr->param_reg_ptr, value_ptr);
+}
+bool getServoCpuCommTorqueSensorData(ServoCpuComm_t* comm_ptr, uint8_t* data_ptr, uint32_t* data_byte_size_ptr)
+{
+    return getCommReg3Data(comm_ptr->param_reg_ptr, data_ptr, data_byte_size_ptr);
+}
 void freeServoCpuComm(ServoCpuComm_t* comm_ptr)
 {
     if(comm_ptr != NULL)

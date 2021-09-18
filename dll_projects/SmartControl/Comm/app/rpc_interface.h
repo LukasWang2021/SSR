@@ -915,30 +915,29 @@ COMM_INTERFACE_API uint64_t c_servo1001CpuSetForceControlParameters(int32_t cpu_
  */
 COMM_INTERFACE_API uint64_t c_servo1001CpuGetForceControlParameters(int32_t cpu_id, int32_t param_value[512], int32_t* param_size_ptr);
 
+
 /***
-* å‡½æ•°åŠŸèƒ½:è®¾ç½®æ‰­çŸ©ä¼ æ„Ÿå™¨æ•°æ®æ›´æ–°æ ‡è®°flag=1 --ä½¿èƒ½æ›´æ–°æ‰­çŸ©ä¼ æ„Ÿå™¨æ•°æ®
-* å‚æ•°:cpu_id--
-* è¿”å›å€¼:é”™è¯¯ç 
+* º¯Êı¹¦ÄÜ:ÉèÖÃÅ¤¾Ø´«¸ĞÆ÷Êı¾İ¸üĞÂ±ê¼Çflag=1 --Ê¹ÄÜ¸üĞÂÅ¤¾Ø´«¸ĞÆ÷Êı¾İ
+* ²ÎÊı:cpu_id--
+* ·µ»ØÖµ:´íÎóÂë
 **/
 COMM_INTERFACE_API uint64_t c_servo1001CpuSetTorqueSensorSync(int32_t cpu_id);
 
 /****
-* å‡½æ•°åŠŸèƒ½:è·å–æ‰­çŸ©ä¼ æ„Ÿå™¨æ•°æ®æ›´æ–°æ ‡è®°flag
-* å‚æ•°:cpu_id
-* p_updateFlag---ä½¿èƒ½æ›´æ–°æ ‡è®°å€¼æŒ‡é’ˆ
-* è¿”å›å€¼:é”™è¯¯ç 
+* º¯Êı¹¦ÄÜ:»ñÈ¡Å¤¾Ø´«¸ĞÆ÷Êı¾İ¸üĞÂ±ê¼Çflag
+* ²ÎÊı:cpu_id
+* p_updateFlag---Ê¹ÄÜ¸üĞÂ±ê¼ÇÖµÖ¸Õë
+* ·µ»ØÖµ:´íÎóÂë
 ***/
 COMM_INTERFACE_API uint64_t c_servo1001CpuGetTorqueSensorSync(int32_t cpu_id, int32_t* p_updateFlag);
 /***
-* å‡½æ•°åŠŸèƒ½: è·å–åŠ›çŸ©ä¼ æ„Ÿå™¨æ•°æ®-ç”¨äºåŠ›çŸ©ä¼ æ„Ÿå™¨æ•°æ®æ ‡å®š
-* å‚æ•°: CPUID
-* t_data---ä¼ æ„Ÿå™¨æ•°æ®æŒ‡é’ˆ
-* data_size_ptr---è¿”å›æ•°æ®é•¿åº¦æŒ‡é’ˆ
-* è¿”å›å€¼:é”™è¯¯ç 
+* º¯Êı¹¦ÄÜ: »ñÈ¡Á¦¾Ø´«¸ĞÆ÷Êı¾İ-ÓÃÓÚÁ¦¾Ø´«¸ĞÆ÷Êı¾İ±ê¶¨
+* ²ÎÊı: CPUID
+* t_data---´«¸ĞÆ÷Êı¾İÖ¸Õë
+* data_size_ptr---·µ»ØÊı¾İ³¤¶ÈÖ¸Õë
+* ·µ»ØÖµ:´íÎóÂë
 */
 COMM_INTERFACE_API uint64_t c_servo1001CpuGetTorqueSensorData(int32_t cpu_id, int32_t t_data[6], int32_t* data_size_ptr);
-
-
 //IO
 /**
  * @brief Get DI value.

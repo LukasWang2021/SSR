@@ -18,7 +18,6 @@ typedef struct
     int posture[4];
     int turn[9];
     double pos[9]; /* the posture value of j1~j9/x-y-z-a-b-c */
-    int group_id;
 }PrInfo;
 
 typedef union 

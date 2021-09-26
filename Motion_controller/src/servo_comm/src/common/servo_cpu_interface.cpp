@@ -27,7 +27,7 @@ ServoCpuComm_t* createServoCpuCommByController(int32_t controller_id, int32_t se
     comm_ptr->comm_reg_ptr = NULL;
     comm_ptr->sampling_buffer_ptr = NULL;
     comm_ptr->param_reg_ptr = NULL;
-    comm_ptr->tsd_reg_pt = NULL;
+    comm_ptr->torque_reg_ptr = NULL;
     return comm_ptr;
 }
 
@@ -69,7 +69,7 @@ bool initServoCpuCommByController(ServoCpuComm_t* comm_ptr,
             && from_block_ptr[i].to == comm_ptr->to
             && from_block_ptr[i].application_id == SERVO_CPU_COMM_APP_ID_TSD_REG)
         {
-            comm_ptr->tsd_reg_pt = &from_block_ptr[i];
+            comm_ptr->torque_reg_ptr = &from_block_ptr[i];
             continue;
         }        
     }
@@ -205,7 +205,7 @@ bool initServoCpuCommByServo(ServoCpuComm_t* comm_ptr,
         if(to_block_ptr[i].to == comm_ptr->from
             && to_block_ptr[i].application_id == SERVO_CPU_COMM_APP_ID_TSD_REG)
         {
-            comm_ptr->tsd_reg_pt = &to_block_ptr[i];
+            comm_ptr->torque_reg_ptr = &to_block_ptr[i];
             continue;
         }                       
     } 
@@ -316,15 +316,15 @@ bool getServoCpuCommForceControlParameters(ServoCpuComm_t* comm_ptr, uint8_t* da
 
 bool setServoCpuCommTorqueSensorUpdateFlag(ServoCpuComm_t* comm_ptr, uint32_t value)
 {
- return setCommReg3UpdateFlag(comm_ptr->tsd_reg_pt, value);
+ return setCommReg3UpdateFlag(comm_ptr->torque_reg_ptr, value);
 }
 bool getServoCpuCommTorqueSensorUpdateFlag(ServoCpuComm_t* comm_ptr, uint32_t* value_ptr)
 {
-    return getCommReg3UpdateFlag(comm_ptr->tsd_reg_pt, value_ptr);
+    return getCommReg3UpdateFlag(comm_ptr->torque_reg_ptr, value_ptr);
 }
 bool getServoCpuCommTorqueSensorData(ServoCpuComm_t* comm_ptr, uint8_t* data_ptr, uint32_t* data_byte_size_ptr)
 {
-    return getCommReg3Data(comm_ptr->tsd_reg_pt, data_ptr, data_byte_size_ptr);
+    return getCommReg3Data(comm_ptr->torque_reg_ptr, data_ptr, data_byte_size_ptr);
 }
 void freeServoCpuComm(ServoCpuComm_t* comm_ptr)
 {

@@ -35,7 +35,7 @@ typedef struct
     CommBlockData_t* comm_reg_ptr;          /**< Pointer of register channel.*/
     CommBlockData_t* sampling_buffer_ptr;   /**< Pointer of sampling buffer channel.*/
     CommBlockData_t* param_reg_ptr;         /**< Pointer of the external parameter channel.*/
-    CommBlockData_t* tsd_reg_pt;            /** <Pointer of the Torque sensor data channel.*/
+    CommBlockData_t* torque_reg_ptr;            /** <Pointer of the Torque sensor data channel.*/
 }ServoCpuComm_t;
 /**
  * @brief Create configuration object to handling servo cpu communication on controller side.

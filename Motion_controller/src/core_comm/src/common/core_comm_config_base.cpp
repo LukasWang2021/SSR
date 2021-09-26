@@ -20,6 +20,8 @@
 #include "common/comm_reg_0.h"
 #include "common/comm_reg_1.h"
 #include "common/comm_reg_2.h"
+#include "common/comm_reg_3.h"
+
 #include "common/core_process_call_1000.h"
 #include "common/buffer_2000.h"
 #include "common/buffer_2001.h"
@@ -63,6 +65,7 @@ void initLocalChannel(CoreCommConfig_t* core_comm_config_ptr, int32_t cpu_id,
             case 0: initCommReg0(&((*from_block_ptr_ptr)[i])); break;   // only called by slave side
             case 1: initCommReg1(&((*from_block_ptr_ptr)[i])); break;   // only called by master side
             case 2: initCommReg2(&((*from_block_ptr_ptr)[i])); break;
+            case 3: initCommReg3(&((*from_block_ptr_ptr)[i])); break;
             case 1000: initCoreProcessCall1000(&((*from_block_ptr_ptr)[i])); break;
             case 2000: initBuffer2000(&((*from_block_ptr_ptr)[i])); break;
             case 2001: initBuffer2001(&((*from_block_ptr_ptr)[i])); break;

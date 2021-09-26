@@ -389,7 +389,6 @@ void Servo_Axis_s_SetCurrent(SERVO_AXIS_ENUM axis_id)
  * ----------------------------------------------------------------*/
  void virtual_servo_device::servo_config_CoreComm(void)
 {
-
     do
     {
         if(!g_local_servo1000->config.core_comm_config_ready)

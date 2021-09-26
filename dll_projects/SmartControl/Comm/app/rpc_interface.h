@@ -915,6 +915,29 @@ COMM_INTERFACE_API uint64_t c_servo1001CpuSetForceControlParameters(int32_t cpu_
  */
 COMM_INTERFACE_API uint64_t c_servo1001CpuGetForceControlParameters(int32_t cpu_id, int32_t param_value[512], int32_t* param_size_ptr);
 
+
+/***
+* 函数功能:设置扭矩传感器数据更新标记flag=1 --使能更新扭矩传感器数据
+* 参数:cpu_id--
+* 返回值:错误码
+**/
+COMM_INTERFACE_API uint64_t c_servo1001CpuSetTorqueSensorSync(int32_t cpu_id);
+
+/****
+* 函数功能:获取扭矩传感器数据更新标记flag
+* 参数:cpu_id
+* p_updateFlag---使能更新标记值指针
+* 返回值:错误码
+***/
+COMM_INTERFACE_API uint64_t c_servo1001CpuGetTorqueSensorSync(int32_t cpu_id, int32_t* p_updateFlag);
+/***
+* 函数功能: 获取力矩传感器数据-用于力矩传感器数据标定
+* 参数: CPUID
+* t_data---传感器数据指针
+* data_size_ptr---返回数据长度指针
+* 返回值:错误码
+*/
+COMM_INTERFACE_API uint64_t c_servo1001CpuGetTorqueSensorData(int32_t cpu_id, int32_t t_data[6], int32_t* data_size_ptr);
 //IO
 /**
  * @brief Get DI value.

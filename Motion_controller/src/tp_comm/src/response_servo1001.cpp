@@ -717,4 +717,54 @@ void TpComm::handleResponse0x00008203(std::vector<TpRequestResponse>::iterator& 
     }
 }
 
+/********rpc/servo1001/cpu/getTorqueSensorData, ResponseMessageType_Uint64_Int32List(count=52)**********/
+void TpComm::handleResponse0x000003E1(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size)
+{
+    if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_DoubleList_fields, task->response_data_ptr, send_buffer_size))
+    {
+        LogProducer::error("rpc", "handleResponse0x000003E1: failed to encode response package");
+    }
+    if(task->request_data_ptr != NULL)
+    {
+        delete (RequestMessageType_Int32*)task->request_data_ptr;
+    }
+    if(task->response_data_ptr != NULL)
+    {
+        delete (ResponseMessageType_Uint64_DoubleList*)task->response_data_ptr;
+    }
+}
+/********rpc/servo1001/cpu/getTorqueSensorSync, ResponseMessageType_Uint64_Int32**********/	
+void TpComm::handleResponse0x00010583(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size)
+{
+    if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_Int32_fields, task->response_data_ptr, send_buffer_size))
+    {
+        LogProducer::error("rpc", "handleResponse0x00010583: failed to encode response package");
+    }
+    if(task->request_data_ptr != NULL)
+    {
+        delete (RequestMessageType_Int32*)task->request_data_ptr;
+    }
+    if(task->response_data_ptr != NULL)
+    {
+        delete (ResponseMessageType_Uint64_Int32*)task->response_data_ptr;
+    }
+}
+/********rpc/servo1001/cpu/setTorqueSensorSync, ResponseMessageType_Uint64_Int32**********/	
+void TpComm::handleResponse0x00012853(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size)
+{
+    if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_Int32_fields, task->response_data_ptr, send_buffer_size))
+    {
+        LogProducer::error("rpc", "handleResponse0x00012853: failed to encode response package");
+    }
+    if(task->request_data_ptr != NULL)
+    {
+        delete (RequestMessageType_Int32*)task->request_data_ptr;
+    }
+    if(task->response_data_ptr != NULL)
+    {
+        delete (ResponseMessageType_Uint64_Int32*)task->response_data_ptr;
+    }
+}
+
+
 

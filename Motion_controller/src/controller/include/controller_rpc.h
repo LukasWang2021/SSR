@@ -304,7 +304,12 @@ private:
     void handleRpc0x00005F53(void* request_data_ptr, void* response_data_ptr);
     //"/rpc/servo1001/cpu/getForceControlParameters"	
     void handleRpc0x00008203(void* request_data_ptr, void* response_data_ptr);
-
+    //"/rpc/servo1001/cpu/getTorqueSensorData"	
+    void handleRpc0x000003E1(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/servo1001/cpu/getTorqueSensorSync"	
+    void handleRpc0x00010583(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/servo1001/cpu/setTorqueSensorSync"	
+    void handleRpc0x00012853(void* request_data_ptr, void* response_data_ptr);
 
     //"/rpc/io/readDI"	
     void handleRpc0x000185A9(void* request_data_ptr, void* response_data_ptr);

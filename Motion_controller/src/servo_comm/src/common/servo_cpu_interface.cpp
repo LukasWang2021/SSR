@@ -27,6 +27,7 @@ ServoCpuComm_t* createServoCpuCommByController(int32_t controller_id, int32_t se
     comm_ptr->comm_reg_ptr = NULL;
     comm_ptr->sampling_buffer_ptr = NULL;
     comm_ptr->param_reg_ptr = NULL;
+    comm_ptr->tsd_reg_pt = NULL;
     return comm_ptr;
 }
 
@@ -62,7 +63,16 @@ bool initServoCpuCommByController(ServoCpuComm_t* comm_ptr,
             continue;
         }        
     }
-
+    for(size_t i=0;i< from_block_number;++i)//20210917---xzc
+    {
+        if(from_block_ptr[i].from == comm_ptr->from
+            && from_block_ptr[i].to == comm_ptr->to
+            && from_block_ptr[i].application_id == SERVO_CPU_COMM_APP_ID_TSD_REG)
+        {
+            comm_ptr->tsd_reg_pt = &from_block_ptr[i];
+            continue;
+        }        
+    }
     for(size_t i = 0; i < to_block_number; ++i)
     {
         if(to_block_ptr[i].from == comm_ptr->to
@@ -190,7 +200,15 @@ bool initServoCpuCommByServo(ServoCpuComm_t* comm_ptr,
             continue;
         }                       
     }
-     
+    for(size_t i = 0; i < to_block_number; ++i)//20210917 xzc
+    {
+        if(to_block_ptr[i].to == comm_ptr->from
+            && to_block_ptr[i].application_id == SERVO_CPU_COMM_APP_ID_TSD_REG)
+        {
+            comm_ptr->tsd_reg_pt = &to_block_ptr[i];
+            continue;
+        }                       
+    } 
     if(comm_ptr->comm_reg_ptr == NULL
         || comm_ptr->sampling_buffer_ptr == NULL
         || comm_ptr->param_reg_ptr == NULL)     
@@ -295,6 +313,19 @@ bool getServoCpuCommForceControlParameters(ServoCpuComm_t* comm_ptr, uint8_t* da
     return getCommReg2Parameters(comm_ptr->param_reg_ptr, data_ptr, data_byte_size_ptr);
 }
 
+
+bool setServoCpuCommTorqueSensorUpdateFlag(ServoCpuComm_t* comm_ptr, uint32_t value)
+{
+ return setCommReg3UpdateFlag(comm_ptr->tsd_reg_pt, value);
+}
+bool getServoCpuCommTorqueSensorUpdateFlag(ServoCpuComm_t* comm_ptr, uint32_t* value_ptr)
+{
+    return getCommReg3UpdateFlag(comm_ptr->tsd_reg_pt, value_ptr);
+}
+bool getServoCpuCommTorqueSensorData(ServoCpuComm_t* comm_ptr, uint8_t* data_ptr, uint32_t* data_byte_size_ptr)
+{
+    return getCommReg3Data(comm_ptr->tsd_reg_pt, data_ptr, data_byte_size_ptr);
+}
 void freeServoCpuComm(ServoCpuComm_t* comm_ptr)
 {
     if(comm_ptr != NULL)

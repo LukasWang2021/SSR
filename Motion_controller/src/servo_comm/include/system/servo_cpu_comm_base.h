@@ -179,6 +179,9 @@ public:
 
     bool getForceControlParameters(CommRegForceControlParam_t* data_ptr);
 
+    bool setTorqueSensorSync(const uint32_t* data_ptr);
+    bool getTorqueSensorSync(uint32_t* data_ptr);
+    bool getTorqueSensorData(CommRegTorqueData_t * data_prt);
 private:
     ServoCpuCommBase();
     ServoCpuComm_t* comm_ptr_;  /**< Servo cpu communication configuration object.*/

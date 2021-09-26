@@ -153,6 +153,29 @@ bool ServoCpuCommBase::getForceControlParameters(CommRegForceControlParam_t* dat
     return true;
 }
 
+
+bool ServoCpuCommBase::setTorqueSensorSync(const uint32_t* data_ptr)
+{
+    uint32_t flag_value = 1;
+    if(!setServoCpuCommTorqueSensorUpdateFlag(comm_ptr_, flag_value)) 
+        return false;
+    return true;
+}
+bool ServoCpuCommBase::getTorqueSensorSync(uint32_t * data_ptr)
+{
+    if(!getServoCpuCommTorqueSensorUpdateFlag(comm_ptr_, data_ptr)) 
+        return false;
+    return true;
+}
+bool ServoCpuCommBase::getTorqueSensorData(CommRegTorqueData_t * data_ptr)
+{
+    uint32_t data_size = 0;
+    if(!getServoCpuCommTorqueSensorData(comm_ptr_, (uint8_t*)data_ptr, &data_size))
+        return false;
+    if(data_size != sizeof(CommRegTorqueData_t))
+        return false;
+    return true;
+}
 ServoCpuCommBase::ServoCpuCommBase():
     comm_ptr_(NULL)
 {

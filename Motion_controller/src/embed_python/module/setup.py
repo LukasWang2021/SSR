@@ -65,6 +65,13 @@ group_module = Extension('group',
                     libraries = LIBRARIES,
                     sources = ['groupmodule.cpp'])
 
+registermodule = Extension('register',
+                    define_macros = [('MAJOR_VERSION', '1'),('MINOR_VERSION', '0')],
+                    include_dirs = INCLUDE_DIRS + ['..//include', ],
+                    library_dirs = LIBRARY_DIRS + ['../../../install/lib'],
+                    libraries = LIBRARIES,
+                    sources = ['registermodule.cpp'])
+
 setup(name = 'controller',
        version = '1.0',
        description = 'This pakage supply the base function to controller option.',
@@ -75,7 +82,7 @@ setup(name = 'controller',
        Axis,group,hardware devices option interfaces.
        ''',
        platforms = 'aarch64-linux-gnu',
-       ext_modules = [controller_module, group_module])
+       ext_modules = [controller_module, group_module, registermodule])
 
 # export EXT_SUFFIX=.cpython-39-aarch64-linux-gnu.so
 

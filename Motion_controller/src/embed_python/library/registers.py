@@ -264,6 +264,7 @@ class RrList:
         if(isinstance(index, RegM) or isinstance(index, RegR)):
             return self.regs[index.value]
         #call c function
+        self.regs[index].value = 
         #self.regs.update{index:data}
         return self.regs[index]
 

@@ -79,7 +79,6 @@ static PyObject *register_SetSR(PyObject *self, PyObject *args)
 
 static PyObject *register_GetPR(PyObject *self, PyObject *args)
 {
-    
     int id = 0;
     /*see https://docs.python.org/3/c-api/arg.html#arg-parsing for PyArg_ParseTuple details*/
     if (!PyArg_ParseTuple(args, "i", &id))
@@ -93,7 +92,6 @@ static PyObject *register_GetPR(PyObject *self, PyObject *args)
 
 static PyObject *register_SetPR(PyObject *self, PyObject *args)
 {
-    
     int id = 0;
     RegValue value;
     Py_buffer buffer;

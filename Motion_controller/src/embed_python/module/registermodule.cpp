@@ -56,10 +56,12 @@ static PyObject *register_GetSR(PyObject *self, PyObject *args)
 {
     int id = 0;
     /*see https://docs.python.org/3/c-api/arg.html#arg-parsing for PyArg_ParseTuple details*/
+    //printf("---------------|register_GetSR|-----------\n");
     if (!PyArg_ParseTuple(args, "i", &id))
         return PyLong_FromUnsignedLongLong(INTERPRETER_ERROR_MOD_INVALID_ARG);
     RegValue value;
     InterpReg_GetSR(id, &value);
+    //printf("===============|register_SetSR result: SR[%d]=%s|===============\n",id,value.sr);
     return Py_BuildValue("s", value.sr);
     //return PyString_AsString(value.sr);
 }
@@ -68,6 +70,7 @@ static PyObject *register_SetSR(PyObject *self, PyObject *args)
 {
     char *srvalue;
     int id = 0;
+    //printf("---------------|registe_SetSR|-----------\n");
     /*see https://docs.python.org/3/c-api/arg.html#arg-parsing for PyArg_ParseTuple details*/
     if (!PyArg_ParseTuple(args, "is", &id, &srvalue))
         return PyLong_FromUnsignedLongLong(INTERPRETER_ERROR_MOD_INVALID_ARG);

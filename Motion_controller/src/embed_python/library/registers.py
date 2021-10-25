@@ -22,16 +22,12 @@ __eq__(self,another)         self == rhs       等于
 __ne__(self,another)         self != rhs       不等于
 """
 
+import register as reg
 class RegP:
     def update(self):
         pass
     
     def __init__(self, index=0, val=0):
-        if index == 0:
-            pass
-        else:
-            #do ctype call first
-            pass
         self.idx = index
         self.name = "default"
         self.comment = "default"
@@ -52,7 +48,6 @@ class RegP:
         self.j7 = 0
         self.j8 = 0
         self.j9 = 0
-        pass
     def __str__(self):
         return str(self.value)
 
@@ -96,23 +91,17 @@ class RegP:
             
     def __getattr__(self, item):
         return self.__dict__[item]
-
+    def setValue(self,ddd):
+        reg.SetPR(self.idx, ddd)
+    def getValue(self):
+        self.value = reg.GetPR(self.idx)
+        return self.value
 class RegR:
-    idx = 0
-    name = "default"
-    comment = "default"
-    value = 0.0
-    def __init__(self, index=0):
-        if index == 0:
-            pass
-        else:
-            #do ctype call first
-            pass
-        # self.idx = index
+    def __init__(self, index):
+        self.idx = index
         # self.name = "default"
         # self.comment = "default"
-        # self.value = 0.0
-        pass
+        self.value = 0.0
     def __str__(self):
         return str(self.value)
     def __add__(self, another):
@@ -136,8 +125,10 @@ class RegR:
     def __iadd__(self, another):
         if isinstance(another, float) or isinstance(another, int):
             self.value += another
+            reg.SetRR(self.idx, self.value)
         elif isinstance(another, RegR):
             self.value += another.value
+            reg.SetRR(self.idx, self.value)
         else:
             print("error type:::RegR __iadd__")
             return
@@ -160,8 +151,10 @@ class RegR:
     def __isub__(self,another):
         if isinstance(another, int) or isinstance(another, float):
             self.value -= another
+            reg.SetRR(self.idx, self.value)
         elif isinstance(another, RegR):    
             self.value -= another.value
+            reg.SetRR(self.idx, self.value)
         else:
             print("error type:::RegR __isub__")   
         return self
@@ -254,23 +247,17 @@ class RegR:
         else:
             print("error type:::RegR __ne__")
             return False
-
+    def setValue(self,ddd):
+        reg.SetRR(self.idx, ddd)
+    def getValue(self):
+        self.value = reg.GetRR(self.idx)
+        return self.value
 class RegM:
-    idx = 0
-    name = "default"
-    comment = "default"
-    value = 0
-    def __init__(self, index=0):
-        if index == 0:
-            pass
-        else:
-            #do ctype call first
-            pass
-        # self.idx = index
+    def __init__(self, index):
+        self.idx = index
         # self.name = "default"
         # self.comment = "default"
-        # self.value = 0
-        pass
+        self.value = 0
     def __str__(self):
         return str(self.value)
 
@@ -297,8 +284,10 @@ class RegM:
     def __iadd__(self, another):
         if isinstance(another, float) or isinstance(another, int):
             self.value += int(another)
+            reg.SetMR(self.idx, self.value)
         elif isinstance(another, RegM):
             self.value += another.value
+            reg.SetMR(self.idx, self.value)
         else:
             print("error type::: RegM __iadd__")
         return self
@@ -317,8 +306,10 @@ class RegM:
     def __isub__(self, another):
         if isinstance(another, float) or isinstance(another, int):
             self.value -= int(another)
+            reg.SetMR(self.idx, self.value)
         elif isinstance(another, RegM):
-             self.value -= another.value
+            self.value -= another.value
+            reg.SetMR(self.idx, self.value)
         else:
             print("error type::: RegM __isub__")
         return self
@@ -412,22 +403,23 @@ class RegM:
         else:
             print("error type::: RegM __ne__")
             return False
+    def setValue(self,ddd):
+        #print("set MR[%d]=%d"%(self.idx,ddd))
+        return reg.SetMR(self.idx, ddd)
+    def getValue(self):
+        self.value = reg.GetMR(self.idx)
+        return self.value
+
 class RegS:
     # idx = 0
     # name = "default"
     # comment = "default"
     # value = ""
-    def __init__(self, index=0):
-        if index == 0:
-            pass
-        else:
-            #do ctype call first
-            pass
+    def __init__(self, index):
         self.idx = index
-        self.name = "default"
-        self.comment = "default"
+        #self.name = "default"
+        #self.comment = "default"
         self.value = ""
-        pass
     def __str__(self):
         return self.value
 
@@ -450,8 +442,10 @@ class RegS:
     def __iadd__(self, another):
         if isinstance(another, str) :
            self.value += another
+           reg.SetSR(self.idx, self.value)
         elif isinstance(another, RegS):
            self.value += another.value
+           reg.SetSR(self.idx, self.value)
         else:
             print("error type::: RegS __iadd__")
         return self
@@ -479,6 +473,17 @@ class RegS:
         else:
             print("error type::: RegS __ne__")
             return False
+    def setValue(self,ssss):
+        #print("set SR[%d] = %s"%(self.idx, ssss))
+        reg.SetSR(self.idx, ssss)
+    
+    def getValue(self):
+        SR_n = self.idx
+        #print("SR---getvalue, SR_n=%s----"%SR_n)
+        #self.value = reg.GetSR(self.idx).encode('utf-8').strip()
+        ret_getSR = reg.GetSR(SR_n)
+        #print("ret_getSR = %s"%ret_getSR) 
+        return ret_getSR
 class PrList:
     regs = {0:RegP(0)}
     def __init__(self):
@@ -487,16 +492,27 @@ class PrList:
         pass
     
     def __getitem__(self, index):
-        #call c function
-        #self.regs.update{index:data}
-        return self.regs[index]
+        t_index = 1
+        if isinstance(index,RegM):
+            t_index = index.value
+        elif isinstance(index,RegR):
+            t_index = int(index.value)
+        elif isinstance(index,RegS):
+            t_index = int(getNumFromString(index.value))
+        elif isinstance(index,str):
+            t_index = int(getNumFromString(index)) 
+        else:
+            t_index = index
+        
+        self.regs[t_index].value = reg.GetPR()
+        return self.regs[t_index]
 
     def __setitem__(self, index, data):
         self.regs[index].value["position"] = data.value["position"]
-        #call c function to update
-        pass
+        #self.regs[index].SetPR(index, data)
+        #reg.SetPR(index, self.regs[index].value)
     
-PR = PrList()
+PR = PrList() 
 
 def is_number(s):   
     try:
@@ -564,80 +580,108 @@ def getNumFromString(sss):
 class RrList:
     regs = {}
     def __init__(self):
-        for count in range(10):
+        for count in range(1,4):#0不可用
             self.regs.update({count:RegR(count)})
         pass
     
     def __getitem__(self, index):
-        if(isinstance(index, RegM) or isinstance(index, RegR)):
-            return self.regs[index.value]
-        #call c function
-        #self.regs.update{index:data}
-        return self.regs[index]
+        t_index = 1
+        if isinstance(index,RegM):
+            t_index = index.value
+        elif isinstance(index,RegR):
+            t_index = int(index.value)
+        elif isinstance(index,RegS):
+            t_index = int(getNumFromString(index.value))
+        elif isinstance(index,str):
+            t_index = int(getNumFromString(index)) 
+        else:
+            t_index = index
+        #print("t_index = %s"%t_index)
+        return self.regs[t_index].getValue()
 
     def __setitem__(self, index, data):
+        setPRData = 0.0
         if isinstance(data, float) or isinstance(data, int):
-            self.regs[index].value = data
+            setPRData = data
         elif isinstance(data, RegR) or isinstance(data, RegM):
-            self.regs[index].value = data.value
+            setPRData = data.value
         elif isinstance(data,RegS):
-            self.regs[index].value = getNumFromString(data.value)
+            setPRData = float(getNumFromString(data.value))
         elif isinstance(data, str):
-            self.regs[index].value = float(getNumFromString(data))
+            setPRData = float(getNumFromString(data))
         else:
             print("error type")
-        #call c function to update
-        pass
+        self.regs[index].setValue(setPRData)
+
 R = RrList()
 
 class MrList:
     regs = {}
     def __init__(self):
-        for count in range(10):
+        for count in range(1,4):# 0不可用
             self.regs.update({count:RegM(count)})
         pass
     
     def __getitem__(self, index):
-        #call c function
-        #self.regs.update{index:data}
-        return self.regs[index]
+        t_index = 1
+        if isinstance(index,RegM):
+            t_index = index.value
+        elif isinstance(index,RegR):
+            t_index = int(index.value)
+        elif isinstance(index,RegS):
+            t_index = int(getNumFromString(index.value))
+        elif isinstance(index,str):
+            t_index = int(getNumFromString(index)) 
+        else:
+            t_index = index
+        #print("t_index = %s"%t_index)
+        return self.regs[t_index].getValue()
 
     def __setitem__(self, index, data):
+        set_data = 0
         if isinstance(data, float) or isinstance(data, int):
-            self.regs[index].value = int(data)
+            set_data= int(data)
         elif isinstance(data, RegR) or isinstance(data, RegM):
-            self.regs[index].value = int(data.value)
+            set_data = int(data.value)
         elif isinstance(data,RegS):
-            self.regs[index].value = int(getNumFromString(data.value))
+            set_data = int(getNumFromString(data.value))
         elif isinstance(data, str):
-            self.regs[index].value = int(getNumFromString(data))
+            set_data = int(getNumFromString(data))
         else:
-            print("error type")
-            
-        #call c function to update
-        pass
+            print("error type") 
+        #print("__setitem__ MR[%d]=%d"%(index,set_data))
+        self.regs[index].setValue(set_data)
 MR = MrList()
-
 
 class SrList:
     regs = {}
     def __init__(self):
-        for count in range(10):
+        for count in range(1,4):   #SR[0]不可用, 实际只有1~3
             self.regs.update({count:RegS(count)})
         pass
-    
     def __getitem__(self, index):
-        #call c function
-        #self.regs.update{index:data}
-        return self.regs[index]
+        t_index = 1
+        if isinstance(index,RegM):
+            t_index = index.value
+        elif isinstance(index,RegR):
+            t_index = int(index.value)
+        elif isinstance(index,RegS):
+            t_index = int(getNumFromString(index.value))
+        elif isinstance(index,str):
+            t_index = int(getNumFromString(index)) 
+        else:
+            t_index = index
+        #print("t_index = %s"%t_index)
+        return self.regs[t_index].getValue()
 
     def __setitem__(self, index, data):
+        set_string = ""
         if isinstance(data, RegS):
-            self.regs[index].value = data.value
+            set_string = data.value   
         else:
-            self.regs[index].value = str(data)
-        #call c function to update
-        pass
-SR = SrList()
+            set_string = str(data)
+        self.regs[index].setValue(set_string)
+
+SR = SrList() #注意:SR[i] i从1开始, SR[0]不可用
     
     

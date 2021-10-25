@@ -18,6 +18,7 @@ bool InterpReg_Init(void)
 ErrorCode InterpReg_GetRR(int id, RegValue *val)
 {
     RValue value;
+    memset(&value,0,sizeof(RValue));
     reg_manager.getRRegValueById(id, value);
     val->rr = value.value;
     LogProducer::info("InterpReg", "get R[%d] register value %f", id, val->rr);
@@ -37,6 +38,8 @@ ErrorCode InterpReg_SetRR(int id, RegValue *val)
 ErrorCode InterpReg_GetSR(int id, RegValue *val)
 {
     SrValue value;
+    memset(&value,0,sizeof(SrValue));
+    //printf("===>1 enter InterpReg_GetSR,  id=%d\n",id);
     reg_manager.getSrRegValueById(id, value);
     memcpy(val->sr, value.value, STRING_REG_MAX_LENGTH);
     LogProducer::info("InterpReg", "get S register[%d] value %s", id, val->sr);
@@ -48,6 +51,7 @@ ErrorCode InterpReg_SetSR(int id, RegValue *val)
     SrRegDataIpc data;
     data.id = id;
     memcpy(data.value.value, val->sr, STRING_REG_MAX_LENGTH);
+    //printf("===>1 enter InterpReg_SetSR,  SrRegDataIpc->id=%d, SrRegDataIpc->data->data = %s\n",id,data.value.value);
     reg_manager.updateSrRegValue(&data);
     LogProducer::info("InterpReg", "set S register[%d] value %s", id, val->sr);
     return 0;
@@ -56,6 +60,7 @@ ErrorCode InterpReg_SetSR(int id, RegValue *val)
 ErrorCode InterpReg_GetMR(int id, RegValue *val)
 {
     MrValue value;
+    memset(&value,0,sizeof(MrValue));
     reg_manager.getMrRegValueById(id, value);
     val->mr = value.value;
     LogProducer::info("InterpReg", "get S register[%d] value %d", id, val->mr);

@@ -197,29 +197,39 @@ ErrorCode SrReg::moveReg(int expect_id, int original_id)
 
 bool SrReg::getRegValueById(int id, SrValue& sr_value)
 {
+    //printf("=====>3 enter SrReg::getRegValueById(int id, SrValue& sr_value),  id=%d\n",id);
     if (!isRegValid(id))
     {
         LogProducer::error("reg_manager", "getRegValueById: input sr id = %d invalid", id);
+        //printf("=====>3_1 enter SrReg::getRegValueById(int id, SrValue& sr_value),  id=%d is invalid\n",id);
         return false;
     }
-
     return nvram_ptr_->readNvram(SR_START_ADDR + sizeof(SrValue) * id, (uint8_t*)sr_value.value, sizeof(SrValue));
 }
 
 bool SrReg::updateRegValue(SrRegDataIpc* data_ptr)
 {
+    //printf("=====>3 enter SrReg::updateRegValue(SrRegDataIpc* data_ptr)  data_ptr->id=%d, data_ptr->value.value=%s\n", data_ptr->id, data_ptr->value.value);
     if (data_ptr == NULL)
     {
 		LogProducer::error("reg_manager", "updateRegValue: input sr ptr = NULL");
+        //printf("=====>3_1 enter SrReg::updateRegValue(SrRegDataIpc* data_ptr)  ERROR:data_ptr==null\n");
         return false;
     }
-
     if (!isUpdateInputValid(data_ptr->id) || static_cast<int>(strlen(data_ptr->value.value)) > param_ptr_->sr_value_limit_)
     {
         LogProducer::error("reg_manager", "updateRegValue: input sr id = %d or invalid", data_ptr->id);
+        /*
+        if(!isUpdateInputValid(data_ptr->id))
+        {
+            printf("=====>3_2 data_ptr->id invalid\n");
+        }
+        if(static_cast<int>(strlen(data_ptr->value.value)) > param_ptr_->sr_value_limit_)
+        {
+            printf("=====>3_3 strlen(data_ptr->value.value) > param_ptr_->sr_value_limit_\n");
+        }*/
         return false;
     }
-
     data_ptr->value.value[STRING_REG_MAX_LENGTH - 1] = '\0';
     return nvram_ptr_->writeNvram(SR_START_ADDR + sizeof(SrValue) * data_ptr->id, (uint8_t*)data_ptr->value.value, sizeof(SrValue));
 }

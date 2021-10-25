@@ -336,6 +336,7 @@ bool RegManager::getMrRegValueById(int id, MrValue& mr_value)
 
 bool RegManager::getSrRegValueById(int id, SrValue& sr_value)
 {
+    //printf("====>2 enter RegManager::getSrRegValueById(int id, SrValue& sr_value),  id=%d\n",id);
     SrReg* reg_ptr = dynamic_cast<SrReg*>(reg_ptr_[REG_TYPE_SR]);
     return reg_ptr->getRegValueById(id, sr_value);
 }
@@ -366,6 +367,7 @@ bool RegManager::updateMrRegValue(MrRegDataIpc* data_ptr)
 
 bool RegManager::updateSrRegValue(SrRegDataIpc* data_ptr)
 {
+    //printf("====>2 enter RegManager::updateSrRegValue(SrRegDataIpc* data_ptr),  data_ptr->id=%d, data_ptr->data->data = %s\n",data_ptr->id,data_ptr->value.value);
     SrReg* reg_ptr = dynamic_cast<SrReg*>(reg_ptr_[REG_TYPE_SR]);
     return reg_ptr->updateRegValue(data_ptr);
 }

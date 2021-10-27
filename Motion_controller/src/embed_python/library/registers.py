@@ -21,8 +21,97 @@ __le__(self,another)         self <= rhs       小于等于
 __eq__(self,another)         self == rhs       等于
 __ne__(self,another)         self != rhs       不等于
 """
-
+import ctypes
 import register as reg
+
+def is_number(s):   
+    try:
+        float(s)
+        return True
+    except ValueError:
+        pass
+    try:
+        import unicodedata
+        unicodedata.numeric(s)
+        return True
+    except (TypeError, ValueError):
+        pass
+    return False
+
+#函数功能: 提取字符串中第一个数字,支持科学计数法. 如果字符串中不包含数字则返回0
+def getNumFromString(sss):
+	slen = len(sss)
+	ret_value = 0 #返回值
+	sflag = 0 #标记是否遇到第一个数字字符 0-未遇到 1-已遇到
+	zflag = 1 #数字整数部分标记  默认1-整数
+	pnflag = 1 #正负号标记   默认1-正数
+	scientificEnumerationFlag = 0 #科学计数法标记
+	cnt = 1 #小数部分长度计数
+	power_num = 0 #幂
+	power_pnFlag = 1
+	#print("字符串长度=%s"%slen)
+	for i in range(slen):
+		if sss[i].isdigit():
+			sflag = 1
+			if scientificEnumerationFlag:
+				power_num = power_num*10 + int(sss[i])
+				#print("current step power_num=%s"%power_num)
+			else:
+				if zflag == 1:
+					ret_value = ret_value*10 + int(sss[i])
+					#print(ret_value)
+				else:	
+					divnum = 10**cnt
+					ret_value = ret_value + float(sss[i])/(divnum)
+					#print("div_num=%s, current step ret_value=%s"%(divnum,ret_value))
+					cnt+=1
+		else:
+			if sflag == 1:
+				if sss[i] == '.':
+					zflag = 0
+				elif sss[i] == 'e' and (sss[i+1] == '+' or sss[i+1] == '-'):
+					scientificEnumerationFlag = 1 #开启科学计数法
+					if(sss[i+1] == '+'):
+						power_pnFlag = 1
+					else:
+						power_pnFlag = -1
+					#print("幂的符号=%s"%power_pnFlag)
+				else:
+					if sss[i-1] == 'e' and (sss[i] == '+' or sss[i] == '-'):
+						continue
+					else:
+						#print("-------------break------------")
+						break
+			else:
+				if sss[i] == '-':
+					pnflag = -1
+	return pnflag*ret_value*(10**(power_num*power_pnFlag)) #符号*返回值*(10**(幂*幂的符号))
+
+class POSTURE(ctypes.Structure):
+    _fields_ = [('coord',ctypes.c_int), 
+                ('arm',ctypes.c_int),
+                ('elbow',ctypes.c_int),
+                ('wrist',ctypes.c_int),
+                ('flip',ctypes.c_int),
+                ('turn1',ctypes.c_int),
+                ('turn2',ctypes.c_int),
+                ('turn3',ctypes.c_int),
+                ('turn4',ctypes.c_int),
+                ('turn5',ctypes.c_int),
+                ('turn6',ctypes.c_int),
+                ('turn7',ctypes.c_int),
+                ('turn8',ctypes.c_int),
+                ('turn9',ctypes.c_int),
+                ('pos1',ctypes.c_double),
+                ('pos2',ctypes.c_double),
+                ('pos3',ctypes.c_double),
+                ('pos4',ctypes.c_double),
+                ('pos5',ctypes.c_double),
+                ('pos6',ctypes.c_double),
+                ('pos7',ctypes.c_double),
+                ('pos8',ctypes.c_double),
+                ('pos9',ctypes.c_double),]
+
 class RegP:
     def update(self):
         pass
@@ -33,9 +122,9 @@ class RegP:
         self.comment = "default"
         self.value = {
             "coord": 0,#1 joint, 2 cart
-            "position": [0,0,0,0,0,0,0,0,0],
-            "turn": [0,0,0,0,0,0,0,0,0],
             "posture": [0,0,0,0],
+            "turn": [0,0,0,0,0,0,0,0,0],
+            "position": [0,0,0,0,0,0,0,0,0],
             "group": 0,
         }
 
@@ -70,9 +159,8 @@ class RegP:
         for count in range(len(self.value["position"])):
             self.value["position"][count] -= another.value["position"][count]
         return self
-   
+    '''
     def __setattr__(self, item, data=0):
-        #print(data, type(data))
         if isinstance(data, RegR) or isinstance(data, RegM):
             self.__dict__[item] = data.value
         elif isinstance(data, int) or isinstance(data, float):
@@ -85,17 +173,58 @@ class RegP:
             pass
         elif isinstance(data, type):
             pass
+        elif isinstance(data, tuple):
+            self.value
         else:
-            #print(type(data), data)
+            print(type(data), data)
             print("error type at RegP")
             
     def __getattr__(self, item):
+        print("===============> item=", type(item))
+        print("===============> dict=", self.__dict__)
         return self.__dict__[item]
-    def setValue(self,ddd):
-        reg.SetPR(self.idx, ddd)
+    '''
+     
+    def setValue(self,spd):
+        setPrData = POSTURE()
+        if isinstance(spd, dict):
+            setPrData.coord = spd['coord']
+            setPrData.arm   = spd['posture'][0]
+            setPrData.elbow = spd['posture'][1]
+            setPrData.wrist = spd['posture'][2]
+            setPrData.flip  = spd['posture'][3]
+            setPrData.turn1 = spd['turn'][0]
+            setPrData.turn2 = spd['turn'][1]
+            setPrData.turn3 = spd['turn'][2]
+            setPrData.turn4 = spd['turn'][3]
+            setPrData.turn5 = spd['turn'][4]
+            setPrData.turn6 = spd['turn'][5]
+            setPrData.turn7 = spd['turn'][6]
+            setPrData.turn8 = spd['turn'][7]
+            setPrData.turn9 = spd['turn'][8]
+            setPrData.pos1 = spd['position'][0]
+            setPrData.pos2 = spd['position'][1]
+            setPrData.pos3 = spd['position'][2]
+            setPrData.pos4 = spd['position'][3]
+            setPrData.pos5 = spd['position'][4]
+            setPrData.pos6 = spd['position'][5]
+            setPrData.pos7 = spd['position'][6]
+            setPrData.pos8 = spd['position'][7]
+            setPrData.pos9 = spd['position'][8]
+
+            reg.SetPR(self.idx, setPrData)
+        else:
+            print("RegP setValue input typeerror")
+        
     def getValue(self):
-        self.value = reg.GetPR(self.idx)
+        Tt = reg.GetPR(self.idx) #获取返回元组数据
+        self.value['coord'] = Tt[0]
+        self.value['posture'] = Tt[1:5] #1,2,3,4
+        self.value['turn'] = Tt[5:14]#5,6,7,8,9,10,11,12,13,14
+        self.value['position'] = Tt[14:]#14~22
         return self.value
+
+
 class RegR:
     def __init__(self, index):
         self.idx = index
@@ -487,7 +616,7 @@ class RegS:
 class PrList:
     regs = {0:RegP(0)}
     def __init__(self):
-        for count in range(2):
+        for count in range(3): #1,2
             self.regs.update({count:RegP(count)})
         pass
     
@@ -502,80 +631,37 @@ class PrList:
         elif isinstance(index,str):
             t_index = int(getNumFromString(index)) 
         else:
-            t_index = index
-        
-        self.regs[t_index].value = reg.GetPR()
-        return self.regs[t_index]
+            t_index = int(index)
+        return self.regs[t_index].getValue()
 
     def __setitem__(self, index, data):
-        self.regs[index].value["position"] = data.value["position"]
-        #self.regs[index].SetPR(index, data)
-        #reg.SetPR(index, self.regs[index].value)
+        set_data = 0
+        s_index = 1
+        if isinstance(index,RegM):
+            s_index = index.value
+        elif isinstance(index,RegR):
+            s_index = int(index.value)
+        elif isinstance(index,RegS):
+            s_index = int(getNumFromString(index.value))
+        elif isinstance(index,str):
+            s_index = int(getNumFromString(index)) 
+        else:
+            s_index = int(index)
+        if isinstance(data, RegP):
+            print("PrList __setitem__ data type=RegP")
+            set_data = data.value #self.regs[index].value["position"] = data.value["position"]
+        elif isinstance(data, tuple):
+            print("PrList __setitem__ data type=tuple")
+            set_data = data
+        elif isinstance(data, dict):
+            print("PrList __setitem__ data type=dict")
+            set_data = data
+        else:
+            print("PrList __setitem__ data type error!!! type(data)=%s"%type(data))
+        self.regs[s_index].setValue(set_data)
     
 PR = PrList() 
 
-def is_number(s):   
-    try:
-        float(s)
-        return True
-    except ValueError:
-        pass
-    try:
-        import unicodedata
-        unicodedata.numeric(s)
-        return True
-    except (TypeError, ValueError):
-        pass
-    return False
-
-#函数功能: 提取字符串中第一个数字,支持科学计数法. 如果字符串中不包含数字则返回0
-def getNumFromString(sss):
-	slen = len(sss)
-	ret_value = 0 #返回值
-	sflag = 0 #标记是否遇到第一个数字字符 0-未遇到 1-已遇到
-	zflag = 1 #数字整数部分标记  默认1-整数
-	pnflag = 1 #正负号标记   默认1-正数
-	scientificEnumerationFlag = 0 #科学计数法标记
-	cnt = 1 #小数部分长度计数
-	power_num = 0 #幂
-	power_pnFlag = 1
-	#print("字符串长度=%s"%slen)
-	for i in range(slen):
-		if sss[i].isdigit():
-			sflag = 1
-			if scientificEnumerationFlag:
-				power_num = power_num*10 + int(sss[i])
-				#print("current step power_num=%s"%power_num)
-			else:
-				if zflag == 1:
-					ret_value = ret_value*10 + int(sss[i])
-					#print(ret_value)
-				else:	
-					divnum = 10**cnt
-					ret_value = ret_value + float(sss[i])/(divnum)
-					#print("div_num=%s, current step ret_value=%s"%(divnum,ret_value))
-					cnt+=1
-		else:
-			if sflag == 1:
-				if sss[i] == '.':
-					zflag = 0
-				elif sss[i] == 'e' and (sss[i+1] == '+' or sss[i+1] == '-'):
-					scientificEnumerationFlag = 1 #开启科学计数法
-					if(sss[i+1] == '+'):
-						power_pnFlag = 1
-					else:
-						power_pnFlag = -1
-					#print("幂的符号=%s"%power_pnFlag)
-				else:
-					if sss[i-1] == 'e' and (sss[i] == '+' or sss[i] == '-'):
-						continue
-					else:
-						#print("-------------break------------")
-						break
-			else:
-				if sss[i] == '-':
-					pnflag = -1
-	return pnflag*ret_value*(10**(power_num*power_pnFlag)) #符号*返回值*(10**(幂*幂的符号))
 
 class RrList:
     regs = {}
@@ -595,12 +681,23 @@ class RrList:
         elif isinstance(index,str):
             t_index = int(getNumFromString(index)) 
         else:
-            t_index = index
+            t_index = int(index)
         #print("t_index = %s"%t_index)
         return self.regs[t_index].getValue()
 
     def __setitem__(self, index, data):
         setPRData = 0.0
+        s_index = 1
+        if isinstance(index,RegM):
+            s_index = index.value
+        elif isinstance(index,RegR):
+            s_index = int(index.value)
+        elif isinstance(index,RegS):
+            s_index = int(getNumFromString(index.value))
+        elif isinstance(index,str):
+            s_index = int(getNumFromString(index)) 
+        else:
+            s_index = int(index)
         if isinstance(data, float) or isinstance(data, int):
             setPRData = data
         elif isinstance(data, RegR) or isinstance(data, RegM):
@@ -611,7 +708,7 @@ class RrList:
             setPRData = float(getNumFromString(data))
         else:
             print("error type")
-        self.regs[index].setValue(setPRData)
+        self.regs[s_index].setValue(setPRData)
 
 R = RrList()
 
@@ -633,12 +730,23 @@ class MrList:
         elif isinstance(index,str):
             t_index = int(getNumFromString(index)) 
         else:
-            t_index = index
+            t_index = int(index)
         #print("t_index = %s"%t_index)
         return self.regs[t_index].getValue()
 
     def __setitem__(self, index, data):
         set_data = 0
+        s_index = 1
+        if isinstance(index,RegM):
+            s_index = index.value
+        elif isinstance(index,RegR):
+            s_index = int(index.value)
+        elif isinstance(index,RegS):
+            s_index = int(getNumFromString(index.value))
+        elif isinstance(index,str):
+            s_index = int(getNumFromString(index)) 
+        else:
+            s_index = int(index)
         if isinstance(data, float) or isinstance(data, int):
             set_data= int(data)
         elif isinstance(data, RegR) or isinstance(data, RegM):
@@ -650,7 +758,7 @@ class MrList:
         else:
             print("error type") 
         #print("__setitem__ MR[%d]=%d"%(index,set_data))
-        self.regs[index].setValue(set_data)
+        self.regs[s_index].setValue(set_data)
 MR = MrList()
 
 class SrList:
@@ -670,18 +778,32 @@ class SrList:
         elif isinstance(index,str):
             t_index = int(getNumFromString(index)) 
         else:
-            t_index = index
+            t_index = int(index)
         #print("t_index = %s"%t_index)
         return self.regs[t_index].getValue()
 
     def __setitem__(self, index, data):
         set_string = ""
+        s_index = 1
+        if isinstance(index,RegM):
+            s_index = index.value
+        elif isinstance(index,RegR):
+            s_index = int(index.value)
+        elif isinstance(index,RegS):
+            s_index = int(getNumFromString(index.value))
+        elif isinstance(index,str):
+            s_index = int(getNumFromString(index)) 
+        else:
+            s_index = int(index)
         if isinstance(data, RegS):
             set_string = data.value   
         else:
             set_string = str(data)
-        self.regs[index].setValue(set_string)
+        self.regs[s_index].setValue(set_string)
 
 SR = SrList() #注意:SR[i] i从1开始, SR[0]不可用
     
     
+
+
+

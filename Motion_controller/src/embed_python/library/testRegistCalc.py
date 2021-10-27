@@ -3,6 +3,7 @@
 肖志才测试通过
 2021/10/19 
 """
+
 from registers import *
 import register as reg
 
@@ -919,10 +920,31 @@ def test_cascad_access(): #寄存器间级联访问测试
 		print("118# test SR[MR[R[SR[]]]] success") 
 	else:
 		print("118# test SR[MR[R[SR[]]]] fail.")
+def testPR():
+    pr = POSTURE(1,2,3,4,5,1,2,3,4,5,6,7,8,9,1,2,3,4,5,6,7,8,9)
+    reg.SetPR(1,pr)
+    d = reg.GetPR(1)
+    print(d)
+def test_set_get_PR():
+	pr = POSTURE(45,2,3,4,5,1,2,3,4,5,6,7,8,9,1,2,3,4,5,6,7,8,9)
+	reg.SetPR(1,pr)
+	print("119# test set PR[1]=%s"%PR[1])
+	PR[2] = PR[1]
+	print("120# test PR[2]=PR[1]  PR[2]=%s"%PR[2])
+	MR[1] = 2
+	R[1] = 2.0
+	SR[1] = "abc2.3sahfaj"
+	print("121# test  PR[MR[1]]=%s"%PR[MR[1]])
+	print("122# test  PR[R[1]]=%s"%PR[R[1]])
+	print("123# test  PR[SR[1]]=%s"%PR[SR[1]])
+	print("124# test  PR[float]=%s"%PR[2.34])
+	print("125# test  PR[string]=%s"%PR["qwer2.23"])
+
+
 
 
 print("======register basic calculation test log======")
-
+"""
 test_set_SR()
 test_set_MR()
 test_set_R()
@@ -957,8 +979,9 @@ test_MR_gt()
 test_MR_ge()
 test_R_ne()
 test_MR_ne()
-
 test_cascad_access()
+"""
 
-
+#testPR()
+test_set_get_PR()
 

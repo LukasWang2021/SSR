@@ -648,13 +648,13 @@ class PrList:
         else:
             s_index = int(index)
         if isinstance(data, RegP):
-            print("PrList __setitem__ data type=RegP")
+            #print("PrList __setitem__ data type=RegP")
             set_data = data.value #self.regs[index].value["position"] = data.value["position"]
         elif isinstance(data, tuple):
-            print("PrList __setitem__ data type=tuple")
+            #print("PrList __setitem__ data type=tuple")
             set_data = data
         elif isinstance(data, dict):
-            print("PrList __setitem__ data type=dict")
+            #print("PrList __setitem__ data type=dict")
             set_data = data
         else:
             print("PrList __setitem__ data type error!!! type(data)=%s"%type(data))

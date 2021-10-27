@@ -1,7 +1,7 @@
 """
 文档说明:  本文档编写了一些对寄存器赋值及基本运算的测试代码
 肖志才测试通过
-2021/10/19 
+2021/10/27 
 """
 
 from registers import *
@@ -255,7 +255,7 @@ def test_SR_add():
 	if SR[1] == "qwerty":
 		print("18# test SR __iadd__ test success")
 	else:
-		print("18# test SR __iadd__ test fail.SR[1]=====================>%s"%SR[1])
+		print("18# test SR __iadd__ test fail.SR[1]=%s"%SR[1])
 
 def test_R_sub():
 	R[1] = 1.234
@@ -382,22 +382,22 @@ def test_R_div():
 	if R[2] == 0.0035715216536002545:
 		print("36# test R __truediv__ R[1]/int success")
 	else:
-		print("36# test R __truediv__ R[1]/int false.R[2]=%s"%R[2])
+		print("36# test R __truediv__ R[1]/int fail.R[2]=%s"%R[2])
 	
 	R[1] = 123.456789
 	R[2] = R[1]/567.123489
 	if R[2] == 0.21768942989416545:
 		print("37# test R __truediv__ R[1]/float success")
 	else:
-		print("37# test R __truediv__ R[1]/float false.R[2]=%s"%R[2])
+		print("37# test R __truediv__ R[1]/float fail.R[2]=%s"%R[2])
 	
 	R[1] = 123.456789
 	R[2] = 567.123489
 	R[3] = R[1]/R[2]
-	if R[2] == 0.21768942989416545:
+	if R[3]-0.21768942989416545 < 0.00000001:
 		print("38# test R __truediv__ R[1]/R[2] success")
 	else:
-		print("38# test R __truediv__ R[1]/R[2] false.R[0]=%s"%R[2])
+		print("38# test R __truediv__ R[1]/R[2] fail.R[0]=%s"%R[3])
 	
 	R[1] = 567.123489
 	MR[1] = 34567
@@ -412,14 +412,14 @@ def test_R_div():
 	if R[2] == 3873.0:
 		print("40# test R __floordiv__ R[1]//int success")
 	else:
-		print("40# test R __floordiv__ R[1]//int false.R[2]=%s"%R[2])
+		print("40# test R __floordiv__ R[1]//int fail.R[2]=%s"%R[2])
 	
 	R[1] = 987654.321
 	R[2] = R[1]//255.789
 	if R[2] == 3861.0:
 		print("41# test R __floordiv__ R[1]//float success")
 	else:
-		print("41# test R __floordiv__ R[1]//float false.R[2]=%s"%R[2])
+		print("41# test R __floordiv__ R[1]//float fail.R[2]=%s"%R[2])
 	
 	R[1] = 987654.321
 	R[2] = 255.789
@@ -427,7 +427,7 @@ def test_R_div():
 	if R[3] ==3861.0:
 		print("42# test R __floordiv__ R[1]//R[2] success")
 	else:
-		print("42# test R __floordiv__ R[1]//R[2] false.R[3]=%s"%R[3])
+		print("42# test R __floordiv__ R[1]//R[2] fail R[3]=%s"%R[3])
 	
 	R[1] = 987654.321
 	MR[1] = 255
@@ -444,14 +444,14 @@ def test_MR_div():
 	if MR[2] == 101:
 		print("44# test MR __truediv__ MR[1]/int success")
 	else:
-		print("44# test MR __truediv__ MR[1]/int false.MR[2]=%s"%MR[2])
+		print("44# test MR __truediv__ MR[1]/int fail.MR[2]=%s"%MR[2])
 	
 	MR[1] = 6789
 	MR[2] = MR[1]/345.678 
 	if MR[2] == 19:
 		print("45# test MR __truediv__ MR[1]/float success")
 	else:
-		print("45# test MR __truediv__ MR[1]/float false.MR[2]=%s"%MR[2])
+		print("45# test MR __truediv__ MR[1]/float fail.MR[2]=%s"%MR[2])
 	
 	MR[1] = 6789
 	MR[2] = 345
@@ -459,7 +459,7 @@ def test_MR_div():
 	if MR[3] == 19:
 		print("46# test MR __truediv__ MR[1]/MR[2] success")
 	else:
-		print("46# test MR __truediv__ MR[1]/MR[2] false.MR[3]=%s"%MR[3])
+		print("46# test MR __truediv__ MR[1]/MR[2] fail.MR[3]=%s"%MR[3])
 	
 	MR[1] = 65533
 	R[1] = 67.123
@@ -474,14 +474,14 @@ def test_MR_div():
 	if MR[2] == 411:
 		print("48# test MR __floordiv__ MR[1]//int success")
 	else:
-		print("48# test MR __floordiv__ MR[1]//int false.MR[2]=%s"%MR[2])
+		print("48# test MR __floordiv__ MR[1]//int fail.MR[2]=%s"%MR[2])
 	
 	MR[1] = 9876
 	MR[2] = MR[1]//3.14 
 	if MR[2] == 3145:
 		print("49# test MR __floordiv__ MR[1]//float success")
 	else:
-		print("49# test MR __floordiv__ MR[1]//float false.MR[2]=%s"%MR[2])
+		print("49# test MR __floordiv__ MR[1]//float fail.MR[2]=%s"%MR[2])
 	
 	MR[1] = 9876
 	MR[2] = 3
@@ -489,7 +489,7 @@ def test_MR_div():
 	if MR[3] == 3292:
 		print("50# test MR __floordiv__ MR[1]//MR[2] success")
 	else:
-		print("50# test MR __floordiv__ MR[1]//MR[2] false.MR[3]=%s"%MR[3])
+		print("50# test MR __floordiv__ MR[1]//MR[2] fail.MR[3]=%s"%MR[3])
 	
 	MR[1] = 987
 	R[1] = 67.1
@@ -920,6 +920,73 @@ def test_cascad_access(): #寄存器间级联访问测试
 		print("118# test SR[MR[R[SR[]]]] success") 
 	else:
 		print("118# test SR[MR[R[SR[]]]] fail.")
+def test_cascad_asignment(): #级联赋值测试
+	MR[1] = 2
+	R[MR[1]] = 99.99
+	if R[2] == 99.99:
+		print("119# test set R[MR[]] succes");
+	else:
+		print("119# test set R[MR[]] fail");
+	R[1] = 2.34
+	R[R[1]] = 123.456
+	if R[2] == 123.456:
+		print("120# test set R[R[]] succes");
+	else:
+		print("120# test set R[R[]] fail");
+	SR[1] = "sdfhsebf2.34sg"
+	R[SR[1]] = 423.456
+	if R[2] == 423.456:
+		print("121# test set R[SR[]] succes");
+	else:
+		print("121# test set R[SR[]] fail");
+
+	MR[1] = 2
+	MR[MR[1]] = 999
+	if MR[2] == 999:
+		print("122# test set MR[MR[]] succes");
+	else:
+		print("122# test set MR[MR[]] fail");
+	R[1] = 2.34
+	MR[R[1]] = 789
+	if MR[2] == 789:
+		print("123# test set MR[R[]] succes");
+	else:
+		print("123# test set MR[R[]] fail");
+	SR[1] = "sdfhsebf2.34sg"
+	MR[SR[1]] = 423
+	if MR[2] == 423:
+		print("124# test set MR[SR[]] succes");
+	else:
+		print("124# test set MR[SR[]] fail");
+
+	MR[1] = 2
+	SR[MR[1]] = "hello world"
+	if SR[2] == "hello world":
+		print("125# test set SR[MR[]] succes");
+	else:
+		print("125# test set SR[MR[]] fail");
+	MR[1] = 2
+	SR[MR["abc1.23fdsbgs"]] = "qazwsx"
+	if SR[2] == "qazwsx":
+		print("126# test set SR[MR[str]] succes");
+	else:
+		print("126# test set SR[MR[str]] fail");
+	MR[1] = 2
+	SR[3] = "abc1.23fdsbgs"
+	SR[MR[SR[3]]] = "zxcvbnm"
+	if SR[2] == "zxcvbnm":
+		print("127# test set SR[MR[SR[]]] succes");
+	else:
+		print("127# test set SR[MR[SR[]]] fail");
+
+	MR[1] = 2
+	SR[3] = "abc1.23fdsbgs"
+	R[MR[SR[3]]] = 123.789
+	if R[2] == 123.789:
+		print("128# test set R[MR[SR[]]] succes");
+	else:
+		print("128# test set R[MR[SR[]]] fail");
+
 def testPR():
     pr = POSTURE(1,2,3,4,5,1,2,3,4,5,6,7,8,9,1,2,3,4,5,6,7,8,9)
     reg.SetPR(1,pr)
@@ -928,23 +995,21 @@ def testPR():
 def test_set_get_PR():
 	pr = POSTURE(45,2,3,4,5,1,2,3,4,5,6,7,8,9,1,2,3,4,5,6,7,8,9)
 	reg.SetPR(1,pr)
-	print("119# test set PR[1]=%s"%PR[1])
+	print("129# test set PR[1]=%s"%PR[1])
 	PR[2] = PR[1]
-	print("120# test PR[2]=PR[1]  PR[2]=%s"%PR[2])
+	print("129# test PR[2]=PR[1]  PR[2]=%s"%PR[2])
 	MR[1] = 2
 	R[1] = 2.0
 	SR[1] = "abc2.3sahfaj"
-	print("121# test  PR[MR[1]]=%s"%PR[MR[1]])
-	print("122# test  PR[R[1]]=%s"%PR[R[1]])
-	print("123# test  PR[SR[1]]=%s"%PR[SR[1]])
-	print("124# test  PR[float]=%s"%PR[2.34])
-	print("125# test  PR[string]=%s"%PR["qwer2.23"])
-
-
+	print("130# test  PR[MR[1]]=%s"%PR[MR[1]])
+	print("131# test  PR[R[1]]=%s"%PR[R[1]])
+	print("132# test  PR[SR[1]]=%s"%PR[SR[1]])
+	print("133# test  PR[float]=%s"%PR[2.34])
+	print("134# test  PR[string]=%s"%PR["qwer2.23"])
 
 
 print("======register basic calculation test log======")
-"""
+
 test_set_SR()
 test_set_MR()
 test_set_R()
@@ -980,8 +1045,7 @@ test_MR_ge()
 test_R_ne()
 test_MR_ne()
 test_cascad_access()
-"""
-
+test_cascad_asignment()
 #testPR()
 test_set_get_PR()
 

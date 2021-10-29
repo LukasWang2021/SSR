@@ -56,7 +56,7 @@ int main(int argc, char **argv)
 {
 	uint8_t data[NVRAM_RW_BUFFER_SIZE];
 	stringstream ss;
-	uint32_t address, length = 0;
+	uint32_t address, length = 0, outss = 0;
 	int res = initSpi();
 
 	if (res != 0)
@@ -76,7 +76,7 @@ int main(int argc, char **argv)
 	
 	for (int i = 0; i < argc - 2; i++)
 	{
-		if (argv[i+2][0] == '0' && argv[i+2][1] == 'x') {ss.clear(); ss.str(""); ss << std::hex << argv[i+2] + 2; ss >> data[i];}
+		if (argv[i+2][0] == '0' && argv[i+2][1] == 'x') {ss.clear(); ss.str(""); ss << std::hex << argv[i+2] + 2; ss >> outss; data[i] = (uint8_t)outss;}
 		else {data[i] = atoi(argv[i+2]);}
 		length++;
 	}

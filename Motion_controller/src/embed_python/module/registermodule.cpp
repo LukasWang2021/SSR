@@ -83,8 +83,7 @@ static PyObject *register_SetSR(PyObject *self, PyObject *args)
 static PyObject *register_GetPR(PyObject *self, PyObject *args)
 {
     int id = 0;
-    /*see https://docs.python.org/3/c-api/arg.html#arg-parsing for PyArg_ParseTuple details*/
-    if (!PyArg_ParseTuple(args, "i", &id))
+    if (!PyArg_ParseTuple(args, "i", &id)) 
         return PyLong_FromUnsignedLongLong(INTERPRETER_ERROR_MOD_INVALID_ARG);
     RegValue value;
     InterpReg_GetPR(id, &value);

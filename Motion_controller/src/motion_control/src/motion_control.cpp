@@ -317,6 +317,13 @@ ErrorCode MotionControl::doGotoPointManualMove(const PoseAndPosture &pose, int u
     return group_ptr_->manualMoveToPoint(point);
 }
 
+ErrorCode MotionControl::convertEulerTraj2JointTraj(const std::string &offline_euler_trajectory_fileName)
+{
+    string euler_trajectory_filePath = "/root/robot_data/trajectory/";
+    euler_trajectory_filePath += offline_euler_trajectory_fileName;
+    return group_ptr_->convertEulerTraj2JointTraj(euler_trajectory_filePath);
+}
+
 ErrorCode MotionControl::setOfflineTrajectory(const std::string &offline_trajectory)
 {
     string trajectory_file = "/root/robot_data/trajectory/";
@@ -1162,14 +1169,19 @@ ErrorCode MotionControl::convertCartToJoint(const PoseAndPosture &pose, int user
 {
     if (user_frame_id == user_frame_id_ && tool_frame_id == tool_frame_id_)
     {
+        //printf("xzc_debug_step1\n");
         return group_ptr_->convertCartToJoint(pose, joint);
     }
-
+    else //xzc 20211109
+    {
+        printf("tool_frame_id_=%d, user_frame_id_=%d\n",tool_frame_id_,user_frame_id_);
+    }
     PoseEuler tf, uf;
 
     if (user_frame_id == 0)
     {
         memset(&uf, 0, sizeof(uf));
+        //printf("xzc_debug_step4\n");
     }
     else
     {
@@ -1179,10 +1191,12 @@ ErrorCode MotionControl::convertCartToJoint(const PoseAndPosture &pose, int user
         if (err_user == SUCCESS && uf_info.is_valid)
         {
             uf = uf_info.data;
+            //printf("xzc_debug_step4-1\n");
         }
         else
         {
             LogProducer::error("mc","Fail to get user frame from given ID = %d", user_frame_id);
+            //printf("xzc_debug_step4-2\n");
             return err_user == SUCCESS ? INVALID_PARAMETER : err_user;
         }
     }
@@ -1190,19 +1204,23 @@ ErrorCode MotionControl::convertCartToJoint(const PoseAndPosture &pose, int user
     if (tool_frame_id == 0)
     {
         memset(&tf, 0, sizeof(tf));
+        //printf("xzc_debug_step5\n");
     }
     else
     {
+        //printf("xzc_debug_step6\n");
         ToolInfo tf_info;
         ErrorCode err_tool = tool_manager_ptr_->getToolInfoById(tool_frame_id, tf_info);
 
         if (err_tool == SUCCESS && tf_info.is_valid)
         {
             tf = tf_info.data;
+            //printf("xzc_debug_step6-1\n");
         }
         else
         {
             LogProducer::error("mc","Fail to get tool frame from given ID = %d", tool_frame_id);
+            //printf("xzc_debug_step6-2\n");
             return err_tool == SUCCESS ? INVALID_PARAMETER : err_tool;
         }
     }

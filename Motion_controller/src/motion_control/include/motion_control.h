@@ -48,6 +48,7 @@ public:
     bool nextMovePermitted(void);
 
     // API for off line trajectory
+    ErrorCode convertEulerTraj2JointTraj(const std::string &offline_euler_trajectory_fileName);
     ErrorCode setOfflineTrajectory(const std::string &offline_trajectory);
     ErrorCode prepairOfflineTrajectory(void);
     ErrorCode moveOfflineTrajectory(void);

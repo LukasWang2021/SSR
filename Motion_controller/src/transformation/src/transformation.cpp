@@ -93,6 +93,7 @@ bool Transformation::convertPoseFromBaseToUser(const PoseEuler& pose_by_base, co
 bool Transformation::convertPoseFromUserToBase(const PoseEuler& pose_by_user, const PoseEuler& user_frame, PoseEuler& pose_by_base)
 {
     TransMatrix trans_pose_by_user, trans_user_frame;
+    //printf("xzc_debug_step3\n");
     pose_by_user.convertToTransMatrix(trans_pose_by_user);
     user_frame.convertToTransMatrix(trans_user_frame);
     TransMatrix trans_pose_by_base;

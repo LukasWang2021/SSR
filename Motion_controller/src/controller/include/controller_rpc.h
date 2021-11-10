@@ -424,6 +424,8 @@ private:
     void handleRpc0x00003B45(void* request_data_ptr, void* response_data_ptr);
     //"/rpc/motion_control/getPostureByJoint"	
     void handleRpc0x0000EC64(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/motion_control/axis_group/convertEulerTraj2JointFile" 将欧拉位置姿态轨迹转换为轴角轨迹
+    void handleRpc0x0000E375(void* request_data_ptr, void* response_data_ptr);
     //"/rpc/motion_control/axis_group/setOfflineTrajectoryFile"	
     void handleRpc0x00011275(void* request_data_ptr, void* response_data_ptr);
     //"/rpc/motion_control/axis_group/PrepareOfflineTrajectory"	

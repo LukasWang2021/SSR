@@ -133,6 +133,10 @@ target_link_libraries(tool_get ${rtm_LIBRARIES} pb tp_comm_test protos)
 add_executable(tool_set ./axis_group/tool_set.cpp)
 target_link_libraries(tool_set ${rtm_LIBRARIES} pb tp_comm_test protos)
 
+######### trajectory_eulerFileConvert2JointFile #########
+add_executable(trajectory_eulerFileConvert2JointFile ./axis_group/trajectory_eulerFileConvert2JointFile.cpp)
+target_link_libraries(trajectory_eulerFileConvert2JointFile ${rtm_LIBRARIES} pb tp_comm_test protos)
+
 ######### trajectory_file_offline_set #########
 add_executable(trajectory_file_offline_set ./axis_group/trajectory_file_offline_set.cpp)
 target_link_libraries(trajectory_file_offline_set ${rtm_LIBRARIES} pb tp_comm_test protos)

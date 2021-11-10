@@ -407,10 +407,12 @@ bool KinematicsRTM::doIK(const PoseEuler& pose_euler, const Posture& posture, co
     if(doIK(pose_euler, posture, joint))
     {
         joint = getJointByGeometryJointAndTurn(joint, turn);
+        //printf("xzc_debug_step3-2\n");
         return true;
     }
     else
     {
+        //printf("xzc_debug_step3-3\n");
         return false;
     }
 }

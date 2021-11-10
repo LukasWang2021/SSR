@@ -85,6 +85,7 @@ class BaseGroup
     virtual bool nextMovePermitted(void);
 
     // API for off line trajectory
+    virtual ErrorCode convertEulerTraj2JointTraj(const std::string &offline_euler_trajectory_filePath);
     virtual ErrorCode setOfflineTrajectory(const std::string &offline_trajectory);
     virtual basic_alg::Joint getStartJointOfOfflineTrajectory(void);
     virtual ErrorCode moveOfflineTrajectory(void);
@@ -285,6 +286,7 @@ class BaseGroup
     basic_alg::DynamicAlg   *dynamics_ptr_;
 
     std::ifstream offline_trajectory_file_;
+    std::ifstream offline_euler_trajectory_file_;
     bool offline_trajectory_first_point_;
     bool offline_trajectory_last_point_;
     uint32_t offline_trajectory_size_;

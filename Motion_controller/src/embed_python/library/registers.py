@@ -616,7 +616,7 @@ class RegS:
 class PrList:
     regs = {0:RegP(0)}
     def __init__(self):
-        for count in range(3): #1,2
+        for count in range(1,3): #1,2
             self.regs.update({count:RegP(count)})
         pass
     

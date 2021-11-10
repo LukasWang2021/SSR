@@ -6,9 +6,13 @@
  ************************************************************************/
 #include <fstream>
 #include <sstream>
+#include <string>
 #include <math.h>
+
 #include <common_error_code.h>
-#include <motion_control_base_group.h>
+#include "motion_control.h"
+//#include  "controller_rpc.h"
+#include "motion_control_base_group.h"
 #include "log_manager_producer.h"
 
 using namespace std;
@@ -17,6 +21,120 @@ using namespace log_space;
 
 namespace group_space
 {
+
+inline void file_to_string(vector<string> &record, const string& line, char delimiter);
+inline float string_to_float(string str);
+inline void file_to_string(vector<string> &record, const string& line, char delimiter)
+{
+    int linepos=0;
+    char c;
+    int linemax = line.length();
+    string curstring;
+    record.clear();
+    while (linepos<linemax)
+    {
+        c = line[linepos];
+        if (isdigit(c) || c=='.')
+        {
+            curstring+=c;
+        }
+        else if(c==delimiter && curstring.size())
+        {
+            record.push_back(curstring);
+            curstring="";
+        }
+        ++linepos;
+    }
+    if(curstring.size())
+        record.push_back(curstring);
+    return;
+}
+inline float string_to_float(string str){
+    int i=0,len=str.length();
+    float sum = 0;
+    while(i<len)
+    {
+        if(str[i]=='.') break;
+        sum = sum*10 + str[i] - '0';
+        ++i;
+    }
+    ++i;
+    float t=1,d=1;
+    while (i<len)
+    {
+        d*=0.1;
+        t=str[i]-'0';
+        sum+=t*d;
+        ++i;
+    }
+    return sum;
+}
+
+/**************************************************
+* 函数功能: 将位置姿态轨迹文件转换为轴角轨迹文件(异地保存)
+* 参数:offline_euler_trajectory_filePath---文件名称
+* 返回值:错误码
+*******************************************************/
+ErrorCode BaseGroup::convertEulerTraj2JointTraj(const std::string &offline_euler_trajectory_filePath)
+{
+    if (mc_state_ == OFFLINE || mc_state_ == OFFLINE_TO_STANDBY || mc_state_ == STANDBY_TO_OFFLINE)
+    {
+        LogProducer::error("mc_offline_traj","Fail to convert euler trajectory to joint trajectory, state = 0x%x", mc_state_);
+        return INVALID_SEQUENCE;
+    }
+    if (offline_euler_trajectory_file_.is_open())
+    {
+        offline_euler_trajectory_file_.close();
+    }
+    cout << "[debug info]离线文件路径及名称: "<< offline_euler_trajectory_filePath << endl;
+    offline_euler_trajectory_file_.open(offline_euler_trajectory_filePath.c_str());
+    if (!offline_euler_trajectory_file_.is_open())
+    {
+        LogProducer::error("mc_offline_traj","Fail to open offline trajectory file");
+        return INVALID_PARAMETER;
+    }
+    vector<vector<float>> euler_trajArr;//二维数组暂存读入的数据
+    vector<float> data_line;
+    vector<string> row;
+    string line;
+    int line_cnt=0;//数据行计数
+    PoseAndPosture pos;
+    Joint jnt;
+    getline(offline_euler_trajectory_file_, line);//跳过第一行表头
+    while (getline(offline_euler_trajectory_file_, line) && offline_euler_trajectory_file_.good())//逐行读取
+    {
+        file_to_string(row, line,',');//把line里的单元格数字字符提取出来,','为单元格分隔符
+        line_cnt++;
+		printf("[%3d] ",line_cnt);
+        for(int i=0,leng=row.size();i<leng;i++)
+        {
+            data_line.push_back(string_to_float(row[i]));
+            printf("%f ",data_line[i]);
+        }
+        pos.pose.point_.x_ = data_line[0];
+        pos.pose.point_.y_ = data_line[1];
+        pos.pose.point_.z_ = data_line[2];
+        pos.pose.euler_.a_ = data_line[3];
+        pos.pose.euler_.b_ = data_line[4];
+        pos.pose.euler_.c_ = data_line[5];
+        pos.posture.arm   = 1;
+        pos.posture.elbow = 1;
+        pos.posture.wrist = 1;
+        pos.posture.flip  = 0;
+        memset(&jnt, 0, sizeof(jnt));
+        MotionControl::convertCartToJoint(pos, 0, 0, jnt);
+        printf(" | [%.6f, %.6f, %.6f, %.6f, %.6f, %.6f]",jnt.j1_,jnt.j2_, jnt.j3_,jnt.j4_, jnt.j5_, jnt.j6_);
+        printf("\n");
+        euler_trajArr.push_back(data_line);
+        data_line.clear(); 
+        if(line_cnt > 9)
+        {
+            break;
+        }      
+    }
+    offline_euler_trajectory_file_.close();
+    return SUCCESS;
+}
 
 ErrorCode BaseGroup::setOfflineTrajectory(const std::string &offline_trajectory)
 {

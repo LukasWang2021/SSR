@@ -11,7 +11,8 @@
 using namespace log_space;
 using namespace hal_space;
 using namespace std;
-
+uint8_t DI_bits[255]={0};//xzc--20210928
+uint8_t DO_bits[255]={0};
 
 Io1000::Io1000(void):
     BaseDevice(hal_space::DEVICE_TYPE_DIO),
@@ -33,21 +34,24 @@ bool Io1000::init(bool is_real)
 
 ErrorCode Io1000::writeDoBit(uint32_t offset, uint8_t value)
 { 
-
+    DO_bits[offset] = value;
+    //printf("### writeDoBit[%d]=%d,DO_bits[%d]=%d ",offset,value, offset, DO_bits[offset]); 
     return SUCCESS;
 }
-
-ErrorCode Io1000::readDiBit(uint32_t offset, uint8_t &value)
-{
-    
-    return SUCCESS;
-}
-
 ErrorCode Io1000::readDoBit(uint32_t offset, uint8_t &value)
 {
-    
+    value = DO_bits[offset];
+    //printf("### readDoBit[%d]=%d ",offset,value);
     return SUCCESS;
 }
+ErrorCode Io1000::readDiBit(uint32_t offset, uint8_t &value)
+{
+    value = DI_bits[offset];
+    //printf("### readDiBit[%d]=%d ",offset,value);
+    return SUCCESS;
+}
+
+
 
 ErrorCode Io1000::readDiAll(uint32_t &value_lower, uint32_t &value_upper)
 {

@@ -204,7 +204,7 @@ ErrorCode Controller::init()
 	publish_.init(&tp_comm_, cpu_comm_ptr_, axis_ptr_, group_ptr_, io_digital_dev_ptr_);
 	rpc_.init(&tp_comm_, &publish_, cpu_comm_ptr_, servo_comm_ptr_, axis_ptr_, axis_model_ptr_, group_ptr_, &file_manager_, io_digital_dev_ptr_, &tool_manager_, &coordinate_manager_, &reg_manager_, force_model_ptr_);
     
-    if(!InterpCtrl::instance().setApi(group_ptr_) ||
+    if(!InterpCtrl::instance().setApi(group_ptr_,io_digital_dev_ptr_) ||
        !InterpCtrl::instance().init() || 
        !InterpCtrl::instance().regSyncCallback(std::bind(&MotionControl::nextMovePermitted, group_ptr_[0])))
     {

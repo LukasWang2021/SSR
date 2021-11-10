@@ -13,6 +13,8 @@
 #include "Python.h"
 #include "common_error_code.h"
 #include "interpreter_control.h"
+#include "interpreter_device.h"
+#include "interpreter_register.h"
 #include <unistd.h>
 #include <sys/syscall.h>
 #include "sem_help.h"
@@ -51,7 +53,7 @@ InterpCtrl::~InterpCtrl()
     // }
 }
 
-bool InterpCtrl::setApi(group_space::MotionControl **group_ptr)
+bool InterpCtrl::setApi(group_space::MotionControl **group_ptr, hal_space::BaseDevice *io_ptr)
 {
     if(group_ptr == NULL)
     {
@@ -60,6 +62,8 @@ bool InterpCtrl::setApi(group_space::MotionControl **group_ptr)
     }
 
     InterpGroup_Init(group_ptr);
+    InterpDevice_Init(io_ptr);
+    InterpReg_Init();
     
     return true;
 }

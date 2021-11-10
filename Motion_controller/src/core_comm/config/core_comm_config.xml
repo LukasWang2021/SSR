@@ -48,7 +48,7 @@
 		<Param4>0</Param4>		
 	</CommBlock>
 	<CommBlock>
-		<!--cpu3 torque reg-->
+		<!-- cpu2 torque reg-->
 		<Type>comm_reg</Type>
 		<ApplicationID>3</ApplicationID>
 		<ByteOffset>0x1200000</ByteOffset>

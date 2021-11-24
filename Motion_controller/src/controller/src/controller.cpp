@@ -193,17 +193,14 @@ ErrorCode Controller::init()
     //setting ISR as soon
     int32_t size = 0;
     g_isr_ptr_ = (uint32_t*)axis_ptr_[0]->rtmReadAxisFdbPdoPtr(&size);
-
 	error_code = tp_comm_.init();
     if(error_code != SUCCESS)
     {
         LogProducer::error("main", "Controller TP comm initialization failed");
         return error_code;
     }
-
 	publish_.init(&tp_comm_, cpu_comm_ptr_, axis_ptr_, group_ptr_, io_digital_dev_ptr_);
-	rpc_.init(&tp_comm_, &publish_, cpu_comm_ptr_, servo_comm_ptr_, axis_ptr_, axis_model_ptr_, group_ptr_, &file_manager_, io_digital_dev_ptr_, &tool_manager_, &coordinate_manager_, &reg_manager_, force_model_ptr_);
-    
+    rpc_.init(&tp_comm_, &publish_, cpu_comm_ptr_, servo_comm_ptr_, axis_ptr_, axis_model_ptr_, group_ptr_, &file_manager_, io_digital_dev_ptr_, &tool_manager_, &coordinate_manager_, &reg_manager_, force_model_ptr_);
     if(!InterpCtrl::instance().setApi(group_ptr_,io_digital_dev_ptr_) ||
        !InterpCtrl::instance().init() || 
        !InterpCtrl::instance().regSyncCallback(std::bind(&MotionControl::nextMovePermitted, group_ptr_[0])))
@@ -216,27 +213,22 @@ ErrorCode Controller::init()
         LogProducer::error("main", "Controller interpreter start failed");
         return CONTROLLER_INIT_FAILED;
     }
-    
     if(!routine_thread_.run(&controllerRoutineThreadFunc, this, config_ptr_->routine_thread_priority_))
     {
         return CONTROLLER_CREATE_ROUTINE_THREAD_FAILED;
     } 
-
     if(!planner_thread_.run(&controllerPlannerThreadFunc, this, config_ptr_->planner_thread_priority_))
     {
         return CONTROLLER_CREATE_ROUTINE_THREAD_FAILED;
     } 
-
     if(!priority_thread_.run(&controllerPriorityThreadFunc, this, config_ptr_->priority_thread_priority_))
     {
         return CONTROLLER_CREATE_ROUTINE_THREAD_FAILED;
     } 
-
     if(!rt_thread_.run(&controllerRealTimeThreadFunc, this, config_ptr_->realtime_thread_priority_))
     {
         return CONTROLLER_CREATE_RT_THREAD_FAILED;
     }    
-
     LogProducer::warn("main", "Controller init success");
     return SUCCESS;
 }

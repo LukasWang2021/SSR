@@ -106,7 +106,6 @@ ErrorCode BaseGroup::manualMoveToPoint(const IntactPoint &point)
     LogProducer::info("mc_base","UserFrame: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", point.user_frame.point_.x_, point.user_frame.point_.y_, point.user_frame.point_.z_, point.user_frame.euler_.a_, point.user_frame.euler_.b_, point.user_frame.euler_.c_);
     LogProducer::info("mc_base","ToolFrame: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", point.tool_frame.point_.x_, point.tool_frame.point_.y_, point.tool_frame.point_.z_, point.tool_frame.euler_.a_, point.tool_frame.euler_.b_, point.tool_frame.euler_.c_);
     LogProducer::info("mc_base","Start-joint = %s", printDBLine(&start_joint[0], buffer, LOG_TEXT_SIZE));
-
     if (!soft_constraint_.isJointInConstraint(start_joint, MINIMUM_E3))
     {
         LogProducer::error("mc_base","Start-joint is out of soft constraint, manual-mode-apoint is disabled.");

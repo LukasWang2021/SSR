@@ -5,12 +5,14 @@
 #include <sys/mman.h>
 #include <string.h>
 #include <fstream>
+#include <vector>
 #include <sys/syscall.h>
 #include <sys/time.h>
 #include <motion_control.h>
 #include <tool_manager.h>
 #include <coordinate_manager.h>
 #include "error_queue.h"
+#include <math.h>
 
 using namespace std;
 using namespace basic_alg;
@@ -166,7 +168,6 @@ ErrorCode MotionControl::initApplication(fst_ctrl::CoordinateManager* coordinate
         LogProducer::error("mc","Fail to init motion group");
         return err;
     }
-
     return SUCCESS;
 }
 
@@ -317,11 +318,78 @@ ErrorCode MotionControl::doGotoPointManualMove(const PoseAndPosture &pose, int u
     return group_ptr_->manualMoveToPoint(point);
 }
 
+/**************************************************
+* 函数功能: 将位置姿态轨迹文件转换为轴角轨迹文件(异地保存)
+* 参数:offline_euler_trajectory_filePath---文件名称
+* 返回值:错误码
+*******************************************************/
 ErrorCode MotionControl::convertEulerTraj2JointTraj(const std::string &offline_euler_trajectory_fileName)
 {
+    PoseAndPosture pos;
+    Joint jnt;
+    int datalineCnt = 0;
     string euler_trajectory_filePath = "/root/robot_data/trajectory/";
     euler_trajectory_filePath += offline_euler_trajectory_fileName;
-    return group_ptr_->convertEulerTraj2JointTraj(euler_trajectory_filePath);
+    vector<vector<float>> euler_trajArr;//二维数组暂存读入的数据
+    if(group_ptr_->readEulerTrajectoryFile(euler_trajectory_filePath, euler_trajArr) == SUCCESS)
+    {
+        datalineCnt = euler_trajArr.size();
+        //新建输出文件(清除原文件)
+        ofstream out_joint_trajectory_file("/root/robot_data/trajectory/out.trajectory",ios::trunc);
+        if(!out_joint_trajectory_file)
+        {
+            LogProducer::error("convertEulerTraj2JointTraj","Fail to create out file");
+            return INVALID_PARAMETER;
+        }
+        printf("******************convert result*****************datalineCnt = %d\n",datalineCnt);
+        char str_JointData_line[188];
+        double last_joint[6]={0,0,0,0,0,0};
+        double joint_anglar_velocity[6]={0.0001,0.0001,0.0001,0.0001,0.0001,0.0001};
+        sprintf(str_JointData_line,"%d %.3f %d", 6, 0.001, datalineCnt);//轴数,间隔时间,轨迹点数
+        out_joint_trajectory_file << str_JointData_line << endl;
+        //memset(str_JointData_line,0,188);
+        //sprintf(str_JointData_line,"%d %d %d %d %d %d %.4f %.4f %.4f %.4f %.4f %.4f %d %d %d %d %d %d %d %d %d %d %d %d", 0,0,0,0,0,0, 0.0001,0.0001,0.0001,0.0001,0.0001,0.0001,0,0,0,0,0,0,10,10,10,10,10,10);
+        //out_joint_trajectory_file << str_JointData_line << endl;    
+        for(int i=0;i<datalineCnt;i++)
+        {  
+            //printf("<=[%3d]=> [%.6f, %.6f, %.6f, %.6f, %.6f, %.6f]",i, euler_trajArr[i][0], euler_trajArr[i][1], euler_trajArr[i][2], euler_trajArr[i][3], euler_trajArr[i][4], euler_trajArr[i][5]);
+            pos.pose.point_.x_ = euler_trajArr[i][0]*1000;
+            pos.pose.point_.y_ = euler_trajArr[i][1]*1000;
+            pos.pose.point_.z_ = euler_trajArr[i][2]*1000;
+            pos.pose.euler_.a_ = euler_trajArr[i][3];
+            pos.pose.euler_.b_ = euler_trajArr[i][4];
+            pos.pose.euler_.c_ = euler_trajArr[i][5];
+            pos.posture.arm   = 1;
+            pos.posture.elbow = 1;
+            pos.posture.wrist = 1;
+            pos.posture.flip  = 0;
+            memset(&(pos.turn), 0, 9*sizeof(int));
+            memset(&jnt, 0, sizeof(jnt));
+            convertCartToJoint(pos,0,0,jnt);
+            if(i==0)
+            {
+                memset(str_JointData_line,0,188);
+                sprintf(str_JointData_line,"%.4f %.4f %.4f %.4f %.4f %.4f", jnt.j1_, jnt.j2_, jnt.j3_, jnt.j4_, jnt.j5_, jnt.j6_);//起始位置6关节轴角弧度位置
+                out_joint_trajectory_file << str_JointData_line << endl;
+                last_joint[0] = jnt.j1_-0.0001;last_joint[1] = jnt.j2_-0.0001;last_joint[2] = jnt.j3_-0.0001;
+                last_joint[3] = jnt.j4_-0.0001;last_joint[4] = jnt.j5_-0.0001;last_joint[5] = jnt.j6_-0.0001;
+            }
+            printf("(%3d) [%.6f, %.6f, %.6f, %.6f, %.6f, %.6f]   \[%.6f, %.6f, %.6f, %.6f, %.6f, %.6f]\n",i, jnt.j1_, jnt.j2_, jnt.j3_, jnt.j4_, jnt.j5_, jnt.j6_,last_joint[0],last_joint[1],last_joint[2],last_joint[3],last_joint[4],last_joint[5]);
+            //计算每个轴相对于上一个点位置的角速度
+            joint_anglar_velocity[0] = fabs(jnt.j1_-last_joint[0]);
+            joint_anglar_velocity[1] = fabs(jnt.j2_-last_joint[1]);
+            joint_anglar_velocity[2] = fabs(jnt.j3_-last_joint[2]);
+            joint_anglar_velocity[3] = fabs(jnt.j4_-last_joint[3]);
+            joint_anglar_velocity[4] = fabs(jnt.j5_-last_joint[4]);
+            joint_anglar_velocity[5] = fabs(jnt.j6_-last_joint[5]);
+            memset(str_JointData_line,0,188);
+            sprintf(str_JointData_line,"%.4f %.4f %.4f %.4f %.4f %.4f %.4f %.4f %.4f %.4f %.4f %.4f %d %d %d %d %d %d %d %d %d %d %d %d", jnt.j1_, jnt.j2_, jnt.j3_, jnt.j4_, jnt.j5_, jnt.j6_, joint_anglar_velocity[0],joint_anglar_velocity[1],joint_anglar_velocity[2],joint_anglar_velocity[3],joint_anglar_velocity[4],joint_anglar_velocity[5],0,0,0,0,0,0,10,10,10,10,10,10);
+            out_joint_trajectory_file << str_JointData_line << endl;
+            last_joint[0] = jnt.j1_;last_joint[1] = jnt.j2_;last_joint[2] = jnt.j3_;last_joint[3] = jnt.j4_;last_joint[4] = jnt.j5_;last_joint[5] = jnt.j6_;
+         }
+        out_joint_trajectory_file.close();
+    }
+    return 0;
 }
 
 ErrorCode MotionControl::setOfflineTrajectory(const std::string &offline_trajectory)
@@ -1169,19 +1237,13 @@ ErrorCode MotionControl::convertCartToJoint(const PoseAndPosture &pose, int user
 {
     if (user_frame_id == user_frame_id_ && tool_frame_id == tool_frame_id_)
     {
-        //printf("xzc_debug_step1\n");
         return group_ptr_->convertCartToJoint(pose, joint);
-    }
-    else //xzc 20211109
-    {
-        printf("tool_frame_id_=%d, user_frame_id_=%d\n",tool_frame_id_,user_frame_id_);
     }
     PoseEuler tf, uf;
 
     if (user_frame_id == 0)
     {
         memset(&uf, 0, sizeof(uf));
-        //printf("xzc_debug_step4\n");
     }
     else
     {
@@ -1191,12 +1253,10 @@ ErrorCode MotionControl::convertCartToJoint(const PoseAndPosture &pose, int user
         if (err_user == SUCCESS && uf_info.is_valid)
         {
             uf = uf_info.data;
-            //printf("xzc_debug_step4-1\n");
         }
         else
         {
             LogProducer::error("mc","Fail to get user frame from given ID = %d", user_frame_id);
-            //printf("xzc_debug_step4-2\n");
             return err_user == SUCCESS ? INVALID_PARAMETER : err_user;
         }
     }
@@ -1204,23 +1264,19 @@ ErrorCode MotionControl::convertCartToJoint(const PoseAndPosture &pose, int user
     if (tool_frame_id == 0)
     {
         memset(&tf, 0, sizeof(tf));
-        //printf("xzc_debug_step5\n");
     }
     else
     {
-        //printf("xzc_debug_step6\n");
         ToolInfo tf_info;
         ErrorCode err_tool = tool_manager_ptr_->getToolInfoById(tool_frame_id, tf_info);
 
         if (err_tool == SUCCESS && tf_info.is_valid)
         {
             tf = tf_info.data;
-            //printf("xzc_debug_step6-1\n");
         }
         else
         {
             LogProducer::error("mc","Fail to get tool frame from given ID = %d", tool_frame_id);
-            //printf("xzc_debug_step6-2\n");
             return err_tool == SUCCESS ? INVALID_PARAMETER : err_tool;
         }
     }

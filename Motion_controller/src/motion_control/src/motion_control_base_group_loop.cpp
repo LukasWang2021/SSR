@@ -110,7 +110,6 @@ void BaseGroup::updateServoStateAndJoint(void)
         {
             // LogProducer::info("mc_base","Servo-state switch %s to %s", getMCServoStatusString(last_servo_state).c_str(),
             //     getMCServoStatusString(servo_state_).c_str());
-
             if ((last_servo_state == SERVO_RUNNING) && (servo_state_ != SERVO_IDLE))
             {
                 LogProducer::error("mc_base","MC-state: %s, point-cache-empty: %d, auto_to_standby_request: %d, auto_to_pause_request: %d", 
@@ -565,7 +564,6 @@ void BaseGroup::sendTrajectoryFlow(void)
             err = bare_core_.sendPoint() ? SUCCESS : MC_SEND_TRAJECTORY_FAIL;
         }
     }
-
     else if (mc_state == OFFLINE && !offline_to_standby_request_)
     {
         err = sendOfflineTrajectoryFlow();
@@ -577,7 +575,6 @@ void BaseGroup::sendTrajectoryFlow(void)
             err = bare_core_.sendPoint() ? SUCCESS : MC_SEND_TRAJECTORY_FAIL;
         }
     }
-
     else if (mc_state == PAUSING && !pausing_to_pause_request_)
     {
         err = sendAutoTrajectoryFlow();
@@ -589,7 +586,6 @@ void BaseGroup::sendTrajectoryFlow(void)
             err = bare_core_.sendPoint() ? SUCCESS : MC_SEND_TRAJECTORY_FAIL;
         }
     }
-
     else if (mc_state == PAUSE_RETURN && !pause_return_to_pause_request_)
     {
         err = sendAutoTrajectoryFlow();
@@ -601,12 +597,10 @@ void BaseGroup::sendTrajectoryFlow(void)
             err = bare_core_.sendPoint() ? SUCCESS : MC_SEND_TRAJECTORY_FAIL;
         }
     }
-
     else if (mc_state == RESUME)
     {
         err = sendAutoTrajectoryFlow();
     }
-
     else if (mc_state == MANUAL && !manual_to_standby_request_)
     {
         err = sendManualTrajectoryFlow();
@@ -618,7 +612,6 @@ void BaseGroup::sendTrajectoryFlow(void)
             err = bare_core_.sendPoint() ? SUCCESS : MC_SEND_TRAJECTORY_FAIL;
         }
     }
-
     else if (mc_state == PAUSE_MANUAL && !manual_to_pause_request_)
     {
         err = sendManualTrajectoryFlow();

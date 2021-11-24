@@ -159,7 +159,6 @@ void BaseGroup::getAllValidPayloadSummaryInfo(vector<PayloadSummaryInfo>& info_l
 ErrorCode BaseGroup::convertCartToJoint(const PoseAndPosture &pose, const PoseEuler &uf, const PoseEuler &tf, Joint &joint)
 {
     PoseEuler tcp_in_base, fcp_in_base;
-    //printf("xzc_debug_step7\n");
     transformation_.convertPoseFromUserToBase(pose.pose, uf, tcp_in_base);
     transformation_.convertTcpToFcp(tcp_in_base, tf, fcp_in_base);
     return kinematics_ptr_->doIK(fcp_in_base, pose.posture, pose.turn, joint) ? SUCCESS : MC_COMPUTE_IK_FAIL;
@@ -168,7 +167,6 @@ ErrorCode BaseGroup::convertCartToJoint(const PoseAndPosture &pose, const PoseEu
 ErrorCode BaseGroup::convertCartToJoint(const PoseEuler &pose, const PoseEuler &uf, const PoseEuler &tf, Joint &joint)
 {
     PoseEuler tcp_in_base, fcp_in_base;
-    //printf("xzc_debug_step8\n");
     transformation_.convertPoseFromUserToBase(pose, uf, tcp_in_base);
     transformation_.convertTcpToFcp(tcp_in_base, tf, fcp_in_base);
     return kinematics_ptr_->doIK(fcp_in_base, getLatestJoint(), joint) ? SUCCESS : MC_COMPUTE_IK_FAIL;
@@ -186,10 +184,8 @@ ErrorCode BaseGroup::convertJointToCart(const Joint &joint, const PoseEuler &uf,
 ErrorCode BaseGroup::convertCartToJoint(const PoseAndPosture &pose, Joint &joint)
 {
     PoseEuler tcp_in_base, fcp_in_base;
-    //printf("xzc_debug_step2\n");
     transformation_.convertPoseFromUserToBase(pose.pose, user_frame_, tcp_in_base);
     transformation_.convertTcpToFcp(tcp_in_base, tool_frame_, fcp_in_base);
-    //printf("xzc_debug_step3-1\n");
     return kinematics_ptr_->doIK(fcp_in_base, pose.posture, pose.turn, joint) ? SUCCESS : MC_COMPUTE_IK_FAIL;
 }
 

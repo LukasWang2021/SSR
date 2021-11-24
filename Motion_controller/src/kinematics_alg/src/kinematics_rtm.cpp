@@ -196,10 +196,12 @@ void KinematicsRTM::doFK(const Joint& joint, PoseEuler& pose_euler, size_t from_
         TransMatrix matrix_first(arm_dh_[first_dh_index].d, arm_dh_[first_dh_index].a, arm_dh_[first_dh_index].alpha, joint[first_dh_index] + arm_dh_[first_dh_index].offset);
         result_matrix = matrix_first;       
     }
+    result_matrix.convertToPoseEuler(pose_euler);
     for(size_t i = from_joint_index; i < to_joint_index; ++i)
     {
-        TransMatrix matrix(arm_dh_[i].d, arm_dh_[i].a, arm_dh_[i].alpha, joint[i] + arm_dh_[i].offset);        
+        TransMatrix matrix(arm_dh_[i].d, arm_dh_[i].a, arm_dh_[i].alpha, joint[i] + arm_dh_[i].offset);     
         result_matrix.rightMultiply(matrix);
+        result_matrix.convertToPoseEuler(pose_euler);
     }
     result_matrix.convertToPoseEuler(pose_euler);
 }
@@ -407,12 +409,10 @@ bool KinematicsRTM::doIK(const PoseEuler& pose_euler, const Posture& posture, co
     if(doIK(pose_euler, posture, joint))
     {
         joint = getJointByGeometryJointAndTurn(joint, turn);
-        //printf("xzc_debug_step3-2\n");
         return true;
     }
     else
     {
-        //printf("xzc_debug_step3-3\n");
         return false;
     }
 }

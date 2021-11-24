@@ -81,8 +81,8 @@ void RotationMatrix::convertToQuaternion(basic_alg::Quaternion& quaternion) cons
 void RotationMatrix::convertToEuler(basic_alg::Euler& euler) const
 {
     double tmp = matrix_[2][1] * matrix_[2][1] + matrix_[2][2] * matrix_[2][2];
-    euler.b_ = atan2(-matrix_[2][0], sqrt(tmp));
     euler.a_ = atan2(matrix_[1][0], matrix_[0][0]);
+    euler.b_ = atan2(-matrix_[2][0], sqrt(tmp)); 
     euler.c_ = atan2(matrix_[2][1], matrix_[2][2]);
 }
 

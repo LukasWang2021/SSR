@@ -60,18 +60,15 @@ bool InterpCtrl::setApi(group_space::MotionControl **group_ptr, hal_space::BaseD
         LogProducer::error("interpctrl", "application interface init failed");
         return false;
     }
-
     InterpGroup_Init(group_ptr);
     InterpDevice_Init(io_ptr);
     InterpReg_Init();
-    
     return true;
 }
 
 bool InterpCtrl::init(void)
 {
     embed_ptr_map.clear();
-
     if(!config_.loadConfig())
     {
         LogProducer::error("interpctrl", "initialize failed with load configuration");
@@ -84,13 +81,11 @@ bool InterpCtrl::init(void)
         LogProducer::error("interpctrl", "initialize failed with update path");
         return false;
     }
-
     if(!InterpEmbed::pyResetInterp())
     {
         LogProducer::error("interpctrl", "initialize failed with reset");
         return false;
     }
-
     // here only create the main interpreter
     InterpEmbed *embed_ptr = new InterpEmbed(index_);
     if(embed_ptr == NULL)
@@ -100,7 +95,6 @@ bool InterpCtrl::init(void)
     }
     // insert to embed_ptr_map and increase the index
     embed_ptr_map.insert(std::make_pair(index_++, embed_ptr));
-
     return true;
 }
 
@@ -310,7 +304,6 @@ bool InterpCtrl::regSyncCallback(const SyncCallback& callback)
     if(curr_state_ != INTERP_STATE_IDLE) return false;
 
     sync_callbacks_.push_back(callback);
-    
     return true;
 }
 

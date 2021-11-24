@@ -8,7 +8,7 @@
 #include <sstream>
 #include <string>
 #include <math.h>
-
+#include <vector>
 #include <common_error_code.h>
 #include "motion_control.h"
 //#include  "controller_rpc.h"
@@ -34,7 +34,7 @@ inline void file_to_string(vector<string> &record, const string& line, char deli
     while (linepos<linemax)
     {
         c = line[linepos];
-        if (isdigit(c) || c=='.')
+        if (isdigit(c) || c=='.' || c == '-')
         {
             curstring+=c;
         }
@@ -52,6 +52,12 @@ inline void file_to_string(vector<string> &record, const string& line, char deli
 inline float string_to_float(string str){
     int i=0,len=str.length();
     float sum = 0;
+    bool pn_flag=1;
+    if(str[0] == '-')
+    {pn_flag = 0;}
+    else
+    {sum = sum*10 + str[0] - '0';}
+    ++i;
     while(i<len)
     {
         if(str[i]=='.') break;
@@ -67,15 +73,18 @@ inline float string_to_float(string str){
         sum+=t*d;
         ++i;
     }
-    return sum;
+    if(pn_flag)
+        return sum;
+    else
+        return -1.0*sum;
 }
 
 /**************************************************
-* 函数功能: 将位置姿态轨迹文件转换为轴角轨迹文件(异地保存)
+* 函数功能: 读取位置姿态轨迹文件数据
 * 参数:offline_euler_trajectory_filePath---文件名称
 * 返回值:错误码
 *******************************************************/
-ErrorCode BaseGroup::convertEulerTraj2JointTraj(const std::string &offline_euler_trajectory_filePath)
+ErrorCode BaseGroup::readEulerTrajectoryFile(const std::string &offline_euler_trajectory_filePath, vector<vector<float> >&euler_trajArr)
 {
     if (mc_state_ == OFFLINE || mc_state_ == OFFLINE_TO_STANDBY || mc_state_ == STANDBY_TO_OFFLINE)
     {
@@ -93,13 +102,11 @@ ErrorCode BaseGroup::convertEulerTraj2JointTraj(const std::string &offline_euler
         LogProducer::error("mc_offline_traj","Fail to open offline trajectory file");
         return INVALID_PARAMETER;
     }
-    vector<vector<float>> euler_trajArr;//二维数组暂存读入的数据
+    
     vector<float> data_line;
     vector<string> row;
     string line;
     int line_cnt=0;//数据行计数
-    PoseAndPosture pos;
-    Joint jnt;
     getline(offline_euler_trajectory_file_, line);//跳过第一行表头
     while (getline(offline_euler_trajectory_file_, line) && offline_euler_trajectory_file_.good())//逐行读取
     {
@@ -111,26 +118,15 @@ ErrorCode BaseGroup::convertEulerTraj2JointTraj(const std::string &offline_euler
             data_line.push_back(string_to_float(row[i]));
             printf("%f ",data_line[i]);
         }
-        pos.pose.point_.x_ = data_line[0];
-        pos.pose.point_.y_ = data_line[1];
-        pos.pose.point_.z_ = data_line[2];
-        pos.pose.euler_.a_ = data_line[3];
-        pos.pose.euler_.b_ = data_line[4];
-        pos.pose.euler_.c_ = data_line[5];
-        pos.posture.arm   = 1;
-        pos.posture.elbow = 1;
-        pos.posture.wrist = 1;
-        pos.posture.flip  = 0;
-        memset(&jnt, 0, sizeof(jnt));
-        MotionControl::convertCartToJoint(pos, 0, 0, jnt);
-        printf(" | [%.6f, %.6f, %.6f, %.6f, %.6f, %.6f]",jnt.j1_,jnt.j2_, jnt.j3_,jnt.j4_, jnt.j5_, jnt.j6_);
         printf("\n");
         euler_trajArr.push_back(data_line);
         data_line.clear(); 
-        if(line_cnt > 9)
+        /*
+        if(line_cnt >= 10)
         {
             break;
-        }      
+        } 
+        */     
     }
     offline_euler_trajectory_file_.close();
     return SUCCESS;
@@ -211,6 +207,7 @@ Joint BaseGroup::getStartJointOfOfflineTrajectory(void)
 ErrorCode BaseGroup::moveOfflineTrajectory(void)
 {
     standby_to_offline_request_ = true;
+    offline_traj_point_readCnt = 0;//log 取点行数
     return SUCCESS;
 }
 
@@ -220,8 +217,10 @@ uint32_t BaseGroup::getOfflineCacheSize(void)
     {
         return offline_trajectory_cache_tail_ - offline_trajectory_cache_head_;
     }
-    
-    return offline_trajectory_cache_tail_ + OFFLINE_TRAJECTORY_CACHE_SIZE - offline_trajectory_cache_head_;
+    else
+    {
+        return offline_trajectory_cache_tail_ + OFFLINE_TRAJECTORY_CACHE_SIZE - offline_trajectory_cache_head_;
+    }
 }
 
 bool BaseGroup::fillOfflineCache(void)
@@ -253,7 +252,8 @@ bool BaseGroup::fillOfflineCache(void)
             {
                 ss >> local_cache[picked_number].state.angle[j];
             }
-            
+            offline_traj_point_readCnt++;
+            //LogProducer::info("mc_offline_traj","read point [%d]-(%f,%f,%f,%f,%f,%f),", offline_traj_point_readCnt,local_cache[picked_number].state.angle[0],local_cache[picked_number].state.angle[1],local_cache[picked_number].state.angle[2],local_cache[picked_number].state.angle[3],local_cache[picked_number].state.angle[4],local_cache[picked_number].state.angle[5]);
             for (uint32_t j = 0; j < joint_number; j++)
             {
                 ss >> local_cache[picked_number].state.omega[j];
@@ -284,7 +284,8 @@ bool BaseGroup::fillOfflineCache(void)
     {
         return false;
     }
-
+    if(offline_trajectory_size_ == offline_traj_point_readCnt) offline_trajectory_last_point_ = true;
+    //LogProducer::info("fillOfflineCache","picked: %d, last = %d", picked_number, offline_trajectory_last_point_);
     if (offline_trajectory_first_point_)
     {
         local_cache[0].level = POINT_START;
@@ -293,6 +294,7 @@ bool BaseGroup::fillOfflineCache(void)
 
     if (offline_trajectory_last_point_)
     {
+        LogProducer::info("fillOfflineCache","point ending");
         local_cache[picked_number - 1].level = POINT_ENDING;
         start_joint_ = local_cache[picked_number - 1].state.angle;
         offline_trajectory_last_point_ = false;
@@ -342,6 +344,10 @@ ErrorCode BaseGroup::pickPointsFromOfflineCache(TrajectoryPoint *points, size_t 
 
     pthread_mutex_unlock(&offline_mutex_);
     length = picked_num;
+    if(length < 1)
+    {
+        err = BASE_GROUP_PICK_POINTS_FROM_OFFLINECACHE_NULL;
+    }
     return err;
 }
 
@@ -351,17 +357,15 @@ ErrorCode BaseGroup::sendOfflineTrajectoryFlow(void)
     {
         size_t length = 10;
         TrajectoryPoint points[10];
-        ErrorCode err = pickPointsFromOfflineCache(points, length);
-        //LogProducer::info("mc_offline_traj","sendOfflineTrajectoryFlow: %d, head=%d, tail=%d", length, offline_trajectory_cache_head_, offline_trajectory_cache_tail_);
-
+        ErrorCode err = pickPointsFromOfflineCache(points, length);//length < 1时返回0x1111
         if (err != SUCCESS)
         {
             LogProducer::error("mc_offline_traj","sendOfflineTrajectoryFlow: cannot pick point from trajectory fifo.");
             return err;
         }
-
         bare_core_.fillPointCache(points, length, POINT_POS_VEL);
-
+        //LogProducer::info("mc_offline_traj","sendOfflineTrajectoryFlow: %d, head=%d, tail=%d", length, offline_trajectory_cache_head_, offline_trajectory_cache_tail_);
+        
         if (points[length - 1].level == POINT_ENDING)
         {
             // 取到了ENDING-POINT，意味着轨迹FIFO已经取完,必须要切换状态机
@@ -371,7 +375,7 @@ ErrorCode BaseGroup::sendOfflineTrajectoryFlow(void)
             }
         }
     }
-
+    //LogProducer::info("mc_offline_traj","sendOfflineTrajectoryFlow: bare.sendPoint");
     return bare_core_.sendPoint() ? SUCCESS : MC_SEND_TRAJECTORY_FAIL;
 }
 

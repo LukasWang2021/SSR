@@ -86,12 +86,6 @@ class BareCoreInterface
 
 
 
-
-
-
-
-
-
 }
 
 #endif

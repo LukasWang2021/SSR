@@ -284,7 +284,7 @@ bool BaseGroup::fillOfflineCache(void)
     {
         return false;
     }
-    if(offline_trajectory_size_ == offline_traj_point_readCnt) offline_trajectory_last_point_ = true;
+    if(offline_trajectory_size_ == offline_traj_point_readCnt) offline_trajectory_last_point_ = true;//取到最后一点,标记结束点
     //LogProducer::info("fillOfflineCache","picked: %d, last = %d", picked_number, offline_trajectory_last_point_);
     if (offline_trajectory_first_point_)
     {

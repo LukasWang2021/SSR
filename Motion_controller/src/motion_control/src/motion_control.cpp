@@ -374,14 +374,14 @@ ErrorCode MotionControl::convertEulerTraj2JointTraj(const std::string &offline_e
                 last_joint[0] = jnt.j1_-0.0001;last_joint[1] = jnt.j2_-0.0001;last_joint[2] = jnt.j3_-0.0001;
                 last_joint[3] = jnt.j4_-0.0001;last_joint[4] = jnt.j5_-0.0001;last_joint[5] = jnt.j6_-0.0001;
             }
-            printf("(%3d) [%.6f, %.6f, %.6f, %.6f, %.6f, %.6f]   \[%.6f, %.6f, %.6f, %.6f, %.6f, %.6f]\n",i, jnt.j1_, jnt.j2_, jnt.j3_, jnt.j4_, jnt.j5_, jnt.j6_,last_joint[0],last_joint[1],last_joint[2],last_joint[3],last_joint[4],last_joint[5]);
+            //printf("(%3d) [%.6f, %.6f, %.6f, %.6f, %.6f, %.6f]   \[%.6f, %.6f, %.6f, %.6f, %.6f, %.6f]\n",i, jnt.j1_, jnt.j2_, jnt.j3_, jnt.j4_, jnt.j5_, jnt.j6_,last_joint[0],last_joint[1],last_joint[2],last_joint[3],last_joint[4],last_joint[5]);
             //计算每个轴相对于上一个点位置的角速度
-            joint_anglar_velocity[0] = fabs(jnt.j1_-last_joint[0]);
-            joint_anglar_velocity[1] = fabs(jnt.j2_-last_joint[1]);
-            joint_anglar_velocity[2] = fabs(jnt.j3_-last_joint[2]);
-            joint_anglar_velocity[3] = fabs(jnt.j4_-last_joint[3]);
-            joint_anglar_velocity[4] = fabs(jnt.j5_-last_joint[4]);
-            joint_anglar_velocity[5] = fabs(jnt.j6_-last_joint[5]);
+            joint_anglar_velocity[0] = (jnt.j1_-last_joint[0])*10430.21937344772*81.0;  //65535/6.2831852 == 10430.21937344772
+            joint_anglar_velocity[1] = (jnt.j2_-last_joint[1])*10430.21937344772*100.908375;
+            joint_anglar_velocity[2] = (jnt.j3_-last_joint[2])*10430.21937344772*81.053333;
+            joint_anglar_velocity[3] = (jnt.j4_-last_joint[3])*10430.21937344772*59.987882; 
+            joint_anglar_velocity[4] = (jnt.j5_-last_joint[4])*10430.21937344772*66.75495; 
+            joint_anglar_velocity[5] = (jnt.j6_-last_joint[5])*10430.21937344772*44.671266; 
             memset(str_JointData_line,0,188);
             sprintf(str_JointData_line,"%.4f %.4f %.4f %.4f %.4f %.4f %.4f %.4f %.4f %.4f %.4f %.4f %d %d %d %d %d %d %d %d %d %d %d %d", jnt.j1_, jnt.j2_, jnt.j3_, jnt.j4_, jnt.j5_, jnt.j6_, joint_anglar_velocity[0],joint_anglar_velocity[1],joint_anglar_velocity[2],joint_anglar_velocity[3],joint_anglar_velocity[4],joint_anglar_velocity[5],0,0,0,0,0,0,10,10,10,10,10,10);
             out_joint_trajectory_file << str_JointData_line << endl;

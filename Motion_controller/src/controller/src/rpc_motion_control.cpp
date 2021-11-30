@@ -257,6 +257,7 @@ void ControllerRpc::handleRpc0x00008075(void* request_data_ptr, void* response_d
         || status != GROUP_STATUS_STANDBY)
     {
         rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION_GOTO_JOINT;
+        LogProducer::error("rpc", "/rpc/motion_control/axis_group/doGotoJointPointManualMove  workmode=%d,status= %d", group_ptr_[group_id]->getWorkMode(),status);
         return;
     }
 
@@ -1403,6 +1404,19 @@ void ControllerRpc::handleRpc0x0000EC64(void* request_data_ptr, void* response_d
 
 }
 
+//"/rpc/motion_control/axis_group/convertEulerTraj2JointFile" 将欧拉位置姿态轨迹文件转换为轴角轨迹文件
+void ControllerRpc::handleRpc0x0000E375(void* request_data_ptr, void* response_data_ptr)
+{
+    RequestMessageType_String* rq_data_ptr = static_cast<RequestMessageType_String*>(request_data_ptr);
+    ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
+    std::string path = rq_data_ptr->data.data;
+    rs_data_ptr->data.data = group_ptr_[0]->convertEulerTraj2JointTraj(path);
+
+    if (rs_data_ptr->data.data == SUCCESS)
+        LogProducer::info("rpc", "/rpc/motion_control/axis_group/convertEulerTraj2JointFile for group[0] success");
+    else
+        LogProducer::error("rpc", "/rpc/motion_control/axis_group/convertEulerTraj2JointFile for group[0] failed. Error = 0x%llx", rs_data_ptr->data.data);
+}
 
 //"/rpc/motion_control/axis_group/setOfflineTrajectoryFile"	
 void ControllerRpc::handleRpc0x00011275(void* request_data_ptr, void* response_data_ptr)
@@ -1428,6 +1442,7 @@ void ControllerRpc::handleRpc0x000051E9(void* request_data_ptr, void* response_d
     GroupStatus_e status = GROUP_STATUS_UNKNOWN;
     bool in_position = false;
     group_ptr_[0]->mcGroupReadStatus(status, in_position);
+    
     if (group_ptr_[0]->getWorkMode() != USER_OP_MODE_AUTO
         || group_ptr_[0]->getWorkMode() == USER_OP_MODE_NONE
         || status != GROUP_STATUS_STANDBY)

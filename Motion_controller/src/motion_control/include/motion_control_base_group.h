@@ -10,6 +10,7 @@
 
 #include <sys/time.h>
 #include <fstream>
+#include <vector>
 #include <error_queue.h>
 #include <common_error_code.h>
 #include <joint_constraint.h>
@@ -31,7 +32,7 @@
 
 
 #define TRAJECTORY_CACHE_SIZE     8
-#define OFFLINE_TRAJECTORY_CACHE_SIZE   512
+#define OFFLINE_TRAJECTORY_CACHE_SIZE  512
 #define TRAJECTORY_LOG_CONTROL_SIZE 1024    // 1KB
 #define TRAJECTORY_LOG_DATA_SIZE 67108864   // 64MB
 
@@ -85,6 +86,7 @@ class BaseGroup
     virtual bool nextMovePermitted(void);
 
     // API for off line trajectory
+    virtual ErrorCode readEulerTrajectoryFile(const std::string &offline_euler_trajectory_filePath,std::vector<std::vector<float>>& euler_trajArr);
     virtual ErrorCode setOfflineTrajectory(const std::string &offline_trajectory);
     virtual basic_alg::Joint getStartJointOfOfflineTrajectory(void);
     virtual ErrorCode moveOfflineTrajectory(void);
@@ -285,13 +287,14 @@ class BaseGroup
     basic_alg::DynamicAlg   *dynamics_ptr_;
 
     std::ifstream offline_trajectory_file_;
+    std::ifstream offline_euler_trajectory_file_;
     bool offline_trajectory_first_point_;
     bool offline_trajectory_last_point_;
     uint32_t offline_trajectory_size_;
     basic_alg::Joint offline_start_joint_;
     TrajectoryPoint offline_trajectory_cache_[OFFLINE_TRAJECTORY_CACHE_SIZE];
     uint32_t offline_trajectory_cache_head_, offline_trajectory_cache_tail_;
-
+    uint32_t offline_traj_point_readCnt;
     pthread_mutex_t     planner_list_mutex_;
     pthread_mutex_t     manual_traj_mutex_;
     pthread_mutex_t     manual_rpc_mutex_;

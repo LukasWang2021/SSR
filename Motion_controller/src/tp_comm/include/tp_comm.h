@@ -536,6 +536,8 @@ private:
     void handleRequest0x00003B45(int recv_bytes);
     /********rpc/motion_control/getPostureByJoint, RequestMessageType_Int32_DoubleList(DoubleList_count=9)**********/	
     void handleRequest0x0000EC64(int recv_bytes);
+    /********rpc/motion_control/axis_group/convertEulerTraj2JointFile, RequestMessageType_String**********/	
+    void handleRequest0x0000E375(int recv_bytes);
     /********rpc/motion_control/axis_group/setOfflineTrajectoryFile, RequestMessageType_String**********/	
     void handleRequest0x00011275(int recv_bytes);
     /********rpc/motion_control/axis_group/PrepareOfflineTrajectory, RequestMessageType_Void**********/	
@@ -885,6 +887,8 @@ private:
     void handleResponse0x00003B45(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
     /********rpc/motion_control/getPostureByJoint, ResponseMessageType_Uint64_Posture**********/	
     void handleResponse0x0000EC64(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/motion_control/axis_group/convertEulerTraj2JointFile, ResponseMessageType_Uint64**********/	
+    void handleResponse0x0000E375(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
     /********rpc/motion_control/axis_group/setOfflineTrajectoryFile, ResponseMessageType_Uint64**********/	
     void handleResponse0x00011275(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
     /********rpc/motion_control/axis_group/PrepareOfflineTrajectory, ResponseMessageType_Uint64**********/	

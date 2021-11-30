@@ -20,7 +20,7 @@
 #include "tb_queue.h"
 
 /**
- * @brief group_space includes all group related definitions and implementation.
+ * @brief group_space includes all group related definitions and implemmcGroupEnableentation.
  */
 namespace group_space {
 

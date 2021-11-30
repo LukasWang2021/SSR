@@ -869,7 +869,7 @@ uint64_t c_servo1001CpuGetForceControlParameters(int32_t cpu_id, int32_t param_v
 	return rep_data.error_code.data;
 }
 
-uint64_t c_servo1001CpuGetTorqueSensorData(int32_t cpu_id, int32_t t_data[6], int32_t* data_size_ptr)
+uint64_t c_servo1001CpuGetTorqueSensorData(int32_t cpu_id, double t_data[6], int32_t* data_size_ptr)
 {
 	if (!rpc_valid)
 		return HANDLE_RPC_FAILED;
@@ -879,11 +879,12 @@ uint64_t c_servo1001CpuGetTorqueSensorData(int32_t cpu_id, int32_t t_data[6], in
 	req_data.header.time_stamp = 122;
 	req_data.property.authority = Comm_Authority_TP_SIMMULATOR;
 	req_data.data.data = cpu_id;
-	if (!rpc_ptr->handleRpc(0x000003E1, &req_data, RequestMessageType_Int32_fields, &rep_data, ResponseMessageType_Uint64_Double_fields))
+	if (!rpc_ptr->handleRpc(0x000003E1, &req_data, RequestMessageType_Int32_fields, &rep_data, ResponseMessageType_Uint64_DoubleList_fields))
 	{
 		return HANDLE_RPC_FAILED;
 	}
 	*data_size_ptr = rep_data.data.data_count;
+
 	for (size_t i = 0; i < rep_data.data.data_count; ++i)
 	{
 		t_data[i] = rep_data.data.data[i];
@@ -925,6 +926,7 @@ uint64_t c_servo1001CpuGetTorqueSensorSync(int32_t cpu_id, int32_t * p_updateFla
 	*p_updateFlag = rep_data.data.data;
 	return rep_data.error_code.data;
 }
+
 
 
 

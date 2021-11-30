@@ -7,6 +7,9 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SmartControl", "Comm\Comm.v
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		cdebug|Any CPU = cdebug|Any CPU
+		cdebug|x64 = cdebug|x64
+		cdebug|x86 = cdebug|x86
 		Debug|Any CPU = Debug|Any CPU
 		Debug|x64 = Debug|x64
 		Debug|x86 = Debug|x86
@@ -15,6 +18,11 @@ Global
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D995B928-4FE0-4CED-97D6-9C1307DF6BC0}.cdebug|Any CPU.ActiveCfg = cdebug|Win32
+		{D995B928-4FE0-4CED-97D6-9C1307DF6BC0}.cdebug|x64.ActiveCfg = cdebug|x64
+		{D995B928-4FE0-4CED-97D6-9C1307DF6BC0}.cdebug|x64.Build.0 = cdebug|x64
+		{D995B928-4FE0-4CED-97D6-9C1307DF6BC0}.cdebug|x86.ActiveCfg = cdebug|Win32
+		{D995B928-4FE0-4CED-97D6-9C1307DF6BC0}.cdebug|x86.Build.0 = cdebug|Win32
 		{D995B928-4FE0-4CED-97D6-9C1307DF6BC0}.Debug|Any CPU.ActiveCfg = Debug|Win32
 		{D995B928-4FE0-4CED-97D6-9C1307DF6BC0}.Debug|x64.ActiveCfg = Debug|x64
 		{D995B928-4FE0-4CED-97D6-9C1307DF6BC0}.Debug|x64.Build.0 = Debug|x64

@@ -937,7 +937,7 @@ COMM_INTERFACE_API uint64_t c_servo1001CpuGetTorqueSensorSync(int32_t cpu_id, in
 * data_size_ptr---返回数据长度指针
 * 返回值:错误码
 */
-COMM_INTERFACE_API uint64_t c_servo1001CpuGetTorqueSensorData(int32_t cpu_id, int32_t t_data[6], int32_t* data_size_ptr);
+COMM_INTERFACE_API uint64_t c_servo1001CpuGetTorqueSensorData(int32_t cpu_id, double t_data[6], int32_t* data_size_ptr);
 //IO
 /**
  * @brief Get DI value.
@@ -1100,8 +1100,35 @@ COMM_INTERFACE_API uint64_t c_mcSetStep(double joint_step, double cartesian_step
 
 COMM_INTERFACE_API uint64_t c_mcGetPostureByJoint(int32_t group_index, double j1, double j2, double j3, double j4, double j5, double j6, double j7, double j8, double j9,
 	int32_t* arm_front_back, int32_t* elbow_up_down, int32_t* wrist_down_up);
+/********************************************
+* 函数功能:将欧拉位姿格式(带标题行x y z a b c)的离线轨迹文件转换为轴角姿态轨迹文件
+* 参数: file_name_ptr--离线轨迹文件名称指针(输入的文件名称为"*.csv")
+* 返回值:错误码
+* 备注:需先将输入文件名对应的文件放在/root/robot_data/trajectory/路径下, 输出文件在"/root/robot_data/trajectory/out.trajectory"
+*****************************************/
+COMM_INTERFACE_API uint64_t c_OfflineTrajectory_eulerFileConvert2JointFile(char* file_name_ptr);
 
+/*************************
+* 函数功能:设置载入离线轨迹文件
+* 参数: file_name_ptr--离线轨迹文件名称指针
+* 返回值:错误码
+* 备注:需先将输入文件名对应的文件放在/root/robot_data/trajectory/路径下
+******************************/
+COMM_INTERFACE_API uint64_t c_OfflineTrajectoryFileSet(char* file_name_ptr);
 
+/*************************
+* 函数功能:将机械臂末端运动到离线轨迹文件中的起点位置
+* 参数: 无
+* 返回值:错误码
+******************************/
+COMM_INTERFACE_API uint64_t c_OfflineTrajectoryPrepare(void);
+
+/*************************
+* 函数功能:让机械臂末端按照离线轨迹文件中给定的轴角位置运动
+* 参数: 无
+* 返回值:错误码
+******************************/
+COMM_INTERFACE_API uint64_t c_OfflineTrajectoryMove(void);
 
 // rpc register
 COMM_INTERFACE_API uint64_t c_getPrRegValidList(int32_t start_id, int32_t max_list_size, char* valid_list_str);

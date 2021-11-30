@@ -376,3 +376,73 @@ uint64_t c_mcGetPostureByJoint(int32_t group_index, double j1, double j2, double
 	return rep_data.error_code.data;
 }
 
+uint64_t c_OfflineTrajectory_eulerFileConvert2JointFile(char* file_name_ptr)
+{
+	if (!rpc_valid)
+		return HANDLE_RPC_FAILED;
+	RpcBasic* rpc_ptr = RpcBasic::getInstance();
+	RequestMessageType_String req_data;
+	ResponseMessageType_Uint64 rep_data;
+
+	req_data.header.time_stamp = 122;
+	req_data.property.authority = Comm_Authority_TP_SIMMULATOR;
+	size_t file_name_size = strlen(file_name_ptr);
+	memcpy(req_data.data.data, file_name_ptr, file_name_size);
+	req_data.data.data[file_name_size] = 0;//在文件名字符串最后一字节设置结束符
+	if (!rpc_ptr->handleRpc(0x0000E375, &req_data, RequestMessageType_String_fields, &rep_data, ResponseMessageType_Uint64_fields))
+	{
+		return HANDLE_RPC_FAILED;
+	}
+	return rep_data.data.data;
+}
+
+uint64_t c_OfflineTrajectoryFileSet(char* file_name_ptr)
+{
+	if (!rpc_valid)
+		return HANDLE_RPC_FAILED;
+	RpcBasic* rpc_ptr = RpcBasic::getInstance();
+	RequestMessageType_String req_data;
+	ResponseMessageType_Uint64 rep_data;
+
+	req_data.header.time_stamp = 122;
+	req_data.property.authority = Comm_Authority_TP_SIMMULATOR;
+	size_t file_name_size = strlen(file_name_ptr);
+	memcpy(req_data.data.data, file_name_ptr, file_name_size);
+	req_data.data.data[file_name_size] = 0;//在文件名字符串最后一字节设置结束符
+	if (!rpc_ptr->handleRpc(0x00011275, &req_data, RequestMessageType_String_fields, &rep_data, ResponseMessageType_Uint64_fields))
+	{
+		return HANDLE_RPC_FAILED;
+	}
+	return rep_data.data.data;
+}
+
+uint64_t c_OfflineTrajectoryPrepare(void)
+{
+	if (!rpc_valid)
+		return HANDLE_RPC_FAILED;
+	RpcBasic* rpc_ptr = RpcBasic::getInstance();
+	RequestMessageType_Int32 req_data;
+	ResponseMessageType_Uint64 rep_data;
+	req_data.header.time_stamp = 122;
+	req_data.property.authority = Comm_Authority_TP_SIMMULATOR;
+	if (!rpc_ptr->handleRpc(0x000051E9, &req_data, RequestMessageType_Void_fields, &rep_data, ResponseMessageType_Uint64_fields))
+	{
+		return HANDLE_RPC_FAILED;
+	}
+	return rep_data.data.data;
+}
+uint64_t c_OfflineTrajectoryMove(void)
+{
+	if (!rpc_valid)
+		return HANDLE_RPC_FAILED;
+	RpcBasic* rpc_ptr = RpcBasic::getInstance();
+	RequestMessageType_Int32 req_data;
+	ResponseMessageType_Uint64 rep_data;
+	req_data.header.time_stamp = 122;
+	req_data.property.authority = Comm_Authority_TP_SIMMULATOR;
+	if (!rpc_ptr->handleRpc(0x0000C4D9, &req_data, RequestMessageType_Void_fields, &rep_data, ResponseMessageType_Uint64_fields))
+	{
+		return HANDLE_RPC_FAILED;
+	}
+	return rep_data.data.data;
+}

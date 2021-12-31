@@ -16,8 +16,8 @@ model_class:
     attr: 1
     validity: 0
 model_gear_ratio_numerator: 
-    operation_value: 101
-    default_value: 101
+    operation_value: 100
+    default_value: 100
     upper_limit_value: 1000 
     lower_limit_value: 1
     unit: None
@@ -48,8 +48,8 @@ model_linear_range:
     attr: 1
     validity: 0
 model_direction: 
-    operation_value: 0
-    default_value: 0
+    operation_value: 1
+    default_value: 1
     upper_limit_value: 1 
     lower_limit_value: 0
     unit: None

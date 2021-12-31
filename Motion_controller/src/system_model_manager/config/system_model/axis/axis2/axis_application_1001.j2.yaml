@@ -16,8 +16,8 @@ model_class:
     attr: 1
     validity: 0
 model_gear_ratio_numerator: 
-    operation_value: 81
-    default_value: 81
+    operation_value: 100
+    default_value: 100
     upper_limit_value: 1000 
     lower_limit_value: 1
     unit: None

@@ -16,16 +16,16 @@ target_reached_count_max:
     attr: 3
     validity: 1
 coupling_numerator_5to6:
-    operation_value: 2
-    default_value: 2
+    operation_value: 0
+    default_value: 0
     upper_limit_value: 1000
     lower_limit_value: 1
     unit: None
     attr: 3
     validity: 2
 coupling_denominator_5to6:
-    operation_value: 100
-    default_value: 100
+    operation_value: 1
+    default_value: 1
     upper_limit_value: 1000
     lower_limit_value: 1
     unit: None

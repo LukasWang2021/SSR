@@ -54,6 +54,36 @@ def MoveJ(target, vel, smooth_type, smooth_val, acc, offset_type, offset_val):
     group.MoveJwithAccOffset(target, vel, smooth_type, smooth_val, acc, offset_type, offset_val)
     pass
 
+@overload(dict,float,int,float)
+def MoveJ(target, vel, smooth_type, smooth_val):
+    p = POSTURE()
+    p.coord = target['coord']
+    p.arm   = target['posture'][0]
+    p.elbow = target['posture'][1]
+    p.wrist = target['posture'][2]
+    p.flip  = target['posture'][3]
+    p.turn1 = target['turn'][0]
+    p.turn2 = target['turn'][1]
+    p.turn3 = target['turn'][2]
+    p.turn4 = target['turn'][3]
+    p.turn5 = target['turn'][4]
+    p.turn6 = target['turn'][5]
+    p.turn7 = target['turn'][6]
+    p.turn8 = target['turn'][7]
+    p.turn9 = target['turn'][8]
+    p.pos1 = target['position'][0]
+    p.pos2 = target['position'][1]
+    p.pos3 = target['position'][2]
+    p.pos4 = target['position'][3]
+    p.pos5 = target['position'][4]
+    p.pos6 = target['position'][5]
+    p.pos7 = target['position'][6]
+    p.pos8 = target['position'][7]
+    p.pos9 = target['position'][8]
+    group.MoveJ(target, vel, smooth_type, smooth_val)
+    pass
+
+
 ##############################################
 # Move liner functions
 ##############################################

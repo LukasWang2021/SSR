@@ -16,16 +16,16 @@ model_class:
     attr: 1
     validity: 0
 model_gear_ratio_numerator: 
-    operation_value: 200
-    default_value: 200
+    operation_value: 100
+    default_value: 100
     upper_limit_value: 1000 
     lower_limit_value: 1
     unit: None
     attr: 1
     validity: 0
 model_gear_ratio_denominator: 
-    operation_value: 3
-    default_value: 3
+    operation_value: 1
+    default_value: 1
     upper_limit_value: 1000 
     lower_limit_value: 1
     unit: None

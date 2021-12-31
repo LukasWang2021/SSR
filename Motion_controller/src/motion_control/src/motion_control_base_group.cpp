@@ -379,7 +379,7 @@ void BaseGroup::handleContinueousManualRpcTimeOut()
         direction.axis6 = STANDING;
         direction.axis7 = STANDING;
         direction.axis8 = STANDING;
-        direction.axis9 = STANDING;        
+        direction.axis9 = STANDING;
         ErrorCode error_code = manualMoveContinuous(&direction[0]);
         if(error_code != SUCCESS)
         {

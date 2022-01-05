@@ -104,7 +104,11 @@ ErrorCode Controller::init()
     io_digital_dev_ptr_ = new hal_space::Io1000();
     io_digital_dev_ptr_->init(config_ptr_->dio_exist_);
     dev_ptr_list.push_back(io_digital_dev_ptr_);
-    
+
+    io_safety_dev_ptr_ = new hal_space::IoSafety();
+    io_safety_dev_ptr_->init(config_ptr_->safety_exist_);
+    dev_ptr_list.push_back(io_safety_dev_ptr_);
+
     //axis init
     for (size_t i = 0; i < axes_config_.size(); ++i)
     {
@@ -199,7 +203,7 @@ ErrorCode Controller::init()
         LogProducer::error("main", "Controller TP comm initialization failed");
         return error_code;
     }
-	publish_.init(&tp_comm_, cpu_comm_ptr_, axis_ptr_, group_ptr_, io_digital_dev_ptr_);
+	publish_.init(&tp_comm_, cpu_comm_ptr_, axis_ptr_, group_ptr_, io_digital_dev_ptr_, io_safety_dev_ptr_);
     rpc_.init(&tp_comm_, &publish_, cpu_comm_ptr_, servo_comm_ptr_, axis_ptr_, axis_model_ptr_, group_ptr_, &file_manager_, io_digital_dev_ptr_, &tool_manager_, &coordinate_manager_, &reg_manager_, force_model_ptr_);
     if(!InterpCtrl::instance().setApi(group_ptr_,io_digital_dev_ptr_) ||
        !InterpCtrl::instance().init() || 

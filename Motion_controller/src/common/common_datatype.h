@@ -78,23 +78,5 @@ typedef struct
     uint32_t byte_size;       /**< Byte size of the share memory.*/
 }Device_t;
 
-typedef enum
-{
-    AXIS_PP_X = 0,       /**<Rotation of PP Arm.*/
-    AXIS_BIN_T = 1,      /**<Rotation of the wafer table.*/
-    AXIS_WAFER_X = 2,    /**<X-axis of the wafer table.*/
-    AXIS_WAFER_Y = 3,    /**<Y-axis of the wafer table.*/
-    AXIS_BIN_X = 4,      /**<X-axis of the bin table.*/
-    AXIS_BIN_Y = 5,      /**<Y-axis of the bin table.*/    
-    AXIS_LOADER_X = 6,   /**<X-axis of the loader.*/
-    AXIS_PP_Z1 = 7,      /**<the wafer-side cap*/
-    AXIS_PP_Z2 = 8,      /**<the bin-side cap*/
-    AXIS_NEEDLE = 9,     /**<the needle*/
-    AXIS_PP_Y = 10,      /**<Y-axis of the wafer island*/
-    AXIS_LOADER_Z1 = 11, /**<Left clamp of the loader*/ 
-    AXIS_LOADER_Z2 = 12, /**<Right clamp of the loader*/
-    AXIS_LOADER_Y = 13,  /**<Y-axis of the loader*/
-}AxisNo_e;
-
 #endif
 

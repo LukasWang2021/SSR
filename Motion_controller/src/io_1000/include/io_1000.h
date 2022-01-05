@@ -115,16 +115,13 @@ class Io1000: public BaseDevice{
     
 
   private:    	
-    Device_t device_;         /**< Stores the information of the share memory.*/
+    Device_t *device_;         /**< Stores the information of the share memory.*/
     IOReg_t* io_ptr_;         /**< The pointer to the register of IO*/
     uint32_t* io_status_ptr_;
     bool is_real_;            /**< True indicates operating on the real device while false means no checking device.*/
     ErrorCode pre_err_io_;
 
     ErrorCode readStepperDiBit(uint32_t offset, uint8_t &value);
-    bool openDevice(std::string device_path, uint32_t base_address, size_t byte_size, Device_t& device);
-    void closeDevice(Device_t& device);
-    
 };
 }
 #endif

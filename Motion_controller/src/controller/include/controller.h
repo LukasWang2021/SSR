@@ -24,6 +24,7 @@
 #include "error_queue.h"
 #include "axis1000.h"
 #include "io_1000.h"
+#include "io_safety.h"
 #include "group.h"
 #include "motion_control.h"
 #include "reg_manager.h"
@@ -127,6 +128,7 @@ private:
     system_model_space::SystemModelManager model_manager_;
     std::vector<hal_space::BaseDevice*> dev_ptr_list;
     hal_space::Io1000* io_digital_dev_ptr_;
+    hal_space::IoSafety* io_safety_dev_ptr_;
 
     system_model_space::AxisModel_t* axis_model_ptr_[AXIS_NUM];
     axis_space::Axis* axis_ptr_[AXIS_NUM];

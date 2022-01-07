@@ -11,7 +11,7 @@ int main()
 
 	char ip[32] = { 0 };
 	memcpy(ip, "192.168.30.108", sizeof("192.168.30.108"));
-	int init_ret = c_initEvent(ip);
+	uint64_t init_ret = c_initEvent(ip);
 	if (init_ret != 0)
 	{
 		printf("failed to init event client\n");
@@ -42,7 +42,7 @@ int main()
 	}
 
 	init_ret = c_exitEvent();
-	printf("exit event ret = %d\n", init_ret);
+	printf("exit event ret = 0x%llX\n", init_ret);
 
 	/*
 	ErrorCode error_code = 0x6008;

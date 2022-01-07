@@ -105,3 +105,19 @@ uint64_t c_getAxisFeedBackByIsrCount(uint32_t array_size, uint32_t isr_count, ui
 	return sub_ptr->getAxisFeedBackByIsrCount(isr_count, state, position, velocity, torque);
 }
 
+uint64_t c_getSafetyIOFeedBack(uint32_t* low, uint32_t* high)
+{
+	SubBasic* sub_ptr = SubBasic::getInstance();
+	if (sub_ptr == NULL)
+		return HANDLE_SUB_FAILED;
+	TopicData* data_ptr = sub_ptr->getTopicDataPtr();
+	sub_ptr->lockTopicData();
+
+	*low = data_ptr->iosafety_feedback.data[0];
+	*high = data_ptr->iosafety_feedback.data[1];
+
+	sub_ptr->unlockTopicData();
+
+	return 0;
+}
+

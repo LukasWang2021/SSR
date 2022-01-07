@@ -17,6 +17,8 @@ typedef struct
 	MessageType_AxisFeedbackList axis_feedback;
 	MessageType_ServoFeedbackList servo_feedback;
 	MessageType_Uint32List cpu_feedback;
+	MessageType_Uint32List io1000_feedback;
+	MessageType_Uint32List iosafety_feedback;
 }TopicData;
 
 

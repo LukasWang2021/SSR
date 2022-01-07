@@ -60,7 +60,7 @@ ErrorCode IoSafety::readStatusAll(uint32_t &value_lower, uint32_t &value_upper)
 
 ErrorCode IoSafety::updateStatus(void)
 {
-    state_.all = *(uint64_t *)(device_->device_ptr);
+    state_.all = *(uint64_t *)(device_->device_ptr + IO_SAFETY_STATUS_OFFSET);
     return SUCCESS;
 }
 

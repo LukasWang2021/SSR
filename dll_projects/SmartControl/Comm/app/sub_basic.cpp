@@ -147,7 +147,9 @@ void SubBasic::handleSubscribe()
 	decodeMessageType(comm_pub_->element[0].data.bytes, comm_pub_->element[0].data.size, (void*)&(topic_data_.axis_feedback), MessageType_AxisFeedbackList_fields);
 	decodeMessageType(comm_pub_->element[1].data.bytes, comm_pub_->element[1].data.size, (void*)&(topic_data_.servo_feedback), MessageType_ServoFeedbackList_fields);
 	decodeMessageType(comm_pub_->element[2].data.bytes, comm_pub_->element[2].data.size, (void*)&(topic_data_.cpu_feedback), MessageType_Uint32List_fields);
-	
+	decodeMessageType(comm_pub_->element[2].data.bytes, comm_pub_->element[2].data.size, (void*)&(topic_data_.io1000_feedback), MessageType_Uint32List_fields);
+	decodeMessageType(comm_pub_->element[2].data.bytes, comm_pub_->element[2].data.size, (void*)&(topic_data_.iosafety_feedback), MessageType_Uint32List_fields);
+
 	cache_axis_feedback_mutex_.lock();
 	pushCacheAxisFeedbackList();
 	cache_axis_feedback_mutex_.unlock();

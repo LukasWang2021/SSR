@@ -402,6 +402,57 @@
     <ClInclude Include="protos\include\response\response_uint64_posture.pb.h">
       <Filter>头文件\protos\response</Filter>
     </ClInclude>
+    <ClInclude Include="protos\include\message_type\reg_base_summary.pb.h">
+      <Filter>头文件\protos\message_type</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\message_type\reg_hr.pb.h">
+      <Filter>头文件\protos\message_type</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\message_type\reg_mr.pb.h">
+      <Filter>头文件\protos\message_type</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\message_type\reg_pr.pb.h">
+      <Filter>头文件\protos\message_type</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\message_type\reg_r.pb.h">
+      <Filter>头文件\protos\message_type</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\message_type\reg_sr.pb.h">
+      <Filter>头文件\protos\message_type</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\request\request_reg_hr.pb.h">
+      <Filter>头文件\protos\request</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\request\request_reg_mr.pb.h">
+      <Filter>头文件\protos\request</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\request\request_reg_pr.pb.h">
+      <Filter>头文件\protos\request</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\request\request_reg_r.pb.h">
+      <Filter>头文件\protos\request</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\request\request_reg_sr.pb.h">
+      <Filter>头文件\protos\request</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\response\response_reg_base_summary.pb.h">
+      <Filter>头文件\protos\response</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\response\response_reg_hr.pb.h">
+      <Filter>头文件\protos\response</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\response\response_reg_mr.pb.h">
+      <Filter>头文件\protos\response</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\response\response_reg_pr.pb.h">
+      <Filter>头文件\protos\response</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\response\response_reg_r.pb.h">
+      <Filter>头文件\protos\response</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\response\response_reg_sr.pb.h">
+      <Filter>头文件\protos\response</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="app\common_error_code.cpp">
@@ -730,6 +781,69 @@
     </ClCompile>
     <ClCompile Include="app\rpc_tool_manager.cpp">
       <Filter>源文件\app</Filter>
+    </ClCompile>
+    <ClCompile Include="main.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="app\rpc_interpreter.cpp">
+      <Filter>源文件\app</Filter>
+    </ClCompile>
+    <ClCompile Include="app\rpc_reg_manager.cpp">
+      <Filter>源文件\app</Filter>
+    </ClCompile>
+    <ClCompile Include="app\rpc_servo1000.cpp">
+      <Filter>源文件\app</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\message_type\reg_base_summary.pb.c">
+      <Filter>源文件\protos\message_type</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\message_type\reg_hr.pb.c">
+      <Filter>源文件\protos\message_type</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\message_type\reg_mr.pb.c">
+      <Filter>源文件\protos\message_type</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\message_type\reg_pr.pb.c">
+      <Filter>源文件\protos\message_type</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\message_type\reg_r.pb.c">
+      <Filter>源文件\protos\message_type</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\message_type\reg_sr.pb.c">
+      <Filter>源文件\protos\message_type</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\request\request_reg_hr.pb.c">
+      <Filter>源文件\protos\request</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\request\request_reg_mr.pb.c">
+      <Filter>源文件\protos\request</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\request\request_reg_pr.pb.c">
+      <Filter>源文件\protos\request</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\request\request_reg_r.pb.c">
+      <Filter>源文件\protos\request</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\request\request_reg_sr.pb.c">
+      <Filter>源文件\protos\request</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\response\response_reg_base_summary.pb.c">
+      <Filter>源文件\protos\response</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\response\response_reg_hr.pb.c">
+      <Filter>源文件\protos\response</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\response\response_reg_mr.pb.c">
+      <Filter>源文件\protos\response</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\response\response_reg_pr.pb.c">
+      <Filter>源文件\protos\response</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\response\response_reg_r.pb.c">
+      <Filter>源文件\protos\response</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\response\response_reg_sr.pb.c">
+      <Filter>源文件\protos\response</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

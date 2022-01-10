@@ -7,10 +7,11 @@
  * @author wuym
  */
 
-#define IO_SAFETY_BASE_ADDRESS         0xA00C0028  /**< The base address of the share memory for io communication.*/
+#define IO_SAFETY_BASE_ADDRESS         0xA00C0000  /**< The base address of the share memory for io communication.*/
 #define IO_SAFETY_TOTAL_BYTE_SIZE      0x8         /**< The total byte size for io communication.*/
 #define IO_SAFETY_MAX_SIZE             63          /**< The maximum number of DI.*/
 #define IO_SAFETY_DEVICE_PATH          "/dev/mem"
+#define IO_SAFETY_STATUS_OFFSET        0x28
 
 typedef struct
 {
@@ -56,7 +57,7 @@ typedef struct
     uint32_t core1_err_stop : 1;
     uint32_t reserved3 : 4;
 
-    uint32_t soft_reset : 1;
+    uint32_t soft_reset_fdb : 1;
     uint32_t break_enable : 1;
     uint32_t busbar_enable : 1;
     uint32_t core0_err_stop_fdb : 1;
@@ -64,7 +65,7 @@ typedef struct
     uint32_t state_machine : 3;
 
     uint32_t reserved4 : 8;
-    uint32_t reserved4 : 8;
+    uint32_t reserved5 : 8;
 }IoSafetyState_b;
 
 typedef union

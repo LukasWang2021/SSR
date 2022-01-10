@@ -36,6 +36,7 @@ Device_t* BaseDevice::openDevice(std::string device_path, uint32_t base_address,
     Device_t *device = new Device_t;
 
     int device_fd = open(device_path.c_str(), O_RDWR);
+    
     device->device_ptr = (char *)mmap(NULL, byte_size, PROT_READ|PROT_WRITE, MAP_SHARED, device_fd, base_address);
     if (device->device_ptr == MAP_FAILED) 
     {

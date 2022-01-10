@@ -48,3 +48,12 @@ void TpComm::handlePublishElement0x00007C5B(Comm_Publish& package, int element_i
         LogProducer::error("publish", "handlePublishElement0x00007C5B: failed to encode");
     }
 }
+
+/********publish/iosafety/safety_feedback, MessageType_Uint32List(count=2)**********/	
+void TpComm::handlePublishElement0x0001472B(Comm_Publish& package, int element_index, TpPublishElement& list_element)
+{
+    if(!encodePublishElement(package.element[element_index].data, MessageType_Uint32List_fields, list_element.data_ptr))
+    {
+        LogProducer::error("publish", "handlePublishElement0x0001472B: failed to encode");
+    }
+}

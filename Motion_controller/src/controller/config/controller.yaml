@@ -8,5 +8,5 @@ planner_thread_priority: 60
 priority_thread_priority: 70
 realtime_thread_priority: 80 
 dio_exist: false
-safety_exist: false
+safety_exist: true
 #END

@@ -7,6 +7,7 @@ bool InterpDevice_Init(hal_space::BaseDevice *dev)
 {
     io_dev =  dev; 
     io1000_dev = (hal_space::Io1000*)io_dev;
+    return true;
 }
 /*
 函数功能: 读取引脚电平状态

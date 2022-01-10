@@ -106,7 +106,11 @@ ErrorCode Controller::init()
     dev_ptr_list.push_back(io_digital_dev_ptr_);
 
     io_safety_dev_ptr_ = new hal_space::IoSafety();
-    io_safety_dev_ptr_->init(config_ptr_->safety_exist_);
+    if(io_safety_dev_ptr_->init(config_ptr_->safety_exist_) == false)
+    {
+        LogProducer::error("main", "Controller safety io initialization failed");
+        return CONTROLLER_INIT_FAILED;
+    }
     dev_ptr_list.push_back(io_safety_dev_ptr_);
 
     //axis init

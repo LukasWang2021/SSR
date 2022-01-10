@@ -20,6 +20,7 @@
 #include "axis.h"
 #include "motion_control.h"
 #include "io_1000.h"
+#include "io_safety.h"
 
 /**
  * @brief user_space includes the user level implementation.

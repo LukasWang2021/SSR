@@ -23,3 +23,7 @@ void* ControllerPublish::getIODigitalFdbPtr()
     return (void*)&io_digital_fdb_;
 }
 
+void* ControllerPublish::getIOSafetyFdbPtr()
+{
+    return (void*)&io_safety_fdb_;
+}

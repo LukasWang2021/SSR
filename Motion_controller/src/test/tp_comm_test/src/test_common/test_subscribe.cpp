@@ -146,6 +146,26 @@ int main()
                     }
                     break;
                 }
+
+                case 0x0001472B://"/publish/iosafety/safety_feedback"
+                {
+                    MessageType_Uint32List fdb;
+                    if(!test.decodeMessageType(msg.element[i].data.bytes, msg.element[i].data.size, 
+                        (void*)&fdb, MessageType_Uint32List_fields))
+                    {
+                        printf("Sub : parse data msg failed !!\n");
+                    }
+                    else 
+                    {
+                        printf("Sub : /publish/iosafety/safety_feedback, hash = 0x%x, count=%d\n", msg.element[i].hash, fdb.data_count);
+                        for (size_t i = 0; i < fdb.data_count; ++i)
+                        {
+                            printf("%d, ", fdb.data[i]);
+                        }
+                        printf("\n");
+                    }
+                    break;
+                }
                 
                 default:
                 {

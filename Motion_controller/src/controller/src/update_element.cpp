@@ -93,3 +93,9 @@ void ControllerPublish::updateIODigitalFdb()
         }
     }
 }
+
+void ControllerPublish::updateIOSafetyFdb()
+{
+    io_safety_fdb_.data_count = 2;
+    safety_ptr_->readStatusAll(io_safety_fdb_.data[0], io_safety_fdb_.data[1]);
+}

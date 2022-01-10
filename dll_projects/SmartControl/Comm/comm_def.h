@@ -9,5 +9,5 @@
 #define MAX_EVENT_NUMBER 8
 #define AXIS_NUM 16
 #define GROUP_NUM 1
-#define TOPIC_ELEM_NUM 3
+#define TOPIC_ELEM_NUM 5
 typedef uint64_t ErrorCode;

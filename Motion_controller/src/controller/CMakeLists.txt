@@ -43,6 +43,7 @@ include_directories(
     ../axis1000/include
     ../axis1001/include
     ../io_1000/include
+    ../io_safety/include
     ../group/include
     ../rtm_spi/include
     ../nvram/include 
@@ -88,6 +89,7 @@ target_link_libraries(controller
     axis1000
     base_device
     io_1000
+    io_safety
     group
     rtm_spi
     nvram_handler

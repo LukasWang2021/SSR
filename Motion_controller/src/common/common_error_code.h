@@ -104,6 +104,12 @@ typedef unsigned long long int ErrorCode;
 #define IO_ANALOG_DEV_FRAME_ERR 0xB014
 #define IO_ANALOG_INVALID_OFFSET 0xB015
 
+#define IO_SAFETY_DEV_LOST 0xB021
+#define IO_SAFETY_DEV_LINE_ERR 0xB022
+#define IO_SAFETY_DEV_CRC_ERR 0xB023
+#define IO_SAFETY_DEV_FRAME_ERR 0xB024
+#define IO_SAFETY_INVALID_OFFSET 0xB025
+
 #define REG_MANAGER_LOG (unsigned long long int)0x0000000100A40000    /* RegManager模块日志{0} */
 #define REG_MANAGER_LOAD_PARAM_FAILED (unsigned long long int)0x0011000B00A40001    /* RegManager模块在初始化阶段载入模块参数失败 */
 #define REG_MANAGER_LOAD_PR_FAILED (unsigned long long int)0x0011000B00A40002    /* RegManager模块在初始化阶段载入Pr寄存器参数失败 */

@@ -936,6 +936,8 @@ private:
     void handlePublishElement0x00013C8B(Comm_Publish& package, int element_index, TpPublishElement& list_element);
     /********publish/ioAnalog/io_analog_feedback, MessageType_Uint32List(count=12)**********/	
     void handlePublishElement0x00007C5B(Comm_Publish& package, int element_index, TpPublishElement& list_element);
+    /********publish/iosafety/safety_feedback, MessageType_Uint32List(count=2)**********/	
+    void handlePublishElement0x0001472B(Comm_Publish& package, int element_index, TpPublishElement& list_element);
 
 
     /* response end */

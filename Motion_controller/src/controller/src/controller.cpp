@@ -237,6 +237,10 @@ ErrorCode Controller::init()
     {
         return CONTROLLER_CREATE_RT_THREAD_FAILED;
     }    
+    if(!rpc_thread_.run(&controllerRpcThreadFunc, this, config_ptr_->rpc_thread_priority_))
+    {
+        return CONTROLLER_CREATE_RT_THREAD_FAILED;
+    }
     LogProducer::warn("main", "Controller init success");
     return SUCCESS;
 }
@@ -276,10 +280,16 @@ void Controller::runRoutineThreadFunc()
         group_ptr_[i]->processFdbPdo();
         group_ptr_[i]->processStateMachine();
     }
-    rpc_.processRpc();
+    // rpc_.processRpc();
 	publish_.processPublish();
     uploadErrorCode();
     group_ptr_[0]->ringCommonTask();
+}
+
+void Controller::runRpcThreadFunc()
+{
+    usleep(config_ptr_->rpc_cycle_time_);
+    rpc_.processRpc();
 }
 
 void Controller::runPlannerThreadFunc()
@@ -598,6 +608,20 @@ void* controllerRoutineThreadFunc(void* arg)
         controller_ptr->runRoutineThreadFunc();
     }
     std::cout<<"controller_rountine exit"<<std::endl;
+    return NULL;
+}
+
+void* controllerRpcThreadFunc(void* arg)
+{
+    Controller* controller_ptr = static_cast<Controller*>(arg);
+    log_space::LogProducer log_manager;
+    log_manager.init("controller_rpc", g_isr_ptr_);
+    LogProducer::warn("main","controller_rpc TID is %ld", syscall(SYS_gettid));
+    while(!controller_ptr->isExit())
+    {
+        controller_ptr->runRpcThreadFunc();
+    }
+    std::cout<<"controller_rpc exit"<<std::endl;
     return NULL;
 }
 

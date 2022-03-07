@@ -50,10 +50,12 @@ public:
     int planner_cycle_time_;       
     int priority_cycle_time_;       
     int realtime_cycle_time_;       /**< The cycle time of the realtime thread. The unit is us.*/
+    int rpc_cycle_time_;       
     int routine_thread_priority_;   /**< The priority of the routine thread.*/
     int planner_thread_priority_;   
     int priority_thread_priority_;  
     int realtime_thread_priority_;  /**< The priority of the realtime thread.*/
+    int rpc_thread_priority_;  
     bool dio_exist_;
     bool safety_exist_;
 

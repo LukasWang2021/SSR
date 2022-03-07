@@ -1,8 +1,8 @@
-#include <windows.h>
-#include <thread>
+ï»¿#include <thread>
 #include "rpc_interface.h"
 #include "rpc_basic.h"
 #include "common_error_code.h"
+#include "protoc.h"
 
 
 
@@ -71,8 +71,12 @@ void ManualMoveThread(void)
 	RpcBasic* rpc_ptr = RpcBasic::getInstance();
 	while (is_g_manual_move_thread_alive)
 	{
-		Sleep(200);
-		rpc_ptr->handleRpc(0x0000D3F5, &g_manual_move_data, RequestMessageType_Int32_Int32List_fields, &g_manual_move_relpy, RequestMessageType_Uint64_fields);
+#ifdef _WIN_PLAT
+        Sleep(200);
+#else
+        usleep(200000);
+#endif		
+        rpc_ptr->handleRpc(0x0000D3F5, &g_manual_move_data, RequestMessageType_Int32_Int32List_fields, &g_manual_move_relpy, RequestMessageType_Uint64_fields);
 	}
 
 	RequestMessageType_Int32_Int32List req_data;
@@ -320,8 +324,11 @@ uint64_t c_mcSetStep(double joint_step, double cartesian_step, double orientatio
 		return HANDLE_RPC_FAILED;
 	}
 	if (rep_data.data.data != 0) return rep_data.data.data;
-	Sleep(100);
-
+#ifdef _WIN_PLAT
+        Sleep(100);
+#else
+        usleep(100000);
+#endif
 	//set orientation manual step
 	req_data2.property.authority = Comm_Authority_TP_SIMMULATOR;
 	req_data2.data1.data = 0;
@@ -331,8 +338,11 @@ uint64_t c_mcSetStep(double joint_step, double cartesian_step, double orientatio
 		return HANDLE_RPC_FAILED;
 	}
 	if (rep_data.data.data != 0) return rep_data.data.data;
-	Sleep(100);
-
+#ifdef _WIN_PLAT
+        Sleep(100);
+#else
+        usleep(100000);
+#endif
 	req_data2.data1.data = 0;
 	req_data2.data2.data = orientation_step;
 	if (!rpc_ptr->handleRpc(0x00002940, &req_data2, RequestMessageType_Int32_Double_fields, &rep_data, ResponseMessageType_Uint64_fields))
@@ -388,7 +398,7 @@ uint64_t c_OfflineTrajectory_eulerFileConvert2JointFile(char* file_name_ptr)
 	req_data.property.authority = Comm_Authority_TP_SIMMULATOR;
 	size_t file_name_size = strlen(file_name_ptr);
 	memcpy(req_data.data.data, file_name_ptr, file_name_size);
-	req_data.data.data[file_name_size] = 0;//ÔÚÎÄ¼þÃû×Ö·û´®×îºóÒ»×Ö½ÚÉèÖÃ½áÊø·û
+	req_data.data.data[file_name_size] = 0;//åœ¨æ–‡ä»¶åå­—ç¬¦ä¸²æœ€åŽä¸€å­—èŠ‚è®¾ç½®ç»“æŸç¬¦
 	if (!rpc_ptr->handleRpc(0x0000E375, &req_data, RequestMessageType_String_fields, &rep_data, ResponseMessageType_Uint64_fields))
 	{
 		return HANDLE_RPC_FAILED;
@@ -408,7 +418,7 @@ uint64_t c_OfflineTrajectoryFileSet(char* file_name_ptr)
 	req_data.property.authority = Comm_Authority_TP_SIMMULATOR;
 	size_t file_name_size = strlen(file_name_ptr);
 	memcpy(req_data.data.data, file_name_ptr, file_name_size);
-	req_data.data.data[file_name_size] = 0;//ÔÚÎÄ¼þÃû×Ö·û´®×îºóÒ»×Ö½ÚÉèÖÃ½áÊø·û
+	req_data.data.data[file_name_size] = 0;//ï¿½ï¿½ï¿½Ä¼ï¿½ï¿½ï¿½ï¿½Ö·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½Ö½ï¿½ï¿½ï¿½ï¿½Ã½ï¿½ï¿½ï¿½ï¿½ï¿½
 	if (!rpc_ptr->handleRpc(0x00011275, &req_data, RequestMessageType_String_fields, &rep_data, ResponseMessageType_Uint64_fields))
 	{
 		return HANDLE_RPC_FAILED;
@@ -425,7 +435,7 @@ uint64_t c_OfflineTrajectoryPrepare(void)
 	ResponseMessageType_Uint64 rep_data;
 	req_data.header.time_stamp = 122;
 	req_data.property.authority = Comm_Authority_TP_SIMMULATOR;
-	if (!rpc_ptr->handleRpc(0x000051E9, &req_data, RequestMessageType_Void_fields, &rep_data, ResponseMessageType_Uint64_fields))
+	if (!rpc_ptr->handleRpc(0x000051E9, &req_data, RequestMessageType_Int32_fields, &rep_data, ResponseMessageType_Uint64_fields))
 	{
 		return HANDLE_RPC_FAILED;
 	}
@@ -440,9 +450,36 @@ uint64_t c_OfflineTrajectoryMove(void)
 	ResponseMessageType_Uint64 rep_data;
 	req_data.header.time_stamp = 122;
 	req_data.property.authority = Comm_Authority_TP_SIMMULATOR;
-	if (!rpc_ptr->handleRpc(0x0000C4D9, &req_data, RequestMessageType_Void_fields, &rep_data, ResponseMessageType_Uint64_fields))
+	if (!rpc_ptr->handleRpc(0x0000C4D9, &req_data, RequestMessageType_Int32_fields, &rep_data, ResponseMessageType_Uint64_fields))
 	{
 		return HANDLE_RPC_FAILED;
 	}
 	return rep_data.data.data;
 }
+
+uint64_t c_sendOnlineTrajectory(double traj[], uint32_t size)
+{
+	if (!rpc_valid)
+		return HANDLE_RPC_FAILED;
+	RpcBasic* rpc_ptr = RpcBasic::getInstance();
+	RequestMessageType_Int32_DoubleList req_data;
+	ResponseMessageType_Uint64 rep_data;
+	req_data.header.time_stamp = 122;
+	req_data.property.authority = Comm_Authority_TP_SIMMULATOR;
+	if (size > 128)
+	{
+		return TP_COMM_RPC_TOO_MUCH_DATA;
+	}
+	req_data.data1.data = 0;
+	req_data.data2.data_count = size;
+	memcpy(req_data.data2.data, traj, size*sizeof(double));
+	if (!rpc_ptr->handleRpc(0x00008A31, &req_data, RequestMessageType_Int32_DoubleList_fields, &rep_data, ResponseMessageType_Uint64_fields))
+	{
+		return HANDLE_RPC_FAILED;
+	}
+	return rep_data.data.data;
+}
+
+
+
+

@@ -4,6 +4,7 @@
 #include "common_error_code.h"
 #include <string.h>
 #include <time.h>
+#include "protoc.h"
 
 uint64_t c_servo1001ServoShutDown(int32_t cpu_id, int32_t servo_id)
 {

@@ -84,7 +84,7 @@ uint64_t c_getTopicCpuFeedback(uint32_t array_size, uint32_t ctrl_pdo_sync[AXIS_
 	uint32_t axis_pdo_sync_num = data_ptr->cpu_feedback.data_count - 1;
 	uint32_t size = array_size < axis_pdo_sync_num ? array_size : axis_pdo_sync_num;
 
-	for (uint32_t i = 0; i < axis_pdo_sync_num; ++i)
+	for (uint32_t i = 0; i < size; ++i)
 	{
 		ctrl_pdo_sync[i] = data_ptr->cpu_feedback.data[i];
 	}

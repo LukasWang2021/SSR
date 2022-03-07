@@ -1,7 +1,6 @@
 #include "event_basic.h"
 #include "protocol/publish.pb.h"
 #include "base.pb.h"
-#include <windows.h>
 
 using namespace std;
 
@@ -132,7 +131,12 @@ void EventThread(void* arg)
 	while (!object_ptr->isOnExit())
 	{
 		object_ptr->handleRecvEvent();
-		Sleep(100);
+#ifdef _WIN_PLAT
+        Sleep(100);
+#else
+        usleep(100000);
+#endif
+		
 	}
 }
 

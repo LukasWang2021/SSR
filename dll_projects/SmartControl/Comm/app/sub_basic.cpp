@@ -2,7 +2,7 @@
 #include "sub_basic.h"
 #include "protocol/publish.pb.h"
 #include "base.pb.h"
-#include <windows.h>
+#include "common_error_code.h"
 
 
 using namespace std;
@@ -218,7 +218,11 @@ void TopicThread(void* arg)
 	while (!object_ptr->isOnExit())
 	{
 		object_ptr->handleSubscribe();
-		Sleep(90);
-	}
+#ifdef _WIN_PLAT
+        Sleep(90);
+#else
+        usleep(90000);
+#endif	
+    }
 }
 

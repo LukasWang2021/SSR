@@ -2,7 +2,7 @@
 #include "rpc_interface.h"
 #include "rpc_basic.h"
 #include "common_error_code.h"
-#include <windows.h>
+#include "protoc.h"
 
 bool rpc_valid = false;
 
@@ -164,8 +164,12 @@ uint64_t c_setSamplingChannelGroup(int32_t cpu_id, int32_t channel_index[16], in
 	for (int i = 0; i < size; ++i)
 	{
 		ret = c_setSamplingChannel(cpu_id, channel_index[i], servo_index[i], servo_param_index[i]);
-		Sleep(10);
-		if (ret != 0)
+#ifdef _WIN_PLAT
+        Sleep(10);
+#else
+        usleep(10000);
+#endif		
+        if (ret != 0)
 			return ret;
 	}
 	return ret;

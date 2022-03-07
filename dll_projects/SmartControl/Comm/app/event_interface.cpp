@@ -26,7 +26,7 @@ COMM_INTERFACE_API uint64_t c_exitEvent(void)
 	return 0;
 }
 
-COMM_INTERFACE_API uint64_t c_getEventErrorList(unsigned long long int error[8], unsigned long long int time_stamp[8], int32_t* size)
+COMM_INTERFACE_API uint64_t c_getEventErrorList(uint64_t error[8], uint64_t time_stamp[8], int32_t* size)
 {
 	EventBasic* event_ptr = EventBasic::getInstance();
 	if (event_ptr == NULL)
@@ -34,7 +34,7 @@ COMM_INTERFACE_API uint64_t c_getEventErrorList(unsigned long long int error[8],
 
 	EventInfo event[8];
 	event_ptr->popAll(event, size);
-	for (size_t i = 0; i < *size; ++i)
+	for (int32_t i = 0; i < *size; ++i)
 	{
 		error[i] = event[i].data;
 		time_stamp[i] = event[i].time_stamp;

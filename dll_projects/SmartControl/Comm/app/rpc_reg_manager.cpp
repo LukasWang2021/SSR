@@ -1,11 +1,11 @@
-#include "stdafx.h"
-#include <windows.h>
 #include <thread>
 #include "rpc_interface.h"
 #include "rpc_basic.h"
 #include "common_error_code.h"
 #include <string>
 #include <sstream>
+#include <math.h>
+#include "protoc.h"
 
 using namespace std;
 

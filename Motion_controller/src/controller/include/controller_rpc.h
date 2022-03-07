@@ -408,6 +408,8 @@ private:
     void handleRpc0x000102F3(void* request_data_ptr, void* response_data_ptr);
     //"/rpc/motion_control/axis_group/setJointManualStep"	
     void handleRpc0x00018470(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/motion_conrtol/axis_group/setOnlineTrajectoryData" 实时下发在线轨迹数据_2021-12-07
+    void handleRpc0x00008A31(void* request_data_ptr, void* response_data_ptr);
     //"/rpc/motion_control/axis_group/getJointManualStep"	
     void handleRpc0x00006D10(void* request_data_ptr, void* response_data_ptr);
     //"/rpc/motion_control/axis_group/setCartesianManualStep"	

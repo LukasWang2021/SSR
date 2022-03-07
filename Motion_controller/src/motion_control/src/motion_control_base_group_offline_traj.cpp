@@ -23,7 +23,7 @@ namespace group_space
 {
 
 inline void file_to_string(vector<string> &record, const string& line, char delimiter);
-inline float string_to_float(string str);
+inline double string_to_float(string str);
 inline void file_to_string(vector<string> &record, const string& line, char delimiter)
 {
     int linepos=0;
@@ -49,9 +49,9 @@ inline void file_to_string(vector<string> &record, const string& line, char deli
         record.push_back(curstring);
     return;
 }
-inline float string_to_float(string str){
+inline double string_to_float(string str){
     int i=0,len=str.length();
-    float sum = 0;
+    double sum = 0;
     bool pn_flag=1;
     if(str[0] == '-')
     {pn_flag = 0;}
@@ -65,7 +65,7 @@ inline float string_to_float(string str){
         ++i;
     }
     ++i;
-    float t=1,d=1;
+    double t=1,d=1;
     while (i<len)
     {
         d*=0.1;
@@ -84,7 +84,7 @@ inline float string_to_float(string str){
 * 参数:offline_euler_trajectory_filePath---文件名称
 * 返回值:错误码
 *******************************************************/
-ErrorCode BaseGroup::readEulerTrajectoryFile(const std::string &offline_euler_trajectory_filePath, vector<vector<float> >&euler_trajArr)
+ErrorCode BaseGroup::readEulerTrajectoryFile(const std::string &offline_euler_trajectory_filePath, vector<vector<double> >&euler_trajArr)
 {
     if (mc_state_ == OFFLINE || mc_state_ == OFFLINE_TO_STANDBY || mc_state_ == STANDBY_TO_OFFLINE)
     {
@@ -103,7 +103,7 @@ ErrorCode BaseGroup::readEulerTrajectoryFile(const std::string &offline_euler_tr
         return INVALID_PARAMETER;
     }
     
-    vector<float> data_line;
+    vector<double> data_line;
     vector<string> row;
     string line;
     int line_cnt=0;//数据行计数
@@ -116,7 +116,7 @@ ErrorCode BaseGroup::readEulerTrajectoryFile(const std::string &offline_euler_tr
         for(int i=0,leng=row.size();i<leng;i++)
         {
             data_line.push_back(string_to_float(row[i]));
-            printf("%f ",data_line[i]);
+            printf("%lf ",data_line[i]);
         }
         printf("\n");
         euler_trajArr.push_back(data_line);
@@ -363,7 +363,18 @@ ErrorCode BaseGroup::sendOfflineTrajectoryFlow(void)
             LogProducer::error("mc_offline_traj","sendOfflineTrajectoryFlow: cannot pick point from trajectory fifo.");
             return err;
         }
-        bare_core_.fillPointCache(points, length, POINT_POS_VEL);
+        err = bare_core_.fillPointCache(points, length, POINT_POS_VEL);
+        
+        if(err == true)//debug infomation
+        {
+            for (size_t i = 0; i < length; i++)
+            {
+                LogProducer::info("OfflinetrjS|barecore_fillPointCache"," %d) level=%d time_stamp=%.4f (%.6f,%.6f,%.6f,%.6f,%.6f,%.6f)",
+                i+1,points[i].level, points[i].time_stamp, 
+                points[i].state.angle.j1_, points[i].state.angle.j2_, points[i].state.angle.j3_,
+                points[i].state.angle.j4_,points[i].state.angle.j5_,points[i].state.angle.j6_);
+            }
+        }
         //LogProducer::info("mc_offline_traj","sendOfflineTrajectoryFlow: %d, head=%d, tail=%d", length, offline_trajectory_cache_head_, offline_trajectory_cache_tail_);
         
         if (points[length - 1].level == POINT_ENDING)
@@ -374,6 +385,10 @@ ErrorCode BaseGroup::sendOfflineTrajectoryFlow(void)
                 offline_to_standby_request_ = true;
             }
         }
+    }
+    else
+    {
+        LogProducer::warn("sendOfflineTrajectoryFlow","bare_core_ is not PointCacheEmpty");
     }
     //LogProducer::info("mc_offline_traj","sendOfflineTrajectoryFlow: bare.sendPoint");
     return bare_core_.sendPoint() ? SUCCESS : MC_SEND_TRAJECTORY_FAIL;

@@ -149,7 +149,9 @@ target_link_libraries(trajectory_offline_move ${rtm_LIBRARIES} pb tp_comm_test p
 add_executable(trajectory_offline_prepare ./axis_group/trajectory_offline_prepare.cpp)
 target_link_libraries(trajectory_offline_prepare ${rtm_LIBRARIES} pb tp_comm_test protos)
 
-
+######### doOnlineTrajectoryMove #########
+add_executable(doOnlineTrajectoryMove ./axis_group/doOnlineTrajectoryMove.cpp)
+target_link_libraries(doOnlineTrajectoryMove ${rtm_LIBRARIES} pb tp_comm_test protos)
 
 ######### user_coord_id_get #########
 add_executable(user_coord_id_get ./axis_group/user_coord_id_get.cpp)

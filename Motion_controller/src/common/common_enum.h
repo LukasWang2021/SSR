@@ -14,6 +14,7 @@ typedef enum
     USER_OP_MODE_AUTO             = 1,
     USER_OP_MODE_SLOWLY_MANUAL    = 2,
     USER_OP_MODE_MANUAL = 3,
+    USER_OP_MODE_ONLINE = 4,
 }UserOpMode;
 
 enum ServiceID
@@ -142,6 +143,8 @@ enum MotionControlState
     OFFLINE = 0x9,
     RESUME = 0xA,
     PREPARE_RESUME = 0xB,
+    ONLINE = 0xC,
+    PAUSE_ONLINE = 0x0D,
 
     MANUAL_TO_STANDBY = 0x32,
     STANDBY_TO_MANUAL = 0x23,

@@ -38,7 +38,7 @@ void ControllerRpc::handleRpc0x000050E3(void* request_data_ptr, void* response_d
             }
         }
     }  
-
+    LogProducer::warn("rpc", "element_count=%d, rq_data_ptr->data.element_hash_list_count=%d", element_count,rq_data_ptr->data.element_hash_list_count);
     if(element_count == rq_data_ptr->data.element_hash_list_count)
     {
         tp_comm_ptr_->pushTaskToPublishList(task);

@@ -13,6 +13,7 @@
 #include <coordinate_manager.h>
 #include "error_queue.h"
 #include <math.h>
+#include "onlineTrj_planner.h"
 
 using namespace std;
 using namespace basic_alg;
@@ -330,7 +331,7 @@ ErrorCode MotionControl::convertEulerTraj2JointTraj(const std::string &offline_e
     int datalineCnt = 0;
     string euler_trajectory_filePath = "/root/robot_data/trajectory/";
     euler_trajectory_filePath += offline_euler_trajectory_fileName;
-    vector<vector<float>> euler_trajArr;//二维数组暂存读入的数据
+    vector<vector<double>> euler_trajArr;//二维数组暂存读入的数据
     if(group_ptr_->readEulerTrajectoryFile(euler_trajectory_filePath, euler_trajArr) == SUCCESS)
     {
         datalineCnt = euler_trajArr.size();
@@ -392,6 +393,129 @@ ErrorCode MotionControl::convertEulerTraj2JointTraj(const std::string &offline_e
     return 0;
 }
 
+ErrorCode MotionControl::Fir_Bspline_algorithm_test2(void)
+{
+    string euler_trajectory_filePath = "/root/robot_data/trajectory/VPp.csv";
+    vector< vector<double> > euler_trajArr;//二维数组暂存读入的数据
+    Vector3 Pdata;
+    Vector3 Qdata;
+    int datalineCnt=0;
+    if(group_ptr_->readEulerTrajectoryFile(euler_trajectory_filePath, euler_trajArr) == SUCCESS)
+    {
+        datalineCnt = euler_trajArr.size();
+        printf("******************convert result*****************datalineCnt = %d\n",datalineCnt);
+        for(int i=0;i<1000;i++)
+        {
+            Pdata.x_ = euler_trajArr[i][0];
+            Pdata.y_ = euler_trajArr[i][1];
+            Pdata.z_ = euler_trajArr[i][2];
+            Qdata.x_ = euler_trajArr[i][3];
+            Qdata.y_ = euler_trajArr[i][4];
+            Qdata.z_ = euler_trajArr[i][5];
+
+            if(i==0)
+            {
+                cout << "[input "<<i<<" (" << Pdata.x_ <<"," << Pdata.y_ <<"," << Pdata.z_ <<"," << Qdata.x_ <<"," << Qdata.y_ <<"," << Qdata.z_<<") Start point"<<endl;
+                online_trj_planner_ptr->traj_on_FIR_Bspline(Pdata,Qdata,0);
+            }
+            else if(i<999)
+            {
+                cout << "[input "<<i<<" (" << Pdata.x_ <<"," << Pdata.y_ <<"," << Pdata.z_ <<"," << Qdata.x_ <<"," << Qdata.y_ <<"," << Qdata.z_<<") Middle point"<<endl;
+                online_trj_planner_ptr->traj_on_FIR_Bspline(Pdata,Qdata,1);
+            }else if(i==999)
+            {
+                cout << "[input "<<i<<" (" << Pdata.x_ <<"," << Pdata.y_ <<"," << Pdata.z_ <<"," << Qdata.x_ <<"," << Qdata.y_ <<"," << Qdata.z_<<") Ending point"<<endl;
+                online_trj_planner_ptr->traj_on_FIR_Bspline(Pdata,Qdata,2);
+            }
+        }
+    }
+    return 0;
+}
+ErrorCode MotionControl::receive_T_matrix_data(int status, double * p_marixArray)
+{
+    static Matrix44 T_r0_R;
+    static Matrix44 Touch_h0_v;
+    Matrix44 Touch_ht_v,T_res;
+    int T_matrix_len=0;
+    double k=1.0;
+    Vector3 res_xyz,res_abc;
+    PoseEuler StartPositionPose;
+    TransMatrix start_trans_matrix;
+cout << "status="<<status<<endl;
+    if(status == 0)
+    {
+        StartPositionPose = getCurrentPose();
+        StartPositionPose.convertToTransMatrix(start_trans_matrix);
+        T_r0_R.matrix_[0][0]=start_trans_matrix.rotation_matrix_.matrix_[0][0];
+        T_r0_R.matrix_[0][1]=start_trans_matrix.rotation_matrix_.matrix_[0][1]; 
+        T_r0_R.matrix_[0][2]=start_trans_matrix.rotation_matrix_.matrix_[0][2];
+        T_r0_R.matrix_[0][3]=start_trans_matrix.trans_vector_.x_;
+        T_r0_R.matrix_[1][0]=start_trans_matrix.rotation_matrix_.matrix_[1][0];
+        T_r0_R.matrix_[1][1]=start_trans_matrix.rotation_matrix_.matrix_[1][1];
+        T_r0_R.matrix_[1][2]=start_trans_matrix.rotation_matrix_.matrix_[1][2];
+        T_r0_R.matrix_[1][3]=start_trans_matrix.trans_vector_.x_;
+        T_r0_R.matrix_[2][0]=start_trans_matrix.rotation_matrix_.matrix_[2][0];
+        T_r0_R.matrix_[2][1]=start_trans_matrix.rotation_matrix_.matrix_[2][1];
+        T_r0_R.matrix_[2][2]=start_trans_matrix.rotation_matrix_.matrix_[2][2];
+        T_r0_R.matrix_[2][3]=start_trans_matrix.trans_vector_.x_;
+        T_r0_R.matrix_[3][0]=0;T_r0_R.matrix_[3][1]=0;T_r0_R.matrix_[3][2]=0;T_r0_R.matrix_[3][3]=1;
+        /*T_r0_R.matrix_[0][0]=1;T_r0_R.matrix_[0][1]=0; T_r0_R.matrix_[0][2]=0;T_r0_R.matrix_[0][3]=0.36;
+        T_r0_R.matrix_[1][0]=0;T_r0_R.matrix_[1][1]=-1;T_r0_R.matrix_[1][2]=0;T_r0_R.matrix_[1][3]=0;
+        T_r0_R.matrix_[2][0]=0;T_r0_R.matrix_[2][1]=0;T_r0_R.matrix_[2][2]=-1;T_r0_R.matrix_[2][3]=0.0407;
+        T_r0_R.matrix_[3][0]=0;T_r0_R.matrix_[3][1]=0;T_r0_R.matrix_[3][2]=0;T_r0_R.matrix_[3][3]=1;*/
+T_r0_R.print("T_r0_R");
+        Touch_h0_v.matrix_[0][0]=*(p_marixArray+1); Touch_h0_v.matrix_[0][1]=*(p_marixArray+5); Touch_h0_v.matrix_[0][2]=*(p_marixArray+9);  Touch_h0_v.matrix_[0][3]=*(p_marixArray+13)/1000;
+        Touch_h0_v.matrix_[1][0]=*(p_marixArray+2); Touch_h0_v.matrix_[1][1]=*(p_marixArray+6); Touch_h0_v.matrix_[1][2]=*(p_marixArray+10);  Touch_h0_v.matrix_[1][3]=*(p_marixArray+14)/1000;
+        Touch_h0_v.matrix_[2][0]=*(p_marixArray+3); Touch_h0_v.matrix_[2][1]=*(p_marixArray+7); Touch_h0_v.matrix_[2][2]=*(p_marixArray+11); Touch_h0_v.matrix_[2][3]=*(p_marixArray+15)/1000;
+        Touch_h0_v.matrix_[3][0]=*(p_marixArray+4); Touch_h0_v.matrix_[3][1]=*(p_marixArray+8); Touch_h0_v.matrix_[3][2]=*(p_marixArray+12); Touch_h0_v.matrix_[3][3]=*(p_marixArray+16);
+        T_matrix_len=4;
+Touch_h0_v.print("Touch_h0_v");
+        res_xyz.x_ = StartPositionPose.point_.x_;
+        res_xyz.y_ = StartPositionPose.point_.y_;
+        res_xyz.z_ = StartPositionPose.point_.z_;
+        res_abc.x_ = StartPositionPose.euler_.a_;
+        res_abc.y_ = StartPositionPose.euler_.b_;
+        res_abc.z_ = StartPositionPose.euler_.c_;
+        online_trj_planner_ptr->traj_on_FIR_Bspline(res_xyz,res_abc,0);//起点
+        status = 1;
+    }
+
+    else
+    {
+        T_matrix_len=5;
+    }
+    for(int i=5-T_matrix_len;i<5;i++)
+    {
+        Touch_ht_v.matrix_[0][0]=*(p_marixArray+16*i+1); Touch_ht_v.matrix_[0][1]=*(p_marixArray+16*i+5); Touch_ht_v.matrix_[0][2]=*(p_marixArray+16*i+9);  Touch_ht_v.matrix_[0][3]=*(p_marixArray+16*i+13)/1000;
+        Touch_ht_v.matrix_[1][0]=*(p_marixArray+16*i+2); Touch_ht_v.matrix_[1][1]=*(p_marixArray+16*i+6); Touch_ht_v.matrix_[1][2]=*(p_marixArray+16*i+10);  Touch_ht_v.matrix_[1][3]=*(p_marixArray+16*i+14)/1000;
+        Touch_ht_v.matrix_[2][0]=*(p_marixArray+16*i+3); Touch_ht_v.matrix_[2][1]=*(p_marixArray+16*i+7); Touch_ht_v.matrix_[2][2]=*(p_marixArray+16*i+11); Touch_ht_v.matrix_[2][3]=*(p_marixArray+16*i+15)/1000;
+        Touch_ht_v.matrix_[3][0]=*(p_marixArray+16*i+4); Touch_ht_v.matrix_[3][1]=*(p_marixArray+16*i+8); Touch_ht_v.matrix_[3][2]=*(p_marixArray+16*i+12); Touch_ht_v.matrix_[3][3]=*(p_marixArray+16*i+16);
+        Touch_ht_v.print("Touch_ht_v");
+//cout << "------------------------------------------"<<i<<endl;
+        online_trj_planner_ptr->DynamicBaseCoordTransformation(T_r0_R, Touch_h0_v, Touch_ht_v, k, T_res);
+//T_res.print("T_res");
+        online_trj_planner_ptr->rtm_r2xyzabc(T_res,res_xyz,res_abc);
+        //res_xyz.print("res_xyz=");
+        //res_abc.print_abc("res_abc=");
+        if(status == 1)
+        {
+            online_trj_planner_ptr->traj_on_FIR_Bspline(res_xyz,res_abc,1);//途中点
+        }
+        else if(status == 2)
+        {
+            if(i<4)
+            {
+                online_trj_planner_ptr->traj_on_FIR_Bspline(res_xyz,res_abc,1);//途中点
+            }
+            else if(i == 4)
+            {
+                online_trj_planner_ptr->traj_on_FIR_Bspline(res_xyz,res_abc,2);//终点
+            }
+        }
+    }
+    return SUCCESS;
+}
+
 ErrorCode MotionControl::setOfflineTrajectory(const std::string &offline_trajectory)
 {
     string trajectory_file = "/root/robot_data/trajectory/";
@@ -423,6 +547,24 @@ ErrorCode MotionControl::moveOfflineTrajectory(void)
     return group_ptr_->moveOfflineTrajectory();
 }
 
+ErrorCode MotionControl::moveOnlineTrajectory(void)
+{
+    return group_ptr_->switchToOnlineState();
+}
+ErrorCode MotionControl::setOnlinePointBufptr(double * ptr)
+{
+    return group_ptr_->setOnlinePointBufData(ptr);
+}
+
+ErrorCode MotionControl::setOnlinePointTMatrixBufptr(double * ptr, uint32_t size)
+{
+    return group_ptr_->setOnlinePoint_TMatrixBufData(ptr,size);
+}
+
+ErrorCode MotionControl::MotionStateOnlineToStandby(void)
+{
+    return group_ptr_->switchOnlineStateToStandby();
+}
 void MotionControl::clearErrorFlag(void)
 {
     motion_error_flag_ = false;

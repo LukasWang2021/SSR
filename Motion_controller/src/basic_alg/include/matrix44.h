@@ -16,6 +16,7 @@ namespace basic_alg
  *        matrix_[3][0]    matrix_[3][1]    matrix_[3][2]    matrix_[3][3]
  * @endcode
  */
+
 class Matrix44
 {
 public:
@@ -30,6 +31,12 @@ public:
      * @retval false  At least one deviation of the 16 elements between the matrix object and the comparing one is over the valve value.
      */
     bool isEqual(const Matrix44& matrix, double valve = 0.001) const;
+    void setZero(void);
+    /**
+    * @brief 四阶矩阵求逆--仅适用于T矩阵输入
+    * @return 求逆后的结果四阶矩阵
+    */
+    bool transmatrix_inverse_matrix44(Matrix44& result_matrix);
     /**
      * @brief Do math operation left_matrix * this.
      * @details Do math operation: this = left_matrix * this.\n

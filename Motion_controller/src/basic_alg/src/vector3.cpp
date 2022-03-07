@@ -254,9 +254,15 @@ const Vector3 Vector3::operator*(double value)
 
 void Vector3::print(std::string comment) const
 {
-    std::cout<<comment<<std::endl;
-    std::cout<<" x = "<<x_
-             <<" y = "<<y_
-             <<" z = "<<z_<<std::endl;
+    std::cout<<comment;//<<std::endl;
+    std::cout<<" x="<<x_
+             <<" y="<<y_
+             <<" z="<<z_<<std::endl;
 }
-
+void Vector3::print_abc(std::string comment) const
+{
+    std::cout<<comment;//<<std::endl;
+    std::cout<<" a="<<x_
+             <<" b="<<y_
+             <<" c="<<z_<<std::endl;
+}

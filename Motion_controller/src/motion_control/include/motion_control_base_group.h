@@ -29,7 +29,7 @@
 #include <lock_free_fifo.h>
 #include "pause_resume_planner.h"
 #include "group.h"
-
+#include "onlineTrj_planner.h"
 
 #define TRAJECTORY_CACHE_SIZE     8
 #define OFFLINE_TRAJECTORY_CACHE_SIZE  512
@@ -78,19 +78,22 @@ class BaseGroup
     MotionControlState getMotionControlState(void);
     ServoState getServoState(void);
 
+    ErrorCode switchToOnlineState();//进入ONLINE状态
+    ErrorCode switchOnlineStateToStandby();//从ONLINE状态切换到STANDBY状态
     // Auto move APIs:
     virtual ErrorCode autoMove(const MotionInfo &info);
     virtual ErrorCode pauseMove(void);
     virtual ErrorCode restartMove(void);
     virtual bool isMoving(void);
     virtual bool nextMovePermitted(void);
-
+    ErrorCode setOnlinePointBufData(double * p_doublePointdata);
+    ErrorCode setOnlinePoint_TMatrixBufData(double * p_doublePointdata,uint32_t size);
     // API for off line trajectory
-    virtual ErrorCode readEulerTrajectoryFile(const std::string &offline_euler_trajectory_filePath,std::vector<std::vector<float>>& euler_trajArr);
+    virtual ErrorCode  readEulerTrajectoryFile(const std::string &offline_euler_trajectory_filePath,std::vector<std::vector<double>>& euler_trajArr);
     virtual ErrorCode setOfflineTrajectory(const std::string &offline_trajectory);
     virtual basic_alg::Joint getStartJointOfOfflineTrajectory(void);
     virtual ErrorCode moveOfflineTrajectory(void);
-
+    
     // Manual teach APIs:
     virtual ManualFrame getManualFrame(void);
     virtual ErrorCode setManualFrame(ManualFrame frame);
@@ -105,7 +108,7 @@ class BaseGroup
     virtual ErrorCode manualMoveToPoint(const IntactPoint &point);
     virtual bool updateContinuousManualMoveRpcTime();
     virtual void handleContinueousManualRpcTimeOut();
-
+ 
     // Constraints handle APIs:
     virtual ErrorCode setSoftConstraint(const JointConstraint &soft_constraint);
     virtual ErrorCode setFirmConstraint(const JointConstraint &firm_constraint);
@@ -168,7 +171,7 @@ class BaseGroup
 
     virtual char* printDBLine(const int *data, char *buffer, size_t length) = 0;
     virtual char* printDBLine(const double *data, char *buffer, size_t length) = 0;
-
+    
   protected:
     void sendTrajectoryFlow(void);
     void updateServoStateAndJoint(void);
@@ -200,11 +203,18 @@ class BaseGroup
 
     virtual ErrorCode sendAutoTrajectoryFlow(void);
     virtual ErrorCode sendManualTrajectoryFlow(void);
-    
+    virtual ErrorCode sendOnlineTrajectoryFlow(void);
+
     virtual ErrorCode fillManualFIFO(void);
     virtual ErrorCode pickManualPoint(TrajectoryPoint &point);
     virtual ErrorCode pickPointsFromTrajectoryFifo(TrajectoryPoint *points, size_t &length);
     virtual ErrorCode pickPointsFromManualTrajectory(TrajectoryPoint *points, size_t &length);
+
+    ErrorCode fillOnlineFIFO(void);
+    ErrorCode pickOnlinePoint(TrajectoryPoint &point);
+    ErrorCode pickPointsFromOnlineTrajectory(TrajectoryPoint *points, size_t &length);
+
+    
 
     ErrorCode checkMotionTarget(const MotionInfo &info);
     //ErrorCode checkStartState(const basic_alg::Joint &start_joint);
@@ -242,6 +252,7 @@ class BaseGroup
     TrajectoryCache *pick_traj_ptr_;
     LockFreeFIFO<TrajectoryPoint> traj_fifo_;
     LockFreeFIFO<TrajectoryPoint> manual_fifo_;
+    LockFreeFIFO<TrajectoryPoint> online_fifo_;
     uint32_t traj_fifo_lower_limit_;
     bool filling_points_into_traj_fifo_;
     bool start_of_motion_;
@@ -274,6 +285,7 @@ class BaseGroup
     MotionTime  cycle_time_;
     MotionTime  auto_time_;
     MotionTime  manual_time_;
+    MotionTime  online_time_;
     MotionTime  duration_per_segment_;
 
     Calibrator  calibrator_;
@@ -288,8 +300,11 @@ class BaseGroup
 
     std::ifstream offline_trajectory_file_;
     std::ifstream offline_euler_trajectory_file_;
+    OnlineTrajectoryPlanner   online_trj_planner_ptr;
     bool offline_trajectory_first_point_;
     bool offline_trajectory_last_point_;
+    bool online_trajectory_first_point_;
+    bool online_trajectory_last_point_;
     uint32_t offline_trajectory_size_;
     basic_alg::Joint offline_start_joint_;
     TrajectoryPoint offline_trajectory_cache_[OFFLINE_TRAJECTORY_CACHE_SIZE];
@@ -298,6 +313,8 @@ class BaseGroup
     pthread_mutex_t     planner_list_mutex_;
     pthread_mutex_t     manual_traj_mutex_;
     pthread_mutex_t     manual_rpc_mutex_;
+    pthread_mutex_t     online_traj_mutex_;
+    pthread_mutex_t     online_rpc_mutex_;
     pthread_mutex_t     servo_mutex_;
     pthread_mutex_t     offline_mutex_;
 
@@ -317,6 +334,9 @@ class BaseGroup
     bool offline_to_standby_request_;
     bool pause_return_to_pause_request_;
     bool pausing_to_pause_request_;
+    bool standby_to_online_request_;
+    bool online_to_standby_request_;
+    bool online_to_pause_request_;
 
 
     size_t  disable_to_standby_timeout_;

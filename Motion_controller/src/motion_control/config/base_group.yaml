@@ -4,6 +4,7 @@ trajectory_fifo:
     fifo_size: 300
     lower_limit: 50
     manual_fifo_size: 50
+    online_fifo_size: 60
 joint_record:
     update_cycle: 250
     update_timeout: 1000

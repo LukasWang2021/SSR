@@ -90,8 +90,28 @@ Matrix33 OnlineTrajectoryPlanner::rpy2r(double a, double b, double c)
     result_R = result_R.rightMultiply(Rx);
     return result_R;
 }
-
 //旋转矩阵转四元数
+Quaternion OnlineTrajectoryPlanner::rtm_r2quat(Matrix33& R)
+{
+    Quaternion q;
+    double r11,r12,r13,r21,r22,r23,r31,r32,r33;
+    r11 = R.matrix_[0][0];
+    r12 = R.matrix_[0][1];
+    r13 = R.matrix_[0][2];
+    r21 = R.matrix_[1][0];
+    r22 = R.matrix_[1][1];
+    r23 = R.matrix_[1][2];
+    r31 = R.matrix_[2][0];
+    r32 = R.matrix_[2][1];
+    r33 = R.matrix_[2][2];
+    q.w_ = 0.5*sqrt(r11+r22+r33+1);
+    q.x_ = 0.5*sign(r32-r23)*sqrt(r11-r22-r33+1);
+    q.y_ = 0.5*sign(r13-r31)*sqrt(r22-r11-r33+1);
+    q.z_ = 0.5*sign(r21-r12)*sqrt(r33-r11-r22+1);
+    return q;
+}
+//旋转矩阵转四元数
+/*
 Quaternion OnlineTrajectoryPlanner::rtm_r2quat(Matrix33& R)
 {
     int accurate = 8;//精确到小数点后8位
@@ -112,6 +132,8 @@ Quaternion OnlineTrajectoryPlanner::rtm_r2quat(Matrix33& R)
     q.z_ = 0.5*sign(r21-r12)*sqrt(roundn(r33-r11-r22+1,accurate));
     return q;
 }
+*/
+
 //四元数转矩阵
 Matrix33 OnlineTrajectoryPlanner::rtm_quat2r(Quaternion& q)
 {
@@ -257,14 +279,15 @@ Vector3 OnlineTrajectoryPlanner::rtm_rpy(Matrix33& u)
         psi_2 = atan2(u.matrix_[2][1]/cos(theta_2), u.matrix_[2][2]/cos(theta_2));
         phi_1 = atan2(u.matrix_[1][0]/cos(theta_1), u.matrix_[0][0]/cos(theta_1));
         phi_2 = atan2(u.matrix_[1][0]/cos(theta_2), u.matrix_[0][0]/cos(theta_2));
-        if(phi_1 < 0)
+        
+        /*if(phi_1 < 0)
         {
             phi_1 = phi_1 + 2*PI;
         }
         if(phi_2 < 0)
         {
             phi_2 = phi_2 + 2*PI;
-        }
+        }*/
     }
     angle1.x_ = psi_1;
     angle1.y_ = theta_1;
@@ -560,8 +583,9 @@ void OnlineTrajectoryPlanner::traj_on_Squad(int Nstep, Vector3 VPp_abc[], int NV
  * 参数说明:
  * 一个采样点数据 xyz, abc
  * status: 状态 0-起点(按下按钮)  1-中间过程(hold按钮) 2-终点(松开按钮)
+ * 返回值: 生成结果途经点的数量
  * *************************/
-void OnlineTrajectoryPlanner::traj_on_FIR_Bspline(Vector3 xyz, Vector3 abc,int status)
+int  OnlineTrajectoryPlanner::traj_on_FIR_Bspline(Vector3 xyz, Vector3 abc,int status, int online_TrjpointBufIndex)
 {
     int m = 5;//B样条近似阶数,越大越接近实际值，但是滤波器延迟也会变大(m最大取值为5,可选3或4)
     static int sp_cnt = 0;//采样点计数
@@ -585,10 +609,12 @@ void OnlineTrajectoryPlanner::traj_on_FIR_Bspline(Vector3 xyz, Vector3 abc,int s
     static Vector3 out_abc[50];//单次abc规划输出
     static Vector3 out_xyz_buf[255];
     static Vector3 out_abc_buf[255];
-    static int out_xyz_cnt;
-    static int out_abc_cnt;
+    static int out_xyz_cnt=0;
+    static int out_abc_cnt=0;
     static int out_cnt=0;
+    static int out_status=0;//默认输出轨迹点状态为起点
     int NP = static_cast<int>(NinterpP);
+    int res_PointCnt = 0;
     //每NstepP记录一个VP NstepP==5
 //cout << "sp_cnt="<<sp_cnt<<endl;
     if(sp_cnt%NstepP == 0) {flag_getVpFromTouch = true;} else {flag_getVpFromTouch = false;}
@@ -608,6 +634,10 @@ void OnlineTrajectoryPlanner::traj_on_FIR_Bspline(Vector3 xyz, Vector3 abc,int s
         }
         flag_getVpFromTouch = true;
         flag_getVqFromTouch = true;
+        out_xyz_cnt = 0;
+        out_abc_cnt = 0;
+        out_cnt=0;
+        out_status=0;
         //sp_cnt++;//采样点计数自增
     }else if(status == 2)//终点---(松开按钮时会发送一次位置点)
     {
@@ -681,9 +711,9 @@ void OnlineTrajectoryPlanner::traj_on_FIR_Bspline(Vector3 xyz, Vector3 abc,int s
         {
             for(int i=0;i<NP; i++)//输出
             {
-                px_new[NP+i].x_ = 3*px_new[NP+i-1].x_-3*px_new[NP+i-2].x_+px_new[NP+i-3].x_ + (cx_ts[3*NP+i]-3*cx_ts[2*NP+i]+3*cx_ts[1*NP+i]-cx_ts[i])/pow(NinterpP,3);
-                px_new[NP+i].y_ = 3*px_new[NP+i-1].y_-3*px_new[NP+i-2].y_+px_new[NP+i-3].y_ + (cy_ts[3*NP+i]-3*cy_ts[2*NP+i]+3*cy_ts[1*NP+i]-cy_ts[i])/pow(NinterpP,3);
-                px_new[NP+i].z_ = 3*px_new[NP+i-1].z_-3*px_new[NP+i-2].z_+px_new[NP+i-3].z_ + (cz_ts[3*NP+i]-3*cz_ts[2*NP+i]+3*cz_ts[1*NP+i]-cz_ts[i])/pow(NinterpP,3);
+                px_new[NP+i].x_ = 3*px_new[NP+i-1].x_-3*px_new[NP+i-2].x_+px_new[NP+i-3].x_ + (cx_ts[3*NP+i]-3*cx_ts[2*NP+i]+3*cx_ts[1*NP+i]-cx_ts[i])/pow(NP,3);
+                px_new[NP+i].y_ = 3*px_new[NP+i-1].y_-3*px_new[NP+i-2].y_+px_new[NP+i-3].y_ + (cy_ts[3*NP+i]-3*cy_ts[2*NP+i]+3*cy_ts[1*NP+i]-cy_ts[i])/pow(NP,3);
+                px_new[NP+i].z_ = 3*px_new[NP+i-1].z_-3*px_new[NP+i-2].z_+px_new[NP+i-3].z_ + (cz_ts[3*NP+i]-3*cz_ts[2*NP+i]+3*cz_ts[1*NP+i]-cz_ts[i])/pow(NP,3);
 //px_new[10+i].print();//输出xyz规划结果
                 out_xyz_buf[out_xyz_cnt]=px_new[NP+i]; out_xyz_cnt++;
             }
@@ -696,26 +726,38 @@ void OnlineTrajectoryPlanner::traj_on_FIR_Bspline(Vector3 xyz, Vector3 abc,int s
         }
         for(int i=0;i<3;i++){cx[i] = cx[i+1];cy[i] = cy[i+1];cz[i] = cz[i+1];}
         for(int i=0;i<3*NP;i++){cx_ts[i] = cx_ts[i+NP];cy_ts[i] = cy_ts[i+NP];cz_ts[i] = cz_ts[i+NP];}
-cout <<"-----------------------------out_xyz_cnt="<<out_xyz_cnt<<" out_abc_cnt="<<out_abc_cnt<<endl;
+//cout <<"-----------------------------out_xyz_cnt="<<out_xyz_cnt<<" out_abc_cnt="<<out_abc_cnt<<endl;
     }
     if(flag_getVqFromTouch)
     {
         vq_cnt++;
         Q3 = rtm_abc2quat(abc);
-        /*abc.print("abc=");
+        #if 1
+        dq = Q2.w_*Q3.w_ + Q2.x_*Q3.x_ + Q2.y_*Q3.y_ + Q2.z_*Q3.z_;
+            if(dq < 0)
+            {
+                //两四元数的dot product表示两个Q之间的夹角余弦，取反后，选取最短路径
+                Q3 = Q3*(-1);
+            }
+        #endif
+       /*
+        abc.print("input_abc=");
         Q0.print("Q0=");
         Q1.print("Q1=");
         Q2.print("Q2=");
-        Q3.print("Q3=");*/
+        Q3.print("Q3=");
+        */
         if(vq_cnt >= 3)//需要至少三个VP点才能开始规划
         {
             vq_cnt = 4;
+            #if 0
             dq = Q2.w_*Q3.w_ + Q2.x_*Q3.x_ + Q2.y_*Q3.y_ + Q2.z_*Q3.z_;
             if(dq < 0)
             {
                 //两四元数的dot product表示两个Q之间的夹角余弦，取反后，选取最短路径
                 Q3 = Q3*(-1);
             }
+            #endif
             if(j==0)//初始段
             {
                 Q0=Q1;
@@ -726,25 +768,27 @@ cout <<"-----------------------------out_xyz_cnt="<<out_xyz_cnt<<" out_abc_cnt="
             {
                 s = k/NinterpQ;
                 Qnew[k] = rtm_Squad(Q0,Q1,Q2,Q3,s);
+//Qnew[k].print("alg_out_Qnew");
                 out_abc[k] = rtm_quat2abc(Qnew[k]);//
-//out_abc[k].print_abc();//输出abc规划结果
+//out_abc[k].print_abc("alg_out_abc");//输出abc规划结果
                 out_abc_buf[out_abc_cnt]=out_abc[k]; out_abc_cnt++;
             }
             if(status == 2)//终点处理
             {
                 Q0=Q1;Q1=Q2;Q2=Q3;//覆盖迭代
-                cout << "Ending abc planing:"<<endl;
+cout << "***************************************************Ending abc planing:"<<endl;
                 for(int k=0;k<NinterpQ;k++)
                 {
                     s = k/NinterpQ;
                     Qnew[k] = rtm_Squad(Q0,Q1,Q2,Q3,s);
+//Qnew[k].print("alg_out_Qnew");
                     out_abc[k] = rtm_quat2abc(Qnew[k]);//
                     out_abc_buf[out_abc_cnt]=out_abc[k]; out_abc_cnt++;
-                    out_abc[k].print_abc();//输出终点abc规划结果
+//out_abc[k].print_abc("alg_out_abc");//输出终点abc规划结果
                 }
                 sp_cnt = 0; vp_cnt = 0; vq_cnt = 0;
             }
-cout << "***************************************************out_xyz_cnt="<<out_xyz_cnt<<" out_abc_cnt="<<out_abc_cnt<<endl;
+//cout << "***************************************************out_xyz_cnt="<<out_xyz_cnt<<" out_abc_cnt="<<out_abc_cnt<<endl;
             j = j+1;
         }
         Q0=Q1;Q1=Q2;Q2=Q3;//覆盖迭代
@@ -753,38 +797,70 @@ cout << "***************************************************out_xyz_cnt="<<out_x
     if(out_xyz_cnt > 0 && out_abc_cnt > 0)
     {
         int cha=0;
-cout <<"-------out_xyz_cnt="<<out_xyz_cnt<<"------------out_abc_cnt="<<out_abc_cnt<<"--------------"<<endl;
+//cout <<"-------out_xyz_cnt="<<out_xyz_cnt<<"------------out_abc_cnt="<<out_abc_cnt<<"--------------"<<endl;
         if(out_xyz_cnt>=out_abc_cnt)
         {
             cha=out_xyz_cnt-out_abc_cnt;
+            res_PointCnt = out_abc_cnt;
             for(int i=0;i< out_abc_cnt;i++)
             {
-                cout << "output "<<out_cnt<<" (" << out_xyz_buf[i].x_ <<"," << out_xyz_buf[i].y_ <<"," << out_xyz_buf[i].z_ <<"," << out_abc_buf[i].x_ <<"," << out_abc_buf[i].y_ <<"," << out_abc_buf[i].z_<<")"<<endl;
+                trj_point_buf[i+online_TrjpointBufIndex].status = out_status;//可能是起点或中间点状态
+                if(out_status == 0) {out_status = 1;}
+                trj_point_buf[i+online_TrjpointBufIndex].x_ = out_xyz_buf[i].x_; trj_point_buf[i+online_TrjpointBufIndex].y_ = out_xyz_buf[i].y_; trj_point_buf[i+online_TrjpointBufIndex].z_ = out_xyz_buf[i].z_;
+                trj_point_buf[i+online_TrjpointBufIndex].a_ = out_abc_buf[i].x_; trj_point_buf[i+online_TrjpointBufIndex].b_ = out_abc_buf[i].y_; trj_point_buf[i+online_TrjpointBufIndex].c_ = out_abc_buf[i].z_;
+//cout << "alg_output "<<out_cnt<<" (" << out_xyz_buf[i].x_ <<"," << out_xyz_buf[i].y_ <<"," << out_xyz_buf[i].z_ <<"," << out_abc_buf[i].x_ <<"," << out_abc_buf[i].y_ <<"," << out_abc_buf[i].z_<<")"<<endl;
                 out_cnt++;
             }
             for(int i=0;i<cha;i++)
             {
                 out_xyz_buf[i]=out_xyz_buf[i+out_abc_cnt];
             }
+            if(status == 2)//正好终点就是abc算法输入点的结束的情况
+            {
+                cout << "---------------------------->>>-----------------------------normal ending." <<endl;
+                trj_point_buf[online_TrjpointBufIndex+out_abc_cnt-1].status = 2;//输出轨迹点状态标记为终点
+            }
             out_xyz_cnt=cha;
             out_abc_cnt = 0;
         }
         else if(out_xyz_cnt < out_abc_cnt)
         {
-            cha=out_abc_cnt-out_xyz_cnt;
+            cha = out_abc_cnt-out_xyz_cnt;
+            res_PointCnt = out_xyz_cnt;
             for(int i=0;i< out_xyz_cnt;i++)
             {
-                cout << "output "<<out_cnt<<" (" << out_xyz_buf[i].x_ <<"," << out_xyz_buf[i].y_ <<"," << out_xyz_buf[i].z_ <<"," << out_abc_buf[i].x_ <<"," << out_abc_buf[i].y_ <<"," << out_abc_buf[i].z_<<")"<<endl;
+//cout << "alg_ending output "<<out_cnt<<" (" << out_xyz_buf[i].x_ <<"," << out_xyz_buf[i].y_ <<"," << out_xyz_buf[i].z_ <<"," << out_abc_buf[i].x_ <<"," << out_abc_buf[i].y_ <<"," << out_abc_buf[i].z_<<")"<<endl;
+                trj_point_buf[i+online_TrjpointBufIndex].status = out_status;
+                if(out_status == 0) {out_status = 1;}
+                trj_point_buf[i+online_TrjpointBufIndex].x_ = out_xyz_buf[i].x_; trj_point_buf[i+online_TrjpointBufIndex].y_ = out_xyz_buf[i].y_; trj_point_buf[i+online_TrjpointBufIndex].z_ = out_xyz_buf[i].z_;
+                trj_point_buf[i+online_TrjpointBufIndex].a_ = out_abc_buf[i].x_; trj_point_buf[i+online_TrjpointBufIndex].b_ = out_abc_buf[i].y_; trj_point_buf[i+online_TrjpointBufIndex].c_ = out_abc_buf[i].z_;
                 out_cnt++;
             }
             for(int i=0;i<cha;i++)
             {
                 out_abc_buf[i]=out_abc_buf[i+out_xyz_cnt];
             }
+            if(status == 2)//考虑可能的提前结束的情况
+            {
+                cout << "early ending. padding xyz (" << out_xyz_buf[out_xyz_cnt-1].x_<<","<<out_xyz_buf[out_xyz_cnt-1].y_<<","<<out_xyz_buf[out_xyz_cnt-1].z_<<")"<<endl;
+                for(int i=0;i<out_abc_cnt;i++)
+                {
+                    trj_point_buf[i+online_TrjpointBufIndex].status = out_status;
+                    if(i == (out_abc_cnt-1)) {trj_point_buf[i+online_TrjpointBufIndex].status = 2;}
+                    trj_point_buf[i+online_TrjpointBufIndex].x_ = out_xyz_buf[out_xyz_cnt-1].x_; trj_point_buf[i+online_TrjpointBufIndex].y_ = out_xyz_buf[out_xyz_cnt-1].y_; trj_point_buf[i+online_TrjpointBufIndex].z_ = out_xyz_buf[out_xyz_cnt-1].z_;
+                    trj_point_buf[i+online_TrjpointBufIndex].a_ = out_abc_buf[i].x_; trj_point_buf[i+online_TrjpointBufIndex].b_ = out_abc_buf[i].y_; trj_point_buf[i+online_TrjpointBufIndex].c_ = out_abc_buf[i].z_;
+                }
+                res_PointCnt = out_abc_cnt;
+            }
             out_abc_cnt=cha;
             out_xyz_cnt = 0;
         }
-    }
+    }/*
+    if(res_PointCnt!=0)
+    {
+        cout << "===>alg_output_PointCnt="<<res_PointCnt<<endl;
+    }*/
+    return res_PointCnt;
 }
 
 /**
@@ -1011,9 +1087,9 @@ void OnlineTrajectoryPlanner::Fir_Bspline_algorithm_test(void)
         Qdata[i].x_ = trj_data[i*6+3];
         Qdata[i].y_ = trj_data[i*6+4];
         Qdata[i].z_ = trj_data[i*6+5];
-        if(i==0){traj_on_FIR_Bspline(Pdata[i],Qdata[i],0);}
-        else if(i==119){traj_on_FIR_Bspline(Pdata[i],Qdata[i],2);}
-        else {traj_on_FIR_Bspline(Pdata[i],Qdata[i],1);}
+        if(i==0){traj_on_FIR_Bspline(Pdata[i],Qdata[i],0,0);}
+        else if(i==119){traj_on_FIR_Bspline(Pdata[i],Qdata[i],2,0);}
+        else {traj_on_FIR_Bspline(Pdata[i],Qdata[i],1,0);}
     }
 }
 

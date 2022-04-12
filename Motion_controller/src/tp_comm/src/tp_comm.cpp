@@ -387,7 +387,7 @@ void TpComm::handleRequest()
     }
 
     unsigned int hash = *((unsigned int*)recv_buffer_ptr_);
-    //LogProducer::debug("rpc", "---handleRequest: %x %x %x %x", recv_buffer_ptr_[3], recv_buffer_ptr_[2], recv_buffer_ptr_[1], recv_buffer_ptr_[0]);
+    LogProducer::info("rpc", "---handleRequest: %x", hash);
 
     HandleRequestFuncPtr func_ptr = getRequestHandlerByHash(hash);
     if(func_ptr != NULL)
@@ -439,7 +439,7 @@ void TpComm::handleResponseList()
         }
 
         int send_bytes = nn_send(req_resp_socket_, send_buffer_ptr_, send_buffer_size, 0); // block send
-        //LogProducer::debug("rpc", "---handleResponse: %x %x %x %x", send_buffer_ptr_[3], send_buffer_ptr_[2], send_buffer_ptr_[1], send_buffer_ptr_[0]);
+        LogProducer::debug("rpc", "---handleResponse: %x", it->hash);
         if(send_bytes == -1)
         {
             ErrorQueue::instance().push(TP_COMM_SEND_FAILED);

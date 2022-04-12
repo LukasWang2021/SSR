@@ -6,6 +6,15 @@
 #include "vector3.h"
 #include <algorithm>
 
+typedef struct {
+    int  status;
+    double x_;
+    double y_;
+    double z_;
+    double a_;
+    double b_;
+    double c_;
+}TrjPoint;
 
 using namespace std;
 using namespace basic_alg;
@@ -13,6 +22,8 @@ using namespace basic_alg;
 class OnlineTrajectoryPlanner
 {
 public:
+    //int  trjPointCnt;
+    TrjPoint trj_point_buf[160];
     OnlineTrajectoryPlanner();
     ~OnlineTrajectoryPlanner();
     int sign(double x);//取double数字的符号
@@ -40,7 +51,8 @@ public:
     //Vector3 * traj_on_FB(int m, int lambda, int Nstep, Vector3 * VPp);
     //void traj_on_Squad(int Nstep, Vector3* VPp, Quaternion* Qnew, Vector3* abc, Quaternion* Qold);
     void traj_on_Squad(int Nstep, Vector3 VPp_abc[], int NVP, Quaternion Qnew[], Vector3 abc[], Quaternion Qold[]);
-    void traj_on_FIR_Bspline(Vector3 xyz, Vector3 abc,int status);
+    //int traj_on_FIR_Bspline(Vector3 xyz, Vector3 abc,int status);
+    int  traj_on_FIR_Bspline(Vector3 xyz, Vector3 abc,int status, int online_TrjpointBufIndex);
     void Fir_Bspline_algorithm_test(void);
     void Fir_Bspline_algorithm_test2(void);
     void TrjPointPlanning();

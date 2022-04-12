@@ -165,7 +165,10 @@ bool Transformation::convertTcpToFcp(const PoseEuler& pose_tcp, const PoseEuler&
     pose_tcp.convertToTransMatrix(trans_pose_tcp);
     TransMatrix trans_pose_fcp;
     trans_pose_tcp.rightMultiply(trans_tool_frame_inverse, trans_pose_fcp);
+    //trans_pose_tcp.trans_vector_.print("xyz=");
+    //trans_pose_tcp.rotation_matrix_.print("rotation_matrix_=");
     trans_pose_fcp.convertToPoseEuler(pose_fcp);
+    
     return true;
 }
 

@@ -78,6 +78,7 @@ class BaseGroup
     MotionControlState getMotionControlState(void);
     ServoState getServoState(void);
 
+    void BaseGroup::setOnlineTrjFirstPointCondition();//检测到在线轨迹起点,设置一些初始条件
     ErrorCode switchToOnlineState();//进入ONLINE状态
     ErrorCode switchOnlineStateToStandby();//从ONLINE状态切换到STANDBY状态
     // Auto move APIs:
@@ -86,7 +87,9 @@ class BaseGroup
     virtual ErrorCode restartMove(void);
     virtual bool isMoving(void);
     virtual bool nextMovePermitted(void);
-    ErrorCode setOnlinePointBufData(double * p_doublePointdata);
+    //ErrorCode setOnlinePointBufData(double * p_doublePointdata);
+    void setOnlinePointLevelBuf(int idx, int value);
+    ErrorCode setOnlineTrjPointBufData(double * trj_point_buf,uint32_t size);//将xyzabc数据逆解为轴角数据后整理为轨迹数据,然后传送给在线轨迹缓存
     ErrorCode setOnlinePoint_TMatrixBufData(double * p_doublePointdata,uint32_t size);
     // API for off line trajectory
     virtual ErrorCode  readEulerTrajectoryFile(const std::string &offline_euler_trajectory_filePath,std::vector<std::vector<double>>& euler_trajArr);

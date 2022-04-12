@@ -131,6 +131,7 @@ bool BareCoreInterface::fillPointCache(TrajectoryPoint *points, size_t length, P
             }
             point_cache_.axis[i].set_point[j].feedforward_velocity = it->second->getAxisConvPtr()->convertVelA2M(points[j].state.omega[i]);
             point_cache_.axis[i].set_point[j].feedforward_acc = it->second->getAxisConvPtr()->convertAccA2M(points[j].state.alpha[i]);
+            LogProducer::info("fillPointCache","joint%d-%d position=%d,velocity=%d",i,j,point_cache_.axis[i].set_point[j].cmd_position, point_cache_.axis[i].set_point[j].feedforward_velocity);
         }
         point_cache_.axis[i].current_point = 0;
         point_cache_.axis[i].total_points = length;

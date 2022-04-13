@@ -2,7 +2,7 @@
 	> File Name: motion_plan_basic_function.h
 	> Author:
 	> Mail:
-	> Created Time: 2017年12月07日 星期四 16时41分13秒
+	> Created Time: 
  ************************************************************************/
 
 #ifndef BASIC_ALG_H
@@ -1074,7 +1074,6 @@ static inline void Matrix2Pose(const double (&m)[4][4], PoseQuaternion &pose)
 
     double norm = sqrt(w * w + x * x + y * y + z * z);
 
-    //四元数强制单位化
     pose.quaternion_.w_ = w / norm;
     pose.quaternion_.x_ = x / norm;
     pose.quaternion_.y_ = y / norm;
@@ -1261,10 +1260,24 @@ static inline Euler Quaternion2Euler(const Quaternion &quaternion)
 //------------------------------------------------------------------------------
 inline double det(const double (&m)[4][4])
 {
-    return  m[0][0] * (m[1][1] * (m[2][2] * m[3][3] - m[3][2] * m[2][3]) - m[1][2] * (m[2][1] * m[3][3] - m[3][1] * m[2][3]) + m[1][3] * (m[2][1] * m[3][2] - m[3][1] * m[2][2]))
-            -m[0][1] * (m[1][0] * (m[2][2] * m[3][3] - m[3][2] * m[2][3]) - m[1][2] * (m[2][0] * m[3][3] - m[3][0] * m[2][3]) + m[1][3] * (m[2][0] * m[3][2] - m[3][0] * m[2][2]))
-            +m[0][2] * (m[1][0] * (m[2][1] * m[3][3] - m[3][1] * m[2][3]) - m[1][1] * (m[2][0] * m[3][3] - m[3][0] * m[2][3]) + m[1][3] * (m[2][0] * m[3][1] - m[3][0] * m[2][1]))
-            -m[0][3] * (m[1][0] * (m[2][1] * m[3][2] - m[3][1] * m[2][2]) - m[1][1] * (m[2][0] * m[3][2] - m[3][0] * m[2][2]) + m[1][2] * (m[2][0] * m[3][1] - m[3][0] * m[2][1]));
+    double main_diag_v1 = m[0][0] * m[1][1] * m[2][2] * m[3][3];
+    double main_diag_v2 = m[0][1] * m[1][2] * m[2][3] * m[3][0];
+    double main_diag_v3 = m[0][2] * m[1][3] * m[2][0] * m[3][1];
+    double main_diag_v4 = m[0][3] * m[1][0] * m[2][1] * m[3][2];
+
+    double side_diag_v1 = m[3][0] * m[2][1] * m[1][2] * m[0][3];
+    double side_diag_v2 = m[3][1] * m[2][2] * m[1][3] * m[0][0];
+    double side_diag_v3 = m[3][2] * m[2][3] * m[1][0] * m[0][1];
+    double side_diag_v4 = m[3][3] * m[2][0] * m[1][1] * m[0][2];
+
+    double v = main_diag_v1 + main_diag_v2 + main_diag_v3 + main_diag_v4 - side_diag_v1 - side_diag_v2 - side_diag_v3 - side_diag_v4;
+
+    return v;
+
+    //return  m[0][0] * (m[1][1] * (m[2][2] * m[3][3] - m[3][2] * m[2][3]) - m[1][2] * (m[2][1] * m[3][3] - m[3][1] * m[2][3]) + m[1][3] * (m[2][1] * m[3][2] - m[3][1] * m[2][2]))
+    //        -m[0][1] * (m[1][0] * (m[2][2] * m[3][3] - m[3][2] * m[2][3]) - m[1][2] * (m[2][0] * m[3][3] - m[3][0] * m[2][3]) + m[1][3] * (m[2][0] * m[3][2] - m[3][0] * m[2][2]))
+    //        +m[0][2] * (m[1][0] * (m[2][1] * m[3][3] - m[3][1] * m[2][3]) - m[1][1] * (m[2][0] * m[3][3] - m[3][0] * m[2][3]) + m[1][3] * (m[2][0] * m[3][1] - m[3][0] * m[2][1]))
+    //        -m[0][3] * (m[1][0] * (m[2][1] * m[3][2] - m[3][1] * m[2][2]) - m[1][1] * (m[2][0] * m[3][2] - m[3][0] * m[2][2]) + m[1][2] * (m[2][0] * m[3][1] - m[3][0] * m[2][1]));
 }
 
 //------------------------------------------------------------------------------
@@ -1487,7 +1500,6 @@ static inline  void sampleSlerpInterpolationQuaternion(const Quaternion &start, 
 
     if (orientation_angle < 0.001)
     {
-        // ��̬�н�С��0.1rad,��̬���Բ�ֵ
         result.w_ = (1 - ratio) * start.w_ + ratio * alternative_end.w_;
         result.x_ = (1 - ratio) * start.x_ + ratio * alternative_end.x_;
         result.y_ = (1 - ratio) * start.y_ + ratio * alternative_end.y_;
@@ -1495,7 +1507,6 @@ static inline  void sampleSlerpInterpolationQuaternion(const Quaternion &start, 
     }
     else
     {
-        // ��̬�нǴ���0.1rad,��̬������ֵ
         result.w_ = (sin((1 - ratio) * orientation_angle) * start.w_ + sin(ratio * orientation_angle) * alternative_end.w_) / sin(orientation_angle);
         result.x_ = (sin((1 - ratio) * orientation_angle) * start.x_ + sin(ratio * orientation_angle) * alternative_end.x_) / sin(orientation_angle);
         result.y_ = (sin((1 - ratio) * orientation_angle) * start.y_ + sin(ratio * orientation_angle) * alternative_end.y_) / sin(orientation_angle);
@@ -1534,7 +1545,29 @@ inline bool binarySearch(double* datas, int length, double target, int& data_ind
     }	
 	return false;
 }
+// LDA means column
+/**
+* @brief calculate the matrix eigenvalue and eigenvector
+* @param p_matrix           n*n array, the input matrix
+* @param dim                the dimension of input matrix
+* @param eig_vec            n dim array, save the maximum eigenvector
+* @param precision          the precision
+* @param eig_val            the the maximum eigenvalue
+* @return
+*/
+bool eigens(const double *p_matrix, int dim, double *eig_vec, double *eig_val);
 
+/**
+* @brief calculate  the inverse of a matrix 
+* @param p_matrix           n*n array, the input matrix
+* @param dim                the dimension of input matrix
+* @param eig_vec            n dim array, save the maximum eigenvector
+* @param precision          the precision
+* @param iter_cnts          the max iteration times
+* @param eig_val            the the maximum eigenvalue
+* @return
+*/
+bool inverse(const double* p_matrix, int dim, double* p_inv);
 }
 #endif
 

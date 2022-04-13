@@ -3,6 +3,7 @@
 #include "comm_def.h"
 #include "rpc_basic.h"
 #include "common_error_code.h"
+#include "protoc.h"
 
 uint64_t c_addTopic()
 {

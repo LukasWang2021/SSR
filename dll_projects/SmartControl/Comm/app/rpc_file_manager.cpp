@@ -5,6 +5,7 @@
 #include "response_uint64_bytes.pb.h"
 #include "request_string_bytes.pb.h"
 #include "common_error_code.h"
+#include "protoc.h"
 
 uint64_t c_readFile(char* file_path_ptr, uint8_t file_data[65536], int* byte_size_ptr)
 {

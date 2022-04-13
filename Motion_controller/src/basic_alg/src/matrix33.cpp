@@ -34,6 +34,7 @@ void Matrix33::eye(void)
     matrix_[2][0] = 0; matrix_[2][1] = 0; matrix_[2][2] = 1;
 }
 
+//矩阵对应行列式的值
 double Matrix33::determ(void) const
 {
     return matrix_[0][0] * (matrix_[1][1] * matrix_[2][2] - matrix_[1][2] * matrix_[2][1]) - 
@@ -72,7 +73,20 @@ Matrix33& Matrix33::operator=(const Matrix33& matrix)
     memcpy(&matrix_, &matrix.matrix_, sizeof(matrix_));
     return *this;
 }
-
+Matrix33& Matrix33::operator+(const Matrix33& matrix)
+{
+    this->matrix_[0][0] += matrix.matrix_[0][0]; this->matrix_[0][1] += matrix.matrix_[0][1]; this->matrix_[0][2] += matrix.matrix_[0][2];
+    this->matrix_[1][0] += matrix.matrix_[1][0]; this->matrix_[1][1] += matrix.matrix_[1][1]; this->matrix_[1][2] += matrix.matrix_[1][2];
+    this->matrix_[2][0] += matrix.matrix_[2][0]; this->matrix_[2][1] += matrix.matrix_[2][1]; this->matrix_[2][2] += matrix.matrix_[2][2];
+    return *this;
+}
+Matrix33& Matrix33::operator*(double num)
+{
+    this->matrix_[0][0] *= num; this->matrix_[0][1] *= num; this->matrix_[0][2] *= num;
+    this->matrix_[1][0] *= num; this->matrix_[1][1] *= num; this->matrix_[1][2] *= num;
+    this->matrix_[2][0] *= num; this->matrix_[2][1] *= num; this->matrix_[2][2] *= num;
+    return *this;
+}
 void Matrix33::print(std::string comment) const
 {
     std::cout<<comment<<std::endl;
@@ -132,12 +146,16 @@ bool Matrix33::inverse(double valve)
 bool Matrix33::inverse(Matrix33& result_matrix, double valve) const
 {
     double det = determ();
-
-    if(det < valve)
+    if(abs(det) < valve)
     {
         return false;
     }
 
+    /**
+    * 00  01 02
+    * 10  11 12
+    * 20  21 22
+    */
     double a00 = matrix_[1][1] * matrix_[2][2] - matrix_[1][2] * matrix_[2][1];
     double a01 = matrix_[1][0] * matrix_[2][2] - matrix_[1][2] * matrix_[2][0];
     double a02 = matrix_[1][0] * matrix_[2][1] - matrix_[1][1] * matrix_[2][0];
@@ -150,6 +168,11 @@ bool Matrix33::inverse(Matrix33& result_matrix, double valve) const
     double a21 = matrix_[0][0] * matrix_[1][2] - matrix_[0][2] * matrix_[1][0];
     double a22 = matrix_[0][0] * matrix_[1][1] - matrix_[0][1] * matrix_[1][0]; 
 
+    /**
+    * a00  -a10 a20
+    * -a01 a11  -a21
+    * a02  -a12 a22
+    */
     result_matrix.matrix_[0][0] =  a00 / det;
     result_matrix.matrix_[0][1] = -a10 / det;
     result_matrix.matrix_[0][2] =  a20 / det;

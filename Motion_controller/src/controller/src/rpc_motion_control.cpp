@@ -1147,7 +1147,47 @@ void ControllerRpc::handleRpc0x00018470(void* request_data_ptr, void* response_d
         LogProducer::error("rpc", "/rpc/motion_control/axis_group/setJointManualStep for group[%d] failed. Error = 0x%llx", group_id, rs_data_ptr->data.data);
 
 }
-
+//"/rpc/motion_conrtol/axis_group/setOnlineTrajectoryData"
+void ControllerRpc::handleRpc0x00008A31(void* request_data_ptr, void* response_data_ptr)
+{
+    RequestMessageType_Int32_DoubleList* rq_data_ptr = static_cast<RequestMessageType_Int32_DoubleList*>(request_data_ptr);
+    ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
+    int32_t group_id = rq_data_ptr->data1.data;
+    if(group_id >= GROUP_NUM || group_id < 0)
+    {
+        rs_data_ptr->data.data = RPC_PARAM_INVALID;
+        LogProducer::error("rpc", "/rpc/motion_control/axis_group/setOnlineTrajectoryData input invalid params group_id = %d", group_id);
+        return;
+    }
+    GroupStatus_e status = GROUP_STATUS_UNKNOWN;
+    bool in_position = false;
+    group_ptr_[0]->mcGroupReadStatus(status, in_position);
+    if (group_ptr_[0]->getWorkMode() != USER_OP_MODE_ONLINE)//检查控制器工作模式
+    {
+        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
+        return;
+    }
+    group_ptr_[group_id]->moveOnlineTrajectory();//检查运控状态是否处于ONLINE状态,如果不是则切换到ONLINE状态并初始化
+    //rs_data_ptr->data.data = group_ptr_[group_id]->Fir_Bspline_algorithm_test2();
+    
+    
+    int TrajPointStatus=static_cast<int>(rq_data_ptr->data2.data[0]);
+            //group_ptr_[group_id]->xzc_funTest();
+    LogProducer::info("rpc", "receive_T_matrix_data in");
+    rs_data_ptr->data.data = group_ptr_[group_id]->receive_T_matrix_data(TrajPointStatus,rq_data_ptr->data2.data);
+    LogProducer::info("rpc", "receive_T_matrix_data out ->> setOnlinePointBufptr");
+    rs_data_ptr->data.data = group_ptr_[group_id]->setOnlinePointBufptr();
+    LogProducer::info("rpc", "setOnlinePointBufptr out");
+    
+    if (rs_data_ptr->data.data == SUCCESS)
+    {
+        //LogProducer::info("rpc", "/rpc/motion_control/axis_group/setOnlineTrajectoryData for group[%d] success", group_id);
+    } 
+    else
+    {
+        LogProducer::error("rpc", "/rpc/motion_control/axis_group/setOnlineTrajectoryData for group[%d] failed. Error = 0x%llx", group_id, rs_data_ptr->data.data);
+    }
+}
 //"/rpc/motion_control/axis_group/getJointManualStep"	
 void ControllerRpc::handleRpc0x00006D10(void* request_data_ptr, void* response_data_ptr)
 {

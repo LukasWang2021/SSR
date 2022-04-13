@@ -1,6 +1,6 @@
-#pragma once
+ï»¿#pragma once
 #include "comm_def.h"
-#include "protoc.h"
+// #include "protoc.h"
 
 extern bool rpc_valid;
 
@@ -917,25 +917,25 @@ COMM_INTERFACE_API uint64_t c_servo1001CpuGetForceControlParameters(int32_t cpu_
 
 
 /***
-* º¯Êı¹¦ÄÜ:ÉèÖÃÅ¤¾Ø´«¸ĞÆ÷Êı¾İ¸üĞÂ±ê¼Çflag=1 --Ê¹ÄÜ¸üĞÂÅ¤¾Ø´«¸ĞÆ÷Êı¾İ
-* ²ÎÊı:cpu_id--
-* ·µ»ØÖµ:´íÎóÂë
+* å‡½æ•°åŠŸèƒ½:è®¾ç½®æ‰­çŸ©ä¼ æ„Ÿå™¨æ•°æ®æ›´æ–°æ ‡è®°flag=1 --ä½¿èƒ½æ›´æ–°æ‰­çŸ©ä¼ æ„Ÿå™¨æ•°æ®
+* å‚æ•°:cpu_id--
+* è¿”å›å€¼:é”™è¯¯ç 
 **/
 COMM_INTERFACE_API uint64_t c_servo1001CpuSetTorqueSensorSync(int32_t cpu_id);
 
 /****
-* º¯Êı¹¦ÄÜ:»ñÈ¡Å¤¾Ø´«¸ĞÆ÷Êı¾İ¸üĞÂ±ê¼Çflag
-* ²ÎÊı:cpu_id
-* p_updateFlag---Ê¹ÄÜ¸üĞÂ±ê¼ÇÖµÖ¸Õë
-* ·µ»ØÖµ:´íÎóÂë
+* å‡½æ•°åŠŸèƒ½:è·å–æ‰­çŸ©ä¼ æ„Ÿå™¨æ•°æ®æ›´æ–°æ ‡è®°flag
+* å‚æ•°:cpu_id
+* p_updateFlag---ä½¿èƒ½æ›´æ–°æ ‡è®°å€¼æŒ‡é’ˆ
+* è¿”å›å€¼:é”™è¯¯ç 
 ***/
 COMM_INTERFACE_API uint64_t c_servo1001CpuGetTorqueSensorSync(int32_t cpu_id, int32_t* p_updateFlag);
 /***
-* º¯Êı¹¦ÄÜ: »ñÈ¡Á¦¾Ø´«¸ĞÆ÷Êı¾İ-ÓÃÓÚÁ¦¾Ø´«¸ĞÆ÷Êı¾İ±ê¶¨
-* ²ÎÊı: CPUID
-* t_data---´«¸ĞÆ÷Êı¾İÖ¸Õë
-* data_size_ptr---·µ»ØÊı¾İ³¤¶ÈÖ¸Õë
-* ·µ»ØÖµ:´íÎóÂë
+* å‡½æ•°åŠŸèƒ½: è·å–åŠ›çŸ©ä¼ æ„Ÿå™¨æ•°æ®-ç”¨äºåŠ›çŸ©ä¼ æ„Ÿå™¨æ•°æ®æ ‡å®š
+* å‚æ•°: CPUID
+* t_data---ä¼ æ„Ÿå™¨æ•°æ®æŒ‡é’ˆ
+* data_size_ptr---è¿”å›æ•°æ®é•¿åº¦æŒ‡é’ˆ
+* è¿”å›å€¼:é”™è¯¯ç 
 */
 COMM_INTERFACE_API uint64_t c_servo1001CpuGetTorqueSensorData(int32_t cpu_id, double t_data[6], int32_t* data_size_ptr);
 //IO
@@ -1101,34 +1101,44 @@ COMM_INTERFACE_API uint64_t c_mcSetStep(double joint_step, double cartesian_step
 COMM_INTERFACE_API uint64_t c_mcGetPostureByJoint(int32_t group_index, double j1, double j2, double j3, double j4, double j5, double j6, double j7, double j8, double j9,
 	int32_t* arm_front_back, int32_t* elbow_up_down, int32_t* wrist_down_up);
 /********************************************
-* º¯Êı¹¦ÄÜ:½«Å·À­Î»×Ë¸ñÊ½(´ø±êÌâĞĞx y z a b c)µÄÀëÏß¹ì¼£ÎÄ¼ş×ª»»ÎªÖá½Ç×ËÌ¬¹ì¼£ÎÄ¼ş
-* ²ÎÊı: file_name_ptr--ÀëÏß¹ì¼£ÎÄ¼şÃû³ÆÖ¸Õë(ÊäÈëµÄÎÄ¼şÃû³ÆÎª"*.csv")
-* ·µ»ØÖµ:´íÎóÂë
-* ±¸×¢:ĞèÏÈ½«ÊäÈëÎÄ¼şÃû¶ÔÓ¦µÄÎÄ¼ş·ÅÔÚ/root/robot_data/trajectory/Â·¾¶ÏÂ, Êä³öÎÄ¼şÔÚ"/root/robot_data/trajectory/out.trajectory"
+* å‡½æ•°åŠŸèƒ½:å°†æ¬§æ‹‰ä½å§¿æ ¼å¼(å¸¦æ ‡é¢˜è¡Œx y z a b c)çš„ç¦»çº¿è½¨è¿¹æ–‡ä»¶è½¬æ¢ä¸ºè½´è§’å§¿æ€è½¨è¿¹æ–‡ä»¶
+* å‚æ•°: file_name_ptr--ç¦»çº¿è½¨è¿¹æ–‡ä»¶åç§°æŒ‡é’ˆ(è¾“å…¥çš„æ–‡ä»¶åç§°ä¸º"*.csv")
+* è¿”å›å€¼:é”™è¯¯ç 
+* å¤‡æ³¨:éœ€å…ˆå°†è¾“å…¥æ–‡ä»¶åå¯¹åº”çš„æ–‡ä»¶æ”¾åœ¨/root/robot_data/trajectory/è·¯å¾„ä¸‹, è¾“å‡ºæ–‡ä»¶åœ¨"/root/robot_data/trajectory/out.trajectory"
 *****************************************/
 COMM_INTERFACE_API uint64_t c_OfflineTrajectory_eulerFileConvert2JointFile(char* file_name_ptr);
 
 /*************************
-* º¯Êı¹¦ÄÜ:ÉèÖÃÔØÈëÀëÏß¹ì¼£ÎÄ¼ş
-* ²ÎÊı: file_name_ptr--ÀëÏß¹ì¼£ÎÄ¼şÃû³ÆÖ¸Õë
-* ·µ»ØÖµ:´íÎóÂë
-* ±¸×¢:ĞèÏÈ½«ÊäÈëÎÄ¼şÃû¶ÔÓ¦µÄÎÄ¼ş·ÅÔÚ/root/robot_data/trajectory/Â·¾¶ÏÂ
+* å‡½æ•°åŠŸèƒ½:è®¾ç½®è½½å…¥ç¦»çº¿è½¨è¿¹æ–‡ä»¶
+* å‚æ•°: file_name_ptr--ç¦»çº¿è½¨è¿¹æ–‡ä»¶åç§°æŒ‡é’ˆ
+* è¿”å›å€¼:é”™è¯¯ç 
+* å¤‡æ³¨:éœ€å…ˆå°†è¾“å…¥æ–‡ä»¶åå¯¹åº”çš„æ–‡ä»¶æ”¾åœ¨/root/robot_data/trajectory/è·¯å¾„ä¸‹
 ******************************/
 COMM_INTERFACE_API uint64_t c_OfflineTrajectoryFileSet(char* file_name_ptr);
 
 /*************************
-* º¯Êı¹¦ÄÜ:½«»úĞµ±ÛÄ©¶ËÔË¶¯µ½ÀëÏß¹ì¼£ÎÄ¼şÖĞµÄÆğµãÎ»ÖÃ
-* ²ÎÊı: ÎŞ
-* ·µ»ØÖµ:´íÎóÂë
+* å‡½æ•°åŠŸèƒ½:å°†æœºæ¢°è‡‚æœ«ç«¯è¿åŠ¨åˆ°ç¦»çº¿è½¨è¿¹æ–‡ä»¶ä¸­çš„èµ·ç‚¹ä½ç½®
+* å‚æ•°: æ— 
+* è¿”å›å€¼:é”™è¯¯ç 
 ******************************/
 COMM_INTERFACE_API uint64_t c_OfflineTrajectoryPrepare(void);
 
 /*************************
-* º¯Êı¹¦ÄÜ:ÈÃ»úĞµ±ÛÄ©¶Ë°´ÕÕÀëÏß¹ì¼£ÎÄ¼şÖĞ¸ø¶¨µÄÖá½ÇÎ»ÖÃÔË¶¯
-* ²ÎÊı: ÎŞ
-* ·µ»ØÖµ:´íÎóÂë
+* å‡½æ•°åŠŸèƒ½:è®©æœºæ¢°è‡‚æœ«ç«¯æŒ‰ç…§ç¦»çº¿è½¨è¿¹æ–‡ä»¶ä¸­ç»™å®šçš„è½´è§’ä½ç½®è¿åŠ¨
+* å‚æ•°: æ— 
+* è¿”å›å€¼:é”™è¯¯ç 
 ******************************/
 COMM_INTERFACE_API uint64_t c_OfflineTrajectoryMove(void);
+
+/**
+ * @brief Send the online robot trajectory.
+ * @details
+ * @param [in] traj trajectory of each axis.
+ * @param [in] size trajectory data size.
+ * @return error_code
+ */
+COMM_INTERFACE_API uint64_t c_sendOnlineTrajectory(double traj[], uint32_t size);
+
 
 // rpc register
 COMM_INTERFACE_API uint64_t c_getPrRegValidList(int32_t start_id, int32_t max_list_size, char* valid_list_str);

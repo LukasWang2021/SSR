@@ -60,6 +60,9 @@ BaseGroup::BaseGroup()
     pause_to_manual_request_ = false;
     standby_to_auto_request_ = false;
     standby_to_manual_request_ = false;
+    standby_to_online_request_ = false;
+    online_to_standby_request_ = false;
+    online_to_pause_request_ = false;
     auto_to_standby_request_ = false;
     offline_to_standby_request_ = false;
     manual_to_standby_request_ = false;
@@ -379,7 +382,7 @@ void BaseGroup::handleContinueousManualRpcTimeOut()
         direction.axis6 = STANDING;
         direction.axis7 = STANDING;
         direction.axis8 = STANDING;
-        direction.axis9 = STANDING;
+        direction.axis9 = STANDING;        
         ErrorCode error_code = manualMoveContinuous(&direction[0]);
         if(error_code != SUCCESS)
         {
@@ -420,7 +423,7 @@ bool BaseGroup::isMoving(void)
     MotionControlState mc_state = mc_state_;
     return servo_state == SERVO_RUNNING && (mc_state == AUTO || mc_state == AUTO_TO_PAUSING || mc_state == PAUSING || 
             mc_state == PAUSE_RETURN || mc_state == RESUME ||
-            mc_state == MANUAL || mc_state == PAUSE_MANUAL || mc_state == OFFLINE);
+            mc_state == MANUAL || mc_state == PAUSE_MANUAL || mc_state == OFFLINE || mc_state == ONLINE);
 }
 
 ErrorCode BaseGroup::pauseMove(void)

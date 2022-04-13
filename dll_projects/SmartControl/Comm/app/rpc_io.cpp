@@ -1,7 +1,7 @@
 #include "rpc_interface.h"
 #include "rpc_basic.h"
 #include "common_error_code.h"
-#include <windows.h>
+#include "protoc.h"
 
 uint64_t c_ioReadDI(int32_t port_offset, int32_t* value)
 {

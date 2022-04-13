@@ -70,7 +70,8 @@ public:
      * @return A reference to self.
      */
     Matrix33& operator=(const Matrix33& matrix);
-
+    Matrix33& operator+(const Matrix33& matrix);
+    Matrix33& operator*(double num);
     void print(std::string comment = "") const;
 private:    
     /**

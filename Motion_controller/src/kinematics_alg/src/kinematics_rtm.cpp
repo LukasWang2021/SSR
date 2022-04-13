@@ -196,12 +196,12 @@ void KinematicsRTM::doFK(const Joint& joint, PoseEuler& pose_euler, size_t from_
         TransMatrix matrix_first(arm_dh_[first_dh_index].d, arm_dh_[first_dh_index].a, arm_dh_[first_dh_index].alpha, joint[first_dh_index] + arm_dh_[first_dh_index].offset);
         result_matrix = matrix_first;       
     }
-    result_matrix.convertToPoseEuler(pose_euler);
+    //result_matrix.convertToPoseEuler(pose_euler);//中间过程调试
     for(size_t i = from_joint_index; i < to_joint_index; ++i)
     {
         TransMatrix matrix(arm_dh_[i].d, arm_dh_[i].a, arm_dh_[i].alpha, joint[i] + arm_dh_[i].offset);     
         result_matrix.rightMultiply(matrix);
-        result_matrix.convertToPoseEuler(pose_euler);
+        //result_matrix.convertToPoseEuler(pose_euler);//中间过程调试
     }
     result_matrix.convertToPoseEuler(pose_euler);
 }

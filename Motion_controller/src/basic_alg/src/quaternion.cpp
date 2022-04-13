@@ -111,7 +111,12 @@ double Quaternion::getIncludedAngle(const Quaternion& quaternion) const
 
     return acos(dot_product);
 }
+double Quaternion::norm()
+{
+    //cout << "w="<<this->w_<<" x="<<this->x_<<" y="<<this->y_<<" z="<<this->z_<<endl;
 
+    return sqrt(this->w_*this->w_ + this->x_*this->x_ + this->y_*this->y_ + this->z_*this->z_);
+}
 double& Quaternion::operator[](size_t index) 
 {
     assert(index < 4); 
@@ -123,14 +128,60 @@ const double& Quaternion::operator[](size_t index) const
     assert(index < 4); 
     return *(&x_ + index);
 }
+const Quaternion Quaternion::operator*(double value)
+{
+    Quaternion q_res;
+    q_res.w_ = value * w_;
+    q_res.x_ = value * x_;
+    q_res.y_ = value * y_;
+    q_res.z_ = value * z_;
+    return q_res;
+}
+const Quaternion Quaternion::operator/(double value)
+{
+    Quaternion q_res;
+    if(value != 0)
+    {
+        q_res.w_ =w_/ value;
+        q_res.x_ =x_/ value;
+        q_res.y_ =y_/ value;
+        q_res.z_ =z_/ value;
+    }
+    else
+    {
+        q_res.w_ = 0;
+        q_res.x_ = 0;
+        q_res.y_ = 0;
+        q_res.z_ = 0;
+    }
+    return q_res;
+}
+const Quaternion Quaternion::operator+(const Quaternion& q)
+{
+    Quaternion result;
+    result.w_ = w_ + q.w_;
+    result.x_ = x_ + q.x_;
+    result.y_ = y_ + q.y_;
+    result.z_ = z_ + q.z_;
+    return result;
+}
+const Quaternion Quaternion::operator-(const Quaternion& q)
+{
+    Quaternion result;
+    result.w_ = w_ - q.w_;
+    result.x_ = x_ - q.x_;
+    result.y_ = y_ - q.y_;
+    result.z_ = z_ - q.z_;
+    return result;
+}
 
 void Quaternion::print(std::string comment) const
 {
-    std::cout<<comment<<std::endl;
-    std::cout<<" x = "<<x_
-             <<" y = "<<y_
-             <<" z = "<<z_
-             <<" w = "<<w_<<std::endl;
+    std::cout<<comment;//<<std::endl;
+    std::cout<<" w="<<w_
+             <<" x="<<x_
+             <<" y="<<y_
+             <<" z="<<z_<<std::endl;
 }
 
 

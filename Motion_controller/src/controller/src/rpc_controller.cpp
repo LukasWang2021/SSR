@@ -64,6 +64,12 @@ void ControllerRpc::handleRpc0x00006825(void* request_data_ptr, void* response_d
 
     for(size_t i = 0; i < GROUP_NUM; ++i)
     {
+        int temp_work_mode = group_ptr_[i]->getWorkMode();
+        //如果从USER_OP_MODE_ONLINE切换到其他work mode, 则运控状态也将由ONLINE状态切换到STANDBY状态
+        if(temp_work_mode == 4 && rq_data_ptr->data.data != 4) //USER_OP_MODE_ONLINE==4
+        {
+            group_ptr_[i]->MotionStateOnlineToStandby();
+        }
         group_ptr_[i]->setWorkMode((group_space::UserOpMode)rq_data_ptr->data.data);
     }
     rs_data_ptr->data.data = SUCCESS;

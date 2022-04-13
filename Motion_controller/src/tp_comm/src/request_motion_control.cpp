@@ -779,6 +779,29 @@ void TpComm::handleRequest0x00018470(int recv_bytes)
                          recv_bytes, RequestMessageType_Int32_DoubleList_fields, -1);
 }
 
+/********rpc/motion_control/axis_group/setOnlineTrajectoryData, RequestMessageType_Int32_DoubleList(DoubleList_count=240)**********/
+void TpComm::handleRequest0x00008A31(int recv_bytes)
+{
+    // create object for request and response package
+    RequestMessageType_Int32_DoubleList *request_data_ptr = new RequestMessageType_Int32_DoubleList;
+    if (request_data_ptr == NULL)
+    {
+        ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
+        LogProducer::error("comm", "handleRequest: can't allocate memory for request_data");
+        return;
+    }
+    ResponseMessageType_Uint64 *response_data_ptr = new ResponseMessageType_Uint64;
+    if (response_data_ptr == NULL)
+    {
+        ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
+        LogProducer::error("comm", "handleRequest: can't allocate memory for response_data");
+        delete request_data_ptr;
+        return;
+    }
+    handleRequestPackage(0x00008A31, (void *)request_data_ptr, (void *)response_data_ptr,
+                         recv_bytes, RequestMessageType_Int32_DoubleList_fields, -1);
+}
+
 //"/rpc/motion_control/axis_group/getJointManualStep"
 void TpComm::handleRequest0x00006D10(int recv_bytes)
 {

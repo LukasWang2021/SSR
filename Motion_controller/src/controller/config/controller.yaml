@@ -3,10 +3,12 @@ routine_cycle_time: 10000
 planner_cycle_time: 10000
 priority_cycle_time: 10000 
 realtime_cycle_time: 2000 
+rpc_cycle_time: 2000
 routine_thread_priority: 50 
 planner_thread_priority: 60 
 priority_thread_priority: 70
 realtime_thread_priority: 80 
+rpc_thread_priority: 55 
 dio_exist: false
 safety_exist: true
 #END

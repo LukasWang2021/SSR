@@ -58,6 +58,7 @@ typedef uint64_t ErrorCode;
 #define TP_COMM_SEND_FAILED 0x3009   /*TpComm failed to send a package*/
 #define TP_COMM_RECEIVE_FAILED 0x300A   /*TpComm failed to receive a package*/
 #define TP_COMM_RPC_OVERLOAD 0x300B   /*TpComm failed to handle too much rpc request*/
+#define TP_COMM_RPC_TOO_MUCH_DATA 0x300C   /*TpComm failed to handle too much request data*/
 #define RPC_PARAM_INVALID 0x4001
 #define RPC_EXECUTE_FAILED 0x4002
 #define AXIS_STATE_TRANSFER_INVALID 0x5001

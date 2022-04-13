@@ -26,6 +26,10 @@ IoSafety::~IoSafety(void)
 
 bool IoSafety::init(bool is_real)
 {
+    is_real_ = is_real;
+    if(is_real == false)
+        return true;
+
     device_ = openDevice(IO_SAFETY_DEVICE_PATH, IO_SAFETY_BASE_ADDRESS, IO_SAFETY_TOTAL_BYTE_SIZE);
 
     if(device_ == NULL)
@@ -60,7 +64,14 @@ ErrorCode IoSafety::readStatusAll(uint32_t &value_lower, uint32_t &value_upper)
 
 ErrorCode IoSafety::updateStatus(void)
 {
-    state_.all = *(uint64_t *)(device_->device_ptr + IO_SAFETY_STATUS_OFFSET);
+    if(is_real_)
+    {
+        state_.all = *(uint64_t *)(device_->device_ptr + IO_SAFETY_STATUS_OFFSET);
+    }
+    else
+    {
+        state_.all = 0;
+    }
     return SUCCESS;
 }
 

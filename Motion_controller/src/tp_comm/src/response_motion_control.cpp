@@ -549,6 +549,22 @@ void TpComm::handleResponse0x00018470(std::vector<TpRequestResponse>::iterator& 
         delete (ResponseMessageType_Uint64*)task->response_data_ptr;
     }
 }
+/********rpc/motion_control/axis_group/setOnlineTrajectoryData, ResponseMessageType_Uint64**********/
+void TpComm::handleResponse0x00008A31(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size)
+{
+    if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_fields, task->response_data_ptr, send_buffer_size))
+    {
+        LogProducer::error("comm", "handleResponse: failed to encode response package");// send
+    }
+    if(task->request_data_ptr != NULL)
+    {
+        delete (RequestMessageType_Int32_DoubleList*)task->request_data_ptr;
+    }
+    if(task->response_data_ptr != NULL)
+    {
+        delete (ResponseMessageType_Uint64*)task->response_data_ptr;
+    }
+}
 
 //"/rpc/motion_control/axis_group/getJointManualStep"
 void TpComm::handleResponse0x00006D10(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size)

@@ -47,8 +47,15 @@ public:
     void clearErrorFlag(void);
     bool nextMovePermitted(void);
 
+    ErrorCode moveOnlineTrajectory(void);//从STANDBY状态切换到ONLINE状态,开始传输在线轨迹数据
+    ErrorCode MotionStateOnlineToStandby(void); //从ONLINE状态切换到STANDBY状态并做相关变量设置
+    //ErrorCode setOnlinePointBufptr(double * ptr);
+    ErrorCode setOnlinePointBufptr();
     // API for off line trajectory
     ErrorCode convertEulerTraj2JointTraj(const std::string &offline_euler_trajectory_fileName);
+    ErrorCode Fir_Bspline_algorithm_test2(void);
+    ErrorCode receive_T_matrix_data(int status, double * p_marixArray);
+    void xzc_funTest();
     ErrorCode setOfflineTrajectory(const std::string &offline_trajectory);
     ErrorCode prepairOfflineTrajectory(void);
     ErrorCode moveOfflineTrajectory(void);
@@ -182,8 +189,7 @@ private:
     fst_ctrl::CoordinateManager* coordinate_manager_ptr_;
     fst_ctrl::ToolManager* tool_manager_ptr_;
     BaseGroup *group_ptr_;
-
-
+    OnlineTrajectoryPlanner *online_trj_planner_ptr;
 };
 
 

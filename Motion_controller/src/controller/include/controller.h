@@ -82,6 +82,7 @@ public:
      * @return void
      */
     void runRoutineThreadFunc();
+    void runRpcThreadFunc();
 
     /**
      * @brief The algorithm thread function.
@@ -115,6 +116,7 @@ private:
     base_space::ThreadHelp planner_thread_;
     base_space::ThreadHelp priority_thread_;
     base_space::ThreadHelp rt_thread_;
+    base_space::ThreadHelp rpc_thread_;
 
     servo_comm_space::Servo1001* servo_1001_ptr_;
     servo_comm_space::ServoCpuCommBase* cpu_comm_ptr_;
@@ -160,6 +162,7 @@ void* controllerRoutineThreadFunc(void* arg);
 void* controllerPlannerThreadFunc(void* arg);
 void* controllerPriorityThreadFunc(void* arg);
 void* controllerRealTimeThreadFunc(void* arg);
+void* controllerRpcThreadFunc(void* arg);
 
 
 #endif

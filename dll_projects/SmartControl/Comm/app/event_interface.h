@@ -31,5 +31,5 @@ extern "C" COMM_INTERFACE_API uint64_t c_exitEvent(void);
  * @retval 0 Success.
  * @retval -1 Failure.
  */
-extern "C" COMM_INTERFACE_API uint64_t c_getEventErrorList(unsigned long long int error[8], unsigned long long int time_stamp[8], int32_t* size);
+extern "C" COMM_INTERFACE_API uint64_t c_getEventErrorList(uint64_t error[8], uint64_t time_stamp[8], int32_t* size);
 

@@ -2,7 +2,7 @@
 #include "sub_interface.h"
 #include "event_interface.h"
 #include <stdio.h>
-#include <windows.h>
+#include "common_error_code.h"
 #include <iostream>
 
 int main()
@@ -22,7 +22,7 @@ int main()
 	printf("receive command\n");
 
 	ErrorCode error_code[8] = { 0 };
-	unsigned long long int time_stamp[8] = { 0 };
+	uint64_t time_stamp[8] = { 0 };
 	int32_t size = 0;
 	ErrorCode ret = c_getEventErrorList(error_code, time_stamp, &size);
 	if (ret != 0)
@@ -35,7 +35,7 @@ int main()
 	ErrorCode detail_ret = 0;
 	char text[128] = { 0 };
 	int text_size = 0;
-	for (size_t i = 0; i < size; ++i)
+	for (int32_t i = 0; i < size; ++i)
 	{
 		detail_ret = c_getErrorCodeDetail(error_code[i], text, &text_size);
 		printf("ret = %lld, code=%lld, text = %s\n", detail_ret, error_code[i], text);
@@ -51,7 +51,10 @@ int main()
 	uint64_t ret = c_getErrorCodeDetail(error_code, text, &size);
 	printf("ret = %lld, text = %s\n", ret, text);
 	*/
-
+#ifdef _WIN_PLAT
 	Sleep(10000);
+#else
+	usleep(10000000);
+#endif
 	return 0;
 }

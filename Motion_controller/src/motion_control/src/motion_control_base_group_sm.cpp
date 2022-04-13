@@ -59,6 +59,10 @@ void BaseGroup::doStateMachine(void)
         offline_trajectory_last_point_ = false;
         pthread_mutex_unlock(&offline_mutex_);
 
+        pthread_mutex_lock(&online_traj_mutex_);
+        online_trajectory_first_point_ = false;
+        online_trajectory_last_point_ = false;
+        pthread_mutex_unlock(&online_traj_mutex_);
         manual_trajectory_check_fail_ = false;
         standby_to_manual_request_ = false;
         manual_to_standby_request_ = false;
@@ -119,7 +123,10 @@ void BaseGroup::doStateMachine(void)
     {
         standby_to_manual_request_ = false;
     }
-
+    if (standby_to_online_request_ && mc_state != STANDBY)
+    {
+        standby_to_online_request_ = false;
+    }
     if (manual_to_standby_request_ && mc_state != MANUAL)
     {
         manual_to_standby_request_ = false;
@@ -154,7 +161,7 @@ void BaseGroup::doStateMachine(void)
         if (pause_to_auto_request_) pause_to_auto_request_ = false;
 
         if (mc_state == MANUAL || mc_state == MANUAL_TO_STANDBY || mc_state == STANDBY_TO_MANUAL ||
-            mc_state == OFFLINE || mc_state == OFFLINE_TO_STANDBY || mc_state == STANDBY_TO_OFFLINE)
+            mc_state == OFFLINE || mc_state == OFFLINE_TO_STANDBY || mc_state == STANDBY_TO_OFFLINE || mc_state == ONLINE)
         {
             mc_state_ = STANDBY;
             clear_request_ = true;
@@ -194,7 +201,9 @@ void BaseGroup::doStateMachine(void)
             bare_core_.clearPointCache();
         }
         else if (mc_state == AUTO_TO_PAUSING || mc_state == PAUSE_TO_RESUME || mc_state == PAUSE_TO_PAUSE_RETURN)
-        {}
+        {
+            
+        }
         else if (mc_state == AUTO_TO_STANDBY)
         {
             mc_state_ = STANDBY;
@@ -272,7 +281,14 @@ void BaseGroup::doStateMachine(void)
                 mc_state_ = STANDBY_TO_OFFLINE;
                 LogProducer::warn("mc_sm","MC-state switch to MC_STANDBY_TO_OFFLINE");
             }
-
+            else if(standby_to_online_request_)
+            {
+                mc_state_ = ONLINE;
+                LogProducer::warn("mc_sm","MC-state switch to ONLINE from STANDBY");
+                online_time_ = 0;
+                //online_trajectory_first_point_ = true;
+	            online_trajectory_last_point_ = false;
+            }
             break;
         }
 
@@ -337,7 +353,17 @@ void BaseGroup::doStateMachine(void)
 
             break;
         }
-
+        case ONLINE:
+        {
+            if (online_to_standby_request_)
+            {
+                mc_state_ = STANDBY;
+                online_to_standby_request_ = false;
+                online_fifo_.clear();
+                
+                LogProducer::warn("mc_sm","MC-state switch to MC__STANDBY");
+            }
+        }break;
         case PAUSE:
         {
             if (pause_to_auto_request_)

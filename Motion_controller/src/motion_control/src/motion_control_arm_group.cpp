@@ -219,8 +219,10 @@ ErrorCode ArmGroup::initGroup(CoordinateManager *coordinate_manager_ptr, ToolMan
     manual_teach_.setGlobalVelRatio(vel_ratio_);
     manual_teach_.setGlobalAccRatio(acc_ratio_);
 
-    if (getServoState() == SERVO_IDLE) updateStartJoint();
-
+    if (getServoState() == SERVO_IDLE) 
+    {
+        updateStartJoint();
+    }
     LogProducer::info("mc_arm_group","ArmGroup init success.");
     return SUCCESS;
 }
@@ -434,6 +436,20 @@ ErrorCode ArmGroup::LoadBaseGroupParameters(std::string dir_path)
         LogProducer::error("mc_arm_group","Fail to initialize manual trajectory FIFO.");
         return MC_INTERNAL_FAULT;
     }
+    if (!base_group_param.getParam("trajectory_fifo/online_fifo_size", traj_fifo_config))
+    {
+        LogProducer::error("mc_arm_group","Fail loading online trajectory FIFO size from config file");
+        return MC_LOAD_PARAM_FAILED;
+    }
+
+    LogProducer::info("mc_arm_group","Initializing Online trajectory FIFO ... capacity = %d", traj_fifo_config);
+
+    if (!online_fifo_.init(traj_fifo_config))
+    {
+        LogProducer::error("mc_arm_group","Fail to initialize online trajectory FIFO.");
+        return MC_INTERNAL_FAULT;
+    }
+
         // 从配置文件加载Fine指令的稳定周期和稳定门限
     int     stable_times;
     double  stable_threshold;

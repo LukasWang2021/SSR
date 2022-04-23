@@ -11,6 +11,7 @@
 #include "log_manager_producer.h"
 #include "common_error_code.h"
 #include "group.h"
+#include "sem_help.h"
 
 namespace group_space
 {
@@ -51,6 +52,11 @@ public:
     ErrorCode MotionStateOnlineToStandby(void); //从ONLINE状态切换到STANDBY状态并做相关变量设置
     //ErrorCode setOnlinePointBufptr(double * ptr);
     ErrorCode setOnlinePointBufptr();
+    ErrorCode setOnlineTrajectoryRatio(double ratio);
+    ErrorCode setOnlineVpointCache(int status, double * p_marixArray);
+    ErrorCode takeOnlineTrajSem(){online_traj_sem_.take();}
+    ErrorCode giveOnlineTrajSem(){online_traj_sem_.give();}
+
     // API for off line trajectory
     ErrorCode convertEulerTraj2JointTraj(const std::string &offline_euler_trajectory_fileName);
     ErrorCode Fir_Bspline_algorithm_test2(void);
@@ -149,6 +155,7 @@ public:
     void ringPlannerTask(void);
     void ringRealTimeTask(void);
     void ringPriorityTask(void);
+    void ringOnlineTrajTask(void);
 
     //pure function no realization
     virtual ErrorCode mcGroupHalt(double dec, double jerk);
@@ -185,6 +192,10 @@ private:
     pthread_mutex_t  instruction_mutex_;
     uint32_t instructions_recv_counter_;
     uint32_t instructions_handle_counter_;
+    base_space::SemHelp online_traj_sem_;
+    double *online_vp_cache_;
+    int32_t online_vp_cache_state_;
+    int32_t online_vp_status_;
 
     fst_ctrl::CoordinateManager* coordinate_manager_ptr_;
     fst_ctrl::ToolManager* tool_manager_ptr_;

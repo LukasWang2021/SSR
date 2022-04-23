@@ -91,8 +91,9 @@ public:
      */
     void runPlannerThreadFunc();
 
+    void runOnlineTrajThreadFunc();
     void runPriorityThreadFunc();
-
+    
     /**
      * @brief The realtime thread function.
      * @details Deal with feedback, state machine and Trajectories.\n
@@ -117,6 +118,7 @@ private:
     base_space::ThreadHelp priority_thread_;
     base_space::ThreadHelp rt_thread_;
     base_space::ThreadHelp rpc_thread_;
+    base_space::ThreadHelp online_traj_thread_;
 
     servo_comm_space::Servo1001* servo_1001_ptr_;
     servo_comm_space::ServoCpuCommBase* cpu_comm_ptr_;
@@ -163,6 +165,7 @@ void* controllerPlannerThreadFunc(void* arg);
 void* controllerPriorityThreadFunc(void* arg);
 void* controllerRealTimeThreadFunc(void* arg);
 void* controllerRpcThreadFunc(void* arg);
+void* controllerOnlineTrajThreadFunc(void* arg);
 
 
 #endif

@@ -5,6 +5,7 @@
 #include "matrix33.h"
 #include "vector3.h"
 #include <algorithm>
+#include <traj_planner.h>
 
 typedef struct {
     int  status;
@@ -19,11 +20,19 @@ typedef struct {
 using namespace std;
 using namespace basic_alg;
 
+namespace group_space
+{
 class OnlineTrajectoryPlanner
 {
 public:
     //int  trjPointCnt;
-    TrjPoint trj_point_buf[160];
+    //TrjPoint trj_point_buf[160];
+    TrjPoint *trj_point_buf;
+    //double OnlinePointJointBuf[1200] = {0};//6*200
+    double *OnlinePointJointBuf=NULL;
+    int online_trjPointCnt = 0;
+    int receive_TmatrixPackCnt = 0;//接收来自touch的矩阵数据包数---对应缓存序号
+    int read_TmatrixPackCnt = 0; //从缓存里读touch数据包计数
     OnlineTrajectoryPlanner();
     ~OnlineTrajectoryPlanner();
     int sign(double x);//取double数字的符号
@@ -32,6 +41,7 @@ public:
     Vector3 rtm_rpy(Matrix33& R);//旋转矩阵转欧拉角
 
     Quaternion rtm_r2quat(Matrix33& R);//矩阵转四元数
+    Quaternion rtm_r2quat_new(Matrix33& R);//旋转矩阵转四元数-新函数-避免出现虚函数
     Matrix33 rtm_quat2r(Quaternion& q);//四元数转矩阵
 
     Matrix33 skew(Vector3& vec3);
@@ -61,6 +71,12 @@ public:
     bool FixedBaseCoordTransformation(Matrix44& T_touchm,Matrix44& resM);
     bool DynamicBaseCoordTransformation(Matrix44 T_r0_R, Matrix44 Touch_h0_v,  Matrix44 Touch_ht_v, double k,Matrix44& resM);
     void rtm_r2xyzabc(Matrix44& u,Vector3& res_xyz, Vector3& res_abc);
+    int  get_onlineRecvTmatrixBuffPackLen();
+    int setOnlineTrjRatio(double data_ratio);
+    double get_online_trj_ratio();
+private:
+    TrajectoryPlanner trajectory_planner_ptr_;
 };
+}
 
 #endif

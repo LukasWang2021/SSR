@@ -23,8 +23,6 @@ using namespace base_space;
 using namespace log_space;
 using namespace group_space;
 
-double OnlinePointJointBuf[1200] = {0};//6*200
-int online_trjPointCnt = 0;
 
 void MotionControl::ringCommonTask(void)
 {
@@ -39,6 +37,28 @@ void MotionControl::ringRealTimeTask(void)
 void MotionControl::ringPriorityTask(void)
 {
     group_ptr_->doPriorityLoop();
+}
+
+void MotionControl::ringOnlineTrajTask(void)
+{
+    if(online_vp_cache_state_ != 1) return ;// means no vp recieved
+
+    online_traj_sem_.take();
+    //int status=0;
+    double vp_cache[91];
+    memcpy(vp_cache, online_vp_cache_+online_trj_planner_ptr->read_TmatrixPackCnt*91*sizeof(double), 91*sizeof(double));
+    online_trj_planner_ptr->read_TmatrixPackCnt++;
+    if(online_trj_planner_ptr->read_TmatrixPackCnt > online_trj_planner_ptr->get_onlineRecvTmatrixBuffPackLen())
+    {
+        online_trj_planner_ptr->read_TmatrixPackCnt=0;
+    }
+    receive_T_matrix_data((int)vp_cache[0], vp_cache);
+    setOnlinePointBufptr();
+    if(online_trj_planner_ptr->read_TmatrixPackCnt == online_trj_planner_ptr->receive_TmatrixPackCnt)
+    {
+        online_vp_cache_state_ = 0; //reset mark means no vp recieved
+    }
+    online_traj_sem_.give();
 }
 
 void MotionControl::ringPlannerTask(void)
@@ -129,12 +149,14 @@ MotionControl::MotionControl(int32_t id):
     motion_error_flag_ = false;
     instructions_recv_counter_ = 0;
     instructions_handle_counter_ = 0;
+    online_vp_status_ = -1;
 
     work_mode_ = group_space::USER_OP_MODE_MANUAL;
 }
 
 MotionControl::~MotionControl()
 {
+    if(online_vp_cache_ != NULL) {delete[] online_vp_cache_; online_vp_cache_ = NULL;}
     if (group_ptr_ != NULL)     {delete group_ptr_; group_ptr_ = NULL;};
 }
 
@@ -171,6 +193,7 @@ ErrorCode MotionControl::initApplication(fst_ctrl::CoordinateManager* coordinate
         return err;
     }
     online_trj_planner_ptr = new OnlineTrajectoryPlanner();
+    online_vp_cache_ = new double[256];
     return SUCCESS;
 }
 
@@ -446,6 +469,38 @@ TTT.matrix_[3][0]=0;TTT.matrix_[3][1]=0;TTT.matrix_[3][2]=0;TTT.matrix_[3][3]=1;
     res_xyz.print("res_xyz=");
     res_abc.print_abc("res_abc=");
 }
+
+ErrorCode MotionControl::setOnlineTrajectoryRatio(double ratio)
+{
+    online_trj_planner_ptr->setOnlineTrjRatio(ratio);
+    return 0;
+}
+/****
+ * 函数功能: 设置在线运动时接收的T矩阵数据缓存
+ * 参数: status: touch点状态
+ * p_marixArray: 传入的数据指针
+ * data_buff_index:数据缓存索引
+ * 
+*/
+ErrorCode MotionControl::setOnlineVpointCache(int status, double * p_marixArray)
+{
+    assert(p_marixArray != NULL);
+    online_traj_sem_.take();
+    online_vp_status_ = status;
+    if(online_vp_status_ == 0)
+    {
+        online_trj_planner_ptr->receive_TmatrixPackCnt = 0;
+        online_trj_planner_ptr->read_TmatrixPackCnt = 0;
+    }
+    memcpy(online_vp_cache_ + online_trj_planner_ptr->receive_TmatrixPackCnt*91*sizeof(double), p_marixArray, 91*sizeof(double));//1+5*16=91
+    online_trj_planner_ptr->receive_TmatrixPackCnt+=1;
+    if(online_trj_planner_ptr->receive_TmatrixPackCnt > online_trj_planner_ptr->get_onlineRecvTmatrixBuffPackLen())
+    {
+        online_trj_planner_ptr->receive_TmatrixPackCnt = 0;
+    }
+    online_vp_cache_state_ = 1;
+    online_traj_sem_.give();
+}
 ErrorCode MotionControl::receive_T_matrix_data(int status, double * p_marixArray)
 {
     static uint64_t iterCnt=0;//进入函数的迭代次数
@@ -453,7 +508,8 @@ ErrorCode MotionControl::receive_T_matrix_data(int status, double * p_marixArray
     static Matrix44 Touch_h0_v;
     Matrix44 Touch_ht_v,T_res;
     int T_matrix_len=0;
-    double k = 1;//机械臂移动距离与touch移动距离的比例系数,    即机械臂移动距离=K*touch移动距离
+    double k = online_trj_planner_ptr->get_online_trj_ratio();
+    //double k = 1.0;//机械臂移动距离与touch移动距离的比例系数,    即机械臂移动距离=K*touch移动距离
     Vector3 res_xyz,res_abc;
     PoseEuler StartPositionPose;
     TransMatrix start_trans_matrix;
@@ -463,7 +519,7 @@ ErrorCode MotionControl::receive_T_matrix_data(int status, double * p_marixArray
     if(status == 0)
     {
         group_ptr_->setOnlineTrjFirstPointCondition();
-        online_trjPointCnt = 0;
+        online_trj_planner_ptr->online_trjPointCnt = 0;
         iterCnt=1;
         StartPositionPose = getCurrentPose();
         //StartPositionPose.print("StartPositionPose");
@@ -495,7 +551,7 @@ ErrorCode MotionControl::receive_T_matrix_data(int status, double * p_marixArray
         res_abc.y_ = StartPositionPose.euler_.b_;
         res_abc.z_ = StartPositionPose.euler_.a_;*/
         online_trj_planner_ptr->rtm_r2xyzabc(T_r0_R,res_xyz,res_abc);
-LogProducer::info("startPoint_xyz2alg"," %lf,%lf,%lf,%lf,%lf,%lf",res_xyz.x_,res_xyz.y_,res_xyz.z_,res_abc.x_,res_abc.y_,res_abc.z_);
+//LogProducer::info("startPoint_xyz2alg"," %lf,%lf,%lf,%lf,%lf,%lf",res_xyz.x_,res_xyz.y_,res_xyz.z_,res_abc.x_,res_abc.y_,res_abc.z_);
 
         Touch_h0_v.matrix_[0][0]=*(p_marixArray+1); Touch_h0_v.matrix_[0][1]=*(p_marixArray+5); Touch_h0_v.matrix_[0][2]=*(p_marixArray+9);  Touch_h0_v.matrix_[0][3]=*(p_marixArray+13);   //  /1000;
         Touch_h0_v.matrix_[1][0]=*(p_marixArray+2); Touch_h0_v.matrix_[1][1]=*(p_marixArray+6); Touch_h0_v.matrix_[1][2]=*(p_marixArray+10);  Touch_h0_v.matrix_[1][3]=*(p_marixArray+14);  //  /1000;
@@ -504,7 +560,7 @@ LogProducer::info("startPoint_xyz2alg"," %lf,%lf,%lf,%lf,%lf,%lf",res_xyz.x_,res
         T_matrix_len=4;
 //Touch_h0_v.print("Touch_h0_v");
 
-        online_trjPointCnt += online_trj_planner_ptr->traj_on_FIR_Bspline(res_xyz,res_abc,0,online_trjPointCnt);//起点
+        online_trj_planner_ptr->online_trjPointCnt += online_trj_planner_ptr->traj_on_FIR_Bspline(res_xyz,res_abc,0,online_trj_planner_ptr->online_trjPointCnt);//起点
         status = 1;
     }
     else
@@ -524,16 +580,16 @@ LogProducer::info("startPoint_xyz2alg"," %lf,%lf,%lf,%lf,%lf,%lf",res_xyz.x_,res
 //T_res.print("CoordTransformed_input2Alg");
         online_trj_planner_ptr->rtm_r2xyzabc(T_res,res_xyz,res_abc);
         //temp_swap = res_abc.x_; res_abc.x_=res_abc.z_; res_abc.z_ = temp_swap;//a<--->c 
-LogProducer::info("xyz2alg","#%lf,%lf,%lf,%lf,%lf,%lf",res_xyz.x_,res_xyz.y_,res_xyz.z_,res_abc.x_,res_abc.y_,res_abc.z_);
+//LogProducer::info("xyz2alg","#%lf,%lf,%lf,%lf,%lf,%lf",res_xyz.x_,res_xyz.y_,res_xyz.z_,res_abc.x_,res_abc.y_,res_abc.z_);
         if(status == 1)
         {
-            online_trjPointCnt += online_trj_planner_ptr->traj_on_FIR_Bspline(res_xyz,res_abc,1,online_trjPointCnt);//途中点
+            online_trj_planner_ptr->online_trjPointCnt += online_trj_planner_ptr->traj_on_FIR_Bspline(res_xyz,res_abc,1,online_trj_planner_ptr->online_trjPointCnt);//途中点
         }
         else if(status == 2)
         {
             if(i<4)
             {
-                online_trjPointCnt += online_trj_planner_ptr->traj_on_FIR_Bspline(res_xyz,res_abc,1,online_trjPointCnt);//途中点
+                online_trj_planner_ptr->online_trjPointCnt += online_trj_planner_ptr->traj_on_FIR_Bspline(res_xyz,res_abc,1,online_trj_planner_ptr->online_trjPointCnt);//途中点
             }
             else if(i == 4)
             {
@@ -545,21 +601,21 @@ LogProducer::info("xyz2alg","#%lf,%lf,%lf,%lf,%lf,%lf",res_xyz.x_,res_xyz.y_,res
                     {
                         for(int j=0;j<5;j++)
                         {
-                            online_trjPointCnt += online_trj_planner_ptr->traj_on_FIR_Bspline(res_xyz,res_abc,1,online_trjPointCnt);///继续迭代途中点
-                            printf("------------>>>>>>>>>online_trjPointCnt=%d\n",online_trjPointCnt);
+                            online_trj_planner_ptr->online_trjPointCnt += online_trj_planner_ptr->traj_on_FIR_Bspline(res_xyz,res_abc,1,online_trj_planner_ptr->online_trjPointCnt);///继续迭代途中点
+                            printf("------------>>>>>>>>>online_trjPointCnt=%d\n",online_trj_planner_ptr->online_trjPointCnt);
                         }  
                     }
                     else
                     {
                         for(int j=0;j<4;j++)
                         {
-                            online_trjPointCnt += online_trj_planner_ptr->traj_on_FIR_Bspline(res_xyz,res_abc,1,online_trjPointCnt);///继续迭代途中点
-                            printf("------------>>>>>>>>>online_trjPointCnt=%d\n",online_trjPointCnt);
+                            online_trj_planner_ptr->online_trjPointCnt += online_trj_planner_ptr->traj_on_FIR_Bspline(res_xyz,res_abc,1,online_trj_planner_ptr->online_trjPointCnt);///继续迭代途中点
+                            printf("------------>>>>>>>>>online_trjPointCnt=%d\n",online_trj_planner_ptr->online_trjPointCnt);
                         }
                     }
                 }
-                online_trjPointCnt += online_trj_planner_ptr->traj_on_FIR_Bspline(res_xyz,res_abc,2,online_trjPointCnt);//终点
-                printf("------------>>>END>>>online_trjPointCnt=%d\n",online_trjPointCnt);
+                online_trj_planner_ptr->online_trjPointCnt += online_trj_planner_ptr->traj_on_FIR_Bspline(res_xyz,res_abc,2,online_trj_planner_ptr->online_trjPointCnt);//终点
+                printf("------------>>>END>>>online_trjPointCnt=%d\n",online_trj_planner_ptr->online_trjPointCnt);
             }
         }
     }
@@ -608,7 +664,7 @@ ErrorCode MotionControl::moveOnlineTrajectory(void)
 ErrorCode MotionControl::setOnlinePointBufptr()
 {
     ErrorCode err;
-    if(online_trjPointCnt == 0)
+    if(online_trj_planner_ptr->online_trjPointCnt == 0)
     {
         //LogProducer::info("setOnlinePointBufptr","online_trjPointCnt == 0");
         return SUCCESS;
@@ -617,7 +673,7 @@ ErrorCode MotionControl::setOnlinePointBufptr()
     {
         //printf("[###setOnlinePointBufptr### online_trjPointCnt=%d]\n",online_trjPointCnt);
         PoseAndPosture pos;  Joint jnt;
-        for(int i =0;i<online_trjPointCnt; i++)
+        for(int i =0;i<online_trj_planner_ptr->online_trjPointCnt; i++)
         {
             pos.pose.point_.x_ = online_trj_planner_ptr->trj_point_buf[i].x_;
             pos.pose.point_.y_ = online_trj_planner_ptr->trj_point_buf[i].y_;
@@ -629,7 +685,7 @@ ErrorCode MotionControl::setOnlinePointBufptr()
             pos.posture.elbow = 1;
             pos.posture.wrist = 1;
             pos.posture.flip  = 0;
-LogProducer::info("AlgOutputPos"," %lf,%lf,%lf,%lf,%lf,%lf status=%d",pos.pose.point_.x_,pos.pose.point_.y_,pos.pose.point_.z_,pos.pose.euler_.a_,pos.pose.euler_.b_,pos.pose.euler_.c_,online_trj_planner_ptr->trj_point_buf[i].status);
+//LogProducer::info("AlgOutputPos"," %lf,%lf,%lf,%lf,%lf,%lf status=%d",pos.pose.point_.x_,pos.pose.point_.y_,pos.pose.point_.z_,pos.pose.euler_.a_,pos.pose.euler_.b_,pos.pose.euler_.c_,online_trj_planner_ptr->trj_point_buf[i].status);
             memset(&(pos.turn), 0, 9*sizeof(int));
             memset(&jnt, 0, sizeof(jnt));
             pos.pose.euler_.a_ = online_trj_planner_ptr->trj_point_buf[i].c_;
@@ -649,16 +705,16 @@ LogProducer::info("AlgOutputPos"," %lf,%lf,%lf,%lf,%lf,%lf status=%d",pos.pose.p
                     }break;
                 default: group_ptr_->setOnlinePointLevelBuf(i,0);break;
             }
-            OnlinePointJointBuf[i*6+0]=jnt.j1_;
-            OnlinePointJointBuf[i*6+1]=jnt.j2_;
-            OnlinePointJointBuf[i*6+2]=jnt.j3_;
-            OnlinePointJointBuf[i*6+3]=jnt.j4_;
-            OnlinePointJointBuf[i*6+4]=jnt.j5_;
-            OnlinePointJointBuf[i*6+5]=jnt.j6_;
+            online_trj_planner_ptr->OnlinePointJointBuf[i*6+0]=jnt.j1_;
+            online_trj_planner_ptr->OnlinePointJointBuf[i*6+1]=jnt.j2_;
+            online_trj_planner_ptr->OnlinePointJointBuf[i*6+2]=jnt.j3_;
+            online_trj_planner_ptr-> OnlinePointJointBuf[i*6+3]=jnt.j4_;
+            online_trj_planner_ptr->OnlinePointJointBuf[i*6+4]=jnt.j5_;
+            online_trj_planner_ptr->OnlinePointJointBuf[i*6+5]=jnt.j6_;
             //printf("setOnlinePointBufptr, converted OnlinePointJointBuf[%d]=<%lf,%lf,%lf,%lf,%lf,%lf> status=%d\n",i,OnlinePointJointBuf[i*6+0],OnlinePointJointBuf[i*6+1],OnlinePointJointBuf[i*6+2],OnlinePointJointBuf[i*6+3],OnlinePointJointBuf[i*6+4],OnlinePointJointBuf[i*6+5],online_trj_planner_ptr->trj_point_buf[i].status);
         }
-        err = group_ptr_->setOnlineTrjPointBufData(OnlinePointJointBuf,online_trjPointCnt);
-        online_trjPointCnt = 0;//操作完成清零
+        err = group_ptr_->setOnlineTrjPointBufData(online_trj_planner_ptr->OnlinePointJointBuf,online_trj_planner_ptr->online_trjPointCnt);
+        online_trj_planner_ptr->online_trjPointCnt = 0;//操作完成清零
         return err;
     }
 }

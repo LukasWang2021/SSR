@@ -32,7 +32,8 @@ typedef unsigned long long int ErrorCode;
 #define CONTROLLER_CREATE_ROUTINE_THREAD_FAILED 0x2001
 #define CONTROLLER_CREATE_ALG_THREAD_FAILED 0x2002
 #define CONTROLLER_CREATE_RT_THREAD_FAILED 0x2003
-#define CONTROLLER_CREATE_GS100_THREAD_FAILED 0x2004
+#define CONTROLLER_CREATE_RPC_THREAD_FAILED 0x2004
+#define CONTROLLER_CREATE_ONLIE_THREAD_FAILED 0x2005
 
 #define CONTROLLER_PUBLISH_EXIST 0x2011   /*the publishing element of request is exist*/
 #define CONTROLLER_INVALID_OPERATION 0x2012   /*Controller failed to operate command because of invalid pre-condition*/

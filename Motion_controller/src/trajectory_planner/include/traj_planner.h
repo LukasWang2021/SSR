@@ -53,6 +53,7 @@ public:
 	void getTrajectoryLimit(basic_alg::Joint &omega_limit, basic_alg::Joint &alpha_limit, basic_alg::Joint *beta_limit, uint32_t &beta_limit_siz);
 	void useSwiftParam(void);
 	void useStableParam(void);
+	TrajParams traj_params_;
 private:
 	bool isEqual(const basic_alg::Joint &joint_a, const basic_alg::Joint &joint_b, double threshold = 0.001);
 	// 仅在内部校核时使用,内部不计算逆动力学
@@ -67,7 +68,7 @@ private:
 	enum {CHECK_POINT_NUM_MIN = 5, CHECK_POINT_NUM = 25, CHECK_POINT_NUM_MAX = 50};
 
 	uint32_t joint_num_;
-	TrajParams traj_params_;
+	
 	double cycle_time_;
 	double delta_time_;
 	basic_alg::Joint start_joint_;

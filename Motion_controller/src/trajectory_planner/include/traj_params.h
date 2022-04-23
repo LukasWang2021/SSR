@@ -37,6 +37,14 @@ public:
     bool dynamics_check_;
     bool adjust_acc_by_vel_;
 
+    double Tsample_;//touch采样时间间隔
+    double GEN_TN_;//生成轨迹间隔
+	int N_step_P_;
+	int N_step_Q_;
+    double NinterpP_;
+    double NinterpQ_;
+    double trj_ratio_;
+    int OnlineRecvTmatrixBuffPackLen_;
     bool loadConstraint();
     bool saveConstraint();
     bool loadConfig();

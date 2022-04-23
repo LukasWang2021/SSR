@@ -435,7 +435,7 @@ uint64_t c_OfflineTrajectoryPrepare(void)
 	ResponseMessageType_Uint64 rep_data;
 	req_data.header.time_stamp = 122;
 	req_data.property.authority = Comm_Authority_TP_SIMMULATOR;
-	if (!rpc_ptr->handleRpc(0x000051E9, &req_data, RequestMessageType_Int32_fields, &rep_data, ResponseMessageType_Uint64_fields))
+	if (!rpc_ptr->handleRpc(0x000051E9, &req_data, RequestMessageType_Void_fields, &rep_data, ResponseMessageType_Uint64_fields))
 	{
 		return HANDLE_RPC_FAILED;
 	}
@@ -450,7 +450,7 @@ uint64_t c_OfflineTrajectoryMove(void)
 	ResponseMessageType_Uint64 rep_data;
 	req_data.header.time_stamp = 122;
 	req_data.property.authority = Comm_Authority_TP_SIMMULATOR;
-	if (!rpc_ptr->handleRpc(0x0000C4D9, &req_data, RequestMessageType_Int32_fields, &rep_data, ResponseMessageType_Uint64_fields))
+	if (!rpc_ptr->handleRpc(0x0000C4D9, &req_data, RequestMessageType_Void_fields, &rep_data, ResponseMessageType_Uint64_fields))
 	{
 		return HANDLE_RPC_FAILED;
 	}

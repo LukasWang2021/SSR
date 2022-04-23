@@ -78,7 +78,7 @@ class BaseGroup
     MotionControlState getMotionControlState(void);
     ServoState getServoState(void);
 
-    void BaseGroup::setOnlineTrjFirstPointCondition();//检测到在线轨迹起点,设置一些初始条件
+    void setOnlineTrjFirstPointCondition();//检测到在线轨迹起点,设置一些初始条件
     ErrorCode switchToOnlineState();//进入ONLINE状态
     ErrorCode switchOnlineStateToStandby();//从ONLINE状态切换到STANDBY状态
     // Auto move APIs:

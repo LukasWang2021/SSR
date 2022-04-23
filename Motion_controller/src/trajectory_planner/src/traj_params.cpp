@@ -172,11 +172,20 @@ bool TrajParams::loadConfig()
     if (!yaml_help_.loadParamFile(config_file_path_.c_str())
         || !yaml_help_.getParam("max_jerk_num", max_jerk_num_)
         || !yaml_help_.getParam("inverse_dynamics_check", dynamics_check_)
-        || !yaml_help_.getParam("adjust_acc_by_vel", adjust_acc_by_vel_))
+        || !yaml_help_.getParam("adjust_acc_by_vel", adjust_acc_by_vel_)
+        || !yaml_help_.getParam("sample_time", Tsample_)
+        || !yaml_help_.getParam("generate_traj_interval", GEN_TN_)
+		|| !yaml_help_.getParam("N_step_P",N_step_P_)
+		|| !yaml_help_.getParam("N_step_Q",N_step_Q_)
+        || !yaml_help_.getParam("trj_ratio",trj_ratio_)
+        || !yaml_help_.getParam("online_receive_Tmatrix_buffPack_len", OnlineRecvTmatrixBuffPackLen_))
     {
         std::cout << " Failed load config.yaml " << std::endl;
         return false;
     }
-
+    NinterpP_ = ((N_step_P_*Tsample_)/GEN_TN_);
+    NinterpQ_ = ((N_step_Q_*Tsample_)/GEN_TN_);
     return true;
 }
+
+

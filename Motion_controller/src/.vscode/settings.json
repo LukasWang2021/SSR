@@ -4,6 +4,8 @@
         "hash_map": "cpp",
         "hash_set": "cpp",
         "bitset": "cpp",
-        "initializer_list": "cpp"
+        "initializer_list": "cpp",
+        "*.tcc": "cpp",
+        "utility": "cpp"
     }
 }

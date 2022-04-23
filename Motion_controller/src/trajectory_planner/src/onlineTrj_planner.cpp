@@ -7,6 +7,7 @@
 #include "math.h"
 #include <cmath>
 #include <iomanip>
+#include "basic_alg.h"
 
 
 float VPp[1][6] = { {0.1, 0.2, 0.3, 0, 0, 0}
@@ -18,12 +19,12 @@ float VPv[2][6] = { {0.0, 0.0, 0.0, 0, 0, 0},
                     //{0.3, 0.3, 0.2, 0.1*PI, 0.2*PI, 0.3*PI},
                 };
 
-#define Tsample     0.002 //touch采样时间间隔
-#define GEN_TN      0.001 //生成轨迹间隔
-#define NstepP      5     //计算位置-取VP点的采样点间隔--->每5个采样点取一个xyz向量  范围<=5
-#define NstepQ      25    //计算姿态-取VQ的采样点间隔--->每25个采样点取一个abc向量
-#define NinterpP    ((NstepP*Tsample)/GEN_TN)  //5*0.002/0.001 = 10
-#define NinterpQ    ((NstepQ*Tsample)/GEN_TN)  //25*0.002/0.001 = 50
+//#define Tsample     0.002 //touch采样时间间隔
+//#define GEN_TN      0.001 //生成轨迹间隔
+//#define NstepP      5     //计算位置-取VP点的采样点间隔--->每5个采样点取一个xyz向量  范围<=5
+//#define NstepQ      25    //计算姿态-取VQ的采样点间隔--->每25个采样点取一个abc向量
+//#define NinterpP    ((NstepP*Tsample)/GEN_TN)  //5*0.002/0.001 = 10
+//#define NinterpQ    ((NstepQ*Tsample)/GEN_TN)  //25*0.002/0.001 = 50
 
 #define LAMBDA 10  //B样条3级串联滤波器脉冲响应系数索引值[1,10,100]
 #if(LAMBDA == 1)
@@ -34,14 +35,19 @@ double hfir[6] = {0.1952,0.1666,0.1183,0.0714,0.0350,0.0112};
 double hfir[6] = {0.1252,0.1191,0.1056,0.0886,0.0706,0.0535};
 #endif
 
-
+namespace group_space
+{
 OnlineTrajectoryPlanner::OnlineTrajectoryPlanner()
 {
-
+    OnlinePointJointBuf = new double[1200];
+    trj_point_buf = new TrjPoint[160];
 }
 OnlineTrajectoryPlanner::~OnlineTrajectoryPlanner()
 {
-
+    delete[]trj_point_buf;
+    trj_point_buf=NULL;
+    delete[]OnlinePointJointBuf;
+    OnlinePointJointBuf = NULL;
 }
 //取double数字的符号
 int OnlineTrajectoryPlanner::sign(double x)
@@ -108,6 +114,53 @@ Quaternion OnlineTrajectoryPlanner::rtm_r2quat(Matrix33& R)
     q.x_ = 0.5*sign(r32-r23)*sqrt(r11-r22-r33+1);
     q.y_ = 0.5*sign(r13-r31)*sqrt(r22-r11-r33+1);
     q.z_ = 0.5*sign(r21-r12)*sqrt(r33-r11-r22+1);
+    return q;
+}
+//旋转矩阵转四元数
+Quaternion OnlineTrajectoryPlanner::rtm_r2quat_new(Matrix33& R)
+{
+    Quaternion q;
+    double r11,r12,r13,r21,r22,r23,r31,r32,r33;
+    double eig_vec[3];
+    double eig_val;
+    r11 = R.matrix_[0][0];
+    r12 = R.matrix_[1][0];
+    r13 = R.matrix_[2][0];
+    r21 = R.matrix_[0][1];
+    r22 = R.matrix_[1][1];
+    r23 = R.matrix_[2][1];
+    r31 = R.matrix_[0][2];
+    r32 = R.matrix_[1][2];
+    r33 = R.matrix_[2][2];
+    double t_matrix44[16];
+    memset(t_matrix44,0,16*sizeof(double));
+    t_matrix44[0] = (r11 - r22 - r33)/3;
+    t_matrix44[1] = (r21 + r12)/3;
+    t_matrix44[2] = (r31 + r13)/3;
+    t_matrix44[3] = (r23 - r32)/3;
+    t_matrix44[4] = (r21 + r12)/3;
+    t_matrix44[5] = (r22 - r11 -r33)/3;
+    t_matrix44[6] = (r32 + r23)/3;
+    t_matrix44[7] = (r31 - r13)/3;
+    t_matrix44[8] = (r31 + r13)/3;
+    t_matrix44[9] = (r32 + r23)/3;
+    t_matrix44[10] = (r33 - r11 - r22)/3;
+    t_matrix44[11] = (r12 - r21)/3;
+    t_matrix44[12] = (r23 - r32)/3;
+    t_matrix44[13] = (r31 - r13)/3;
+    t_matrix44[14] = (r12 - r21)/3;
+    t_matrix44[15] = (r11 + r22 + r33)/3;
+    //计算K的特征向量   #todo
+    eigens(t_matrix44, 3, eig_vec, &eig_val);
+    q.x_=eig_vec[0];
+    q.y_=eig_vec[1];
+    q.z_=eig_vec[2];
+    q.w_=eig_val;
+    /*
+    [V,D] = eig(K)
+    q(i,:)=V(:,4)'
+    q=[q(i,4) q(i,1) q(i,2) q(i,3) ]
+    */
     return q;
 }
 //旋转矩阵转四元数
@@ -441,10 +494,11 @@ Quaternion OnlineTrajectoryPlanner::rtm_Squad(Quaternion& q0, Quaternion& q1, Qu
  * VPp_point[]---输入VP点数据 最长255
  * Pout--输出点位置向量数组
  * *****************************/
+/*
 void OnlineTrajectoryPlanner::traj_on_FB(int m, int lambda, int Nstep, Vector3 VPp_point[], int NVP, Vector3 point_new[])
 {
     //double Tsample = 0.002;//touch采样间隔
-    double tvp = Nstep*Tsample;//VP点时间间隔  0.01--->每5个采样点取一个VP点
+    double tvp = trajectory_planner_ptr_.traj_params_.N_step_P_*trajectory_planner_ptr_.traj_params_.Tsample_;//VP点时间间隔  0.01--->每5个采样点取一个VP点
     double tn=0.001;
     double Ninterp = tvp/tn;//10
     double hfir[6];
@@ -511,7 +565,7 @@ void OnlineTrajectoryPlanner::traj_on_FB(int m, int lambda, int Nstep, Vector3 V
     }
     point_new[k].x_ = 3*point_new[k-1].x_ - 3*point_new[k-2].x_ + point_new[k-3].x_;
 }
-
+*/
 /******************************************
  * 函数功能:
  * 参数说明:
@@ -526,7 +580,7 @@ void OnlineTrajectoryPlanner::traj_on_Squad(int Nstep, Vector3 VPp_abc[], int NV
 {
     //double Tsample = 0.002;//touch 采样间隔
     double tn = 0.001;//生成轨迹间隔
-    double Ninterp = Nstep*static_cast<double>(Tsample)/tn;//VP点之间插点数量Nstep*Tsample/0.001个点，即10ms 10个点
+    //double Ninterp = Nstep*static_cast<double>(Tsample)/tn;//VP点之间插点数量Nstep*Tsample/0.001个点，即10ms 10个点
 
     Quaternion Qs[255];
     Quaternion Q0,Q1,Q2,Q3;
@@ -565,11 +619,11 @@ void OnlineTrajectoryPlanner::traj_on_Squad(int Nstep, Vector3 VPp_abc[], int NV
             {
                 Q0 = Qs[j-1]; Q1 = Qs[j]; Q2 = Qs[j+1]; Q3 = Qs[j+2];
             }
-            for(k=0;k<Ninterp;k++)
+            for(k=0;k<trajectory_planner_ptr_.traj_params_.N_step_P_;k++)
             {
-                s = k/Ninterp;
-                Qnew[static_cast<int>(k+Ninterp*(j-1)+1)] = rtm_Squad(Q0,Q1,Q2,Q3,s);
-                abc[static_cast<int>(k+Ninterp*(j-1)+1)] = rtm_quat2abc(Qnew[static_cast<int>(k+Ninterp*(j-1)+1)]);//
+                s = k/trajectory_planner_ptr_.traj_params_.N_step_P_;
+                Qnew[static_cast<int>(k+trajectory_planner_ptr_.traj_params_.N_step_P_*(j-1)+1)] = rtm_Squad(Q0,Q1,Q2,Q3,s);
+                abc[static_cast<int>(k+trajectory_planner_ptr_.traj_params_.N_step_P_*(j-1)+1)] = rtm_quat2abc(Qnew[static_cast<int>(k+trajectory_planner_ptr_.traj_params_.N_step_P_*(j-1)+1)]);//
             }
             j = j+1;
         }
@@ -613,13 +667,13 @@ int  OnlineTrajectoryPlanner::traj_on_FIR_Bspline(Vector3 xyz, Vector3 abc,int s
     static int out_abc_cnt=0;
     static int out_cnt=0;
     static int out_status=0;//默认输出轨迹点状态为起点
-    int NP = static_cast<int>(NinterpP);
+    int NP = static_cast<int>(trajectory_planner_ptr_.traj_params_.NinterpP_);
     int res_PointCnt = 0;
     //每NstepP记录一个VP NstepP==5
 //cout << "sp_cnt="<<sp_cnt<<endl;
-    if(sp_cnt%NstepP == 0) {flag_getVpFromTouch = true;} else {flag_getVpFromTouch = false;}
+    if(sp_cnt%trajectory_planner_ptr_.traj_params_.N_step_P_ == 0) {flag_getVpFromTouch = true;} else {flag_getVpFromTouch = false;}
     //每NstepQ记录一个VQ NstepQ==25
-    if(sp_cnt%NstepQ == 0) {flag_getVqFromTouch = true;} else {flag_getVqFromTouch = false;}
+    if(sp_cnt%trajectory_planner_ptr_.traj_params_.N_step_Q_ == 0) {flag_getVqFromTouch = true;} else {flag_getVqFromTouch = false;}
     if(status == 0)//轨迹起点--按下按键后立即传入静止状态的机械臂末端位姿
     {
         sp_cnt = 0; vp_cnt = 0; vq_cnt = 0;j=0;
@@ -645,7 +699,8 @@ int  OnlineTrajectoryPlanner::traj_on_FIR_Bspline(Vector3 xyz, Vector3 abc,int s
         flag_getVqFromTouch = true;
     }
     //采样点计数根据取VP点和VQ点间隔的公倍数清零
-    if(sp_cnt >= 2*NstepP*NstepQ) {sp_cnt = NstepP*NstepQ;}
+    if(sp_cnt >= 2*trajectory_planner_ptr_.traj_params_.N_step_P_*trajectory_planner_ptr_.traj_params_.N_step_Q_) 
+    {sp_cnt = trajectory_planner_ptr_.traj_params_.N_step_P_*trajectory_planner_ptr_.traj_params_.N_step_Q_;}
     sp_cnt++;//采样点计数自增
     if(flag_getVpFromTouch)
     {
@@ -764,9 +819,9 @@ int  OnlineTrajectoryPlanner::traj_on_FIR_Bspline(Vector3 xyz, Vector3 abc,int s
             }
 //cout << "***************************************************"<<endl;
             double s;
-            for(int k=0;k<NinterpQ;k++)
+            for(int k=0;k<trajectory_planner_ptr_.traj_params_.NinterpQ_;k++)
             {
-                s = k/NinterpQ;
+                s = k/trajectory_planner_ptr_.traj_params_.NinterpQ_;
                 Qnew[k] = rtm_Squad(Q0,Q1,Q2,Q3,s);
 //Qnew[k].print("alg_out_Qnew");
                 out_abc[k] = rtm_quat2abc(Qnew[k]);//
@@ -777,9 +832,9 @@ int  OnlineTrajectoryPlanner::traj_on_FIR_Bspline(Vector3 xyz, Vector3 abc,int s
             {
                 Q0=Q1;Q1=Q2;Q2=Q3;//覆盖迭代
 cout << "***************************************************Ending abc planing:"<<endl;
-                for(int k=0;k<NinterpQ;k++)
+                for(int k=0;k<trajectory_planner_ptr_.traj_params_.NinterpQ_;k++)
                 {
-                    s = k/NinterpQ;
+                    s = k/trajectory_planner_ptr_.traj_params_.NinterpQ_;
                     Qnew[k] = rtm_Squad(Q0,Q1,Q2,Q3,s);
 //Qnew[k].print("alg_out_Qnew");
                     out_abc[k] = rtm_quat2abc(Qnew[k]);//
@@ -1132,11 +1187,26 @@ void OnlineTrajectoryPlanner::function_test()
     q_res.print("q_res=rtm_Slerpt");
 }
 
+int OnlineTrajectoryPlanner::setOnlineTrjRatio(double data_ratio)
+{
+    trajectory_planner_ptr_.traj_params_.trj_ratio_ = data_ratio;
+    return 0;
+}
+/**
+ * 函数功能: 获取运控接收来自Touch T矩阵数据包的缓存包数量
+*/
+int  OnlineTrajectoryPlanner::get_onlineRecvTmatrixBuffPackLen()
+{
+    return trajectory_planner_ptr_.traj_params_.OnlineRecvTmatrixBuffPackLen_;
+}
 
 
+double OnlineTrajectoryPlanner::get_online_trj_ratio()
+{
+    return trajectory_planner_ptr_.traj_params_.trj_ratio_;
+}
 
-
-
+}
 
 
 

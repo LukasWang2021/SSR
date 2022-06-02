@@ -113,7 +113,7 @@ bool basic_alg::eigens(const double *p_matrix, int dim, double *eig_vec, double 
 	double *ev_l = new double[dim * dim];
 	double *ev_r = new double[dim * dim];
 	double *work_space = new double[dim * 4];
-	integer work_dim = 4*dim*dim;
+	integer work_dim = 4*dim;
 	integer ret_info = 0;
 
 	dgeev_(&calc_l, &calc_r, &row, mat, &col, eig_val_r, eig_val_i, ev_l, &col, ev_r, &col, work_space, &work_dim, &ret_info);

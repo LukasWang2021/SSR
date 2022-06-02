@@ -445,6 +445,10 @@ void BaseGroup::fillTrajectoryFifo(void)
             reportError(err);
         }
     }
+    else if (mc_state_ == PAUSE_OFFLINE)
+    {
+        
+    }
     /*
     else if (mc_state_ == ONLINE )
     {

@@ -4,6 +4,7 @@
 	> Mail: 
 	> Created Time: 2019年11月29日 星期五 15时07分13秒
  ************************************************************************/
+#include <iomanip>
 #include <fstream>
 #include <sstream>
 #include <string>
@@ -209,6 +210,92 @@ ErrorCode BaseGroup::moveOfflineTrajectory(void)
     standby_to_offline_request_ = true;
     offline_traj_point_readCnt = 0;//log 取点行数
     return SUCCESS;
+}
+
+ErrorCode BaseGroup::planOfflineTrajectory(vector<PoseEuler> via_points, string file_name)
+{
+    if(!offline_planner_.viaPoints2Traj(via_points))
+    {
+        LogProducer::error("motion_control","plan via points to trajectory failed");
+        return MC_VP2TRAJ_PLAN_FAILED;
+    }
+    vector<PoseEuler> xyz_traj = offline_planner_.getResampledTraj();
+
+    Posture posture = {1, 1, 1, 0};
+    JointState joint_state;
+    JointState last_state;
+    double traj_time = 0.0;
+    std::ofstream traj_out_file(file_name, ios::out);
+    // write the traj file head
+    traj_out_file << 6 << " " << 0.001 << " " << xyz_traj.size() << "\n";
+
+    for(auto iter = xyz_traj.begin(); iter != xyz_traj.end(); ++iter)
+    {
+        if(!kinematics_ptr_->doIK(*iter, posture, joint_state.angle))
+        {
+            return MC_VP2TRAJ_PLAN_FAILED;
+        }
+        last_state = joint_state;
+        if(iter == xyz_traj.begin())
+        {
+            // write the first joint angle to file
+            traj_out_file << setprecision(10) 
+            << joint_state.angle.j1_ << " " << joint_state.angle.j2_ << " " 
+            << joint_state.angle.j3_ << " " << joint_state.angle.j4_ << " " 
+            << joint_state.angle.j5_ << " " << joint_state.angle.j6_ << "\n";
+            // write the first joint state to file
+            traj_out_file << setprecision(10) << traj_time << " " 
+            << joint_state.angle.j1_ << " " << joint_state.angle.j2_ << " " 
+            << joint_state.angle.j3_ << " " << joint_state.angle.j4_ << " " 
+            << joint_state.angle.j5_ << " " << joint_state.angle.j6_ << " "
+            // first point is zero
+            << 0 << " " << 0 << " " << 0 << " " << 0 << " " << 0 << " " << 0 << " "
+            << 0 << " " << 0 << " " << 0 << " " << 0 << " " << 0 << " " << 0 << " "
+            << 0 << " " << 0 << " " << 0 << " " << 0 << " " << 0 << " " << 0 << "\n";
+        }
+        else
+        {
+            // calc the angle speed
+            joint_state.omega = (joint_state.angle - last_state.angle);
+            // write the first joint state to file
+            traj_out_file << setprecision(10) << traj_time << " " 
+            << joint_state.angle.j1_ << " " << joint_state.angle.j2_ << " " 
+            << joint_state.angle.j3_ << " " << joint_state.angle.j4_ << " " 
+            << joint_state.angle.j5_ << " " << joint_state.angle.j6_ << " "
+
+            << joint_state.omega.j1_ * 1000 << " " << joint_state.omega.j2_ * 1000 << " " 
+            << joint_state.omega.j3_ * 1000 << " " << joint_state.omega.j4_ * 1000 << " " 
+            << joint_state.omega.j5_ * 1000 << " " << joint_state.omega.j6_ * 1000 << " "
+
+            << joint_state.alpha.j1_ << " " << joint_state.alpha.j2_ << " " 
+            << joint_state.alpha.j3_ << " " << joint_state.alpha.j4_ << " " 
+            << joint_state.alpha.j5_ << " " << joint_state.alpha.j6_ << " "
+
+            << joint_state.torque.j1_ << " " << joint_state.torque.j2_ << " " 
+            << joint_state.torque.j3_ << " " << joint_state.torque.j4_ << " " 
+            << joint_state.torque.j5_ << " " << joint_state.torque.j6_ << "\n";
+        }
+        traj_time += 0.001;
+    }
+    traj_out_file.close();
+
+    return SUCCESS;
+}
+
+ErrorCode BaseGroup::planOfflinePause(void)
+{
+    // getOfflineCacheSize();
+    // offline_traj_point_readCnt;
+    // offline_planner_.trajPausePlan(offline_traj_point_readCnt);
+    return 0;
+}
+
+ErrorCode BaseGroup::planOfflineResume(void)
+{
+    // getOfflineCacheSize();
+    // offline_traj_point_readCnt;
+    // offline_planner_.trajPausePlan(offline_traj_point_readCnt);
+    return 0;
 }
 
 uint32_t BaseGroup::getOfflineCacheSize(void)

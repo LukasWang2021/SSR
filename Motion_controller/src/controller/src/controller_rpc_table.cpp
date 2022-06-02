@@ -170,6 +170,7 @@ void ControllerRpc::initRpcTable()
     rpc_service =	{	"/rpc/motion_control/axis_group/setOfflineTrajectoryFile",	0x00011275,	&ControllerRpc::handleRpc0x00011275	};	rpc_table_.push_back(rpc_service);
     rpc_service =	{	"/rpc/motion_control/axis_group/PrepareOfflineTrajectory",	0x000051E9,	&ControllerRpc::handleRpc0x000051E9	};	rpc_table_.push_back(rpc_service);
     rpc_service =	{	"/rpc/motion_control/axis_group/moveOfflineTrajectory",	0x0000C4D9,	&ControllerRpc::handleRpc0x0000C4D9	};	rpc_table_.push_back(rpc_service);
+	rpc_service =	{	"/rpc/motion_control/axis_group/viaPointsToTrajWithGivenVelocity",	0x0000E479,	&ControllerRpc::handleRpc0x0000E479	};	rpc_table_.push_back(rpc_service);
 
     rpc_service =	{	"/rpc/reg_manager/pr/addReg",	0x000154E7,	&ControllerRpc::handleRpc0x000154E7	};	rpc_table_.push_back(rpc_service);
     rpc_service =	{	"/rpc/reg_manager/pr/deleteReg",	0x00001097,	&ControllerRpc::handleRpc0x00001097	};	rpc_table_.push_back(rpc_service);

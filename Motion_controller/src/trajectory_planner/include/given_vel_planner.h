@@ -25,7 +25,10 @@ public:
     6. xyz trajectory resampling with spline
     7. abc transfer to quaternion and resampling with spline
     */
-    int32_t viaPoints2Traj(std::vector<basic_alg::PoseEuler> via_points);
+    bool viaPoints2Traj(std::vector<basic_alg::PoseEuler> via_points);
+    
+    bool trajPausePlan(int32_t index, double vel, double vel_ratio, double acc_ratio, double jerk_ratio);
+    bool trajResumePlan(void);
 
     std::vector<basic_alg::PoseEuler> getResampledTraj(void) { return resampled_traj_; }
     void setSamplingFreq(double fs) { sampling_freq_ = fs; }
@@ -36,7 +39,7 @@ public:
     void abcSetSmoothWindow(int window) { abc_smooth_window_ = window; }
 
     std::vector<basic_alg::Quaternion> testQuatSmooth(const std::vector<basic_alg::Quaternion>& quat_in);
-    std::vector<basic_alg::PoseEuler> testFitSmooth(const std::vector<basic_alg::PoseEuler>& pos_in);
+    std::vector<basic_alg::Point> testPoseSmooth(const std::vector<basic_alg::Point>& pose_in);
 
 private:
     /*smooth abc with fit*/
@@ -68,8 +71,17 @@ private:
         double time_start, double time_end,
         double fs, double pos_give);
     /*spline function sepreated with xyz and abc for the efficiency of calculation */
-    bool xyzSpline(void);
-    bool abcSpline(void);
+    bool spline(
+        const std::vector<basic_alg::Point> via_points_pose,
+        const std::vector<basic_alg::Quaternion> via_points_quat,
+        const basic_alg::Point init_pose_vel,
+        const basic_alg::Point final_pose_vel,
+        const basic_alg::Quaternion init_quat_vel,
+        const basic_alg::Quaternion final_quat_vel,
+        const std::vector<double> via_points_time,
+        std::vector<basic_alg::PoseEuler>& out_traj);
+
+    bool calcResampledPointDist(void);
 
 private:
     double sampling_freq_;
@@ -82,9 +94,11 @@ private:
 
 private:
     int32_t via_points_cnt_;
-    std::vector<basic_alg::PoseEuler> input_via_points_;
+    // std::vector<basic_alg::PoseEuler> input_via_points_;
+    std::vector<basic_alg::Point> via_points_pose_;
     std::vector<basic_alg::Quaternion> via_points_quat_;
     std::vector<double> via_points_dist_;
+    std::vector<double> traj_points_dist_;
 
     double vel_even_;
     double acc_;
@@ -100,6 +114,7 @@ private:
 
     std::vector<double> via_points_time_new_;
     std::vector<basic_alg::PoseEuler> resampled_traj_;
+    std::vector<basic_alg::PoseEuler> pause_traj_;
 };
 
 #endif

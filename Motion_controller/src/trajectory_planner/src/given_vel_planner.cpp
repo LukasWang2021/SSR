@@ -26,21 +26,23 @@ GivenVelocityPlanner::~GivenVelocityPlanner()
 
 }
 
-int32_t GivenVelocityPlanner::viaPoints2Traj(vector<PoseEuler> via_points)
+bool GivenVelocityPlanner::viaPoints2Traj(vector<PoseEuler> via_points)
 {
-    input_via_points_.clear();
+    via_points_pose_.clear();
     via_points_quat_.clear();
     via_points_dist_.clear();
     via_points_time_new_.clear();
     resampled_traj_.clear();
     // 1. transfer abc to quaternion and normalize it
-    input_via_points_ = via_points;
-    for (auto iter = input_via_points_.begin(); iter != input_via_points_.end(); ++iter)
+    Point tmp_pose;
+    Quaternion tmp_quat;
+    for (auto iter = via_points.begin(); iter != via_points.end(); ++iter)
     {
-        Quaternion tmp_quat;
+        tmp_pose = iter->point_;
         tmp_quat = Euler2Quaternion(iter->euler_);
         normalizeQuaternion(tmp_quat);
         via_points_quat_.push_back(tmp_quat);
+        via_points_pose_.push_back(tmp_pose);
         ++via_points_cnt_;
     }
     // if the number of via point more than 10 do 2 and 3 else not
@@ -48,7 +50,7 @@ int32_t GivenVelocityPlanner::viaPoints2Traj(vector<PoseEuler> via_points)
     // 3. smooth abc
     if (via_points_cnt_ >= 10 && (!xyzFitSmooth(xyz_fit_rate_) || !abcQuatSmooth(abc_smooth_window_)))
     {
-        return -1;
+        return false;
     }
     // 4. calculate the path info
     pathInfoCalc();
@@ -58,8 +60,37 @@ int32_t GivenVelocityPlanner::viaPoints2Traj(vector<PoseEuler> via_points)
     xyzTrajResampling();
     // 6. resampling abc trajectory with 0.001s
     abcTrajResampling();
+     /* the trajectory speed on begin and end are 0 */
+    Point init_pose_vel;
+    init_pose_vel.x_ = 0.0;
+    init_pose_vel.y_ = 0.0;
+    init_pose_vel.z_ = 0.0;
+    Point final_pose_vel;
+    final_pose_vel.x_ = 0.0;
+    final_pose_vel.y_ = 0.0;
+    final_pose_vel.z_ = 0.0;
+    Quaternion init_quat_vel;
+    init_quat_vel.w_ = 0.0;
+    init_quat_vel.x_ = 0.0;
+    init_quat_vel.y_ = 0.0;
+    init_quat_vel.z_ = 0.0;
+    Quaternion final_quat_vel;
+    final_quat_vel.w_ = 0.0;
+    final_quat_vel.x_ = 0.0;
+    final_quat_vel.y_ = 0.0;
+    final_quat_vel.z_ = 0.0;
 
-    return 0;
+    if (spline(via_points_pose_, via_points_quat_,
+        init_pose_vel, final_pose_vel,
+        init_quat_vel, final_quat_vel,
+        via_points_time_new_, resampled_traj_) == false)
+    {
+        return -1;
+    }
+
+    calcResampledPointDist();
+
+    return true;
 }
 
 bool GivenVelocityPlanner::xyzFitSmooth(double fit_rate)
@@ -77,7 +108,7 @@ bool GivenVelocityPlanner::abcQuatSmooth(int32_t smooth_window)
     vector<Quaternion> smooth_quat;
     vector<Quaternion> mean_quat;
 
-    for (int32_t idx = 0; idx < via_points_quat_.size(); ++idx)
+    for (size_t idx = 0; idx < via_points_quat_.size(); ++idx)
     {
         if (idx <= ((smooth_window - 1) / 2 - 1) || idx >= (via_points_quat_.size() - (smooth_window - 1) / 2))
         {
@@ -94,7 +125,7 @@ bool GivenVelocityPlanner::abcQuatSmooth(int32_t smooth_window)
         double eigval = 0;
         Quaternion quat;
         memset(quat_matrix_sum.matrix_, 0, sizeof(double)*16);
-        for (int32_t i = 0; i < mean_quat.size(); ++i)
+        for (size_t i = 0; i < mean_quat.size(); ++i)
         {
             quat_matrix_sum.matrix_[0][0] += mean_quat[i].x_ * mean_quat[i].x_;
             quat_matrix_sum.matrix_[0][1] += mean_quat[i].x_ * mean_quat[i].y_;
@@ -150,12 +181,11 @@ bool GivenVelocityPlanner::abcQuatSmooth(int32_t smooth_window)
 bool GivenVelocityPlanner::pathInfoCalc(void)
 {
     /*calculate distance between via points*/
-    int32_t point_cnt = input_via_points_.size();
     double distance = 0;
     via_points_dist_.push_back(distance);
-    for (int cnt = 0; cnt < point_cnt - 1; ++cnt)
+    for (int cnt = 0; cnt < via_points_cnt_ - 1; ++cnt)
     {
-        distance += getDistance(input_via_points_[cnt+1].point_, input_via_points_[cnt].point_);
+        distance += getDistance(via_points_pose_[cnt+1], via_points_pose_[cnt]);
         via_points_dist_.push_back(distance);
     }
     acc_end_time_ = acc_time_ratio_ * traj_time_set_;
@@ -171,6 +201,7 @@ bool GivenVelocityPlanner::pathInfoCalc(void)
 
     return true;
 }
+
 
 bool GivenVelocityPlanner::trajPlanWithPathInfo(void)
 {
@@ -194,17 +225,6 @@ bool GivenVelocityPlanner::trajPlanWithPathInfo(void)
     via_points_time_new_.back() = traj_time_set_;
     return true;
 }
-
-
-//bool  GivenVelocityPlanner::trajTimeResampling(void)
-//{
-//    PoseEuler pos;
-//    for (double t = 0; t <= traj_time_set_; t += sampling_freq_)
-//    {
-//        resampled_traj_.push_back(pos);
-//    }
-//    return true;
-//}
 
 bool GivenVelocityPlanner::poly5(
     double pos_start, double pos_end, 
@@ -253,457 +273,142 @@ bool GivenVelocityPlanner::poly5(
 
 bool GivenVelocityPlanner::xyzTrajResampling(void)
 {
-    if (!xyzSpline()) return false;
+    // if (!xyzSpline()) return false;
 
     return true;
 }
-
-bool GivenVelocityPlanner::xyzSpline(void)
-{
-    double v_start = 0.0, v_end = 0.0;
-    double *px_Y = new double[via_points_cnt_];
-    double *py_Y = new double[via_points_cnt_];
-    double *pz_Y = new double[via_points_cnt_];
-    double *H = new double[via_points_cnt_ * via_points_cnt_];
-    double *inv_H = new double[via_points_cnt_ * via_points_cnt_];
-    double *inv_H_px_Y = new double[via_points_cnt_];
-    double* inv_H_py_Y = new double[via_points_cnt_];
-    double* inv_H_pz_Y = new double[via_points_cnt_];
-
-    memset(px_Y, 0, sizeof(double) * via_points_cnt_);
-    memset(py_Y, 0, sizeof(double) * via_points_cnt_);
-    memset(pz_Y, 0, sizeof(double) * via_points_cnt_);
-    memset(H, 0, sizeof(double)* via_points_cnt_* via_points_cnt_);
-    memset(inv_H, 0, sizeof(double) * via_points_cnt_ * via_points_cnt_);
-    memset(inv_H_px_Y, 0, sizeof(double) * via_points_cnt_);
-    memset(inv_H_py_Y, 0, sizeof(double) * via_points_cnt_);
-    memset(inv_H_pz_Y, 0, sizeof(double) * via_points_cnt_);
-
-    for (int i = 0; i < via_points_cnt_; ++i)
-    {
-        if (i == 0)
-        {
-            H[0] = 2 * (via_points_time_new_[1] - via_points_time_new_[0]);
-            H[1] = via_points_time_new_[1] - via_points_time_new_[0];
-
-            px_Y[0] = 6 * (
-                (input_via_points_[1].point_.x_ - input_via_points_[0].point_.x_) 
-                / (via_points_time_new_[1] - via_points_time_new_[0]) - v_start
-                );
-            
-            py_Y[0] = 6 * (
-                (input_via_points_[1].point_.y_ - input_via_points_[0].point_.y_) 
-                / (via_points_time_new_[1] - via_points_time_new_[0]) - v_start
-                );
-
-            pz_Y[0] = 6 * (
-                (input_via_points_[1].point_.z_ - input_via_points_[0].point_.z_) 
-                / (via_points_time_new_[1] - via_points_time_new_[0]) - v_start
-                );
-        }
-        else if (i == via_points_cnt_ - 1)
-        {
-            H[i * via_points_cnt_ + i - 1] = via_points_time_new_[i] - via_points_time_new_[i - 1];
-            H[i * via_points_cnt_ + i - 0] = 2 * (via_points_time_new_[i] - via_points_time_new_[i - 1]);
-            
-            //Y(i) = 6 * (diff(p(i:i + 1)) / diff(tnew(i:i + 1)) - v0);
-            px_Y[i] = 6 * (v_end 
-                - (input_via_points_[i].point_.x_ - input_via_points_[i - 1].point_.x_) 
-                / (via_points_time_new_[i] - via_points_time_new_[i - 1])
-                );
-
-            py_Y[i] = 6 * (v_end 
-                - (input_via_points_[i].point_.y_ - input_via_points_[i - 1].point_.y_) 
-                / (via_points_time_new_[i] - via_points_time_new_[i - 1])
-                );
-
-            pz_Y[i] = 6 * (v_end 
-                - (input_via_points_[i].point_.z_ - input_via_points_[i - 1].point_.z_) 
-                / (via_points_time_new_[i] - via_points_time_new_[i - 1])
-                );
-        }
-        else
-        {
-            H[i * via_points_cnt_ + i - 1] = via_points_time_new_[i] - via_points_time_new_[i - 1];
-            /*a[i] - a[i-1] + a[i+1] - a[i] --> a[i+1] - a[i-1]*/
-            H[i * via_points_cnt_ + i - 0] = 2 * (via_points_time_new_[i + 1] - via_points_time_new_[i - 1]);
-            H[i * via_points_cnt_ + i + 1] = via_points_time_new_[i + 1] - via_points_time_new_[i];
-            //Y(i) = 6 * (diff(p(i:i + 1)) / diff(tnew(i:i + 1)) - diff(p(i - 1:i) / diff(tnew(i - 1:i))));
-            px_Y[i] = 6 * (
-                (input_via_points_[i + 1].point_.x_ - input_via_points_[i].point_.x_) 
-                / (via_points_time_new_[i + 1] - via_points_time_new_[i]) 
-                - (input_via_points_[i].point_.x_ - input_via_points_[i - 1].point_.x_) 
-                / (via_points_time_new_[i] - via_points_time_new_[i - 1])
-                );
-
-            py_Y[i] = 6 * (
-                (input_via_points_[i + 1].point_.y_ - input_via_points_[i].point_.y_) 
-                / (via_points_time_new_[i + 1] - via_points_time_new_[i]) 
-                - (input_via_points_[i].point_.y_ - input_via_points_[i - 1].point_.y_) 
-                / (via_points_time_new_[i] - via_points_time_new_[i - 1])
-                );
-
-            pz_Y[i] = 6 * (
-                (input_via_points_[i + 1].point_.z_ - input_via_points_[i].point_.z_) 
-                / (via_points_time_new_[i + 1] - via_points_time_new_[i]) 
-                - (input_via_points_[i].point_.z_ - input_via_points_[i - 1].point_.z_) 
-                / (via_points_time_new_[i] - via_points_time_new_[i - 1])
-                );
-        }
-    }
-    if (!inverse(H, via_points_cnt_, inv_H))
-    {
-        return false;
-    }
-
-    //m = inv(H) * Y;
-    for (int i = 0; i < via_points_cnt_; ++i)
-    {
-        for (int j = 0; j < via_points_cnt_; ++j)
-        {
-            inv_H_px_Y[i] += inv_H[i * via_points_cnt_ + j] * px_Y[j];
-            inv_H_py_Y[i] += inv_H[i * via_points_cnt_ + j] * py_Y[j];
-            inv_H_pz_Y[i] += inv_H[i * via_points_cnt_ + j] * pz_Y[j];
-        }
-    }
-
-    vector<double> fa0_x, fa0_y, fa0_z;
-    vector<double> fa1_x, fa1_y, fa1_z;
-    vector<double> fa2_x, fa2_y, fa2_z;
-    vector<double> fa3_x, fa3_y, fa3_z;
-
-    for (int i = 0; i < via_points_cnt_ - 1; ++i)
-    {
-        fa0_x.push_back(input_via_points_[i].point_.x_);
-        fa0_y.push_back(input_via_points_[i].point_.y_);
-        fa0_z.push_back(input_via_points_[i].point_.z_);
-
-        fa1_x.push_back((input_via_points_[i + 1].point_.x_ - input_via_points_[i].point_.x_) 
-            / (via_points_time_new_[i + 1] - via_points_time_new_[i])
-            - inv_H_px_Y[i] * (via_points_time_new_[i + 1] - via_points_time_new_[i]) / 2 
-            - (inv_H_px_Y[i + 1] - inv_H_px_Y[i]) * (via_points_time_new_[i + 1] - via_points_time_new_[i]) / 6);
-
-        fa1_y.push_back((input_via_points_[i + 1].point_.y_ - input_via_points_[i].point_.y_)
-            / (via_points_time_new_[i + 1] - via_points_time_new_[i])
-            - inv_H_py_Y[i] * (via_points_time_new_[i + 1] - via_points_time_new_[i]) / 2
-            - (inv_H_py_Y[i + 1] - inv_H_py_Y[i]) * (via_points_time_new_[i + 1] - via_points_time_new_[i]) / 6);
-
-        fa1_z.push_back((input_via_points_[i + 1].point_.z_ - input_via_points_[i].point_.z_)
-            / (via_points_time_new_[i + 1] - via_points_time_new_[i])
-            - inv_H_pz_Y[i] * (via_points_time_new_[i + 1] - via_points_time_new_[i]) / 2
-            - (inv_H_pz_Y[i + 1] - inv_H_pz_Y[i]) * (via_points_time_new_[i + 1] - via_points_time_new_[i]) / 6);
-
-        fa2_x.push_back(inv_H_px_Y[i] / 2);
-        fa2_y.push_back(inv_H_py_Y[i] / 2);
-        fa2_z.push_back(inv_H_pz_Y[i] / 2);
-
-        fa3_x.push_back((inv_H_px_Y[i + 1] - inv_H_px_Y[i]) 
-            / (6 * (via_points_time_new_[i + 1] - via_points_time_new_[i])));
-
-        fa3_y.push_back((inv_H_py_Y[i + 1] - inv_H_py_Y[i])
-            / (6 * (via_points_time_new_[i + 1] - via_points_time_new_[i])));
-
-        fa3_z.push_back((inv_H_pz_Y[i + 1] - inv_H_pz_Y[i])
-            / (6 * (via_points_time_new_[i + 1] - via_points_time_new_[i])));
-    }
-    int index = 0;
-    PoseEuler tmp_pos;
-    for (double t = 0; t <= traj_time_set_; t += sampling_freq_)
-    {
-        for (int i = 0; ; ++i)
-        {
-            if (via_points_time_new_[i] > t)
-            {
-                index = i - 1;
-                break;
-            }
-        }
-        tmp_pos.point_.x_ = fa3_x[index] * pow(t - via_points_time_new_[index], 3)
-            + fa2_x[index] * pow(t - via_points_time_new_[index], 2)
-            + fa1_x[index] * (t - via_points_time_new_[index])
-            + fa0_x[index];
-
-        tmp_pos.point_.y_ = fa3_y[index] * pow(t - via_points_time_new_[index], 3)
-            + fa2_y[index] * pow(t - via_points_time_new_[index], 2)
-            + fa1_y[index] * (t - via_points_time_new_[index])
-            + fa0_y[index];
-
-        tmp_pos.point_.z_ = fa3_z[index] * pow(t - via_points_time_new_[index], 3)
-            + fa2_z[index] * pow(t - via_points_time_new_[index], 2)
-            + fa1_z[index] * (t - via_points_time_new_[index])
-            + fa0_z[index];
-
-        resampled_traj_.push_back(tmp_pos);
-    }
-
-    delete[] px_Y;
-    delete[] py_Y;
-    delete[] pz_Y;
-    delete[] H;
-    delete[] inv_H;
-    delete[] inv_H_px_Y;
-    delete[] inv_H_py_Y;
-    delete[] inv_H_pz_Y;
-
-    return true;
-}
-
 
 bool GivenVelocityPlanner::abcTrajResampling(void)
 {
     double dq = 0.0;
     vector<Quaternion> resampled_quat;
-    vector<Quaternion> tmp_quat_vec_ = via_points_quat_;
-    for (int i = 0; i < tmp_quat_vec_.size() - 1; ++i)
+    vector<Quaternion> tmp_quat_vec = via_points_quat_;
+    for (size_t i = 0; i < tmp_quat_vec.size() - 1; ++i)
     {
-        dq = tmp_quat_vec_[i].w_ * tmp_quat_vec_[i + 1].w_
-            + tmp_quat_vec_[i].x_ * tmp_quat_vec_[i + 1].x_
-            + tmp_quat_vec_[i].y_ * tmp_quat_vec_[i + 1].y_
-            + tmp_quat_vec_[i].z_ * tmp_quat_vec_[i + 1].z_;
+        dq = tmp_quat_vec[i].w_ * tmp_quat_vec[i + 1].w_
+            + tmp_quat_vec[i].x_ * tmp_quat_vec[i + 1].x_
+            + tmp_quat_vec[i].y_ * tmp_quat_vec[i + 1].y_
+            + tmp_quat_vec[i].z_ * tmp_quat_vec[i + 1].z_;
 
         if (dq < 0)
         {
-            tmp_quat_vec_[i + 1].w_ = -tmp_quat_vec_[i + 1].w_;
-            tmp_quat_vec_[i + 1].x_ = -tmp_quat_vec_[i + 1].x_;
-            tmp_quat_vec_[i + 1].y_ = -tmp_quat_vec_[i + 1].y_;
-            tmp_quat_vec_[i + 1].z_ = -tmp_quat_vec_[i + 1].z_;
+            tmp_quat_vec[i + 1].w_ = -tmp_quat_vec[i + 1].w_;
+            tmp_quat_vec[i + 1].x_ = -tmp_quat_vec[i + 1].x_;
+            tmp_quat_vec[i + 1].y_ = -tmp_quat_vec[i + 1].y_;
+            tmp_quat_vec[i + 1].z_ = -tmp_quat_vec[i + 1].z_;
         }
     }
-    via_points_quat_ = tmp_quat_vec_;
-    if (!abcSpline()) return false;
+    via_points_quat_ = tmp_quat_vec;
+    // if (!abcSpline()) return false;
 
     return true;
 }
 
-bool GivenVelocityPlanner::abcSpline(void)
+bool GivenVelocityPlanner::calcResampledPointDist(void)
 {
-    double v_start = 0.0, v_end = 0.0;
-    double* qw_Y = new double[via_points_cnt_];
-    double* qx_Y = new double[via_points_cnt_];
-    double* qy_Y = new double[via_points_cnt_];
-    double* qz_Y = new double[via_points_cnt_];
-    double* H = new double[via_points_cnt_ * via_points_cnt_];
-    double* inv_H = new double[via_points_cnt_ * via_points_cnt_];
-    double* inv_H_pw_Y = new double[via_points_cnt_];
-    double* inv_H_px_Y = new double[via_points_cnt_];
-    double* inv_H_py_Y = new double[via_points_cnt_];
-    double* inv_H_pz_Y = new double[via_points_cnt_];
-
-    memset(qw_Y, 0, sizeof(double) * via_points_cnt_);
-    memset(qx_Y, 0, sizeof(double) * via_points_cnt_);
-    memset(qy_Y, 0, sizeof(double) * via_points_cnt_);
-    memset(qz_Y, 0, sizeof(double) * via_points_cnt_);
-    memset(H, 0, sizeof(double) * via_points_cnt_ * via_points_cnt_);
-    memset(inv_H, 0, sizeof(double) * via_points_cnt_ * via_points_cnt_);
-    memset(inv_H_pw_Y, 0, sizeof(double) * via_points_cnt_);
-    memset(inv_H_px_Y, 0, sizeof(double) * via_points_cnt_);
-    memset(inv_H_py_Y, 0, sizeof(double) * via_points_cnt_);
-    memset(inv_H_pz_Y, 0, sizeof(double) * via_points_cnt_);
-
-    for (int i = 0; i < via_points_cnt_; ++i)
+    double distance = 0;
+    traj_points_dist_.clear();
+    traj_points_dist_.push_back(distance);
+    for (size_t cnt = 0; cnt < resampled_traj_.size() - 1; ++cnt)
     {
-        if (i == 0)
+        distance += getDistance(resampled_traj_[cnt+1].point_, resampled_traj_[cnt].point_);
+        traj_points_dist_.push_back(distance);
+    }
+    return true;
+}
+
+bool GivenVelocityPlanner::trajPausePlan(int32_t index, double vel, double vel_ratio, double acc_ratio, double jerk_ratio)
+{
+    // calc the line speed of the origon traj
+    vector<double> cart_vel_org;
+    for (size_t i = 0; i < traj_points_dist_.size() - 1; ++i)
+    {
+        cart_vel_org.push_back((traj_points_dist_[i + 1] - traj_points_dist_[i]) / sampling_freq_);
+    }
+    // calc the stop time
+    double dec_max = 5; // may calc with acc_ratio
+    double line_stop_time = cart_vel_org[index] / dec_max;
+
+    // calc the distance of pause traj use the specified acceleration
+    double min_stop_dist = 0.5 * dec_max * pow(line_stop_time, 2);
+
+    // find the nearlist point on the orginal traj
+    double stop_pos = 0;
+    //double stop_while = 0;
+    int stop_index = 0;
+    for (size_t i = index; i < traj_points_dist_.size() - 1; ++i)
+    {
+        if (traj_points_dist_[i] > min_stop_dist + traj_points_dist_[index])
         {
-            H[0] = 2 * (via_points_time_new_[1] - via_points_time_new_[0]);
-            H[1] = via_points_time_new_[1] - via_points_time_new_[0];
-
-            qw_Y[0] = 6 * (
-                (via_points_quat_[1].w_ - via_points_quat_[0].w_)
-                / (via_points_time_new_[1] - via_points_time_new_[0]) - v_start
-                );
-
-            qx_Y[0] = 6 * (
-                (via_points_quat_[1].x_ - via_points_quat_[0].x_)
-                / (via_points_time_new_[1] - via_points_time_new_[0]) - v_start
-                );
-
-            qy_Y[0] = 6 * (
-                (via_points_quat_[1].y_ - via_points_quat_[0].y_)
-                / (via_points_time_new_[1] - via_points_time_new_[0]) - v_start
-                );
-
-            qz_Y[0] = 6 * (
-                (via_points_quat_[1].z_ - via_points_quat_[0].z_)
-                / (via_points_time_new_[1] - via_points_time_new_[0]) - v_start
-                );
-        }
-        else if (i == via_points_cnt_ - 1)
-        {
-            H[i * via_points_cnt_ + i - 1] = via_points_time_new_[i] - via_points_time_new_[i - 1];
-            H[i * via_points_cnt_ + i - 0] = 2 * (via_points_time_new_[i] - via_points_time_new_[i - 1]);
-
-            //H[via_points_cnt_ * via_points_cnt_ - 1] = via_points_time_new_[i + 1] - via_points_time_new_[i];
-            //H[via_points_cnt_ * via_points_cnt_] = 2 * (via_points_time_new_[i + 1] - via_points_time_new_[i]);
-
-            //Y(i) = 6 * (diff(p(i:i + 1)) / diff(tnew(i:i + 1)) - v0);
-            qw_Y[i] = 6 * (v_end
-                - (via_points_quat_[i].w_ - via_points_quat_[i - 1].w_)
-                / (via_points_time_new_[i] - via_points_time_new_[i - 1])
-                );
-
-            qx_Y[i] = 6 * (v_end
-                - (via_points_quat_[i].x_ - via_points_quat_[i - 1].x_)
-                / (via_points_time_new_[i] - via_points_time_new_[i - 1])
-                );
-
-            qy_Y[i] = 6 * (v_end
-                - (via_points_quat_[i].y_ - via_points_quat_[i - 1].y_)
-                / (via_points_time_new_[i] - via_points_time_new_[i - 1])
-                );
-
-            qz_Y[i] = 6 * (v_end
-                - (via_points_quat_[i].z_ - via_points_quat_[i - 1].z_)
-                / (via_points_time_new_[i] - via_points_time_new_[i - 1])
-                );
-        }
-        else
-        {
-            H[i * via_points_cnt_ + i - 1] = via_points_time_new_[i] - via_points_time_new_[i - 1];
-            /*a[i] - a[i-1] + a[i+1] - a[i] --> a[i+1] - a[i-1]*/
-            H[i * via_points_cnt_ + i - 0] = 2 * (via_points_time_new_[i + 1] - via_points_time_new_[i - 1]);
-            H[i * via_points_cnt_ + i + 1] = via_points_time_new_[i + 1] - via_points_time_new_[i];
-            //Y(i) = 6 * (diff(p(i:i + 1)) / diff(tnew(i:i + 1)) - diff(p(i - 1:i) / diff(tnew(i - 1:i))));
-            qw_Y[i] = 6 * (
-                (via_points_quat_[i + 1].w_ - via_points_quat_[i].w_)
-                / (via_points_time_new_[i + 1] - via_points_time_new_[i])
-                - (via_points_quat_[i].w_ - via_points_quat_[i - 1].w_)
-                / (via_points_time_new_[i] - via_points_time_new_[i - 1])
-                );
-            qx_Y[i] = 6 * (
-                (via_points_quat_[i + 1].x_ - via_points_quat_[i].x_)
-                / (via_points_time_new_[i + 1] - via_points_time_new_[i])
-                - (via_points_quat_[i].x_ - via_points_quat_[i - 1].x_)
-                / (via_points_time_new_[i] - via_points_time_new_[i - 1])
-                );
-
-            qy_Y[i] = 6 * (
-                (via_points_quat_[i + 1].y_ - via_points_quat_[i].y_)
-                / (via_points_time_new_[i + 1] - via_points_time_new_[i])
-                - (via_points_quat_[i].y_ - via_points_quat_[i - 1].y_)
-                / (via_points_time_new_[i] - via_points_time_new_[i - 1])
-                );
-
-            qz_Y[i] = 6 * (
-                (via_points_quat_[i + 1].z_ - via_points_quat_[i].z_)
-                / (via_points_time_new_[i + 1] - via_points_time_new_[i])
-                - (via_points_quat_[i].z_ - via_points_quat_[i - 1].z_)
-                / (via_points_time_new_[i] - via_points_time_new_[i - 1])
-                );
+            stop_index = i;
+            stop_pos = traj_points_dist_[stop_index];
+            break;
+            //stop_while = stop_index * sampling_freq_;
         }
     }
-    if (!inverse(H, via_points_cnt_, inv_H))
+    // means can not stop in time just go on org traj
+    if (stop_index == 0)
+    {
+        return true;
+    }
+
+    double pause_time = index * sampling_freq_;
+    double stop_time = sqrt(2 * (stop_pos - traj_points_dist_[index])) + pause_time;
+    stop_time = ceil(stop_time / sampling_freq_) * sampling_freq_;
+
+    // fit the stop traj
+    vector<Point> xyz_pause_vp;
+    xyz_pause_vp.push_back(resampled_traj_[index].point_);
+    xyz_pause_vp.push_back(resampled_traj_[stop_index].point_);
+
+    vector<double> vp_time;
+    vp_time.push_back(pause_time);
+    vp_time.push_back(stop_time);
+
+    // calc the xyz speed of the origon traj on pause and stop point
+    Point pause_pose_vel = (resampled_traj_[index].point_ - resampled_traj_[index - 1].point_) / sampling_freq_;
+    Point stop_pose_vel; stop_pose_vel.x_ = 0; stop_pose_vel.y_ = 0; stop_pose_vel.z_ = 0;
+
+    Quaternion pause_quat = Euler2Quaternion(resampled_traj_[index].euler_);
+    Quaternion stop_quat = Euler2Quaternion(resampled_traj_[stop_index].euler_);
+    double dq = 0.0;
+    dq = pause_quat.w_ * stop_quat.w_
+        + pause_quat.x_ * stop_quat.x_
+        + pause_quat.y_ * stop_quat.y_
+        + pause_quat.z_ * stop_quat.z_;
+
+    if (dq < 0)
+    {
+        stop_quat.w_ = -stop_quat.w_;
+        stop_quat.x_ = -stop_quat.x_;
+        stop_quat.y_ = -stop_quat.y_;
+        stop_quat.z_ = -stop_quat.z_;
+    }
+
+    vector<Quaternion> abc_pause_vp;
+    abc_pause_vp.push_back(pause_quat);
+    abc_pause_vp.push_back(stop_quat);
+
+    Quaternion pause_quat_vel = (Euler2Quaternion(resampled_traj_[index].euler_) - Euler2Quaternion(resampled_traj_[index - 1].euler_));
+    pause_quat_vel = pause_quat_vel / sampling_freq_;
+    Quaternion stop_quat_vel; stop_quat_vel.w_ = 0; stop_quat_vel.x_ = 0; stop_quat_vel.y_ = 0; stop_quat_vel.z_ = 0;
+
+    //double abc_vs[4] = { pause_quat_vel.x_, pause_quat_vel.y_, pause_quat_vel.z_, pause_quat_vel.w_ };
+    //double abc_ve[4] = { 0, 0, 0, 0 };
+
+    if (spline(xyz_pause_vp, abc_pause_vp,
+        pause_pose_vel, stop_pose_vel,
+        pause_quat_vel, stop_quat_vel,
+        vp_time, pause_traj_) == false)
     {
         return false;
     }
 
-    //m = inv(H) * Y;
-    for (int i = 0; i < via_points_cnt_; ++i)
-    {
-        for (int j = 0; j < via_points_cnt_; ++j)
-        {
-            inv_H_pw_Y[i] += inv_H[i * via_points_cnt_ + j] * qw_Y[j];
-            inv_H_px_Y[i] += inv_H[i * via_points_cnt_ + j] * qx_Y[j];
-            inv_H_py_Y[i] += inv_H[i * via_points_cnt_ + j] * qy_Y[j];
-            inv_H_pz_Y[i] += inv_H[i * via_points_cnt_ + j] * qz_Y[j];
-        }
-    }
+    return true;
+}
 
-    vector<double> fa0_w, fa0_x, fa0_y, fa0_z;
-    vector<double> fa1_w, fa1_x, fa1_y, fa1_z;
-    vector<double> fa2_w, fa2_x, fa2_y, fa2_z;
-    vector<double> fa3_w, fa3_x, fa3_y, fa3_z;
-
-    for (int i = 0; i < via_points_cnt_ - 1; ++i)
-    {
-        fa0_w.push_back(via_points_quat_[i].w_);
-        fa0_x.push_back(via_points_quat_[i].x_);
-        fa0_y.push_back(via_points_quat_[i].y_);
-        fa0_z.push_back(via_points_quat_[i].z_);
-
-        fa1_w.push_back((via_points_quat_[i + 1].w_ - via_points_quat_[i].w_)
-            / (via_points_time_new_[i + 1] - via_points_time_new_[i])
-            - inv_H_pw_Y[i] * (via_points_time_new_[i + 1] - via_points_time_new_[i]) / 2
-            - (inv_H_pw_Y[i + 1] - inv_H_pw_Y[i]) * (via_points_time_new_[i + 1] - via_points_time_new_[i]) / 6);
-
-        fa1_x.push_back((via_points_quat_[i + 1].x_ - via_points_quat_[i].x_)
-            / (via_points_time_new_[i + 1] - via_points_time_new_[i])
-            - inv_H_px_Y[i] * (via_points_time_new_[i + 1] - via_points_time_new_[i]) / 2
-            - (inv_H_px_Y[i + 1] - inv_H_px_Y[i]) * (via_points_time_new_[i + 1] - via_points_time_new_[i]) / 6);
-
-        fa1_y.push_back((via_points_quat_[i + 1].y_ - via_points_quat_[i].y_)
-            / (via_points_time_new_[i + 1] - via_points_time_new_[i])
-            - inv_H_py_Y[i] * (via_points_time_new_[i + 1] - via_points_time_new_[i]) / 2
-            - (inv_H_py_Y[i + 1] - inv_H_py_Y[i]) * (via_points_time_new_[i + 1] - via_points_time_new_[i]) / 6);
-
-        fa1_z.push_back((via_points_quat_[i + 1].z_ - via_points_quat_[i].z_)
-            / (via_points_time_new_[i + 1] - via_points_time_new_[i])
-            - inv_H_pz_Y[i] * (via_points_time_new_[i + 1] - via_points_time_new_[i]) / 2
-            - (inv_H_pz_Y[i + 1] - inv_H_pz_Y[i]) * (via_points_time_new_[i + 1] - via_points_time_new_[i]) / 6);
-
-        fa2_w.push_back(inv_H_pw_Y[i] / 2);
-        fa2_x.push_back(inv_H_px_Y[i] / 2);
-        fa2_y.push_back(inv_H_py_Y[i] / 2);
-        fa2_z.push_back(inv_H_pz_Y[i] / 2);
-
-        fa3_w.push_back((inv_H_pw_Y[i + 1] - inv_H_pw_Y[i])
-            / (6 * (via_points_time_new_[i + 1] - via_points_time_new_[i])));
-
-        fa3_x.push_back((inv_H_px_Y[i + 1] - inv_H_px_Y[i])
-            / (6 * (via_points_time_new_[i + 1] - via_points_time_new_[i])));
-
-        fa3_y.push_back((inv_H_py_Y[i + 1] - inv_H_py_Y[i])
-            / (6 * (via_points_time_new_[i + 1] - via_points_time_new_[i])));
-
-        fa3_z.push_back((inv_H_pz_Y[i + 1] - inv_H_pz_Y[i])
-            / (6 * (via_points_time_new_[i + 1] - via_points_time_new_[i])));
-    }
-    int index = 0;
-    Quaternion tmp_quat;
-    int traj_index = 0;
-    for (double t = 0; t <= traj_time_set_; t += sampling_freq_, ++traj_index)
-    {
-        for (int i = 0; ; ++i)
-        {
-            if (via_points_time_new_[i] > t)
-            {
-                index = i - 1;
-                break;
-            }
-        }
-        tmp_quat.w_ = fa3_w[index] * pow(t - via_points_time_new_[index], 3)
-            + fa2_w[index] * pow(t - via_points_time_new_[index], 2)
-            + fa1_w[index] * (t - via_points_time_new_[index])
-            + fa0_w[index];
-
-        tmp_quat.x_ = fa3_x[index] * pow(t - via_points_time_new_[index], 3)
-            + fa2_x[index] * pow(t - via_points_time_new_[index], 2)
-            + fa1_x[index] * (t - via_points_time_new_[index])
-            + fa0_x[index];
-
-        tmp_quat.y_ = fa3_y[index] * pow(t - via_points_time_new_[index], 3)
-            + fa2_y[index] * pow(t - via_points_time_new_[index], 2)
-            + fa1_y[index] * (t - via_points_time_new_[index])
-            + fa0_y[index];
-
-        tmp_quat.z_ = fa3_z[index] * pow(t - via_points_time_new_[index], 3)
-            + fa2_z[index] * pow(t - via_points_time_new_[index], 2)
-            + fa1_z[index] * (t - via_points_time_new_[index])
-            + fa0_z[index];
-
-        resampled_traj_[traj_index].euler_ = Quaternion2Euler(tmp_quat);
-    }
-
-    delete[] qw_Y;
-    delete[] qx_Y;
-    delete[] qy_Y;
-    delete[] qz_Y;
-    delete[] H;
-    delete[] inv_H;
-    delete[] inv_H_pw_Y;
-    delete[] inv_H_px_Y;
-    delete[] inv_H_py_Y;
-    delete[] inv_H_pz_Y;
-
+bool GivenVelocityPlanner::trajResumePlan(void)
+{
     return true;
 }
 
@@ -714,7 +419,397 @@ vector<Quaternion> GivenVelocityPlanner::testQuatSmooth(const vector<Quaternion>
     return via_points_quat_;
 }
 
-vector<PoseEuler> GivenVelocityPlanner::testFitSmooth(const vector<PoseEuler>& pos_in)
+vector<Point> GivenVelocityPlanner::testPoseSmooth(const vector<Point>& pos_in)
 {
-    return input_via_points_;
+    return via_points_pose_;
 }
+
+
+bool GivenVelocityPlanner::spline
+(
+    const vector<Point> via_points_pose,
+    const vector<Quaternion> via_points_quat,
+    const Point init_pose_vel,
+    const Point final_pose_vel,
+    const Quaternion init_quat_vel,
+    const Quaternion final_quat_vel,
+    const vector<double> via_points_time,
+    vector<PoseEuler>& out_traj
+)
+{
+    if (via_points_pose.size() != via_points_quat.size()
+        || via_points_time.size() != via_points_pose.size()
+        || via_points_pose.size() <= 1)
+    {
+        return false;
+    }
+
+    size_t points_cnts = via_points_pose.size();
+
+    double* px_Y = new double[points_cnts];
+    double* py_Y = new double[points_cnts];
+    double* pz_Y = new double[points_cnts];
+
+    double* qw_Y = new double[points_cnts];
+    double* qx_Y = new double[points_cnts];
+    double* qy_Y = new double[points_cnts];
+    double* qz_Y = new double[points_cnts];
+
+    double* H = new double[points_cnts * points_cnts];
+    double* inv_H = new double[points_cnts * points_cnts];
+
+    double* inv_H_px_Y = new double[points_cnts];
+    double* inv_H_py_Y = new double[points_cnts];
+    double* inv_H_pz_Y = new double[points_cnts];
+
+    double* inv_H_qw_Y = new double[points_cnts];
+    double* inv_H_qx_Y = new double[points_cnts];
+    double* inv_H_qy_Y = new double[points_cnts];
+    double* inv_H_qz_Y = new double[points_cnts];
+
+    memset(px_Y, 0, sizeof(double) * points_cnts);
+    memset(py_Y, 0, sizeof(double) * points_cnts);
+    memset(pz_Y, 0, sizeof(double) * points_cnts);
+
+    memset(qw_Y, 0, sizeof(double) * points_cnts);
+    memset(qx_Y, 0, sizeof(double) * points_cnts);
+    memset(qy_Y, 0, sizeof(double) * points_cnts);
+    memset(qz_Y, 0, sizeof(double) * points_cnts);
+    memset(H, 0, sizeof(double) * points_cnts * points_cnts);
+    memset(inv_H, 0, sizeof(double) * points_cnts * points_cnts);
+
+    memset(inv_H_px_Y, 0, sizeof(double) * points_cnts);
+    memset(inv_H_py_Y, 0, sizeof(double) * points_cnts);
+    memset(inv_H_pz_Y, 0, sizeof(double) * points_cnts);
+
+    memset(inv_H_qw_Y, 0, sizeof(double) * points_cnts);
+    memset(inv_H_qx_Y, 0, sizeof(double) * points_cnts);
+    memset(inv_H_qy_Y, 0, sizeof(double) * points_cnts);
+    memset(inv_H_qz_Y, 0, sizeof(double) * points_cnts);
+
+    for (size_t i = 0; i < points_cnts; ++i)
+    {
+        if (i == 0)
+        {
+            H[0] = 2 * (via_points_time[1] - via_points_time[0]);
+            H[1] = via_points_time[1] - via_points_time[0];
+
+            //point factor calc
+            px_Y[0] = 6 * (
+                (via_points_pose[1].x_ - via_points_pose[0].x_)
+                / (via_points_time[1] - via_points_time[0]) - init_pose_vel.x_
+                );
+
+            py_Y[0] = 6 * (
+                (via_points_pose[1].y_ - via_points_pose[0].y_)
+                / (via_points_time[1] - via_points_time[0]) - init_pose_vel[1]
+                );
+
+            pz_Y[0] = 6 * (
+                (via_points_pose[1].z_ - via_points_pose[0].z_)
+                / (via_points_time[1] - via_points_time[0]) - init_pose_vel[2]
+                );
+
+            // quaternion factor calc
+            qw_Y[0] = 6 * (
+                (via_points_quat[1].w_ - via_points_quat[0].w_)
+                / (via_points_time[1] - via_points_time[0]) - init_quat_vel.w_
+                );
+
+            qx_Y[0] = 6 * (
+                (via_points_quat[1].x_ - via_points_quat[0].x_)
+                / (via_points_time[1] - via_points_time[0]) - init_quat_vel.x_
+                );
+
+            qy_Y[0] = 6 * (
+                (via_points_quat[1].y_ - via_points_quat[0].y_)
+                / (via_points_time[1] - via_points_time[0]) - init_quat_vel.y_
+                );
+
+            qz_Y[0] = 6 * (
+                (via_points_quat[1].z_ - via_points_quat[0].z_)
+                / (via_points_time[1] - via_points_time[0]) - init_quat_vel.z_
+                );
+        }
+        else if (i == points_cnts - 1)
+        {
+            H[i * points_cnts + i - 1] = via_points_time[i] - via_points_time[i - 1];
+            H[i * points_cnts + i - 0] = 2 * (via_points_time[i] - via_points_time[i - 1]);
+
+            //matlab:Y(i) = 6 * (diff(p(i:i + 1)) / diff(tnew(i:i + 1)) - v0);
+            //point factor calc
+            px_Y[i] = 6 * (final_pose_vel.x_
+                - (via_points_pose[i].x_ - via_points_pose[i - 1].x_)
+                / (via_points_time[i] - via_points_time[i - 1])
+                );
+
+            py_Y[i] = 6 * (final_pose_vel.y_
+                - (via_points_pose[i].y_ - via_points_pose[i - 1].y_)
+                / (via_points_time[i] - via_points_time[i - 1])
+                );
+
+            pz_Y[i] = 6 * (final_pose_vel.z_
+                - (via_points_pose[i].z_ - via_points_pose[i - 1].z_)
+                / (via_points_time[i] - via_points_time[i - 1])
+                );
+            /************************************************************/
+            qw_Y[i] = 6 * (final_quat_vel.w_
+                - (via_points_quat[i].w_ - via_points_quat[i - 1].w_)
+                / (via_points_time[i] - via_points_time[i - 1])
+                );
+
+            qx_Y[i] = 6 * (final_quat_vel.x_
+                - (via_points_quat[i].x_ - via_points_quat_[i - 1].x_)
+                / (via_points_time[i] - via_points_time[i - 1])
+                );
+
+            qy_Y[i] = 6 * (final_quat_vel.y_
+                - (via_points_quat[i].y_ - via_points_quat[i - 1].y_)
+                / (via_points_time[i] - via_points_time[i - 1])
+                );
+
+            qz_Y[i] = 6 * (final_quat_vel.z_
+                - (via_points_quat[i].z_ - via_points_quat[i - 1].z_)
+                / (via_points_time[i] - via_points_time[i - 1])
+                );
+        }
+        else
+        {
+            H[i * points_cnts + i - 1] = via_points_time[i] - via_points_time[i - 1];
+            /*a[i] - a[i-1] + a[i+1] - a[i] --> a[i+1] - a[i-1]*/
+            H[i * points_cnts + i - 0] = 2 * (via_points_time[i + 1] - via_points_time[i - 1]);
+            H[i * points_cnts + i + 1] = via_points_time[i + 1] - via_points_time[i];
+            //Y(i) = 6 * (diff(p(i:i + 1)) / diff(tnew(i:i + 1)) - diff(p(i - 1:i) / diff(tnew(i - 1:i))));
+            px_Y[i] = 6 * (
+                (via_points_pose[i + 1].x_ - via_points_pose[i].x_)
+                / (via_points_time[i + 1] - via_points_time[i])
+                - (via_points_pose[i].x_ - via_points_pose[i - 1].x_)
+                / (via_points_time[i] - via_points_time[i - 1])
+                );
+
+            py_Y[i] = 6 * (
+                (via_points_pose[i + 1].y_ - via_points_pose[i].y_)
+                / (via_points_time[i + 1] - via_points_time[i])
+                - (via_points_pose[i].y_ - via_points_pose[i - 1].y_)
+                / (via_points_time[i] - via_points_time[i - 1])
+                );
+
+            pz_Y[i] = 6 * (
+                (via_points_pose[i + 1].z_ - via_points_pose[i].z_)
+                / (via_points_time[i + 1] - via_points_time[i])
+                - (via_points_pose[i].z_ - via_points_pose[i - 1].z_)
+                / (via_points_time[i] - via_points_time[i - 1])
+                );
+            /******************************************************************/
+            qw_Y[i] = 6 * (
+                (via_points_quat[i + 1].w_ - via_points_quat[i].w_)
+                / (via_points_time[i + 1] - via_points_time[i])
+                - (via_points_quat[i].w_ - via_points_quat[i - 1].w_)
+                / (via_points_time[i] - via_points_time[i - 1])
+                );
+            qx_Y[i] = 6 * (
+                (via_points_quat[i + 1].x_ - via_points_quat[i].x_)
+                / (via_points_time[i + 1] - via_points_time[i])
+                - (via_points_quat[i].x_ - via_points_quat[i - 1].x_)
+                / (via_points_time[i] - via_points_time[i - 1])
+                );
+
+            qy_Y[i] = 6 * (
+                (via_points_quat[i + 1].y_ - via_points_quat[i].y_)
+                / (via_points_time[i + 1] - via_points_time[i])
+                - (via_points_quat[i].y_ - via_points_quat[i - 1].y_)
+                / (via_points_time[i] - via_points_time[i - 1])
+                );
+
+            qz_Y[i] = 6 * (
+                (via_points_quat[i + 1].z_ - via_points_quat[i].z_)
+                / (via_points_time[i + 1] - via_points_time[i])
+                - (via_points_quat[i].z_ - via_points_quat[i - 1].z_)
+                / (via_points_time[i] - via_points_time[i - 1])
+                );
+        }
+    }
+    if (!inverse(H, points_cnts, inv_H))
+    {
+        return false;
+    }
+
+    //m = inv(H) * Y;
+    for (size_t i = 0; i < points_cnts; ++i)
+    {
+        for (size_t j = 0; j < points_cnts; ++j)
+        {
+            inv_H_px_Y[i] += inv_H[i * points_cnts + j] * px_Y[j];
+            inv_H_py_Y[i] += inv_H[i * points_cnts + j] * py_Y[j];
+            inv_H_pz_Y[i] += inv_H[i * points_cnts + j] * pz_Y[j];
+
+            inv_H_qw_Y[i] += inv_H[i * points_cnts + j] * qw_Y[j];
+            inv_H_qx_Y[i] += inv_H[i * points_cnts + j] * qx_Y[j];
+            inv_H_qy_Y[i] += inv_H[i * points_cnts + j] * qy_Y[j];
+            inv_H_qz_Y[i] += inv_H[i * points_cnts + j] * qz_Y[j];
+        }
+    }
+
+    vector<double> fa0_px, fa0_py, fa0_pz;
+    vector<double> fa1_px, fa1_py, fa1_pz;
+    vector<double> fa2_px, fa2_py, fa2_pz;
+    vector<double> fa3_px, fa3_py, fa3_pz;
+
+    vector<double> fa0_qw, fa0_qx, fa0_qy, fa0_qz;
+    vector<double> fa1_qw, fa1_qx, fa1_qy, fa1_qz;
+    vector<double> fa2_qw, fa2_qx, fa2_qy, fa2_qz;
+    vector<double> fa3_qw, fa3_qx, fa3_qy, fa3_qz;
+
+    for (size_t i = 0; i < points_cnts - 1; ++i)
+    {
+        fa0_px.push_back(via_points_pose[i].x_);
+        fa0_py.push_back(via_points_pose[i].y_);
+        fa0_pz.push_back(via_points_pose[i].z_);
+
+        fa0_qw.push_back(via_points_quat[i].w_);
+        fa0_qx.push_back(via_points_quat[i].x_);
+        fa0_qy.push_back(via_points_quat[i].y_);
+        fa0_qz.push_back(via_points_quat[i].z_);
+
+        fa1_px.push_back((via_points_pose[i + 1].x_ - via_points_pose[i].x_)
+            / (via_points_time[i + 1] - via_points_time[i])
+            - inv_H_px_Y[i] * (via_points_time[i + 1] - via_points_time[i]) / 2
+            - (inv_H_px_Y[i + 1] - inv_H_px_Y[i]) * (via_points_time[i + 1] - via_points_time[i]) / 6);
+
+        fa1_py.push_back((via_points_pose[i + 1].y_ - via_points_pose[i].y_)
+            / (via_points_time[i + 1] - via_points_time[i])
+            - inv_H_py_Y[i] * (via_points_time[i + 1] - via_points_time[i]) / 2
+            - (inv_H_py_Y[i + 1] - inv_H_py_Y[i]) * (via_points_time[i + 1] - via_points_time[i]) / 6);
+
+        fa1_pz.push_back((via_points_pose[i + 1].z_ - via_points_pose[i].z_)
+            / (via_points_time[i + 1] - via_points_time[i])
+            - inv_H_pz_Y[i] * (via_points_time[i + 1] - via_points_time[i]) / 2
+            - (inv_H_pz_Y[i + 1] - inv_H_pz_Y[i]) * (via_points_time[i + 1] - via_points_time[i]) / 6);
+        /************************/
+        fa1_qw.push_back((via_points_quat[i + 1].w_ - via_points_quat[i].w_)
+            / (via_points_time[i + 1] - via_points_time[i])
+            - inv_H_qw_Y[i] * (via_points_time[i + 1] - via_points_time[i]) / 2
+            - (inv_H_qw_Y[i + 1] - inv_H_qw_Y[i]) * (via_points_time[i + 1] - via_points_time[i]) / 6);
+
+        fa1_qx.push_back((via_points_quat[i + 1].x_ - via_points_quat[i].x_)
+            / (via_points_time[i + 1] - via_points_time[i])
+            - inv_H_qx_Y[i] * (via_points_time[i + 1] - via_points_time[i]) / 2
+            - (inv_H_qx_Y[i + 1] - inv_H_qx_Y[i]) * (via_points_time[i + 1] - via_points_time[i]) / 6);
+
+        fa1_qy.push_back((via_points_quat[i + 1].y_ - via_points_quat[i].y_)
+            / (via_points_time[i + 1] - via_points_time[i])
+            - inv_H_qy_Y[i] * (via_points_time[i + 1] - via_points_time[i]) / 2
+            - (inv_H_qy_Y[i + 1] - inv_H_qy_Y[i]) * (via_points_time[i + 1] - via_points_time[i]) / 6);
+
+        fa1_qz.push_back((via_points_quat[i + 1].z_ - via_points_quat[i].z_)
+            / (via_points_time[i + 1] - via_points_time[i])
+            - inv_H_qz_Y[i] * (via_points_time[i + 1] - via_points_time[i]) / 2
+            - (inv_H_qz_Y[i + 1] - inv_H_qz_Y[i]) * (via_points_time[i + 1] - via_points_time[i]) / 6);
+
+        fa2_px.push_back(inv_H_px_Y[i] / 2);
+        fa2_py.push_back(inv_H_py_Y[i] / 2);
+        fa2_pz.push_back(inv_H_pz_Y[i] / 2);
+
+        fa2_qw.push_back(inv_H_qw_Y[i] / 2);
+        fa2_qx.push_back(inv_H_qx_Y[i] / 2);
+        fa2_qy.push_back(inv_H_qy_Y[i] / 2);
+        fa2_qz.push_back(inv_H_qz_Y[i] / 2);
+
+        fa3_px.push_back((inv_H_px_Y[i + 1] - inv_H_px_Y[i])
+            / (6 * (via_points_time[i + 1] - via_points_time[i])));
+
+        fa3_py.push_back((inv_H_py_Y[i + 1] - inv_H_py_Y[i])
+            / (6 * (via_points_time[i + 1] - via_points_time[i])));
+
+        fa3_pz.push_back((inv_H_pz_Y[i + 1] - inv_H_pz_Y[i])
+            / (6 * (via_points_time[i + 1] - via_points_time[i])));
+        /**********************/
+        fa3_qw.push_back((inv_H_qw_Y[i + 1] - inv_H_qw_Y[i])
+            / (6 * (via_points_time[i + 1] - via_points_time[i])));
+
+        fa3_qx.push_back((inv_H_qx_Y[i + 1] - inv_H_qx_Y[i])
+            / (6 * (via_points_time[i + 1] - via_points_time[i])));
+
+        fa3_qy.push_back((inv_H_qy_Y[i + 1] - inv_H_qy_Y[i])
+            / (6 * (via_points_time[i + 1] - via_points_time[i])));
+
+        fa3_qz.push_back((inv_H_qz_Y[i + 1] - inv_H_qz_Y[i])
+            / (6 * (via_points_time[i + 1] - via_points_time[i])));
+    }
+    int index = 0;
+    PoseEuler tmp_pos;
+    Quaternion tmp_quat;
+    for (double t = via_points_time.front(); t <= via_points_time.back(); t += sampling_freq_)
+    {
+        for (int i = 0; ; ++i)
+        {
+            if (via_points_time[i] > t)
+            {
+                index = i - 1;
+                break;
+            }
+        }
+        tmp_pos.point_.x_ = fa3_px[index] * pow(t - via_points_time[index], 3)
+            + fa2_px[index] * pow(t - via_points_time[index], 2)
+            + fa1_px[index] * (t - via_points_time[index])
+            + fa0_px[index];
+
+        tmp_pos.point_.y_ = fa3_py[index] * pow(t - via_points_time[index], 3)
+            + fa2_py[index] * pow(t - via_points_time[index], 2)
+            + fa1_py[index] * (t - via_points_time[index])
+            + fa0_py[index];
+
+        tmp_pos.point_.z_ = fa3_pz[index] * pow(t - via_points_time[index], 3)
+            + fa2_pz[index] * pow(t - via_points_time[index], 2)
+            + fa1_pz[index] * (t - via_points_time[index])
+            + fa0_pz[index];
+
+        tmp_quat.w_ = fa3_qw[index] * pow(t - via_points_time[index], 3)
+            + fa2_qw[index] * pow(t - via_points_time[index], 2)
+            + fa1_qw[index] * (t - via_points_time[index])
+            + fa0_qw[index];
+
+        tmp_quat.x_ = fa3_qx[index] * pow(t - via_points_time[index], 3)
+            + fa2_qx[index] * pow(t - via_points_time[index], 2)
+            + fa1_qx[index] * (t - via_points_time[index])
+            + fa0_qx[index];
+
+        tmp_quat.y_ = fa3_qy[index] * pow(t - via_points_time[index], 3)
+            + fa2_qy[index] * pow(t - via_points_time[index], 2)
+            + fa1_qy[index] * (t - via_points_time[index])
+            + fa0_qy[index];
+
+        tmp_quat.z_ = fa3_qz[index] * pow(t - via_points_time[index], 3)
+            + fa2_qz[index] * pow(t - via_points_time[index], 2)
+            + fa1_qz[index] * (t - via_points_time[index])
+            + fa0_qz[index];
+
+        tmp_pos.euler_ = Quaternion2Euler(tmp_quat);
+
+        out_traj.push_back(tmp_pos);
+    }
+
+    delete[] px_Y;
+    delete[] py_Y;
+    delete[] pz_Y;
+
+    delete[] qw_Y;
+    delete[] qx_Y;
+    delete[] qy_Y;
+    delete[] qz_Y;
+
+    delete[] H;
+    delete[] inv_H;
+
+    delete[] inv_H_px_Y;
+    delete[] inv_H_py_Y;
+    delete[] inv_H_pz_Y;
+
+    delete[] inv_H_qw_Y;
+    delete[] inv_H_qx_Y;
+    delete[] inv_H_qy_Y;
+    delete[] inv_H_qz_Y;
+
+    return true;
+}
+

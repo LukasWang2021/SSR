@@ -45,7 +45,9 @@ void ControllerRpc::handleRpc0x0000BA55(void* request_data_ptr, void* response_d
 
     LogProducer::info("rpc", "/rpc/interpreter/pause %d, group state:%d", rq_data_ptr->data.data, status);
  
+    group_ptr_[0]->pauseMove();
     rs_data_ptr->data.data = InterpCtrl::instance().pause(rq_data_ptr->data.data);
+    
 
     LogProducer::info("rpc", "/rpc/interpreter/pause %d, error:%llX", rq_data_ptr->data.data, rs_data_ptr->data.data);
 }

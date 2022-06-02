@@ -446,6 +446,12 @@ ErrorCode BaseGroup::pauseMove(void)
         stop_barecore_ = true;
         return SUCCESS;
     }
+    else if(mc_state == OFFLINE && !offline_to_pause_request_)
+    {
+        // offline traj stop
+        // get the number of point in share mem
+        offline_to_pause_request_ = true;
+    }
     else
     {}
 

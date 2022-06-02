@@ -142,6 +142,11 @@ void BaseGroup::doStateMachine(void)
         manual_to_pause_request_ = false;
     }
 
+    if (offline_to_pause_request_ && mc_state != PAUSE_OFFLINE)
+    {
+        offline_to_pause_request_ = false;
+    }
+
     if (auto_to_pause_request_ && mc_state != AUTO)
     {
         auto_to_pause_request_ = false;
@@ -351,8 +356,21 @@ void BaseGroup::doStateMachine(void)
                 LogProducer::warn("mc_sm","MC-state switch to MC_OFFLINE_TO_STANDBY");
             }
 
+            if(offline_to_pause_request_)
+            {
+                mc_state_ = OFFLINE_TO_PAUSING;
+                offline_to_pause_request_ = false;
+                LogProducer::warn("mc_sm","MC-state switch to MC_OFFLINE_TO_PAUSING");
+            }
+
             break;
         }
+
+        case PAUSE_OFFLINE:
+        {
+            mc_state_ = OFFLINE_TO_STANDBY;
+        }
+
         case ONLINE:
         {
             if (online_to_standby_request_)
@@ -363,7 +381,9 @@ void BaseGroup::doStateMachine(void)
                 
                 LogProducer::warn("mc_sm","MC-state switch to MC__STANDBY");
             }
-        }break;
+            break;
+        }
+
         case PAUSE:
         {
             if (pause_to_auto_request_)
@@ -414,7 +434,6 @@ void BaseGroup::doStateMachine(void)
                 pause_to_manual_request_ = false;
                 LogProducer::warn("mc_sm","MC-state switch to MC_PAUSE_TO_PAUSE_MANUAL");
             }
-
             break;
         }
 
@@ -609,6 +628,26 @@ void BaseGroup::doStateMachine(void)
             }
             */
 
+            break;
+        }
+
+        case OFFLINE_TO_PAUSING:
+        {
+            // TODO get traj cache
+            
+            ErrorCode err = planOfflinePause();
+
+            if (err != SUCCESS)
+            {
+                mc_state_ = OFFLINE;
+                LogProducer::info("mc_sm","MC-state switch to MC_OFFLINE.");
+                reportError(err);
+            }
+            else
+            {
+                mc_state_ = PAUSING;
+                LogProducer::info("mc_sm","MC-state switch to MC_PAUSING.");
+            }
             break;
         }
 

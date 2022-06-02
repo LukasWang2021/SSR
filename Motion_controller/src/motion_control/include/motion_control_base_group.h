@@ -30,6 +30,7 @@
 #include "pause_resume_planner.h"
 #include "group.h"
 #include "onlineTrj_planner.h"
+#include "given_vel_planner.h"
 
 #define TRAJECTORY_CACHE_SIZE     8
 #define OFFLINE_TRAJECTORY_CACHE_SIZE  512
@@ -78,7 +79,7 @@ class BaseGroup
     MotionControlState getMotionControlState(void);
     ServoState getServoState(void);
 
-    void BaseGroup::setOnlineTrjFirstPointCondition();//检测到在线轨迹起点,设置一些初始条件
+    void setOnlineTrjFirstPointCondition();//检测到在线轨迹起点,设置一些初始条件
     ErrorCode switchToOnlineState();//进入ONLINE状态
     ErrorCode switchOnlineStateToStandby();//从ONLINE状态切换到STANDBY状态
     // Auto move APIs:
@@ -96,7 +97,10 @@ class BaseGroup
     virtual ErrorCode setOfflineTrajectory(const std::string &offline_trajectory);
     virtual basic_alg::Joint getStartJointOfOfflineTrajectory(void);
     virtual ErrorCode moveOfflineTrajectory(void);
-    
+    virtual ErrorCode planOfflineTrajectory(vector<PoseEuler> via_points, std::string file_name);
+    virtual ErrorCode planOfflinePause(void);
+    virtual ErrorCode planOfflineResume(void);
+
     // Manual teach APIs:
     virtual ManualFrame getManualFrame(void);
     virtual ErrorCode setManualFrame(ManualFrame frame);
@@ -301,6 +305,7 @@ class BaseGroup
     basic_alg::Transformation   transformation_;
     basic_alg::DynamicAlg   *dynamics_ptr_;
 
+    GivenVelocityPlanner offline_planner_;
     std::ifstream offline_trajectory_file_;
     std::ifstream offline_euler_trajectory_file_;
     OnlineTrajectoryPlanner   online_trj_planner_ptr;
@@ -333,8 +338,12 @@ class BaseGroup
     bool manual_to_pause_request_;
     bool standby_to_manual_request_;
     bool manual_to_standby_request_;
+
+    bool offline_to_pause_request_;
+    bool pause_to_offline_request_;
     bool standby_to_offline_request_;
     bool offline_to_standby_request_;
+
     bool pause_return_to_pause_request_;
     bool pausing_to_pause_request_;
     bool standby_to_online_request_;

@@ -546,6 +546,8 @@ private:
     void handleRequest0x000051E9(int recv_bytes);
     /********rpc/motion_control/axis_group/moveOfflineTrajectory, RequestMessageType_Void**********/	
     void handleRequest0x0000C4D9(int recv_bytes);
+    /********rpc/motion_control/axis_group/viaPointsToTrajWithGivenVelocity, RequestMessageType_Int32_DoubleList**********/	
+    void handleRequest0x0000E479(int recv_bytes);
 
     /********rpc/reg_manager/pr/addReg, RequestMessageType_PrRegData**********/	
     void handleRequest0x000154E7(int recv_bytes);
@@ -899,7 +901,9 @@ private:
     void handleResponse0x000051E9(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
     /********rpc/motion_control/axis_group/moveOfflineTrajectory, ResponseMessageType_Uint64**********/	
     void handleResponse0x0000C4D9(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
-
+    /********rpc/motion_control/axis_group/viaPointsToTrajWithGivenVelocity, ResponseMessageType_Uint64_String**********/	
+    void handleResponse0x0000E479(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    
     /********rpc/reg_manager/pr/addReg, ResponseMessageType_Uint64**********/	
     void handleResponse0x000154E7(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
     /********rpc/reg_manager/pr/deleteReg, ResponseMessageType_Uint64**********/	

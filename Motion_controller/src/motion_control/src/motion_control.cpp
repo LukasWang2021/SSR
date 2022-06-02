@@ -174,9 +174,6 @@ ErrorCode MotionControl::initApplication(fst_ctrl::CoordinateManager* coordinate
     return SUCCESS;
 }
 
-
-
-
 ManualFrame MotionControl::getManualFrame(void)
 {
     return group_ptr_->getManualFrame();
@@ -573,7 +570,7 @@ ErrorCode MotionControl::setOfflineTrajectory(const std::string &offline_traject
     return group_ptr_->setOfflineTrajectory(trajectory_file);
 }
 
-ErrorCode MotionControl::prepairOfflineTrajectory(void)
+ErrorCode MotionControl::prepareOfflineTrajectory(void)
 {
     if (group_ptr_->getMotionControlState() != STANDBY)
     {
@@ -595,6 +592,24 @@ ErrorCode MotionControl::prepairOfflineTrajectory(void)
 ErrorCode MotionControl::moveOfflineTrajectory(void)
 {
     return group_ptr_->moveOfflineTrajectory();
+}
+
+ErrorCode MotionControl::planOfflineTrajectory(std::vector<PoseEuler> via_points)
+{
+    ErrorCode err = SUCCESS;
+    char file_name[32] = "";
+    string trajectory_file = "/root/robot_data/trajectory/";
+    time_t t;
+    struct tm *t_now = localtime(&t);
+    // named after timestamp 
+    strftime(file_name, sizeof(file_name), "%Y%m%d%H%M%S.traj", t_now);
+    trajectory_file += string(file_name);
+    if( (err = group_ptr_->planOfflineTrajectory(via_points, trajectory_file)) != 0
+    || (err = setOfflineTrajectory(file_name)) != 0 )
+    {
+        return err;
+    }
+    return SUCCESS;
 }
 
 ErrorCode MotionControl::moveOnlineTrajectory(void)

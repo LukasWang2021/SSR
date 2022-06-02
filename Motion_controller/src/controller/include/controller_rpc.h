@@ -434,6 +434,8 @@ private:
     void handleRpc0x000051E9(void* request_data_ptr, void* response_data_ptr);
     //"/rpc/motion_control/axis_group/moveOfflineTrajectory"	
     void handleRpc0x0000C4D9(void* request_data_ptr, void* response_data_ptr);
+	//"/rpc/motion_control/axis_group/viaPointsToTrajWithGivenVelocity"	
+    void handleRpc0x0000E479(void* request_data_ptr, void* response_data_ptr);	
 
     //"/rpc/reg_manager/pr/addReg"	
     void handleRpc0x000154E7(void* request_data_ptr, void* response_data_ptr);

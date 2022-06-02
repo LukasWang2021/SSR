@@ -35,6 +35,7 @@ public:
     Point& operator+=(const Point& point);
     Point& operator-=(const Point& point);
     const Point operator*(double value) const;
+    const Point operator/(double value) const;
     
     void print(std::string comment = "") const;
 };

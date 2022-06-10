@@ -92,12 +92,13 @@ class BaseGroup
     void setOnlinePointLevelBuf(int idx, int value);
     ErrorCode setOnlineTrjPointBufData(double * trj_point_buf,uint32_t size);//将xyzabc数据逆解为轴角数据后整理为轨迹数据,然后传送给在线轨迹缓存
     ErrorCode setOnlinePoint_TMatrixBufData(double * p_doublePointdata,uint32_t size);
-    // API for off line trajectory
+    // API for offline trajectory
     virtual ErrorCode  readEulerTrajectoryFile(const std::string &offline_euler_trajectory_filePath,std::vector<std::vector<double>>& euler_trajArr);
     virtual ErrorCode setOfflineTrajectory(const std::string &offline_trajectory);
+    virtual ErrorCode setOfflineViaPoints(const std::vector<PoseEuler> &via_points, bool is_new);
     virtual basic_alg::Joint getStartJointOfOfflineTrajectory(void);
     virtual ErrorCode moveOfflineTrajectory(void);
-    virtual ErrorCode planOfflineTrajectory(vector<PoseEuler> via_points, std::string file_name);
+    virtual ErrorCode planOfflineTrajectory(std::string traj_name, double traj_vel);
     virtual ErrorCode planOfflinePause(void);
     virtual ErrorCode planOfflineResume(void);
 
@@ -231,6 +232,7 @@ class BaseGroup
     bool isSameJoint(const basic_alg::Joint &joint1, const basic_alg::Joint &joint2, const basic_alg::Joint &thres);
 
     bool fillOfflineCache(void);
+    bool fillOfflinePauseCache(void);
     uint32_t getOfflineCacheSize(void);
     ErrorCode sendOfflineTrajectoryFlow(void);
     ErrorCode pickPointsFromOfflineCache(TrajectoryPoint *points, size_t &length);

@@ -117,6 +117,15 @@ double Quaternion::norm()
 
     return sqrt(this->w_*this->w_ + this->x_*this->x_ + this->y_*this->y_ + this->z_*this->z_);
 }
+
+void Quaternion::zero()
+{
+    w_ = 0.0;
+    x_ = 0.0;
+    y_ = 0.0;
+    z_ = 0.0;
+}
+
 double& Quaternion::operator[](size_t index) 
 {
     assert(index < 4); 

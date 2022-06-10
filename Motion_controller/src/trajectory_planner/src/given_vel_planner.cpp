@@ -6,9 +6,11 @@
 #include <fstream>
 #include <sstream>
 #include "given_vel_planner.h"
+#include "log_manager_producer.h"
 
 using namespace std;
 using namespace basic_alg;
+using namespace log_space;
 
 GivenVelocityPlanner::GivenVelocityPlanner()
 {
@@ -24,6 +26,78 @@ GivenVelocityPlanner::GivenVelocityPlanner()
 GivenVelocityPlanner::~GivenVelocityPlanner()
 {
 
+}
+
+bool GivenVelocityPlanner::setViaPoints(const vector<PoseEuler> &via_points, bool is_new)
+{
+    if(is_new) // plan a new trajectory
+    {
+        via_points_pose_.clear();
+        via_points_quat_.clear();
+        via_points_dist_.clear();
+        via_points_time_new_.clear();
+        resampled_traj_.clear();
+        via_points_cnt_ = 0;
+    }
+
+    Point tmp_pose;
+    Quaternion tmp_quat;
+    for (auto iter = via_points.begin(); iter != via_points.end(); ++iter)
+    {
+        tmp_pose = iter->point_;
+        tmp_quat = Euler2Quaternion(iter->euler_);
+        normalizeQuaternion(tmp_quat);
+        via_points_quat_.push_back(tmp_quat);
+        via_points_pose_.push_back(tmp_pose);
+        ++via_points_cnt_;
+    }
+
+    return true;
+}
+
+bool GivenVelocityPlanner::viaPoints2Traj(double traj_vel)
+{
+    if(traj_vel < MINIMUM_E6)
+    {
+        LogProducer::error("offline_planner","trajectory speed %lf invalid", traj_vel);
+        return false;
+    }
+    traj_vel_set_ = traj_vel;
+    if (via_points_cnt_ >= 10 && (!xyzFitSmooth(xyz_fit_rate_) || !abcQuatSmooth(abc_smooth_window_)))
+    {
+        LogProducer::error("offline_planner","via points smooth failed");
+        return false;
+    }
+    // 4. calculate the path info
+    pathInfoCalc();
+    trajPlanWithPathInfo();
+    // trajTimeResampling();
+    // 5. resampling xyz trajectory with 0.001s
+    xyzTrajResampling();
+    // 6. resampling abc trajectory with 0.001s
+    abcTrajResampling();
+
+     /* the trajectory speed on begin and end are 0 */
+    Point init_pose_vel;
+    init_pose_vel.zero();
+    Point final_pose_vel;
+    final_pose_vel.zero();
+    Quaternion init_quat_vel;
+    init_quat_vel.zero();
+    Quaternion final_quat_vel;
+    final_quat_vel.zero();
+
+    if (spline(via_points_pose_, via_points_quat_,
+        init_pose_vel, final_pose_vel,
+        init_quat_vel, final_quat_vel,
+        via_points_time_new_, resampled_traj_) == false)
+    {
+        return false;
+    }
+
+    calcResampledPointDist();
+
+    return true;
 }
 
 bool GivenVelocityPlanner::viaPoints2Traj(vector<PoseEuler> via_points)
@@ -62,23 +136,13 @@ bool GivenVelocityPlanner::viaPoints2Traj(vector<PoseEuler> via_points)
     abcTrajResampling();
      /* the trajectory speed on begin and end are 0 */
     Point init_pose_vel;
-    init_pose_vel.x_ = 0.0;
-    init_pose_vel.y_ = 0.0;
-    init_pose_vel.z_ = 0.0;
+    init_pose_vel.zero();
     Point final_pose_vel;
-    final_pose_vel.x_ = 0.0;
-    final_pose_vel.y_ = 0.0;
-    final_pose_vel.z_ = 0.0;
+    final_pose_vel.zero();
     Quaternion init_quat_vel;
-    init_quat_vel.w_ = 0.0;
-    init_quat_vel.x_ = 0.0;
-    init_quat_vel.y_ = 0.0;
-    init_quat_vel.z_ = 0.0;
+    init_quat_vel.zero();
     Quaternion final_quat_vel;
-    final_quat_vel.w_ = 0.0;
-    final_quat_vel.x_ = 0.0;
-    final_quat_vel.y_ = 0.0;
-    final_quat_vel.z_ = 0.0;
+    final_quat_vel.zero();
 
     if (spline(via_points_pose_, via_points_quat_,
         init_pose_vel, final_pose_vel,
@@ -110,7 +174,7 @@ bool GivenVelocityPlanner::abcQuatSmooth(int32_t smooth_window)
 
     for (size_t idx = 0; idx < via_points_quat_.size(); ++idx)
     {
-        if (idx <= ((smooth_window - 1) / 2 - 1) || idx >= (via_points_quat_.size() - (smooth_window - 1) / 2))
+        if (idx <= (size_t)((smooth_window - 1) / 2 - 1) || idx >= (via_points_quat_.size() - (smooth_window - 1) / 2))
         {
             smooth_quat.push_back(via_points_quat_[idx]);
             continue;
@@ -188,6 +252,7 @@ bool GivenVelocityPlanner::pathInfoCalc(void)
         distance += getDistance(via_points_pose_[cnt+1], via_points_pose_[cnt]);
         via_points_dist_.push_back(distance);
     }
+    traj_time_set_ = distance / traj_vel_set_ * 1.5;
     acc_end_time_ = acc_time_ratio_ * traj_time_set_;
     even_end_time_ = acc_end_time_ + traj_time_set_ * (1 - (acc_time_ratio_ + dec_time_ratio_));
     dec_end_time_ = traj_time_set_;
@@ -223,6 +288,11 @@ bool GivenVelocityPlanner::trajPlanWithPathInfo(void)
         }
     }
     via_points_time_new_.back() = traj_time_set_;
+    // for(auto iter = via_points_time_new_.begin(); iter != via_points_time_new_.end(); ++iter)
+    // {
+    //     LogProducer::error("mc","####vp time new %lf", *iter);
+    // }
+
     return true;
 }
 
@@ -441,6 +511,7 @@ bool GivenVelocityPlanner::spline
         || via_points_time.size() != via_points_pose.size()
         || via_points_pose.size() <= 1)
     {
+        LogProducer::error("mc","spline factor size invalid pose=%ld, quat=%ld time=%ld", via_points_pose.size(), via_points_quat.size(), via_points_time.size());
         return false;
     }
 
@@ -631,6 +702,7 @@ bool GivenVelocityPlanner::spline
     }
     if (!inverse(H, points_cnts, inv_H))
     {
+        LogProducer::error("offline_planner", "inverse H failed");
         return false;
     }
 
@@ -813,3 +885,8 @@ bool GivenVelocityPlanner::spline
     return true;
 }
 
+void GivenVelocityPlanner::setLimit(const basic_alg::Joint &vel_limit, const basic_alg::Joint &acc_limit)
+{
+    vel_limit_ = vel_limit;
+    acc_limit_ = acc_limit;
+}

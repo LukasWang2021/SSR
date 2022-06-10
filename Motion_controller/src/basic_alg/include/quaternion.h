@@ -48,6 +48,7 @@ public:
     bool isEquivalent(const Euler& euler, double valve = 0.001) const;
     bool isEquivalent(const Quaternion& quaternion, double valve = 0.001) const;
     double norm();//获取四元数的模长
+    void zero();
     /**
     * @brief Reverse the quaternion expression.
     * @details Reverse all member variables of the quaternion object. Let x_=-x_, y_=-y_, z_=-z_, w_=-w_.\n

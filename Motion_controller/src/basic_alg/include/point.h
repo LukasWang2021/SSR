@@ -20,6 +20,7 @@ public:
     bool isParallel(const Point& point, double valve = 0.001) const;
     bool isVertical(const Point& point, double valve = 0.001) const;
     void reverse();
+    void zero();
     double distanceToPoint(const Point& point) const;
     double norm() const;
     bool normalize(double valve = 0.001);

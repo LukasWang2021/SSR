@@ -1240,10 +1240,10 @@ static inline Euler Quaternion2Euler(const Quaternion &quaternion)
     Euler euler;
     Quaternion q(quaternion);
 
-    if (fabs(sqrt(q.w_ * q.w_ + q.x_ * q.x_ + q.y_ * q.y_ + q.z_ * q.z_) - 1) > 0.0005)
-    {
-        normalizeQuaternion(q);
-    }
+    // if (fabs(sqrt(q.w_ * q.w_ + q.x_ * q.x_ + q.y_ * q.y_ + q.z_ * q.z_) - 1) > 0.0005)
+    // {
+    normalizeQuaternion(q);
+    // }
     
     euler.c_ = atan2((q.w_ * q.x_ + q.y_ * q.z_) * 2, 1 - (q.x_ * q.x_ + q.y_ * q.y_) * 2);
     euler.b_ = asin((q.w_ * q.y_ - q.z_ * q.x_) * 2);

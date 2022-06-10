@@ -768,9 +768,9 @@ void TpComm::handleResponse0x0000C4D9(std::vector<TpRequestResponse>::iterator& 
     }
 }
 
-void TpComm::handleResponse0x0000E479(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size)
+void TpComm::handleResponse0x0000A063(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size)
 {
-    if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_String_fields, task->response_data_ptr, send_buffer_size))
+    if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_fields, task->response_data_ptr, send_buffer_size))
     {
         LogProducer::error("comm", "handleResponse: failed to encode response package");// send
     }
@@ -780,6 +780,22 @@ void TpComm::handleResponse0x0000E479(std::vector<TpRequestResponse>::iterator& 
     }
     if(task->response_data_ptr != NULL)
     {
+        delete (ResponseMessageType_Uint64*)task->response_data_ptr;
+    }
+}
+
+void TpComm::handleResponse0x0000E479(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size)
+{
+    if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_String_fields, task->response_data_ptr, send_buffer_size))
+    {
+        LogProducer::error("comm", "handleResponse: failed to encode response package");// send
+    }
+    if(task->request_data_ptr != NULL)
+    {
+        delete (RequestMessageType_String_Double*)task->request_data_ptr;
+    }
+    if(task->response_data_ptr != NULL)
+    {
         delete (ResponseMessageType_Uint64_String*)task->response_data_ptr;
     }
-}		
+}

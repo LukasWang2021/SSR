@@ -212,39 +212,60 @@ ErrorCode BaseGroup::moveOfflineTrajectory(void)
     return SUCCESS;
 }
 
-ErrorCode BaseGroup::planOfflineTrajectory(vector<PoseEuler> via_points, string file_name)
+ErrorCode BaseGroup::setOfflineViaPoints(const vector<PoseEuler> &via_points, bool is_new)
 {
-    if(!offline_planner_.viaPoints2Traj(via_points))
+    offline_planner_.setViaPoints(via_points, is_new);
+    return 0;
+}
+
+ErrorCode BaseGroup::planOfflineTrajectory(string traj_name, double traj_vel)
+{
+    LogProducer::info("BaseGroup","start plan");
+
+    if(!offline_planner_.viaPoints2Traj(traj_vel))
     {
-        LogProducer::error("motion_control","plan via points to trajectory failed");
+        LogProducer::error("BaseGroup","transfer via points to trajectory failed");
         return MC_VP2TRAJ_PLAN_FAILED;
     }
+    LogProducer::info("BaseGroup","finish plan");
+
     vector<PoseEuler> xyz_traj = offline_planner_.getResampledTraj();
+    LogProducer::info("BaseGroup","trajectory size %ld", xyz_traj.size());
 
     Posture posture = {1, 1, 1, 0};
     JointState joint_state;
+    joint_state.alpha.zero();
+    joint_state.angle.zero();
+    joint_state.jerk.zero();
+    joint_state.omega.zero();
+    joint_state.torque.zero();
     JointState last_state;
     double traj_time = 0.0;
-    std::ofstream traj_out_file(file_name, ios::out);
+    std::ofstream traj_out_file(traj_name, ios::out);
     // write the traj file head
-    traj_out_file << 6 << " " << 0.001 << " " << xyz_traj.size() << "\n";
+    traj_out_file << getNumberOfJoint() << " " << 0.001 << " " << xyz_traj.size() << "\n";
+    traj_out_file << fixed << setprecision(10);
 
     for(auto iter = xyz_traj.begin(); iter != xyz_traj.end(); ++iter)
     {
         if(!kinematics_ptr_->doIK(*iter, posture, joint_state.angle))
         {
+            LogProducer::error("BaseGroup", "offline trajectory point IK failed");
+            LogProducer::error("BaseGroup", "failed point(%lf, %lf, %lf, %lf, %lf, %lf) count %ld", 
+            iter->point_.x_, iter->point_.y_, iter->point_.z_, 
+            iter->euler_.a_, iter->euler_.b_, iter->euler_.c_, 
+            iter - xyz_traj.begin());
             return MC_VP2TRAJ_PLAN_FAILED;
         }
-        last_state = joint_state;
         if(iter == xyz_traj.begin())
         {
             // write the first joint angle to file
-            traj_out_file << setprecision(10) 
+            traj_out_file
             << joint_state.angle.j1_ << " " << joint_state.angle.j2_ << " " 
             << joint_state.angle.j3_ << " " << joint_state.angle.j4_ << " " 
             << joint_state.angle.j5_ << " " << joint_state.angle.j6_ << "\n";
             // write the first joint state to file
-            traj_out_file << setprecision(10) << traj_time << " " 
+            traj_out_file
             << joint_state.angle.j1_ << " " << joint_state.angle.j2_ << " " 
             << joint_state.angle.j3_ << " " << joint_state.angle.j4_ << " " 
             << joint_state.angle.j5_ << " " << joint_state.angle.j6_ << " "
@@ -256,9 +277,9 @@ ErrorCode BaseGroup::planOfflineTrajectory(vector<PoseEuler> via_points, string 
         else
         {
             // calc the angle speed
-            joint_state.omega = (joint_state.angle - last_state.angle);
+            joint_state.omega = joint_state.angle - last_state.angle;
             // write the first joint state to file
-            traj_out_file << setprecision(10) << traj_time << " " 
+            traj_out_file
             << joint_state.angle.j1_ << " " << joint_state.angle.j2_ << " " 
             << joint_state.angle.j3_ << " " << joint_state.angle.j4_ << " " 
             << joint_state.angle.j5_ << " " << joint_state.angle.j6_ << " "
@@ -275,7 +296,8 @@ ErrorCode BaseGroup::planOfflineTrajectory(vector<PoseEuler> via_points, string 
             << joint_state.torque.j3_ << " " << joint_state.torque.j4_ << " " 
             << joint_state.torque.j5_ << " " << joint_state.torque.j6_ << "\n";
         }
-        traj_time += 0.001;
+        origin_trajectory_.push_back(joint_state);
+        last_state = joint_state;
     }
     traj_out_file.close();
 
@@ -284,17 +306,43 @@ ErrorCode BaseGroup::planOfflineTrajectory(vector<PoseEuler> via_points, string 
 
 ErrorCode BaseGroup::planOfflinePause(void)
 {
-    // getOfflineCacheSize();
-    // offline_traj_point_readCnt;
-    // offline_planner_.trajPausePlan(offline_traj_point_readCnt);
+    pthread_mutex_lock(&offline_mutex_);
+    uint32_t left_points = getOfflineCacheSize(); // local cache left points
+    pthread_mutex_unlock(&offline_mutex_);
+    // offline plan
+    offline_planner_.trajPausePlan(offline_traj_point_readCnt, 0, 0, 0, 0);
+    vector<PoseEuler> pause_traj = offline_planner_.getPauseTraj();
+
+    Posture posture = {1, 1, 1, 0};
+    JointState joint_state;
+    JointState last_state = origin_trajectory_[offline_traj_point_readCnt];
+    joint_state.alpha.zero();
+    joint_state.angle.zero();
+    joint_state.jerk.zero();
+    joint_state.omega.zero();
+    joint_state.torque.zero();
+    pause_trajectory_.clear();
+
+    for(auto iter = pause_traj.begin(); iter < pause_traj.end(); ++iter)
+    {
+        if(!kinematics_ptr_->doIK(*iter, posture, joint_state.angle))
+        {
+            LogProducer::error("BaseGroup", "offline trajectory pause point IK failed");
+            LogProducer::error("BaseGroup", "failed point(%lf, %lf, %lf, %lf, %lf, %lf)", 
+            iter->point_.x_, iter->point_.y_, iter->point_.z_, iter->euler_.a_, iter->euler_.b_, iter->euler_.c_);
+            // need error stop
+            return -1;
+        }
+        joint_state.omega = last_state.angle - joint_state.angle;
+        pause_trajectory_.push_back(joint_state);
+        last_state = joint_state;
+    }
+
     return 0;
 }
 
 ErrorCode BaseGroup::planOfflineResume(void)
 {
-    // getOfflineCacheSize();
-    // offline_traj_point_readCnt;
-    // offline_planner_.trajPausePlan(offline_traj_point_readCnt);
     return 0;
 }
 
@@ -399,6 +447,11 @@ bool BaseGroup::fillOfflineCache(void)
     return true;
 }
 
+bool BaseGroup::fillOfflinePauseCache(void)
+{
+    return true;
+}
+
 ErrorCode BaseGroup::pickPointsFromOfflineCache(TrajectoryPoint *points, size_t &length)
 {
     ErrorCode err = SUCCESS;
@@ -470,6 +523,10 @@ ErrorCode BaseGroup::sendOfflineTrajectoryFlow(void)
             if (mc_state_ == OFFLINE)
             {
                 offline_to_standby_request_ = true;
+            }
+            else if(mc_state_ == PAUSE_OFFLINE)
+            {
+                offline_to_pause_request_ = true;
             }
         }
     }

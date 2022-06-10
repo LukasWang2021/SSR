@@ -57,9 +57,10 @@ public:
     ErrorCode receive_T_matrix_data(int status, double * p_marixArray);
     void xzc_funTest();
     ErrorCode setOfflineTrajectory(const std::string &offline_trajectory);
+    ErrorCode setOfflineViaPoints(const std::vector<PoseEuler> &via_points, bool is_new);
+    ErrorCode planOfflineTrajectory(string traj_name, double traj_vel);
     ErrorCode prepareOfflineTrajectory(void);
     ErrorCode moveOfflineTrajectory(void);
-    ErrorCode planOfflineTrajectory(std::vector<PoseEuler> via_points);
 
     // API for zero offset and calibrator
     ErrorCode setOffset(size_t index, double offset);

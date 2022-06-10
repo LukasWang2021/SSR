@@ -1524,35 +1524,49 @@ void ControllerRpc::handleRpc0x0000C4D9(void* request_data_ptr, void* response_d
 
 }
 
+//"/rpc/motion_control/axis_group/sendViaPoints"	
+void ControllerRpc::handleRpc0x0000A063(void* request_data_ptr, void* response_data_ptr)
+{
+    RequestMessageType_Int32_DoubleList* rq_data_ptr = static_cast<RequestMessageType_Int32_DoubleList*>(request_data_ptr);
+    ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr); 
+
+    PoseEuler pos;
+    vector<PoseEuler> vps; // via points
+    LogProducer::info("rpc", "recieved via point count %d", rq_data_ptr->data2.data_count);
+    for(uint32_t i = 0; i < rq_data_ptr->data2.data_count; i+=6)
+    {
+        // pos.point_.x_ = rq_data_ptr->data2.data[i+0];
+        // pos.point_.y_ = rq_data_ptr->data2.data[i+1];
+        // pos.point_.z_ = rq_data_ptr->data2.data[i+2];
+        // pos.euler_.a_ = rq_data_ptr->data2.data[i+3];
+        // pos.euler_.b_ = rq_data_ptr->data2.data[i+4];
+        // pos.euler_.c_ = rq_data_ptr->data2.data[i+5];
+        LogProducer::info("rpc", "pos point(%lf,%lf,%lf,%lf,%lf,%lf)", 
+        pos.point_.x_ = rq_data_ptr->data2.data[i+0], pos.point_.y_ = rq_data_ptr->data2.data[i+1], 
+        pos.point_.z_ = rq_data_ptr->data2.data[i+2], pos.euler_.a_ = rq_data_ptr->data2.data[i+3], 
+        pos.euler_.b_ = rq_data_ptr->data2.data[i+4], pos.euler_.c_ = rq_data_ptr->data2.data[i+5]);
+        
+        vps.push_back(pos);
+    }
+    bool is_new = rq_data_ptr->data1.data == 1 ? true : false;
+    LogProducer::info("rpc", "new traj via points %s", is_new ? "true" : "false");
+    rs_data_ptr->data.data = group_ptr_[0]->setOfflineViaPoints(vps, is_new);
+    if (rs_data_ptr->data.data == SUCCESS)
+        LogProducer::info("rpc", "/rpc/motion_control/axis_group/sendViaPoints for group[0] success");
+    else
+        LogProducer::error("rpc", "/rpc/motion_control/axis_group/sendViaPoints for group[0] failed. Error = 0x%llx", rs_data_ptr->data.data);
+}
+
 //"/rpc/motion_control/axis_group/viaPointsToTrajWithGivenVelocity"	
 void ControllerRpc::handleRpc0x0000E479(void* request_data_ptr, void* response_data_ptr)
 {
-    RequestMessageType_Int32_DoubleList* rq_data_ptr = static_cast<RequestMessageType_Int32_DoubleList*>(request_data_ptr);
+    RequestMessageType_String_Double* rq_data_ptr = static_cast<RequestMessageType_String_Double*>(request_data_ptr);
     ResponseMessageType_Uint64_String* rs_data_ptr = static_cast<ResponseMessageType_Uint64_String*>(response_data_ptr); 
 
-    bool in_position = false;
-    GroupStatus_e status = GROUP_STATUS_UNKNOWN;
-    group_ptr_[0]->mcGroupReadStatus(status, in_position);
-    if (status != GROUP_STATUS_STANDBY)
-    {
-        rs_data_ptr->error_code.data = CONTROLLER_INVALID_OPERATION;
-        return;
-    }
-    vector<PoseEuler> vps;
-    PoseEuler pos;
-    for(uint32_t i = 0; i < rq_data_ptr->data2.data_count; i+=6)
-    {
-        pos.point_.x_ = rq_data_ptr->data2.data[i+0];
-        pos.point_.y_ = rq_data_ptr->data2.data[i+1];
-        pos.point_.z_ = rq_data_ptr->data2.data[i+2];
-        pos.euler_.a_ = rq_data_ptr->data2.data[i+3];
-        pos.euler_.b_ = rq_data_ptr->data2.data[i+4];
-        pos.euler_.c_ = rq_data_ptr->data2.data[i+5];
-        vps.push_back(pos);
-    }
-    rs_data_ptr->error_code.data = group_ptr_[0]->planOfflineTrajectory(vps);
-    if (rs_data_ptr->data.data == SUCCESS)
-        LogProducer::info("rpc", "/rpc/motion_control/axis_group/moveOfflineTrajectory for group[0] success");
+    rs_data_ptr->error_code.data = group_ptr_[0]->planOfflineTrajectory(rq_data_ptr->data1.data, rq_data_ptr->data2.data);
+
+    if (rs_data_ptr->error_code.data == SUCCESS)
+        LogProducer::info("rpc", "/rpc/motion_control/axis_group/viaPointsToTrajWithGivenVelocity for group[0] success");
     else
-        LogProducer::error("rpc", "/rpc/motion_control/axis_group/moveOfflineTrajectory for group[0] failed. Error = 0x%llx", rs_data_ptr->data.data);
+        LogProducer::error("rpc", "/rpc/motion_control/axis_group/viaPointsToTrajWithGivenVelocity for group[0] failed. Error = 0x%llx", rs_data_ptr->error_code.data);
 }

@@ -366,6 +366,24 @@ void BaseGroup::doStateMachine(void)
             break;
         }
 
+        case OFFLINE_TO_PAUSING:
+        {
+            ErrorCode err = planOfflinePause();
+
+            if (err != SUCCESS)
+            {
+                mc_state_ = OFFLINE;
+                LogProducer::info("mc_sm","MC-state switch to MC_OFFLINE.");
+                reportError(err);
+            }
+            else
+            {
+                mc_state_ = PAUSE_OFFLINE;
+                LogProducer::info("mc_sm","MC-state switch to MC_PAUSING.");
+            }
+            break;
+        }
+        
         case PAUSE_OFFLINE:
         {
             mc_state_ = OFFLINE_TO_STANDBY;
@@ -628,26 +646,6 @@ void BaseGroup::doStateMachine(void)
             }
             */
 
-            break;
-        }
-
-        case OFFLINE_TO_PAUSING:
-        {
-            // TODO get traj cache
-            
-            ErrorCode err = planOfflinePause();
-
-            if (err != SUCCESS)
-            {
-                mc_state_ = OFFLINE;
-                LogProducer::info("mc_sm","MC-state switch to MC_OFFLINE.");
-                reportError(err);
-            }
-            else
-            {
-                mc_state_ = PAUSING;
-                LogProducer::info("mc_sm","MC-state switch to MC_PAUSING.");
-            }
             break;
         }
 

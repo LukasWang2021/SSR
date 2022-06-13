@@ -15,6 +15,8 @@ ControllerConfig::ControllerConfig():
     planner_thread_priority_(60),
     priority_thread_priority_(70),
     realtime_thread_priority_(80),
+    rpc_thread_priority_(55), 
+    online_traj_thread_priority_(55), 
     dio_exist_(false),
     safety_exist_(false),
     file_path_(COMPONENT_PARAM_FILE_DIR)

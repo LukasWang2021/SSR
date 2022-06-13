@@ -27,9 +27,9 @@ using namespace group_space;
 using namespace basic_alg;
 using namespace base_space;
 using namespace log_space;
-double OnlinePointBuf[4800] = {0};//200*24==4800 在线轨迹点数据(轴角弧度位置,角速度,角加速度,力矩)
+double OnlinePointBuf[7200] = {0};//300*24==7200 在线轨迹点数据(轴角弧度位置,角速度,角加速度,力矩)
 int OnlinePointBuf_pointNum=0;
-int OnlinePointLevelBuf[200]={0};
+int OnlinePointLevelBuf[300]={0};
 bool online_trajectory_point_data_update_flag = false;//在线轨迹点数据更新标记
 bool enable_send_online_fifoPoint_flag = false;
 int online_fifo_pointCnt = 0;//在线轨迹缓存队列里的点数
@@ -463,7 +463,7 @@ ErrorCode BaseGroup::fillOnlineFIFO(void)
     if(online_fifo_pointCnt > 150)//300-150=150 如果剩余空间不够150点存储
     {
         pthread_mutex_unlock(&online_traj_mutex_);
-        printf("online_fifo_error--->online_fifo_pointCnt > 150 !!!\n");
+        printf("online_fifo_error--->online_fifo_pointCnt=%d > 150 !!!\n",online_fifo_pointCnt);
         return 1;
     }
     //运控状态机处于在线轨迹下发状态且在线轨迹点数据已更新(避免重复填数据)
@@ -1055,13 +1055,18 @@ ErrorCode BaseGroup::sendOnlineTrajectoryFlow(void)
                 {
                     enable_send_online_fifoPoint_flag = false;
                 }
-                
+                /*
                 LogProducer::info("barecore_fillPointCache","%d) level=%d time_stamp=%.4f (%.6f,%.6f,%.6f,%.6f,%.6f,%.6f, %.6f,%.6f,%.6f,%.6f,%.6f,%.6f) onlineFifoCnt=%d",
                 i+1,points[i].level, points[i].time_stamp, 
                 points[i].state.angle.j1_, points[i].state.angle.j2_, points[i].state.angle.j3_, 
                 points[i].state.angle.j4_, points[i].state.angle.j5_, points[i].state.angle.j6_,
                 points[i].state.omega.j1_, points[i].state.omega.j2_, points[i].state.omega.j3_, 
                 points[i].state.omega.j4_, points[i].state.omega.j5_, points[i].state.omega.j6_, 
+                online_fifo_pointCnt);*/
+                LogProducer::info("barecore_fillPointCache","%d) level=%d time_stamp=%.4f (%.6f,%.6f,%.6f,%.6f,%.6f,%.6f) onlineFifoCnt=%d",
+                i+1,points[i].level, points[i].time_stamp, 
+                points[i].state.angle.j1_, points[i].state.angle.j2_, points[i].state.angle.j3_, 
+                points[i].state.angle.j4_, points[i].state.angle.j5_, points[i].state.angle.j6_,
                 online_fifo_pointCnt);
             }
         }

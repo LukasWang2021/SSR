@@ -1,11 +1,5 @@
 max_jerk_num: 2
 inverse_dynamics_check: true
 adjust_acc_by_vel: true
-sample_time : 0.002 #touch采样时间间隔
-generate_traj_interval  : 0.001 #生成轨迹间隔
-N_step_P : 5  #计算位置-取VP点的采样点间隔--->每5个采样点取一个xyz向量  范围<=5
-N_step_Q : 25 #计算姿态-取VQ的采样点间隔--->每25个采样点取一个abc向量
-trj_ratio: 1.0 #机械臂移动距离与touch移动距离的比例系数,    即机械臂移动距离=K*touch移动距离
-online_receive_Tmatrix_buffPack_len : 50  #运控接收来自Touch T矩阵数据包的缓存包数量
 
 #END

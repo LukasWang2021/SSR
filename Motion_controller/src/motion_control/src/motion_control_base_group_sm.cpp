@@ -363,7 +363,9 @@ void BaseGroup::doStateMachine(void)
                 
                 LogProducer::warn("mc_sm","MC-state switch to MC__STANDBY");
             }
-        }break;
+            break;
+        }
+
         case PAUSE:
         {
             if (pause_to_auto_request_)
@@ -414,7 +416,6 @@ void BaseGroup::doStateMachine(void)
                 pause_to_manual_request_ = false;
                 LogProducer::warn("mc_sm","MC-state switch to MC_PAUSE_TO_PAUSE_MANUAL");
             }
-
             break;
         }
 

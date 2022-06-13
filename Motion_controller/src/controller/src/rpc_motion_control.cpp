@@ -1170,7 +1170,30 @@ void ControllerRpc::handleRpc0x00008A31(void* request_data_ptr, void* response_d
     group_ptr_[group_id]->moveOnlineTrajectory();//检查运控状态是否处于ONLINE状态,如果不是则切换到ONLINE状态并初始化
     //rs_data_ptr->data.data = group_ptr_[group_id]->Fir_Bspline_algorithm_test2();
     
-    int TrajPointStatus=static_cast<int>(rq_data_ptr->data2.data[0]);
+    int TrajPointStatus=static_cast<int>(rq_data_ptr->data2.data[0]);//取第一个点的状态
+    
+    for(int i=0;i<1;i++)
+    {
+        LogProducer::info("rpc-8A31", "\n%lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf", 
+        rq_data_ptr->data2.data[i*17+0],//status
+        rq_data_ptr->data2.data[i*17+1],
+        rq_data_ptr->data2.data[i*17+2],
+        rq_data_ptr->data2.data[i*17+3],
+        rq_data_ptr->data2.data[i*17+4],
+        rq_data_ptr->data2.data[i*17+5],
+        rq_data_ptr->data2.data[i*17+6],
+        rq_data_ptr->data2.data[i*17+7],
+        rq_data_ptr->data2.data[i*17+8],
+        rq_data_ptr->data2.data[i*17+9],
+        rq_data_ptr->data2.data[i*17+10],
+        rq_data_ptr->data2.data[i*17+11],
+        rq_data_ptr->data2.data[i*17+12],
+        rq_data_ptr->data2.data[i*17+13],
+        rq_data_ptr->data2.data[i*17+14],
+        rq_data_ptr->data2.data[i*17+15],
+        rq_data_ptr->data2.data[i*17+16]);
+    }
+    
     rs_data_ptr->data.data = group_ptr_[group_id]->setOnlineVpointCache(TrajPointStatus, rq_data_ptr->data2.data);
             //group_ptr_[group_id]->xzc_funTest();
     /*
@@ -1516,7 +1539,7 @@ void ControllerRpc::handleRpc0x000051E9(void* request_data_ptr, void* response_d
         return;
     }
 
-    rs_data_ptr->data.data = group_ptr_[0]->prepairOfflineTrajectory();
+    rs_data_ptr->data.data = group_ptr_[0]->prepareOfflineTrajectory();
     if (rs_data_ptr->data.data == SUCCESS)
         LogProducer::info("rpc", "/rpc/motion_control/axis_group/PrepareOfflineTrajectory for group[0] success");
     else

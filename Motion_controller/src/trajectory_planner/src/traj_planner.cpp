@@ -378,6 +378,7 @@ ErrorCode TrajectoryPlanner::checkTrajectory(void)
 	return SUCCESS;
 }
 
+
 ErrorCode TrajectoryPlanner::planLineTrajectory(double vel_ratio, double acc_ratio)
 {
 	TransMatrix matrix;

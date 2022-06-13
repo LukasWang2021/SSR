@@ -2,7 +2,7 @@
 	> File Name: motion_plan_basic_function.h
 	> Author:
 	> Mail:
-	> Created Time: 2017年12月07日 星期四 16时41分13秒
+	> Created Time: 
  ************************************************************************/
 
 #ifndef BASIC_ALG_H

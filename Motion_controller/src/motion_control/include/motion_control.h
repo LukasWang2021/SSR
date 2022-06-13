@@ -11,7 +11,6 @@
 #include "log_manager_producer.h"
 #include "common_error_code.h"
 #include "group.h"
-#include "sem_help.h"
 
 namespace group_space
 {
@@ -54,16 +53,13 @@ public:
     ErrorCode setOnlinePointBufptr();
     ErrorCode setOnlineTrajectoryRatio(double ratio);
     ErrorCode setOnlineVpointCache(int status, double * p_marixArray);
-    ErrorCode takeOnlineTrajSem(){online_traj_sem_.take();}
-    ErrorCode giveOnlineTrajSem(){online_traj_sem_.give();}
-
     // API for off line trajectory
     ErrorCode convertEulerTraj2JointTraj(const std::string &offline_euler_trajectory_fileName);
     ErrorCode Fir_Bspline_algorithm_test2(void);
     ErrorCode receive_T_matrix_data(int status, double * p_marixArray);
     void xzc_funTest();
     ErrorCode setOfflineTrajectory(const std::string &offline_trajectory);
-    ErrorCode prepairOfflineTrajectory(void);
+    ErrorCode prepareOfflineTrajectory(void);
     ErrorCode moveOfflineTrajectory(void);
 
     // API for zero offset and calibrator
@@ -192,7 +188,8 @@ private:
     pthread_mutex_t  instruction_mutex_;
     uint32_t instructions_recv_counter_;
     uint32_t instructions_handle_counter_;
-    base_space::SemHelp online_traj_sem_;
+    //base_space::SemHelp online_traj_sem_;
+    std::mutex online_trajData_mutex_;
     double *online_vp_cache_;
     int32_t online_vp_cache_state_;
     int32_t online_vp_status_;

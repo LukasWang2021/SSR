@@ -21,8 +21,9 @@ using namespace group_space;
 using namespace fst_ctrl;
 using namespace base_space;
 using namespace log_space;
-using namespace group_space;
 
+double OnlinePointJointBuf[1200] = {0};//6*200
+int online_trjPointCnt = 0;
 
 void MotionControl::ringCommonTask(void)
 {
@@ -42,23 +43,30 @@ void MotionControl::ringPriorityTask(void)
 void MotionControl::ringOnlineTrajTask(void)
 {
     if(online_vp_cache_state_ != 1) return ;// means no vp recieved
-
-    online_traj_sem_.take();
+    online_vp_cache_state_ = 0; //reset mark means no vp recieved
+    //online_traj_sem_.take();
+    online_trajData_mutex_.lock();
     //int status=0;
-    double vp_cache[91];
-    memcpy(vp_cache, online_vp_cache_+online_trj_planner_ptr->read_TmatrixPackCnt*91*sizeof(double), 91*sizeof(double));
+    double vp_cache[81];
+    //printf("ringOnlineTrajTask online_trj_planner_ptr->read_TmatrixPackCnt=%d|%d\n",online_trj_planner_ptr->read_TmatrixPackCnt,online_trj_planner_ptr->online_alg_params_.online_receive_Tmatrix_buffPack_len);
+    memcpy(vp_cache, online_vp_cache_+online_trj_planner_ptr->read_TmatrixPackCnt*81*sizeof(double), 81*sizeof(double));
     online_trj_planner_ptr->read_TmatrixPackCnt++;
-    if(online_trj_planner_ptr->read_TmatrixPackCnt > online_trj_planner_ptr->get_onlineRecvTmatrixBuffPackLen())
+    //if(online_trj_planner_ptr->read_TmatrixPackCnt > online_trj_planner_ptr->get_onlineRecvTmatrixBuffPackLen())
+    if(online_trj_planner_ptr->read_TmatrixPackCnt > 30)
     {
         online_trj_planner_ptr->read_TmatrixPackCnt=0;
     }
-    receive_T_matrix_data((int)vp_cache[0], vp_cache);
+    receive_T_matrix_data(vp_cache[0],vp_cache);
+    //printf("ringOnlineTrajTask--receive_T_matrix_data\n");
     setOnlinePointBufptr();
+    //printf("ringOnlineTrajTask--setOnlinePointBufptr\n");
     if(online_trj_planner_ptr->read_TmatrixPackCnt == online_trj_planner_ptr->receive_TmatrixPackCnt)
     {
-        online_vp_cache_state_ = 0; //reset mark means no vp recieved
+        online_trj_planner_ptr->read_TmatrixPackCnt = 0;
+        online_trj_planner_ptr->receive_TmatrixPackCnt=0;
     }
-    online_traj_sem_.give();
+    //online_traj_sem_.give();
+    online_trajData_mutex_.unlock();
 }
 
 void MotionControl::ringPlannerTask(void)
@@ -485,41 +493,63 @@ ErrorCode MotionControl::setOnlineTrajectoryRatio(double ratio)
 ErrorCode MotionControl::setOnlineVpointCache(int status, double * p_marixArray)
 {
     assert(p_marixArray != NULL);
-    online_traj_sem_.take();
+    ErrorCode ret_code = 1;
+    //printf("xzc-debug:OnlineTraj---p1\n");
+    //online_traj_sem_.take();
+    online_trajData_mutex_.lock();
+    //printf("xzc-debug:OnlineTraj---p2\n");
     online_vp_status_ = status;
-    if(online_vp_status_ == 0)
+    if(online_vp_status_ == 0)//判断该包数据中第一个点是否为起点(起点一定在某包数据中的第一个点)
     {
         online_trj_planner_ptr->receive_TmatrixPackCnt = 0;
         online_trj_planner_ptr->read_TmatrixPackCnt = 0;
+        printf("sample_time=%lf,generate_interval=%lf,N_step_P=%d,N_step_Q=%d,N_interpP=%d,N_interpQ=%d,trj_ratio=%lf,recvTmatrix_buffPackLen=%d\n",
+            online_trj_planner_ptr->online_alg_params_.sample_time,
+            online_trj_planner_ptr->online_alg_params_.generate_traj_interval,
+            online_trj_planner_ptr->online_alg_params_.N_step_P,
+            online_trj_planner_ptr->online_alg_params_.N_step_Q,
+            online_trj_planner_ptr->online_alg_params_.N_interp_P,
+            online_trj_planner_ptr->online_alg_params_.N_interp_Q,
+            online_trj_planner_ptr->online_alg_params_.trj_ratio,
+            online_trj_planner_ptr->online_alg_params_.online_receive_Tmatrix_buffPack_len
+        );
     }
-    memcpy(online_vp_cache_ + online_trj_planner_ptr->receive_TmatrixPackCnt*91*sizeof(double), p_marixArray, 91*sizeof(double));//1+5*16=91
+    memcpy(online_vp_cache_ + online_trj_planner_ptr->receive_TmatrixPackCnt*81*sizeof(double), p_marixArray, 81*sizeof(double));//1+5*16=81 
+    //printf("setOnlineVpointCache online_trj_planner_ptr->receive_TmatrixPackCnt=%d\n",online_trj_planner_ptr->receive_TmatrixPackCnt);
     online_trj_planner_ptr->receive_TmatrixPackCnt+=1;
-    if(online_trj_planner_ptr->receive_TmatrixPackCnt > online_trj_planner_ptr->get_onlineRecvTmatrixBuffPackLen())
+    //if(online_trj_planner_ptr->receive_TmatrixPackCnt > online_trj_planner_ptr->get_onlineRecvTmatrixBuffPackLen())
+    if(online_trj_planner_ptr->receive_TmatrixPackCnt > 30)
     {
         online_trj_planner_ptr->receive_TmatrixPackCnt = 0;
     }
     online_vp_cache_state_ = 1;
-    online_traj_sem_.give();
+    //online_traj_sem_.give();
+    ret_code = SUCCESS;
+    online_trajData_mutex_.unlock();
+    //printf("xzc-debug:OnlineTraj---p3\n");
+    return ret_code;
 }
+
+
 ErrorCode MotionControl::receive_T_matrix_data(int status, double * p_marixArray)
 {
-    static uint64_t iterCnt=0;//进入函数的迭代次数
+    static uint64_t iterCnt=0;//进入当前函数的迭代次数
     static Matrix44 T_r0_R;
     static Matrix44 Touch_h0_v;
     Matrix44 Touch_ht_v,T_res;
     int T_matrix_len=0;
-    double k = online_trj_planner_ptr->get_online_trj_ratio();
-    //double k = 1.0;//机械臂移动距离与touch移动距离的比例系数,    即机械臂移动距离=K*touch移动距离
+    //double k = online_trj_planner_ptr->online_alg_params_.trj_ratio; 
+    double k = 1;//机械臂移动距离与touch移动距离的比例系数,    即机械臂移动距离=K*touch移动距离
     Vector3 res_xyz,res_abc;
     PoseEuler StartPositionPose;
     TransMatrix start_trans_matrix;
 //cout << "status="<<status<<endl;
     double temp_swap=0;
-    iterCnt++;
-    if(status == 0)
+    iterCnt++;//收包次数
+    if(status == 0)//起点
     {
         group_ptr_->setOnlineTrjFirstPointCondition();
-        online_trj_planner_ptr->online_trjPointCnt = 0;
+        online_trjPointCnt = 0;
         iterCnt=1;
         StartPositionPose = getCurrentPose();
         //StartPositionPose.print("StartPositionPose");
@@ -560,7 +590,7 @@ ErrorCode MotionControl::receive_T_matrix_data(int status, double * p_marixArray
         T_matrix_len=4;
 //Touch_h0_v.print("Touch_h0_v");
 
-        online_trj_planner_ptr->online_trjPointCnt += online_trj_planner_ptr->traj_on_FIR_Bspline(res_xyz,res_abc,0,online_trj_planner_ptr->online_trjPointCnt);//起点
+        online_trjPointCnt += online_trj_planner_ptr->traj_on_FIR_Bspline(res_xyz,res_abc,0,online_trjPointCnt);//起点
         status = 1;
     }
     else
@@ -581,17 +611,17 @@ ErrorCode MotionControl::receive_T_matrix_data(int status, double * p_marixArray
         online_trj_planner_ptr->rtm_r2xyzabc(T_res,res_xyz,res_abc);
         //temp_swap = res_abc.x_; res_abc.x_=res_abc.z_; res_abc.z_ = temp_swap;//a<--->c 
 //LogProducer::info("xyz2alg","#%lf,%lf,%lf,%lf,%lf,%lf",res_xyz.x_,res_xyz.y_,res_xyz.z_,res_abc.x_,res_abc.y_,res_abc.z_);
-        if(status == 1)
+        if(status == 1)//中间途经点
         {
-            online_trj_planner_ptr->online_trjPointCnt += online_trj_planner_ptr->traj_on_FIR_Bspline(res_xyz,res_abc,1,online_trj_planner_ptr->online_trjPointCnt);//途中点
+            online_trjPointCnt += online_trj_planner_ptr->traj_on_FIR_Bspline(res_xyz,res_abc,1,online_trjPointCnt);//途中点
         }
-        else if(status == 2)
+        else if(status == 2)//终点
         {
             if(i<4)
             {
-                online_trj_planner_ptr->online_trjPointCnt += online_trj_planner_ptr->traj_on_FIR_Bspline(res_xyz,res_abc,1,online_trj_planner_ptr->online_trjPointCnt);//途中点
+                online_trjPointCnt += online_trj_planner_ptr->traj_on_FIR_Bspline(res_xyz,res_abc,1,online_trjPointCnt);//途中点
             }
-            else if(i == 4)
+            else if(i == 4)//一包数据中五个点的最后一个
             {
                 while(iterCnt%5 !=0)//每次进入函数传入5个T矩阵, 对应5个途经点,遇到提前结束的情况, 重复终点凑齐刚好结束的情况
                 {
@@ -601,21 +631,26 @@ ErrorCode MotionControl::receive_T_matrix_data(int status, double * p_marixArray
                     {
                         for(int j=0;j<5;j++)
                         {
-                            online_trj_planner_ptr->online_trjPointCnt += online_trj_planner_ptr->traj_on_FIR_Bspline(res_xyz,res_abc,1,online_trj_planner_ptr->online_trjPointCnt);///继续迭代途中点
-                            printf("------------>>>>>>>>>online_trjPointCnt=%d\n",online_trj_planner_ptr->online_trjPointCnt);
+                            online_trjPointCnt += online_trj_planner_ptr->traj_on_FIR_Bspline(res_xyz,res_abc,1,online_trjPointCnt);///继续迭代途中点
+                            printf("------------>>>>>>>>>online_trjPointCnt=%d\n",online_trjPointCnt);
                         }  
                     }
                     else
                     {
                         for(int j=0;j<4;j++)
                         {
-                            online_trj_planner_ptr->online_trjPointCnt += online_trj_planner_ptr->traj_on_FIR_Bspline(res_xyz,res_abc,1,online_trj_planner_ptr->online_trjPointCnt);///继续迭代途中点
-                            printf("------------>>>>>>>>>online_trjPointCnt=%d\n",online_trj_planner_ptr->online_trjPointCnt);
+                            online_trjPointCnt += online_trj_planner_ptr->traj_on_FIR_Bspline(res_xyz,res_abc,1,online_trjPointCnt);///继续迭代途中点
+                            printf("------------>>>>>>>>>online_trjPointCnt=%d\n",online_trjPointCnt);
                         }
                     }
                 }
-                online_trj_planner_ptr->online_trjPointCnt += online_trj_planner_ptr->traj_on_FIR_Bspline(res_xyz,res_abc,2,online_trj_planner_ptr->online_trjPointCnt);//终点
-                printf("------------>>>END>>>online_trjPointCnt=%d\n",online_trj_planner_ptr->online_trjPointCnt);
+                /*
+                for(int  r=0;r<online_trj_planner_ptr->online_alg_params_.N_interp_Q;r++)//终点时不管是否带速度,都重复N_interp_Q次输入到算法后再停止
+                {
+                    online_trjPointCnt += online_trj_planner_ptr->traj_on_FIR_Bspline(res_xyz,res_abc,1,online_trjPointCnt);
+                }*/
+                online_trjPointCnt += online_trj_planner_ptr->traj_on_FIR_Bspline(res_xyz,res_abc,2,online_trjPointCnt);//终点
+                printf("------------>>>END>>>online_trjPointCnt=%d\n",online_trjPointCnt);
             }
         }
     }
@@ -629,7 +664,7 @@ ErrorCode MotionControl::setOfflineTrajectory(const std::string &offline_traject
     return group_ptr_->setOfflineTrajectory(trajectory_file);
 }
 
-ErrorCode MotionControl::prepairOfflineTrajectory(void)
+ErrorCode MotionControl::prepareOfflineTrajectory(void)
 {
     if (group_ptr_->getMotionControlState() != STANDBY)
     {
@@ -664,7 +699,7 @@ ErrorCode MotionControl::moveOnlineTrajectory(void)
 ErrorCode MotionControl::setOnlinePointBufptr()
 {
     ErrorCode err;
-    if(online_trj_planner_ptr->online_trjPointCnt == 0)
+    if(online_trjPointCnt == 0)
     {
         //LogProducer::info("setOnlinePointBufptr","online_trjPointCnt == 0");
         return SUCCESS;
@@ -673,7 +708,7 @@ ErrorCode MotionControl::setOnlinePointBufptr()
     {
         //printf("[###setOnlinePointBufptr### online_trjPointCnt=%d]\n",online_trjPointCnt);
         PoseAndPosture pos;  Joint jnt;
-        for(int i =0;i<online_trj_planner_ptr->online_trjPointCnt; i++)
+        for(int i =0;i<online_trjPointCnt; i++)
         {
             pos.pose.point_.x_ = online_trj_planner_ptr->trj_point_buf[i].x_;
             pos.pose.point_.y_ = online_trj_planner_ptr->trj_point_buf[i].y_;
@@ -705,16 +740,16 @@ ErrorCode MotionControl::setOnlinePointBufptr()
                     }break;
                 default: group_ptr_->setOnlinePointLevelBuf(i,0);break;
             }
-            online_trj_planner_ptr->OnlinePointJointBuf[i*6+0]=jnt.j1_;
-            online_trj_planner_ptr->OnlinePointJointBuf[i*6+1]=jnt.j2_;
-            online_trj_planner_ptr->OnlinePointJointBuf[i*6+2]=jnt.j3_;
-            online_trj_planner_ptr-> OnlinePointJointBuf[i*6+3]=jnt.j4_;
-            online_trj_planner_ptr->OnlinePointJointBuf[i*6+4]=jnt.j5_;
-            online_trj_planner_ptr->OnlinePointJointBuf[i*6+5]=jnt.j6_;
+            OnlinePointJointBuf[i*6+0]=jnt.j1_;
+            OnlinePointJointBuf[i*6+1]=jnt.j2_;
+            OnlinePointJointBuf[i*6+2]=jnt.j3_;
+            OnlinePointJointBuf[i*6+3]=jnt.j4_;
+            OnlinePointJointBuf[i*6+4]=jnt.j5_;
+            OnlinePointJointBuf[i*6+5]=jnt.j6_;
             //printf("setOnlinePointBufptr, converted OnlinePointJointBuf[%d]=<%lf,%lf,%lf,%lf,%lf,%lf> status=%d\n",i,OnlinePointJointBuf[i*6+0],OnlinePointJointBuf[i*6+1],OnlinePointJointBuf[i*6+2],OnlinePointJointBuf[i*6+3],OnlinePointJointBuf[i*6+4],OnlinePointJointBuf[i*6+5],online_trj_planner_ptr->trj_point_buf[i].status);
         }
-        err = group_ptr_->setOnlineTrjPointBufData(online_trj_planner_ptr->OnlinePointJointBuf,online_trj_planner_ptr->online_trjPointCnt);
-        online_trj_planner_ptr->online_trjPointCnt = 0;//操作完成清零
+        err = group_ptr_->setOnlineTrjPointBufData(OnlinePointJointBuf,online_trjPointCnt);
+        online_trjPointCnt = 0;//操作完成清零
         return err;
     }
 }

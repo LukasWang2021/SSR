@@ -1205,7 +1205,7 @@ void ControllerRpc::handleRpc0x00008A31(void* request_data_ptr, void* response_d
     */
     if (rs_data_ptr->data.data == SUCCESS)
     {
-        //LogProducer::info("rpc", "/rpc/motion_control/axis_group/setOnlineTrajectoryData for group[%d] success", group_id);
+        LogProducer::info("rpc", "/rpc/motion_control/axis_group/setOnlineTrajectoryData for group[%d] success", group_id);
     } 
     else
     {

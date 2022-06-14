@@ -477,15 +477,26 @@ ErrorCode BaseGroup::fillOnlineFIFO(void)
         }
         online_fifo_.push(point);
         online_fifo_pointCnt++;
-        if(online_fifo_pointCnt>=150)//运控轨迹点缓存150个以后再向伺服发送
-        {
-            enable_send_online_fifoPoint_flag = true;
-        }
         /*
         LogProducer::info("fill_online_fifo_","(%lf,%lf,%lf,%lf,%lf,%lf) onlineFifoCnt=%d, pointLevel=%d",\
         point.state.angle.j1_, point.state.angle.j2_, point.state.angle.j3_, point.state.angle.j4_,\
         point.state.angle.j5_,point.state.angle.j6_,online_fifo_pointCnt,point.level);
         */
+    }
+    if(!online_trajectory_first_point_ )//运控轨迹点缓存150个以后再向伺服发送
+    {
+        if(online_fifo_pointCnt > 0)
+        {
+            enable_send_online_fifoPoint_flag = true;
+        }
+    }
+    else
+    {
+        if(online_fifo_pointCnt>=150)
+        {
+            enable_send_online_fifoPoint_flag = true;
+            online_trajectory_first_point_ = false;
+        }  
     }
     pthread_mutex_unlock(&online_traj_mutex_);
     return SUCCESS;
@@ -553,6 +564,7 @@ ErrorCode BaseGroup::setOnlineTrjPointBufData(double * p_doublePointdata,uint32_
         */
     }
     OnlinePointBuf_pointNum = TrjSize;
+    LogProducer::info("setOnlinePointBufData","xzc_debug---onlineFifoCnt+=%d",OnlinePointBuf_pointNum);
     online_trajectory_point_data_update_flag = true;//使能向在线队列里填入数据
     err = fillOnlineFIFO();
     if(err == 1)
@@ -571,16 +583,6 @@ ErrorCode BaseGroup::setOnlineTrjPointBufData(double * p_doublePointdata,uint32_
 ErrorCode BaseGroup::pickOnlinePoint(TrajectoryPoint &point)
 {
     static int pickCnt = 0;
-    /*
-    if (online_trajectory_first_point_)
-    {
-        online_trajectory_first_point_ = false;
-        point.level = POINT_START;
-    }
-    else
-    {
-        point.level = POINT_MIDDLE;
-    }*/
     point.level = OnlinePointLevelBuf[pickCnt];
     point.state.angle.j1_ = OnlinePointBuf[pickCnt*24+0];
     point.state.angle.j2_ = OnlinePointBuf[pickCnt*24+1];
@@ -1031,7 +1033,7 @@ ErrorCode BaseGroup::sendOnlineTrajectoryFlow(void)
         if(err != SUCCESS)
         {
             LogProducer::warn("mc_base","sendPoint: cannot pick point from OnlineTrajecgtory.");
-            return err;
+            //return err;
         }
         //err = bare_core_.fillPointCache(points, length, POINT_POS);
         err = bare_core_.fillPointCache(points, length, POINT_POS_VEL);
@@ -1051,10 +1053,11 @@ ErrorCode BaseGroup::sendOnlineTrajectoryFlow(void)
             for (size_t i = 0; i < length; i++)
             {
                 online_fifo_pointCnt--;
+                /*
                 if(online_fifo_pointCnt <=0)
                 {
                     enable_send_online_fifoPoint_flag = false;
-                }
+                }*/
                 /*
                 LogProducer::info("barecore_fillPointCache","%d) level=%d time_stamp=%.4f (%.6f,%.6f,%.6f,%.6f,%.6f,%.6f, %.6f,%.6f,%.6f,%.6f,%.6f,%.6f) onlineFifoCnt=%d",
                 i+1,points[i].level, points[i].time_stamp, 
@@ -1070,7 +1073,6 @@ ErrorCode BaseGroup::sendOnlineTrajectoryFlow(void)
                 online_fifo_pointCnt);
             }
         }
-        //enable_send_online_fifoPoint_flag = false; //xzc-1231
     }
     else
     {

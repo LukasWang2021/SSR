@@ -749,7 +749,10 @@ ErrorCode MotionControl::setOnlinePointBufptr()
             //printf("setOnlinePointBufptr, converted OnlinePointJointBuf[%d]=<%lf,%lf,%lf,%lf,%lf,%lf> status=%d\n",i,OnlinePointJointBuf[i*6+0],OnlinePointJointBuf[i*6+1],OnlinePointJointBuf[i*6+2],OnlinePointJointBuf[i*6+3],OnlinePointJointBuf[i*6+4],OnlinePointJointBuf[i*6+5],online_trj_planner_ptr->trj_point_buf[i].status);
         }
         err = group_ptr_->setOnlineTrjPointBufData(OnlinePointJointBuf,online_trjPointCnt);
-        online_trjPointCnt = 0;//操作完成清零
+        if(err == SUCCESS)
+        {
+            online_trjPointCnt = 0;//操作完成清零
+        }
         return err;
     }
 }

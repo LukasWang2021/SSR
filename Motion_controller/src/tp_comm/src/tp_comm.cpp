@@ -439,7 +439,7 @@ void TpComm::handleResponseList()
         }
 
         int send_bytes = nn_send(req_resp_socket_, send_buffer_ptr_, send_buffer_size, 0); // block send
-        //LogProducer::debug("rpc", "---handleResponse: %x", it->hash);
+        LogProducer::debug("rpc", "---handleResponse: %x", it->hash);
         if(send_bytes == -1)
         {
             ErrorQueue::instance().push(TP_COMM_SEND_FAILED);

@@ -854,7 +854,7 @@ void BaseGroup::sendTrajectoryFlow(void)
             if (error_cnt > trajectory_flow_timeout_)
             {
                 error_cnt = 0;
-                system("/root/md -64 0x30012200");
+                // system("/root/md -64 0x30012200");
                 reportError(MC_SEND_TRAJECTORY_FAIL);
                 mc_state_ = STANDBY;
                 LogProducer::error("mc_base","sendTrajectoryFlow: bare core time-out, servo state: %s.", getMCServoStatusString(servo_state).c_str());
@@ -864,7 +864,7 @@ void BaseGroup::sendTrajectoryFlow(void)
         else
         {
             LogProducer::error("mc_base","sendTrajectoryFlow aborted, code = 0x%llx", err);
-            reportError(err);
+            // reportError(err);
             error_cnt = 0;
         }
     }
@@ -1025,6 +1025,7 @@ ErrorCode BaseGroup::pickPointsFromManualTrajectory(TrajectoryPoint *points, siz
 ErrorCode BaseGroup::sendOnlineTrajectoryFlow(void) 
 {
     ErrorCode err;
+    static TrajectoryPoint last_Point;
     if(bare_core_.isPointCacheEmpty())
     {
         size_t length = 10;
@@ -1032,8 +1033,28 @@ ErrorCode BaseGroup::sendOnlineTrajectoryFlow(void)
         err = pickPointsFromOnlineTrajectory(points, length);
         if(err != SUCCESS)
         {
-            LogProducer::warn("mc_base","sendPoint: cannot pick point from OnlineTrajecgtory.");
+            LogProducer::warn("mc_base","sendPoint: cannot pick point from OnlineTrajecgtory.online_fifo_pointCnt=%d",online_fifo_pointCnt);
             //return err;
+            //2022-06-14
+            if(online_fifo_pointCnt<=0)
+            {
+                for(int i=0;i<10;i++)
+                {
+                    online_time_ += cycle_time_;
+                    points[i] = last_Point;
+                    points[i].level = 0;
+                    points[i].time_stamp = online_time_;
+                    LogProducer::warn("repeat current TrajectoryPoint","%d) level=%d time_stamp=%.4f (%.6f,%.6f,%.6f,%.6f,%.6f,%.6f)",
+                    i+1,points[i].level, points[i].time_stamp, 
+                    points[i].state.angle.j1_, points[i].state.angle.j2_, points[i].state.angle.j3_, 
+                    points[i].state.angle.j4_, points[i].state.angle.j5_, points[i].state.angle.j6_);
+                }
+                online_fifo_pointCnt+=10; 
+            } 
+        }
+        else
+        {
+            last_Point=points[9];
         }
         //err = bare_core_.fillPointCache(points, length, POINT_POS);
         err = bare_core_.fillPointCache(points, length, POINT_POS_VEL);

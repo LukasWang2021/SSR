@@ -34,3 +34,5 @@ target_link_libraries(test_controller_set_control_mode ${rtm_LIBRARIES} pb tp_co
 add_executable(test_controller_get_control_mode test_controller_get_control_mode.cpp)
 target_link_libraries(test_controller_get_control_mode ${rtm_LIBRARIES} pb tp_comm_test protos)
 
+add_executable(test_rpc_send_8A31 test_rpc_send_8A31.cpp)
+target_link_libraries(test_rpc_send_8A31 ${rtm_LIBRARIES} pb tp_comm_test protos)

@@ -558,7 +558,7 @@ void TpComm::handleResponse0x00008A31(std::vector<TpRequestResponse>::iterator& 
     }
     if(task->request_data_ptr != NULL)
     {
-        delete (RequestMessageType_Int32_DoubleList*)task->request_data_ptr;
+        delete (RequestMessageType_TransMatrixList*)task->request_data_ptr;
     }
     if(task->response_data_ptr != NULL)
     {

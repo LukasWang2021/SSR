@@ -1068,7 +1068,7 @@ void OnlineTrajectoryPlanner::online_trajectory_algorithm_params_init()
     online_alg_params_.N_step_P=5;
     online_alg_params_.N_step_Q=25;
     online_alg_params_.trj_ratio=1.0;
-    online_alg_params_.online_receive_Tmatrix_buffPack_len=30;
+    online_alg_params_.online_receive_Tmatrix_buff_len=1000;
     online_alg_params_.N_interp_P=((online_alg_params_.N_step_P*online_alg_params_.sample_time)/online_alg_params_.generate_traj_interval); //NinterpP_ = ((N_step_P_*Tsample_)/GEN_TN_);
     online_alg_params_.N_interp_Q=((online_alg_params_.N_step_Q*online_alg_params_.sample_time)/online_alg_params_.generate_traj_interval); //NinterpQ_ = ((N_step_Q_*Tsample_)/GEN_TN_);
 }

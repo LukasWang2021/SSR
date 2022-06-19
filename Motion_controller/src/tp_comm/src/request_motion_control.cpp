@@ -779,11 +779,11 @@ void TpComm::handleRequest0x00018470(int recv_bytes)
                          recv_bytes, RequestMessageType_Int32_DoubleList_fields, -1);
 }
 
-/********rpc/motion_control/axis_group/setOnlineTrajectoryData, RequestMessageType_Int32_DoubleList(DoubleList_count=240)**********/
+/********rpc/motion_control/axis_group/setOnlineTrajectoryData, RequestMessageType_TransMatrixList(DoubleList_count=240)**********/
 void TpComm::handleRequest0x00008A31(int recv_bytes)
 {
     // create object for request and response package
-    RequestMessageType_Int32_DoubleList *request_data_ptr = new RequestMessageType_Int32_DoubleList;
+    RequestMessageType_TransMatrixList *request_data_ptr = new RequestMessageType_TransMatrixList;
     if (request_data_ptr == NULL)
     {
         ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
@@ -798,8 +798,15 @@ void TpComm::handleRequest0x00008A31(int recv_bytes)
         delete request_data_ptr;
         return;
     }
+    /*
+    printf("handleRequest0x00008A31:\n");
+    for(int i=0;i<recv_bytes;i++)
+    {
+        printf("%x ",*(recv_buffer_ptr_+i));
+        if(i%16 == 0 && i!=0){printf("\n");}
+    }*/
     handleRequestPackage(0x00008A31, (void *)request_data_ptr, (void *)response_data_ptr,
-                         recv_bytes, RequestMessageType_Int32_DoubleList_fields, -1);
+                         recv_bytes, RequestMessageType_TransMatrixList_fields, -1);
 }
 /********rpc/motion_control/axis_group/setOnlineTrajectoryRatio, RequestMessageType_Double**********/
 void TpComm::handleRequest0x0000B35F(int recv_bytes)

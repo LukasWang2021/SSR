@@ -850,7 +850,7 @@ void BaseGroup::sendTrajectoryFlow(void)
         if (err == MC_SEND_TRAJECTORY_FAIL)
         {
             error_cnt ++;
-            //LogProducer::info("MC_SEND_TRAJECTORY_FAIL","error_cnt=%d/%d",error_cnt,trajectory_flow_timeout_);
+            //LogProducer::error("MC_SEND_TRAJECTORY_FAIL","error_cnt=%d/%d",error_cnt,trajectory_flow_timeout_);
             if (error_cnt > trajectory_flow_timeout_)
             {
                 error_cnt = 0;
@@ -1033,9 +1033,14 @@ ErrorCode BaseGroup::sendOnlineTrajectoryFlow(void)
         err = pickPointsFromOnlineTrajectory(points, length);
         if(err != SUCCESS)
         {
-            LogProducer::warn("mc_base","sendPoint: cannot pick point from OnlineTrajecgtory.online_fifo_pointCnt=%d",online_fifo_pointCnt);
+            LogProducer::warn("mc_base","sendOnlineTrajectoryFlow: cannot pick point from OnlineTrajecgtory.  online_fifo_pointCnt=%d, picked_len=%d",online_fifo_pointCnt, length);
             //return err;
             //2022-06-14
+            if(online_fifo_.empty())
+            {
+                LogProducer::warn("mc_base","sendOnlineTrajectoryFlow: online_fifo_ is empty. reset online_fifo_pointCnt=0");
+                online_fifo_pointCnt = 0;
+            }
             if(online_fifo_pointCnt<=0)
             {
                 for(int i=0;i<10;i++)
@@ -1087,12 +1092,14 @@ ErrorCode BaseGroup::sendOnlineTrajectoryFlow(void)
                 points[i].state.omega.j1_, points[i].state.omega.j2_, points[i].state.omega.j3_, 
                 points[i].state.omega.j4_, points[i].state.omega.j5_, points[i].state.omega.j6_, 
                 online_fifo_pointCnt);*/
+                /*
                 LogProducer::info("barecore_fillPointCache","%d) level=%d time_stamp=%.4f (%.6f,%.6f,%.6f,%.6f,%.6f,%.6f) onlineFifoCnt=%d",
                 i+1,points[i].level, points[i].time_stamp, 
                 points[i].state.angle.j1_, points[i].state.angle.j2_, points[i].state.angle.j3_, 
                 points[i].state.angle.j4_, points[i].state.angle.j5_, points[i].state.angle.j6_,
-                online_fifo_pointCnt);
+                online_fifo_pointCnt);*/
             }
+            LogProducer::info("barecore_fillPointCache","onlineFifoCnt=%d",online_fifo_pointCnt);
         }
     }
     else
@@ -1136,8 +1143,8 @@ ErrorCode BaseGroup::pickPointsFromOnlineTrajectory(TrajectoryPoint *points, siz
     length = picked;
     if(length < 1)
     {
+        LogProducer::error("pickPointsFromOnlineFifo","pick length < 1  error code=0x%llx",err);
         err = BASE_GROUP_PICK_POINTS_FROM_ONLINECACHE_NULL;
-        //LogProducer::error("pickPointsFromOnlineFifo","pick length < 1  error code=0x%llx",err);
     }
     return err;
 }

@@ -52,7 +52,7 @@ public:
     //ErrorCode setOnlinePointBufptr(double * ptr);
     ErrorCode setOnlinePointBufptr();
     ErrorCode setOnlineTrajectoryRatio(double ratio);
-    ErrorCode setOnlineVpointCache(int status, double * p_marixArray);
+    ErrorCode setOnlineVpointCache(int num_matrix,int * p_status, double * p_marixArray);
     // API for off line trajectory
     ErrorCode convertEulerTraj2JointTraj(const std::string &offline_euler_trajectory_fileName);
     ErrorCode Fir_Bspline_algorithm_test2(void);
@@ -188,11 +188,11 @@ private:
     pthread_mutex_t  instruction_mutex_;
     uint32_t instructions_recv_counter_;
     uint32_t instructions_handle_counter_;
-    //base_space::SemHelp online_traj_sem_;
+
     std::mutex online_trajData_mutex_;
-    double *online_vp_cache_;
-    int32_t online_vp_cache_state_;
-    int32_t online_vp_status_;
+    bool flag_recv_new_VPMatrix_= false;// false-现在没有收到VP点矩阵, true-收到VP点矩阵
+    int *online_vp_status_; //用于暂存在线轨迹接收途经点矩阵状态
+    double *online_vp_cache_;//用于暂存在线轨迹接收途经点矩阵数据
 
     fst_ctrl::CoordinateManager* coordinate_manager_ptr_;
     fst_ctrl::ToolManager* tool_manager_ptr_;

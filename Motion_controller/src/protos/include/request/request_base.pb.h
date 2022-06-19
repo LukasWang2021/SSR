@@ -10,6 +10,7 @@
 #include "protocol/comm.pb.h"
 
 #include "message_type/base.pb.h"
+#include "message_type/trans_matrix_list.pb.h"
 
 /* @@protoc_insertion_point(includes) */
 #if PB_PROTO_HEADER_VERSION != 30
@@ -177,6 +178,7 @@ typedef struct _RequestMessageType_Void {
 #define RequestMessageType_DoubleList_init_zero  {Request_Header_init_zero, Comm_Property_init_zero, MessageType_DoubleList_init_zero}
 #define RequestMessageType_FloatList_init_zero   {Request_Header_init_zero, Comm_Property_init_zero, MessageType_FloatList_init_zero}
 
+
 /* Field tags (for use in manual encoding/decoding) */
 #define RequestMessageType_Bool_header_tag       1
 #define RequestMessageType_Bool_property_tag     2
@@ -247,7 +249,6 @@ extern const pb_field_t RequestMessageType_Int64List_fields[4];
 extern const pb_field_t RequestMessageType_Uint64List_fields[4];
 extern const pb_field_t RequestMessageType_DoubleList_fields[4];
 extern const pb_field_t RequestMessageType_FloatList_fields[4];
-
 /* Maximum encoded size of messages (where known) */
 #define RequestMessageType_Bool_size             21
 #define RequestMessageType_Int32_size            30
@@ -266,7 +267,6 @@ extern const pb_field_t RequestMessageType_FloatList_fields[4];
 #define RequestMessageType_Uint64List_size       1428
 #define RequestMessageType_DoubleList_size       1172
 #define RequestMessageType_FloatList_size        660
-
 /* Message IDs (where set with "msgid" option) */
 #ifdef PB_MSGID
 

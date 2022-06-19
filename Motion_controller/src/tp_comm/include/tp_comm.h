@@ -520,7 +520,7 @@ private:
     void handleRequest0x000102F3(int recv_bytes); 
     /********rpc/motion_control/axis_group/setJointManualStep, RequestMessageType_Int32_DoubleList(DoubleList_count=9)**********/	
     void handleRequest0x00018470(int recv_bytes);
-    /********rpc/motion_control/axis_group/setOnlineTrajectoryData, RequestMessageType_Int32_DoubleList(DoubleList_count=240)**********/
+    /********rpc/motion_control/axis_group/setOnlineTrajectoryData, RequestMessageType_TransMatrixList**********/
     void handleRequest0x00008A31(int recv_bytes);
     /********rpc/motion_control/axis_group/setOnlineTrajectoryRatio, RequestMessageType_Double**********/
     void handleRequest0x0000B35F(int recv_bytes);

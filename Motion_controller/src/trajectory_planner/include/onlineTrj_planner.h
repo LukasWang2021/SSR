@@ -23,7 +23,7 @@ typedef struct{
     int N_step_P;
     int N_step_Q;
     double trj_ratio;
-    int online_receive_Tmatrix_buffPack_len;
+    int online_receive_Tmatrix_buff_len;
     double N_interp_P;
     double N_interp_Q;
 }onlineTrjAlgParam;
@@ -34,10 +34,9 @@ using namespace basic_alg;
 class OnlineTrajectoryPlanner
 {
 public:
-    //int  trjPointCnt;
     TrjPoint trj_point_buf[160];
-    int receive_TmatrixPackCnt = 0;//接收来自touch的矩阵数据包数---对应缓存序号
-    int read_TmatrixPackCnt = 0; //从缓存里读touch数据包计数
+    int receive_TmatrixCnt = 0;//接收来自touch的矩阵数据数---对应缓存序号
+    int read_TmatrixCnt = 0; //从缓存里读touch矩阵数量计数
 
     OnlineTrajectoryPlanner();
     ~OnlineTrajectoryPlanner();

@@ -179,50 +179,31 @@ int main(int argc, char** argv)
             cout << "Reply : msg.property.authority = " << recv_msg.property.authority << endl;
             cout << "Reply : msg.data.data = " <<hex<<recv_msg.data.data << endl;
     #else
-
+    //需要 VP 点矩阵文件  --- 读取矩阵文件函数缺
     if(readJointTrajectoryFile(trajectory_filePath, trajArr) == 0)
     {
-        RequestMessageType_Int32_DoubleList msg;
+        RequestMessageType_TransMatrixList msg;
         ResponseMessageType_Uint64 recv_msg;
-        printf("RequestMessageType_Int32_DoubleList size=%d <==============\n",sizeof(RequestMessageType_Int32_DoubleList));
-        //double traj_point[240]={0.0};
-        int j=0;
-        for(j=0;j<sendCnt;j++)
+        printf("RequestMessageType_TransMatrixList size=%d <==============\n",sizeof(RequestMessageType_TransMatrixList));
+
+        for(int i=0;i<sendCnt;i++)
         {
-            msg.data1.data = 0;
-            msg.data2.data_count=480;
+            msg.data.matrices_count = 5;
             memset(twentyPoint,0,480*sizeof(float));
-            for(int t=0;t<20;t++)//一次发送20个点
+            for(int t=0;t<6;t++)//一次发送5个点
             {
-                twentyPoint[t*24+0] = trajArr[j*20+t][0];
-                twentyPoint[t*24+1] = trajArr[j*20+t][1];
-                twentyPoint[t*24+2] = trajArr[j*20+t][2];
-                twentyPoint[t*24+3] = trajArr[j*20+t][3];
-                twentyPoint[t*24+4] = trajArr[j*20+t][4];
-                twentyPoint[t*24+5] = trajArr[j*20+t][5];
-                twentyPoint[t*24+6] = trajArr[j*20+t][6];
-                twentyPoint[t*24+7] = trajArr[j*20+t][7];
-                twentyPoint[t*24+8] = trajArr[j*20+t][8];
-                twentyPoint[t*24+9] = trajArr[j*20+t][9];
-                twentyPoint[t*24+10] = trajArr[j*20+t][10];
-                twentyPoint[t*24+11] = trajArr[j*20+t][11];
-                twentyPoint[t*24+12] = trajArr[j*20+t][12];
-                twentyPoint[t*24+13] = trajArr[j*20+t][13];
-                twentyPoint[t*24+14] = trajArr[j*20+t][14];
-                twentyPoint[t*24+15] = trajArr[j*20+t][15];
-                twentyPoint[t*24+16] = trajArr[j*20+t][16];
-                twentyPoint[t*24+17] = trajArr[j*20+t][17];
-                twentyPoint[t*24+18] = trajArr[j*20+t][18];
-                twentyPoint[t*24+19] = trajArr[j*20+t][19];
-                twentyPoint[t*24+20] = trajArr[j*20+t][20];
-                twentyPoint[t*24+21] = trajArr[j*20+t][21];
-                twentyPoint[t*24+22] = trajArr[j*20+t][22];
-                twentyPoint[t*24+23] = trajArr[j*20+t][23];
+                msg.data.matrices[t]
+                twentyPoint[t*24+0] = trajArr[i*5+t][0];
+                twentyPoint[t*24+1] = trajArr[i*5+t][1];
+                twentyPoint[t*24+2] = trajArr[i*5+t][2];
+                twentyPoint[t*24+3] = trajArr[i*5+t][3];
+                twentyPoint[t*24+4] = trajArr[i*5+t][4];
+                twentyPoint[t*24+5] = trajArr[i*5+t][5];
             }
             memcpy(msg.data2.data, twentyPoint,480*sizeof(double));
             msg.header.time_stamp = 122;
             msg.property.authority = Comm_Authority_TP_SIMMULATOR;
-            if (!test.generateRequestMessageType(hash_value, (void*)&msg, RequestMessageType_Int32_DoubleList_fields, buf, buf_size))
+            if (!test.generateRequestMessageType(hash_value, (void*)&msg, RequestMessageType_transMatrixList_fields, buf, buf_size))
             {
                 cout << "Request : encode buf failed" << endl;
                 return -1;

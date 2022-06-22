@@ -1145,8 +1145,7 @@ COMM_INTERFACE_API uint64_t c_OfflineTrajectoryMove(void);
  * @param [in] size trajectory data size.
  * @return error_code
  */
-COMM_INTERFACE_API uint64_t c_sendOnlineTrajectory(double traj[], uint32_t size);
-
+COMM_INTERFACE_API uint64_t c_sendOnlineTrajectory(double* m_list, int* m_stat, int matrix_cnt);
 
 // rpc register
 COMM_INTERFACE_API uint64_t c_getPrRegValidList(int32_t start_id, int32_t max_list_size, char* valid_list_str);

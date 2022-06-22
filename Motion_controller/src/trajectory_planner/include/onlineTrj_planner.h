@@ -22,10 +22,10 @@ typedef struct{
     double generate_traj_interval;
     int N_step_P;
     int N_step_Q;
-    double trj_ratio;
-    int online_receive_Tmatrix_buff_len;
     double N_interp_P;
     double N_interp_Q;
+    double trj_ratio;
+    int online_receive_Tmatrix_buff_len;
 }onlineTrjAlgParam;
 
 using namespace std;
@@ -34,7 +34,7 @@ using namespace basic_alg;
 class OnlineTrajectoryPlanner
 {
 public:
-    TrjPoint trj_point_buf[160];
+    TrjPoint trj_point_buf[160];//Bspline算法输出暂存
     int receive_TmatrixCnt = 0;//接收来自touch的矩阵数据数---对应缓存序号
     int read_TmatrixCnt = 0; //从缓存里读touch矩阵数量计数
 

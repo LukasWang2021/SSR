@@ -3,6 +3,8 @@
 #include "rpc_basic.h"
 #include "common_error_code.h"
 #include "protoc.h"
+#include "trans_matrix_list.pb.h"
+#include "request_transmatrixlist.pb.h"
 
 
 
@@ -457,23 +459,40 @@ uint64_t c_OfflineTrajectoryMove(void)
 	return rep_data.data.data;
 }
 
-uint64_t c_sendOnlineTrajectory(double traj[], uint32_t size)
+uint64_t c_sendOnlineTrajectory(double *m_list, int *m_stat, int matrix_cnt)
 {
 	if (!rpc_valid)
 		return HANDLE_RPC_FAILED;
 	RpcBasic* rpc_ptr = RpcBasic::getInstance();
-	RequestMessageType_Int32_DoubleList req_data;
+	RequestMessageType_TransMatrixList req_data;
 	ResponseMessageType_Uint64 rep_data;
+	//req_data = RequestMessageType_TransMatrixList_init_zero;
 	req_data.header.time_stamp = 122;
 	req_data.property.authority = Comm_Authority_TP_SIMMULATOR;
-	if (size > 128)
+	//printf("c_sendOnlineTrajectory matrix_cnt=%d\n", matrix_cnt);
+	if (matrix_cnt > 32)
 	{
 		return TP_COMM_RPC_TOO_MUCH_DATA;
 	}
-	req_data.data1.data = 0;
-	req_data.data2.data_count = size;
-	memcpy(req_data.data2.data, traj, size*sizeof(double));
-	if (!rpc_ptr->handleRpc(0x00008A31, &req_data, RequestMessageType_Int32_DoubleList_fields, &rep_data, ResponseMessageType_Uint64_fields))
+	req_data.data.matrices_count = matrix_cnt;
+	int i = 0, j = 0;
+	for (i = 0; i < matrix_cnt; i++)
+	{
+		req_data.data.matrices[i].state = m_stat[i];
+		req_data.data.matrices[i].matrix_count = 16;//此处必须是16,不然无法保证数据传输的完整性
+		/*printf("\nmatrix[%d]=%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf", i,
+			m_list[16 * i + 0], m_list[16 * i + 1], m_list[16 * i + 2], m_list[16 * i + 3],
+			m_list[16 * i + 4], m_list[16 * i + 5], m_list[16 * i + 6], m_list[16 * i + 7],
+			m_list[16 * i + 8], m_list[16 * i + 9], m_list[16 * i + 10], m_list[16 * i + 11],
+			m_list[16 * i + 12], m_list[16 * i + 13], m_list[16 * i + 14], m_list[16 * i + 15]);*/
+		memcpy(&req_data.data.matrices[i].matrix[0], &m_list[16*i], 16*sizeof(double));
+		/*printf("req_data.data.matrices[%d]=%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf", i,
+			req_data.data.matrices[i].matrix[0],req_data.data.matrices[i].matrix[1],req_data.data.matrices[i].matrix[2],req_data.data.matrices[i].matrix[3],
+			req_data.data.matrices[i].matrix[4], req_data.data.matrices[i].matrix[5],req_data.data.matrices[i].matrix[6],req_data.data.matrices[i].matrix[7],
+			req_data.data.matrices[i].matrix[8],req_data.data.matrices[i].matrix[9],req_data.data.matrices[i].matrix[10],req_data.data.matrices[i].matrix[11],
+			req_data.data.matrices[i].matrix[12],req_data.data.matrices[i].matrix[13],req_data.data.matrices[i].matrix[14],req_data.data.matrices[i].matrix[15]);*/
+	}
+	if (!rpc_ptr->handleRpc(0x00008A31, &req_data, RequestMessageType_TransMatrixList_fields, &rep_data, ResponseMessageType_Uint64_fields))
 	{
 		return HANDLE_RPC_FAILED;
 	}

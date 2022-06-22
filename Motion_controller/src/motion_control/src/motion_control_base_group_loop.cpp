@@ -522,13 +522,19 @@ ErrorCode BaseGroup::setOnlinePointBufData(double * p_doublePointdata)
 }
 */
 /***************
- * 函数功能: 将xyzabc数据逆解为轴角数据后整理为轨迹数据,然后传送给在线轨迹缓存
+ * 函数功能: 将轴角位置数据整理为轨迹数据,然后传送给在线轨迹缓存
  * */
 ErrorCode BaseGroup::setOnlineTrjPointBufData(double * p_doublePointdata,uint32_t TrjSize)
 {
     ErrorCode err = SUCCESS;
+    static int index = 0;
     static Joint last_periodJoint;//传输过程中上一段轨迹结束时轴角
-    for(uint32_t i=0;i< TrjSize; i++)
+    if((index+TrjSize) >=300)
+    {
+        LogProducer::error("setOnlineTrjPointBufData","(index+TrjSize) >=300");
+        return 1;
+    }
+    for(uint32_t i=index;i< (index+TrjSize); i++)
     {
         memcpy(OnlinePointBuf + i*24, p_doublePointdata + 6*i, 6*sizeof(double));
         if(i==0 && OnlinePointLevelBuf[0]==1)//start point
@@ -563,18 +569,21 @@ ErrorCode BaseGroup::setOnlineTrjPointBufData(double * p_doublePointdata,uint32_
         OnlinePointBuf[i*24+6],OnlinePointBuf[i*24+7],OnlinePointBuf[i*24+8],OnlinePointBuf[i*24+9],OnlinePointBuf[i*24+10],OnlinePointBuf[i*24+11],OnlinePointLevelBuf[i]);
         */
     }
-    OnlinePointBuf_pointNum = TrjSize;
+    OnlinePointBuf_pointNum = index+TrjSize;
     LogProducer::info("setOnlinePointBufData","xzc_debug---onlineFifoCnt+=%d",OnlinePointBuf_pointNum);
     online_trajectory_point_data_update_flag = true;//使能向在线队列里填入数据
     err = fillOnlineFIFO();
     if(err == 1)
     {
-        LogProducer::error("setOnlinePointBufData","fillOnlineFIFO is full !!! ");
+        index += TrjSize;
+        LogProducer::error("setOnlinePointBufData","fillOnlineFIFO error.  index = %d",index);
         return BASE_GROUP_FILL_ONLINE_FIFO_ERROR;
     }
     else if(err == SUCCESS)
     {
         //enable_send_online_fifoPoint_flag = true;
+        index -= TrjSize;
+        if(index < 0) index = 0;
         return SUCCESS;
     }
     return err;
@@ -619,26 +628,6 @@ ErrorCode BaseGroup::pickOnlinePoint(TrajectoryPoint &point)
         pickCnt = 0;
         online_trajectory_point_data_update_flag = false;
     }
-    /*
-    if(pickCnt >= 50)
-    {
-        pickCnt=0;
-        //LogProducer::info("pickOnlinePoint"," pickCnt has been cleared. online_trajectory_point_data_update_flag=%",online_trajectory_point_data_update_flag);
-        //memset(OnlindePointBuf,0,240*sizeof(double));
-        online_trajectory_point_data_update_flag = false;
-        if(point.state.omega.j1_ == 0 && point.state.omega.j2_ == 0 && point.state.omega.j3_==0 && point.state.omega.j4_==0 && point.state.omega.j5_==0 && point.state.omega.j6_==0)
-        {
-            point.level = POINT_ENDING;//2
-        }
-    }*/
-    //xzc???
-    /*
-    if (traj_log_enable_)
-    {
-        traj_log_data_ptr_[traj_log_ctrl_ptr_->write_index] = point;
-        traj_log_ctrl_ptr_->write_index = (traj_log_ctrl_ptr_->write_index + 1 < traj_log_ctrl_ptr_->max_of_points) ? (traj_log_ctrl_ptr_->write_index + 1) : 0;
-        traj_log_ctrl_ptr_->num_of_points = (traj_log_ctrl_ptr_->num_of_points < traj_log_ctrl_ptr_->max_of_points) ? (traj_log_ctrl_ptr_->num_of_points + 1) : traj_log_ctrl_ptr_->max_of_points;
-    }*/
     return SUCCESS;
 }
 
@@ -1097,9 +1086,10 @@ ErrorCode BaseGroup::sendOnlineTrajectoryFlow(void)
                 i+1,points[i].level, points[i].time_stamp, 
                 points[i].state.angle.j1_, points[i].state.angle.j2_, points[i].state.angle.j3_, 
                 points[i].state.angle.j4_, points[i].state.angle.j5_, points[i].state.angle.j6_,
-                online_fifo_pointCnt);*/
+                online_fifo_pointCnt);
+                */
             }
-            LogProducer::info("barecore_fillPointCache","onlineFifoCnt=%d",online_fifo_pointCnt);
+            LogProducer::warn("barecore_fillPointCache","onlineFifoCnt=%d",online_fifo_pointCnt);
         }
     }
     else

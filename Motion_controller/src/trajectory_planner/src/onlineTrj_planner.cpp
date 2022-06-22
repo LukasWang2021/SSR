@@ -500,7 +500,7 @@ void OnlineTrajectoryPlanner::traj_on_Squad(int Nstep, Vector3 VPp_abc[], int NV
  * 参数说明:
  * 一个采样点数据 xyz, abc
  * status: 状态 0-起点(按下按钮)  1-中间过程(hold按钮) 2-终点(松开按钮)
- * online_TrjpointBufIndex
+ * online_TrjpointBufIndex--填入算法输出结果trj_point_buf[]的起点下标
  * 返回值: 生成结果途经点的数量
  * *************************/
 int  OnlineTrajectoryPlanner::traj_on_FIR_Bspline(Vector3 xyz, Vector3 abc,int status, int online_TrjpointBufIndex)
@@ -533,6 +533,7 @@ int  OnlineTrajectoryPlanner::traj_on_FIR_Bspline(Vector3 xyz, Vector3 abc,int s
     static int out_status=0;//默认输出轨迹点状态为起点
     int NP = static_cast<int>(online_alg_params_.N_interp_P);//has been static_cast to int when init().
     int res_PointCnt = 0;
+
     //每NstepP记录一个VP NstepP==5
 //cout << "sp_cnt="<<sp_cnt<<endl;
  if(sp_cnt%online_alg_params_.N_step_P == 0) {flag_getVpFromTouch = true;} else {flag_getVpFromTouch = false;}
@@ -1059,7 +1060,7 @@ generate_traj_interval  : 0.001 #生成轨迹间隔
 N_step_P : 5  #计算位置-取VP点的采样点间隔--->每5个采样点取一个xyz向量  范围<=5
 N_step_Q : 25 #计算姿态-取VQ的采样点间隔--->每25个采样点取一个abc向量
 trj_ratio: 1.0 #机械臂移动距离与touch移动距离的比例系数,    即机械臂移动距离=K*touch移动距离
-online_receive_Tmatrix_buffPack_len : 30  #运控接收来自Touch T矩阵数据包的缓存包数量
+online_receive_Tmatrix_buff_len : 1000  #运控接收来自Touch T矩阵数据的缓存数量
 */
 void OnlineTrajectoryPlanner::online_trajectory_algorithm_params_init()
 {
@@ -1067,10 +1068,20 @@ void OnlineTrajectoryPlanner::online_trajectory_algorithm_params_init()
     online_alg_params_.generate_traj_interval=0.001;
     online_alg_params_.N_step_P=5;
     online_alg_params_.N_step_Q=25;
-    online_alg_params_.trj_ratio=1.0;
-    online_alg_params_.online_receive_Tmatrix_buff_len=1000;
     online_alg_params_.N_interp_P=((online_alg_params_.N_step_P*online_alg_params_.sample_time)/online_alg_params_.generate_traj_interval); //NinterpP_ = ((N_step_P_*Tsample_)/GEN_TN_);
     online_alg_params_.N_interp_Q=((online_alg_params_.N_step_Q*online_alg_params_.sample_time)/online_alg_params_.generate_traj_interval); //NinterpQ_ = ((N_step_Q_*Tsample_)/GEN_TN_);
+    online_alg_params_.trj_ratio=1.0;
+    online_alg_params_.online_receive_Tmatrix_buff_len=1000;
+
+    printf("\nonline_trajectory_algorithm_params_init:\nsample_time=%lf,generate_interval=%lf,N_step_P=%d,N_step_Q=%d,N_interpP=%lf,N_interpQ=%lf,trj_ratio=%lf,recvTmatrix_buffLen=%d\n",
+            online_alg_params_.sample_time,
+            online_alg_params_.generate_traj_interval,
+            online_alg_params_.N_step_P,
+            online_alg_params_.N_step_Q,
+            online_alg_params_.N_interp_P,
+            online_alg_params_.N_interp_Q,
+            online_alg_params_.trj_ratio,
+            online_alg_params_.online_receive_Tmatrix_buff_len);
 }
 
 int OnlineTrajectoryPlanner::setOnlineTrjRatio(double data_ratio)

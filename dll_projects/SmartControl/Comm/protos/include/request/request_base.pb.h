@@ -10,6 +10,7 @@
 #include "protocol/comm.pb.h"
 
 #include "message_type/base.pb.h"
+#include "message_type/trans_matrix_list.pb.h"
 
 /* @@protoc_insertion_point(includes) */
 #if PB_PROTO_HEADER_VERSION != 30
@@ -132,6 +133,7 @@ typedef struct _RequestMessageType_Uint64List {
     MessageType_Uint64List data;
 /* @@protoc_insertion_point(struct:RequestMessageType_Uint64List) */
 } RequestMessageType_Uint64List;
+
 
 typedef struct _RequestMessageType_Void {
     Request_Header header;
@@ -266,7 +268,6 @@ extern const pb_field_t RequestMessageType_FloatList_fields[4];
 #define RequestMessageType_Uint64List_size       1428
 #define RequestMessageType_DoubleList_size       1172
 #define RequestMessageType_FloatList_size        660
-
 /* Message IDs (where set with "msgid" option) */
 #ifdef PB_MSGID
 

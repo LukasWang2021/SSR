@@ -1157,16 +1157,16 @@ void ControllerRpc::handleRpc0x00008A31(void* request_data_ptr, void* response_d
     //暂定最多接收10个矩阵
     int matrix_state[10];
     double matrix_data[160];
-    printf("\nrpc-8A31 recv_matrixLen=%d\n",recv_matrixLen);
+    
     #if 0 
-    printf("\nrpc-8A31 recv_matrixLen=%d\n",recv_matrixLen);
+    LogProducer::info("rpc-8A31","recv_matrixLen=%d",recv_matrixLen);
     for(int i=0;i<recv_matrixLen;i++)
     {
-        printf("\nstate=%d,\n[%lf, %lf, %lf, %lf]\n[%lf, %lf, %lf, %lf]\n[%lf, %lf, %lf, %lf]\n[%lf, %lf, %lf, %lf]\n", \
-        rq_data_ptr->data.matrices[i].state,\
-        rq_data_ptr->data.matrices[i].matrix[0],rq_data_ptr->data.matrices[i].matrix[1],rq_data_ptr->data.matrices[i].matrix[2],rq_data_ptr->data.matrices[i].matrix[3],\
-        rq_data_ptr->data.matrices[i].matrix[4],rq_data_ptr->data.matrices[i].matrix[5],rq_data_ptr->data.matrices[i].matrix[6],rq_data_ptr->data.matrices[i].matrix[7],\
-        rq_data_ptr->data.matrices[i].matrix[8],rq_data_ptr->data.matrices[i].matrix[9],rq_data_ptr->data.matrices[i].matrix[10],rq_data_ptr->data.matrices[i].matrix[11],\
+        LogProducer::info("handleRpc0x8A31","state=%d,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf", 
+        rq_data_ptr->data.matrices[i].state,
+        rq_data_ptr->data.matrices[i].matrix[0],rq_data_ptr->data.matrices[i].matrix[1],rq_data_ptr->data.matrices[i].matrix[2],rq_data_ptr->data.matrices[i].matrix[3],
+        rq_data_ptr->data.matrices[i].matrix[4],rq_data_ptr->data.matrices[i].matrix[5],rq_data_ptr->data.matrices[i].matrix[6],rq_data_ptr->data.matrices[i].matrix[7],
+        rq_data_ptr->data.matrices[i].matrix[8],rq_data_ptr->data.matrices[i].matrix[9],rq_data_ptr->data.matrices[i].matrix[10],rq_data_ptr->data.matrices[i].matrix[11],
         rq_data_ptr->data.matrices[i].matrix[12],rq_data_ptr->data.matrices[i].matrix[13],rq_data_ptr->data.matrices[i].matrix[14],rq_data_ptr->data.matrices[i].matrix[15]);
     }
     #endif

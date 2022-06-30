@@ -364,7 +364,7 @@ ErrorCode BaseGroup::sendOfflineTrajectoryFlow(void)
             return err;
         }
         err = bare_core_.fillPointCache(points, length, POINT_POS_VEL);
-        
+        /*
         if(err == true)//debug infomation
         {
             for (size_t i = 0; i < length; i++)
@@ -374,7 +374,7 @@ ErrorCode BaseGroup::sendOfflineTrajectoryFlow(void)
                 points[i].state.angle.j1_, points[i].state.angle.j2_, points[i].state.angle.j3_,
                 points[i].state.angle.j4_,points[i].state.angle.j5_,points[i].state.angle.j6_);
             }
-        }
+        }*/
         //LogProducer::info("mc_offline_traj","sendOfflineTrajectoryFlow: %d, head=%d, tail=%d", length, offline_trajectory_cache_head_, offline_trajectory_cache_tail_);
         
         if (points[length - 1].level == POINT_ENDING)

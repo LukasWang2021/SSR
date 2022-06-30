@@ -571,21 +571,21 @@ ErrorCode BaseGroup::setOnlineTrjPointBufData(double * p_doublePointdata,int *le
         last_periodJoint.j4_=OnlinePointBuf[i*24+3];
         last_periodJoint.j5_=OnlinePointBuf[i*24+4];
         last_periodJoint.j6_=OnlinePointBuf[i*24+5];
-
+        /*
         printf("displayTrjPointBufData[%d]=#%lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf#level=%d\n",\
         i,OnlinePointBuf[i*24+0],OnlinePointBuf[i*24+1],OnlinePointBuf[i*24+2],OnlinePointBuf[i*24+3],OnlinePointBuf[i*24+4],OnlinePointBuf[i*24+5],\
         OnlinePointBuf[i*24+6],OnlinePointBuf[i*24+7],OnlinePointBuf[i*24+8],OnlinePointBuf[i*24+9],OnlinePointBuf[i*24+10],OnlinePointBuf[i*24+11],OnlinePointLevelBuf[i]);
-        
+        */
     }
     OnlinePointBuf_pointNum = OnlinePointBuf_append_idx+TrjSize;
     online_trajectory_point_data_update_flag = true;//使能向在线队列里填入数据
     fill_success_cnt = fillOnlineFIFO(fill_start_index);
-    LogProducer::warn("setOnlinePointBufData","xzc_debug---fill_success_cnt=%d, fill_start_index=%d, OnlinePointBuf_pointNum=%d",fill_success_cnt,fill_start_index,OnlinePointBuf_pointNum);
+    //LogProducer::warn("setOnlinePointBufData","xzc_debug---fill_success_cnt=%d, fill_start_index=%d, OnlinePointBuf_pointNum=%d",fill_success_cnt,fill_start_index,OnlinePointBuf_pointNum);
     if(fill_success_cnt < (OnlinePointBuf_pointNum-fill_start_index))
     {
         OnlinePointBuf_append_idx += TrjSize;
         fill_start_index += fill_success_cnt;
-        LogProducer::error("setOnlinePointBufData"," fillOnlineFIFO error.OnlinePointBuf_append_idx=%d, fill_start_index = %d",OnlinePointBuf_append_idx,fill_start_index);
+        //LogProducer::error("setOnlinePointBufData"," fillOnlineFIFO error.OnlinePointBuf_append_idx=%d, fill_start_index = %d",OnlinePointBuf_append_idx,fill_start_index);
         //return BASE_GROUP_FILL_ONLINE_FIFO_ERROR;
     }
     else
@@ -1095,7 +1095,7 @@ ErrorCode BaseGroup::sendOnlineTrajectoryFlow(void)
                 online_fifo_pointCnt);
                 */
             }
-            LogProducer::warn("barecore_fillPointCache","onlineFifoCnt=%d",online_fifo_pointCnt);
+            //LogProducer::warn("barecore_fillPointCache","onlineFifoCnt=%d",online_fifo_pointCnt);
         }
     }
     else

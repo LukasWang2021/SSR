@@ -1194,6 +1194,7 @@ void ControllerRpc::handleRpc0x00008A31(void* request_data_ptr, void* response_d
     {
         rs_data_ptr->data.data = group_ptr_[0]->setOnlineVpointCache(recv_matrixLen, matrix_state, matrix_data);
     }
+    #if 0
     if (rs_data_ptr->data.data == SUCCESS)
     {
         LogProducer::info("rpc", "/rpc/motion_control/axis_group/setOnlineTrajectoryData for group[0] success");
@@ -1202,6 +1203,7 @@ void ControllerRpc::handleRpc0x00008A31(void* request_data_ptr, void* response_d
     {
         LogProducer::error("rpc", "/rpc/motion_control/axis_group/setOnlineTrajectoryData for group[0] failed. Error = 0x%llx", rs_data_ptr->data.data);
     }
+    #endif
 }
 //rpc/motion_conrtol/axis_group/setOnlineTrajectoryRatio  : 设置在线轨迹运动比例系数2022-0414
 void ControllerRpc::handleRpc0x0000B35F(void* request_data_ptr, void* response_data_ptr)

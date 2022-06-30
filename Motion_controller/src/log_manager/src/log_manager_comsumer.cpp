@@ -43,7 +43,7 @@ LogComsumer::~LogComsumer(void)
 		log_queue_ptr_ = NULL;
 	}
 	munmap(shmem_ptr_, LOG_SHMEM_SIZE);
-	printf("~LogComsumer success\n");
+	//printf("~LogComsumer success\n");
 }
 
 LogComsumer* LogComsumer::getInstance()
@@ -60,7 +60,7 @@ bool LogComsumer::init(int32_t level, std::vector<std::string> &thread_list)
 {
     //load params
     if(!param_ptr_->loadParam()){
-        printf("Failed to load log comsumer config files\n");
+        //printf("Failed to load log comsumer config files\n");
 		return false;
     }
 
@@ -73,7 +73,7 @@ bool LogComsumer::init(int32_t level, std::vector<std::string> &thread_list)
 	if (shmem_ptr_ == MAP_FAILED)
 	{
 		close(fd);
-		printf("Failed to map share memory\n");
+		//printf("Failed to map share memory\n");
 		return false;
 	}
 	close(fd);
@@ -96,8 +96,7 @@ bool LogComsumer::init(int32_t level, std::vector<std::string> &thread_list)
 	}
 	display_thread_list_ = thread_list;
 
-	printf("Display_enable: %d\nDisplay_level: %d\nLog_enable: %d\n", 
-		    display_enable_, display_level_, log_enable_);
+	//printf("Display_enable: %d\nDisplay_level: %d\nLog_enable: %d\n",display_enable_, display_level_, log_enable_);
 
 	return true;	
 }
@@ -161,7 +160,7 @@ void LogComsumer::writeLogFiles(LogControlBlock *log_block_ptr)
 		log_block_ptr->file_fd = open(path.c_str(), O_RDWR|O_CREAT);
 		if (log_block_ptr->file_fd == -1)
 		{
-			printf("failed to create file: %s\n", path.c_str());
+			//printf("failed to create file: %s\n", path.c_str());
 			return;
 		}
 		log_block_ptr->file_name = path;

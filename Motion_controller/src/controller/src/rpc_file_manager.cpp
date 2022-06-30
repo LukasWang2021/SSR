@@ -24,7 +24,7 @@ void ControllerRpc::handleRpc0x0000A545(void* request_data_ptr, void* response_d
 	
     std::string str = rq_data_ptr->data.data;
 	ErrorCode err = rs_data_ptr->error_code.data;
-    printf("rpc-readFile: %s, ret = 0x%llx\n", str.c_str(), err);
+    //printf("rpc-readFile: %s, ret = 0x%llx\n", str.c_str(), err);
 }
 
 //"/rpc/file_manager/writeFile"
@@ -45,6 +45,6 @@ void ControllerRpc::handleRpc0x00010D95(void* request_data_ptr, void* response_d
 
 	std::string str = rq_data_ptr->data1.data;
 	ErrorCode err = rs_data_ptr->data.data;
-    printf("rpc-writeFile: %s, ret = 0x%llx\n", str.c_str(), err);
+    //printf("rpc-writeFile: %s, ret = 0x%llx\n", str.c_str(), err);
 }
 

@@ -1084,7 +1084,7 @@ void OnlineTrajectoryPlanner::online_trajectory_algorithm_params_init()
     online_alg_params_.N_interp_Q=((online_alg_params_.N_step_Q*online_alg_params_.sample_time)/online_alg_params_.generate_traj_interval); //NinterpQ_ = ((N_step_Q_*Tsample_)/GEN_TN_);
     online_alg_params_.trj_ratio=1.0;
     online_alg_params_.online_receive_Tmatrix_buff_len=1000;
-
+    /*
     printf("\nonline_trajectory_algorithm_params_init:\nsample_time=%lf,generate_interval=%lf,N_step_P=%d,N_step_Q=%d,N_interpP=%lf,N_interpQ=%lf,trj_ratio=%lf,recvTmatrix_buffLen=%d\n",
             online_alg_params_.sample_time,
             online_alg_params_.generate_traj_interval,
@@ -1094,6 +1094,7 @@ void OnlineTrajectoryPlanner::online_trajectory_algorithm_params_init()
             online_alg_params_.N_interp_Q,
             online_alg_params_.trj_ratio,
             online_alg_params_.online_receive_Tmatrix_buff_len);
+    */
 }
 
 int OnlineTrajectoryPlanner::setOnlineTrjRatio(double data_ratio)

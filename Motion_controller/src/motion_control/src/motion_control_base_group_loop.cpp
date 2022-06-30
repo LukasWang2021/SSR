@@ -445,6 +445,10 @@ void BaseGroup::fillTrajectoryFifo(void)
             reportError(err);
         }
     }
+    else if (mc_state_ == PAUSING_OFFLINE)
+    {
+        fillOfflinePauseCache();
+    }
     /*
     else if (mc_state_ == ONLINE )
     {
@@ -774,6 +778,17 @@ void BaseGroup::sendTrajectoryFlow(void)
         err = sendOfflineTrajectoryFlow();
     }
     else if ((mc_state == OFFLINE && offline_to_standby_request_) || mc_state == OFFLINE_TO_STANDBY)
+    {
+        if (!bare_core_.isPointCacheEmpty())
+        {
+            err = bare_core_.sendPoint() ? SUCCESS : MC_SEND_TRAJECTORY_FAIL;
+        }
+    }
+    else if (mc_state == PAUSING_OFFLINE && !offline_to_pause_request_)
+    {
+        err = sendOfflineTrajectoryFlow();
+    }
+    else if (mc_state == PAUSING_OFFLINE && offline_to_pause_request_)
     {
         if (!bare_core_.isPointCacheEmpty())
         {

@@ -569,6 +569,11 @@ std::string BaseGroup::getMontionControlStatusString(MotionControlState mc_statu
         case OFFLINE:               return std::string("MC_OFFLINE");
         case RESUME:                return std::string("MC_RESUME");
         case PREPARE_RESUME:        return std::string("MC_PREPARE_RESUME");
+        case ONLINE:                return std::string("MC_ONLINE");
+        case PAUSE_ONLINE:          return std::string("MC_PAUSE_ONLINE");
+        case PAUSING_OFFLINE:       return std::string("MC_PAUSING_OFFLINE");
+        case PAUSING_OFFLINE_TO_PAUSE: return std::string("MC_PAUSING_OFFLINE_TO_PAUSE");
+        case PAUSED_OFFLINE:        return std::string("MC_PAUSED_OFFLINE");
 
         case MANUAL_TO_STANDBY:     return std::string("MC_MANUAL_TO_STANDBY");
         case STANDBY_TO_MANUAL:     return std::string("MC_STANDBY_TO_MANUAL");

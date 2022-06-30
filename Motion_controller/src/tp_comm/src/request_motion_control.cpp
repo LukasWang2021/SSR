@@ -1088,3 +1088,49 @@ void TpComm::handleRequest0x0000C4D9(int recv_bytes)
                          recv_bytes, RequestMessageType_Void_fields, -1);
 }
 
+void TpComm::handleRequest0x0000A063(int recv_bytes)
+{
+    // create object for request and response package
+    RequestMessageType_Int32_DoubleList *request_data_ptr = new RequestMessageType_Int32_DoubleList;
+    if (request_data_ptr == NULL)
+    {
+        ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
+        LogProducer::error("comm", "handleRequest: can't allocate memory for request_data");
+        return;
+    }
+    ResponseMessageType_Uint64* response_data_ptr = new ResponseMessageType_Uint64;
+    if (response_data_ptr == NULL)
+    {
+        ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
+        LogProducer::error("comm", "handleRequest: can't allocate memory for response_data");
+        delete request_data_ptr;
+        return;
+    }
+
+    handleRequestPackage(0x0000A063, (void *)request_data_ptr, (void *)response_data_ptr,
+                         recv_bytes, RequestMessageType_Int32_DoubleList_fields, -1);
+}
+
+void TpComm::handleRequest0x0000E479(int recv_bytes)
+{
+    // create object for request and response package
+    RequestMessageType_String_Double *request_data_ptr = new RequestMessageType_String_Double;
+    if (request_data_ptr == NULL)
+    {
+        ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
+        LogProducer::error("comm", "handleRequest: can't allocate memory for request_data");
+        return;
+    }
+    ResponseMessageType_Uint64_String* response_data_ptr = new ResponseMessageType_Uint64_String;
+    if (response_data_ptr == NULL)
+    {
+        ErrorQueue::instance().push(TP_COMM_MEMORY_OPERATION_FAILED);
+        LogProducer::error("comm", "handleRequest: can't allocate memory for response_data");
+        delete request_data_ptr;
+        return;
+    }
+
+    handleRequestPackage(0x0000E479, (void *)request_data_ptr, (void *)response_data_ptr,
+                         recv_bytes, RequestMessageType_String_Double_fields, -1);
+}
+

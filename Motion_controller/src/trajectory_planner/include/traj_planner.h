@@ -18,7 +18,7 @@
 #include <joint_planner.h>
 #include <circle_planner.h>
 #include <traj_params.h>
-
+#include "given_vel_planner.h"
 
 namespace group_space
 {

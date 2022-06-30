@@ -22,6 +22,7 @@ public:
     double   j9_;
 
     bool isEqual(Joint& joint, double valve = 0.001) const;
+    void zero();
 
     double& operator[](size_t index);
     const double& operator[](size_t index) const;

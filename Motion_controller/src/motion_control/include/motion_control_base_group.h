@@ -30,6 +30,7 @@
 #include "pause_resume_planner.h"
 #include "group.h"
 #include "onlineTrj_planner.h"
+#include "given_vel_planner.h"
 
 #define TRAJECTORY_CACHE_SIZE     8
 #define OFFLINE_TRAJECTORY_CACHE_SIZE  512
@@ -78,7 +79,7 @@ class BaseGroup
     MotionControlState getMotionControlState(void);
     ServoState getServoState(void);
 
-    void BaseGroup::setOnlineTrjFirstPointCondition();//检测到在线轨迹起点,设置一些初始条件
+    void setOnlineTrjFirstPointCondition();//检测到在线轨迹起点,设置一些初始条件
     ErrorCode switchToOnlineState();//进入ONLINE状态
     ErrorCode switchOnlineStateToStandby();//从ONLINE状态切换到STANDBY状态
     // Auto move APIs:
@@ -91,12 +92,16 @@ class BaseGroup
     void setOnlinePointLevelBuf(int idx, int value);
     ErrorCode setOnlineTrjPointBufData(double * trj_point_buf,uint32_t size);//将xyzabc数据逆解为轴角数据后整理为轨迹数据,然后传送给在线轨迹缓存
     ErrorCode setOnlinePoint_TMatrixBufData(double * p_doublePointdata,uint32_t size);
-    // API for off line trajectory
+    // API for offline trajectory
     virtual ErrorCode  readEulerTrajectoryFile(const std::string &offline_euler_trajectory_filePath,std::vector<std::vector<double>>& euler_trajArr);
     virtual ErrorCode setOfflineTrajectory(const std::string &offline_trajectory);
+    virtual ErrorCode setOfflineViaPoints(const std::vector<PoseEuler> &via_points, bool is_new);
     virtual basic_alg::Joint getStartJointOfOfflineTrajectory(void);
     virtual ErrorCode moveOfflineTrajectory(void);
-    
+    virtual ErrorCode planOfflineTrajectory(std::string traj_name, double traj_vel);
+    virtual ErrorCode planOfflinePause(void);
+    virtual ErrorCode planOfflineResume(void);
+
     // Manual teach APIs:
     virtual ManualFrame getManualFrame(void);
     virtual ErrorCode setManualFrame(ManualFrame frame);
@@ -192,6 +197,7 @@ class BaseGroup
     void doOfflineToStandby(const ServoState &servo_state, uint32_t &fail_counter);
     void doStandbyToOffline(void);
     void doPausingToPause(const ServoState &servo_state, uint32_t &fail_counter);
+    void doPausingOfflineToPause(const ServoState &servo_state, uint32_t &fail_counter);
     
     ErrorCode checkManualTrajectory(double start_time, double end_time, double step_time, basic_alg::Joint reference);
     ErrorCode planPauseTrajectory(void);
@@ -227,6 +233,7 @@ class BaseGroup
     bool isSameJoint(const basic_alg::Joint &joint1, const basic_alg::Joint &joint2, const basic_alg::Joint &thres);
 
     bool fillOfflineCache(void);
+    bool fillOfflinePauseCache(void);
     uint32_t getOfflineCacheSize(void);
     ErrorCode sendOfflineTrajectoryFlow(void);
     ErrorCode pickPointsFromOfflineCache(TrajectoryPoint *points, size_t &length);
@@ -301,8 +308,10 @@ class BaseGroup
     basic_alg::Transformation   transformation_;
     basic_alg::DynamicAlg   *dynamics_ptr_;
 
+    GivenVelocityPlanner offline_planner_;
     std::ifstream offline_trajectory_file_;
     std::ifstream offline_euler_trajectory_file_;
+    std::string offline_trajectory_file_name_;
     OnlineTrajectoryPlanner   online_trj_planner_ptr;
     bool offline_trajectory_first_point_;
     bool offline_trajectory_last_point_;
@@ -312,7 +321,7 @@ class BaseGroup
     basic_alg::Joint offline_start_joint_;
     TrajectoryPoint offline_trajectory_cache_[OFFLINE_TRAJECTORY_CACHE_SIZE];
     uint32_t offline_trajectory_cache_head_, offline_trajectory_cache_tail_;
-    uint32_t offline_traj_point_readCnt;
+    uint32_t offline_traj_point_read_cnt_;
     pthread_mutex_t     planner_list_mutex_;
     pthread_mutex_t     manual_traj_mutex_;
     pthread_mutex_t     manual_rpc_mutex_;
@@ -333,8 +342,14 @@ class BaseGroup
     bool manual_to_pause_request_;
     bool standby_to_manual_request_;
     bool manual_to_standby_request_;
+
+    bool offline_to_pause_request_;
+    bool pause_to_offline_request_;
+    bool pause_offline_to_standby_request_;
+    bool pausing_offline_to_pause_request_;
     bool standby_to_offline_request_;
     bool offline_to_standby_request_;
+
     bool pause_return_to_pause_request_;
     bool pausing_to_pause_request_;
     bool standby_to_online_request_;

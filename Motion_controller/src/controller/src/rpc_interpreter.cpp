@@ -6,6 +6,7 @@
 using namespace user_space;
 using namespace base_space;
 using namespace log_space;
+using namespace group_space;
 
 
 //"/rpc/interpreter/start"	
@@ -40,11 +41,19 @@ void ControllerRpc::handleRpc0x0000BA55(void* request_data_ptr, void* response_d
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
     bool in_position;
-    group_space::GroupStatus_e status;
+    GroupStatus_e status;
     group_ptr_[0]->mcGroupReadStatus(status, in_position);
 
     LogProducer::info("rpc", "/rpc/interpreter/pause %d, group state:%d", rq_data_ptr->data.data, status);
- 
+
+    if(status != GROUP_STATUS_STANDBY && status != GROUP_STATUS_MOVING)
+    {
+        LogProducer::info("rpc", "pause in invalid group state:%d", rq_data_ptr->data.data, status);
+        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
+        return ;
+    }
+
+    group_ptr_[0]->pauseMove();
     rs_data_ptr->data.data = InterpCtrl::instance().pause(rq_data_ptr->data.data);
 
     LogProducer::info("rpc", "/rpc/interpreter/pause %d, error:%llX", rq_data_ptr->data.data, rs_data_ptr->data.data);
@@ -61,7 +70,14 @@ void ControllerRpc::handleRpc0x0000CF55(void* request_data_ptr, void* response_d
     group_ptr_[0]->mcGroupReadStatus(status, in_position);
 
     LogProducer::info("rpc", "/rpc/interpreter/resume %d, group state:%d", rq_data_ptr->data.data, status);
+    if(status != GROUP_STATUS_STANDBY)
+    {
+        LogProducer::info("rpc", "resume in invalid group state:%d", rq_data_ptr->data.data, status);
+        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
+        return ;
+    }
 
+    group_ptr_[0]->restartMove();
     rs_data_ptr->data.data = InterpCtrl::instance().resume(rq_data_ptr->data.data);
     
     LogProducer::info("rpc", "/rpc/interpreter/resume %d, error:%llX", rq_data_ptr->data.data, rs_data_ptr->data.data);

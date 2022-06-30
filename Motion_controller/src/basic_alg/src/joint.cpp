@@ -6,6 +6,18 @@
 using namespace std;
 using namespace basic_alg;
 
+void Joint::zero()
+{
+    j1_ = 0.0;
+    j2_ = 0.0;
+    j3_ = 0.0;
+    j4_ = 0.0;
+    j5_ = 0.0;
+    j6_ = 0.0;
+    j7_ = 0.0;
+    j8_ = 0.0;
+    j9_ = 0.0;
+}
 
 bool Joint::isEqual(Joint& joint, double valve) const
 {

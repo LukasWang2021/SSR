@@ -20,6 +20,7 @@ public:
     bool isParallel(const Point& point, double valve = 0.001) const;
     bool isVertical(const Point& point, double valve = 0.001) const;
     void reverse();
+    void zero();
     double distanceToPoint(const Point& point) const;
     double norm() const;
     bool normalize(double valve = 0.001);
@@ -35,6 +36,7 @@ public:
     Point& operator+=(const Point& point);
     Point& operator-=(const Point& point);
     const Point operator*(double value) const;
+    const Point operator/(double value) const;
     
     void print(std::string comment = "") const;
 };

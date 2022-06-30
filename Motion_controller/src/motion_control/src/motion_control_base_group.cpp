@@ -446,6 +446,11 @@ ErrorCode BaseGroup::pauseMove(void)
         stop_barecore_ = true;
         return SUCCESS;
     }
+    else if(mc_state == OFFLINE && !offline_to_pause_request_)
+    {
+        offline_to_pause_request_ = true;
+        return SUCCESS;
+    }
     else
     {}
 
@@ -715,6 +720,11 @@ ErrorCode BaseGroup::restartMove(void)
     if (mc_state == PAUSE && servo_state == SERVO_IDLE)
     {
         pause_to_auto_request_ = true;
+        return SUCCESS;
+    }
+    else if(mc_state == PAUSED_OFFLINE && servo_state == SERVO_IDLE)
+    {
+        pause_to_offline_request_ = true;
         return SUCCESS;
     }
     else if (mc_state == STANDBY && servo_state == SERVO_IDLE)

@@ -23,6 +23,7 @@ void BaseGroup::doStateMachine(void)
     static uint32_t pausing_to_pause_cnt = 0;
     static uint32_t pause_return_to_pause_cnt = 0;
     static uint32_t offline_to_standby_cnt = 0;
+    static uint32_t pausing_offline_to_pause_cnt = 0;
     static uint32_t prepare_resume_cnt = 0;
     static uint32_t pause_manual_to_pause_cnt = 0;
     static uint32_t fine_counter = 0;
@@ -30,7 +31,7 @@ void BaseGroup::doStateMachine(void)
     MotionControlState mc_state = mc_state_;
     ServoState servo_state = getServoState();
 
-    if (clear_request_ && (mc_state == STANDBY || mc_state == PAUSE))
+    if (clear_request_ && (mc_state == STANDBY || mc_state == PAUSE || mc_state == PAUSED_OFFLINE))
     {
         LogProducer::info("mc_sm","Clear group, MC-state = %s", getMontionControlStatusString(mc_state).c_str());
         mc_state_ = STANDBY;
@@ -171,7 +172,7 @@ void BaseGroup::doStateMachine(void)
                  mc_state == PAUSING_TO_PAUSE || mc_state == PAUSE_RETURN_TO_PAUSE || mc_state == PREPARE_RESUME)
         {
             mc_state_ = PAUSE;
-            LogProducer::warn("mc_sm","MC-state switch to MC_PAUSE.");
+            LogProducer::warn("mc_sm","1 MC-state switch to MC_PAUSE.");
         }
         else if (mc_state == PAUSING)
         {
@@ -179,7 +180,7 @@ void BaseGroup::doStateMachine(void)
             traj_fifo_.clear();
             bare_core_.clearPointCache();
             mc_state_ = PAUSE;
-            LogProducer::warn("mc_sm","MC-state switch to MC_PAUSE.");
+            LogProducer::warn("mc_sm","2 MC-state switch to MC_PAUSE.");
         }
         else if (mc_state == PAUSE_RETURN)
         {
@@ -187,12 +188,12 @@ void BaseGroup::doStateMachine(void)
             traj_fifo_.clear();
             bare_core_.clearPointCache();
             mc_state_ = PAUSE;
-            LogProducer::warn("mc_sm","MC-state switch to MC_PAUSE.");
+            LogProducer::warn("mc_sm","3 MC-state switch to MC_PAUSE.");
         }
         else if (mc_state == RESUME)
         {
             mc_state_ = PAUSE;
-            LogProducer::warn("mc_sm","MC-state switch to MC_PAUSE.");
+            LogProducer::warn("mc_sm","4 MC-state switch to MC_PAUSE.");
             remain_trajectory_.assign(origin_trajectory_.begin(), origin_trajectory_.end());
             start_joint_before_pause_ = start_joint_;
             pause_joint_ = remain_trajectory_.front().angle;
@@ -218,7 +219,7 @@ void BaseGroup::doStateMachine(void)
         else if (mc_state == AUTO || mc_state == STANDBY_TO_AUTO)
         {
             mc_state_ = PAUSE;
-            LogProducer::warn("mc_sm","MC-state switch to MC_PAUSE.");
+            LogProducer::warn("mc_sm","5 MC-state switch to MC_PAUSE.");
             start_joint_before_pause_ = start_joint_;
             remain_trajectory_.clear();
             TrajectoryPoint point;
@@ -343,6 +344,13 @@ void BaseGroup::doStateMachine(void)
         {
             fillOfflineCache();
 
+            if(offline_to_pause_request_)
+            {
+                mc_state_ = OFFLINE_TO_PAUSING;
+                offline_to_pause_request_ = false;
+                LogProducer::warn("mc_sm","MC-state switch to MC_OFFLINE_TO_PAUSING");
+            }
+
             if (offline_to_standby_request_)
             {
                 offline_to_standby_cnt = 0;
@@ -353,6 +361,75 @@ void BaseGroup::doStateMachine(void)
 
             break;
         }
+
+        case OFFLINE_TO_PAUSING:
+        {
+            ErrorCode err = planOfflinePause();
+
+            if (err != SUCCESS)
+            {
+                mc_state_ = OFFLINE;
+                LogProducer::info("mc_sm","MC-state switch to MC_OFFLINE.");
+                reportError(err);
+            }
+            else
+            {
+                pause_joint_ = pause_trajectory_.back().angle;
+                mc_state_ = PAUSING_OFFLINE;
+                LogProducer::info("mc_sm","MC-state switch to PAUSING_OFFLINE.");
+            }
+            break;
+        }
+        case PAUSING_OFFLINE:
+        {
+            if (pausing_offline_to_pause_request_)
+            {
+                // pausing_to_pause_cnt = 0;
+                offline_to_standby_cnt = 0;
+                mc_state_ = PAUSING_OFFLINE_TO_PAUSE;
+                pausing_offline_to_pause_request_ = false;
+                LogProducer::warn("mc_sm","MC-state switch to offline MC_PAUSING_TO_PAUSE");
+            }
+        }
+        case PAUSED_OFFLINE:
+        {
+            if(pause_to_offline_request_) // resume
+            {
+                // check is the same 
+                if (!isSameJoint(pause_joint_, start_joint_))
+                {
+                    mc_state_ = STANDBY;
+                    pause_to_offline_request_ = false;
+                    LogProducer::warn("mc_sm","MC-state switch to MC_STANDBY");
+                    break;
+                }
+                // plan resume traj
+                ErrorCode err = planOfflineResume();
+                if (err != SUCCESS)
+                {
+                    mc_state_ = STANDBY;
+                    LogProducer::info("mc_sm","MC-state switch to MC_STANDBY.");
+                    reportError(err);
+                }
+                else
+                {
+                    if(setOfflineTrajectory(offline_trajectory_file_name_) == SUCCESS)
+                    {
+                        pause_joint_ = pause_trajectory_.back().angle;
+                        doStandbyToOffline();
+                        LogProducer::info("mc_sm","MC-state switch to OFFLINE.");
+                    }
+                    else
+                    {
+                        mc_state_ = STANDBY;
+                        LogProducer::info("mc_sm","set offline file failed MC-state switch to MC_STANDBY.");
+                    }
+                }
+                pause_to_offline_request_ = false;
+            }
+            break;
+        }
+
         case ONLINE:
         {
             if (online_to_standby_request_)
@@ -363,7 +440,9 @@ void BaseGroup::doStateMachine(void)
                 
                 LogProducer::warn("mc_sm","MC-state switch to MC__STANDBY");
             }
-        }break;
+            break;
+        }
+
         case PAUSE:
         {
             if (pause_to_auto_request_)
@@ -414,7 +493,6 @@ void BaseGroup::doStateMachine(void)
                 pause_to_manual_request_ = false;
                 LogProducer::warn("mc_sm","MC-state switch to MC_PAUSE_TO_PAUSE_MANUAL");
             }
-
             break;
         }
 
@@ -430,7 +508,6 @@ void BaseGroup::doStateMachine(void)
 
             break;
         }
-
         case RESUME:
         {
             if (resume_trajectory_.size() == 0)
@@ -457,7 +534,7 @@ void BaseGroup::doStateMachine(void)
                 if (prepare_resume_cnt > 300)
                 {
                     mc_state_ = PAUSE;
-                    LogProducer::warn("mc_sm","MC-state switch to MC_PAUSE.");
+                    LogProducer::warn("mc_sm","6 MC-state switch to MC_PAUSE.");
                     LogProducer::warn("mc_sm","Pause to prepare resume time-out but trajectory-fifo still empty.");
                 }
             }
@@ -478,7 +555,7 @@ void BaseGroup::doStateMachine(void)
             {
                 reportError(err);
                 mc_state_ = PAUSE;
-                LogProducer::warn("mc_sm","MC-state switch to MC_PAUSE.");
+                LogProducer::warn("mc_sm","7 MC-state switch to MC_PAUSE.");
             }
 
             break;
@@ -531,7 +608,7 @@ void BaseGroup::doStateMachine(void)
             else
             {
                 mc_state_ = PAUSE;
-                LogProducer::warn("mc_sm","MC-state switch to MC_PAUSE.");
+                LogProducer::warn("mc_sm","8 MC-state switch to MC_PAUSE.");
             }
             
             break;
@@ -585,6 +662,12 @@ void BaseGroup::doStateMachine(void)
             break;
         }
 
+        case PAUSING_OFFLINE_TO_PAUSE:
+        {
+            doPausingOfflineToPause(servo_state, pausing_offline_to_pause_cnt);
+            break;
+        }
+
         case PAUSING_TO_PAUSE:
         {
             doPausingToPause(servo_state, pausing_to_pause_cnt);
@@ -627,7 +710,7 @@ void BaseGroup::doPausingToPause(const ServoState &servo_state, uint32_t &fail_c
 	if (servo_state == SERVO_IDLE)
 	{
 		mc_state_ = PAUSE;
-        LogProducer::warn("mc_sm","MC-state switch to MC_PAUSE.");
+        LogProducer::warn("mc_sm","9 MC-state switch to MC_PAUSE.");
         return;
 	}
 
@@ -638,6 +721,25 @@ void BaseGroup::doPausingToPause(const ServoState &servo_state, uint32_t &fail_c
         mc_state_ = PAUSE;
 		reportError(MC_SWITCH_STATE_TIMEOUT);
         LogProducer::error("mc_sm","Pausing to pause timeout.");
+	}
+}
+
+void BaseGroup::doPausingOfflineToPause(const ServoState &servo_state, uint32_t &fail_counter)
+{
+	if (servo_state == SERVO_IDLE)
+	{
+		mc_state_ = PAUSED_OFFLINE;
+        LogProducer::warn("mc_sm","MC-state switch to offline MC_PAUSE.");
+        return;
+	}
+
+	fail_counter ++;
+
+	if (fail_counter > auto_to_pause_timeout_)
+	{
+        mc_state_ = PAUSED_OFFLINE;
+		reportError(MC_SWITCH_STATE_TIMEOUT);
+        LogProducer::error("mc_sm","offline pausing to pause timeout.");
 	}
 }
 
@@ -824,7 +926,7 @@ void BaseGroup::doPauseToManual(void)
         {
             reportError(err);
             mc_state_ = PAUSE;
-            LogProducer::warn("mc_sm","MC-state switch to MC_PAUSE.");
+            LogProducer::warn("mc_sm","10 MC-state switch to MC_PAUSE.");
             return;
         }
     }
@@ -838,7 +940,7 @@ void BaseGroup::doPauseToManual(void)
         {
             reportError(err);
             mc_state_ = PAUSE;
-            LogProducer::warn("mc_sm","MC-state switch to MC_PAUSE.");
+            LogProducer::warn("mc_sm","11 MC-state switch to MC_PAUSE.");
             return;
         }
     }
@@ -878,7 +980,7 @@ void BaseGroup::doPauseManualToPause(const ServoState &servo_state, uint32_t &fa
 	if (servo_state == SERVO_IDLE)
 	{
 		mc_state_ = PAUSE;
-		LogProducer::warn("mc_sm","MC-state switch to MC_PAUSE.");
+		LogProducer::warn("mc_sm","12 MC-state switch to MC_PAUSE.");
 	}
 
 	fail_counter ++;

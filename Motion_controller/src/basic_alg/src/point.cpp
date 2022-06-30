@@ -119,6 +119,13 @@ void Point::reverse()
     z_ = -z_;
 }
 
+void Point::zero()
+{
+    x_ = 0.0;
+    y_ = 0.0;
+    z_ = 0.0;
+}
+
 double Point::distanceToPoint(const Point& point) const
 {
     double delta_x = x_ - point.x_;
@@ -221,6 +228,25 @@ const Point Point::operator*(double value) const
     result.x_ = value * x_;
     result.y_ = value * y_;
     result.z_ = value * z_;
+    return result;
+}
+
+
+const Point Point::operator/(double value) const
+{
+    Point result;
+    if (value != 0)
+    {
+        result.x_ = x_ / value;
+        result.y_ = y_ / value;
+        result.z_ = z_ / value;
+    }
+    else
+    {
+        result.x_ = 0;
+        result.y_ = 0;
+        result.z_ = 0;
+    }
     return result;
 }
 

@@ -16,14 +16,28 @@ typedef struct {
     double c_;
 }TrjPoint;
 
+
+typedef struct{
+    double sample_time;
+    double generate_traj_interval;
+    int N_step_P;
+    int N_step_Q;
+    double N_interp_P;
+    double N_interp_Q;
+    double trj_ratio;
+    int online_receive_Tmatrix_buff_len;
+}onlineTrjAlgParam;
+
 using namespace std;
 using namespace basic_alg;
 
 class OnlineTrajectoryPlanner
 {
 public:
-    //int  trjPointCnt;
-    TrjPoint trj_point_buf[160];
+    TrjPoint trj_point_buf[160];//Bspline算法输出暂存
+    int receive_TmatrixCnt = 0;//接收来自touch的矩阵数据数---对应缓存序号
+    int read_TmatrixCnt = 0; //从缓存里读touch矩阵数量计数
+
     OnlineTrajectoryPlanner();
     ~OnlineTrajectoryPlanner();
     int sign(double x);//取double数字的符号
@@ -61,6 +75,12 @@ public:
     bool FixedBaseCoordTransformation(Matrix44& T_touchm,Matrix44& resM);
     bool DynamicBaseCoordTransformation(Matrix44 T_r0_R, Matrix44 Touch_h0_v,  Matrix44 Touch_ht_v, double k,Matrix44& resM);
     void rtm_r2xyzabc(Matrix44& u,Vector3& res_xyz, Vector3& res_abc);
+   
+    onlineTrjAlgParam online_alg_params_;
+    void online_trajectory_algorithm_params_init();
+    int  get_onlineRecvTmatrixBuffPackLen();
+    int setOnlineTrjRatio(double data_ratio);
+    double get_online_trj_ratio();
 };
 
 #endif

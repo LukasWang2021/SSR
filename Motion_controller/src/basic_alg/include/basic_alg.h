@@ -1074,6 +1074,7 @@ static inline void Matrix2Pose(const double (&m)[4][4], PoseQuaternion &pose)
 
     double norm = sqrt(w * w + x * x + y * y + z * z);
 
+    //四元数强制单位化
     pose.quaternion_.w_ = w / norm;
     pose.quaternion_.x_ = x / norm;
     pose.quaternion_.y_ = y / norm;
@@ -1500,6 +1501,7 @@ static inline  void sampleSlerpInterpolationQuaternion(const Quaternion &start, 
 
     if (orientation_angle < 0.001)
     {
+        // ��̬�н�С��0.1rad,��̬���Բ�ֵ
         result.w_ = (1 - ratio) * start.w_ + ratio * alternative_end.w_;
         result.x_ = (1 - ratio) * start.x_ + ratio * alternative_end.x_;
         result.y_ = (1 - ratio) * start.y_ + ratio * alternative_end.y_;
@@ -1507,6 +1509,7 @@ static inline  void sampleSlerpInterpolationQuaternion(const Quaternion &start, 
     }
     else
     {
+        // ��̬�нǴ���0.1rad,��̬������ֵ
         result.w_ = (sin((1 - ratio) * orientation_angle) * start.w_ + sin(ratio * orientation_angle) * alternative_end.w_) / sin(orientation_angle);
         result.x_ = (sin((1 - ratio) * orientation_angle) * start.x_ + sin(ratio * orientation_angle) * alternative_end.x_) / sin(orientation_angle);
         result.y_ = (sin((1 - ratio) * orientation_angle) * start.y_ + sin(ratio * orientation_angle) * alternative_end.y_) / sin(orientation_angle);

@@ -11,6 +11,7 @@
 #include "log_manager_producer.h"
 #include "common_error_code.h"
 #include "group.h"
+#include "onlineTrj_planner.h"
 
 namespace group_space
 {
@@ -51,13 +52,15 @@ public:
     ErrorCode MotionStateOnlineToStandby(void); //从ONLINE状态切换到STANDBY状态并做相关变量设置
     //ErrorCode setOnlinePointBufptr(double * ptr);
     ErrorCode setOnlinePointBufptr();
+    ErrorCode setOnlineTrajectoryRatio(double ratio);
+    ErrorCode setOnlineVpointCache(int num_matrix,int * p_status, double * p_marixArray);
     // API for off line trajectory
     ErrorCode convertEulerTraj2JointTraj(const std::string &offline_euler_trajectory_fileName);
     ErrorCode Fir_Bspline_algorithm_test2(void);
     ErrorCode receive_T_matrix_data(int status, double * p_marixArray);
     void xzc_funTest();
     ErrorCode setOfflineTrajectory(const std::string &offline_trajectory);
-    ErrorCode prepairOfflineTrajectory(void);
+    ErrorCode prepareOfflineTrajectory(void);
     ErrorCode moveOfflineTrajectory(void);
 
     // API for zero offset and calibrator
@@ -140,6 +143,10 @@ public:
 
     //ssr
     void setWorkMode(UserOpMode mode);
+    void OnlineMove_exceedJointLimit_pause();
+    void OnlineMove_exceedJointLimit_pause2(TrjPoint point);
+    TrjPoint getOnlineMoveLastWithinPoint();
+    ErrorCode checkOnlineMoveError(int op_code);
     UserOpMode getWorkMode(void);
 
     // parameter access
@@ -149,6 +156,7 @@ public:
     void ringPlannerTask(void);
     void ringRealTimeTask(void);
     void ringPriorityTask(void);
+    void ringOnlineTrajTask(void);
 
     //pure function no realization
     virtual ErrorCode mcGroupHalt(double dec, double jerk);
@@ -185,6 +193,13 @@ private:
     pthread_mutex_t  instruction_mutex_;
     uint32_t instructions_recv_counter_;
     uint32_t instructions_handle_counter_;
+
+    uint64_t receive_T_matrix_iterCnt=0;//进入receive_T_matrix_data()函数的迭代次数
+    //TrjPoint last_within_limit_point;//记录在线运动过程中逆解失败之前的Bspline算法输出点xyzabc, 紧急暂停终点处理时用到
+    std::mutex online_trajData_mutex_;
+    bool flag_recv_new_VPMatrix_= false;// false-现在没有收到VP点矩阵, true-收到VP点矩阵
+    int *online_vp_status_; //用于暂存在线轨迹接收途经点矩阵状态
+    double *online_vp_cache_;//用于暂存在线轨迹接收途经点矩阵数据
 
     fst_ctrl::CoordinateManager* coordinate_manager_ptr_;
     fst_ctrl::ToolManager* tool_manager_ptr_;

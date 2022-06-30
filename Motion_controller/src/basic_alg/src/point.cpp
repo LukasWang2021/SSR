@@ -224,6 +224,25 @@ const Point Point::operator*(double value) const
     return result;
 }
 
+
+const Point Point::operator/(double value) const
+{
+    Point result;
+    if (value != 0)
+    {
+        result.x_ = x_ / value;
+        result.y_ = y_ / value;
+        result.z_ = z_ / value;
+    }
+    else
+    {
+        result.x_ = 0;
+        result.y_ = 0;
+        result.z_ = 0;
+    }
+    return result;
+}
+
 void Point::print(std::string comment) const
 {
     std::cout<<comment<<std::endl;

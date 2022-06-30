@@ -18,12 +18,12 @@ float VPv[2][6] = { {0.0, 0.0, 0.0, 0, 0, 0},
                     //{0.3, 0.3, 0.2, 0.1*PI, 0.2*PI, 0.3*PI},
                 };
 
-#define Tsample     0.002 //touch采样时间间隔
-#define GEN_TN      0.001 //生成轨迹间隔
-#define NstepP      5     //计算位置-取VP点的采样点间隔--->每5个采样点取一个xyz向量  范围<=5
-#define NstepQ      25    //计算姿态-取VQ的采样点间隔--->每25个采样点取一个abc向量
-#define NinterpP    ((NstepP*Tsample)/GEN_TN)  //5*0.002/0.001 = 10
-#define NinterpQ    ((NstepQ*Tsample)/GEN_TN)  //25*0.002/0.001 = 50
+//#define Tsample     0.002 //touch采样时间间隔
+//#define GEN_TN      0.001 //生成轨迹间隔
+//#define NstepP      5     //计算位置-取VP点的采样点间隔--->每5个采样点取一个xyz向量  范围<=5
+//#define NstepQ      25    //计算姿态-取VQ的采样点间隔--->每25个采样点取一个abc向量
+//#define NinterpP    ((NstepP*Tsample)/GEN_TN)  //5*0.002/0.001 = 10
+//#define NinterpQ    ((NstepQ*Tsample)/GEN_TN)  //25*0.002/0.001 = 50
 
 #define LAMBDA 10  //B样条3级串联滤波器脉冲响应系数索引值[1,10,100]
 #if(LAMBDA == 1)
@@ -37,7 +37,7 @@ double hfir[6] = {0.1252,0.1191,0.1056,0.0886,0.0706,0.0535};
 
 OnlineTrajectoryPlanner::OnlineTrajectoryPlanner()
 {
-
+    online_trajectory_algorithm_params_init();
 }
 OnlineTrajectoryPlanner::~OnlineTrajectoryPlanner()
 {
@@ -431,86 +431,6 @@ Quaternion OnlineTrajectoryPlanner::rtm_Squad(Quaternion& q0, Quaternion& q1, Qu
 
     return q12;
 }
-/***************************
- * 函数功能:
- * 参数说明:
- * m---范围[1,5]
- * lambda---
- * Nstep---
- * NVP---加载的VP点数量
- * VPp_point[]---输入VP点数据 最长255
- * Pout--输出点位置向量数组
- * *****************************/
-void OnlineTrajectoryPlanner::traj_on_FB(int m, int lambda, int Nstep, Vector3 VPp_point[], int NVP, Vector3 point_new[])
-{
-    //double Tsample = 0.002;//touch采样间隔
-    double tvp = Nstep*Tsample;//VP点时间间隔  0.01--->每5个采样点取一个VP点
-    double tn=0.001;
-    double Ninterp = tvp/tn;//10
-    double hfir[6];
-    double VPx[255],VPy[255],VPz[255];
-    double cx[5],cy[5],cz[5];
-    double cx_ts[500],cy_ts[500],cz_ts[500];
-    int i=0,k=0;//迭代
-    const int hfir_idx[11] = {5,4,3,2,1,0,1,2,3,4,5};
-    int hfir_idxidx = 0;
-    int count_ts=0;
-    int count_VP = 0;//VP点计数
-    if(lambda == 1)
-    {
-        hfir[0]=0.4018; hfir[1]=0.2424;  hfir[2]=0.0841; hfir[3]=0.0041; hfir[4]=-0.0174;  hfir[5]=-0.0140;
-    }
-    else if(lambda == 10)
-    {
-        hfir[0]=0.1952; hfir[1]=0.1666;  hfir[2]=0.1183; hfir[3]=0.0714; hfir[4]=-0.0350;  hfir[5]=-0.0112;
-    }
-    else if(lambda == 100)
-    {
-        hfir[0]=0.1252; hfir[1]=0.1191;  hfir[2]=0.1056; hfir[3]=0.0886; hfir[4]=-0.0706;  hfir[5]=-0.0535;
-    }
-    for(i=0;i<NVP;i++)
-    {
-        VPx[i] = VPp_point[i].x_;
-        VPy[i] = VPp_point[i].y_;
-        VPz[i] = VPp_point[i].z_;
-    }
-    for(i=0;i<m;i++)
-    {
-        cx[i] = VPx[0];
-        cy[i] = VPy[0];
-        cz[i] = VPz[0];
-    }
-    for(i=0;i<m*Ninterp;i++)
-    {
-        cx_ts[i] = cx[0];
-        cy_ts[i] = cy[0];
-        cz_ts[i] = cz[0];
-    }
-    count_ts += m*Ninterp;
-    for(k=2*m;k<NVP;k++)//通过前2m+1个vp点来确定当前的控制点c(k)，即滞后2m+1个点
-    {
-        double t_sum_cx=0,t_sum_cy=0,t_sum_cz=0;
-        hfir_idxidx = 5-m;//确定hfir_idx的查找起始下标
-        for(int i=0;i<(2*m+1);i++)
-        {
-            t_sum_cx += hfir[hfir_idx[hfir_idxidx]]*VPx[k-2*m+i];
-            t_sum_cy += hfir[hfir_idx[hfir_idxidx]]*VPy[k-2*m+i];
-            t_sum_cz += hfir[hfir_idx[hfir_idxidx]]*VPz[k-2*m+i];
-            hfir_idxidx++;
-        }
-        cx[k-m] = t_sum_cx;
-        cy[k-m] = t_sum_cy;
-        cz[k-m] = t_sum_cz;
-        for(int i=0;i<Ninterp;i++)//VP点间隔Nms，因此得到的每个cp点要保持Nms
-        {
-            cx_ts[count_ts+i] = cz[k-m];
-            cx_ts[count_ts+i] = cz[k-m];
-            cx_ts[count_ts+i] = cz[k-m];
-        }
-        count_ts += Ninterp;
-    }
-    point_new[k].x_ = 3*point_new[k-1].x_ - 3*point_new[k-2].x_ + point_new[k-3].x_;
-}
 
 /******************************************
  * 函数功能:
@@ -524,10 +444,7 @@ void OnlineTrajectoryPlanner::traj_on_FB(int m, int lambda, int Nstep, Vector3 V
  * ******************************************/
 void OnlineTrajectoryPlanner::traj_on_Squad(int Nstep, Vector3 VPp_abc[], int NVP, Quaternion Qnew[], Vector3 abc[], Quaternion Qold[])
 {
-    //double Tsample = 0.002;//touch 采样间隔
-    double tn = 0.001;//生成轨迹间隔
-    double Ninterp = Nstep*static_cast<double>(Tsample)/tn;//VP点之间插点数量Nstep*Tsample/0.001个点，即10ms 10个点
-
+    double t_NinterpP = online_alg_params_.N_interp_P;//2022-6-10 pm
     Quaternion Qs[255];
     Quaternion Q0,Q1,Q2,Q3;
     double dq;
@@ -565,11 +482,11 @@ void OnlineTrajectoryPlanner::traj_on_Squad(int Nstep, Vector3 VPp_abc[], int NV
             {
                 Q0 = Qs[j-1]; Q1 = Qs[j]; Q2 = Qs[j+1]; Q3 = Qs[j+2];
             }
-            for(k=0;k<Ninterp;k++)
+            for(k=0;k<t_NinterpP;k++)
             {
-                s = k/Ninterp;
-                Qnew[static_cast<int>(k+Ninterp*(j-1)+1)] = rtm_Squad(Q0,Q1,Q2,Q3,s);
-                abc[static_cast<int>(k+Ninterp*(j-1)+1)] = rtm_quat2abc(Qnew[static_cast<int>(k+Ninterp*(j-1)+1)]);//
+                s = k/t_NinterpP;
+                Qnew[static_cast<int>(k+t_NinterpP*(j-1)+1)] = rtm_Squad(Q0,Q1,Q2,Q3,s);
+                abc[static_cast<int>(k+t_NinterpP*(j-1)+1)] = rtm_quat2abc(Qnew[static_cast<int>(k+t_NinterpP*(j-1)+1)]);//
             }
             j = j+1;
         }
@@ -583,6 +500,7 @@ void OnlineTrajectoryPlanner::traj_on_Squad(int Nstep, Vector3 VPp_abc[], int NV
  * 参数说明:
  * 一个采样点数据 xyz, abc
  * status: 状态 0-起点(按下按钮)  1-中间过程(hold按钮) 2-终点(松开按钮)
+ * online_TrjpointBufIndex--填入算法输出结果trj_point_buf[]的起点下标
  * 返回值: 生成结果途经点的数量
  * *************************/
 int  OnlineTrajectoryPlanner::traj_on_FIR_Bspline(Vector3 xyz, Vector3 abc,int status, int online_TrjpointBufIndex)
@@ -613,13 +531,15 @@ int  OnlineTrajectoryPlanner::traj_on_FIR_Bspline(Vector3 xyz, Vector3 abc,int s
     static int out_abc_cnt=0;
     static int out_cnt=0;
     static int out_status=0;//默认输出轨迹点状态为起点
-    int NP = static_cast<int>(NinterpP);
+    int NP = static_cast<int>(online_alg_params_.N_interp_P);//has been static_cast to int when init().
     int res_PointCnt = 0;
+
     //每NstepP记录一个VP NstepP==5
 //cout << "sp_cnt="<<sp_cnt<<endl;
-    if(sp_cnt%NstepP == 0) {flag_getVpFromTouch = true;} else {flag_getVpFromTouch = false;}
+ if(sp_cnt%online_alg_params_.N_step_P == 0) {flag_getVpFromTouch = true;} else {flag_getVpFromTouch = false;}
     //每NstepQ记录一个VQ NstepQ==25
-    if(sp_cnt%NstepQ == 0) {flag_getVqFromTouch = true;} else {flag_getVqFromTouch = false;}
+    //if(sp_cnt%NstepQ == 0) {flag_getVqFromTouch = true;} else {flag_getVqFromTouch = false;}
+    if(sp_cnt%online_alg_params_.N_step_Q == 0) {flag_getVqFromTouch = true;} else {flag_getVqFromTouch = false;}
     if(status == 0)//轨迹起点--按下按键后立即传入静止状态的机械臂末端位姿
     {
         sp_cnt = 0; vp_cnt = 0; vq_cnt = 0;j=0;
@@ -634,6 +554,14 @@ int  OnlineTrajectoryPlanner::traj_on_FIR_Bspline(Vector3 xyz, Vector3 abc,int s
         }
         flag_getVpFromTouch = true;
         flag_getVqFromTouch = true;
+        Q0.w_=0;Q0.x_=0;Q0.y_=0;Q0.z_=0;
+        Q1.w_=0;Q1.x_=0;Q1.y_=0;Q1.z_=0;
+        Q2.w_=0;Q2.x_=0;Q2.y_=0;Q2.z_=0;
+        Q3.w_=0;Q3.x_=0;Q3.y_=0;Q3.z_=0;
+        memset(Qnew,0,50*sizeof(Quaternion));
+        memset(out_abc,0,50*sizeof(Vector3));
+        memset(out_xyz_buf,0,255*sizeof(Vector3));
+        memset(out_abc_buf,0,255*sizeof(Vector3));
         out_xyz_cnt = 0;
         out_abc_cnt = 0;
         out_cnt=0;
@@ -645,7 +573,8 @@ int  OnlineTrajectoryPlanner::traj_on_FIR_Bspline(Vector3 xyz, Vector3 abc,int s
         flag_getVqFromTouch = true;
     }
     //采样点计数根据取VP点和VQ点间隔的公倍数清零
-    if(sp_cnt >= 2*NstepP*NstepQ) {sp_cnt = NstepP*NstepQ;}
+    if(sp_cnt >= 2*online_alg_params_.N_step_P*online_alg_params_.N_step_Q) 
+    {sp_cnt = online_alg_params_.N_step_P*online_alg_params_.N_step_Q;}
     sp_cnt++;//采样点计数自增
     if(flag_getVpFromTouch)
     {
@@ -764,9 +693,9 @@ int  OnlineTrajectoryPlanner::traj_on_FIR_Bspline(Vector3 xyz, Vector3 abc,int s
             }
 //cout << "***************************************************"<<endl;
             double s;
-            for(int k=0;k<NinterpQ;k++)
+            for(int k=0;k<online_alg_params_.N_interp_Q;k++)
             {
-                s = k/NinterpQ;
+ 		s = k/online_alg_params_.N_interp_Q;
                 Qnew[k] = rtm_Squad(Q0,Q1,Q2,Q3,s);
 //Qnew[k].print("alg_out_Qnew");
                 out_abc[k] = rtm_quat2abc(Qnew[k]);//
@@ -777,9 +706,9 @@ int  OnlineTrajectoryPlanner::traj_on_FIR_Bspline(Vector3 xyz, Vector3 abc,int s
             {
                 Q0=Q1;Q1=Q2;Q2=Q3;//覆盖迭代
 cout << "***************************************************Ending abc planing:"<<endl;
-                for(int k=0;k<NinterpQ;k++)
+		for(int k=0;k<online_alg_params_.N_interp_Q;k++)
                 {
-                    s = k/NinterpQ;
+		    s = k/online_alg_params_.N_interp_Q;
                     Qnew[k] = rtm_Squad(Q0,Q1,Q2,Q3,s);
 //Qnew[k].print("alg_out_Qnew");
                     out_abc[k] = rtm_quat2abc(Qnew[k]);//
@@ -847,8 +776,12 @@ cout << "***************************************************Ending abc planing:"
                 {
                     trj_point_buf[i+online_TrjpointBufIndex].status = out_status;
                     if(i == (out_abc_cnt-1)) {trj_point_buf[i+online_TrjpointBufIndex].status = 2;}
-                    trj_point_buf[i+online_TrjpointBufIndex].x_ = out_xyz_buf[out_xyz_cnt-1].x_; trj_point_buf[i+online_TrjpointBufIndex].y_ = out_xyz_buf[out_xyz_cnt-1].y_; trj_point_buf[i+online_TrjpointBufIndex].z_ = out_xyz_buf[out_xyz_cnt-1].z_;
-                    trj_point_buf[i+online_TrjpointBufIndex].a_ = out_abc_buf[i].x_; trj_point_buf[i+online_TrjpointBufIndex].b_ = out_abc_buf[i].y_; trj_point_buf[i+online_TrjpointBufIndex].c_ = out_abc_buf[i].z_;
+                    trj_point_buf[i+online_TrjpointBufIndex].x_ = out_xyz_buf[out_xyz_cnt-1].x_; 
+                    trj_point_buf[i+online_TrjpointBufIndex].y_ = out_xyz_buf[out_xyz_cnt-1].y_; 
+                    trj_point_buf[i+online_TrjpointBufIndex].z_ = out_xyz_buf[out_xyz_cnt-1].z_;
+                    trj_point_buf[i+online_TrjpointBufIndex].a_ = out_abc_buf[i].x_; 
+                    trj_point_buf[i+online_TrjpointBufIndex].b_ = out_abc_buf[i].y_; 
+                    trj_point_buf[i+online_TrjpointBufIndex].c_ = out_abc_buf[i].z_;
                 }
                 res_PointCnt = out_abc_cnt;
             }
@@ -1133,9 +1066,58 @@ void OnlineTrajectoryPlanner::function_test()
 }
 
 
+/*
+sample_time : 0.002 #touch采样时间间隔
+generate_traj_interval  : 0.001 #生成轨迹间隔
+N_step_P : 5  #计算位置-取VP点的采样点间隔--->每5个采样点取一个xyz向量  范围<=5
+N_step_Q : 25 #计算姿态-取VQ的采样点间隔--->每25个采样点取一个abc向量
+trj_ratio: 1.0 #机械臂移动距离与touch移动距离的比例系数,    即机械臂移动距离=K*touch移动距离
+online_receive_Tmatrix_buff_len : 1000  #运控接收来自Touch T矩阵数据的缓存数量
+*/
+void OnlineTrajectoryPlanner::online_trajectory_algorithm_params_init()
+{
+    online_alg_params_.sample_time=0.002;
+    online_alg_params_.generate_traj_interval=0.001;
+    online_alg_params_.N_step_P=5;
+    online_alg_params_.N_step_Q=25;
+    online_alg_params_.N_interp_P=((online_alg_params_.N_step_P*online_alg_params_.sample_time)/online_alg_params_.generate_traj_interval); //NinterpP_ = ((N_step_P_*Tsample_)/GEN_TN_);
+    online_alg_params_.N_interp_Q=((online_alg_params_.N_step_Q*online_alg_params_.sample_time)/online_alg_params_.generate_traj_interval); //NinterpQ_ = ((N_step_Q_*Tsample_)/GEN_TN_);
+    online_alg_params_.trj_ratio=1.0;
+    online_alg_params_.online_receive_Tmatrix_buff_len=1000;
+    /*
+    printf("\nonline_trajectory_algorithm_params_init:\nsample_time=%lf,generate_interval=%lf,N_step_P=%d,N_step_Q=%d,N_interpP=%lf,N_interpQ=%lf,trj_ratio=%lf,recvTmatrix_buffLen=%d\n",
+            online_alg_params_.sample_time,
+            online_alg_params_.generate_traj_interval,
+            online_alg_params_.N_step_P,
+            online_alg_params_.N_step_Q,
+            online_alg_params_.N_interp_P,
+            online_alg_params_.N_interp_Q,
+            online_alg_params_.trj_ratio,
+            online_alg_params_.online_receive_Tmatrix_buff_len);
+    */
+}
+
+int OnlineTrajectoryPlanner::setOnlineTrjRatio(double data_ratio)
+{
+    //trajectory_planner_ptr_.traj_params_.trj_ratio_ = data_ratio;
+    online_alg_params_.trj_ratio = data_ratio;
+    return 0;
+}
+/**
+ * 函数功能: 获取运控接收来自Touch T矩阵数据包的缓存包数量
+*/
+int  OnlineTrajectoryPlanner::get_onlineRecvTmatrixBuffPackLen()
+{
+    //return trajectory_planner_ptr_.traj_params_.OnlineRecvTmatrixBuffPackLen_;
+    return 30;
+}
 
 
-
+double OnlineTrajectoryPlanner::get_online_trj_ratio()
+{
+    //return trajectory_planner_ptr_.traj_params_.trj_ratio_;
+    return 1.0;
+}
 
 
 

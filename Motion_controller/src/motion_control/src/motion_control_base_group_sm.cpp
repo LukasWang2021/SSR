@@ -60,7 +60,6 @@ void BaseGroup::doStateMachine(void)
         pthread_mutex_unlock(&offline_mutex_);
 
         pthread_mutex_lock(&online_traj_mutex_);
-        online_trajectory_first_point_ = false;
         online_trajectory_last_point_ = false;
         pthread_mutex_unlock(&online_traj_mutex_);
         manual_trajectory_check_fail_ = false;
@@ -286,7 +285,6 @@ void BaseGroup::doStateMachine(void)
                 mc_state_ = ONLINE;
                 LogProducer::warn("mc_sm","MC-state switch to ONLINE from STANDBY");
                 online_time_ = 0;
-                //online_trajectory_first_point_ = true;
 	            online_trajectory_last_point_ = false;
             }
             break;
@@ -363,7 +361,9 @@ void BaseGroup::doStateMachine(void)
                 
                 LogProducer::warn("mc_sm","MC-state switch to MC__STANDBY");
             }
-        }break;
+            break;
+        }
+
         case PAUSE:
         {
             if (pause_to_auto_request_)
@@ -414,7 +414,6 @@ void BaseGroup::doStateMachine(void)
                 pause_to_manual_request_ = false;
                 LogProducer::warn("mc_sm","MC-state switch to MC_PAUSE_TO_PAUSE_MANUAL");
             }
-
             break;
         }
 

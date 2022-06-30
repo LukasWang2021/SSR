@@ -574,7 +574,7 @@ ErrorCode MotionControl::prepareOfflineTrajectory(void)
 {
     if (group_ptr_->getMotionControlState() != STANDBY)
     {
-        LogProducer::error("mc","Fail to prepair offline trajectory, state = 0x%x", group_ptr_->getMotionControlState());
+        LogProducer::error("mc","Fail to prepare offline trajectory, state = 0x%x", group_ptr_->getMotionControlState());
         return INVALID_SEQUENCE;
     }
 

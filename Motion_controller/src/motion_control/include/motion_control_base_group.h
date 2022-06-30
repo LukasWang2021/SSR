@@ -197,6 +197,7 @@ class BaseGroup
     void doOfflineToStandby(const ServoState &servo_state, uint32_t &fail_counter);
     void doStandbyToOffline(void);
     void doPausingToPause(const ServoState &servo_state, uint32_t &fail_counter);
+    void doPausingOfflineToPause(const ServoState &servo_state, uint32_t &fail_counter);
     
     ErrorCode checkManualTrajectory(double start_time, double end_time, double step_time, basic_alg::Joint reference);
     ErrorCode planPauseTrajectory(void);
@@ -310,6 +311,7 @@ class BaseGroup
     GivenVelocityPlanner offline_planner_;
     std::ifstream offline_trajectory_file_;
     std::ifstream offline_euler_trajectory_file_;
+    std::string offline_trajectory_file_name_;
     OnlineTrajectoryPlanner   online_trj_planner_ptr;
     bool offline_trajectory_first_point_;
     bool offline_trajectory_last_point_;
@@ -319,7 +321,7 @@ class BaseGroup
     basic_alg::Joint offline_start_joint_;
     TrajectoryPoint offline_trajectory_cache_[OFFLINE_TRAJECTORY_CACHE_SIZE];
     uint32_t offline_trajectory_cache_head_, offline_trajectory_cache_tail_;
-    uint32_t offline_traj_point_readCnt;
+    uint32_t offline_traj_point_read_cnt_;
     pthread_mutex_t     planner_list_mutex_;
     pthread_mutex_t     manual_traj_mutex_;
     pthread_mutex_t     manual_rpc_mutex_;
@@ -343,6 +345,8 @@ class BaseGroup
 
     bool offline_to_pause_request_;
     bool pause_to_offline_request_;
+    bool pause_offline_to_standby_request_;
+    bool pausing_offline_to_pause_request_;
     bool standby_to_offline_request_;
     bool offline_to_standby_request_;
 

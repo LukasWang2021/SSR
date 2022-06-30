@@ -46,7 +46,6 @@ enum MotionType
     MOTION_LINE   = 2,
     MOTION_CIRCLE = 3,
     MOTION_XPOS   = 4,
-    MOTION_VP_POS = 5,
 };
 
 enum SmoothType
@@ -146,7 +145,10 @@ enum MotionControlState
     PREPARE_RESUME = 0xB,
     ONLINE = 0xC,
     PAUSE_ONLINE = 0x0D,
-    PAUSE_OFFLINE = 0x0E,
+    PAUSING_OFFLINE = 0x0E,
+    PAUSING_OFFLINE_TO_PAUSE = 0x0F,
+    PAUSED_OFFLINE = 0x10,
+    RESUME_OFFLINE = 0x11,
 
     MANUAL_TO_STANDBY = 0x32,
     STANDBY_TO_MANUAL = 0x23,

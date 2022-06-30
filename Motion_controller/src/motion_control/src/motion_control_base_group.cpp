@@ -722,6 +722,11 @@ ErrorCode BaseGroup::restartMove(void)
         pause_to_auto_request_ = true;
         return SUCCESS;
     }
+    else if(mc_state == PAUSED_OFFLINE && servo_state == SERVO_IDLE)
+    {
+        pause_to_offline_request_ = true;
+        return SUCCESS;
+    }
     else if (mc_state == STANDBY && servo_state == SERVO_IDLE)
     {
         return SUCCESS;

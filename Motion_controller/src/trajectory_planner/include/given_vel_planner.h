@@ -7,6 +7,7 @@
 #include "vector3.h"
 #include "algorithm"
 #include "pose_euler.h"
+#include "traj_params.h"
 
 class GivenVelocityPlanner
 {
@@ -26,11 +27,12 @@ public:
     7. abc transfer to quaternion and resampling with spline
     */
     bool viaPoints2Traj(double traj_vel);
-    bool viaPoints2Traj(std::vector<basic_alg::PoseEuler> via_points);
+    bool viaPoints2Traj(std::vector<basic_alg::PoseEuler> via_points, double traj_vel);
     bool setViaPoints(const std::vector<basic_alg::PoseEuler> &via_points, bool is_new);
+    void reset(void);
     
-    bool trajPausePlan(int32_t index, double vel, double vel_ratio, double acc_ratio, double jerk_ratio);
-    bool trajResumePlan(void);
+    bool trajPausePlan(uint32_t index, double vel, double vel_ratio, double acc_ratio, double jerk_ratio);
+    bool trajResumePlan(double vel, double vel_ratio, double acc_ratio, double jerk_ratio);
 
     std::vector<basic_alg::PoseEuler> getResampledTraj(void) { return resampled_traj_; }
     std::vector<basic_alg::PoseEuler> getPauseTraj(void) { return pause_traj_; }
@@ -42,7 +44,7 @@ public:
     void xyzSetFitRate(double rate) { xyz_fit_rate_ = rate; }
     void abcSetSmoothWindow(int window) { abc_smooth_window_ = window; }
 
-	void setLimit(const basic_alg::Joint &vel_limit, const basic_alg::Joint &acc_limit);
+	void setLimit(TrajParams *param) { traj_param_ = param; }
 
     std::vector<basic_alg::Quaternion> testQuatSmooth(const std::vector<basic_alg::Quaternion>& quat_in);
     std::vector<basic_alg::Point> testPoseSmooth(const std::vector<basic_alg::Point>& pose_in);
@@ -63,10 +65,12 @@ private:
     bool xyzTrajResampling(void);
     bool abcTrajResampling(void);
 
+    bool calcResampledPointDist(void);
+
 private:
     /*
       Interpolation between pos_start and pos_end with 5th order polynome and then 
-      find the give via point's time in the whole trajectory.
+      find the give via points' time in the whole trajectory.
       fs: sampling frequency
       pos_give: via point's distance between first via point
     */
@@ -87,7 +91,17 @@ private:
         const std::vector<double> via_points_time,
         std::vector<basic_alg::PoseEuler>& out_traj);
 
-    bool calcResampledPointDist(void);
+    bool spline(
+        const std::vector<double>& data, 
+        const double& init, 
+        const double& final, 
+        const std::vector<double> times, 
+        std::vector<double>& out);
+
+    void spline_value(
+        const std::vector<double> via_points_time, 
+        const std::vector<double> resampled_time, 
+        std::vector<basic_alg::PoseEuler>& out_traj);
 
 private:
     double sampling_freq_;
@@ -120,13 +134,24 @@ private:
     double even_end_dist_;
     double dec_end_dist_;
 
+    int paused_index_;
+
+    std::vector<double> fa0_px_, fa0_py_, fa0_pz_;
+    std::vector<double> fa1_px_, fa1_py_, fa1_pz_;
+    std::vector<double> fa2_px_, fa2_py_, fa2_pz_;
+    std::vector<double> fa3_px_, fa3_py_, fa3_pz_;
+
+    std::vector<double> fa0_qw_, fa0_qx_, fa0_qy_, fa0_qz_;
+    std::vector<double> fa1_qw_, fa1_qx_, fa1_qy_, fa1_qz_;
+    std::vector<double> fa2_qw_, fa2_qx_, fa2_qy_, fa2_qz_;
+    std::vector<double> fa3_qw_, fa3_qx_, fa3_qy_, fa3_qz_;
+
     std::vector<double> via_points_time_new_;
     std::vector<basic_alg::PoseEuler> resampled_traj_;
     std::vector<basic_alg::PoseEuler> pause_traj_;
     std::vector<basic_alg::PoseEuler> resume_traj_;
 private:
-	basic_alg::Joint vel_limit_;
-	basic_alg::Joint acc_limit_;
+    TrajParams *traj_param_;
 };
 
 #endif

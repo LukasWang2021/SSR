@@ -1488,6 +1488,7 @@ void ControllerRpc::handleRpc0x000051E9(void* request_data_ptr, void* response_d
         || status != GROUP_STATUS_STANDBY)
     {
         rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
+        LogProducer::error("rpc", "prepare offline invalid option mode=%d, status=%d", group_ptr_[0]->getWorkMode(), status);
         return;
     }
 

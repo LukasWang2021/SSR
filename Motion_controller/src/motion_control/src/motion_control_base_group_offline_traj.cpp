@@ -153,7 +153,8 @@ ErrorCode BaseGroup::setOfflineTrajectory(const std::string &offline_trajectory)
         LogProducer::error("mc_offline_traj","Fail to open offline trajectory file");
         return INVALID_PARAMETER;
     }
-
+    offline_trajectory_file_name_ = offline_trajectory;
+    offline_traj_point_read_cnt_ = 0;
     uint32_t joint_num;
     double cycle_time;
     char line_str[512];
@@ -208,7 +209,7 @@ Joint BaseGroup::getStartJointOfOfflineTrajectory(void)
 ErrorCode BaseGroup::moveOfflineTrajectory(void)
 {
     standby_to_offline_request_ = true;
-    offline_traj_point_readCnt = 0;//log 取点行数
+    offline_traj_point_read_cnt_ = 0;//log 取点行数
     return SUCCESS;
 }
 
@@ -240,7 +241,7 @@ ErrorCode BaseGroup::planOfflineTrajectory(string traj_name, double traj_vel)
     joint_state.omega.zero();
     joint_state.torque.zero();
     JointState last_state;
-    double traj_time = 0.0;
+    // double traj_time = 0.0;
     std::ofstream traj_out_file(traj_name, ios::out);
     // write the traj file head
     traj_out_file << getNumberOfJoint() << " " << 0.001 << " " << xyz_traj.size() << "\n";
@@ -309,19 +310,29 @@ ErrorCode BaseGroup::planOfflinePause(void)
     pthread_mutex_lock(&offline_mutex_);
     uint32_t left_points = getOfflineCacheSize(); // local cache left points
     pthread_mutex_unlock(&offline_mutex_);
+    // if the left points less than 20ms
     // offline plan
-    offline_planner_.trajPausePlan(offline_traj_point_readCnt, 0, 0, 0, 0);
+    LogProducer::warn("BaseGroup", "start offline pause plan on index %u, cache left points %u", offline_traj_point_read_cnt_, left_points);
+    if(!offline_planner_.trajPausePlan(offline_traj_point_read_cnt_, 0, 0, 0, 0))
+    {
+        LogProducer::error("BaseGroup", "offline pause plan failed", offline_traj_point_read_cnt_);
+        return MC_PAUSE_FAILED;
+    }
     vector<PoseEuler> pause_traj = offline_planner_.getPauseTraj();
 
     Posture posture = {1, 1, 1, 0};
     JointState joint_state;
-    JointState last_state = origin_trajectory_[offline_traj_point_readCnt];
+    JointState last_state = origin_trajectory_[offline_traj_point_read_cnt_];
     joint_state.alpha.zero();
     joint_state.angle.zero();
     joint_state.jerk.zero();
     joint_state.omega.zero();
     joint_state.torque.zero();
     pause_trajectory_.clear();
+    pause_trajectory_time_stamp_ = offline_traj_point_read_cnt_ * cycle_time_;
+    LogProducer::info("BaseGroup", "offline pause plan success last state( %lf,%lf,%lf,%lf,%lf,%lf )", 
+    last_state.angle.j1_, last_state.angle.j2_, last_state.angle.j3_, 
+    last_state.angle.j4_, last_state.angle.j5_, last_state.angle.j6_);
 
     for(auto iter = pause_traj.begin(); iter < pause_traj.end(); ++iter)
     {
@@ -331,18 +342,99 @@ ErrorCode BaseGroup::planOfflinePause(void)
             LogProducer::error("BaseGroup", "failed point(%lf, %lf, %lf, %lf, %lf, %lf)", 
             iter->point_.x_, iter->point_.y_, iter->point_.z_, iter->euler_.a_, iter->euler_.b_, iter->euler_.c_);
             // need error stop
-            return -1;
+            return MC_PAUSE_FAILED;
         }
         joint_state.omega = last_state.angle - joint_state.angle;
         pause_trajectory_.push_back(joint_state);
         last_state = joint_state;
     }
+    LogProducer::info("BaseGroup", "offline pause traj filled");
 
-    return 0;
+    return SUCCESS;
 }
 
 ErrorCode BaseGroup::planOfflineResume(void)
 {
+    LogProducer::warn("BaseGroup", "start offline resume plan");
+    if(!offline_planner_.trajResumePlan(0.0, 0.0, 0.0, 0.0))
+    {
+        LogProducer::error("BaseGroup", "offline resume plan failed");
+        return MC_RESUME_FAILED;
+    }
+    vector<PoseEuler> resume_traj = offline_planner_.getResampledTraj();
+    LogProducer::info("BaseGroup", "offline resume plan success");
+    offline_trajectory_file_name_ += ".resume";
+    std::ofstream traj_out_file(offline_trajectory_file_name_, ios::out);
+    // write the traj file head
+    traj_out_file << getNumberOfJoint() << " " << 0.001 << " " << resume_traj.size() << "\n";
+    traj_out_file << fixed << setprecision(10);
+
+    Posture posture = {1, 1, 1, 0};
+    JointState joint_state;
+    JointState last_state;
+    joint_state.alpha.zero();
+    joint_state.angle.zero();
+    joint_state.jerk.zero();
+    joint_state.omega.zero();
+    joint_state.torque.zero();
+    pause_trajectory_.clear();
+    for(auto iter = resume_traj.begin(); iter != resume_traj.end(); ++iter)
+    {
+        if(!kinematics_ptr_->doIK(*iter, posture, joint_state.angle))
+        {
+            LogProducer::error("BaseGroup", "offline resume trajectory point IK failed");
+            LogProducer::error("BaseGroup", "failed point(%lf, %lf, %lf, %lf, %lf, %lf) count %ld", 
+            iter->point_.x_, iter->point_.y_, iter->point_.z_, 
+            iter->euler_.a_, iter->euler_.b_, iter->euler_.c_, 
+            iter - resume_traj.begin());
+            return MC_VP2TRAJ_PLAN_FAILED;
+        }
+        if(iter == resume_traj.begin())
+        {
+            // write the first joint angle to file
+            traj_out_file
+            << joint_state.angle.j1_ << " " << joint_state.angle.j2_ << " " 
+            << joint_state.angle.j3_ << " " << joint_state.angle.j4_ << " " 
+            << joint_state.angle.j5_ << " " << joint_state.angle.j6_ << "\n";
+            // write the first joint state to file
+            traj_out_file
+            << joint_state.angle.j1_ << " " << joint_state.angle.j2_ << " " 
+            << joint_state.angle.j3_ << " " << joint_state.angle.j4_ << " " 
+            << joint_state.angle.j5_ << " " << joint_state.angle.j6_ << " "
+            // first point is zero
+            << 0 << " " << 0 << " " << 0 << " " << 0 << " " << 0 << " " << 0 << " "
+            << 0 << " " << 0 << " " << 0 << " " << 0 << " " << 0 << " " << 0 << " "
+            << 0 << " " << 0 << " " << 0 << " " << 0 << " " << 0 << " " << 0 << "\n";
+        }
+        else
+        {
+            // calc the angle speed
+            joint_state.omega = joint_state.angle - last_state.angle;
+            // write the first joint state to file
+            traj_out_file
+            << joint_state.angle.j1_ << " " << joint_state.angle.j2_ << " " 
+            << joint_state.angle.j3_ << " " << joint_state.angle.j4_ << " " 
+            << joint_state.angle.j5_ << " " << joint_state.angle.j6_ << " "
+
+            << joint_state.omega.j1_ * 1000 << " " << joint_state.omega.j2_ * 1000 << " " 
+            << joint_state.omega.j3_ * 1000 << " " << joint_state.omega.j4_ * 1000 << " " 
+            << joint_state.omega.j5_ * 1000 << " " << joint_state.omega.j6_ * 1000 << " "
+
+            << joint_state.alpha.j1_ << " " << joint_state.alpha.j2_ << " " 
+            << joint_state.alpha.j3_ << " " << joint_state.alpha.j4_ << " " 
+            << joint_state.alpha.j5_ << " " << joint_state.alpha.j6_ << " "
+
+            << joint_state.torque.j1_ << " " << joint_state.torque.j2_ << " " 
+            << joint_state.torque.j3_ << " " << joint_state.torque.j4_ << " " 
+            << joint_state.torque.j5_ << " " << joint_state.torque.j6_ << "\n";
+        }
+        resume_trajectory_.push_back(joint_state);
+        last_state = joint_state;
+    }
+    traj_out_file.close();
+
+    LogProducer::info("BaseGroup", "offline pause traj filled");
+
     return 0;
 }
 
@@ -387,8 +479,8 @@ bool BaseGroup::fillOfflineCache(void)
             {
                 ss >> local_cache[picked_number].state.angle[j];
             }
-            offline_traj_point_readCnt++;
-            //LogProducer::info("mc_offline_traj","read point [%d]-(%f,%f,%f,%f,%f,%f),", offline_traj_point_readCnt,local_cache[picked_number].state.angle[0],local_cache[picked_number].state.angle[1],local_cache[picked_number].state.angle[2],local_cache[picked_number].state.angle[3],local_cache[picked_number].state.angle[4],local_cache[picked_number].state.angle[5]);
+            offline_traj_point_read_cnt_++;
+            //LogProducer::info("mc_offline_traj","read point [%d]-(%f,%f,%f,%f,%f,%f),", offline_traj_point_read_cnt_,local_cache[picked_number].state.angle[0],local_cache[picked_number].state.angle[1],local_cache[picked_number].state.angle[2],local_cache[picked_number].state.angle[3],local_cache[picked_number].state.angle[4],local_cache[picked_number].state.angle[5]);
             for (uint32_t j = 0; j < joint_number; j++)
             {
                 ss >> local_cache[picked_number].state.omega[j];
@@ -419,7 +511,7 @@ bool BaseGroup::fillOfflineCache(void)
     {
         return false;
     }
-    if(offline_trajectory_size_ == offline_traj_point_readCnt) offline_trajectory_last_point_ = true;//取到最后一点,标记结束点
+    if(offline_trajectory_size_ == offline_traj_point_read_cnt_) offline_trajectory_last_point_ = true;//取到最后一点,标记结束点
     //LogProducer::info("fillOfflineCache","picked: %d, last = %d", picked_number, offline_trajectory_last_point_);
     if (offline_trajectory_first_point_)
     {
@@ -449,6 +541,66 @@ bool BaseGroup::fillOfflineCache(void)
 
 bool BaseGroup::fillOfflinePauseCache(void)
 {
+    const static uint32_t local_cache_size = 50;
+    static uint32_t picked_number = 0;
+    static TrajectoryPoint local_cache[local_cache_size];
+
+    pthread_mutex_lock(&offline_mutex_);
+
+    if (getOfflineCacheSize() + local_cache_size >= OFFLINE_TRAJECTORY_CACHE_SIZE)
+    {
+        pthread_mutex_unlock(&offline_mutex_);
+        return false;
+    }
+
+    pthread_mutex_unlock(&offline_mutex_);
+
+    for(picked_number = 0; picked_number < local_cache_size; picked_number++)
+    {
+        if (picked_number < pause_trajectory_.size())
+        {
+            local_cache[picked_number].state = pause_trajectory_[picked_number];
+        }
+        else
+        {
+            offline_trajectory_last_point_ = true;
+            break;
+        }
+        local_cache[picked_number].time_stamp = pause_trajectory_time_stamp_;
+        local_cache[picked_number].level = POINT_MIDDLE;
+        pause_trajectory_time_stamp_ += cycle_time_;
+    }
+
+    if (picked_number == 0)
+    {
+        return false;
+    }
+    if (picked_number > 0)
+    {
+        pause_trajectory_.erase(pause_trajectory_.begin(), pause_trajectory_.begin() + picked_number);
+    }
+
+    if(offline_trajectory_size_ == offline_traj_point_read_cnt_)
+        offline_trajectory_last_point_ = true;//取到最后一点,标记结束点
+    //LogProducer::info("fillOfflineCache","picked: %d, last = %d", picked_number, offline_trajectory_last_point_);
+
+    if (offline_trajectory_last_point_)
+    {
+        LogProducer::info("fillOfflinePauseCache","pause point ending");
+        local_cache[picked_number - 1].level = POINT_ENDING;
+        start_joint_ = local_cache[picked_number - 1].state.angle;
+        offline_trajectory_last_point_ = false;
+    }
+    
+    pthread_mutex_lock(&offline_mutex_);
+
+    for (uint32_t i = 0; i < picked_number; i++)
+    {
+        offline_trajectory_cache_[offline_trajectory_cache_tail_] = local_cache[i];
+        offline_trajectory_cache_tail_ = offline_trajectory_cache_tail_ + 1 < OFFLINE_TRAJECTORY_CACHE_SIZE ? offline_trajectory_cache_tail_ + 1 : 0;
+    }
+
+    pthread_mutex_unlock(&offline_mutex_);
     return true;
 }
 
@@ -501,21 +653,9 @@ ErrorCode BaseGroup::sendOfflineTrajectoryFlow(void)
         if (err != SUCCESS)
         {
             LogProducer::error("mc_offline_traj","sendOfflineTrajectoryFlow: cannot pick point from trajectory fifo.");
-            return err;
+            return MC_SEND_TRAJECTORY_FAIL;
         }
         err = bare_core_.fillPointCache(points, length, POINT_POS_VEL);
-        
-        if(err == true)//debug infomation
-        {
-            for (size_t i = 0; i < length; i++)
-            {
-                LogProducer::info("OfflinetrjS|barecore_fillPointCache"," %d) level=%d time_stamp=%.4f (%.6f,%.6f,%.6f,%.6f,%.6f,%.6f)",
-                i+1,points[i].level, points[i].time_stamp, 
-                points[i].state.angle.j1_, points[i].state.angle.j2_, points[i].state.angle.j3_,
-                points[i].state.angle.j4_,points[i].state.angle.j5_,points[i].state.angle.j6_);
-            }
-        }
-        //LogProducer::info("mc_offline_traj","sendOfflineTrajectoryFlow: %d, head=%d, tail=%d", length, offline_trajectory_cache_head_, offline_trajectory_cache_tail_);
         
         if (points[length - 1].level == POINT_ENDING)
         {
@@ -524,17 +664,13 @@ ErrorCode BaseGroup::sendOfflineTrajectoryFlow(void)
             {
                 offline_to_standby_request_ = true;
             }
-            else if(mc_state_ == PAUSE_OFFLINE)
+            else if(mc_state_ == PAUSING_OFFLINE)
             {
-                offline_to_pause_request_ = true;
+                pausing_offline_to_pause_request_ = true;
             }
         }
     }
-    else
-    {
-        LogProducer::warn("sendOfflineTrajectoryFlow","bare_core_ is not PointCacheEmpty");
-    }
-    //LogProducer::info("mc_offline_traj","sendOfflineTrajectoryFlow: bare.sendPoint");
+
     return bare_core_.sendPoint() ? SUCCESS : MC_SEND_TRAJECTORY_FAIL;
 }
 

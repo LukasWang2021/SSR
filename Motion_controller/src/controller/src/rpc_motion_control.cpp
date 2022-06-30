@@ -1182,7 +1182,18 @@ void ControllerRpc::handleRpc0x00008A31(void* request_data_ptr, void* response_d
         matrix_state[i] = rq_data_ptr->data.matrices[i].state;
         memcpy(&matrix_data[i*16],&rq_data_ptr->data.matrices[i].matrix[0], 16*sizeof(double));
     }
-    rs_data_ptr->data.data = group_ptr_[0]->setOnlineVpointCache(recv_matrixLen, matrix_state, matrix_data);
+    if(group_ptr_[0]->checkOnlineMoveError(0))
+    {
+        rs_data_ptr->data.data = group_ptr_[0]->checkOnlineMoveError(0);
+        //group_ptr_[0]->OnlineMove_exceedJointLimit_pause();
+        //TrjPoint endPoint_xyzabc =  group_ptr_[0]->getOnlineMoveLastWithinPoint();
+        //group_ptr_[0]->OnlineMove_exceedJointLimit_pause2(endPoint_xyzabc);
+        group_ptr_[0]->OnlineMove_exceedJointLimit_pause();//checkOnlineMoveError(1);//重置成功
+    }
+    else
+    {
+        rs_data_ptr->data.data = group_ptr_[0]->setOnlineVpointCache(recv_matrixLen, matrix_state, matrix_data);
+    }
     if (rs_data_ptr->data.data == SUCCESS)
     {
         LogProducer::info("rpc", "/rpc/motion_control/axis_group/setOnlineTrajectoryData for group[0] success");

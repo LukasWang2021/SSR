@@ -8,6 +8,7 @@
         "*.tcc": "cpp",
         "utility": "cpp",
         "ostream": "cpp",
-        "cmath": "cpp"
+        "cmath": "cpp",
+        "mutex": "cpp"
     }
 }

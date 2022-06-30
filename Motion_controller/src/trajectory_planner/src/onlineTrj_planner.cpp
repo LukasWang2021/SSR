@@ -554,6 +554,14 @@ int  OnlineTrajectoryPlanner::traj_on_FIR_Bspline(Vector3 xyz, Vector3 abc,int s
         }
         flag_getVpFromTouch = true;
         flag_getVqFromTouch = true;
+        Q0.w_=0;Q0.x_=0;Q0.y_=0;Q0.z_=0;
+        Q1.w_=0;Q1.x_=0;Q1.y_=0;Q1.z_=0;
+        Q2.w_=0;Q2.x_=0;Q2.y_=0;Q2.z_=0;
+        Q3.w_=0;Q3.x_=0;Q3.y_=0;Q3.z_=0;
+        memset(Qnew,0,50*sizeof(Quaternion));
+        memset(out_abc,0,50*sizeof(Vector3));
+        memset(out_xyz_buf,0,255*sizeof(Vector3));
+        memset(out_abc_buf,0,255*sizeof(Vector3));
         out_xyz_cnt = 0;
         out_abc_cnt = 0;
         out_cnt=0;
@@ -768,8 +776,12 @@ cout << "***************************************************Ending abc planing:"
                 {
                     trj_point_buf[i+online_TrjpointBufIndex].status = out_status;
                     if(i == (out_abc_cnt-1)) {trj_point_buf[i+online_TrjpointBufIndex].status = 2;}
-                    trj_point_buf[i+online_TrjpointBufIndex].x_ = out_xyz_buf[out_xyz_cnt-1].x_; trj_point_buf[i+online_TrjpointBufIndex].y_ = out_xyz_buf[out_xyz_cnt-1].y_; trj_point_buf[i+online_TrjpointBufIndex].z_ = out_xyz_buf[out_xyz_cnt-1].z_;
-                    trj_point_buf[i+online_TrjpointBufIndex].a_ = out_abc_buf[i].x_; trj_point_buf[i+online_TrjpointBufIndex].b_ = out_abc_buf[i].y_; trj_point_buf[i+online_TrjpointBufIndex].c_ = out_abc_buf[i].z_;
+                    trj_point_buf[i+online_TrjpointBufIndex].x_ = out_xyz_buf[out_xyz_cnt-1].x_; 
+                    trj_point_buf[i+online_TrjpointBufIndex].y_ = out_xyz_buf[out_xyz_cnt-1].y_; 
+                    trj_point_buf[i+online_TrjpointBufIndex].z_ = out_xyz_buf[out_xyz_cnt-1].z_;
+                    trj_point_buf[i+online_TrjpointBufIndex].a_ = out_abc_buf[i].x_; 
+                    trj_point_buf[i+online_TrjpointBufIndex].b_ = out_abc_buf[i].y_; 
+                    trj_point_buf[i+online_TrjpointBufIndex].c_ = out_abc_buf[i].z_;
                 }
                 res_PointCnt = out_abc_cnt;
             }

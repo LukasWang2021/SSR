@@ -55,12 +55,10 @@ COMM_INTERFACE_API uint64_t c_getVersion(uint32_t version[4], int32_t* size);
 COMM_INTERFACE_API uint64_t c_getSystemTime(uint64_t* time);
 
 
-/**
- * @brief Set the working mode of Controller.
- * @details 1-auto, 2-manaul_slow,3-manual
- * @param [in] mode The mode of the controller.
- * @return error_code
- */
+/*********************************************************
+ *brief Set the working mode of Controller.
+ * param [in]: 0-None 1-auto, 2-slowly_manaul,3-manual, 4-online
+ * return error_code */
 COMM_INTERFACE_API uint64_t c_setWorkMode(uint32_t mode);
 
 /**
@@ -70,6 +68,16 @@ COMM_INTERFACE_API uint64_t c_setWorkMode(uint32_t mode);
  * @return error_code
  */
 COMM_INTERFACE_API uint64_t c_getWorkMode(uint32_t* mode);
+
+/****
+*ÉèÖÃÔÚÏß¹ì¼£ÔË¶¯±ÈÀýÏµÊý
+*/
+COMM_INTERFACE_API uint64_t c_setOnlineTrajectoryRatio(double ratio);
+
+/**
+ * »ñÈ¡ÔÚÏß¹ì¼£ÔË¶¯±ÈÀýÏµÊý
+ */
+COMM_INTERFACE_API uint64_t c_getOnlineTrajectoryRatio(double* ratio);
 
 /**
  * @brief Set the servo control mode of Controller.
@@ -1137,8 +1145,7 @@ COMM_INTERFACE_API uint64_t c_OfflineTrajectoryMove(void);
  * @param [in] size trajectory data size.
  * @return error_code
  */
-COMM_INTERFACE_API uint64_t c_sendOnlineTrajectory(double traj[], uint32_t size);
-
+COMM_INTERFACE_API uint64_t c_sendOnlineTrajectory(double* m_list, int* m_stat, int matrix_cnt);
 
 // rpc register
 COMM_INTERFACE_API uint64_t c_getPrRegValidList(int32_t start_id, int32_t max_list_size, char* valid_list_str);

@@ -103,6 +103,8 @@ typedef struct _MessageType_Uint64List {
 /* @@protoc_insertion_point(struct:MessageType_Uint64List) */
 } MessageType_Uint64List;
 
+
+
 /* Default values for struct fields */
 
 /* Initializer values for message structs */

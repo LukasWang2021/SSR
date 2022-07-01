@@ -1074,6 +1074,7 @@ static inline void Matrix2Pose(const double (&m)[4][4], PoseQuaternion &pose)
 
     double norm = sqrt(w * w + x * x + y * y + z * z);
 
+    //四元数强制单位化
     pose.quaternion_.w_ = w / norm;
     pose.quaternion_.x_ = x / norm;
     pose.quaternion_.y_ = y / norm;

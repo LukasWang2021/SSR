@@ -15,6 +15,8 @@ ControllerConfig::ControllerConfig():
     planner_thread_priority_(60),
     priority_thread_priority_(70),
     realtime_thread_priority_(80),
+    rpc_thread_priority_(55), 
+    online_traj_thread_priority_(55), 
     dio_exist_(false),
     safety_exist_(false),
     file_path_(COMPONENT_PARAM_FILE_DIR)
@@ -35,11 +37,13 @@ bool ControllerConfig::load()
         || !yaml_help_.getParam("priority_cycle_time", priority_cycle_time_)
         || !yaml_help_.getParam("realtime_cycle_time", realtime_cycle_time_)
         || !yaml_help_.getParam("rpc_cycle_time", rpc_cycle_time_)
+        || !yaml_help_.getParam("rpc_cycle_time", online_traj_cycle_time_)
         || !yaml_help_.getParam("routine_thread_priority", routine_thread_priority_)
         || !yaml_help_.getParam("planner_thread_priority", planner_thread_priority_)
         || !yaml_help_.getParam("priority_thread_priority", priority_thread_priority_)
         || !yaml_help_.getParam("realtime_thread_priority", realtime_thread_priority_)
         || !yaml_help_.getParam("rpc_thread_priority", rpc_thread_priority_)
+        || !yaml_help_.getParam("online_traj_thread_priority", rpc_thread_priority_)
         || !yaml_help_.getParam("dio_exist", dio_exist_)
         || !yaml_help_.getParam("safety_exist", safety_exist_))
     {

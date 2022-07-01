@@ -1150,44 +1150,85 @@ void ControllerRpc::handleRpc0x00018470(void* request_data_ptr, void* response_d
 //"/rpc/motion_conrtol/axis_group/setOnlineTrajectoryData"
 void ControllerRpc::handleRpc0x00008A31(void* request_data_ptr, void* response_data_ptr)
 {
-    RequestMessageType_Int32_DoubleList* rq_data_ptr = static_cast<RequestMessageType_Int32_DoubleList*>(request_data_ptr);
+    RequestMessageType_TransMatrixList* rq_data_ptr = static_cast<RequestMessageType_TransMatrixList*>(request_data_ptr);
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
-    int32_t group_id = rq_data_ptr->data1.data;
-    if(group_id >= GROUP_NUM || group_id < 0)
+    int recv_matrixLen=0;
+    recv_matrixLen = rq_data_ptr->data.matrices_count;
+    //暂定最多接收10个矩阵
+    int matrix_state[10];
+    double matrix_data[160];
+    
+    #if 0 
+    LogProducer::info("rpc-8A31","recv_matrixLen=%d",recv_matrixLen);
+    for(int i=0;i<recv_matrixLen;i++)
     {
-        rs_data_ptr->data.data = RPC_PARAM_INVALID;
-        LogProducer::error("rpc", "/rpc/motion_control/axis_group/setOnlineTrajectoryData input invalid params group_id = %d", group_id);
-        return;
+        LogProducer::info("handleRpc0x8A31","state=%d,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf", 
+        rq_data_ptr->data.matrices[i].state,
+        rq_data_ptr->data.matrices[i].matrix[0],rq_data_ptr->data.matrices[i].matrix[1],rq_data_ptr->data.matrices[i].matrix[2],rq_data_ptr->data.matrices[i].matrix[3],
+        rq_data_ptr->data.matrices[i].matrix[4],rq_data_ptr->data.matrices[i].matrix[5],rq_data_ptr->data.matrices[i].matrix[6],rq_data_ptr->data.matrices[i].matrix[7],
+        rq_data_ptr->data.matrices[i].matrix[8],rq_data_ptr->data.matrices[i].matrix[9],rq_data_ptr->data.matrices[i].matrix[10],rq_data_ptr->data.matrices[i].matrix[11],
+        rq_data_ptr->data.matrices[i].matrix[12],rq_data_ptr->data.matrices[i].matrix[13],rq_data_ptr->data.matrices[i].matrix[14],rq_data_ptr->data.matrices[i].matrix[15]);
     }
-    GroupStatus_e status = GROUP_STATUS_UNKNOWN;
-    bool in_position = false;
-    group_ptr_[0]->mcGroupReadStatus(status, in_position);
+    #endif
+    group_ptr_[0]->moveOnlineTrajectory();//检查运控状态是否处于ONLINE状态,如果不是则切换到ONLINE状态并初始化
+    rs_data_ptr->data.data = SUCCESS;
     if (group_ptr_[0]->getWorkMode() != USER_OP_MODE_ONLINE)//检查控制器工作模式
     {
         rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
         return;
     }
-    group_ptr_[group_id]->moveOnlineTrajectory();//检查运控状态是否处于ONLINE状态,如果不是则切换到ONLINE状态并初始化
-    //rs_data_ptr->data.data = group_ptr_[group_id]->Fir_Bspline_algorithm_test2();
-    
-    
-    int TrajPointStatus=static_cast<int>(rq_data_ptr->data2.data[0]);
-            //group_ptr_[group_id]->xzc_funTest();
-    LogProducer::info("rpc", "receive_T_matrix_data in");
-    rs_data_ptr->data.data = group_ptr_[group_id]->receive_T_matrix_data(TrajPointStatus,rq_data_ptr->data2.data);
-    LogProducer::info("rpc", "receive_T_matrix_data out ->> setOnlinePointBufptr");
-    rs_data_ptr->data.data = group_ptr_[group_id]->setOnlinePointBufptr();
-    LogProducer::info("rpc", "setOnlinePointBufptr out");
-    
+    for(int i=0;i<recv_matrixLen;i++)
+    {
+        matrix_state[i] = rq_data_ptr->data.matrices[i].state;
+        memcpy(&matrix_data[i*16],&rq_data_ptr->data.matrices[i].matrix[0], 16*sizeof(double));
+    }
+    if(group_ptr_[0]->checkOnlineMoveError(0))
+    {
+        rs_data_ptr->data.data = group_ptr_[0]->checkOnlineMoveError(0);
+        //group_ptr_[0]->OnlineMove_exceedJointLimit_pause();
+        //TrjPoint endPoint_xyzabc =  group_ptr_[0]->getOnlineMoveLastWithinPoint();
+        //group_ptr_[0]->OnlineMove_exceedJointLimit_pause2(endPoint_xyzabc);
+        group_ptr_[0]->OnlineMove_exceedJointLimit_pause();//checkOnlineMoveError(1);//重置成功
+    }
+    else
+    {
+        rs_data_ptr->data.data = group_ptr_[0]->setOnlineVpointCache(recv_matrixLen, matrix_state, matrix_data);
+    }
+    #if 0
     if (rs_data_ptr->data.data == SUCCESS)
     {
-        //LogProducer::info("rpc", "/rpc/motion_control/axis_group/setOnlineTrajectoryData for group[%d] success", group_id);
+        LogProducer::info("rpc", "/rpc/motion_control/axis_group/setOnlineTrajectoryData for group[0] success");
     } 
     else
     {
-        LogProducer::error("rpc", "/rpc/motion_control/axis_group/setOnlineTrajectoryData for group[%d] failed. Error = 0x%llx", group_id, rs_data_ptr->data.data);
+        LogProducer::error("rpc", "/rpc/motion_control/axis_group/setOnlineTrajectoryData for group[0] failed. Error = 0x%llx", rs_data_ptr->data.data);
     }
+    #endif
 }
+//rpc/motion_conrtol/axis_group/setOnlineTrajectoryRatio  : 设置在线轨迹运动比例系数2022-0414
+void ControllerRpc::handleRpc0x0000B35F(void* request_data_ptr, void* response_data_ptr)
+{
+    RequestMessageType_Double* rq_data_ptr = static_cast<RequestMessageType_Double*>(request_data_ptr);
+    ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
+    rs_data_ptr->data.data = group_ptr_[0]->setOnlineTrajectoryRatio(rq_data_ptr->data.data);
+    if (rs_data_ptr->data.data != SUCCESS)
+    {
+        LogProducer::error("rpc", "/rpc/group/setOnlineTrajectoryRatio failed, ret = %llx", rs_data_ptr->data.data);
+        return;
+    }
+    LogProducer::info("rpc", "/rpc/group/setOnlineTrajectoryRatio success");
+}
+//"/rpc/motion_conrtol/axis_group/getOnlineTrajectoryRatio  : 获取在线轨迹运动比例系数
+void ControllerRpc::handleRpc0x00004DEF(void* request_data_ptr, void* response_data_ptr)
+{
+    ResponseMessageType_Uint64_Double* rs_data_ptr = static_cast<ResponseMessageType_Uint64_Double*>(response_data_ptr);
+    
+    rs_data_ptr->error_code.data = SUCCESS;
+    //rs_data_ptr->data.data = group_ptr_[0]->getGlobalAccRatio();
+
+    LogProducer::info("rpc", "/rpc/group/getGlobalAccRatio success");
+}
+
 //"/rpc/motion_control/axis_group/getJointManualStep"	
 void ControllerRpc::handleRpc0x00006D10(void* request_data_ptr, void* response_data_ptr)
 {

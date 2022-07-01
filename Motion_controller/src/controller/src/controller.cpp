@@ -239,6 +239,10 @@ ErrorCode Controller::init()
     }    
     if(!rpc_thread_.run(&controllerRpcThreadFunc, this, config_ptr_->rpc_thread_priority_))
     {
+        return CONTROLLER_CREATE_RPC_THREAD_FAILED;
+    }
+    if(!online_traj_thread_.run(&controllerOnlineTrajThreadFunc, this, config_ptr_->online_traj_thread_priority_))
+    {
         return CONTROLLER_CREATE_RT_THREAD_FAILED;
     }
     LogProducer::warn("main", "Controller init success");
@@ -296,6 +300,12 @@ void Controller::runPlannerThreadFunc()
 {
     usleep(config_ptr_->planner_cycle_time_);
     group_ptr_[0]->ringPlannerTask();
+}
+
+void Controller::runOnlineTrajThreadFunc()
+{
+    usleep(config_ptr_->online_traj_cycle_time_);
+    group_ptr_[0]->ringOnlineTrajTask();
 }
 
 void Controller::runPriorityThreadFunc()
@@ -636,6 +646,20 @@ void* controllerPlannerThreadFunc(void* arg)
         controller_ptr->runPlannerThreadFunc();
     }
     std::cout<<"controller_planner exit"<<std::endl;
+    return NULL;
+}
+
+void* controllerOnlineTrajThreadFunc(void* arg)
+{
+    Controller* controller_ptr = static_cast<Controller*>(arg);
+    log_space::LogProducer log_manager;
+    log_manager.init("controller_online_traj", g_isr_ptr_);
+    LogProducer::warn("main","controller_onlie_traj TID is %ld", syscall(SYS_gettid));
+    while(!controller_ptr->isExit())
+    {
+        controller_ptr->runOnlineTrajThreadFunc();
+    }
+    std::cout<<"controller_online_traj exit"<<std::endl;
     return NULL;
 }
 

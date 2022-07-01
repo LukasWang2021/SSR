@@ -94,6 +94,41 @@ uint64_t c_getWorkMode(uint32_t* mode)
 	return rep_data.error_code.data;
 }
 
+uint64_t c_setOnlineTrajectoryRatio(double ratio)
+{
+	if (!rpc_valid)
+		return HANDLE_RPC_FAILED;
+	RpcBasic* rpc_ptr = RpcBasic::getInstance();
+	RequestMessageType_Double req_data;
+	ResponseMessageType_Uint64 rep_data;
+
+	req_data.header.time_stamp = 122;
+	req_data.data.data = ratio;
+	req_data.property.authority = Comm_Authority_TP_SIMMULATOR;
+	if (!rpc_ptr->handleRpc(0x0000B35F, &req_data, RequestMessageType_Double_fields, &rep_data, ResponseMessageType_Uint64_fields))
+	{
+		return HANDLE_RPC_FAILED;
+	}
+	return rep_data.data.data;
+}
+
+uint64_t c_getOnlineTrajectoryRatio(double* ratio)
+{
+	if (!rpc_valid)
+		return HANDLE_RPC_FAILED;
+	RpcBasic* rpc_ptr = RpcBasic::getInstance();
+	RequestMessageType_Void req_data;
+	ResponseMessageType_Double rep_data;
+
+	req_data.header.time_stamp = 122;
+	req_data.property.authority = Comm_Authority_TP_SIMMULATOR;
+	if (!rpc_ptr->handleRpc(0x00004DEF, &req_data, RequestMessageType_Void_fields, &rep_data, ResponseMessageType_Double_fields))
+	{
+		return HANDLE_RPC_FAILED;
+	}
+	*ratio = rep_data.data.data;
+	return 0;
+}
 
 uint64_t c_setControlMode(uint32_t mode)
 {

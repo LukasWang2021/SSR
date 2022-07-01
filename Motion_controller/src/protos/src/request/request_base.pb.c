@@ -128,7 +128,6 @@ const pb_field_t RequestMessageType_FloatList_fields[4] = {
     PB_LAST_FIELD
 };
 
-
 /* Check that field information fits in pb_field_t */
 #if !defined(PB_FIELD_32BIT)
 /* If you get an error here, it means that you need to define PB_FIELD_32BIT

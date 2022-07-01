@@ -3,7 +3,7 @@
 #include "request_base.pb.h"
 #include "response_base.pb.h"
 #include <iostream>
-
+#include "request_transmatrixlist.pb.h"
 using namespace std;
 
 RpcBasic* RpcBasic::instance_ = NULL;

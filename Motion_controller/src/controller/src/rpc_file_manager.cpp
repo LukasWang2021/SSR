@@ -1,6 +1,7 @@
 #include "controller_rpc.h"
 
 using namespace user_space;
+using namespace log_space;
 
 //"/rpc/file_manager/readFile"
 void ControllerRpc::handleRpc0x0000A545(void* request_data_ptr, void* response_data_ptr)
@@ -21,10 +22,7 @@ void ControllerRpc::handleRpc0x0000A545(void* request_data_ptr, void* response_d
     {
         rs_data_ptr->data.data.size = 0;
     }
-	
-    std::string str = rq_data_ptr->data.data;
-	ErrorCode err = rs_data_ptr->error_code.data;
-    printf("rpc-readFile: %s, ret = 0x%llx\n", str.c_str(), err);
+	LogProducer::info("rpc", "/rpc/file_manager/readFile %s, ret = 0x%llx", rq_data_ptr->data.data, rs_data_ptr->error_code.data);
 }
 
 //"/rpc/file_manager/writeFile"
@@ -42,9 +40,6 @@ void ControllerRpc::handleRpc0x00010D95(void* request_data_ptr, void* response_d
     {
         rs_data_ptr->data.data = FILE_MANAGER_WRITE_FILE_FAILED;
     }
-
-	std::string str = rq_data_ptr->data1.data;
-	ErrorCode err = rs_data_ptr->data.data;
-    printf("rpc-writeFile: %s, ret = 0x%llx\n", str.c_str(), err);
+	LogProducer::info("rpc", "/rpc/file_manager/writeFile %s, ret = 0x%llx", rq_data_ptr->data1.data, rs_data_ptr->data.data);
 }
 

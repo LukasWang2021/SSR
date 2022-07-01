@@ -453,6 +453,12 @@
     <ClInclude Include="protos\include\response\response_reg_sr.pb.h">
       <Filter>头文件\protos\response</Filter>
     </ClInclude>
+    <ClInclude Include="protos\include\message_type\string_double.pb.h">
+      <Filter>头文件\protos\message_type</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\request\request_string_double.pb.h">
+      <Filter>头文件\protos\request</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="app\common_error_code.cpp">
@@ -844,6 +850,12 @@
     </ClCompile>
     <ClCompile Include="protos\src\response\response_reg_sr.pb.c">
       <Filter>源文件\protos\response</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\message_type\string_double.pb.c">
+      <Filter>源文件\protos\message_type</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\request\request_string_double.pb.c">
+      <Filter>源文件\protos\request</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

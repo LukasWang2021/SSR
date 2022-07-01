@@ -1130,6 +1130,13 @@ COMM_INTERFACE_API uint64_t c_OfflineTrajectoryPrepare(void);
 ******************************/
 COMM_INTERFACE_API uint64_t c_OfflineTrajectoryMove(void);
 
+/*************************
+* 函数功能:让机械臂末端按照离线轨迹文件中给定的轴角位置运动
+* 参数: 无
+* 返回值:错误码
+******************************/
+COMM_INTERFACE_API uint64_t c_OfflineTrajectoryPlan(char *traj_name, double traj_vel, double via_points[][6], int32_t number_of_vp);
+
 /**
  * @brief Send the online robot trajectory.
  * @details

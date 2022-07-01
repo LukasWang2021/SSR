@@ -38,6 +38,7 @@
 #include "request/request_reg_sr.pb.h"
 #include "request/request_reg_r.pb.h"
 #include "request/request_string_double.pb.h"
+#include "request/request_transmatrixlist.pb.h"
 
 #include "message_type/base.pb.h"
 #include "message_type/axis_info.pb.h"
@@ -71,6 +72,7 @@
 #include "message_type/reg_sr.pb.h"
 #include "message_type/reg_r.pb.h"
 #include "message_type/string_double.pb.h"
+#include "message_type/trans_matrix_list.pb.h"
 
 #include "response/response_base.pb.h"
 #include "response/response_bool_int32.pb.h"

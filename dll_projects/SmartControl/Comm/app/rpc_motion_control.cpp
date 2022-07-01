@@ -420,7 +420,7 @@ uint64_t c_OfflineTrajectoryFileSet(char* file_name_ptr)
 	req_data.property.authority = Comm_Authority_TP_SIMMULATOR;
 	size_t file_name_size = strlen(file_name_ptr);
 	memcpy(req_data.data.data, file_name_ptr, file_name_size);
-	req_data.data.data[file_name_size] = 0;//���ļ����ַ������һ�ֽ����ý�����
+	req_data.data.data[file_name_size] = 0;
 	if (!rpc_ptr->handleRpc(0x00011275, &req_data, RequestMessageType_String_fields, &rep_data, ResponseMessageType_Uint64_fields))
 	{
 		return HANDLE_RPC_FAILED;
@@ -497,6 +497,57 @@ uint64_t c_sendOnlineTrajectory(double *m_list, int *m_stat, int matrix_cnt)
 		return HANDLE_RPC_FAILED;
 	}
 	return rep_data.data.data;
+}
+
+uint64_t c_OfflineTrajectoryPlan(char* traj_name, double traj_vel, double via_points[][6], int32_t number_of_vp)
+{
+	if (!rpc_valid) return HANDLE_RPC_FAILED;
+	if (traj_name == NULL || via_points == NULL) return RPC_PARAM_INVALID;
+
+	RpcBasic* rpc_ptr = RpcBasic::getInstance();
+	RequestMessageType_Int32_DoubleList send_vp_req_data;
+	ResponseMessageType_Uint64 send_vp_rep_data;
+
+	send_vp_req_data.header.time_stamp = 122;
+	send_vp_req_data.property.authority = Comm_Authority_TP_SIMMULATOR;
+	send_vp_req_data.data1.data = 1; // first time is 1 means this is a new trajectory
+
+	double* p_vp = &via_points[0][0];
+	int32_t rest_of_vp = number_of_vp;
+	size_t cp_cnts = (number_of_vp * 6 * sizeof(double)) / sizeof(send_vp_req_data.data2.data) + 1;
+	for (size_t i = 0; i < cp_cnts; ++i, p_vp += send_vp_req_data.data2.data_count)
+	{
+		if (rest_of_vp * 6 * sizeof(double) / sizeof(send_vp_req_data.data2.data) > 0)
+		{
+			memcpy(send_vp_req_data.data2.data, p_vp, sizeof(send_vp_req_data.data2.data) / 6);
+			send_vp_req_data.data2.data_count = sizeof(send_vp_req_data.data2.data) / 6 / sizeof(double);
+		}
+		else
+		{
+			memcpy(send_vp_req_data.data2.data, p_vp, rest_of_vp * 6 * sizeof(double));
+			send_vp_req_data.data2.data_count = rest_of_vp * 6;
+		}
+
+		if (!rpc_ptr->handleRpc(0x0000A063, &send_vp_req_data, RequestMessageType_Int32_DoubleList_fields, &send_vp_rep_data, ResponseMessageType_Uint64_fields))
+		{
+			return CORE_COMM_LOAD_PARAM_FAILED;
+		}
+		send_vp_req_data.data1.data = 0;
+	}
+
+	RequestMessageType_String_Double traj_plan_req_data;
+	ResponseMessageType_Uint64_String traj_plan_rep_data;
+	traj_plan_req_data.header.time_stamp = 122;
+	traj_plan_req_data.property.authority = Comm_Authority_TP_SIMMULATOR;
+	strcpy(traj_plan_req_data.data1.data, traj_name);
+	traj_plan_req_data.data2.data = traj_vel;
+
+	if (!rpc_ptr->handleRpc(0x0000E479, &traj_plan_req_data, RequestMessageType_String_Double_fields, &traj_plan_rep_data, ResponseMessageType_Uint64_String_fields))
+	{
+		return HANDLE_RPC_FAILED;
+	}
+
+	return traj_plan_rep_data.error_code.data;
 }
 
 

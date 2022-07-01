@@ -96,7 +96,7 @@
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
-      <PreprocessorDefinitions>_WIN_PLAT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_WIN_PLAT;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <AddModuleNamesToAssembly>Source.def</AddModuleNamesToAssembly>
@@ -187,6 +187,7 @@
     <ClInclude Include="protos\include\message_type\scara_a_feedback_list.pb.h" />
     <ClInclude Include="protos\include\message_type\servo1000_servo_feedback_list.pb.h" />
     <ClInclude Include="protos\include\message_type\servo_feedback_list.pb.h" />
+    <ClInclude Include="protos\include\message_type\string_double.pb.h" />
     <ClInclude Include="protos\include\message_type\string_int32.pb.h" />
     <ClInclude Include="protos\include\message_type\string_list.pb.h" />
     <ClInclude Include="protos\include\message_type\tool_frame.pb.h" />
@@ -227,6 +228,7 @@
     <ClInclude Include="protos\include\request\request_reg_sr.pb.h" />
     <ClInclude Include="protos\include\request\request_stringlist.pb.h" />
     <ClInclude Include="protos\include\request\request_string_bytes.pb.h" />
+    <ClInclude Include="protos\include\request\request_string_double.pb.h" />
     <ClInclude Include="protos\include\request\request_tool_frame.pb.h" />
     <ClInclude Include="protos\include\request\request_work_mode.pb.h" />
     <ClInclude Include="protos\include\response\response_base.pb.h" />
@@ -321,6 +323,7 @@
     <ClCompile Include="protos\src\message_type\scara_a_feedback_list.pb.c" />
     <ClCompile Include="protos\src\message_type\servo1000_servo_feedback_list.pb.c" />
     <ClCompile Include="protos\src\message_type\servo_feedback_list.pb.c" />
+    <ClCompile Include="protos\src\message_type\string_double.pb.c" />
     <ClCompile Include="protos\src\message_type\string_int32.pb.c" />
     <ClCompile Include="protos\src\message_type\string_list.pb.c" />
     <ClCompile Include="protos\src\message_type\tool_frame.pb.c" />
@@ -360,6 +363,7 @@
     <ClCompile Include="protos\src\request\request_reg_sr.pb.c" />
     <ClCompile Include="protos\src\request\request_stringlist.pb.c" />
     <ClCompile Include="protos\src\request\request_string_bytes.pb.c" />
+    <ClCompile Include="protos\src\request\request_string_double.pb.c" />
     <ClCompile Include="protos\src\request\request_tool_frame.pb.c" />
     <ClCompile Include="protos\src\request\request_work_mode.pb.c" />
     <ClCompile Include="protos\src\response\response_base.pb.c" />

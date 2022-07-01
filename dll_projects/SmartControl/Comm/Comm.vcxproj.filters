@@ -459,6 +459,12 @@
     <ClInclude Include="protos\include\request\request_string_double.pb.h">
       <Filter>头文件\protos\request</Filter>
     </ClInclude>
+    <ClInclude Include="protos\include\message_type\trans_matrix_list.pb.h">
+      <Filter>头文件\protos\message_type</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\request\request_transmatrixlist.pb.h">
+      <Filter>头文件\protos\request</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="app\common_error_code.cpp">
@@ -855,6 +861,12 @@
       <Filter>源文件\protos\message_type</Filter>
     </ClCompile>
     <ClCompile Include="protos\src\request\request_string_double.pb.c">
+      <Filter>源文件\protos\request</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\message_type\trans_matrix_list.pb.c">
+      <Filter>源文件\protos\message_type</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\request\request_transmatrixlist.pb.c">
       <Filter>源文件\protos\request</Filter>
     </ClCompile>
   </ItemGroup>

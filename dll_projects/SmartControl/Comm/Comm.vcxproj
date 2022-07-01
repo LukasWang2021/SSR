@@ -191,6 +191,7 @@
     <ClInclude Include="protos\include\message_type\string_int32.pb.h" />
     <ClInclude Include="protos\include\message_type\string_list.pb.h" />
     <ClInclude Include="protos\include\message_type\tool_frame.pb.h" />
+    <ClInclude Include="protos\include\message_type\trans_matrix_list.pb.h" />
     <ClInclude Include="protos\include\message_type\uftf_pose_and_posture.pb.h" />
     <ClInclude Include="protos\include\message_type\uint32list_doublelist.pb.h" />
     <ClInclude Include="protos\include\message_type\work_mode.pb.h" />
@@ -230,6 +231,7 @@
     <ClInclude Include="protos\include\request\request_string_bytes.pb.h" />
     <ClInclude Include="protos\include\request\request_string_double.pb.h" />
     <ClInclude Include="protos\include\request\request_tool_frame.pb.h" />
+    <ClInclude Include="protos\include\request\request_transmatrixlist.pb.h" />
     <ClInclude Include="protos\include\request\request_work_mode.pb.h" />
     <ClInclude Include="protos\include\response\response_base.pb.h" />
     <ClInclude Include="protos\include\response\response_bool_int32.pb.h" />
@@ -327,6 +329,7 @@
     <ClCompile Include="protos\src\message_type\string_int32.pb.c" />
     <ClCompile Include="protos\src\message_type\string_list.pb.c" />
     <ClCompile Include="protos\src\message_type\tool_frame.pb.c" />
+    <ClCompile Include="protos\src\message_type\trans_matrix_list.pb.c" />
     <ClCompile Include="protos\src\message_type\uftf_pose_and_posture.pb.c" />
     <ClCompile Include="protos\src\message_type\uint32list_doublelist.pb.c" />
     <ClCompile Include="protos\src\message_type\work_mode.pb.c" />
@@ -365,6 +368,7 @@
     <ClCompile Include="protos\src\request\request_string_bytes.pb.c" />
     <ClCompile Include="protos\src\request\request_string_double.pb.c" />
     <ClCompile Include="protos\src\request\request_tool_frame.pb.c" />
+    <ClCompile Include="protos\src\request\request_transmatrixlist.pb.c" />
     <ClCompile Include="protos\src\request\request_work_mode.pb.c" />
     <ClCompile Include="protos\src\response\response_base.pb.c" />
     <ClCompile Include="protos\src\response\response_bool_int32.pb.c" />

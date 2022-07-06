@@ -44,3 +44,11 @@ install(FILES ./config/config.yaml
 install(FILES ./config/constraint.yaml
     DESTINATION ${CONFIG_FILE_OUTPUT_PATH}/robot/algorithm/
 )
+
+install(FILES ./config/config_OnlineMove_params.yaml
+    DESTINATION ${CONFIG_FILE_OUTPUT_PATH}/robot/algorithm/
+)
+
+
+
+

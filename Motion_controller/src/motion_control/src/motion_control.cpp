@@ -530,9 +530,15 @@ TTT.matrix_[3][0]=0;TTT.matrix_[3][1]=0;TTT.matrix_[3][2]=0;TTT.matrix_[3][3]=1;
 
 ErrorCode MotionControl::setOnlineTrajectoryRatio(double ratio)
 {
-    online_trj_planner_ptr->setOnlineTrjRatio(ratio);
-    return 0;
+    ErrorCode ret;
+    ret = online_trj_planner_ptr->setOnlineTrjRatio(ratio);
+    return ret;
 }
+double MotionControl::getOnlineTrajectoryRatio()
+{
+    return online_trj_planner_ptr->get_online_trj_ratio();
+}
+
 /****
  * 函数功能: 设置在线运动时接收的T矩阵数据缓存
  * 参数: 
@@ -579,15 +585,14 @@ ErrorCode MotionControl::setOnlineVpointCache(int num_matrix,int * p_status, dou
     return ret_code;
 }
 
-
 ErrorCode MotionControl::receive_T_matrix_data(int status, double * p_marixArray)
 {
     ErrorCode err;
     static Matrix44 T_r0_R;
     static Matrix44 Touch_h0_v;
     Matrix44 Touch_ht_v,T_res;
-    //double k = online_trj_planner_ptr->online_alg_params_.trj_ratio; 
-    double k = 0.1;//机械臂移动距离与touch移动距离的比例系数,    即机械臂移动距离=K*touch移动距离
+    double k = online_trj_planner_ptr->online_alg_params_.trj_ratio; 
+    //double k = 0.1;//机械臂移动距离与touch移动距离的比例系数,    即机械臂移动距离=K*touch移动距离
     Vector3 res_xyz,res_abc;
     PoseEuler StartPositionPose;
     TransMatrix start_trans_matrix;
@@ -660,6 +665,9 @@ ErrorCode MotionControl::receive_T_matrix_data(int status, double * p_marixArray
         memset(&(pos_posture.turn), 0, 9*sizeof(int));
         memset(&temp_jnt, 0, sizeof(temp_jnt));
         err = convertCartToJoint(pos_posture,0,0,temp_jnt);//将xyzabc逆解为轴角
+        int t_Nstep_Q = online_trj_planner_ptr->online_alg_params_.N_step_Q;
+        int t_mod, cha;
+        
         if(err == SUCCESS)
         {
             err = isPoseReachable(0,temp_jnt);
@@ -674,9 +682,8 @@ ErrorCode MotionControl::receive_T_matrix_data(int status, double * p_marixArray
                 }
                 else if(status == 2)//终点
                 {
-                    int  t_Nstep_Q = 25;//online_trj_planner_ptr->online_alg_params_.N_step_Q;
-                    int t_mod = receive_T_matrix_iterCnt%t_Nstep_Q;
-                    int cha = t_Nstep_Q-t_mod;
+                    t_mod = receive_T_matrix_iterCnt%t_Nstep_Q;
+                    cha = t_Nstep_Q-t_mod;
                     //LogProducer::info("receive_T_matrix_data",">>>END >>> t_Nstep_Q=%d, t_mod=%d,cha=%d\n",t_Nstep_Q,t_mod,cha);
                     for(int i=0;i<(cha-1);i++)
                     {
@@ -692,9 +699,8 @@ ErrorCode MotionControl::receive_T_matrix_data(int status, double * p_marixArray
             }
             else//输入超限
             {
-                int  t_Nstep_Q = 25;//online_trj_planner_ptr->online_alg_params_.N_step_Q;
-                int t_mod = receive_T_matrix_iterCnt%t_Nstep_Q;
-                int cha = t_Nstep_Q-t_mod;
+                t_mod = receive_T_matrix_iterCnt%t_Nstep_Q;
+                cha = t_Nstep_Q-t_mod;
                 checkOnlineMoveError(2);
                 //LogProducer::info("receive_T_matrix_data",">>>END >>> t_Nstep_Q=%d, t_mod=%d,cha=%d\n",t_Nstep_Q,t_mod,cha);
                 if(flag_last_end_OutConstraint)
@@ -727,9 +733,8 @@ ErrorCode MotionControl::receive_T_matrix_data(int status, double * p_marixArray
         }
         else //逆解失败 提前结束
         {
-            int  t_Nstep_Q = 25;//online_trj_planner_ptr->online_alg_params_.N_step_Q;
-            int t_mod = receive_T_matrix_iterCnt%t_Nstep_Q;
-            int cha = t_Nstep_Q-t_mod;
+            t_mod = receive_T_matrix_iterCnt%t_Nstep_Q;
+            cha = t_Nstep_Q-t_mod;
             checkOnlineMoveError(3);
             //LogProducer::error("receive_T_matrix_data",">>>END >>> t_Nstep_Q=%d, t_mod=%d,cha=%d",t_Nstep_Q,t_mod,cha);
             if(flag_last_end_doIKError)

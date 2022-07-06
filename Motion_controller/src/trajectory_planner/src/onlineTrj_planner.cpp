@@ -3,6 +3,7 @@
 #include <iostream>
 #include <vector>
 #include "onlineTrj_planner.h"
+#include "common_file_path.h"
 #include <sstream>
 #include "math.h"
 #include <cmath>
@@ -18,13 +19,6 @@ float VPv[2][6] = { {0.0, 0.0, 0.0, 0, 0, 0},
                     //{0.3, 0.3, 0.2, 0.1*PI, 0.2*PI, 0.3*PI},
                 };
 
-//#define Tsample     0.002 //touch采样时间间隔
-//#define GEN_TN      0.001 //生成轨迹间隔
-//#define NstepP      5     //计算位置-取VP点的采样点间隔--->每5个采样点取一个xyz向量  范围<=5
-//#define NstepQ      25    //计算姿态-取VQ的采样点间隔--->每25个采样点取一个abc向量
-//#define NinterpP    ((NstepP*Tsample)/GEN_TN)  //5*0.002/0.001 = 10
-//#define NinterpQ    ((NstepQ*Tsample)/GEN_TN)  //25*0.002/0.001 = 50
-
 #define LAMBDA 10  //B样条3级串联滤波器脉冲响应系数索引值[1,10,100]
 #if(LAMBDA == 1)
 double hfir[6] = {0.4018,0.2424,0.0841,0.0041,-0.0174,-0.0140};
@@ -37,7 +31,8 @@ double hfir[6] = {0.1252,0.1191,0.1056,0.0886,0.0706,0.0535};
 
 OnlineTrajectoryPlanner::OnlineTrajectoryPlanner()
 {
-    online_trajectory_algorithm_params_init();
+    config_OnlineMove_params_file_path_ = config_OnlineMove_params_file_path_ + ALGORITHM_DIR + "config_OnlineMove_params.yaml";
+    load_OnlineMove_params_Config();
 }
 OnlineTrajectoryPlanner::~OnlineTrajectoryPlanner()
 {
@@ -1065,7 +1060,32 @@ void OnlineTrajectoryPlanner::function_test()
     q_res.print("q_res=rtm_Slerpt");
 }
 
-
+bool OnlineTrajectoryPlanner::load_OnlineMove_params_Config()
+{
+    if (!yaml_help_.loadParamFile(config_OnlineMove_params_file_path_.c_str())
+        || !yaml_help_.getParam("online_sample_time", online_alg_params_.sample_time)
+        || !yaml_help_.getParam("online_generate_traj_interval", online_alg_params_.generate_traj_interval)
+        || !yaml_help_.getParam("online_N_step_P", online_alg_params_.N_step_P)
+        || !yaml_help_.getParam("online_N_step_Q", online_alg_params_.N_step_Q)
+        || !yaml_help_.getParam("online_N_interp_P", online_alg_params_.N_interp_P)
+        || !yaml_help_.getParam("online_N_interp_Q", online_alg_params_.N_interp_Q)
+        || !yaml_help_.getParam("online_trj_ratio", online_alg_params_.trj_ratio)
+        || !yaml_help_.getParam("online_receive_Tmatrix_buff_len", online_alg_params_.online_receive_Tmatrix_buff_len))
+    {
+        std::cout << " Failed load config_OnlineMove_params.yaml " << std::endl;
+        return false;
+    }
+    printf("\nload_OnlineMove_params_Config:\nsample_time=%lf,generate_interval=%lf,N_step_P=%d,N_step_Q=%d,N_interpP=%lf,N_interpQ=%lf,trj_ratio=%lf,recvTmatrix_buffLen=%d\n",
+            online_alg_params_.sample_time,
+            online_alg_params_.generate_traj_interval,
+            online_alg_params_.N_step_P,
+            online_alg_params_.N_step_Q,
+            online_alg_params_.N_interp_P,
+            online_alg_params_.N_interp_Q,
+            online_alg_params_.trj_ratio,
+            online_alg_params_.online_receive_Tmatrix_buff_len);
+    return true;
+}
 /*
 sample_time : 0.002 #touch采样时间间隔
 generate_traj_interval  : 0.001 #生成轨迹间隔
@@ -1076,15 +1096,21 @@ online_receive_Tmatrix_buff_len : 1000  #运控接收来自Touch T矩阵数据�
 */
 void OnlineTrajectoryPlanner::online_trajectory_algorithm_params_init()
 {
-    online_alg_params_.sample_time=0.002;
-    online_alg_params_.generate_traj_interval=0.001;
-    online_alg_params_.N_step_P=5;
-    online_alg_params_.N_step_Q=25;
-    online_alg_params_.N_interp_P=((online_alg_params_.N_step_P*online_alg_params_.sample_time)/online_alg_params_.generate_traj_interval); //NinterpP_ = ((N_step_P_*Tsample_)/GEN_TN_);
-    online_alg_params_.N_interp_Q=((online_alg_params_.N_step_Q*online_alg_params_.sample_time)/online_alg_params_.generate_traj_interval); //NinterpQ_ = ((N_step_Q_*Tsample_)/GEN_TN_);
-    online_alg_params_.trj_ratio=1.0;
-    online_alg_params_.online_receive_Tmatrix_buff_len=1000;
-    /*
+    load_OnlineMove_params_Config();
+}
+
+int OnlineTrajectoryPlanner::setOnlineTrjRatio(double data_ratio)
+{
+    online_alg_params_.trj_ratio = data_ratio;
+    if(!yaml_help_.setParam("online_trj_ratio", data_ratio) || !yaml_help_.dumpParamFile(config_OnlineMove_params_file_path_.c_str()))
+    {
+        return 1;//FAIL
+    }
+    return 0;//SUCCESS
+}
+
+double OnlineTrajectoryPlanner::get_online_trj_ratio()
+{
     printf("\nonline_trajectory_algorithm_params_init:\nsample_time=%lf,generate_interval=%lf,N_step_P=%d,N_step_Q=%d,N_interpP=%lf,N_interpQ=%lf,trj_ratio=%lf,recvTmatrix_buffLen=%d\n",
             online_alg_params_.sample_time,
             online_alg_params_.generate_traj_interval,
@@ -1094,29 +1120,7 @@ void OnlineTrajectoryPlanner::online_trajectory_algorithm_params_init()
             online_alg_params_.N_interp_Q,
             online_alg_params_.trj_ratio,
             online_alg_params_.online_receive_Tmatrix_buff_len);
-    */
-}
-
-int OnlineTrajectoryPlanner::setOnlineTrjRatio(double data_ratio)
-{
-    //trajectory_planner_ptr_.traj_params_.trj_ratio_ = data_ratio;
-    online_alg_params_.trj_ratio = data_ratio;
-    return 0;
-}
-/**
- * 函数功能: 获取运控接收来自Touch T矩阵数据包的缓存包数量
-*/
-int  OnlineTrajectoryPlanner::get_onlineRecvTmatrixBuffPackLen()
-{
-    //return trajectory_planner_ptr_.traj_params_.OnlineRecvTmatrixBuffPackLen_;
-    return 30;
-}
-
-
-double OnlineTrajectoryPlanner::get_online_trj_ratio()
-{
-    //return trajectory_planner_ptr_.traj_params_.trj_ratio_;
-    return 1.0;
+    return online_alg_params_.trj_ratio;
 }
 
 

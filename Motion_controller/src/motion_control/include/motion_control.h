@@ -53,6 +53,7 @@ public:
     //ErrorCode setOnlinePointBufptr(double * ptr);
     ErrorCode setOnlinePointBufptr();
     ErrorCode setOnlineTrajectoryRatio(double ratio);
+    double getOnlineTrajectoryRatio();
     ErrorCode setOnlineVpointCache(int num_matrix,int * p_status, double * p_marixArray);
     // API for off line trajectory
     ErrorCode convertEulerTraj2JointTraj(const std::string &offline_euler_trajectory_fileName);

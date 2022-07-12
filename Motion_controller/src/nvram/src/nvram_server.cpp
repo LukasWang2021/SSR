@@ -49,7 +49,7 @@ bool readNvram(uint32_t address, uint8_t *data, uint32_t length)
 	g_write_buffer[2] = (uint8_t)(address >> 8);
 	g_write_buffer[3] = (uint8_t)(address);
 	transferData(g_write_buffer, g_read_buffer, length + 4);
-	/*
+#if 0
 	printf("readNvram w: 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x\n",
 		g_write_buffer[0], g_write_buffer[1], g_write_buffer[2], g_write_buffer[3],
 		g_write_buffer[4], g_write_buffer[5], g_write_buffer[6], g_write_buffer[7],
@@ -60,7 +60,7 @@ bool readNvram(uint32_t address, uint8_t *data, uint32_t length)
 		g_read_buffer[4], g_read_buffer[5], g_read_buffer[6], g_read_buffer[7],
 		g_read_buffer[8], g_read_buffer[9], g_read_buffer[10], g_read_buffer[11],
 		g_read_buffer[12], g_read_buffer[3], g_read_buffer[14], g_read_buffer[15]);
-	*/
+#endif
 	memcpy(data, &g_read_buffer[4], length);
 	return true;
 }
@@ -78,13 +78,13 @@ bool writeNvram(uint32_t address, uint8_t *data, uint32_t length)
 	g_write_buffer[2] = (uint8_t)(address >> 8);
 	g_write_buffer[3] = (uint8_t)(address);
 	memcpy(&g_write_buffer[4], data, length);
-	/*
-	printf("writeNvram: 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x\n",
+#if 0
+	printf("Server writeNvram: 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x\n",
 		g_write_buffer[0], g_write_buffer[1], g_write_buffer[2], g_write_buffer[3],
 		g_write_buffer[4], g_write_buffer[5], g_write_buffer[6], g_write_buffer[7],
 		g_write_buffer[8], g_write_buffer[9], g_write_buffer[10], g_write_buffer[11],
 		g_write_buffer[12], g_write_buffer[3], g_write_buffer[14], g_write_buffer[15]);
-	*/
+#endif
 	transferData(g_write_buffer, g_read_buffer, length + 4);
 	return true;
 }

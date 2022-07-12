@@ -819,12 +819,12 @@ ErrorCode MotionControl::planOfflineTrajectory(string traj_name, double traj_vel
     {
         trajectory_file += traj_name;
     }
+    err = group_ptr_->planOfflineTrajectory(trajectory_file, traj_vel);
+    if(err != 0) return err;
+    usleep(10000);
+    err = setOfflineTrajectory(traj_name);
+    if(err != 0) return err;
 
-    if( (err = group_ptr_->planOfflineTrajectory(trajectory_file, traj_vel)) != 0
-    || (err = setOfflineTrajectory(traj_name)) != 0 )
-    {
-        return err;
-    }
     return SUCCESS;
 }
 

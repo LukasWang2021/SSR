@@ -8,7 +8,7 @@
  */
 
 #define LOG_OCCUPIED_NUMBER 0x12345678   /**< The magic number indicates the block is occupied.*/
-#define LOG_SHMEM_ADDRESS 0x3D120000     /**< The address of the share memory.*/
+#define LOG_SHMEM_ADDRESS   0x7A120000   //0x7A120000 //0x3D120000  0x3A120000   /**< The address of the share memory.*/
 #define LOG_SHMEM_NAME "/dev/mem"  /**< The name of the device when opening the share memory.*/
 #define LOG_SHMEM_SIZE (8*1024*1024)     /**< The size of the share memory.*/
 #define LOG_BLOCK_NUMBER 32              /**< The maximum number of the log blocks in the share memory.*/

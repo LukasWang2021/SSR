@@ -30,7 +30,7 @@ ControllerRpc::ControllerRpc():
 
 ControllerRpc::~ControllerRpc()
 {
-    save_file_thread_.join();
+    // save_file_thread_.join();
 }
 
 void ControllerRpc::init(TpComm* tp_comm_ptr, ControllerPublish* publish_ptr, servo_comm_space::ServoCpuCommBase* cpu_comm_ptr,

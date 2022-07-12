@@ -13,7 +13,7 @@ ThreadHelp::~ThreadHelp()
 
 }
 
-bool ThreadHelp::run(threadFunc func_ptr, void* data, int priority)
+bool ThreadHelp::run(threadFunc func_ptr, void* data, int priority, bool is_rt)
 {
     if(func_ptr == NULL
         || priority < 1
@@ -21,14 +21,16 @@ bool ThreadHelp::run(threadFunc func_ptr, void* data, int priority)
     {
         return false;
     }
-        
     pthread_attr_t attr;
-    struct sched_param param;  
-    pthread_attr_init(&attr);  
-    pthread_attr_setschedpolicy(&attr, SCHED_RR);  
-    param.sched_priority = priority;  
-    pthread_attr_setschedparam(&attr,   &param);
-    pthread_attr_setinheritsched(&attr, PTHREAD_EXPLICIT_SCHED);
+    struct sched_param param;
+    pthread_attr_init(&attr);
+    if(is_rt)
+    {
+        param.sched_priority = priority;  
+        pthread_attr_setschedpolicy(&attr, SCHED_RR);
+        pthread_attr_setschedparam(&attr,   &param);
+        pthread_attr_setinheritsched(&attr, PTHREAD_EXPLICIT_SCHED);
+    }
     pthread_create(&pid_, &attr, func_ptr, data);  
     pthread_attr_destroy(&attr);
 

@@ -38,7 +38,7 @@ public:
     std::vector<basic_alg::PoseEuler> getPauseTraj(void) { return pause_traj_; }
 
     void setSamplingFreq(double fs) { sampling_freq_ = fs; }
-    void setTrajTime(double t) { traj_time_set_ = t; }
+    // void setTrajTime(double t) { traj_time_set_ = t; }
     void setAccTimeRatio(double rate) { acc_time_ratio_ = rate; }
     void setDecTimeRatio(double rate) { dec_time_ratio_ = rate; }
     void xyzSetFitRate(double rate) { xyz_fit_rate_ = rate; }
@@ -79,7 +79,8 @@ private:
         double vel_start, double vel_end,
         double acc_start, double acc_end,
         double time_start, double time_end,
-        double fs, double pos_give);
+        double fs, double pos_give, 
+        double results[4]);
     /*spline function sepreated with xyz and abc for the efficiency of calculation */
     bool spline(
         const std::vector<basic_alg::Point> via_points_pose,
@@ -105,7 +106,6 @@ private:
 
 private:
     double sampling_freq_;
-    double traj_time_set_;
     double acc_time_ratio_;
     double dec_time_ratio_;
 
@@ -121,6 +121,8 @@ private:
     std::vector<double> traj_points_dist_;
 
     double traj_vel_set_; // mm/s
+    double traj_time_set_;
+    size_t traj_size_;
 
     double vel_even_;
     double acc_;
@@ -150,6 +152,7 @@ private:
     std::vector<basic_alg::PoseEuler> resampled_traj_;
     std::vector<basic_alg::PoseEuler> pause_traj_;
     std::vector<basic_alg::PoseEuler> resume_traj_;
+
 private:
     TrajParams *traj_param_;
 };

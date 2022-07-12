@@ -243,7 +243,7 @@ ErrorCode Controller::init()
     }
     if(!online_traj_thread_.run(&controllerOnlineTrajThreadFunc, this, config_ptr_->online_traj_thread_priority_))
     {
-        return CONTROLLER_CREATE_RT_THREAD_FAILED;
+        return CONTROLLER_CREATE_ONLIE_THREAD_FAILED;
     }
     LogProducer::warn("main", "Controller init success");
     return SUCCESS;

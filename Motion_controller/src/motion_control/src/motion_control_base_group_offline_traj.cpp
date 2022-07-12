@@ -232,7 +232,8 @@ ErrorCode BaseGroup::planOfflineTrajectory(string traj_name, double traj_vel)
 
     vector<PoseEuler> xyz_traj = offline_planner_.getResampledTraj();
     LogProducer::info("BaseGroup","trajectory size %ld", xyz_traj.size());
-
+    origin_trajectory_.clear();
+    origin_trajectory_.resize(xyz_traj.size());
     Posture posture = {1, 1, 1, 0};
     JointState joint_state;
     joint_state.alpha.zero();
@@ -241,12 +242,12 @@ ErrorCode BaseGroup::planOfflineTrajectory(string traj_name, double traj_vel)
     joint_state.omega.zero();
     joint_state.torque.zero();
     JointState last_state;
-    // double traj_time = 0.0;
+
     std::ofstream traj_out_file(traj_name, ios::out);
     // write the traj file head
     traj_out_file << getNumberOfJoint() << " " << 0.001 << " " << xyz_traj.size() << "\n";
     traj_out_file << fixed << setprecision(10);
-
+    auto org_traj_iter = origin_trajectory_.begin();
     for(auto iter = xyz_traj.begin(); iter != xyz_traj.end(); ++iter)
     {
         if(!kinematics_ptr_->doIK(*iter, posture, joint_state.angle))
@@ -297,7 +298,7 @@ ErrorCode BaseGroup::planOfflineTrajectory(string traj_name, double traj_vel)
             << joint_state.torque.j3_ << " " << joint_state.torque.j4_ << " " 
             << joint_state.torque.j5_ << " " << joint_state.torque.j6_ << "\n";
         }
-        origin_trajectory_.push_back(joint_state);
+        *org_traj_iter++ = joint_state;
         last_state = joint_state;
     }
     traj_out_file.close();
@@ -310,7 +311,6 @@ ErrorCode BaseGroup::planOfflinePause(void)
     pthread_mutex_lock(&offline_mutex_);
     uint32_t left_points = getOfflineCacheSize(); // local cache left points
     pthread_mutex_unlock(&offline_mutex_);
-    // if the left points less than 20ms
     // offline plan
     LogProducer::warn("BaseGroup", "start offline pause plan on index %u, cache left points %u", offline_traj_point_read_cnt_, left_points);
     if(!offline_planner_.trajPausePlan(offline_traj_point_read_cnt_, 0, 0, 0, 0))
@@ -348,6 +348,7 @@ ErrorCode BaseGroup::planOfflinePause(void)
         pause_trajectory_.push_back(joint_state);
         last_state = joint_state;
     }
+    pause_trajectory_.shrink_to_fit();
     LogProducer::info("BaseGroup", "offline pause traj filled");
 
     return SUCCESS;
@@ -377,7 +378,7 @@ ErrorCode BaseGroup::planOfflineResume(void)
     joint_state.jerk.zero();
     joint_state.omega.zero();
     joint_state.torque.zero();
-    pause_trajectory_.clear();
+    resume_trajectory_.clear();
     for(auto iter = resume_traj.begin(); iter != resume_traj.end(); ++iter)
     {
         if(!kinematics_ptr_->doIK(*iter, posture, joint_state.angle))
@@ -431,11 +432,12 @@ ErrorCode BaseGroup::planOfflineResume(void)
         resume_trajectory_.push_back(joint_state);
         last_state = joint_state;
     }
+    resume_trajectory_.shrink_to_fit();
+    LogProducer::info("BaseGroup", "offline resume traj file filled");
+
     traj_out_file.close();
 
-    LogProducer::info("BaseGroup", "offline pause traj filled");
-
-    return 0;
+    return SUCCESS;
 }
 
 uint32_t BaseGroup::getOfflineCacheSize(void)

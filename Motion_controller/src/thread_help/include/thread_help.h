@@ -43,7 +43,7 @@ public:
      * @retval true Operation succeed.
      * @retval false Operation failed.
      */
-    bool run(threadFunc func_ptr, void* data, int priority);
+    bool run(threadFunc func_ptr, void* data, int priority, bool is_rt=true);
     /**
      * @brief Wait the thread to exit.
      * @return void
@@ -54,7 +54,7 @@ public:
      * @return void
      */ 
     void detach();
-   
+
 private:
     pthread_t pid_; /**< Thread id.*/
 };

@@ -471,6 +471,12 @@ void TpComm::handlePublishList()
                 {
                     (this->*func_ptr)(it->package, i, it->element_list_[i]);
                 }
+                if(it->package.element[i].hash==0x0000AEAB)
+                {
+                    MessageType_DoubleList *dat = (MessageType_DoubleList*)it->element_list_[i].data_ptr;
+                    //printf("cnt:%d val: %lf %lf %lf %lf %lf %lf\n",it->package.element_count,dat->data[0],dat->data[1],dat->data[2],dat->data[3],dat->data[4],dat->data[5]);
+                }
+                    
             }
 
             // encode TpPublish

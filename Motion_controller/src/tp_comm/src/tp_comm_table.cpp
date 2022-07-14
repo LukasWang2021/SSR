@@ -203,4 +203,6 @@ void TpComm::initPublishElementTable()
     publish_service =   {   "/publish/servo1001/cpu_feedback",  0x00012FFB, "MessageType.Uint32List(count=15)",  &TpComm::handlePublishElement0x00012FFB,    Comm_Authority_TP_SIMMULATOR,   };  publish_element_table_.push_back(publish_service); 
     publish_service =   {   "/publish/io1000/io_feedback",  0x00013C8B, "MessageType.Uint32List(count=4)",  &TpComm::handlePublishElement0x00013C8B,    Comm_Authority_TP_SIMMULATOR,   };  publish_element_table_.push_back(publish_service); 
     publish_service =   {   "/publish/iosafety/safety_feedback",  0x0001472B, "MessageType.Uint32List(count=2)",  &TpComm::handlePublishElement0x0001472B,    Comm_Authority_TP_SIMMULATOR,   };  publish_element_table_.push_back(publish_service); 
+	publish_service =	{	"/publish/torque_feedback", 0x0000AEAB, "MessageType.DoubleList(count=6)",	&TpComm::handlePublishElement0x0000AEAB,	Comm_Authority_TP_SIMMULATOR,	};	publish_element_table_.push_back(publish_service); 
+
 }

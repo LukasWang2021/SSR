@@ -57,3 +57,13 @@ void TpComm::handlePublishElement0x0001472B(Comm_Publish& package, int element_i
         LogProducer::error("publish", "handlePublishElement0x0001472B: failed to encode");
     }
 }
+
+/********publish/torque_feedback, MessageType_DoubleList(count=6)**********/	
+void TpComm::handlePublishElement0x0000AEAB(Comm_Publish& package, int element_index, TpPublishElement& list_element)
+{
+	if(!encodePublishElement(package.element[element_index].data, MessageType_DoubleList_fields, list_element.data_ptr))
+    {
+        LogProducer::error("publish", "handlePublishElement0x0000AEAB: failed to encode");
+    }
+}
+

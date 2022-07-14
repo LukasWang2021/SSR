@@ -157,6 +157,7 @@ private:
     MessageType_Uint32List servo1001_cpu_fdb_;
     MessageType_Uint32List io_digital_fdb_;
     MessageType_Uint32List io_safety_fdb_;
+	MessageType_DoubleList torque_fdb_;
 
     void initPublishTable();
     void initPublishQuickSearchTable();
@@ -167,13 +168,15 @@ private:
     void* getServo1001CpuFdbPtr();
     void* getIODigitalFdbPtr();
     void* getIOSafetyFdbPtr();
-    
+    void* getTorqueFdbPtr();
+	
     // update publish element
     void updateAxisFdb();
     void updateServo1001ServoFdb();
     void updateServo1001CpuFdb();
     void updateIODigitalFdb();
     void updateIOSafetyFdb();
+	void updateTorqueFdb();
 };
 
 }

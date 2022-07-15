@@ -121,3 +121,22 @@ uint64_t c_getSafetyIOFeedBack(uint32_t* low, uint32_t* high)
 	return 0;
 }
 
+uint64_t c_getTorqueFeedBack(double* torque, int size)
+{
+	SubBasic* sub_ptr = SubBasic::getInstance();
+	if(torque == NULL || size <= 0)
+		return HANDLE_SUB_FAILED;
+
+	TopicData* data_ptr = sub_ptr->getTopicDataPtr();
+	sub_ptr->lockTopicData();
+
+	//printf("torque: %lf %lf %lf %lf %lf %lf\n", 
+	//	data_ptr->torque_feedback.data[0], data_ptr->torque_feedback.data[1],
+	//	data_ptr->torque_feedback.data[2], data_ptr->torque_feedback.data[3], 
+	//	data_ptr->torque_feedback.data[4], data_ptr->torque_feedback.data[5]);
+
+	memcpy_s(torque, size, &data_ptr->torque_feedback.data[0], 6 * sizeof(double));
+	sub_ptr->unlockTopicData();
+	return 0;
+}
+

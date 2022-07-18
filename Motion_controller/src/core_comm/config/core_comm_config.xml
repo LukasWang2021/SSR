@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CoreCommConfig>
-	<BaseAddress>0x30010000</BaseAddress>
+	<!--0x30010000 0x70010000-->
+	<BaseAddress>0x70010000</BaseAddress>
 	<BoardcastBlock>
 		<ByteOffset>0</ByteOffset>
 		<From>1</From>

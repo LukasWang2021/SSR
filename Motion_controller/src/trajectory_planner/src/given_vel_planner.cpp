@@ -75,15 +75,15 @@ bool GivenVelocityPlanner::viaPoints2Traj(double traj_vel)
 {
     if(traj_vel < MINIMUM_E3)
     {
-        LogProducer::error("offline_planner","trajectory speed %lf invalid", traj_vel);
+        LogProducer::error("GivenVelocityPlanner","trajectory speed %lf invalid", traj_vel);
+        return false;
+    }
+    if (via_points_cnt_ >= 10 && (!xyzFitSmooth(xyz_fit_rate_) || !abcQuatSmooth(abc_smooth_window_)))
+    {
+        LogProducer::error("GivenVelocityPlanner","via points smooth failed");
         return false;
     }
     traj_vel_set_ = traj_vel;
-    if (via_points_cnt_ >= 10 && (!xyzFitSmooth(xyz_fit_rate_) || !abcQuatSmooth(abc_smooth_window_)))
-    {
-        LogProducer::error("offline_planner","via points smooth failed");
-        return false;
-    }
     // 4. calculate the path info
     pathInfoCalc();
     trajPlanWithPathInfo();
@@ -94,15 +94,12 @@ bool GivenVelocityPlanner::viaPoints2Traj(double traj_vel)
     abcTrajResampling();
 
      /* the trajectory speed on begin and end are 0 */
-    Point init_pose_vel;
-    init_pose_vel.zero();
-    Point final_pose_vel;
-    final_pose_vel.zero();
-    Quaternion init_quat_vel;
-    init_quat_vel.zero();
-    Quaternion final_quat_vel;
-    final_quat_vel.zero();
+    Point init_pose_vel;       init_pose_vel.zero();
+    Point final_pose_vel;      final_pose_vel.zero();
+    Quaternion init_quat_vel;  init_quat_vel.zero();
+    Quaternion final_quat_vel; final_quat_vel.zero();
 
+    resampled_traj_.resize(traj_size_);
     if (spline(via_points_pose_, via_points_quat_,
         init_pose_vel, final_pose_vel,
         init_quat_vel, final_quat_vel,
@@ -211,13 +208,15 @@ bool GivenVelocityPlanner::pathInfoCalc(void)
 {
     /*calculate distance between via points*/
     double distance = 0;
-    via_points_dist_.push_back(distance);
+    via_points_dist_.resize(via_points_cnt_);
+    via_points_dist_[0] = distance;
     for (int cnt = 0; cnt < via_points_cnt_ - 1; ++cnt)
     {
         distance += getDistance(via_points_pose_[cnt+1], via_points_pose_[cnt]);
-        via_points_dist_.push_back(distance);
+        via_points_dist_[cnt+1] = distance;
     }
     traj_time_set_ = distance / traj_vel_set_ * 1.5;
+    traj_size_ = (size_t)round(traj_time_set_ / sampling_freq_);
     acc_end_time_ = acc_time_ratio_ * traj_time_set_;
     even_end_time_ = acc_end_time_ + traj_time_set_ * (1 - (acc_time_ratio_ + dec_time_ratio_));
     dec_end_time_ = traj_time_set_;
@@ -236,22 +235,28 @@ bool GivenVelocityPlanner::pathInfoCalc(void)
 bool GivenVelocityPlanner::trajPlanWithPathInfo(void)
 {
     double pos_give = 0.0;
+    double ploy_sets[4] = {0, 0, 0, 0};
+    via_points_time_new_.resize(via_points_cnt_);
+
     for (int i = 0; i < via_points_cnt_; ++i)
     {
         pos_give = via_points_dist_[i];
         if (pos_give >= 0 && pos_give < acc_end_dist_)
         {
-            poly5(0, acc_end_dist_, 0, vel_even_, 0, 0, 0, acc_end_time_, sampling_freq_, pos_give);
+            poly5(0, acc_end_dist_, 0, vel_even_, 0, 0, 0, acc_end_time_, sampling_freq_, pos_give, ploy_sets);
         }
         else if (pos_give >= acc_end_dist_ && pos_give < even_end_dist_)
         {
-            poly5(acc_end_dist_, even_end_dist_, vel_even_, vel_even_, 0, 0, acc_end_time_, even_end_time_, sampling_freq_, pos_give);
+            poly5(acc_end_dist_, even_end_dist_, vel_even_, vel_even_, 0, 0, acc_end_time_, even_end_time_, sampling_freq_, pos_give, ploy_sets);
         }
         else if (pos_give >= even_end_dist_ && pos_give <= dec_end_dist_)
         {
-            poly5(even_end_dist_, dec_end_dist_, vel_even_, 0, 0, 0, even_end_time_, dec_end_time_, sampling_freq_, pos_give);
+            poly5(even_end_dist_, dec_end_dist_, vel_even_, 0, 0, 0, even_end_time_, dec_end_time_, sampling_freq_, pos_give, ploy_sets);
         }
+
+        via_points_time_new_[i] = ploy_sets[0];
     }
+
     via_points_time_new_.back() = traj_time_set_;
 
     return true;
@@ -262,7 +267,8 @@ bool GivenVelocityPlanner::poly5(
     double vel_start, double vel_end, 
     double acc_start, double acc_end, 
     double time_start, double time_end, 
-    double fs, double pos_give
+    double fs, double pos_give, 
+    double results[4]
 )
 {
     double T = time_end - time_start;
@@ -279,7 +285,7 @@ bool GivenVelocityPlanner::poly5(
         + pow(T, 2) * acc_start - pow(T, 2) * acc_end) / (2 * pow(T, 5));
 
     double tmp_pos = 0;
-    double t_set = 0, pos_set = 0, vel_set = 0, acc_set = 0;
+    double t_set = 0; //pos_set = 0, vel_set = 0, acc_set = 0;
     for (double t = time_start; t <= time_end; t += fs)
     {
         tmp_pos = a0 + a1 * pow((t - time_start), 1) + a2 * pow((t - time_start), 2) +
@@ -288,16 +294,19 @@ bool GivenVelocityPlanner::poly5(
         if (tmp_pos <= pos_give) t_set = t;
     }
 
-    via_points_time_new_.push_back(t_set);
+    results[0] = t_set;
 
-    pos_set = a0 + a1 * pow((t_set - time_start), 1) + a2 * pow((t_set - time_start), 2) 
-        + a3 * pow((t_set - time_start), 3) + a4 * pow(t_set - time_start, 4) + a5 * pow(t_set - time_start, 5);
+    // pos_set = a0 + a1 * pow((t_set - time_start), 1) + a2 * pow((t_set - time_start), 2) 
+    //     + a3 * pow((t_set - time_start), 3) + a4 * pow(t_set - time_start, 4) + a5 * pow(t_set - time_start, 5);
+    // results[1] = pos_set;
 
-    vel_set = a1 + 2 * a2 * pow((t_set - time_start), 1) + 3 * a3 * pow((t_set - time_start), 2) 
-        + 4 * a4 * pow(t_set - time_start, 3) + 5 * a5 * pow(t_set - time_start, 4);
+    // vel_set = a1 + 2 * a2 * pow((t_set - time_start), 1) + 3 * a3 * pow((t_set - time_start), 2) 
+    //     + 4 * a4 * pow(t_set - time_start, 3) + 5 * a5 * pow(t_set - time_start, 4);
+    // results[2] = vel_set;
 
-    acc_set = 2 * a2 + 6 * a3 * pow((t_set - time_start), 1) + 12 * a4 * pow(t_set - time_start, 2) 
-        + 20 * a5 * pow(t_set - time_start, 3);
+    // acc_set = 2 * a2 + 6 * a3 * pow((t_set - time_start), 1) + 12 * a4 * pow(t_set - time_start, 2) 
+    //     + 20 * a5 * pow(t_set - time_start, 3);
+    // results[3] = acc_set;
 
     return true;
 }
@@ -339,12 +348,14 @@ bool GivenVelocityPlanner::calcResampledPointDist(void)
 {
     double distance = 0;
     traj_points_dist_.clear();
-    traj_points_dist_.push_back(distance);
+    traj_points_dist_.resize(traj_size_);
+    traj_points_dist_[0] = distance;
     for (size_t cnt = 0; cnt < resampled_traj_.size() - 1; ++cnt)
     {
         distance += getDistance(resampled_traj_[cnt+1].point_, resampled_traj_[cnt].point_);
-        traj_points_dist_.push_back(distance);
+        traj_points_dist_[cnt + 1] = distance;
     }
+
     return true;
 }
 
@@ -374,17 +385,18 @@ bool GivenVelocityPlanner::trajPausePlan(uint32_t index, double vel, double vel_
         if (traj_points_dist_[i] > min_stop_dist + traj_points_dist_[index])
         {
             paused_index_ = i;
-            LogProducer::info("GivenVelocityPlanner", "paused_index %d", paused_index_);
             paused_pos = traj_points_dist_[paused_index_];
+            LogProducer::info("GivenVelocityPlanner", "paused index %d", paused_index_);
             break;
         }
     }
     // means can not stop in time just go on org traj
     if (paused_index_ == 0)
     {
+        pause_traj_.resize(resampled_traj_.size() - index + 1);
         for(size_t i = index; i < resampled_traj_.size(); ++i)
         {
-            pause_traj_.push_back(resampled_traj_[i]);
+            pause_traj_[i-index] = resampled_traj_[i];
         }
         return true;
     }
@@ -406,6 +418,7 @@ bool GivenVelocityPlanner::trajPausePlan(uint32_t index, double vel, double vel_
     {
         return false;
     }
+    pause_traj_.resize(size_t(stop_time / sampling_freq_));
     spline_value(via_points_time_new_, pause_traj_time, pause_traj_);
 
 #if 0
@@ -696,7 +709,7 @@ bool GivenVelocityPlanner::spline
     }
     if (!inverse(H, points_cnts, inv_H))
     {
-        LogProducer::error("offline_planner", "inverse H failed");
+        LogProducer::error("GivenVelocityPlanner", "inverse H failed");
         return false;
     }
 
@@ -716,85 +729,96 @@ bool GivenVelocityPlanner::spline
         }
     }
 
+    fa0_px_.resize(points_cnts); fa0_py_.resize(points_cnts); fa0_pz_.resize(points_cnts);
+    fa1_px_.resize(points_cnts); fa1_py_.resize(points_cnts); fa1_pz_.resize(points_cnts);
+    fa2_px_.resize(points_cnts); fa2_py_.resize(points_cnts); fa2_pz_.resize(points_cnts);
+    fa3_px_.resize(points_cnts); fa3_py_.resize(points_cnts); fa3_pz_.resize(points_cnts);
+
+    fa0_qw_.resize(points_cnts); fa0_qx_.resize(points_cnts); fa0_qy_.resize(points_cnts); fa0_qz_.resize(points_cnts);
+    fa1_qw_.resize(points_cnts); fa1_qx_.resize(points_cnts); fa1_qy_.resize(points_cnts); fa1_qz_.resize(points_cnts);
+    fa2_qw_.resize(points_cnts); fa2_qx_.resize(points_cnts); fa2_qy_.resize(points_cnts); fa2_qz_.resize(points_cnts);
+    fa3_qw_.resize(points_cnts); fa3_qx_.resize(points_cnts); fa3_qy_.resize(points_cnts); fa3_qz_.resize(points_cnts);
+
     for (size_t i = 0; i < points_cnts - 1; ++i)
     {
-        fa0_px_.push_back(via_points_pose[i].x_);
-        fa0_py_.push_back(via_points_pose[i].y_);
-        fa0_pz_.push_back(via_points_pose[i].z_);
+        fa0_px_[i] = via_points_pose[i].x_;
+        fa0_py_[i] = via_points_pose[i].y_;
+        fa0_pz_[i] = via_points_pose[i].z_;
 
-        fa0_qw_.push_back(via_points_quat[i].w_);
-        fa0_qx_.push_back(via_points_quat[i].x_);
-        fa0_qy_.push_back(via_points_quat[i].y_);
-        fa0_qz_.push_back(via_points_quat[i].z_);
+        fa0_qw_[i] = via_points_quat[i].w_;
+        fa0_qx_[i] = via_points_quat[i].x_;
+        fa0_qy_[i] = via_points_quat[i].y_;
+        fa0_qz_[i] = via_points_quat[i].z_;
 
-        fa1_px_.push_back((via_points_pose[i + 1].x_ - via_points_pose[i].x_)
+        fa1_px_[i] = (via_points_pose[i + 1].x_ - via_points_pose[i].x_)
             / (via_points_time[i + 1] - via_points_time[i])
             - inv_H_px_Y[i] * (via_points_time[i + 1] - via_points_time[i]) / 2
-            - (inv_H_px_Y[i + 1] - inv_H_px_Y[i]) * (via_points_time[i + 1] - via_points_time[i]) / 6);
+            - (inv_H_px_Y[i + 1] - inv_H_px_Y[i]) * (via_points_time[i + 1] - via_points_time[i]) / 6;
 
-        fa1_py_.push_back((via_points_pose[i + 1].y_ - via_points_pose[i].y_)
+        fa1_py_[i] = (via_points_pose[i + 1].y_ - via_points_pose[i].y_)
             / (via_points_time[i + 1] - via_points_time[i])
             - inv_H_py_Y[i] * (via_points_time[i + 1] - via_points_time[i]) / 2
-            - (inv_H_py_Y[i + 1] - inv_H_py_Y[i]) * (via_points_time[i + 1] - via_points_time[i]) / 6);
+            - (inv_H_py_Y[i + 1] - inv_H_py_Y[i]) * (via_points_time[i + 1] - via_points_time[i]) / 6;
 
-        fa1_pz_.push_back((via_points_pose[i + 1].z_ - via_points_pose[i].z_)
+        fa1_pz_[i] = (via_points_pose[i + 1].z_ - via_points_pose[i].z_)
             / (via_points_time[i + 1] - via_points_time[i])
             - inv_H_pz_Y[i] * (via_points_time[i + 1] - via_points_time[i]) / 2
-            - (inv_H_pz_Y[i + 1] - inv_H_pz_Y[i]) * (via_points_time[i + 1] - via_points_time[i]) / 6);
+            - (inv_H_pz_Y[i + 1] - inv_H_pz_Y[i]) * (via_points_time[i + 1] - via_points_time[i]) / 6;
         /******************************************************************************************************/
-        fa1_qw_.push_back((via_points_quat[i + 1].w_ - via_points_quat[i].w_)
+        fa1_qw_[i] = (via_points_quat[i + 1].w_ - via_points_quat[i].w_)
             / (via_points_time[i + 1] - via_points_time[i])
             - inv_H_qw_Y[i] * (via_points_time[i + 1] - via_points_time[i]) / 2
-            - (inv_H_qw_Y[i + 1] - inv_H_qw_Y[i]) * (via_points_time[i + 1] - via_points_time[i]) / 6);
+            - (inv_H_qw_Y[i + 1] - inv_H_qw_Y[i]) * (via_points_time[i + 1] - via_points_time[i]) / 6;
 
-        fa1_qx_.push_back((via_points_quat[i + 1].x_ - via_points_quat[i].x_)
+        fa1_qx_[i] = (via_points_quat[i + 1].x_ - via_points_quat[i].x_)
             / (via_points_time[i + 1] - via_points_time[i])
             - inv_H_qx_Y[i] * (via_points_time[i + 1] - via_points_time[i]) / 2
-            - (inv_H_qx_Y[i + 1] - inv_H_qx_Y[i]) * (via_points_time[i + 1] - via_points_time[i]) / 6);
+            - (inv_H_qx_Y[i + 1] - inv_H_qx_Y[i]) * (via_points_time[i + 1] - via_points_time[i]) / 6;
 
-        fa1_qy_.push_back((via_points_quat[i + 1].y_ - via_points_quat[i].y_)
+        fa1_qy_[i] = (via_points_quat[i + 1].y_ - via_points_quat[i].y_)
             / (via_points_time[i + 1] - via_points_time[i])
             - inv_H_qy_Y[i] * (via_points_time[i + 1] - via_points_time[i]) / 2
-            - (inv_H_qy_Y[i + 1] - inv_H_qy_Y[i]) * (via_points_time[i + 1] - via_points_time[i]) / 6);
+            - (inv_H_qy_Y[i + 1] - inv_H_qy_Y[i]) * (via_points_time[i + 1] - via_points_time[i]) / 6;
 
-        fa1_qz_.push_back((via_points_quat[i + 1].z_ - via_points_quat[i].z_)
+        fa1_qz_[i] = (via_points_quat[i + 1].z_ - via_points_quat[i].z_)
             / (via_points_time[i + 1] - via_points_time[i])
             - inv_H_qz_Y[i] * (via_points_time[i + 1] - via_points_time[i]) / 2
-            - (inv_H_qz_Y[i + 1] - inv_H_qz_Y[i]) * (via_points_time[i + 1] - via_points_time[i]) / 6);
+            - (inv_H_qz_Y[i + 1] - inv_H_qz_Y[i]) * (via_points_time[i + 1] - via_points_time[i]) / 6;
 
-        fa2_px_.push_back(inv_H_px_Y[i] / 2);
-        fa2_py_.push_back(inv_H_py_Y[i] / 2);
-        fa2_pz_.push_back(inv_H_pz_Y[i] / 2);
+        fa2_px_[i] = inv_H_px_Y[i] / 2;
+        fa2_py_[i] = inv_H_py_Y[i] / 2;
+        fa2_pz_[i] = inv_H_pz_Y[i] / 2;
 
-        fa2_qw_.push_back(inv_H_qw_Y[i] / 2);
-        fa2_qx_.push_back(inv_H_qx_Y[i] / 2);
-        fa2_qy_.push_back(inv_H_qy_Y[i] / 2);
-        fa2_qz_.push_back(inv_H_qz_Y[i] / 2);
+        fa2_qw_[i] = inv_H_qw_Y[i] / 2;
+        fa2_qx_[i] = inv_H_qx_Y[i] / 2;
+        fa2_qy_[i] = inv_H_qy_Y[i] / 2;
+        fa2_qz_[i] = inv_H_qz_Y[i] / 2;
 
-        fa3_px_.push_back((inv_H_px_Y[i + 1] - inv_H_px_Y[i])
-            / (6 * (via_points_time[i + 1] - via_points_time[i])));
+        fa3_px_[i] = (inv_H_px_Y[i + 1] - inv_H_px_Y[i])
+            / (6 * (via_points_time[i + 1] - via_points_time[i]));
 
-        fa3_py_.push_back((inv_H_py_Y[i + 1] - inv_H_py_Y[i])
-            / (6 * (via_points_time[i + 1] - via_points_time[i])));
+        fa3_py_[i] = (inv_H_py_Y[i + 1] - inv_H_py_Y[i])
+            / (6 * (via_points_time[i + 1] - via_points_time[i]));
 
-        fa3_pz_.push_back((inv_H_pz_Y[i + 1] - inv_H_pz_Y[i])
-            / (6 * (via_points_time[i + 1] - via_points_time[i])));
+        fa3_pz_[i] = (inv_H_pz_Y[i + 1] - inv_H_pz_Y[i])
+            / (6 * (via_points_time[i + 1] - via_points_time[i]));
         /******************************************************************************************************/
-        fa3_qw_.push_back((inv_H_qw_Y[i + 1] - inv_H_qw_Y[i])
-            / (6 * (via_points_time[i + 1] - via_points_time[i])));
+        fa3_qw_[i] = (inv_H_qw_Y[i + 1] - inv_H_qw_Y[i])
+            / (6 * (via_points_time[i + 1] - via_points_time[i]));
 
-        fa3_qx_.push_back((inv_H_qx_Y[i + 1] - inv_H_qx_Y[i])
-            / (6 * (via_points_time[i + 1] - via_points_time[i])));
+        fa3_qx_[i] = (inv_H_qx_Y[i + 1] - inv_H_qx_Y[i])
+            / (6 * (via_points_time[i + 1] - via_points_time[i]));
 
-        fa3_qy_.push_back((inv_H_qy_Y[i + 1] - inv_H_qy_Y[i])
-            / (6 * (via_points_time[i + 1] - via_points_time[i])));
+        fa3_qy_[i] = (inv_H_qy_Y[i + 1] - inv_H_qy_Y[i])
+            / (6 * (via_points_time[i + 1] - via_points_time[i]));
 
-        fa3_qz_.push_back((inv_H_qz_Y[i + 1] - inv_H_qz_Y[i])
-            / (6 * (via_points_time[i + 1] - via_points_time[i])));
+        fa3_qz_[i] = (inv_H_qz_Y[i + 1] - inv_H_qz_Y[i])
+            / (6 * (via_points_time[i + 1] - via_points_time[i]));
     }
     int index = 0;
     PoseEuler tmp_pos;
     Quaternion tmp_quat;
+    auto out_traj_iter = out_traj.begin();
     for (double t = via_points_time.front(); t <= via_points_time.back(); t += sampling_freq_)
     {
         for (int i = 0; ; ++i)
@@ -842,7 +866,8 @@ bool GivenVelocityPlanner::spline
 
         tmp_pos.euler_ = Quaternion2Euler(tmp_quat);
 
-        out_traj.push_back(tmp_pos);
+        // out_traj.push_back(tmp_pos);
+        *out_traj_iter++ = tmp_pos;
     }
 
     delete[] px_Y;
@@ -879,6 +904,7 @@ void GivenVelocityPlanner::spline_value
     int index = 0;
     PoseEuler tmp_pos;
     Quaternion tmp_quat;
+    auto out_traj_iter = out_traj.begin();
 
     for (double t = resampled_time.front(); t <= resampled_time.back(); t += sampling_freq_)
     {
@@ -927,7 +953,8 @@ void GivenVelocityPlanner::spline_value
 
         tmp_pos.euler_ = Quaternion2Euler(tmp_quat);
 
-        out_traj.push_back(tmp_pos);
+        // out_traj.push_back(tmp_pos);
+        *out_traj_iter++ = tmp_pos;
     }
 }
 
@@ -986,7 +1013,7 @@ bool GivenVelocityPlanner::spline
     }
     if (!inverse(H, cnts, inv_H))
     {
-        LogProducer::error("offline_planner", "inverse H failed");
+        LogProducer::error("GivenVelocityPlanner", "inverse H failed");
         return false;
     }
 

@@ -448,6 +448,9 @@ ErrorCode BaseGroup::pauseMove(void)
     }
     else if(mc_state == OFFLINE && !offline_to_pause_request_)
     {
+        ErrorCode err = planOfflinePause();
+        if (err != SUCCESS) return err;
+
         offline_to_pause_request_ = true;
         return SUCCESS;
     }
@@ -716,6 +719,7 @@ ErrorCode BaseGroup::restartMove(void)
     LogProducer::info("mc_base","Restart move request received.");
     MotionControlState mc_state = mc_state_;
     ServoState servo_state = getServoState();
+    ErrorCode err = SUCCESS;
     
     if (mc_state == PAUSE && servo_state == SERVO_IDLE)
     {
@@ -724,7 +728,14 @@ ErrorCode BaseGroup::restartMove(void)
     }
     else if(mc_state == PAUSED_OFFLINE && servo_state == SERVO_IDLE)
     {
+        err = planOfflineResume();
+        if(err != SUCCESS) return err;
+        usleep(10000);
+        err = setOfflineTrajectory(offline_trajectory_file_name_);
+        if(err != SUCCESS) return err;
+
         pause_to_offline_request_ = true;
+
         return SUCCESS;
     }
     else if (mc_state == STANDBY && servo_state == SERVO_IDLE)

@@ -10,8 +10,8 @@
 #include <stdint.h>
 #include <stddef.h>
 
-#define CORE_COMM_BASE_ADDRESS      0x30000000  /**< The base address of the share memory for inter core communication.*/
-#define CORE_COMM_TOTAL_BYTE_SIZE   0x10000000  /**< The share memory byte size for inter core communication.*/
+#define CORE_COMM_BASE_ADDRESS      0x70000000 // 0x70000000 //0x30000000  /**< The base address of the share memory for inter core communication.*/
+#define CORE_COMM_TOTAL_BYTE_SIZE   0x8000000  /**< The share memory byte size for inter core communication.*/
 
 #define CORE_COMM_INIT_SECTION_BYTE_SIZE 65536  /**< The share memory byte size for establish the inter core communication. The size of CoreCommConfigMemoryMap_t must be smaller than it.*/
 #define CORE_COMM_BOARDCAST_BYTE_SIZE 4         /**< The share memory byte size for boardcasting signals, only the first byte is used.*/

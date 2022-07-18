@@ -362,20 +362,9 @@ void BaseGroup::doStateMachine(void)
 
         case OFFLINE_TO_PAUSING:
         {
-            ErrorCode err = planOfflinePause();
-
-            if (err != SUCCESS)
-            {
-                mc_state_ = OFFLINE;
-                LogProducer::info("mc_sm","MC-state switch to MC_OFFLINE.");
-                reportError(err);
-            }
-            else
-            {
-                pause_joint_ = pause_trajectory_.back().angle;
-                mc_state_ = PAUSING_OFFLINE;
-                LogProducer::info("mc_sm","MC-state switch to PAUSING_OFFLINE.");
-            }
+            pause_joint_ = pause_trajectory_.back().angle;
+            mc_state_ = PAUSING_OFFLINE;
+            LogProducer::info("mc_sm","MC-state switch to PAUSING_OFFLINE.");
             break;
         }
         case PAUSING_OFFLINE:
@@ -401,28 +390,9 @@ void BaseGroup::doStateMachine(void)
                     LogProducer::warn("mc_sm","MC-state switch to MC_STANDBY");
                     break;
                 }
-                // plan resume traj
-                ErrorCode err = planOfflineResume();
-                if (err != SUCCESS)
-                {
-                    mc_state_ = STANDBY;
-                    LogProducer::info("mc_sm","MC-state switch to MC_STANDBY.");
-                    reportError(err);
-                }
-                else
-                {
-                    if(setOfflineTrajectory(offline_trajectory_file_name_) == SUCCESS)
-                    {
-                        pause_joint_ = pause_trajectory_.back().angle;
-                        doStandbyToOffline();
-                        LogProducer::info("mc_sm","MC-state switch to OFFLINE.");
-                    }
-                    else
-                    {
-                        mc_state_ = STANDBY;
-                        LogProducer::info("mc_sm","set offline file failed MC-state switch to MC_STANDBY.");
-                    }
-                }
+                pause_joint_ = pause_trajectory_.back().angle;
+                doStandbyToOffline();
+                LogProducer::info("mc_sm","MC-state switch to OFFLINE.");
                 pause_to_offline_request_ = false;
             }
             break;

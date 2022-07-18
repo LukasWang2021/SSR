@@ -19,6 +19,7 @@ typedef struct
 	MessageType_Uint32List cpu_feedback;
 	MessageType_Uint32List io1000_feedback;
 	MessageType_Uint32List iosafety_feedback;
+	MessageType_DoubleList torque_feedback;
 }TopicData;
 
 

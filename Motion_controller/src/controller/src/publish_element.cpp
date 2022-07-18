@@ -27,3 +27,9 @@ void* ControllerPublish::getIOSafetyFdbPtr()
 {
     return (void*)&io_safety_fdb_;
 }
+
+void* ControllerPublish::getTorqueFdbPtr()
+{
+	return (void*)&torque_fdb_;
+}
+

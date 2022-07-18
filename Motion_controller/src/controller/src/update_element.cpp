@@ -99,3 +99,21 @@ void ControllerPublish::updateIOSafetyFdb()
     io_safety_fdb_.data_count = 2;
     safety_ptr_->readStatusAll(io_safety_fdb_.data[0], io_safety_fdb_.data[1]);
 }
+
+void ControllerPublish::updateTorqueFdb()
+{
+	CommRegTorqueData_t   t_data;
+	memset(&t_data, 0, sizeof(t_data));
+	 
+	torque_fdb_.data_count = 6;
+	
+    if (cpu_comm_ptr_->getTorqueSensorData(&t_data))
+    {
+        for(size_t i = 0; i < torque_fdb_.data_count; ++i)
+        {
+           	torque_fdb_.data[i] = (double)t_data.data[i]/1024.0;
+        }
+    }
+
+	cpu_comm_ptr_->setTorqueSensorSync(NULL);
+}

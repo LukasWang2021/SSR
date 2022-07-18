@@ -112,6 +112,16 @@ COMM_INTERFACE_API uint64_t c_getAxisFeedBackByIsrCount(uint32_t array_size,
  */
 COMM_INTERFACE_API uint64_t c_getSafetyIOFeedBack(uint32_t *low, uint32_t* high);
 
+/**
+ * @brief Get torque feedback.
+ * @details .
+ * @param [out] low The low byte for safety io.
+ * @param [out] high The high byte for safety io.
+ * @retval 0 Success.
+ * @retval -1 Failure.
+ */
+COMM_INTERFACE_API uint64_t c_getTorqueFeedBack(double *torque, int size);
+
 #ifdef __cplusplus
 }
 #endif

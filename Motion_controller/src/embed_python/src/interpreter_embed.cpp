@@ -57,7 +57,7 @@ static int tracer(PyObject *obj, PyFrameObject *frame, int what, PyObject *arg)
         return -1;
     }
 
-    // update execution info, python system lib will ignored
+    // update execution info, python system lib will be ignored
     PyCodeObject *code = PyFrame_GetCode(frame);
     const char *filename = PyUnicode_AsUTF8(code->co_filename);
     const char *funcname = PyUnicode_AsUTF8(code->co_name);
@@ -358,8 +358,8 @@ ErrorCode InterpEmbed::pause(void)
 {
     if(curr_state_ != INTERP_STATE_RUNNING)
     {
-        LogProducer::warn("interpembed", "pause program %d failed not in RUNNING state", id_);
-        return INTERPRETER_ERROR_INVALID_STATE;
+        LogProducer::warn("interpembed", "pause program %d not in RUNNING state, ignored", id_);
+        return 0;
     }
 
     LogProducer::info("interpembed", "try pause program %d", id_);
@@ -382,8 +382,8 @@ ErrorCode InterpEmbed::resume(void)
 {
     if(curr_state_ != INTERP_STATE_PAUSE)
     {
-        LogProducer::error("interpembed", "resume program %d failed not in PAUSE state", id_);
-        return INTERPRETER_ERROR_INVALID_STATE;
+        LogProducer::warn("interpembed", "resume program %d not in PAUSE state, ignored", id_);
+        return 0;
     }
 
     LogProducer::info("interpembed", "try resume program %d", id_);
@@ -405,8 +405,8 @@ ErrorCode InterpEmbed::abort(void)
 {
     if(curr_state_ == INTERP_STATE_IDLE)
     {
-        LogProducer::error("interpembed", "abort program %d failed in IDLE state", id_);
-        return INTERPRETER_ERROR_INVALID_STATE;
+        LogProducer::warn("interpembed", "abort program %d in IDLE state, ignored", id_);
+        return 0;
     }
 
     LogProducer::info("interpembed", "try abort program %d", id_);

@@ -451,6 +451,7 @@ void ControllerRpc::handleRpc0x00004DD5(void* request_data_ptr, void* response_d
     int32_t jerk = rq_data_ptr->data1.data[5];
     int64_t position = rq_data_ptr->data2.data;
     rs_data_ptr->data.data = servo_comm_ptr_[axis_id]->doServoCmdMoveAbsolute(position, velocity, acc, dec, jerk);
+    LogProducer::info("rpc", "servo move absolute[%d](%ld,%d,%d,%d,%d)", axis_id, position, velocity, acc, dec, jerk);
     if (rs_data_ptr->data.data == SUCCESS)
     {
         LogProducer::info("rpc", "/rpc/servo1001/servo/moveAbsolute for axis(%d) success", axis_id);
@@ -746,6 +747,7 @@ void ControllerRpc::handleRpc0x000172C5(void* request_data_ptr, void* response_d
     int32_t jerk = rq_data_ptr->data1.data[5];
     int64_t position = rq_data_ptr->data2.data;
     rs_data_ptr->data.data = servo_comm_ptr_[axis_id]->doServoCmdMoveRelative(position, velocity, acc, dec, jerk);
+    LogProducer::info("rpc", "servo move relative[%d](%ld,%d,%d,%d,%d)", axis_id, position, velocity, acc, dec, jerk);
     if (rs_data_ptr->data.data == SUCCESS)
     {
         LogProducer::info("rpc", "/rpc/servo1001/servo/moveRelative for axis(%d) success", axis_id);

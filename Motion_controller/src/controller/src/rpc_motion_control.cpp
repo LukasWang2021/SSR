@@ -1612,3 +1612,40 @@ void ControllerRpc::handleRpc0x0000E479(void* request_data_ptr, void* response_d
     else
         LogProducer::error("rpc", "/rpc/motion_control/axis_group/viaPointsToTrajWithGivenVelocity for group[0] failed. Error = 0x%llx", rs_data_ptr->error_code.data);
 }
+
+//"/rpc/motion_control/axis_group/getDH"	
+void ControllerRpc::handleRpc0x00016078(void* request_data_ptr, void* response_data_ptr)
+{
+    // RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
+    ResponseMessageType_Uint64_DoubleList* rs_data_ptr = static_cast<ResponseMessageType_Uint64_DoubleList*>(response_data_ptr); 
+    DH base_dh, arm_dh[6];
+    rs_data_ptr->error_code.data = group_ptr_[0]->getDH(base_dh, arm_dh);
+    rs_data_ptr->data.data_count = 4 * 7;
+    if (rs_data_ptr->error_code.data == SUCCESS)
+    {
+        rs_data_ptr->data.data[0] = base_dh.d;
+        rs_data_ptr->data.data[1] = base_dh.a;
+        rs_data_ptr->data.data[2] = base_dh.alpha;
+        rs_data_ptr->data.data[3] = base_dh.offset;
+
+        for(size_t i = 0; i < 6; ++i)
+        {
+            rs_data_ptr->data.data[i * 4 + 4] = arm_dh[i].d;
+            rs_data_ptr->data.data[i * 4 + 5] = arm_dh[i].a;
+            rs_data_ptr->data.data[i * 4 + 6] = arm_dh[i].alpha;
+            rs_data_ptr->data.data[i * 4 + 7] = arm_dh[i].offset;
+        }
+
+        // memcpy(rs_data_ptr->data.data, &base_dh, sizeof(DH) * 7);
+        LogProducer::info("rpc", "/rpc/motion_control/axis_group/getDH for group[0] success");
+        LogProducer::info("rpc", "base:%lf,%lf,%lf,%lf", base_dh.d, base_dh.a, base_dh.alpha, base_dh.offset);
+        LogProducer::info("rpc", "arm1:%lf,%lf,%lf,%lf", arm_dh[0].d, arm_dh[0].a, arm_dh[0].alpha, arm_dh[0].offset);
+        LogProducer::info("rpc", "arm2:%lf,%lf,%lf,%lf", arm_dh[1].d, arm_dh[1].a, arm_dh[1].alpha, arm_dh[1].offset);
+        LogProducer::info("rpc", "arm3:%lf,%lf,%lf,%lf", arm_dh[2].d, arm_dh[2].a, arm_dh[2].alpha, arm_dh[2].offset);
+        LogProducer::info("rpc", "arm4:%lf,%lf,%lf,%lf", arm_dh[3].d, arm_dh[3].a, arm_dh[3].alpha, arm_dh[3].offset);
+        LogProducer::info("rpc", "arm5:%lf,%lf,%lf,%lf", arm_dh[4].d, arm_dh[4].a, arm_dh[4].alpha, arm_dh[4].offset);
+        LogProducer::info("rpc", "arm6:%lf,%lf,%lf,%lf", arm_dh[5].d, arm_dh[5].a, arm_dh[5].alpha, arm_dh[5].offset);
+    }
+    else
+        LogProducer::error("rpc", "/rpc/motion_control/axis_group/getDH for group[0] failed. Error = 0x%llx", rs_data_ptr->error_code.data);
+}

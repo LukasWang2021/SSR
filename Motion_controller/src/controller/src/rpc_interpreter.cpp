@@ -118,7 +118,7 @@ void ControllerRpc::handleRpc0x00008E74(void* request_data_ptr, void* response_d
     RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
-    rs_data_ptr->data.data = InterpCtrl::instance().forward(rq_data_ptr->data.data);
+    rs_data_ptr->data.data = InterpCtrl::instance().backward(rq_data_ptr->data.data);
     
     LogProducer::info("rpc", "/rpc/interpreter/forward %d", rq_data_ptr->data.data);
 }

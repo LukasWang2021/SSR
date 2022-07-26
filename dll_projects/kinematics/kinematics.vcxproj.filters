@@ -1,0 +1,217 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="源文件">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="头文件">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="源文件\basic_alg">
+      <UniqueIdentifier>{0ee44bba-5d6d-4e75-8589-401efe8f04a6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\basic_alg">
+      <UniqueIdentifier>{e2be353b-220a-4e36-a5a5-9418ab23077d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\kinematics_alg">
+      <UniqueIdentifier>{a32ffa9d-89ff-4bb0-a4a8-4f5eda3b5a28}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\kinematics_alg">
+      <UniqueIdentifier>{375a21d3-cb3f-48ee-b2db-f91e3fa1fad5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\transformation">
+      <UniqueIdentifier>{64c1657a-35d7-4b8c-84ed-c9c42130db4d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\transformation">
+      <UniqueIdentifier>{a336e810-1ab1-48ad-89f5-3f8c8e6df5b9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\clapack">
+      <UniqueIdentifier>{ca2025bf-474c-48d5-bd26-0cf2747f4180}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="库文件">
+      <UniqueIdentifier>{721b8cde-f6ec-4df2-95fa-f09db9658050}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\app">
+      <UniqueIdentifier>{d69a4124-5ee9-4bd5-b51c-51d200b21a5d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\app">
+      <UniqueIdentifier>{6922238f-0dd7-4b4b-acbf-c59697afe432}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="framework.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="pch.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="basic_alg\include\basic_alg.h">
+      <Filter>头文件\basic_alg</Filter>
+    </ClInclude>
+    <ClInclude Include="basic_alg\include\basic_alg_datatype.h">
+      <Filter>头文件\basic_alg</Filter>
+    </ClInclude>
+    <ClInclude Include="basic_alg\include\basic_constants.h">
+      <Filter>头文件\basic_alg</Filter>
+    </ClInclude>
+    <ClInclude Include="basic_alg\include\double_array9.h">
+      <Filter>头文件\basic_alg</Filter>
+    </ClInclude>
+    <ClInclude Include="basic_alg\include\euler.h">
+      <Filter>头文件\basic_alg</Filter>
+    </ClInclude>
+    <ClInclude Include="basic_alg\include\int32_array9.h">
+      <Filter>头文件\basic_alg</Filter>
+    </ClInclude>
+    <ClInclude Include="basic_alg\include\joint.h">
+      <Filter>头文件\basic_alg</Filter>
+    </ClInclude>
+    <ClInclude Include="basic_alg\include\joint_acceleration.h">
+      <Filter>头文件\basic_alg</Filter>
+    </ClInclude>
+    <ClInclude Include="basic_alg\include\joint_torque.h">
+      <Filter>头文件\basic_alg</Filter>
+    </ClInclude>
+    <ClInclude Include="basic_alg\include\joint_velocity.h">
+      <Filter>头文件\basic_alg</Filter>
+    </ClInclude>
+    <ClInclude Include="basic_alg\include\matrix33.h">
+      <Filter>头文件\basic_alg</Filter>
+    </ClInclude>
+    <ClInclude Include="basic_alg\include\matrix44.h">
+      <Filter>头文件\basic_alg</Filter>
+    </ClInclude>
+    <ClInclude Include="basic_alg\include\point.h">
+      <Filter>头文件\basic_alg</Filter>
+    </ClInclude>
+    <ClInclude Include="basic_alg\include\pose_euler.h">
+      <Filter>头文件\basic_alg</Filter>
+    </ClInclude>
+    <ClInclude Include="basic_alg\include\pose_quaternion.h">
+      <Filter>头文件\basic_alg</Filter>
+    </ClInclude>
+    <ClInclude Include="basic_alg\include\quaternion.h">
+      <Filter>头文件\basic_alg</Filter>
+    </ClInclude>
+    <ClInclude Include="basic_alg\include\rotation_matrix.h">
+      <Filter>头文件\basic_alg</Filter>
+    </ClInclude>
+    <ClInclude Include="basic_alg\include\trans_matrix.h">
+      <Filter>头文件\basic_alg</Filter>
+    </ClInclude>
+    <ClInclude Include="basic_alg\include\vector3.h">
+      <Filter>头文件\basic_alg</Filter>
+    </ClInclude>
+    <ClInclude Include="kinematics_alg\include\kinematics.h">
+      <Filter>头文件\kinematics_alg</Filter>
+    </ClInclude>
+    <ClInclude Include="kinematics_alg\include\kinematics_rtm.h">
+      <Filter>头文件\kinematics_alg</Filter>
+    </ClInclude>
+    <ClInclude Include="transformation\include\transformation.h">
+      <Filter>头文件\transformation</Filter>
+    </ClInclude>
+    <ClInclude Include="basic_alg\include\filter.h">
+      <Filter>头文件\basic_alg</Filter>
+    </ClInclude>
+    <ClInclude Include="app\include\kinematics_app.h">
+      <Filter>头文件\app</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\comm_def.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="app\include\kinematics_err.h">
+      <Filter>头文件\app</Filter>
+    </ClInclude>
+    <ClInclude Include="clapack\include\blaswrap.h">
+      <Filter>头文件\clapack</Filter>
+    </ClInclude>
+    <ClInclude Include="clapack\include\clapack.h">
+      <Filter>头文件\clapack</Filter>
+    </ClInclude>
+    <ClInclude Include="clapack\include\f2c.h">
+      <Filter>头文件\clapack</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="pch.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="basic_alg\src\basic_alg.cpp">
+      <Filter>源文件\basic_alg</Filter>
+    </ClCompile>
+    <ClCompile Include="basic_alg\src\double_array9.cpp">
+      <Filter>源文件\basic_alg</Filter>
+    </ClCompile>
+    <ClCompile Include="basic_alg\src\euler.cpp">
+      <Filter>源文件\basic_alg</Filter>
+    </ClCompile>
+    <ClCompile Include="basic_alg\src\int32_array9.cpp">
+      <Filter>源文件\basic_alg</Filter>
+    </ClCompile>
+    <ClCompile Include="basic_alg\src\joint.cpp">
+      <Filter>源文件\basic_alg</Filter>
+    </ClCompile>
+    <ClCompile Include="basic_alg\src\joint_acceleration.cpp">
+      <Filter>源文件\basic_alg</Filter>
+    </ClCompile>
+    <ClCompile Include="basic_alg\src\joint_torque.cpp">
+      <Filter>源文件\basic_alg</Filter>
+    </ClCompile>
+    <ClCompile Include="basic_alg\src\joint_velocity.cpp">
+      <Filter>源文件\basic_alg</Filter>
+    </ClCompile>
+    <ClCompile Include="basic_alg\src\matrix33.cpp">
+      <Filter>源文件\basic_alg</Filter>
+    </ClCompile>
+    <ClCompile Include="basic_alg\src\matrix44.cpp">
+      <Filter>源文件\basic_alg</Filter>
+    </ClCompile>
+    <ClCompile Include="basic_alg\src\point.cpp">
+      <Filter>源文件\basic_alg</Filter>
+    </ClCompile>
+    <ClCompile Include="basic_alg\src\pose_euler.cpp">
+      <Filter>源文件\basic_alg</Filter>
+    </ClCompile>
+    <ClCompile Include="basic_alg\src\pose_quaternion.cpp">
+      <Filter>源文件\basic_alg</Filter>
+    </ClCompile>
+    <ClCompile Include="basic_alg\src\quaternion.cpp">
+      <Filter>源文件\basic_alg</Filter>
+    </ClCompile>
+    <ClCompile Include="basic_alg\src\rotation_matrix.cpp">
+      <Filter>源文件\basic_alg</Filter>
+    </ClCompile>
+    <ClCompile Include="basic_alg\src\trans_matrix.cpp">
+      <Filter>源文件\basic_alg</Filter>
+    </ClCompile>
+    <ClCompile Include="basic_alg\src\vector3.cpp">
+      <Filter>源文件\basic_alg</Filter>
+    </ClCompile>
+    <ClCompile Include="kinematics_alg\src\kinematics_rtm.cpp">
+      <Filter>源文件\kinematics_alg</Filter>
+    </ClCompile>
+    <ClCompile Include="main.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="transformation\src\transformation.cpp">
+      <Filter>源文件\transformation</Filter>
+    </ClCompile>
+    <ClCompile Include="app\src\kinematics_app.cpp">
+      <Filter>源文件\app</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="clapack\lib\blas.lib">
+      <Filter>库文件</Filter>
+    </Library>
+    <Library Include="clapack\lib\lapack.lib">
+      <Filter>库文件</Filter>
+    </Library>
+    <Library Include="clapack\lib\libf2c.lib">
+      <Filter>库文件</Filter>
+    </Library>
+  </ItemGroup>
+</Project>

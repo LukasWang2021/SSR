@@ -63,6 +63,13 @@ Matrix33& Matrix33::rightMultiply(const Matrix33& right_matrix)
     return *this;
 }
 
+void Matrix33::rightMultiply(const Point& vect, Point& res_vect)
+{
+	res_vect.x_ = this->matrix_[0][0]*vect.x_ + this->matrix_[0][1]*vect.y_+this->matrix_[0][2]*vect.z_;
+    res_vect.y_ = this->matrix_[1][0]*vect.x_ + this->matrix_[1][1]*vect.y_+this->matrix_[1][2]*vect.z_;
+	res_vect.z_ = this->matrix_[2][0]*vect.x_ + this->matrix_[2][1]*vect.y_+this->matrix_[2][2]*vect.z_;
+}
+
 void Matrix33::rightMultiply(const Matrix33& right_matrix, Matrix33& result_matrix) const
 {
     multiply(*this, right_matrix, result_matrix);

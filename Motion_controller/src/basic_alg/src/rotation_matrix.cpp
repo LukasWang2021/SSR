@@ -125,4 +125,25 @@ void RotationMatrix::getVectorA(Point& a_vector) const
     a_vector.z_ = matrix_[2][2];
 }
 
+bool RotationMatrix::inverse(double valve)
+{
+	RotationMatrix result_matrix;
+	inverse(result_matrix);
+	*this = result_matrix;
+	return true;
+}	
+
+void RotationMatrix::inverse(RotationMatrix& result_matrix) const
+{
+	result_matrix.matrix_[0][0] = this->matrix_[0][0];
+    result_matrix.matrix_[0][1] = this->matrix_[1][0];
+    result_matrix.matrix_[0][2] = this->matrix_[2][0];
+    result_matrix.matrix_[1][0] = this->matrix_[0][1];
+    result_matrix.matrix_[1][1] = this->matrix_[1][1];
+    result_matrix.matrix_[1][2] = this->matrix_[2][1];
+    result_matrix.matrix_[2][0] = this->matrix_[0][2];
+    result_matrix.matrix_[2][1] = this->matrix_[1][2];
+    result_matrix.matrix_[2][2] = this->matrix_[2][2];
+}
+
 

@@ -3,11 +3,18 @@
 
 
 #include "kinematics.h"
+#include "matrix66.h"
 #include "yaml_help.h"
 #include <string>
 
 namespace basic_alg
 {
+
+typedef struct{
+	int Imax;	//最大迭代次数
+	double Etol;	//容许误差
+	double lambda;	//初始系数
+}ParamNumericalIK_t;
 
 class KinematicsRTM : public Kinematics
 {
@@ -50,6 +57,9 @@ public:
     virtual Joint getJointByGeometryJointAndTurn(const Joint& geom_joint, const Turn& turn);
     virtual Joint getJointByGeometryJointAndRefJointAndTurn(const Joint& geom_joint, const Joint& ref_joint, const Turn& turn);
     virtual bool nearSingularPosition(const Joint& joint);
+
+	bool doNumericalIK(const TransMatrix& trans_matrix, const Joint& ref_joint, Joint& joint, double valve = 0.001);
+	TransMatrix getJacobian(const Joint& joint, Matrix66& res_mtx);
 private:
     KinematicsRTM();
     inline void scaleResultJoint(double& angle);
@@ -65,6 +75,8 @@ private:
     base_space::YamlHelp param_;
     bool is_valid_;
     std::string file_path_;
+		
+	ParamNumericalIK_t param_nik_;
 };
 
 

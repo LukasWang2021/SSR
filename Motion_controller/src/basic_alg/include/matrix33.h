@@ -3,7 +3,7 @@
 
 #include <stddef.h>
 #include <string>
-
+#include "point.h"
 namespace basic_alg
 {
 /**
@@ -61,7 +61,8 @@ public:
      * @return void
      */ 
     void rightMultiply(const Matrix33& right_matrix, Matrix33& result_matrix) const;
-    bool inverse(double valve = 0.001);
+	void rightMultiply(const Point& vect, Point& res_vect);
+    virtual bool inverse(double valve = 0.001);
     bool inverse(Matrix33& result_matrix, double valve = 0.001) const;
     /**
      * @brief Operator= overload.

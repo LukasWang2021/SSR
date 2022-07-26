@@ -57,7 +57,7 @@ public:
     
     double& operator[](size_t index);
     const double& operator[](size_t index) const;
-
+    void zero(void);
     void print(std::string comment = "") const;
 };
 

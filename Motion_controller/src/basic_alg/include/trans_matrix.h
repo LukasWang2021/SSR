@@ -117,6 +117,9 @@ public:
      */
     bool inverse(TransMatrix& result_matrix, double valve = 0.001);
     void print(std::string comment = "") const;
+	
+	void inverse_simplify(void);	
+	void inverse_simplify(TransMatrix& result_matrix);
     
 private:
     /**

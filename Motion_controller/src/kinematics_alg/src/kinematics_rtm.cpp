@@ -1,6 +1,8 @@
 #include "kinematics_rtm.h"
+#include "basic_alg.h"
 #include <iostream>
 #include <math.h>
+#include <string.h>
 
 using namespace std;
 using namespace basic_alg;
@@ -15,6 +17,11 @@ KinematicsRTM::KinematicsRTM():
 KinematicsRTM::KinematicsRTM(DH& base_dh, DH arm_dh[6], bool is_flip):    
     matrix_base_(base_dh.d, base_dh.a, base_dh.alpha, base_dh.offset)
 {
+
+    param_nik_.Imax=100;	//最大迭代次数
+    param_nik_.Etol=1e-12;	//容许误差
+    param_nik_.lambda=0.1;	//初始系数
+
     base_dh_.d = base_dh.d;
     base_dh_.a = base_dh.a;
     base_dh_.alpha = base_dh.alpha;
@@ -41,7 +48,11 @@ KinematicsRTM::KinematicsRTM(DH& base_dh, DH arm_dh[6], bool is_flip):
 }
 
 KinematicsRTM::KinematicsRTM(std::string file_path, bool is_flip)
-{
+{	
+	param_nik_.Imax=100;	//最大迭代次数
+	param_nik_.Etol=1e-12;	//容许误差
+	param_nik_.lambda=0.1;	//初始系数
+
     file_path_ = file_path + "arm_dh.yaml";
     if (param_.loadParamFile(file_path_))
     {
@@ -1021,4 +1032,132 @@ bool KinematicsRTM::nearSingularPosition(const Joint &joint)
 
     return false;
 }
+
+bool KinematicsRTM::doNumericalIK(const TransMatrix& trans_matrix, const Joint& ref_joint, Joint& q, double valve)
+{
+	TransMatrix tmx_qk, tmx_qk_inv, dT;
+	Matrix66 J0,Je,Jet,Je2,eye_mtx;
+	Joint err, dq, qtemp;
+	double err_norm, err_temp;
+
+    param_nik_.lambda = 0.1;
+	q = ref_joint;	
+	//Levenberg-Marquardt
+	for(int k=0; k<param_nik_.Imax-1; k++) 
+	{
+        memset(&Je.matrix_[0][0], 0, 36 * sizeof(double));
+		// joint >>>> T0_6 J0
+		tmx_qk = getJacobian(q,J0); 
+		tmx_qk.inverse_simplify(tmx_qk_inv);
+		tmx_qk_inv.rightMultiply(trans_matrix, dT);
+		err[0] = dT.trans_vector_.x_;
+		err[1] = dT.trans_vector_.y_;
+		err[2] = dT.trans_vector_.z_;
+		err[3] = 0.5*(dT.rotation_matrix_.matrix_[2][1]-dT.rotation_matrix_.matrix_[1][2]);
+		err[4] = 0.5*(dT.rotation_matrix_.matrix_[0][2]-dT.rotation_matrix_.matrix_[2][0]);
+        err[5] = 0.5 * (dT.rotation_matrix_.matrix_[1][0] - dT.rotation_matrix_.matrix_[0][1]);  //printf("%d-err:", k); err.print();
+		err_norm = err[0]*err[0] + err[1]*err[1] \
+					+ err[2]*err[2] + err[3]*err[3] \
+					+ err[4]*err[4] +  err[5]*err[5];
+		err_norm = sqrt(err_norm);
+		
+		if(err_norm <= param_nik_.Etol)
+			break;
+		
+		//转换到末端坐标系
+		for(int i=0; i<6; i++)
+		{
+			int j = (i/3)*3;
+			int n = i%3;
+			Je.matrix_[i][j] = tmx_qk.rotation_matrix_.matrix_[0][n];
+			Je.matrix_[i][j+1] = tmx_qk.rotation_matrix_.matrix_[1][n];
+			Je.matrix_[i][j+2] = tmx_qk.rotation_matrix_.matrix_[2][n];
+		}
+		Je.rightMultiply(J0);
+
+		//calc dq
+		Je.transpose(Jet);
+		Jet.rightMultiply(Je,Je2);
+		Je2.sum(eye_mtx.eye(param_nik_.lambda),1);
+		basic_alg::inverse(&Je2.matrix_[0][0], 6, &Je2.matrix_[0][0]);
+		Je2.rightMultiply(Jet);
+		Je2.multiplyVect(err, dq);
+
+		qtemp = q + dq;
+		this->doFK(qtemp, tmx_qk, 0, 6);
+		tmx_qk.inverse_simplify(tmx_qk_inv);
+		tmx_qk_inv.rightMultiply(trans_matrix, dT);
+		err[0] = dT.trans_vector_.x_;
+		err[1] = dT.trans_vector_.y_;
+		err[2] = dT.trans_vector_.z_;
+		err[3] = 0.5*(dT.rotation_matrix_.matrix_[2][1]-dT.rotation_matrix_.matrix_[1][2]);
+		err[4] = 0.5*(dT.rotation_matrix_.matrix_[0][2]-dT.rotation_matrix_.matrix_[2][0]);
+		err[5] = 0.5*(dT.rotation_matrix_.matrix_[1][0]-dT.rotation_matrix_.matrix_[0][1]);
+		err_temp = err[0]*err[0] + err[1]*err[1] \
+					+ err[2]*err[2] + err[3]*err[3] \
+					+ err[4]*err[4] +  err[5]*err[5];
+		err_temp = sqrt(err_temp);
+
+		if(err_temp<err_norm)
+		{
+			q = qtemp;
+			param_nik_.lambda = param_nik_.lambda/2;
+		}else{
+			param_nik_.lambda = param_nik_.lambda*10;
+		}
+		scaleResultJoint(q.j1_);
+		scaleResultJoint(q.j2_);
+		scaleResultJoint(q.j3_);
+		scaleResultJoint(q.j4_);
+		scaleResultJoint(q.j5_);
+		scaleResultJoint(q.j6_);
+	}
+    return true;
+}
+
+TransMatrix KinematicsRTM::getJacobian(const Joint& joint, Matrix66& res_mtx)
+{
+	//TransMatrix result_matrix;
+    TransMatrix t_mtx[6];// T01~T06
+    TransMatrix tmp0;
+    int i = 0;
+    Point rot,result,xyz;
+
+	tmp0 = matrix_base_;
+
+    for(i = 0; i < 6; ++i)
+    {
+		TransMatrix tmp1(arm_dh_[i].d, arm_dh_[i].a, arm_dh_[i].alpha, joint[i] + arm_dh_[i].offset);     
+        tmp0.rightMultiply(tmp1);
+		t_mtx[i] = tmp0;
+    }
+
+    for(i = 0; i < 6; ++i)
+    {
+
+        if(i==0)
+        {
+			xyz = t_mtx[5].trans_vector_;
+            rot.x_ = 0;
+            rot.y_ = 0;
+            rot.z_ = 1;
+        }
+        else
+        {
+			t_mtx[i-1].rotation_matrix_.getVectorA(rot);
+			xyz = t_mtx[i-1].trans_vector_;
+            xyz = t_mtx[5].trans_vector_ - xyz;
+        }
+        rot.crossProduct(xyz, result);
+
+        res_mtx.matrix_[0][i] = result.x_;
+        res_mtx.matrix_[1][i] = result.y_;
+        res_mtx.matrix_[2][i] = result.z_;
+        res_mtx.matrix_[3][i] = rot.x_;
+        res_mtx.matrix_[4][i] = rot.y_;
+        res_mtx.matrix_[5][i] = rot.z_;
+    }
+	return t_mtx[5];
+}
+
 

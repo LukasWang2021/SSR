@@ -2155,6 +2155,12 @@ UserOpMode MotionControl::getWorkMode(void)
     return work_mode_;
 }
 
+ErrorCode MotionControl::getDH(DH& base_dh, DH arm_dh[6])
+{
+    group_ptr_->getKinematicsPtr()->getDH(base_dh, arm_dh);
+    return 0;
+}
+
 //pure function no realization
 ErrorCode MotionControl::mcGroupHalt(double dec, double jerk)
 {

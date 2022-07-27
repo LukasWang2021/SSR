@@ -526,6 +526,8 @@ private:
     void handleRequest0x0000B35F(int recv_bytes);
     /********rpc/motion_control/axis_group/getOnlineTrajectoryRatio, RequestMessageType_void**********/
     void handleRequest0x00004DEF(int recv_bytes);
+    /********rpc/motion_control/axis_group/getDH, RequestMessageType_Void**********/	
+    void handleRequest0x00016078(int recv_bytes);		
 
     /********rpc/motion_control/axis_group/getJointManualStep, RequestMessageType_Int32**********/	
     void handleRequest0x00006D10(int recv_bytes);
@@ -917,6 +919,8 @@ private:
     void handleResponse0x0000A063(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
     /********rpc/motion_control/axis_group/viaPointsToTrajWithGivenVelocity, ResponseMessageType_Uint64_String**********/	
     void handleResponse0x0000E479(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/motion_control/axis_group/getDH, ResponseMessageType_Uint64_DoubleList(DoubleList_count=28)**********/	
+    void handleResponse0x00016078(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
 
     /********rpc/reg_manager/pr/addReg, ResponseMessageType_Uint64**********/	
     void handleResponse0x000154E7(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);

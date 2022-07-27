@@ -152,7 +152,7 @@ public:
     UserOpMode getWorkMode(void);
 
     // parameter access
-    // ...
+    ErrorCode getDH(DH& base_dh, DH arm_dh[6]);
 
     void ringCommonTask(void);
     void ringPlannerTask(void);

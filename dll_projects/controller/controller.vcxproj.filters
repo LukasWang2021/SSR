@@ -1,0 +1,882 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="源文件">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="头文件">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="头文件\app">
+      <UniqueIdentifier>{fba3919f-14ed-4889-835c-90c909f8a4fb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\nanomsg">
+      <UniqueIdentifier>{a3ce541b-7c9d-4994-8dc9-2328bde4cd95}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\nanopb">
+      <UniqueIdentifier>{dddecefc-3944-4e67-b3aa-d837bdbec304}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\protos">
+      <UniqueIdentifier>{26cfd914-ca3f-45ff-87a4-b1c7977237b2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\protos\event">
+      <UniqueIdentifier>{c66c9e49-ba7e-48f8-951e-edf8f40a5523}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\protos\message_type">
+      <UniqueIdentifier>{4f0df059-1ece-41bd-b8c0-d5d5e0e2d139}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\protos\protocol">
+      <UniqueIdentifier>{d55d7d83-07c6-49b4-909d-9f4e9a5b67a3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\protos\request">
+      <UniqueIdentifier>{84132dc5-c881-4b06-8ce0-3106e920c632}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\protos\response">
+      <UniqueIdentifier>{379525ae-70b9-4f38-a40f-b8034178fc99}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\app">
+      <UniqueIdentifier>{ac39bd58-8f64-46a2-8f64-03dde1f29412}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\nanopb">
+      <UniqueIdentifier>{98b82f9a-9606-4c9f-a693-5570cad0f6a2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\protos">
+      <UniqueIdentifier>{7ddbc7cd-ba48-4fba-a62a-a43b69637882}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\protos\event">
+      <UniqueIdentifier>{b7072928-f4a5-45f0-a35e-baee7c50eea3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\protos\message_type">
+      <UniqueIdentifier>{3d638791-b165-4270-9c60-b2c8f50e0c9a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\protos\protocol">
+      <UniqueIdentifier>{9aa20d31-a7b5-4828-9911-99208a1cba0e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\protos\request">
+      <UniqueIdentifier>{7db19d05-1f48-45e2-b091-63581887d4ca}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\protos\response">
+      <UniqueIdentifier>{b62e0fe3-3d2f-4fd5-9681-49307ad89ddc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="库文件">
+      <UniqueIdentifier>{913bb0ec-4b52-4bcb-925c-e2706f0fba5f}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="app\common_error_code.h">
+      <Filter>头文件\app</Filter>
+    </ClInclude>
+    <ClInclude Include="app\event_basic.h">
+      <Filter>头文件\app</Filter>
+    </ClInclude>
+    <ClInclude Include="app\event_interface.h">
+      <Filter>头文件\app</Filter>
+    </ClInclude>
+    <ClInclude Include="app\rpc_basic.h">
+      <Filter>头文件\app</Filter>
+    </ClInclude>
+    <ClInclude Include="app\rpc_interface.h">
+      <Filter>头文件\app</Filter>
+    </ClInclude>
+    <ClInclude Include="app\sub_interface.h">
+      <Filter>头文件\app</Filter>
+    </ClInclude>
+    <ClInclude Include="nanopb\pb.h">
+      <Filter>头文件\nanopb</Filter>
+    </ClInclude>
+    <ClInclude Include="nanopb\pb_common.h">
+      <Filter>头文件\nanopb</Filter>
+    </ClInclude>
+    <ClInclude Include="nanopb\pb_decode.h">
+      <Filter>头文件\nanopb</Filter>
+    </ClInclude>
+    <ClInclude Include="nanopb\pb_encode.h">
+      <Filter>头文件\nanopb</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\protoc.h">
+      <Filter>头文件\protos</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\event\event_base.pb.h">
+      <Filter>头文件\protos\event</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\message_type\axis_feedback_list.pb.h">
+      <Filter>头文件\protos\message_type</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\message_type\axis_info.pb.h">
+      <Filter>头文件\protos\message_type</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\message_type\axis_status.pb.h">
+      <Filter>头文件\protos\message_type</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\message_type\base.pb.h">
+      <Filter>头文件\protos\message_type</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\message_type\coord_type.pb.h">
+      <Filter>头文件\protos\message_type</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\message_type\core_comm_state.pb.h">
+      <Filter>头文件\protos\message_type</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\message_type\group_status.pb.h">
+      <Filter>头文件\protos\message_type</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\message_type\int32_doublelist.pb.h">
+      <Filter>头文件\protos\message_type</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\message_type\int32_int32list.pb.h">
+      <Filter>头文件\protos\message_type</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\message_type\int64_int32list.pb.h">
+      <Filter>头文件\protos\message_type</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\message_type\param_detail_list.pb.h">
+      <Filter>头文件\protos\message_type</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\message_type\publish_table.pb.h">
+      <Filter>头文件\protos\message_type</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\message_type\publish_topic.pb.h">
+      <Filter>头文件\protos\message_type</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\message_type\rpc_table.pb.h">
+      <Filter>头文件\protos\message_type</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\message_type\scara_a_feedback_list.pb.h">
+      <Filter>头文件\protos\message_type</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\message_type\servo1000_servo_feedback_list.pb.h">
+      <Filter>头文件\protos\message_type</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\message_type\string_int32.pb.h">
+      <Filter>头文件\protos\message_type</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\message_type\string_list.pb.h">
+      <Filter>头文件\protos\message_type</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\message_type\uint32list_doublelist.pb.h">
+      <Filter>头文件\protos\message_type</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\message_type\work_mode.pb.h">
+      <Filter>头文件\protos\message_type</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\protocol\comm.pb.h">
+      <Filter>头文件\protos\protocol</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\protocol\event_header.pb.h">
+      <Filter>头文件\protos\protocol</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\protocol\publish.pb.h">
+      <Filter>头文件\protos\protocol</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\protocol\request_header.pb.h">
+      <Filter>头文件\protos\protocol</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\protocol\response_header.pb.h">
+      <Filter>头文件\protos\protocol</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\request\request_base.pb.h">
+      <Filter>头文件\protos\request</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\request\request_int32_bool.pb.h">
+      <Filter>头文件\protos\request</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\request\request_int32_bool_coord_type_doublelist.pb.h">
+      <Filter>头文件\protos\request</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\request\request_int32_coord_type.pb.h">
+      <Filter>头文件\protos\request</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\request\request_int32_coord_type_doublelist.pb.h">
+      <Filter>头文件\protos\request</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\request\request_int32_double.pb.h">
+      <Filter>头文件\protos\request</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\request\request_int32_doublelist.pb.h">
+      <Filter>头文件\protos\request</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\request\request_int32_int32list.pb.h">
+      <Filter>头文件\protos\request</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\request\request_int32_string.pb.h">
+      <Filter>头文件\protos\request</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\request\request_int32_uint32.pb.h">
+      <Filter>头文件\protos\request</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\request\request_int32_uint32list.pb.h">
+      <Filter>头文件\protos\request</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\request\request_int32list_core_comm_state.pb.h">
+      <Filter>头文件\protos\request</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\request\request_int32list_double.pb.h">
+      <Filter>头文件\protos\request</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\request\request_int32list_doublelist.pb.h">
+      <Filter>头文件\protos\request</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\request\request_int32list_int32list.pb.h">
+      <Filter>头文件\protos\request</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\request\request_int32list_int64.pb.h">
+      <Filter>头文件\protos\request</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\request\request_int32list_uint32.pb.h">
+      <Filter>头文件\protos\request</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\request\request_publish_topic.pb.h">
+      <Filter>头文件\protos\request</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\request\request_string_bytes.pb.h">
+      <Filter>头文件\protos\request</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\request\request_stringlist.pb.h">
+      <Filter>头文件\protos\request</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\request\request_work_mode.pb.h">
+      <Filter>头文件\protos\request</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\response\response_base.pb.h">
+      <Filter>头文件\protos\response</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\response\response_bool_int32.pb.h">
+      <Filter>头文件\protos\response</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\response\response_bool_int32list.pb.h">
+      <Filter>头文件\protos\response</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\response\response_publish_table.pb.h">
+      <Filter>头文件\protos\response</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\response\response_rpc_table.pb.h">
+      <Filter>头文件\protos\response</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\response\response_uint64_axis_info.pb.h">
+      <Filter>头文件\protos\response</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\response\response_uint64_axis_status.pb.h">
+      <Filter>头文件\protos\response</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\response\response_uint64_bool.pb.h">
+      <Filter>头文件\protos\response</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\response\response_uint64_bytes.pb.h">
+      <Filter>头文件\protos\response</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\response\response_uint64_core_comm_state.pb.h">
+      <Filter>头文件\protos\response</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\response\response_uint64_double.pb.h">
+      <Filter>头文件\protos\response</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\response\response_uint64_doublelist.pb.h">
+      <Filter>头文件\protos\response</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\response\response_uint64_group_status_bool.pb.h">
+      <Filter>头文件\protos\response</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\response\response_uint64_int32.pb.h">
+      <Filter>头文件\protos\response</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\response\response_uint64_int32_uint32.pb.h">
+      <Filter>头文件\protos\response</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\response\response_uint64_int32list.pb.h">
+      <Filter>头文件\protos\response</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\response\response_uint64_param_detail_list.pb.h">
+      <Filter>头文件\protos\response</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\response\response_uint64_string.pb.h">
+      <Filter>头文件\protos\response</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\response\response_uint64_uint32.pb.h">
+      <Filter>头文件\protos\response</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\response\response_uint64_uint32list.pb.h">
+      <Filter>头文件\protos\response</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\response\response_uint64_uint64.pb.h">
+      <Filter>头文件\protos\response</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\response\response_uint64_uint64list.pb.h">
+      <Filter>头文件\protos\response</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\response\response_uint64_work_mode.pb.h">
+      <Filter>头文件\protos\response</Filter>
+    </ClInclude>
+    <ClInclude Include="stdafx.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="targetver.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="app\sub_basic.h">
+      <Filter>头文件\app</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\message_type\servo_feedback_list.pb.h">
+      <Filter>头文件\protos\message_type</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\message_type\coord_user.pb.h">
+      <Filter>头文件\protos\message_type</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\message_type\joint_limit.pb.h">
+      <Filter>头文件\protos\message_type</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\message_type\pose_and_posture.pb.h">
+      <Filter>头文件\protos\message_type</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\message_type\posture.pb.h">
+      <Filter>头文件\protos\message_type</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\message_type\tool_frame.pb.h">
+      <Filter>头文件\protos\message_type</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\message_type\uftf_pose_and_posture.pb.h">
+      <Filter>头文件\protos\message_type</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\request\request_coord_user.pb.h">
+      <Filter>头文件\protos\request</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\request\request_int32_jointlimit.pb.h">
+      <Filter>头文件\protos\request</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\request\request_int32_uftf_pose_and_posture.pb.h">
+      <Filter>头文件\protos\request</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\request\request_tool_frame.pb.h">
+      <Filter>头文件\protos\request</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\response\response_coord_user.pb.h">
+      <Filter>头文件\protos\response</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\response\response_tool_frame.pb.h">
+      <Filter>头文件\protos\response</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\response\response_uint64_jointlimit.pb.h">
+      <Filter>头文件\protos\response</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\response\response_uint64_pose_and_posture.pb.h">
+      <Filter>头文件\protos\response</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\response\response_uint64_posture.pb.h">
+      <Filter>头文件\protos\response</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\message_type\reg_base_summary.pb.h">
+      <Filter>头文件\protos\message_type</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\message_type\reg_hr.pb.h">
+      <Filter>头文件\protos\message_type</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\message_type\reg_mr.pb.h">
+      <Filter>头文件\protos\message_type</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\message_type\reg_pr.pb.h">
+      <Filter>头文件\protos\message_type</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\message_type\reg_r.pb.h">
+      <Filter>头文件\protos\message_type</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\message_type\reg_sr.pb.h">
+      <Filter>头文件\protos\message_type</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\request\request_reg_hr.pb.h">
+      <Filter>头文件\protos\request</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\request\request_reg_mr.pb.h">
+      <Filter>头文件\protos\request</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\request\request_reg_pr.pb.h">
+      <Filter>头文件\protos\request</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\request\request_reg_r.pb.h">
+      <Filter>头文件\protos\request</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\request\request_reg_sr.pb.h">
+      <Filter>头文件\protos\request</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\response\response_reg_base_summary.pb.h">
+      <Filter>头文件\protos\response</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\response\response_reg_hr.pb.h">
+      <Filter>头文件\protos\response</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\response\response_reg_mr.pb.h">
+      <Filter>头文件\protos\response</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\response\response_reg_pr.pb.h">
+      <Filter>头文件\protos\response</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\response\response_reg_r.pb.h">
+      <Filter>头文件\protos\response</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\response\response_reg_sr.pb.h">
+      <Filter>头文件\protos\response</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\message_type\string_double.pb.h">
+      <Filter>头文件\protos\message_type</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\request\request_string_double.pb.h">
+      <Filter>头文件\protos\request</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\message_type\trans_matrix_list.pb.h">
+      <Filter>头文件\protos\message_type</Filter>
+    </ClInclude>
+    <ClInclude Include="protos\include\request\request_transmatrixlist.pb.h">
+      <Filter>头文件\protos\request</Filter>
+    </ClInclude>
+    <ClInclude Include="nanomsg\include\bus.h">
+      <Filter>头文件\nanomsg</Filter>
+    </ClInclude>
+    <ClInclude Include="nanomsg\include\inproc.h">
+      <Filter>头文件\nanomsg</Filter>
+    </ClInclude>
+    <ClInclude Include="nanomsg\include\ipc.h">
+      <Filter>头文件\nanomsg</Filter>
+    </ClInclude>
+    <ClInclude Include="nanomsg\include\nn.h">
+      <Filter>头文件\nanomsg</Filter>
+    </ClInclude>
+    <ClInclude Include="nanomsg\include\pair.h">
+      <Filter>头文件\nanomsg</Filter>
+    </ClInclude>
+    <ClInclude Include="nanomsg\include\pipeline.h">
+      <Filter>头文件\nanomsg</Filter>
+    </ClInclude>
+    <ClInclude Include="nanomsg\include\pubsub.h">
+      <Filter>头文件\nanomsg</Filter>
+    </ClInclude>
+    <ClInclude Include="nanomsg\include\reqrep.h">
+      <Filter>头文件\nanomsg</Filter>
+    </ClInclude>
+    <ClInclude Include="nanomsg\include\survey.h">
+      <Filter>头文件\nanomsg</Filter>
+    </ClInclude>
+    <ClInclude Include="nanomsg\include\tcp.h">
+      <Filter>头文件\nanomsg</Filter>
+    </ClInclude>
+    <ClInclude Include="nanomsg\include\ws.h">
+      <Filter>头文件\nanomsg</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\comm_def.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="app\common_error_code.cpp">
+      <Filter>源文件\app</Filter>
+    </ClCompile>
+    <ClCompile Include="app\event_basic.cpp">
+      <Filter>源文件\app</Filter>
+    </ClCompile>
+    <ClCompile Include="app\event_interface.cpp">
+      <Filter>源文件\app</Filter>
+    </ClCompile>
+    <ClCompile Include="app\rpc_app.cpp">
+      <Filter>源文件\app</Filter>
+    </ClCompile>
+    <ClCompile Include="app\rpc_axis.cpp">
+      <Filter>源文件\app</Filter>
+    </ClCompile>
+    <ClCompile Include="app\rpc_basic.cpp">
+      <Filter>源文件\app</Filter>
+    </ClCompile>
+    <ClCompile Include="app\rpc_controller.cpp">
+      <Filter>源文件\app</Filter>
+    </ClCompile>
+    <ClCompile Include="app\rpc_file_manager.cpp">
+      <Filter>源文件\app</Filter>
+    </ClCompile>
+    <ClCompile Include="app\rpc_servo_sampling.cpp">
+      <Filter>源文件\app</Filter>
+    </ClCompile>
+    <ClCompile Include="app\rpc_subscribe.cpp">
+      <Filter>源文件\app</Filter>
+    </ClCompile>
+    <ClCompile Include="app\sub_basic.cpp">
+      <Filter>源文件\app</Filter>
+    </ClCompile>
+    <ClCompile Include="app\sub_interface.cpp">
+      <Filter>源文件\app</Filter>
+    </ClCompile>
+    <ClCompile Include="nanopb\pb_common.c">
+      <Filter>源文件\nanopb</Filter>
+    </ClCompile>
+    <ClCompile Include="nanopb\pb_decode.c">
+      <Filter>源文件\nanopb</Filter>
+    </ClCompile>
+    <ClCompile Include="nanopb\pb_encode.c">
+      <Filter>源文件\nanopb</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\event\event_base.pb.c">
+      <Filter>源文件\protos\event</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\message_type\axis_feedback_list.pb.c">
+      <Filter>源文件\protos\message_type</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\message_type\axis_info.pb.c">
+      <Filter>源文件\protos\message_type</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\message_type\axis_status.pb.c">
+      <Filter>源文件\protos\message_type</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\message_type\base.pb.c">
+      <Filter>源文件\protos\message_type</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\message_type\coord_type.pb.c">
+      <Filter>源文件\protos\message_type</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\message_type\core_comm_state.pb.c">
+      <Filter>源文件\protos\message_type</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\message_type\group_status.pb.c">
+      <Filter>源文件\protos\message_type</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\message_type\int32_doublelist.pb.c">
+      <Filter>源文件\protos\message_type</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\message_type\int32_int32list.pb.c">
+      <Filter>源文件\protos\message_type</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\message_type\int64_int32list.pb.c">
+      <Filter>源文件\protos\message_type</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\message_type\param_detail_list.pb.c">
+      <Filter>源文件\protos\message_type</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\message_type\publish_table.pb.c">
+      <Filter>源文件\protos\message_type</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\message_type\publish_topic.pb.c">
+      <Filter>源文件\protos\message_type</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\message_type\rpc_table.pb.c">
+      <Filter>源文件\protos\message_type</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\message_type\scara_a_feedback_list.pb.c">
+      <Filter>源文件\protos\message_type</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\message_type\servo1000_servo_feedback_list.pb.c">
+      <Filter>源文件\protos\message_type</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\message_type\string_int32.pb.c">
+      <Filter>源文件\protos\message_type</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\message_type\string_list.pb.c">
+      <Filter>源文件\protos\message_type</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\message_type\uint32list_doublelist.pb.c">
+      <Filter>源文件\protos\message_type</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\message_type\work_mode.pb.c">
+      <Filter>源文件\protos\message_type</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\response\response_base.pb.c">
+      <Filter>源文件\protos\response</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\response\response_bool_int32.pb.c">
+      <Filter>源文件\protos\response</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\response\response_bool_int32list.pb.c">
+      <Filter>源文件\protos\response</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\response\response_publish_table.pb.c">
+      <Filter>源文件\protos\response</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\response\response_rpc_table.pb.c">
+      <Filter>源文件\protos\response</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\response\response_uint64_axis_info.pb.c">
+      <Filter>源文件\protos\response</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\response\response_uint64_axis_status.pb.c">
+      <Filter>源文件\protos\response</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\response\response_uint64_bool.pb.c">
+      <Filter>源文件\protos\response</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\response\response_uint64_bytes.pb.c">
+      <Filter>源文件\protos\response</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\response\response_uint64_core_comm_state.pb.c">
+      <Filter>源文件\protos\response</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\response\response_uint64_double.pb.c">
+      <Filter>源文件\protos\response</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\response\response_uint64_doublelist.pb.c">
+      <Filter>源文件\protos\response</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\response\response_uint64_group_status_bool.pb.c">
+      <Filter>源文件\protos\response</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\response\response_uint64_int32.pb.c">
+      <Filter>源文件\protos\response</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\response\response_uint64_int32_uint32.pb.c">
+      <Filter>源文件\protos\response</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\response\response_uint64_int32list.pb.c">
+      <Filter>源文件\protos\response</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\response\response_uint64_param_detail_list.pb.c">
+      <Filter>源文件\protos\response</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\response\response_uint64_string.pb.c">
+      <Filter>源文件\protos\response</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\response\response_uint64_uint32.pb.c">
+      <Filter>源文件\protos\response</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\response\response_uint64_uint32list.pb.c">
+      <Filter>源文件\protos\response</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\response\response_uint64_uint64.pb.c">
+      <Filter>源文件\protos\response</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\response\response_uint64_uint64list.pb.c">
+      <Filter>源文件\protos\response</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\response\response_uint64_work_mode.pb.c">
+      <Filter>源文件\protos\response</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\request\request_base.pb.c">
+      <Filter>源文件\protos\request</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\request\request_int32_bool.pb.c">
+      <Filter>源文件\protos\request</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\request\request_int32_bool_coord_type_doublelist.pb.c">
+      <Filter>源文件\protos\request</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\request\request_int32_coord_type.pb.c">
+      <Filter>源文件\protos\request</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\request\request_int32_coord_type_doublelist.pb.c">
+      <Filter>源文件\protos\request</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\request\request_int32_double.pb.c">
+      <Filter>源文件\protos\request</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\request\request_int32_doublelist.pb.c">
+      <Filter>源文件\protos\request</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\request\request_int32_int32list.pb.c">
+      <Filter>源文件\protos\request</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\request\request_int32_string.pb.c">
+      <Filter>源文件\protos\request</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\request\request_int32_uint32.pb.c">
+      <Filter>源文件\protos\request</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\request\request_int32_uint32list.pb.c">
+      <Filter>源文件\protos\request</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\request\request_int32list_core_comm_state.pb.c">
+      <Filter>源文件\protos\request</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\request\request_int32list_double.pb.c">
+      <Filter>源文件\protos\request</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\request\request_int32list_doublelist.pb.c">
+      <Filter>源文件\protos\request</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\request\request_int32list_int32list.pb.c">
+      <Filter>源文件\protos\request</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\request\request_int32list_int64.pb.c">
+      <Filter>源文件\protos\request</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\request\request_int32list_uint32.pb.c">
+      <Filter>源文件\protos\request</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\request\request_publish_topic.pb.c">
+      <Filter>源文件\protos\request</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\request\request_string_bytes.pb.c">
+      <Filter>源文件\protos\request</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\request\request_stringlist.pb.c">
+      <Filter>源文件\protos\request</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\request\request_work_mode.pb.c">
+      <Filter>源文件\protos\request</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\protocol\comm.pb.c">
+      <Filter>源文件\protos\protocol</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\protocol\event_header.pb.c">
+      <Filter>源文件\protos\protocol</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\protocol\publish.pb.c">
+      <Filter>源文件\protos\protocol</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\protocol\request_header.pb.c">
+      <Filter>源文件\protos\protocol</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\protocol\response_header.pb.c">
+      <Filter>源文件\protos\protocol</Filter>
+    </ClCompile>
+    <ClCompile Include="dllmain.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="stdafx.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="app\rpc_servo1001.cpp">
+      <Filter>源文件\app</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\message_type\servo_feedback_list.pb.c">
+      <Filter>源文件\protos\message_type</Filter>
+    </ClCompile>
+    <ClCompile Include="app\rpc_io.cpp">
+      <Filter>源文件\app</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\message_type\coord_user.pb.c">
+      <Filter>源文件\protos\message_type</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\message_type\joint_limit.pb.c">
+      <Filter>源文件\protos\message_type</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\message_type\pose_and_posture.pb.c">
+      <Filter>源文件\protos\message_type</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\message_type\posture.pb.c">
+      <Filter>源文件\protos\message_type</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\message_type\tool_frame.pb.c">
+      <Filter>源文件\protos\message_type</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\message_type\uftf_pose_and_posture.pb.c">
+      <Filter>源文件\protos\message_type</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\request\request_coord_user.pb.c">
+      <Filter>源文件\protos\request</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\request\request_int32_jointlimit.pb.c">
+      <Filter>源文件\protos\request</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\request\request_int32_uftf_pose_and_posture.pb.c">
+      <Filter>源文件\protos\request</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\request\request_tool_frame.pb.c">
+      <Filter>源文件\protos\request</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\response\response_uint64_jointlimit.pb.c">
+      <Filter>源文件\protos\response</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\response\response_uint64_pose_and_posture.pb.c">
+      <Filter>源文件\protos\response</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\response\response_uint64_posture.pb.c">
+      <Filter>源文件\protos\response</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\response\response_coord_user.pb.c">
+      <Filter>源文件\protos\response</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\response\response_tool_frame.pb.c">
+      <Filter>源文件\protos\response</Filter>
+    </ClCompile>
+    <ClCompile Include="app\rpc_group.cpp">
+      <Filter>源文件\app</Filter>
+    </ClCompile>
+    <ClCompile Include="app\rpc_coord_manager.cpp">
+      <Filter>源文件\app</Filter>
+    </ClCompile>
+    <ClCompile Include="app\rpc_motion_control.cpp">
+      <Filter>源文件\app</Filter>
+    </ClCompile>
+    <ClCompile Include="app\rpc_tool_manager.cpp">
+      <Filter>源文件\app</Filter>
+    </ClCompile>
+    <ClCompile Include="main.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="app\rpc_interpreter.cpp">
+      <Filter>源文件\app</Filter>
+    </ClCompile>
+    <ClCompile Include="app\rpc_reg_manager.cpp">
+      <Filter>源文件\app</Filter>
+    </ClCompile>
+    <ClCompile Include="app\rpc_servo1000.cpp">
+      <Filter>源文件\app</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\message_type\reg_base_summary.pb.c">
+      <Filter>源文件\protos\message_type</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\message_type\reg_hr.pb.c">
+      <Filter>源文件\protos\message_type</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\message_type\reg_mr.pb.c">
+      <Filter>源文件\protos\message_type</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\message_type\reg_pr.pb.c">
+      <Filter>源文件\protos\message_type</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\message_type\reg_r.pb.c">
+      <Filter>源文件\protos\message_type</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\message_type\reg_sr.pb.c">
+      <Filter>源文件\protos\message_type</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\request\request_reg_hr.pb.c">
+      <Filter>源文件\protos\request</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\request\request_reg_mr.pb.c">
+      <Filter>源文件\protos\request</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\request\request_reg_pr.pb.c">
+      <Filter>源文件\protos\request</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\request\request_reg_r.pb.c">
+      <Filter>源文件\protos\request</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\request\request_reg_sr.pb.c">
+      <Filter>源文件\protos\request</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\response\response_reg_base_summary.pb.c">
+      <Filter>源文件\protos\response</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\response\response_reg_hr.pb.c">
+      <Filter>源文件\protos\response</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\response\response_reg_mr.pb.c">
+      <Filter>源文件\protos\response</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\response\response_reg_pr.pb.c">
+      <Filter>源文件\protos\response</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\response\response_reg_r.pb.c">
+      <Filter>源文件\protos\response</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\response\response_reg_sr.pb.c">
+      <Filter>源文件\protos\response</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\message_type\string_double.pb.c">
+      <Filter>源文件\protos\message_type</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\request\request_string_double.pb.c">
+      <Filter>源文件\protos\request</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\message_type\trans_matrix_list.pb.c">
+      <Filter>源文件\protos\message_type</Filter>
+    </ClCompile>
+    <ClCompile Include="protos\src\request\request_transmatrixlist.pb.c">
+      <Filter>源文件\protos\request</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Source.def">
+      <Filter>源文件</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="nanomsg\nanomsg.lib">
+      <Filter>库文件</Filter>
+    </Library>
+  </ItemGroup>
+</Project>

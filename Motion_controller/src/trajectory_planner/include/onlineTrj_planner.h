@@ -75,6 +75,7 @@ public:
     void function_test();
     bool FixedBaseCoordTransformation(Matrix44& T_touchm,Matrix44& resM);
     bool DynamicBaseCoordTransformation(Matrix44 T_r0_R, Matrix44 Touch_h0_v,  Matrix44 Touch_ht_v, double k,Matrix44& resM);
+    bool get_increment_matrix(Matrix44 T_ck,Matrix44 T_k1, Matrix44 T_k, Matrix44 &resT);
     void rtm_r2xyzabc(Matrix44& u,Vector3& res_xyz, Vector3& res_abc);
    
     onlineTrjAlgParam online_alg_params_;

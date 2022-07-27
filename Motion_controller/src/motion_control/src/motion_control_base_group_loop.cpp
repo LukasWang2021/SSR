@@ -528,6 +528,12 @@ ErrorCode BaseGroup::setOnlineTrjPointBufData(double * p_doublePointdata,int *le
     static int OnlinePointBuf_append_idx = 0;
     static Joint last_periodJoint;//传输过程中上一段轨迹结束时轴角
     int fill_success_cnt = 0;
+    if(*(level_buf) == 1)
+    {
+        OnlinePointBuf_append_idx = 0;
+        OnlinePointBuf_pointNum = 0;
+        fill_start_index = 0;
+    }
     if((OnlinePointBuf_append_idx+TrjSize) >=500)
     {
         LogProducer::error("fatal error!!! setOnlineTrjPointBufData","(OnlinePointBuf_append_idx+TrjSize) >=500  OnlinePointBuf_append_idx=%d,TrjSize=%d",OnlinePointBuf_append_idx,TrjSize);

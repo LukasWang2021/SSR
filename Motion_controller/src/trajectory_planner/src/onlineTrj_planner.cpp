@@ -843,6 +843,22 @@ bool OnlineTrajectoryPlanner::DynamicBaseCoordTransformation(Matrix44 T_r0_R, Ma
     return true;
 }
 
+/*
+* 函数功能: 计算获取增量后的位姿矩阵
+* 参数: 
+*/
+bool OnlineTrajectoryPlanner::get_increment_matrix(Matrix44 T_ck,Matrix44 T_k1, Matrix44 T_k, Matrix44 &resT)
+{
+    Matrix44 inv_T_k1;
+    T_k1.transmatrix_inverse_matrix44(inv_T_k1);
+    //inv_T_k1.print("inv_T_k1:");
+    T_ck.rightMultiply(inv_T_k1,resT);
+    //resT.print("res = T_c*inv_T_k1=");
+    resT.rightMultiply(T_k);
+    //resT.print("res = res*T_k=");
+    return true;
+}
+
 /**
 *函数功能: T矩阵转xyz,abc
 *参数说明:

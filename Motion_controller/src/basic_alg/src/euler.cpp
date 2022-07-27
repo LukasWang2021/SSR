@@ -85,6 +85,13 @@ const double& Euler::operator[](size_t index) const
     return *(&a_ + index);
 }
 
+void Euler::zero(void)
+{
+    a_ = 0.0;
+    b_ = 0.0;
+    c_ = 0.0;
+}
+
 void Euler::print(std::string comment) const
 {
     std::cout<<comment<<std::endl;

@@ -145,4 +145,23 @@ void TransMatrix::multiply(const TransMatrix& left_matrix, const TransMatrix& ri
     result_matrix.trans_vector_ = result_trans_vector + left_matrix.trans_vector_;
 }
 
+void TransMatrix::inverse_simplify(void)
+{
+	Point res_vect;
+	rotation_matrix_.inverse();	
+	rotation_matrix_.rightMultiply(trans_vector_, res_vect);
+	res_vect.x_ = -res_vect.x_;
+	res_vect.y_ = -res_vect.y_;
+	res_vect.z_ = -res_vect.z_;
+}
+
+void TransMatrix::inverse_simplify(TransMatrix& result_matrix)
+{
+	Point res_vect;
+	rotation_matrix_.inverse(result_matrix.rotation_matrix_);	
+	result_matrix.rotation_matrix_.rightMultiply(trans_vector_, res_vect);
+	result_matrix.trans_vector_.x_ = -res_vect.x_;
+	result_matrix.trans_vector_.y_ = -res_vect.y_;
+	result_matrix.trans_vector_.z_ = -res_vect.z_;
+}
 

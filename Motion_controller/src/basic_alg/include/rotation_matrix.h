@@ -84,7 +84,9 @@ public:
      * @return void
      */ 
     void getVectorA(Point& a_vector) const;
-    
+
+	virtual bool inverse(double valve = 0.001);
+    void inverse(RotationMatrix& result_matrix) const;
 };
 
 }

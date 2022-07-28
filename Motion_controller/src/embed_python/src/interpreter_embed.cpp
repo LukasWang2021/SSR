@@ -56,7 +56,6 @@ static int tracer(PyObject *obj, PyFrameObject *frame, int what, PyObject *arg)
         LogProducer::warn("interpembed","interpreter stop signal recieved");
         return -1;
     }
-
     // update execution info, python system lib will be ignored
     PyCodeObject *code = PyFrame_GetCode(frame);
     const char *filename = PyUnicode_AsUTF8(code->co_filename);
@@ -74,6 +73,7 @@ static int tracer(PyObject *obj, PyFrameObject *frame, int what, PyObject *arg)
     embed_ptr->setCurrProg(filename);
     embed_ptr->setCurrFunc(funcname);
     LogProducer::info("interpembed", "program(%s) line[%d]", filename, lineno);
+
     // exec sem take
     Py_BEGIN_ALLOW_THREADS
     embed_ptr->hold();

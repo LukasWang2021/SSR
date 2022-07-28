@@ -157,7 +157,7 @@ ErrorCode ArmGroup::initGroup(CoordinateManager *coordinate_manager_ptr, ToolMan
         LogProducer::error("mc_arm_group","Fail to initialize calibrator, code = 0x%llx", err);
         return err;
     }
-
+#if 0
     // 如果某些轴的零位错误被屏蔽，必须同时屏蔽这些轴的软限位校验
     OffsetMask mask[NUM_OF_JOINT] = {OFFSET_UNMASK};
     calibrator_.getOffsetMask(mask);
@@ -198,7 +198,7 @@ ErrorCode ArmGroup::initGroup(CoordinateManager *coordinate_manager_ptr, ToolMan
             ErrorQueue::instance().push(CONTROLLER_OFFSET_NEED_CALIBRATE);
         }
     }
-
+#endif
     // 初始化坐标变换模块
     if (!transformation_.init(kinematics_ptr_))
     {
@@ -227,6 +227,50 @@ ErrorCode ArmGroup::initGroup(CoordinateManager *coordinate_manager_ptr, ToolMan
     return SUCCESS;
 }
 
+ErrorCode ArmGroup::checkGroupZeroOffset(void)
+{
+        // 如果某些轴的零位错误被屏蔽，必须同时屏蔽这些轴的软限位校验
+    OffsetMask mask[NUM_OF_JOINT] = {OFFSET_UNMASK};
+    calibrator_.getOffsetMask(mask);
+
+    for (size_t i = 0; i < JOINT_OF_ARM; i++)
+    {
+        if (mask[i] == OFFSET_MASKED)
+        {
+            soft_constraint_.setMask(i);
+        }
+    }
+
+    //启动检查零位是否跑偏
+    CalibrateState calib_state;
+    OffsetState offset_state[NUM_OF_JOINT];
+    LogProducer::info("mc_arm_group","calibrator checkOffset start");
+    ErrorCode err = calibrator_.checkOffset(calib_state, offset_state);
+    if (err != SUCCESS)
+    {
+        LogProducer::error("mc_arm_group","calibrator checkOffset failed, code = 0x%llx", err);
+        return err;
+    }
+    if(calib_state != MOTION_NORMAL)
+    {
+        for(int i=0; i < JOINT_OF_ARM; ++i)
+        {
+            if(offset_state[i] == OFFSET_LOST)
+            {
+                ErrorQueue::instance().push(ZERO_OFFSET_LOST);
+            }
+            else if(offset_state[i] == OFFSET_INVALID)
+            {
+                ErrorQueue::instance().push(ZERO_OFFSET_INVALID);
+            }
+        }
+        if(calib_state == MOTION_FORBIDDEN)
+        {
+            ErrorQueue::instance().push(CONTROLLER_OFFSET_NEED_CALIBRATE);
+        }
+    }
+    return 0;
+}
 
 char* ArmGroup::getModelName(char *buffer, size_t length)
 {

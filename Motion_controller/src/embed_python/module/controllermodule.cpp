@@ -46,10 +46,23 @@ static PyObject* controller_ThreadRun(PyObject *self, PyObject *args)
     return PyLong_FromUnsignedLongLong(ret);
 }
 
+static PyObject* controller_Delay(PyObject *self, PyObject *args)
+{
+    ErrorCode ret = 0;
+    double delay_time = 0;
+    if (!PyArg_ParseTuple(args, "d", &delay_time))
+        return NULL;
+
+    ret = InterpCtrl::instance().delay(delay_time);
+    
+    return PyLong_FromUnsignedLongLong(ret);
+} 
+
 static PyMethodDef controllerMethods[] = {
     {"Pause",      controller_Pause,     METH_VARARGS, "pause the running user program."},
     {"Abort",      controller_Abort,     METH_VARARGS, "abort the running user program."},
     {"ThreadRun",  controller_ThreadRun, METH_VARARGS, "run in another thread."},
+    {"Delay",      controller_Delay,     METH_VARARGS, "delay for seconds."},
     {NULL, NULL, 0, NULL}        /* Sentinel */
 };
 

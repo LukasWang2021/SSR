@@ -25,6 +25,8 @@ class ArmGroup : public BaseGroup
         std::map<int32_t, axis_space::Axis*>* axis_group_ptr, GroupSm* sm_ptr, servo_comm_space::ServoCpuCommBase* cpu_comm_ptr,
         system_model_space::GroupModel_t* db_ptr);
 
+    ErrorCode checkGroupZeroOffset(void);
+
     virtual char* getModelName(char *buffer, size_t length);
     virtual size_t getNumberOfJoint(void);
     size_t getFIFOLength(void);

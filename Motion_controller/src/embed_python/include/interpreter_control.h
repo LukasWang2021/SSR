@@ -86,6 +86,8 @@ public:
     ErrorCode backward(interpid_t id=0);
     ErrorCode jumpLine(interpid_t id=0, int line=-1);
 
+    ErrorCode reset(void);
+
     InterpState getState(interpid_t id=0);
     std::string getProgName(interpid_t id=0);
 
@@ -95,6 +97,9 @@ public:
     bool runSyncCallback(interpid_t id=0);
 
     void stateThreadFunc(void);
+
+public:
+    ErrorCode delay(double seconds);
 
 private:
     InterpCtrl(/* args */);

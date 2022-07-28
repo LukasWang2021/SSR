@@ -245,6 +245,12 @@ ErrorCode Controller::init()
     {
         return CONTROLLER_CREATE_ONLIE_THREAD_FAILED;
     }
+    sleep(1);
+    if(group_ptr_[0]->checkZeroOffset())
+    {
+        return CONTROLLER_INIT_FAILED;
+    }
+
     LogProducer::warn("main", "Controller init success");
     return SUCCESS;
 }

@@ -120,7 +120,7 @@ void ControllerRpc::handleRpc0x00008E74(void* request_data_ptr, void* response_d
 
     rs_data_ptr->data.data = InterpCtrl::instance().backward(rq_data_ptr->data.data);
     
-    LogProducer::info("rpc", "/rpc/interpreter/forward %d", rq_data_ptr->data.data);
+    LogProducer::info("rpc", "/rpc/interpreter/backward %d", rq_data_ptr->data.data);
 }
 
 //"/rpc/interpreter/jump"	

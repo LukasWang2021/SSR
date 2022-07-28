@@ -30,10 +30,10 @@ def wait(_condition=None, _timeout=None, _option=None):
         while(end_time - start_time < outtime):
             if(_condition != None and eval(_condition)):#get condition may need sleep
                 pass
-            end_time = time.time();
+            end_time = time.time()
         if(_option):#do option
             exec(_option)
-        print("wait conditio timeout %fs " % outtime)
+        print("wait condition timeout %f" % outtime)
         return
 
     if(_timeout):

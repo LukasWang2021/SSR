@@ -44,12 +44,12 @@ def MoveJ(target, vel, smooth_type, smooth_val, acc):
     group.MoveJwithAcc(target, vel, smooth_type, smooth_val, acc)
     pass
 
-@overload(POSTURE,float,int,float,int,POSTURE)
+@overload(POSTURE,float,int,float,int,int)
 def MoveJ(target, vel, smooth_type, smooth_val, offset_type, offset_val):
     group.MoveJwithOffset(target, vel, smooth_type, smooth_val, offset_type, offset_val)
     pass
 
-@overload(POSTURE,float,int,float,float,int,POSTURE)
+@overload(POSTURE,float,int,float,float,int,int)
 def MoveJ(target, vel, smooth_type, smooth_val, acc, offset_type, offset_val):
     group.MoveJwithAccOffset(target, vel, smooth_type, smooth_val, acc, offset_type, offset_val)
     pass
@@ -113,12 +113,12 @@ def MoveL(target, vel, smooth_type, smooth_val, acc):
     group.MoveLwithAcc(target, vel, smooth_type, smooth_val, acc)
     pass
 
-@overload(POSTURE,float,int,float,int,POSTURE)
+@overload(POSTURE,float,int,float,int,int)
 def MoveL(target, vel, smooth_type, smooth_val, offset_type, offset_val):
     group.MoveLwithOffset(target, vel, smooth_type, smooth_val, offset_type, offset_val)
     pass
 
-@overload(POSTURE,float,int,float,float,int,POSTURE)
+@overload(POSTURE,float,int,float,float,int,int)
 def MoveL(target, vel, smooth_type, smooth_val, acc, offset_type, offset_val):
     group.MoveLwithAccOffset(target, vel, smooth_type, smooth_val, acc, offset_type, offset_val)
     pass
@@ -138,12 +138,12 @@ def MoveC(via, target, vel, smooth_type, smooth_val, acc):
     group.MoveCwithAcc(via, target, vel, smooth_type, smooth_val, acc)
     pass
 
-@overload(POSTURE,POSTURE,float,int,float,int,POSTURE)
+@overload(POSTURE,POSTURE,float,int,float,int,int)
 def MoveC(via, target, vel, smooth_type, smooth_val, offset_type, offset_val):
     group.MoveCwithOffset(via, target, vel, smooth_type, smooth_val, offset_type, offset_val)
     pass
 
-@overload(POSTURE,POSTURE,float,int,float,float,int,POSTURE)
+@overload(POSTURE,POSTURE,float,int,float,float,int,int)
 def MoveC(via, target, vel, smooth_type, smooth_val, acc, offset_type, offset_val):
     group.MoveCwithAccOffset(via, target, vel, smooth_type, smooth_val, acc, offset_type, offset_val)
     pass

@@ -66,6 +66,7 @@ public:
     ErrorCode moveOfflineTrajectory(void);
 
     // API for zero offset and calibrator
+    ErrorCode checkZeroOffset(void);
     ErrorCode setOffset(size_t index, double offset);
     ErrorCode setOffset(const double (&offset)[NUM_OF_JOINT]);
     void getOffset(double (&offset)[NUM_OF_JOINT]);

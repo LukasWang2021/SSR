@@ -1371,6 +1371,11 @@ bool MotionControl::nextMovePermitted(void)
     return true;
 }
 
+ErrorCode MotionControl::checkZeroOffset(void)
+{
+    return group_ptr_->checkGroupZeroOffset();
+}
+
 ErrorCode MotionControl::setOffset(size_t index, double offset)
 {
     ErrorCode err = group_ptr_->getCalibratorPtr()->setOffset(index, offset);

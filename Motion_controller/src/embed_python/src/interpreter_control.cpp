@@ -76,6 +76,8 @@ bool InterpCtrl::init(void)
     }
     InterpEmbed::config_ = config_;
 
+    // if(reset() != 0) return false;
+
     if(!InterpEmbed::pyUpdatePath(config_.getModulePath()))
     {
         LogProducer::error("interpctrl", "initialize failed with update path");
@@ -380,3 +382,36 @@ ErrorCode InterpCtrl::startNewFunc(void *pyfunc, bool in_real_thread)
     return 0;
 }
 
+ErrorCode InterpCtrl::delay(double seconds)
+{
+    if(!runSyncCallback())
+        return INTERPRETER_ERROR_SYNC_CALL_FAILED;
+
+    uint32_t delay_time = (uint32_t)(seconds * 1000 * 1000);
+
+    usleep(delay_time);
+
+    return 0;
+}
+
+ErrorCode InterpCtrl::reset(void)
+{
+    if(curr_state_ != INTERP_STATE_IDLE)
+    {
+        LogProducer::error("interpctrl", "try reset interpreter control failed need state %d, current %d", INTERP_STATE_IDLE, curr_state_);
+        return INTERPRETER_ERROR_RESET_FAILED;
+    }
+
+    if(!InterpEmbed::pyUpdatePath(config_.getModulePath()))
+    {
+        LogProducer::error("interpctrl", "reset failed with update path");
+        return INTERPRETER_ERROR_RESET_FAILED;
+    }
+    if(!InterpEmbed::pyResetInterp())
+    {
+        LogProducer::error("interpctrl", "reset failed with reset");
+        return INTERPRETER_ERROR_RESET_FAILED;
+    }
+
+    return 0;
+}

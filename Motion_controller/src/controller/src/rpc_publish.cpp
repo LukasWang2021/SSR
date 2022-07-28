@@ -12,7 +12,7 @@ void ControllerRpc::handleRpc0x000050E3(void* request_data_ptr, void* response_d
 
     if(tp_comm_ptr_->isTopicExisted(rq_data_ptr->data.topic_hash))
     {
-        rs_data_ptr->data.data = CONTROLLER_PUBLISH_EXIST;
+        rs_data_ptr->data.data = 0;
         LogProducer::warn("rpc", "/rpc/controller/addTopic is exist. Error = 0x%llx", rs_data_ptr->data.data);
         return;        
     }

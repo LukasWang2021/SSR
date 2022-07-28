@@ -71,6 +71,8 @@ class BaseGroup
     virtual ErrorCode initGroup(fst_ctrl::CoordinateManager *coordinate_manager_ptr, fst_ctrl::ToolManager *tool_manager_ptr, 
         std::map<int32_t, axis_space::Axis*>* axis_group_ptr, GroupSm* sm_ptr,servo_comm_space::ServoCpuCommBase* cpu_comm_ptr,
         system_model_space::GroupModel_t* db_ptr) = 0;
+    virtual ErrorCode checkGroupZeroOffset(void) = 0;
+
     virtual ErrorCode stopGroup(void);
     virtual ErrorCode clearGroup(void);
     virtual ErrorCode clearTeachGroup(void);

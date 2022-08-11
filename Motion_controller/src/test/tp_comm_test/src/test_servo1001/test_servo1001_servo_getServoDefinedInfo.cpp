@@ -45,17 +45,19 @@ int main(int argc, char* argv[])
     RequestMessageType_Int32_Int32List msg;
     msg.header.time_stamp = 122;
     msg.property.authority = Comm_Authority_TP_SIMMULATOR;
-    msg.data1.data = atoi(argv[1]);
-    msg.data2.data_count = 9;
-    msg.data2.data[0] = atoi(argv[2]);
-    msg.data2.data[1] = atoi(argv[3]);
-    msg.data2.data[2] = atoi(argv[4]);
-    msg.data2.data[3] = atoi(argv[5]);
-    msg.data2.data[4] = atoi(argv[6]);
-    msg.data2.data[5] = atoi(argv[7]);
-    msg.data2.data[6] = atoi(argv[8]);
-    msg.data2.data[7] = atoi(argv[9]);
-    msg.data2.data[8] = atoi(argv[10]);
+    msg.data1.data = 0;
+    msg.data2.data_count = 10;
+
+    msg.data2.data[0] = atoi(argv[1]); // cpu id
+    msg.data2.data[1] = atoi(argv[2]); // servo id
+    msg.data2.data[2] = atoi(argv[3]);
+    msg.data2.data[3] = atoi(argv[4]);
+    msg.data2.data[4] = atoi(argv[5]);
+    msg.data2.data[5] = atoi(argv[6]);
+    msg.data2.data[6] = atoi(argv[7]);
+    msg.data2.data[7] = atoi(argv[8]);
+    msg.data2.data[8] = atoi(argv[9]);
+    msg.data2.data[9] = atoi(argv[10]);
 
     if (!test.generateRequestMessageType(hash_value, (void*)&msg, RequestMessageType_Int32_Int32List_fields, buf, buf_size))
     {

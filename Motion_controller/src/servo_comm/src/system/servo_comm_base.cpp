@@ -302,10 +302,11 @@ ErrorCode ServoCommBase::doServoCmdGetServoDefinedInfo(int32_t* req_data_ptr, in
     {
         return CORE_COMM_SEND_CORE_PROCESS_CALL_FAILED;
     }
-    if(res_data.param1 != 0)
-    {
-        return CORE_COMM_EXEC_CORE_PROCESS_CALL_FAILED;
-    }
+    // do not need
+    // if(res_data.param1 != 0)
+    // {
+    //     return CORE_COMM_EXEC_CORE_PROCESS_CALL_FAILED;
+    // }
     res_data_ptr[0] = res_data.param1;
     res_data_ptr[1] = res_data.param2;
     res_data_ptr[2] = res_data.param3;

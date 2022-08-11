@@ -107,8 +107,8 @@ static PyObject *register_SetPR(PyObject *self, PyObject *args)
 }
 
 static PyMethodDef registerMethods[] = {
-    {"SetRR",      register_SetRR,    METH_VARARGS, "set real reg value."},
-    {"GetRR",      register_GetRR,    METH_VARARGS, "get real reg value."},
+    {"SetRR",      register_SetRR,    METH_VARARGS, "set real number reg value."},
+    {"GetRR",      register_GetRR,    METH_VARARGS, "get real number reg value."},
     {"SetMR",      register_SetMR,    METH_VARARGS, "set motion reg value."},
     {"GetMR",      register_GetMR,    METH_VARARGS, "get motion reg value."},
     {"SetSR",      register_SetSR,    METH_VARARGS, "set string reg value."},

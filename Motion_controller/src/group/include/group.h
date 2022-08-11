@@ -50,7 +50,7 @@ class Group {
      * @retval true success.
      * @retval false Failed to initialize.
      */
-    bool init(servo_comm_space::ServoCpuCommBase* cpu_comm_ptr,  system_model_space::GroupModel_t* db_ptr,
+    bool init(servo_comm_space::ServoCpuCommBase* cpu_comm_ptr, system_model_space::GroupModel_t* db_ptr,
         system_model_space::GroupConfig_t* group_config_ptr);
 
     /**

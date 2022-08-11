@@ -361,7 +361,11 @@ bool GivenVelocityPlanner::calcResampledPointDist(void)
 
 bool GivenVelocityPlanner::trajPausePlan(uint32_t index, double vel, double vel_ratio, double acc_ratio, double jerk_ratio)
 {
-    if(index > traj_points_dist_.size() - 1) return false;
+    if(index > traj_points_dist_.size() - 1)
+    {
+        LogProducer::info("GivenVelocityPlanner", "pause index %u out of traj range %ld", index, traj_points_dist_.size());
+        return false;
+    }
     pause_traj_.clear();
     // calc the line speed of the origon traj
     vector<double> cart_vel_org;
@@ -393,7 +397,7 @@ bool GivenVelocityPlanner::trajPausePlan(uint32_t index, double vel, double vel_
     // means can not stop in time just go on org traj
     if (paused_index_ == 0)
     {
-        pause_traj_.resize(resampled_traj_.size() - index + 1);
+        pause_traj_.resize(resampled_traj_.size() - index); // index start with 1
         for(size_t i = index; i < resampled_traj_.size(); ++i)
         {
             pause_traj_[i-index] = resampled_traj_[i];
@@ -401,9 +405,11 @@ bool GivenVelocityPlanner::trajPausePlan(uint32_t index, double vel, double vel_
         return true;
     }
 
-    double pause_time = index * sampling_freq_;
-    double stop_time = sqrt(2 * (paused_pos - traj_points_dist_[index])) + pause_time;
-    stop_time = ceil(stop_time / sampling_freq_) * sampling_freq_;
+    double pause_time = index * sampling_freq_; // unit seconds,start pause time
+    double stop_time = sqrt(2 * (paused_pos - traj_points_dist_[index]) / dec_max) + pause_time; // mm/ms
+    stop_time = ceil(stop_time / sampling_freq_) * sampling_freq_; // paused time
+    // LogProducer::info("GivenVelocityPlanner", "stop_time %lf, pause_time %lf", stop_time, pause_time);
+    // LogProducer::info("GivenVelocityPlanner", "paused_pos %lf, traj_points_dist_ %lf", paused_pos, traj_points_dist_[index]);
 
     vector<double> org_traj_time;
     org_traj_time.push_back(pause_time);
@@ -418,7 +424,7 @@ bool GivenVelocityPlanner::trajPausePlan(uint32_t index, double vel, double vel_
     {
         return false;
     }
-    pause_traj_.resize(size_t(stop_time / sampling_freq_));
+    pause_traj_.resize(pause_traj_time.size());
     spline_value(via_points_time_new_, pause_traj_time, pause_traj_);
 
 #if 0
@@ -898,16 +904,17 @@ void GivenVelocityPlanner::spline_value
 (
     const std::vector<double> via_points_time, 
     const std::vector<double> resampled_time, 
-    std::vector<basic_alg::PoseEuler>& out_traj
+    vector<basic_alg::PoseEuler>& out_traj
 )
 {
     int index = 0;
     PoseEuler tmp_pos;
     Quaternion tmp_quat;
     auto out_traj_iter = out_traj.begin();
-
-    for (double t = resampled_time.front(); t <= resampled_time.back(); t += sampling_freq_)
+    double t = 0;
+    for (auto iter = resampled_time.begin(); iter != resampled_time.end(); ++iter)
     {
+        t = *iter;
         for (int i = 0; ; ++i)
         {
             if (via_points_time[i] > t)

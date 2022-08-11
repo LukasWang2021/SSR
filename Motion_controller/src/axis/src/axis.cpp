@@ -173,7 +173,11 @@ ErrorCode Axis::mcHalt(void)
 ErrorCode Axis::mcSetPosition(double position)
 {
     AxisStatus_e axis_status = sm_.getAxisStatus();  
-    if (axis_status != AXIS_STATUS_DISABLED && axis_status != AXIS_STATUS_ERRORSTOP && axis_status != AXIS_STATUS_UNKNOWN)
+    // if (axis_status != AXIS_STATUS_DISABLED && axis_status != AXIS_STATUS_ERRORSTOP && axis_status != AXIS_STATUS_UNKNOWN)
+    if (axis_status != AXIS_STATUS_DISABLED 
+    && axis_status != AXIS_STATUS_ERRORSTOP 
+    && axis_status != AXIS_STATUS_UNKNOWN
+    && axis_status != AXIS_STATUS_STANDSTILL) // standstill for save zero offset
     {
         LogProducer::warn("Axis", "Axis[%d] mcSetPosition called failed when axis_status is %s", id_, sm_.getAxisStateString(axis_status).c_str());
         return AXIS_STATE_TRANSFER_INVALID;

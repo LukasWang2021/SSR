@@ -315,7 +315,7 @@ ErrorCode BaseGroup::planOfflinePause(void)
     LogProducer::warn("BaseGroup", "start offline pause plan on index %u, cache left points %u", offline_traj_point_read_cnt_, left_points);
     if(!offline_planner_.trajPausePlan(offline_traj_point_read_cnt_, 0, 0, 0, 0))
     {
-        LogProducer::error("BaseGroup", "offline pause plan failed", offline_traj_point_read_cnt_);
+        LogProducer::error("BaseGroup", "offline pause plan failed");
         return MC_PAUSE_FAILED;
     }
     vector<PoseEuler> pause_traj = offline_planner_.getPauseTraj();
@@ -338,7 +338,7 @@ ErrorCode BaseGroup::planOfflinePause(void)
     {
         if(!kinematics_ptr_->doIK(*iter, posture, joint_state.angle))
         {
-            LogProducer::error("BaseGroup", "offline trajectory pause point IK failed");
+            LogProducer::error("BaseGroup", "offline trajectory pause point IK failed index %d", iter - pause_traj.begin());
             LogProducer::error("BaseGroup", "failed point(%lf, %lf, %lf, %lf, %lf, %lf)", 
             iter->point_.x_, iter->point_.y_, iter->point_.z_, iter->euler_.a_, iter->euler_.b_, iter->euler_.c_);
             // need error stop

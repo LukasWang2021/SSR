@@ -513,7 +513,7 @@ uint64_t c_servo1001ServoGetServoCommInfo(int32_t cpu_id, int32_t servo_id, int3
 	return rep_data.error_code.data;
 }
 
-uint64_t c_servo1001ServoGetServoDefinedInfo(int32_t cpu_id, int32_t servo_id, int32_t req[7], int32_t res[7])
+uint64_t c_servo1001ServoGetServoDefinedInfo(int32_t cpu_id, int32_t servo_id, int32_t req[8], int32_t res[8])
 {
 	if (!rpc_valid)
 		return HANDLE_RPC_FAILED;
@@ -523,20 +523,21 @@ uint64_t c_servo1001ServoGetServoDefinedInfo(int32_t cpu_id, int32_t servo_id, i
 
 	req_data.header.time_stamp = 122;
 	req_data.property.authority = Comm_Authority_TP_SIMMULATOR;
-	req_data.data1.data = cpu_id;
-	req_data.data2.data_count = 9;
-	req_data.data2.data[0] = servo_id;
-	for (unsigned int i = 0; i < 7; ++i)
+	req_data.data1.data = 0;
+	req_data.data2.data_count = 10;
+	req_data.data2.data[0] = cpu_id;
+	req_data.data2.data[1] = servo_id;
+	for (unsigned int i = 0; i < 8; ++i)
 	{
-		req_data.data2.data[i + 1] = req[i];
+		req_data.data2.data[i + 2] = req[i];
 	}
 	if (!rpc_ptr->handleRpc(0x0000C87F, &req_data, RequestMessageType_Int32_Int32List_fields, &rep_data, ResponseMessageType_Uint64_Int32List_fields))
 	{
 		return HANDLE_RPC_FAILED;
 	}
-	for (unsigned int i = 0; i < 7; ++i)
+	for (unsigned int i = 0; i < 8; ++i)
 	{
-		res[i] = rep_data.data.data[i + 1];
+		res[i] = rep_data.data.data[i];
 	}
 	return rep_data.error_code.data;
 }

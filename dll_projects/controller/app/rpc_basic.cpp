@@ -36,7 +36,7 @@ int32_t RpcBasic::init(std::string server_ip)
 	server_path_ = "ws://" + server_ip + ":5600";
 
 	if ((socket_ = nn_socket(AF_SP, NN_REQ)) < 0) return -1;
-	int32_t recv_timeout = 10000, send_timeout = 2000;
+	int32_t recv_timeout = 2000, send_timeout = 2000;
     nn_setsockopt(socket_, NN_SOL_SOCKET, NN_RCVTIMEO, &recv_timeout, sizeof(int32_t));
 	nn_setsockopt(socket_, NN_SOL_SOCKET, NN_SNDTIMEO, &send_timeout, sizeof(int32_t));
 	if (nn_connect(socket_, server_path_.c_str()) < 0) return -1;

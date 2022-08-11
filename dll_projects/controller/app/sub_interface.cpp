@@ -135,7 +135,7 @@ uint64_t c_getTorqueFeedBack(double* torque, int size)
 	//	data_ptr->torque_feedback.data[2], data_ptr->torque_feedback.data[3], 
 	//	data_ptr->torque_feedback.data[4], data_ptr->torque_feedback.data[5]);
 
-	memcpy_s(torque, size, &data_ptr->torque_feedback.data[0], 6 * sizeof(double));
+	memcpy(torque, &data_ptr->torque_feedback.data[0], 6 * sizeof(double));
 	sub_ptr->unlockTopicData();
 	return 0;
 }

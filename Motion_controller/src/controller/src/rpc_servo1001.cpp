@@ -857,14 +857,14 @@ void ControllerRpc::handleRpc0x0000C87F(void* request_data_ptr, void* response_d
     RequestMessageType_Int32_Int32List* rq_data_ptr = static_cast<RequestMessageType_Int32_Int32List*>(request_data_ptr);
     ResponseMessageType_Uint64_Int32List* rs_data_ptr = static_cast<ResponseMessageType_Uint64_Int32List*>(response_data_ptr);
 
-    if (rq_data_ptr->data2.data_count != 9)
+    if (rq_data_ptr->data2.data_count != 10)
     {
         rs_data_ptr->error_code.data = RPC_PARAM_INVALID;
-        LogProducer::error("rpc", "/rpc/servo1001/servo/getServoDefinedInfo input invalid params");
+        LogProducer::error("rpc", "/rpc/servo1001/servo/getServoDefinedInfo input invalid params %d", rq_data_ptr->data2.data_count);
         return;
     }
     //int32_t cpu = rq_data_ptr->data1.data;//todo with axis_manager
-    int32_t axis_id = rq_data_ptr->data2.data[0];
+    int32_t axis_id = rq_data_ptr->data2.data[1];
     if(axis_id >= AXIS_NUM || axis_id < 0)
     {
         rs_data_ptr->error_code.data = RPC_PARAM_INVALID;
@@ -872,13 +872,19 @@ void ControllerRpc::handleRpc0x0000C87F(void* request_data_ptr, void* response_d
         return;
     }
     
-    int32_t req[8] = {0};
-    int32_t res[8] = {0};
+    int32_t req[8] = {0}, res[8] = {0};
     for(size_t i = 0; i < 8; ++i)
     {
-        req[i] = rq_data_ptr->data2.data[i + 1];
+        req[i] = rq_data_ptr->data2.data[i + 2];
     }
+    LogProducer::info("rpc", "define request %d,%d,%d,%d,%d,%d,%d,%d", 
+        req[0], req[1], req[2], req[3], req[4], req[5], req[6], req[7]);
+        
     rs_data_ptr->error_code.data = servo_comm_ptr_[axis_id]->doServoCmdGetServoDefinedInfo(&req[0], &res[0]);
+
+    LogProducer::info("rpc", "define response %d,%d,%d,%d,%d,%d,%d,%d", 
+        res[0], res[1], res[2], res[3], res[4], res[5], res[6], res[7]);        
+
     rs_data_ptr->data.data_count = 8;
     for(size_t i = 0; i < rs_data_ptr->data.data_count; ++i)
     {

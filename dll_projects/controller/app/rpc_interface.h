@@ -761,7 +761,7 @@ COMM_INTERFACE_API uint64_t c_servo1001ServoGetServoCommInfo(int32_t cpu_id, int
  * @param [out] res_data The response data from the servo.
  * @return error_code
  */
-COMM_INTERFACE_API uint64_t c_servo1001ServoGetServoDefinedInfo(int32_t cpu_id, int32_t servo_id, int32_t req[7], int32_t res[7]);
+COMM_INTERFACE_API uint64_t c_servo1001ServoGetServoDefinedInfo(int32_t cpu_id, int32_t servo_id, int32_t req[8], int32_t res[8]);
 
 /**
  * @brief Get the versions of Controller.

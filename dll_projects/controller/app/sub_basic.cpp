@@ -139,7 +139,8 @@ void SubBasic::handleSubscribe()
 	{
 		return;
 	}
-	if (comm_pub_->element_count != TOPIC_ELEM_NUM)
+	//if (comm_pub_->element_count != TOPIC_ELEM_NUM)
+	if (comm_pub_->element_count > 1024)
 	{
 		return;
 	}

@@ -186,6 +186,14 @@ ErrorCode BaseGroup::convertCartToJoint(const PoseAndPosture &pose, Joint &joint
     PoseEuler tcp_in_base, fcp_in_base;
     transformation_.convertPoseFromUserToBase(pose.pose, user_frame_, tcp_in_base);
     transformation_.convertTcpToFcp(tcp_in_base, tool_frame_, fcp_in_base);
+    /*
+    LogProducer::info("convertCartToJoint","PoseAndPosture-->Joint \npose=<%lf,%lf,%lf,%lf,%lf,%lf>\nuser_frame_=<%lf,%lf,%lf,%lf,%lf,%lf>\ntool_frame_=<%lf,%lf,%lf,%lf,%lf,%lf>\ntcp_in_base=<%lf,%lf,%lf,%lf,%lf,%lf>\nfcp_in_base=<%lf,%lf,%lf,%lf,%lf,%lf>",
+    pose.pose.point_.x_, pose.pose.point_.y_, pose.pose.point_.z_, pose.pose.euler_.a_,  pose.pose.euler_.b_,  pose.pose.euler_.c_,
+    user_frame_.point_.x_, user_frame_.point_.y_,user_frame_.point_.z_,user_frame_.euler_.a_,user_frame_.euler_.b_,user_frame_.euler_.c_,
+    tool_frame_.point_.x_, tool_frame_.point_.y_,tool_frame_.point_.z_,tool_frame_.euler_.a_,tool_frame_.euler_.b_,tool_frame_.euler_.c_,
+    tcp_in_base.point_.x_, tcp_in_base.point_.y_,tcp_in_base.point_.z_,tcp_in_base.euler_.a_,tcp_in_base.euler_.b_,tcp_in_base.euler_.c_,
+    fcp_in_base.point_.x_, fcp_in_base.point_.y_,fcp_in_base.point_.z_,fcp_in_base.euler_.a_,fcp_in_base.euler_.b_,fcp_in_base.euler_.c_
+    );*/
     return kinematics_ptr_->doIK(fcp_in_base, pose.posture, pose.turn, joint) ? SUCCESS : MC_COMPUTE_IK_FAIL;
 }
 

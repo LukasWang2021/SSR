@@ -5,6 +5,8 @@
 #include "matrix33.h"
 #include "vector3.h"
 #include <algorithm>
+#include <string>
+#include "yaml_help.h"
 
 typedef struct {
     int  status;
@@ -16,14 +18,13 @@ typedef struct {
     double c_;
 }TrjPoint;
 
-
 typedef struct{
-    double sample_time;
-    double generate_traj_interval;
-    int N_step_P;
-    int N_step_Q;
-    double N_interp_P;
-    double N_interp_Q;
+    double sample_time;//touch采样时间间隔
+    double generate_traj_interval;//生成轨迹间隔
+    int N_step_P;//计算位置-取VP点的采样点间隔--->每5个采样点取一个xyz向量  范围<=5
+    int N_step_Q;//计算姿态-取VQ的采样点间隔--->每25个采样点取一个abc向量
+    double N_interp_P;//((NstepP*Tsample)/GEN_TN)
+    double N_interp_Q;//((NstepQ*Tsample)/GEN_TN)
     double trj_ratio;
     int online_receive_Tmatrix_buff_len;
 }onlineTrjAlgParam;
@@ -74,13 +75,18 @@ public:
     void function_test();
     bool FixedBaseCoordTransformation(Matrix44& T_touchm,Matrix44& resM);
     bool DynamicBaseCoordTransformation(Matrix44 T_r0_R, Matrix44 Touch_h0_v,  Matrix44 Touch_ht_v, double k,Matrix44& resM);
+    bool get_increment_matrix(Matrix44 T_ck,Matrix44 T_k1, Matrix44 T_k, Matrix44 &resT);
     void rtm_r2xyzabc(Matrix44& u,Vector3& res_xyz, Vector3& res_abc);
    
     onlineTrjAlgParam online_alg_params_;
     void online_trajectory_algorithm_params_init();
-    int  get_onlineRecvTmatrixBuffPackLen();
     int setOnlineTrjRatio(double data_ratio);
     double get_online_trj_ratio();
+
+    bool load_OnlineMove_params_Config();
+private:
+    base_space::YamlHelp yaml_help_;
+    std::string config_OnlineMove_params_file_path_;
 };
 
 #endif

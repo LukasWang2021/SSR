@@ -1170,6 +1170,7 @@ void ControllerRpc::handleRpc0x00008A31(void* request_data_ptr, void* response_d
         rq_data_ptr->data.matrices[i].matrix[12],rq_data_ptr->data.matrices[i].matrix[13],rq_data_ptr->data.matrices[i].matrix[14],rq_data_ptr->data.matrices[i].matrix[15]);
     }
     #endif
+    
     group_ptr_[0]->moveOnlineTrajectory();//检查运控状态是否处于ONLINE状态,如果不是则切换到ONLINE状态并初始化
     rs_data_ptr->data.data = SUCCESS;
     if (group_ptr_[0]->getWorkMode() != USER_OP_MODE_ONLINE)//检查控制器工作模式
@@ -1222,11 +1223,9 @@ void ControllerRpc::handleRpc0x0000B35F(void* request_data_ptr, void* response_d
 void ControllerRpc::handleRpc0x00004DEF(void* request_data_ptr, void* response_data_ptr)
 {
     ResponseMessageType_Uint64_Double* rs_data_ptr = static_cast<ResponseMessageType_Uint64_Double*>(response_data_ptr);
-    
     rs_data_ptr->error_code.data = SUCCESS;
-    //rs_data_ptr->data.data = group_ptr_[0]->getGlobalAccRatio();
-
-    LogProducer::info("rpc", "/rpc/group/getGlobalAccRatio success");
+    rs_data_ptr->data.data = group_ptr_[0]->getOnlineTrajectoryRatio();
+    LogProducer::info("rpc", "/rpc/group/getOnlineTrajectoryRatio success");
 }
 
 //"/rpc/motion_control/axis_group/getJointManualStep"	

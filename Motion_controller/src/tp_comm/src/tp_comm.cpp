@@ -387,11 +387,7 @@ void TpComm::handleRequest()
     }
 
     unsigned int hash = *((unsigned int*)recv_buffer_ptr_);
-<<<<<<< HEAD
     LogProducer::debug("rpc", "---handleRequest: %x", hash);
-=======
-    //LogProducer::info("rpc", "---handleRequest: %x", hash);
->>>>>>> zhicai.xiao-NewOnlineMoveAlgConfig-20220701
     HandleRequestFuncPtr func_ptr = getRequestHandlerByHash(hash);
     if(func_ptr != NULL)
     {

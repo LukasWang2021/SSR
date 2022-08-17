@@ -20,7 +20,7 @@ ControllerPublish::~ControllerPublish()
 
 void ControllerPublish::init(user_space::TpComm* tp_comm_ptr, servo_comm_space::ServoCpuCommBase* cpu_comm_ptr, 
         axis_space::Axis* axis_ptr[AXIS_NUM], group_space::MotionControl* group_ptr[GROUP_NUM], 
-        hal_space::Io1000* io_dev_ptr, hal_space::IoSafety* safety_ptr)
+        hal_space::Io1000* io_dev_ptr, hal_space::IoSafety* safety_ptr, sensor_space::ForceSensor *force_sensor_ptr)
 {
     tp_comm_ptr_ = tp_comm_ptr; 
     cpu_comm_ptr_ = cpu_comm_ptr;
@@ -34,6 +34,7 @@ void ControllerPublish::init(user_space::TpComm* tp_comm_ptr, servo_comm_space::
     }
     io_dev_ptr_ = io_dev_ptr;
     safety_ptr_ = safety_ptr;
+	force_sensor_ptr_ = force_sensor_ptr;
 
     initPublishTable();
     initPublishQuickSearchTable();

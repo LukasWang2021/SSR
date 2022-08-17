@@ -150,7 +150,7 @@ private:
     system_model_space::ForceModel_t* force_model_ptr_;
     std::vector<system_model_space::ForceConfig_t> forces_config_;
 
-	sensor_space::ForceSensor force_sensor_;
+	sensors_space::ForceSensor force_sensor_;
 
     uint32_t fdb_current_time_stamp_;
 

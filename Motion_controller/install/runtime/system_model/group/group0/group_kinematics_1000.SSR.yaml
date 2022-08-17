@@ -1,0 +1,458 @@
+name: group_kinematics_1000
+model_id: 
+    operation_value: 1000
+    default_value: 1000
+    upper_limit_value: 0 
+    lower_limit_value: 0
+    unit: None
+    attr: 1
+    validity: 0
+BaseD:
+    operation_value: 3650
+    default_value: 3650
+    upper_limit_value: 0 
+    lower_limit_value: 0
+    unit: "0.1mm"
+    attr: 3
+    validity: 1
+BaseA:
+    operation_value: 0
+    default_value: 0
+    upper_limit_value: 0 
+    lower_limit_value: 0
+    unit: "0.1mm"
+    attr: 3
+    validity: 1
+BaseALPHA:
+    operation_value: 0
+    default_value: 0
+    upper_limit_value: 0 
+    lower_limit_value: 0
+    unit: "0.1D"
+    attr: 3
+    validity: 1
+BaseTHETA:
+    operation_value: 0
+    default_value: 0
+    upper_limit_value: 0 
+    lower_limit_value: 0
+    unit: "0.1D"
+    attr: 3
+    validity: 1
+BaseD_offset:
+    operation_value: 0
+    default_value: 0
+    upper_limit_value: 0 
+    lower_limit_value: 0
+    unit: "0.000001mm"
+    attr: 3
+    validity: 1
+BaseA_offset:
+    operation_value: 0
+    default_value: 0
+    upper_limit_value: 0 
+    lower_limit_value: 0
+    unit: "0.000001mm"
+    attr: 3
+    validity: 1
+BaseALPHA_offset:
+    operation_value: 0
+    default_value: 0
+    upper_limit_value: 0 
+    lower_limit_value: 0
+    unit: "0.000001D"
+    attr: 3
+    validity: 1
+BaseTHETA_offset:
+    operation_value: 0
+    default_value: 0
+    upper_limit_value: 0 
+    lower_limit_value: 0
+    unit: "0.000001D"
+    attr: 3
+    validity: 1
+D0: 
+    operation_value: 0
+    default_value: 0
+    upper_limit_value: 0 
+    lower_limit_value: 0
+    unit: "0.1mm"
+    attr: 3
+    validity: 1
+D1: 
+    operation_value: 0
+    default_value: 0
+    upper_limit_value: 0 
+    lower_limit_value: 0
+    unit: "0.1mm"
+    attr: 3
+    validity: 1
+D2: 
+    operation_value: 0
+    default_value: 0
+    upper_limit_value: 0 
+    lower_limit_value: 0
+    unit: "0.1mm"
+    attr: 3
+    validity: 1
+D3: 
+    operation_value: 3500
+    default_value: 0
+    upper_limit_value: 0 
+    lower_limit_value: 0
+    unit: "0.1mm"
+    attr: 3
+    validity: 1
+D4: 
+    operation_value: 0
+    default_value: 0
+    upper_limit_value: 0 
+    lower_limit_value: 0
+    unit: "0.1mm"
+    attr: 3
+    validity: 1
+D5: 
+    operation_value: 965
+    default_value: 965
+    upper_limit_value: 0 
+    lower_limit_value: 0
+    unit: "0.1mm"
+    attr: 3
+    validity: 1
+A0: 
+    operation_value: 300
+    default_value: 300
+    upper_limit_value: 0 
+    lower_limit_value: 0
+    unit: "0.1mm"
+    attr: 3
+    validity: 1
+A1: 
+    operation_value: 3400
+    default_value: 3400
+    upper_limit_value: 0 
+    lower_limit_value: 0
+    unit: "0.1mm"
+    attr: 3
+    validity: 1
+A2: 
+    operation_value: 350
+    default_value: 350
+    upper_limit_value: 0 
+    lower_limit_value: 0
+    unit: "0.1mm"
+    attr: 3
+    validity: 1
+A3: 
+    operation_value: 0
+    default_value: 0
+    upper_limit_value: 0 
+    lower_limit_value: 0
+    unit: "0.1mm"
+    attr: 3
+    validity: 1
+A4: 
+    operation_value: 0
+    default_value: 0
+    upper_limit_value: 0 
+    lower_limit_value: 0
+    unit: "0.1mm"
+    attr: 3
+    validity: 1
+A5: 
+    operation_value: 0
+    default_value: 0
+    upper_limit_value: 0 
+    lower_limit_value: 0
+    unit: "0.1mm"
+    attr: 3
+    validity: 1
+ALPHA0: 
+    operation_value: 900
+    default_value: 900
+    upper_limit_value: 0 
+    lower_limit_value: 0
+    unit: "0.1D"
+    attr: 3
+    validity: 1
+ALPHA1: 
+    operation_value: 0
+    default_value: 0
+    upper_limit_value: 0 
+    lower_limit_value: 0
+    unit: "0.1D"
+    attr: 3
+    validity: 1
+ALPHA2: 
+    operation_value: 900
+    default_value: 900
+    upper_limit_value: 0 
+    lower_limit_value: 0
+    unit: "0.1D"
+    attr: 3
+    validity: 1
+ALPHA3: 
+    operation_value: -900
+    default_value: -900
+    upper_limit_value: 0 
+    lower_limit_value: 0
+    unit: "0.1D"
+    attr: 3
+    validity: 1
+ALPHA4: 
+    operation_value: 900
+    default_value: 900
+    upper_limit_value: 0 
+    lower_limit_value: 0
+    unit: "0.1D"
+    attr: 3
+    validity: 1
+ALPHA5: 
+    operation_value: 0
+    default_value: 0
+    upper_limit_value: 0 
+    lower_limit_value: 0
+    unit: "0.1D"
+    attr: 3
+    validity: 1
+THETA0: 
+    operation_value: 0
+    default_value: 0
+    upper_limit_value: 0 
+    lower_limit_value: 0
+    unit: "0.1D"
+    attr: 3
+    validity: 1
+THETA1: 
+    operation_value: 900
+    default_value: 900
+    upper_limit_value: 0 
+    lower_limit_value: 0
+    unit: "0.1D"
+    attr: 3
+    validity: 1
+THETA2: 
+    operation_value: 0
+    default_value: 0
+    upper_limit_value: 0 
+    lower_limit_value: 0
+    unit: "0.1D"
+    attr: 3
+    validity: 1
+THETA3: 
+    operation_value: 0
+    default_value: 0
+    upper_limit_value: 0 
+    lower_limit_value: 0
+    unit: "0.1D"
+    attr: 3
+    validity: 1
+THETA4: 
+    operation_value: 0
+    default_value: 0
+    upper_limit_value: 0 
+    lower_limit_value: 0
+    unit: "0.1D"
+    attr: 3
+    validity: 1
+THETA5: 
+    operation_value: 0
+    default_value: 0
+    upper_limit_value: 0 
+    lower_limit_value: 0
+    unit: "0.1D"
+    attr: 3
+    validity: 1
+D0_offset: 
+    operation_value: 0
+    default_value: 0
+    upper_limit_value: 0 
+    lower_limit_value: 0
+    unit: "0.000001mm"
+    attr: 3
+    validity: 1
+D1_offset: 
+    operation_value: 0
+    default_value: 0
+    upper_limit_value: 0 
+    lower_limit_value: 0
+    unit: "0.000001mm"
+    attr: 3
+    validity: 1
+D2_offset: 
+    operation_value: 0
+    default_value: 0
+    upper_limit_value: 0 
+    lower_limit_value: 0
+    unit: "0.000001mm"
+    attr: 3
+    validity: 1
+D3_offset: 
+    operation_value: 0
+    default_value: 0
+    upper_limit_value: 0 
+    lower_limit_value: 0
+    unit: "0.000001mm"
+    attr: 3
+    validity: 1
+D4_offset: 
+    operation_value: 0
+    default_value: 0
+    upper_limit_value: 0 
+    lower_limit_value: 0
+    unit: "0.000001mm"
+    attr: 3
+    validity: 1
+D5_offset: 
+    operation_value: 0
+    default_value: 0
+    upper_limit_value: 0 
+    lower_limit_value: 0
+    unit: "0.000001mm"
+    attr: 3
+    validity: 1
+A0_offset: 
+    operation_value: 0
+    default_value: 0
+    upper_limit_value: 0 
+    lower_limit_value: 0
+    unit: "0.000001mm"
+    attr: 3
+    validity: 1
+A1_offset: 
+    operation_value: 0
+    default_value: 0
+    upper_limit_value: 0 
+    lower_limit_value: 0
+    unit: "0.000001mm"
+    attr: 3
+    validity: 1
+A2_offset: 
+    operation_value: 0
+    default_value: 0
+    upper_limit_value: 0 
+    lower_limit_value: 0
+    unit: "0.000001mm"
+    attr: 3
+    validity: 1
+A3_offset: 
+    operation_value: 0
+    default_value: 0
+    upper_limit_value: 0 
+    lower_limit_value: 0
+    unit: "0.000001mm"
+    attr: 3
+    validity: 1
+A4_offset: 
+    operation_value: 0
+    default_value: 0
+    upper_limit_value: 0 
+    lower_limit_value: 0
+    unit: "0.000001mm"
+    attr: 3
+    validity: 1
+A5_offset: 
+    operation_value: 0
+    default_value: 0
+    upper_limit_value: 0 
+    lower_limit_value: 0
+    unit: "0.000001mm"
+    attr: 3
+    validity: 1
+ALPHA0_offset: 
+    operation_value: 0
+    default_value: 0
+    upper_limit_value: 0 
+    lower_limit_value: 0
+    unit: "0.000001D"
+    attr: 3
+    validity: 1
+ALPHA1_offset: 
+    operation_value: 0
+    default_value: 0
+    upper_limit_value: 0 
+    lower_limit_value: 0
+    unit: "0.000001D"
+    attr: 3
+    validity: 1
+ALPHA2_offset: 
+    operation_value: 0
+    default_value: 0
+    upper_limit_value: 0 
+    lower_limit_value: 0
+    unit: "0.000001D"
+    attr: 3
+    validity: 1
+ALPHA3_offset: 
+    operation_value: 0
+    default_value: 0
+    upper_limit_value: 0 
+    lower_limit_value: 0
+    unit: "0.000001D"
+    attr: 3
+    validity: 1
+ALPHA4_offset: 
+    operation_value: 0
+    default_value: 0
+    upper_limit_value: 0 
+    lower_limit_value: 0
+    unit: "0.000001D"
+    attr: 3
+    validity: 1
+ALPHA5_offset: 
+    operation_value: 0
+    default_value: 0
+    upper_limit_value: 0 
+    lower_limit_value: 0
+    unit: "0.000001D"
+    attr: 3
+    validity: 1
+THETA0_offset: 
+    operation_value: 0
+    default_value: 0
+    upper_limit_value: 0 
+    lower_limit_value: 0
+    unit: "0.000001D"
+    attr: 3
+    validity: 1
+THETA1_offset: 
+    operation_value: 0
+    default_value: 0
+    upper_limit_value: 0 
+    lower_limit_value: 0
+    unit: "0.000001D"
+    attr: 3
+    validity: 1
+THETA2_offset: 
+    operation_value: 0
+    default_value: 0
+    upper_limit_value: 0 
+    lower_limit_value: 0
+    unit: "0.000001D"
+    attr: 3
+    validity: 1
+THETA3_offset: 
+    operation_value: 0
+    default_value: 0
+    upper_limit_value: 0 
+    lower_limit_value: 0
+    unit: "0.000001D"
+    attr: 3
+    validity: 1
+THETA4_offset: 
+    operation_value: 0
+    default_value: 0
+    upper_limit_value: 0 
+    lower_limit_value: 0
+    unit: "0.000001D"
+    attr: 3
+    validity: 1
+THETA5_offset: 
+    operation_value: 0
+    default_value: 0
+    upper_limit_value: 0 
+    lower_limit_value: 0
+    unit: "0.000001D"
+    attr: 3
+    validity: 1
+    

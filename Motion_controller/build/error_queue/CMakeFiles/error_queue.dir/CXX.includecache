@@ -1,0 +1,36 @@
+#IncludeRegexLine: ^[ 	]*#[ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/ld/git_work/mc_application/Motion_controller/src/error_queue/../common/common_error_code.h
+
+/home/ld/git_work/mc_application/Motion_controller/src/error_queue/../common/lockfree_queue.h
+atomic
+-
+map
+-
+type_traits
+-
+iostream
+-
+
+/home/ld/git_work/mc_application/Motion_controller/src/error_queue/include/error_queue.h
+lockfree_queue.h
+/home/ld/git_work/mc_application/Motion_controller/src/error_queue/include/lockfree_queue.h
+common_error_code.h
+/home/ld/git_work/mc_application/Motion_controller/src/error_queue/include/common_error_code.h
+string
+-
+list
+-
+
+/home/ld/git_work/mc_application/Motion_controller/src/error_queue/src/error_queue.cpp
+error_queue.h
+/home/ld/git_work/mc_application/Motion_controller/src/error_queue/src/error_queue.h
+iostream
+-
+

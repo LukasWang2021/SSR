@@ -57,7 +57,7 @@ public:
     void init(user_space::TpComm* tp_comm_ptr, servo_comm_space::ServoCpuCommBase* cpu_comm_ptr, 
         axis_space::Axis* axis_ptr[AXIS_NUM], group_space::MotionControl* group_ptr[GROUP_NUM], 
         hal_space::Io1000* io_dev_ptr, hal_space::IoSafety* safety_ptr,
-        sensor_space::ForceSensor *force_sensor_ptr);
+        sensors_space::ForceSensor* force_sensor_ptr);
 
     /**
      * @brief Gets the pointer of the publishing value.
@@ -134,7 +134,7 @@ private:
     group_space::MotionControl* group_ptr_[GROUP_NUM];
     hal_space::Io1000* io_dev_ptr_;
     hal_space::IoSafety* safety_ptr_;
-	sensor_space::ForceSensor *force_sensor_ptr_;
+	sensors_space::ForceSensor* force_sensor_ptr_;
 		
     enum {HASH_BYTE_SIZE = 4,};
     enum {QUICK_SEARCH_TABLE_SIZE = 128,};

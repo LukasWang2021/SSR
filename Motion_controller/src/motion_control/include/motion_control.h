@@ -109,6 +109,8 @@ public:
     ErrorCode convertCartToJoint(const PoseAndPosture &pose, int user_frame_id, int tool_frame_id, basic_alg::Joint &joint);
     ErrorCode convertCartToJoint(const basic_alg::PoseEuler &pose, int user_frame_id, int tool_frame_id, basic_alg::Joint &joint);
     ErrorCode convertJointToCart(const basic_alg::Joint &joint, int user_frame_id, int tool_frame_id, basic_alg::PoseEuler &pose);
+    ErrorCode convertJointToTmx(const Joint &joint, TransMatrix &tmx);
+
     basic_alg::Posture getPostureFromJoint(const basic_alg::Joint &joint);
     basic_alg::Turn getTurnFromJoint(const basic_alg::Joint &joint);
 

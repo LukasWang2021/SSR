@@ -1,0 +1,42 @@
+file(REMOVE_RECURSE
+  "CMakeFiles/tp_comm.dir/__/pb/src/pb_decode.c.o"
+  "CMakeFiles/tp_comm.dir/__/pb/src/pb_encode.c.o"
+  "CMakeFiles/tp_comm.dir/__/pb/src/pb_common.c.o"
+  "CMakeFiles/tp_comm.dir/src/response_controller.cpp.o"
+  "CMakeFiles/tp_comm.dir/src/request_reg.cpp.o"
+  "CMakeFiles/tp_comm.dir/src/request_interpreter.cpp.o"
+  "CMakeFiles/tp_comm.dir/src/request_servo_sampling.cpp.o"
+  "CMakeFiles/tp_comm.dir/src/tp_comm.cpp.o"
+  "CMakeFiles/tp_comm.dir/src/response_reg.cpp.o"
+  "CMakeFiles/tp_comm.dir/src/response_interpreter.cpp.o"
+  "CMakeFiles/tp_comm.dir/src/tp_comm_table.cpp.o"
+  "CMakeFiles/tp_comm.dir/src/request_frame.cpp.o"
+  "CMakeFiles/tp_comm.dir/src/response_motion_control.cpp.o"
+  "CMakeFiles/tp_comm.dir/src/response_file_manager.cpp.o"
+  "CMakeFiles/tp_comm.dir/src/request_axis.cpp.o"
+  "CMakeFiles/tp_comm.dir/src/request_file_manager.cpp.o"
+  "CMakeFiles/tp_comm.dir/src/response_servo1001.cpp.o"
+  "CMakeFiles/tp_comm.dir/src/response_group.cpp.o"
+  "CMakeFiles/tp_comm.dir/src/request_servo1001.cpp.o"
+  "CMakeFiles/tp_comm.dir/src/response_servo_sampling.cpp.o"
+  "CMakeFiles/tp_comm.dir/src/response_axis.cpp.o"
+  "CMakeFiles/tp_comm.dir/src/tp_comm_manager_config.cpp.o"
+  "CMakeFiles/tp_comm.dir/src/request_publish.cpp.o"
+  "CMakeFiles/tp_comm.dir/src/response_frame.cpp.o"
+  "CMakeFiles/tp_comm.dir/src/request_group.cpp.o"
+  "CMakeFiles/tp_comm.dir/src/response_publish.cpp.o"
+  "CMakeFiles/tp_comm.dir/src/request_common.cpp.o"
+  "CMakeFiles/tp_comm.dir/src/response_io.cpp.o"
+  "CMakeFiles/tp_comm.dir/src/publish.cpp.o"
+  "CMakeFiles/tp_comm.dir/src/request_motion_control.cpp.o"
+  "CMakeFiles/tp_comm.dir/src/response_common.cpp.o"
+  "CMakeFiles/tp_comm.dir/src/request_io.cpp.o"
+  "CMakeFiles/tp_comm.dir/src/request_controller.cpp.o"
+  "/home/ld/git_work/mc_application/Motion_controller/install/lib/libtp_comm.pdb"
+  "/home/ld/git_work/mc_application/Motion_controller/install/lib/libtp_comm.so"
+)
+
+# Per-language clean rules from dependency scanning.
+foreach(lang C CXX)
+  include(CMakeFiles/tp_comm.dir/cmake_clean_${lang}.cmake OPTIONAL)
+endforeach()

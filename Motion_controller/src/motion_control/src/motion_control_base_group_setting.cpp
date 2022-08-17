@@ -206,6 +206,12 @@ ErrorCode BaseGroup::convertJointToCart(const Joint &joint, PoseEuler &pose)
     return SUCCESS;
 }
 
+ErrorCode BaseGroup::convertJointToTmx(const Joint &joint, TransMatrix &tmx)
+{
+    kinematics_ptr_->doFK(joint, tmx);
+    return SUCCESS;
+}
+
 ManualFrame BaseGroup::getManualFrame(void)
 {
     return manual_teach_.getManualFrame();

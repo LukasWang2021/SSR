@@ -21,7 +21,8 @@
 /**
  * @brief io_space includes all io related definitions and implementation.
  */
-namespace sensor_space {
+namespace sensors_space 
+{
 
 /**
  * @brief Defines the share memory for io communication.
@@ -79,9 +80,8 @@ class ForceSensor{
      * @retval false Failed to initialize.
      */
     bool init(group_space::MotionControl* group_ptr[GROUP_NUM], 
-    			user_space::ControllerPublish* publish_ptr,
     			servo_comm_space::ServoCpuCommBase* cpu_comm_ptr,
-   		 		system_model_space::ForceModel_t* force_model_ptr[GROUP_NUM]);
+   		 	system_model_space::ForceModel_t** force_model_ptr);
 	
 	/**
      * @brief Update source value of force sensor.
@@ -180,7 +180,6 @@ class ForceSensor{
   private:    	
 	group_space::MotionControl* group_ptr_[GROUP_NUM];
     system_model_space::ForceModel_t* force_model_ptr_[GROUP_NUM];	
-	user_space::ControllerPublish* publish_ptr_;
 	servo_comm_space::ServoCpuCommBase* cpu_comm_ptr_;
 	
 	Force_Sensor_Calib_t force_calib_param_[GROUP_NUM];

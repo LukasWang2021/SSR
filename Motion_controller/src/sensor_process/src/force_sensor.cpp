@@ -3,7 +3,7 @@
 #include "force_sensor.h"
 #include "rotation_matrix.h"
 #include "controller_publish.h"
-#include "comm_reg_3.h"
+#include "common/comm_reg_3.h"
 #include "joint.h"
 #include "trans_matrix.h"
 #include "pose_euler.h"
@@ -12,29 +12,26 @@ using namespace user_space;
 using namespace log_space;
 using namespace group_space;
 using namespace system_model_space;
-using namespace sensor_space;
+using namespace sensors_space;
 
 ForceSensor::ForceSensor()
 {
 	
 }
   
-~ForceSensor::ForceSensor()
+ForceSensor::~ForceSensor()
 {
 
 }
 
 bool ForceSensor::init(group_space::MotionControl* group_ptr[GROUP_NUM], 
-							user_space::ControllerPublish* publish_ptr,
 							servo_comm_space::ServoCpuCommBase* cpu_comm_ptr,
-							system_model_space::ForceModel_t* force_model_ptr[GROUP_NUM])
+							system_model_space::ForceModel_t** force_model_ptr)
 {
 	bool ret =false;
 	
-	if(publish_ptr == NULL || cpu_comm_ptr == NULL) 
+	if(cpu_comm_ptr == NULL) 
 		return false;
-
-	publish_ptr_ = publish_ptr;
 	cpu_comm_ptr_ = cpu_comm_ptr;
 	
 	for(int i = 0 ; i < GROUP_NUM; i++)
@@ -47,9 +44,9 @@ bool ForceSensor::init(group_space::MotionControl* group_ptr[GROUP_NUM],
 		
 		is_param_load_[i] = false;
 
-		if(loadCalibrationParams() == false) return false;
+		if(loadCalibrationParams(i) == false) return false;
 
-		if(getRotationEnd2Tool() == false) return false;
+		if(getRotationEnd2Tool(i) == false) return false;
 	}
 	
 	return true;
@@ -89,8 +86,8 @@ bool ForceSensor::calibratedForceSensor(int group_id, double *dst_dat_ptr, int n
 		return false;
 
 	/*calibration*/
-	joint = group_ptr_[group_id]->group_ptr_->getLatestJoint();
-	group_ptr_[group_id]->group_ptr_->kinematics_ptr_->doFK(joint, tmx);
+	joint = group_ptr_[group_id]->getServoJoint();
+	group_ptr_[group_id]->convertJointToTmx(joint, tmx);
 	
 	b[0] = tmx.rotation_matrix_.matrix_[2][0]*force_calib_param_[group_id].mg_;
 	b[1] = tmx.rotation_matrix_.matrix_[2][1]*force_calib_param_[group_id].mg_;
@@ -121,40 +118,40 @@ bool ForceSensor::transCalibrated2Tool(int group_id, double *dst_dat_ptr, int nu
 	if(group_id >= GROUP_NUM)
 			return false;
 
-	force_tool.force[0] = tmx.matrix_[0][0]*force_calib[0]
-							+ tmx.matrix_[1][0]*force_calib[1]
-							+ tmx.matrix_[2][0]*force_calib[2];
-	force_tool.force[1] = tmx.matrix_[0][1]*force_calib[0]
-							+ tmx.matrix_[1][1]*force_calib[1]
-							+ tmx.matrix_[2][1]*force_calib[2];
-	force_tool.force[2] = tmx.matrix_[0][2]*force_calib[0]
-							+ tmx.matrix_[1][2]*force_calib[1]
-							+ tmx.matrix_[2][2]*force_calib[2];
+	force_tool[group_id].force[0] = tmx.matrix_[0][0]*force_calib[group_id].force[0]
+							+ tmx.matrix_[1][0]*force_calib[group_id].force[1]
+							+ tmx.matrix_[2][0]*force_calib[group_id].force[2];
+	force_tool[group_id].force[1] = tmx.matrix_[0][1]*force_calib[group_id].force[0]
+							+ tmx.matrix_[1][1]*force_calib[group_id].force[1]
+							+ tmx.matrix_[2][1]*force_calib[group_id].force[2];
+	force_tool[group_id].force[2] = tmx.matrix_[0][2]*force_calib[group_id].force[0]
+							+ tmx.matrix_[1][2]*force_calib[group_id].force[1]
+							+ tmx.matrix_[2][2]*force_calib[group_id].force[2];
 
-	b[0] = tmx.matrix_[0][0]*force_tool.force[0]
-				+ tmx.matrix_[1][0]*force_tool.force[1]
-				+ tmx.matrix_[2][0]*force_tool.force[2];
-	b[1] = tmx.matrix_[0][1]*force_tool.force[0]
-				+ tmx.matrix_[1][1]*force_tool.force[1]
-				+ tmx.matrix_[2][1]*force_tool.force[2];
-	b[2] = tmx.matrix_[0][2]*force_tool.force[0]
-				+ tmx.matrix_[1][2]*force_tool.force[1]
-				+ tmx.matrix_[2][2]*force_tool.force[2];
+	b[0] = tmx.matrix_[0][0]*force_tool[group_id].force[0]
+				+ tmx.matrix_[1][0]*force_tool[group_id].force[1]
+				+ tmx.matrix_[2][0]*force_tool[group_id].force[2];
+	b[1] = tmx.matrix_[0][1]*force_tool[group_id].force[0]
+				+ tmx.matrix_[1][1]*force_tool[group_id].force[1]
+				+ tmx.matrix_[2][1]*force_tool[group_id].force[2];
+	b[2] = tmx.matrix_[0][2]*force_tool[group_id].force[0]
+				+ tmx.matrix_[1][2]*force_tool[group_id].force[1]
+				+ tmx.matrix_[2][2]*force_tool[group_id].force[2];
 	c[0] = force_calib_param_[group_id].centroid_pos_.y_*b[2] - force_calib_param_[group_id].centroid_pos_.z_*b[1];
 	c[1] = force_calib_param_[group_id].centroid_pos_.z_*b[0] - force_calib_param_[group_id].centroid_pos_.x_*b[2];
 	c[2] = force_calib_param_[group_id].centroid_pos_.x_*b[1] - force_calib_param_[group_id].centroid_pos_.y_*b[0];
 
-	c[0] = force_calib.force[4] - c[0];
-	c[1] = force_calib.force[5] - c[1];
-	c[2] = force_calib.force[6] - c[2];
+	c[0] = force_calib[group_id].force[4] - c[0];
+	c[1] = force_calib[group_id].force[5] - c[1];
+	c[2] = force_calib[group_id].force[6] - c[2];
 
-	force_tool.force[4] = tmx.matrix_[0][0]*c[0]
+	force_tool[group_id].force[4] = tmx.matrix_[0][0]*c[0]
 							+ tmx.matrix_[1][0]*c[1]
 							+ tmx.matrix_[2][0]*c[2];
-	force_tool.force[5] = tmx.matrix_[0][1]*c[0]
+	force_tool[group_id].force[5] = tmx.matrix_[0][1]*c[0]
 							+ tmx.matrix_[1][1]*c[1]
 							+ tmx.matrix_[2][1]*c[2];
-	force_tool.force[6] = tmx.matrix_[0][2]*c[0]
+	force_tool[group_id].force[6] = tmx.matrix_[0][2]*c[0]
 							+ tmx.matrix_[1][2]*c[1]
 							+ tmx.matrix_[2][2]*c[2];
 	
@@ -204,7 +201,7 @@ bool ForceSensor::getRotationEnd2Tool(int group_id)
 	if(group_id >= GROUP_NUM)
 		return false;
 
-	pos_euler = group_ptr_->group_ptr_->getToolFrame();
+	group_ptr_[group_id]->getUsingTool(pos_euler);
 	pos_euler.convertToTransMatrix(tmx_tmp);
 	tmx = tmx_tmp.rotation_matrix_;
 	return true;

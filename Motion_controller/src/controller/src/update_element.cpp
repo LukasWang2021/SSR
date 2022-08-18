@@ -104,7 +104,7 @@ void ControllerPublish::updateTorqueFdb()
 {
 	torque_fdb_.data_count = 6;
 	
-	force_sensor_ptr_->updateSourceValue(GROUP_0, &torque_fdb_.data[0], torque_fdb_.data_count);
+	force_sensor_ptr_->updateSourceValue(GROUP_0, &torque_fdb_.data[0], (int)torque_fdb_.data_count);
 	
 	//force_sensor_ptr_->calibratedForceSensor(GROUP_0);
 	

@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<ForcesConfig>
-    <ForceConfig>
-		<ForceId>0</ForceId>
-		<RootDir>/root/install/runtime/system_model/force/param</RootDir>
-		<Parameter>force.0</Parameter>	
-	</ForceConfig>
-</ForcesConfig>
-

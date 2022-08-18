@@ -171,7 +171,7 @@ int main()
                 {
                     MessageType_DoubleList fdb;
                     if(!test.decodeMessageType(msg.element[i].data.bytes, msg.element[i].data.size, 
-                        (void*)&fdb, MessageType_Uint32List_fields))
+                        (void*)&fdb, MessageType_DoubleList_fields))
                     {
                         printf("Sub : parse data msg failed !!\n");
                     }

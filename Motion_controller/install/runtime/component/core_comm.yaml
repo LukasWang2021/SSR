@@ -1,3 +1,0 @@
-device_path: /dev/mem
-config_file: core_comm_config.xml 
-cpu_id: 1

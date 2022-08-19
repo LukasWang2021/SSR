@@ -1,0 +1,4 @@
+./gitignore
+dll_projects/.vs
+dll_projects/tmp
+dll_projects/x64

@@ -57,6 +57,7 @@ include_directories(
     ../trajectory_planner/include
     ../motion_control/include
     ../embed_python/include
+    ../sensor_process/include
     ${PROJECT_BINARY_DIR}
 	${rtm_INCLUDE_DIRS}
 )
@@ -103,6 +104,7 @@ target_link_libraries(controller
     trajectory_planner
     motion_control
     embed_python
+    sensor_process
 )
 install(FILES ./config/controller.yaml 
     DESTINATION ${CONFIG_FILE_OUTPUT_PATH}/component/

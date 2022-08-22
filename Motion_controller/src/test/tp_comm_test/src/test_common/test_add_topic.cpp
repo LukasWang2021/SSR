@@ -42,12 +42,13 @@ int main(int argc, char* argv[])
     msg.data.topic_hash = 0x12345678;
     msg.data.time_min = 100;
     msg.data.time_max = 100;
-    msg.data.element_hash_list_count = 5;
+    msg.data.element_hash_list_count = 6;
     msg.data.element_hash_list[0] = 0x0001715B;
     msg.data.element_hash_list[1] = 0x0001128B;
     msg.data.element_hash_list[2] = 0x00012FFB;
     msg.data.element_hash_list[3] = 0x00013C8B;
     msg.data.element_hash_list[4] = 0x0001472B;
+    msg.data.element_hash_list[5] = 0x0000AEAB;
 
     if (!test.generateRequestMessageType(hash_value, (void*)&msg, RequestMessageType_Topic_fields, buf, buf_size))
     {

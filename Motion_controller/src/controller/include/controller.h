@@ -29,6 +29,7 @@
 #include "motion_control.h"
 #include "reg_manager.h"
 #include "interpreter_control.h"
+#include "force_sensor.h"
 
 /**
  * @brief user_space includes the user level implementation.
@@ -148,6 +149,8 @@ private:
 
     system_model_space::ForceModel_t* force_model_ptr_;
     std::vector<system_model_space::ForceConfig_t> forces_config_;
+
+	sensors_space::ForceSensor force_sensor_;
 
     uint32_t fdb_current_time_stamp_;
 

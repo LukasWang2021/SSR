@@ -8,8 +8,10 @@
 #include <string.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <mutex>
 #endif
 
+static std::mutex sync_mutex;
 void initCommReg3(CommBlockData_t* block_ptr)
 {
     CommRegAppData3_t comm_data;
@@ -24,15 +26,22 @@ void initCommReg3(CommBlockData_t* block_ptr)
 bool setCommReg3UpdateFlag(CommBlockData_t* block_ptr, uint32_t value)
 {
     assert(block_ptr != NULL);
+    sync_mutex.lock();
     memcpy(COMM_REG3_UPDATE_FLAG_PTR, &value, sizeof(uint32_t)); //COMM_REG3_UPDATE_FLAG_PTR   <===>  ((int8_t*)(block_ptr->memory_ptr))
+    sync_mutex.unlock();
     return true;
 }
 
 bool getCommReg3UpdateFlag(CommBlockData_t* block_ptr, uint32_t* value_ptr)
 {
     assert(block_ptr != NULL);
-    memcpy(value_ptr, COMM_REG3_UPDATE_FLAG_PTR, sizeof(uint32_t));
-    return true;
+    if(sync_mutex.try_lock())
+    {
+        memcpy(value_ptr, COMM_REG3_UPDATE_FLAG_PTR, sizeof(uint32_t));
+        sync_mutex.unlock();
+        return true;
+    }
+    return false;
 }
 
 bool getCommReg3Data(CommBlockData_t* block_ptr, uint8_t* data_ptr, uint32_t* data_byte_size_ptr)

@@ -19,6 +19,13 @@
  */
 #define GROUP_NUM 1
 
+typedef enum
+{
+	GROUP_0 = 0,
+	GROUP_1 = 1,
+	GROUP_MAX = GROUP_1 + 1,
+}GroupEnum_e;
+
 /**
  * @brief The attribute of a parameter defined by bit.
  */

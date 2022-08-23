@@ -49,10 +49,25 @@ static PyObject *device_GetDIBit(PyObject *self, PyObject *args)
     return PyLong_FromUnsignedLong(return_val);//DI pin status
 }
 
+static PyObject *device_ForceValue(PyObject *self, PyObject *args)
+{
+    int id = 0;
+    double ft[6] = {0};
+
+    if (!PyArg_ParseTuple(args, "i", &id))
+        return NULL;
+
+    if(InterpDevice_GetForceValue(id, ft) != 0) 
+        return NULL;
+
+    return NULL;
+}
+
 static PyMethodDef deviceMethods[] = {
     {"GetDO",      device_GetDOBit,    METH_VARARGS, "read DO value of the index."},
     {"SetDO",      device_SetDOBit,    METH_VARARGS, "write DO value of the index."},
-    {"GetDI",      device_GetDIBit,    METH_VARARGS,  "read DI value of the index."},
+    {"GetDI",      device_GetDIBit,    METH_VARARGS, "read DI value of the index."},
+    {"ForceValue", device_ForceValue,  METH_VARARGS, "read force sensor value with the index."},
     {NULL, NULL, 0, NULL}        /* Sentinel */
 };
 

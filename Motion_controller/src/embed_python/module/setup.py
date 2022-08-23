@@ -76,6 +76,13 @@ register_module = Extension('register',
                     library_dirs = LIBRARY_DIRS + ['../../../install/lib'],
                     libraries = LIBRARIES,
                     sources = ['registermodule.cpp'])
+linealg_module = Extension('linealg',
+                    define_macros = [('MAJOR_VERSION', '1'),('MINOR_VERSION', '0')],
+                    include_dirs = INCLUDE_DIRS + ['..//include', ],
+                    library_dirs = LIBRARY_DIRS + ['../../../install/lib'],
+                    libraries = LIBRARIES,
+                    sources = ['linealgmodule.cpp'])
+
 setup(name = 'controller',
        version = '1.0',
        description = 'This pakage supply the base function to controller option.',
@@ -86,7 +93,7 @@ setup(name = 'controller',
        Axis,group,hardware devices option interfaces.
        ''',
        platforms = 'aarch64-linux-gnu',
-       ext_modules = [controller_module, group_module, device_module,register_module])
+       ext_modules = [controller_module, group_module, device_module,register_module,linealg_module])
 
 # export EXT_SUFFIX=.cpython-39-aarch64-linux-gnu.so
 

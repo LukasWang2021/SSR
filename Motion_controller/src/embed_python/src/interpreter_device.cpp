@@ -45,5 +45,8 @@ ErrorCode InterpDevice_SetDOBit(uint32_t offset, uint8_t value)
     return ret;
 }
 
-
+ErrorCode InterpDevice_GetForceValue(uint32_t id, double value[6])
+{
+    return 0;
+}
 

@@ -29,6 +29,7 @@
 #include "motion_control.h"
 #include "reg_manager.h"
 #include "interpreter_control.h"
+#include "fio_device.h"
 #include "force_sensor.h"
 
 /**
@@ -143,6 +144,7 @@ private:
     fst_ctrl::ToolManager tool_manager_;
     fst_ctrl::CoordinateManager coordinate_manager_;
     fst_ctrl::RegManager reg_manager_;
+    hal_space::FioDevice fio_device_;
     system_model_space::GroupModel_t* group_model_ptr_[GROUP_NUM];
     group_space::MotionControl* group_ptr_[GROUP_NUM];
     std::vector<system_model_space::GroupConfig_t> group_config_;

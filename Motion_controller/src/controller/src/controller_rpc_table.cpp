@@ -185,6 +185,8 @@ void ControllerRpc::initRpcTable()
     rpc_service =	{	"/rpc/reg_manager/pr/getChangedList",	0x0000B454,	&ControllerRpc::handleRpc0x0000B454	};	rpc_table_.push_back(rpc_service);
     rpc_service =	{	"/rpc/reg_manager/pr/getValidList",	0x00009354,	&ControllerRpc::handleRpc0x00009354	};	rpc_table_.push_back(rpc_service);
 
+    rpc_service =	{	"/rpc/fio_device/sendFioCmdPack",	0x0000175B,	&ControllerRpc::handleRpc0x0000175B	};	rpc_table_.push_back(rpc_service);
+
     rpc_service =	{	"/rpc/interpreter/start",	0x00006154,	&ControllerRpc::handleRpc0x00006154	};	rpc_table_.push_back(rpc_service);
     rpc_service =	{	"/rpc/interpreter/pause",	0x0000BA55,	&ControllerRpc::handleRpc0x0000BA55	};	rpc_table_.push_back(rpc_service);
     rpc_service =	{	"/rpc/interpreter/resume",	0x0000CF55,	&ControllerRpc::handleRpc0x0000CF55	};	rpc_table_.push_back(rpc_service);

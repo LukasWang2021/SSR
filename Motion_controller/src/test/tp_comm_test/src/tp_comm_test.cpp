@@ -212,10 +212,6 @@ bool TpCommTest::generateRequestMessageType(unsigned int &hash,
     buf_size = HASH_BYTE_SIZE;
 
     pb_ostream_t ostream = pb_ostream_from_buffer(buf + HASH_BYTE_SIZE, REQUEST_BUFFER_SIZE - HASH_BYTE_SIZE);
-    for(int i=0;i< 32;i++)
-    {
-        printf("%x ",*(static_cast<uint8_t *>(ostream.state)+i));
-    }
     
     bool encode_success = pb_encode(&ostream, fields, request_ptr);
     if(!encode_success) return false;

@@ -48,6 +48,7 @@ include_directories(
     ../rtm_spi/include
     ../nvram/include 
     ../reg_manager/include
+    ../fio_device/include
     ../joint_constraint/include
     ../kinematics_alg/include
     ../dynamic_alg/include
@@ -95,6 +96,7 @@ target_link_libraries(controller
     rtm_spi
     nvram_handler
     reg_manager
+    fio_device
     joint_constraint
     kinematics_alg
     dynamic_alg

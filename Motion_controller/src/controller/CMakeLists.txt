@@ -48,6 +48,7 @@ include_directories(
     ../rtm_spi/include
     ../nvram/include 
     ../reg_manager/include
+    ../foc_device/include
     ../joint_constraint/include
     ../kinematics_alg/include
     ../dynamic_alg/include
@@ -57,6 +58,7 @@ include_directories(
     ../trajectory_planner/include
     ../motion_control/include
     ../embed_python/include
+    ../sensor_process/include
     ${PROJECT_BINARY_DIR}
 	${rtm_INCLUDE_DIRS}
 )
@@ -94,6 +96,7 @@ target_link_libraries(controller
     rtm_spi
     nvram_handler
     reg_manager
+    foc_device
     joint_constraint
     kinematics_alg
     dynamic_alg
@@ -103,6 +106,7 @@ target_link_libraries(controller
     trajectory_planner
     motion_control
     embed_python
+    sensor_process
 )
 install(FILES ./config/controller.yaml 
     DESTINATION ${CONFIG_FILE_OUTPUT_PATH}/component/

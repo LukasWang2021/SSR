@@ -32,8 +32,9 @@
 #include "onlineTrj_planner.h"
 #include "given_vel_planner.h"
 
+
 #define TRAJECTORY_CACHE_SIZE     8
-#define OFFLINE_TRAJECTORY_CACHE_SIZE  512
+#define OFFLINE_TRAJECTORY_CACHE_SIZE  150// 512
 #define TRAJECTORY_LOG_CONTROL_SIZE 1024    // 1KB
 #define TRAJECTORY_LOG_DATA_SIZE 67108864   // 64MB
 
@@ -164,6 +165,7 @@ class BaseGroup
     ErrorCode convertCartToJoint(const PoseAndPosture &pose, basic_alg::Joint &joint);
     ErrorCode convertCartToJoint(const basic_alg::PoseEuler &pose, basic_alg::Joint &joint);
     ErrorCode convertJointToCart(const basic_alg::Joint &joint, basic_alg::PoseEuler &pose);
+    ErrorCode convertJointToTmx(const Joint &joint, TransMatrix &tmx);
     ErrorCode isLinearPathReachable(const IntactPoint &start, const IntactPoint &target);
 
     double decouplingAxis6ByRad(double fifth_pos, double sixth_pos);

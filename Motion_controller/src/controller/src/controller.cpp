@@ -171,7 +171,12 @@ ErrorCode Controller::init()
         LogProducer::error("main", "Controller reg manager initialization failed");
         return error_code;
     }
-
+    error_code = foc_device_.init(1);
+    if(SUCCESS != error_code)
+    {
+        LogProducer::error("main", "Controller foc_device initialization failed");
+        return error_code;
+    }
     //add axis to group according config.xml
     for (unsigned int i = 0; i < group_config_.size(); ++i)
     {
@@ -207,9 +212,14 @@ ErrorCode Controller::init()
         LogProducer::error("main", "Controller TP comm initialization failed");
         return error_code;
     }
-	publish_.init(&tp_comm_, cpu_comm_ptr_, axis_ptr_, group_ptr_, io_digital_dev_ptr_, io_safety_dev_ptr_);
-    rpc_.init(&tp_comm_, &publish_, cpu_comm_ptr_, servo_comm_ptr_, axis_ptr_, axis_model_ptr_, group_ptr_, &file_manager_, io_digital_dev_ptr_, &tool_manager_, &coordinate_manager_, &reg_manager_, force_model_ptr_);
-    if(!InterpCtrl::instance().setApi(group_ptr_,io_digital_dev_ptr_) ||
+
+    //force sensor
+	force_sensor_.init(group_ptr_, cpu_comm_ptr_, &force_model_ptr_);
+
+	publish_.init(&tp_comm_, cpu_comm_ptr_, axis_ptr_, group_ptr_, io_digital_dev_ptr_, io_safety_dev_ptr_, &force_sensor_);
+    rpc_.init(&tp_comm_, &publish_, cpu_comm_ptr_, servo_comm_ptr_, axis_ptr_, axis_model_ptr_, group_ptr_, &file_manager_, io_digital_dev_ptr_, &tool_manager_, &coordinate_manager_, &reg_manager_, &foc_device_,force_model_ptr_);
+	
+	if(!InterpCtrl::instance().setApi(group_ptr_,io_digital_dev_ptr_) ||
        !InterpCtrl::instance().init() || 
        !InterpCtrl::instance().regSyncCallback(std::bind(&MotionControl::nextMovePermitted, group_ptr_[0])))
     {
@@ -294,6 +304,7 @@ void Controller::runRoutineThreadFunc()
 	publish_.processPublish();
     uploadErrorCode();
     group_ptr_[0]->ringCommonTask();
+    foc_device_.FioHeartBeatLoopQuery();
 }
 
 void Controller::runRpcThreadFunc()

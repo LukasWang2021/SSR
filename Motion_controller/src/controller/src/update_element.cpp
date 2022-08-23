@@ -102,18 +102,11 @@ void ControllerPublish::updateIOSafetyFdb()
 
 void ControllerPublish::updateTorqueFdb()
 {
-	CommRegTorqueData_t   t_data;
-	memset(&t_data, 0, sizeof(t_data));
-	 
 	torque_fdb_.data_count = 6;
 	
-    if (cpu_comm_ptr_->getTorqueSensorData(&t_data))
-    {
-        for(size_t i = 0; i < torque_fdb_.data_count; ++i)
-        {
-           	torque_fdb_.data[i] = (double)t_data.data[i]/1024.0;
-        }
-    }
-
-	cpu_comm_ptr_->setTorqueSensorSync(NULL);
+	force_sensor_ptr_->updateSourceValue(GROUP_0, &torque_fdb_.data[0], (int)torque_fdb_.data_count);
+	
+	//force_sensor_ptr_->calibratedForceSensor(GROUP_0);
+	
+	//force_sensor_ptr_->transCalibrated2Tool(GROUP_0, &torque_fdb_.data[0], torque_fdb_.data_count);
 }

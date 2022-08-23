@@ -573,6 +573,9 @@ private:
     /********rpc/reg_manager/pr/getValidList, RequestMessageType_Int32List(count = 2) **********/	
     void handleRequest0x00009354(int recv_bytes);
 
+    /********rpc/foc_device/sendFioCmdPack, RequestMessageType_Uint32List(count = 2) **********/	
+    void handleRequest0x0000175B(int recv_bytes);
+	
     /********rpc/interpreter/start, RequestMessageType_String**********/	
     void handleRequest0x00006154(int recv_bytes);
     /********rpc/interpreter/pause, RequestMessageType_Int32**********/	
@@ -936,6 +939,9 @@ private:
     void handleResponse0x0000B454(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
     /********rpc/reg_manager/pr/getValidList, ResponseMessageType_Uint64_BaseRegSummaryList**********/	
     void handleResponse0x00009354(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    
+    /********rpc/foc_device/sendFioCmdPack, ResponseMessageType_Uint32List(count=2)**********/	
+    void handleResponse0x0000175B(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
 
     /********rpc/interpreter/start, ResponseMessageType_Uint64**********/	
     void handleResponse0x00006154(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);

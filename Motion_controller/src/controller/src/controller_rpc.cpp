@@ -38,6 +38,7 @@ void ControllerRpc::init(TpComm* tp_comm_ptr, ControllerPublish* publish_ptr, se
         system_model_space::AxisModel_t* axis_model_ptr[AXIS_NUM], group_space::MotionControl* group_ptr[GROUP_NUM],
         base_space::FileManager* file_manager_ptr, hal_space::Io1000* io_dev_ptr,
         fst_ctrl::ToolManager* tool_manager_ptr, fst_ctrl::CoordinateManager* coordinate_manager_ptr, fst_ctrl::RegManager* reg_manager_ptr,
+        hal_space::FocDevice* foc_device_ptr,
         system_model_space::ForceModel_t* force_model_ptr)
 {
     tp_comm_ptr_ = tp_comm_ptr;
@@ -60,7 +61,7 @@ void ControllerRpc::init(TpComm* tp_comm_ptr, ControllerPublish* publish_ptr, se
     tool_manager_ptr_ =  tool_manager_ptr;
     coordinate_manager_ptr_ = coordinate_manager_ptr;
     reg_manager_ptr_ = reg_manager_ptr;
-
+    foc_device_ptr_ = foc_device_ptr;
     device_version_.init();
 
     initRpcTable();

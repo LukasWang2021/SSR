@@ -110,3 +110,12 @@ void ControllerPublish::updateTorqueFdb()
 	
 	//force_sensor_ptr_->transCalibrated2Tool(GROUP_0, &torque_fdb_.data[0], torque_fdb_.data_count);
 }
+
+void ControllerPublish::updateFioInfoFdb()
+{
+	fio_info_fdb_.data_count = 2;
+	
+	fio_info_fdb_.data[0] = fio_dev_ptr_->getStatus();
+	fio_dev_ptr_->sendCmdRcvRpl(GET_ACTUAL_SPEED, 0, &fio_info_fdb_.data[1])
+}
+

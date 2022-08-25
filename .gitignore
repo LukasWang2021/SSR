@@ -1,4 +1,6 @@
 ./gitignore
+Motion_controller/src/.vs
 dll_projects/.vs
 dll_projects/tmp
 dll_projects/x64
+dll_projects/out

@@ -33,3 +33,9 @@ void* ControllerPublish::getTorqueFdbPtr()
 	return (void*)&torque_fdb_;
 }
 
+void* ControllerPublish::getFioInfoPtr()
+{
+	return (void*)&fio_info_fdb_;
+}
+
+

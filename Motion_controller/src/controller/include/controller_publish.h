@@ -22,7 +22,7 @@
 #include "io_1000.h"
 #include "io_safety.h"
 #include "force_sensor.h"
-
+#include "fio_device.h"
 /**
  * @brief user_space includes the user level implementation.
  */
@@ -57,7 +57,7 @@ public:
     void init(user_space::TpComm* tp_comm_ptr, servo_comm_space::ServoCpuCommBase* cpu_comm_ptr, 
         axis_space::Axis* axis_ptr[AXIS_NUM], group_space::MotionControl* group_ptr[GROUP_NUM], 
         hal_space::Io1000* io_dev_ptr, hal_space::IoSafety* safety_ptr,
-        sensors_space::ForceSensor* force_sensor_ptr);
+        sensors_space::ForceSensor* force_sensor_ptr, hal_space::FioDevice* fio_dev_ptr);
 
     /**
      * @brief Gets the pointer of the publishing value.
@@ -135,7 +135,8 @@ private:
     hal_space::Io1000* io_dev_ptr_;
     hal_space::IoSafety* safety_ptr_;
 	sensors_space::ForceSensor* force_sensor_ptr_;
-		
+	hal_space::FioDevice* fio_dev_ptr_;
+	
     enum {HASH_BYTE_SIZE = 4,};
     enum {QUICK_SEARCH_TABLE_SIZE = 128,};
 
@@ -161,6 +162,7 @@ private:
     MessageType_Uint32List io_digital_fdb_;
     MessageType_Uint32List io_safety_fdb_;
 	MessageType_DoubleList torque_fdb_;
+	MessageType_Uint32List fio_info_fdb_;
 
     void initPublishTable();
     void initPublishQuickSearchTable();
@@ -172,6 +174,7 @@ private:
     void* getIODigitalFdbPtr();
     void* getIOSafetyFdbPtr();
     void* getTorqueFdbPtr();
+	void* getFioInfoPtr();
 	
     // update publish element
     void updateAxisFdb();
@@ -180,6 +183,7 @@ private:
     void updateIODigitalFdb();
     void updateIOSafetyFdb();
 	void updateTorqueFdb();
+	void updateFioInfoFdb();
 };
 
 }

@@ -13,5 +13,6 @@ void ControllerPublish::initPublishTable()
     publish_service = {"/publish/io1000/io_feedback", 0x00013C8B, &ControllerPublish::getIODigitalFdbPtr, &ControllerPublish::updateIODigitalFdb}; publish_table_.push_back(publish_service);
     publish_service = {"/publish/iosafety/safety_feedback",	0x0001472B, &ControllerPublish::getIOSafetyFdbPtr, &ControllerPublish::updateIOSafetyFdb}; publish_table_.push_back(publish_service); 
 	publish_service = {"/publish/torque_feedback", 0x0000AEAB, &ControllerPublish::getTorqueFdbPtr, &ControllerPublish::updateTorqueFdb}; publish_table_.push_back(publish_service);
+	publish_service = {"/publish/fio_feedback",	0x00006EFB,	&ControllerPublish::getFioInfoPtr, &ControllerPublish::updateFioInfoFdb}; publish_table_.push_back(publish_service);
 }
 

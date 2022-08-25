@@ -972,6 +972,8 @@ private:
     void handlePublishElement0x0001472B(Comm_Publish& package, int element_index, TpPublishElement& list_element);
 	/********publish/torque_feedback, MessageType_DoubleList(count=6)**********/	
     void handlePublishElement0x0000AEAB(Comm_Publish& package, int element_index, TpPublishElement& list_element);
+	/********publish/fio_feedback, MessageType_Uint32List(count=2)**********/	
+	void handlePublishElement0x00006EFB(Comm_Publish& package, int element_index, TpPublishElement& list_element);
 
     /* response end */
     base_space::LocalIP local_ip_;

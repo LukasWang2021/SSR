@@ -1,5 +1,6 @@
 #include "controller_publish.h"
 #include "basic_alg_datatype.h"
+#include "fio_cmd.h"
 
 using namespace user_space;
 using namespace basic_alg;
@@ -113,9 +114,11 @@ void ControllerPublish::updateTorqueFdb()
 
 void ControllerPublish::updateFioInfoFdb()
 {
+    hal_space::FioStatus_u tmp_st;
 	fio_info_fdb_.data_count = 2;
 	
-	fio_info_fdb_.data[0] = fio_dev_ptr_->getStatus();
-	fio_dev_ptr_->sendCmdRcvRpl(GET_ACTUAL_SPEED, 0, &fio_info_fdb_.data[1])
+	tmp_st = fio_dev_ptr_->getStatus();
+    fio_info_fdb_.data[0] = tmp_st.all;
+	fio_dev_ptr_->sendCmdRcvRpl(GET_ACTUAL_SPEED, 0, &fio_info_fdb_.data[1]);
 }
 

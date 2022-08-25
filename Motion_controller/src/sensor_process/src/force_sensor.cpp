@@ -2,13 +2,12 @@
 #include <stdlib.h>
 #include "force_sensor.h"
 #include "rotation_matrix.h"
-#include "controller_publish.h"
 #include "common/comm_reg_3.h"
 #include "joint.h"
 #include "trans_matrix.h"
 #include "pose_euler.h"
 
-using namespace user_space;
+//using namespace user_space;
 using namespace log_space;
 using namespace group_space;
 using namespace system_model_space;

@@ -12,7 +12,7 @@ typedef enum
     DEVICE_TYPE_DIO = 1,
     DEVICE_TYPE_AIO = 2,
     DEVICE_TYPE_SAFETY = 3,
-    DEVICE_TYPE_FOC = 4
+    DEVICE_TYPE_FIO = 4
 }DeviceType;
 
 class BaseDevice

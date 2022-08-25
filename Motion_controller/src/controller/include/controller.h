@@ -135,6 +135,7 @@ private:
     std::vector<hal_space::BaseDevice*> dev_ptr_list;
     hal_space::Io1000* io_digital_dev_ptr_;
     hal_space::IoSafety* io_safety_dev_ptr_;
+    hal_space::FioDevice fio_device_;
 
     system_model_space::AxisModel_t* axis_model_ptr_[AXIS_NUM];
     axis_space::Axis* axis_ptr_[AXIS_NUM];
@@ -144,7 +145,6 @@ private:
     fst_ctrl::ToolManager tool_manager_;
     fst_ctrl::CoordinateManager coordinate_manager_;
     fst_ctrl::RegManager reg_manager_;
-    hal_space::FioDevice fio_device_;
     system_model_space::GroupModel_t* group_model_ptr_[GROUP_NUM];
     group_space::MotionControl* group_ptr_[GROUP_NUM];
     std::vector<system_model_space::GroupConfig_t> group_config_;

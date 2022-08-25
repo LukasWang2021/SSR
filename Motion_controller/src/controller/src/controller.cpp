@@ -113,6 +113,13 @@ ErrorCode Controller::init()
     }
     dev_ptr_list.push_back(io_safety_dev_ptr_);
 
+    if(!fio_device_.init(config_ptr_->fio_exist_))
+    {
+        LogProducer::error("main", "Controller fio device initialization failed");
+        return CONTROLLER_INIT_FAILED;
+    }
+    // dev_ptr_list.push_back(fio_device_);
+
     //axis init
     for (size_t i = 0; i < axes_config_.size(); ++i)
     {
@@ -171,12 +178,7 @@ ErrorCode Controller::init()
         LogProducer::error("main", "Controller reg manager initialization failed");
         return error_code;
     }
-    error_code = fio_device_.init(1);
-    if(SUCCESS != error_code)
-    {
-        LogProducer::error("main", "Controller fio_device initialization failed");
-        return error_code;
-    }
+
     //add axis to group according config.xml
     for (unsigned int i = 0; i < group_config_.size(); ++i)
     {
@@ -305,7 +307,7 @@ void Controller::runRoutineThreadFunc()
 	publish_.processPublish();
     uploadErrorCode();
     group_ptr_[0]->ringCommonTask();
-    fio_device_.FioHeartBeatLoopQuery();
+    fio_device_.updateStatus();
 }
 
 void Controller::runRpcThreadFunc()

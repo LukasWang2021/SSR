@@ -10,16 +10,17 @@
 #define TorqueSensorRegsAddr  (MMAP_BASE_ADDR+0x100)
 #define TorqueSensorBkRegsOffset 0x130
 
-#define FOC_CH1_SIZE       56   
-#define FOC_CH2_SIZE       392       
-#define FOC_DEVICE_PATH    "/dev/mem"
+#define FIO_CH1_SIZE       56   
+#define FIO_CH2_SIZE       392       
+#define FIO_DEVICE_PATH    "/dev/mem"
 
-#define FOC_STATUS_OFFSET  0x28
+#define FIO_STATUS_OFFSET  0x28
 
 
 #include "base_device.h"
+#include "common_error_code.h"
+#include <mutex>
 
-//#pragma pack(1)
 namespace hal_space
 {
 
@@ -82,6 +83,49 @@ typedef	struct {
     FioIntEn 	    int_en;;//中断使能，第[0]位：超时中断使能， 1使能，超出timeOutBase时间为收到则中断；第[1]位：接收中断使能， 1使能，收到数据后产生中断
 }FioHw;
 
+/*
+读取错误状态，type=1。返回值VALUE
+bit 0 MCU出错.LDO 3.3v 和LDO 5V 
+bit 1 TMC4671板子出错
+bit 2 保留
+bit 3 保留
+bit 4 保留
+bit 5 保留
+bit 6 MCU电压低
+bit 7 TMC4671电压低
+bit 8 DRV8302电压低
+bit 9 MCU电压高
+bit 10 TMC4671电压高
+bit 11 DRV8302电压高
+bit 12 TMC4671芯片报错
+bit 13 DRV8302报错
+bit 14 ADS8688报错
+bit 15:16 0代表停止，1代表 正在运行，2代表磨钻出错。
+其他：保留
+*/
+typedef struct
+{
+    uint32_t mcu_ldo_err:1; // adc power supply
+    uint32_t tmc_err:1;     // TMC4671(grind controller)
+    uint32_t reserved_1:4;  // reserved
+    uint32_t mcu_low_vol:1; // mcu low voltage
+    uint32_t tmc_low_vol:1; // TMC4671 low voltage
+    uint32_t drv_low_vol:1; // DRV8302(MOS driver) low voltage
+    uint32_t mcu_high_vol:1; // mcu high voltage
+    uint32_t tmc_high_vol:1; // TMC4671 high voltage
+    uint32_t drv_high_vol:1; // DRV8302 high voltage
+    uint32_t tmc_ret_err:1;  // MCU cmd to TMC return error
+    uint32_t drv_ret_err:1;  // DRV8302 return error
+    uint32_t ads_ret_err:1;  // ADS8688(force sensor ADC)
+    uint32_t grind_state:2;  // the grind motor state, 00:stopped, 01:running, 10:motor error
+    uint32_t reserved_2:15;  // reserved
+}FioStatus_b;
+
+typedef union
+{
+	uint32_t all;                          /**< Operated attribute by double word.*/
+	FioStatus_b bit;                   /**< Operated attribute by bit.*/
+}FioStatus_u;
 
 /**
  * @brief FielManager can be used to read or write a text file.
@@ -98,17 +142,26 @@ public:
      */ 
     ~FioDevice();
     virtual bool init(bool is_real);
+
 public:
     virtual ErrorCode updateStatus();
-    int FioSendCmdPack(uint32_t cmd, uint32_t val);
-    int FioRecvReplyPack(uint32_t *pktid_status_cmd, uint32_t *val);
-    bool getIsReal();
-    void heartBeatBreak();
-    void FioHeartBeatLoopQuery();
+    bool isReal() { return is_real_; }
+    // void heartBeatBreak();
+    // void FioHeartBeatLoopQuery();
+    ErrorCode sendCmdRcvRpl(uint32_t cmd, uint32_t cmd_val, uint32_t *rpl_val);
+    FioStatus_u getStatus(void) { return fio_status_; }
+
 private:
-    Device_t *fio_device_;/**< Stores the information of the share memory.*/
+    bool fioSendCmdPack(uint32_t cmd, uint32_t val);
+    bool fioRecvRplPack(uint32_t *status, uint32_t *val);
+    ErrorCode rplResult(uint32_t status);
+
+private:
+    Device_t *fio_device_;    /**< Stores the information of the share memory.*/
     bool is_real_;            /**< True indicates operating on the real device while false means no checking device.*/
-    FioHw * fio_hw_ptr;
+    FioHw * fio_hw_ptr_;
+    FioStatus_u fio_status_;
+    std::mutex fio_mutex_;
 };
 
 }

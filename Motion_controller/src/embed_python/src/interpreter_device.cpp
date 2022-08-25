@@ -1,8 +1,13 @@
 #include "interpreter_device.h"
+#include "io_1000.h"
+// #include "fio_device.h"
+
 using namespace log_space;
 
 hal_space::BaseDevice *io_dev;
-hal_space::Io1000*  io1000_dev;
+hal_space::Io1000     *io1000_dev;
+// hal_space::FioDevice  *fio_dev;
+
 bool InterpDevice_Init(hal_space::BaseDevice *dev)
 {
     io_dev =  dev; 

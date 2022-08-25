@@ -2,7 +2,6 @@
 #define INTERPRETER_DEVICE_H
 
 #include "base_device.h"
-#include "io_1000.h"
 #include "common_datatype.h"
 
 

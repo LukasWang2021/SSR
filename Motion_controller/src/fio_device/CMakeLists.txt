@@ -4,8 +4,9 @@ project(fio_device)
 include_directories(
 	include
 	../common
-	../base_device/include/
-	./fio_device/include/
+	../base_device/include
+	../log_manager/include
+	../yaml_help/include
 	${rtm_INCLUDE_DIRS}
 )
 

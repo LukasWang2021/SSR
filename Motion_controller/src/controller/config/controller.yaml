@@ -13,4 +13,5 @@ rpc_thread_priority: 55
 online_traj_thread_priority: 55 
 dio_exist: false
 safety_exist: true
+fio_exist: true
 #END

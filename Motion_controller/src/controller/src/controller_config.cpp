@@ -45,7 +45,8 @@ bool ControllerConfig::load()
         || !yaml_help_.getParam("rpc_thread_priority", rpc_thread_priority_)
         || !yaml_help_.getParam("online_traj_thread_priority", rpc_thread_priority_)
         || !yaml_help_.getParam("dio_exist", dio_exist_)
-        || !yaml_help_.getParam("safety_exist", safety_exist_))
+        || !yaml_help_.getParam("safety_exist", safety_exist_)
+        || !yaml_help_.getParam("fio_exist", fio_exist_))
     {
         return false;
     }

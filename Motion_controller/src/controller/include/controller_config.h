@@ -60,6 +60,7 @@ public:
     int online_traj_thread_priority_;  
     bool dio_exist_;
     bool safety_exist_;
+    bool fio_exist_;
 
 private:
     base_space::YamlHelp yaml_help_;

@@ -116,6 +116,23 @@ typedef unsigned long long int ErrorCode;
 #define IO_SAFETY_DEV_FRAME_ERR 0xB024
 #define IO_SAFETY_INVALID_OFFSET 0xB025
 
+#define FIO_UNKNOWN 0xC000
+#define FIO_DEVICE_CH_BUSY 0xC001
+#define FIO_DEVICE_NO_RPL 0xC002
+#define FIO_DEVICE_BUSY 0xC003
+#define FIO_CMD_CRC_ERR 0xC004
+#define FIO_CMD_INVALID 0xC005
+#define FIO_CMD_TYPE_ERR 0xC006
+#define FIO_CMD_VALUE_ERR 0xC007
+#define FIO_EEPROM_LOCKED 0xC008
+#define FIO_CMD_NOT_AVAILABLE 0xC009
+#define FIO_CMD_EXEC_FAILED 0xC00A
+#define FIO_MAX_EXCEEDED 0xC00B
+#define FIO_DOWNLOAD_NOT_POSSIBLE 0xC00C
+#define FIO_REG_WRITE_PROTECTED 0xC00D
+#define FIO_CHIP_READ_FAILED 0xC00E
+#define FIO_GET_ID_FAILED 0xC00F
+
 #define REG_MANAGER_LOG (unsigned long long int)0x0000000100A40000    /* RegManager模块日志{0} */
 #define REG_MANAGER_LOAD_PARAM_FAILED (unsigned long long int)0x0011000B00A40001    /* RegManager模块在初始化阶段载入模块参数失败 */
 #define REG_MANAGER_LOAD_PR_FAILED (unsigned long long int)0x0011000B00A40002    /* RegManager模块在初始化阶段载入Pr寄存器参数失败 */

@@ -5,13 +5,16 @@
 #include "fio_cmd.h"
 #include "fio_device.h"
 #include <stdio.h>
+#include "log_manager_producer.h"
 
 using namespace std;
 using namespace hal_space;
+using namespace log_space;
 
-FioDevice::FioDevice():BaseDevice(DEVICE_TYPE_FOC)
+FioDevice::FioDevice():
+    BaseDevice(DEVICE_TYPE_FIO)
 {
-    //init(1);
+
 }
 
 FioDevice::~FioDevice()
@@ -22,139 +25,164 @@ FioDevice::~FioDevice()
 bool FioDevice::init(bool is_real)
 {
     is_real_ = is_real;
-    fio_device_ = openDevice(FOC_DEVICE_PATH, GrindCmdRegsAddr, FOC_CH1_SIZE);
+
+    if(is_real == false)
+        return true;
+
+    fio_device_ = openDevice(FIO_DEVICE_PATH, GrindCmdRegsAddr, FIO_CH1_SIZE);
     if(fio_device_ == NULL)
     {
+        LogProducer::error("FioDevice", "open fio device failed");
         return false;
     }
-    else
-    {
-        fio_hw_ptr = (FioHw * )fio_device_->device_ptr;
-        fio_hw_ptr->status.time_out_base = 0xFFFF;
-        fio_hw_ptr->int_status.timeout = 0xFFFF;
-        fio_hw_ptr->status.cmd_trans_valid = 0;
-        return true;
-    }
+
+    fio_hw_ptr_ = (FioHw * )fio_device_->device_ptr;
+    fio_hw_ptr_->status.time_out_base = 0xFFFF;
+    memset(&(fio_hw_ptr_->int_status), 0, sizeof(FioIntStatus));
+
+    return true;
+
 }
 
-
-//默认大端存储, 字节序逆转后得到小端存储形式 
 uint16_t u16_byte_reverse(uint16_t da)
 {
-	uint16_t t1=0,t2=0;
-	t1 = (da&0x00FF)<<8;
-	t2 = (da&0xFF00)>>8;
+	uint16_t t1=0, t2=0;
+	t1 = (da & 0x00FF) << 8;
+	t2 = (da & 0xFF00) >> 8;
 	return t1+t2;
 }
+
 uint32_t u32_byte_reverse(uint32_t da)
 {
-	uint32_t b1=0,b2=0,b3=0,b4=0;
-	b1 = (da&0x000000FF)<<24;
-	b2 = (da&0x0000FF00)<<8;
-	b3 = (da&0x00FF0000)>>8;
-	b4 = (da&0xFF000000)>>24;
+	uint32_t b1=0, b2=0, b3=0, b4=0;
+	b1 = (da & 0x000000FF) << 24;
+	b2 = (da & 0x0000FF00) << 8;
+	b3 = (da & 0x00FF0000) >> 8;
+	b4 = (da & 0xFF000000) >> 24;
 	return b1+b2+b3+b4;
 }
 
-
-int FioDevice::FioSendCmdPack(uint32_t cmd, uint32_t val)
+ErrorCode FioDevice::rplResult(uint32_t status)
 {
-    int wait_cnt=0;
-	while( fio_hw_ptr->status.cmd_trans_valid==1 && wait_cnt < 1000)
+/*
+    Status              	Status对应值          说明
+    REPLY_OK                    100             返回正确
+    REPLY_CMD_LOADED    	    101             正在处理命令
+    REPLY_CHKERR            	1	            checksum错误
+    REPLY_INVALID_CMD           2	            错误命令
+    REPLY_INVALID_TYPE          3	            type值错误
+    REPLY_INVALID_VALUE         4	            value值错误
+    REPLY_EEPROM_LOCKED	        5	            eeprom锁定
+    REPLY_CMD_NOT_AVAILABLE	    6	            命令不能使用
+    REPLY_CMD_LOAD_ERROR	    7	            命令执行出错
+    REPLY_WRITE_PROTECTED   	8	            写保护
+    REPLY_MAX_EXCEEDED       	9	            最大执行
+    REPLY_DOWNLOAD_NOT_POSSIBLE	10              不能执行
+    REPLY_CHIP_READ_FAILED  	11          	芯片读取错误
+    REPLY_DELAYED	128	延迟
+*/
+    switch ((status & 0xFF00) >> 8)
     {
-        usleep(1000);
-        wait_cnt++;
+    case 100: return SUCCESS;
+    case 101: return FIO_DEVICE_BUSY;
+    case 1:   return FIO_CMD_CRC_ERR;
+    case 2:   return FIO_CMD_INVALID;
+    case 3:   return FIO_CMD_TYPE_ERR;
+    case 4:   return FIO_CMD_VALUE_ERR;
+    case 5:   return FIO_EEPROM_LOCKED;
+    case 6:   return FIO_CMD_NOT_AVAILABLE;
+    case 7:   return FIO_CMD_EXEC_FAILED;
+    case 8:   return FIO_REG_WRITE_PROTECTED;
+    case 9:   return FIO_MAX_EXCEEDED;
+    case 10:  return FIO_DOWNLOAD_NOT_POSSIBLE;
+    case 11:  return FIO_CHIP_READ_FAILED;
+    case 128: return FIO_GET_ID_FAILED;
+    default:  break;
     }
-    printf("send_wait->%d\n",wait_cnt);
-    if(wait_cnt < 1000)
-    {
-        fio_hw_ptr->cmd_regs.status = 1;
-        fio_hw_ptr->cmd_regs.tmcl_cmd = u16_byte_reverse((uint16_t)cmd);
-        fio_hw_ptr->cmd_regs.motor = 0;
-        fio_hw_ptr->cmd_regs.value = u32_byte_reverse(val);
-        //printf("cmd=%x, value=%x\n", fio_hw_ptr->cmd_regs.tmcl_cmd,fio_hw_ptr->cmd_regs.value);
-        return 0;
-    }
-    return 1;//err
+    return FIO_UNKNOWN;
 }
 
-int FioDevice::FioRecvReplyPack(uint32_t *pktid_status_cmd, uint32_t *val)
+ErrorCode FioDevice::sendCmdRcvRpl(uint32_t cmd, uint32_t cmd_val, uint32_t *rpl_val)
 {
-    int wait_cnt=0;
-    uint32_t t_pktId;
-    uint32_t t_opcode;
-    uint32_t t_status;
-    while (fio_hw_ptr->int_status.rx_interrupt == 0 && wait_cnt<1000)//没收到数据
+    if(!is_real_)
     {
-        usleep(1000);
-        wait_cnt++;
+        LogProducer::warn("FioDevice", "fio device is not exist");
+        return SUCCESS;
     }
-    /*
-    printf("recv_wait->%d\n",wait_cnt);
-    printf("cmd_reg=%llx, int_status=%llx \nint_status.rx_int=%llx, int_status.timeout=%llx\n",fio_hw_ptr->cmd_regs,fio_hw_ptr->int_status,\
-        fio_hw_ptr->int_status.rx_interrupt,fio_hw_ptr->int_status.timeout);
-    */
-    fio_hw_ptr->int_status.rx_interrupt = 0;//重置标记为没收到数据
-    if(wait_cnt < 1000)
+    fio_mutex_.lock();
+
+    if(!fioSendCmdPack(cmd, cmd_val))
     {
-        t_pktId  = fio_hw_ptr->back_regs.packet_id<<16;
-        t_status = fio_hw_ptr->back_regs.status<<8;
-        t_opcode= fio_hw_ptr->back_regs.opcode;
-        *pktid_status_cmd =  t_pktId + t_opcode + t_status;
-        *val = u32_byte_reverse(fio_hw_ptr->back_regs.value);
-        /*printf("back_reg=%llx, id=%llx, status=%llx, opcode=%llx, pktid_status_cmd=[%llx], value=%llx\n",fio_hw_ptr->back_regs,\
+        fio_mutex_.unlock();
+        return FIO_DEVICE_BUSY;
+    }
+
+    uint32_t rpl_status;
+    if(!fioRecvRplPack(&rpl_status, rpl_val))
+    {
+        fio_mutex_.unlock();
+        return FIO_DEVICE_NO_RPL;
+    }
+
+    fio_mutex_.unlock();
+
+    return rplResult(rpl_status);
+}
+
+bool FioDevice::fioSendCmdPack(uint32_t cmd, uint32_t val)
+{
+    int wait_cnt = 0;
+
+    while(wait_cnt++ < 1000)
+    {
+        if(fio_hw_ptr_->status.cmd_trans_valid == 1)
+        {
+            usleep(1000);
+            continue;
+        }
+        fio_hw_ptr_->cmd_regs.status = 1;
+        fio_hw_ptr_->cmd_regs.tmcl_cmd = u16_byte_reverse((uint16_t)cmd);
+        fio_hw_ptr_->cmd_regs.motor = 0;
+        fio_hw_ptr_->cmd_regs.value = u32_byte_reverse(val);
+        //printf("cmd=%x, value=%x\n", fio_hw_ptr_->cmd_regs.tmcl_cmd,fio_hw_ptr_->cmd_regs.value);
+        return true;
+    }
+
+    LogProducer::error("FioDevice", "fio device cmd channel is busy, send cmd failed");
+    return false;
+}
+
+bool FioDevice::fioRecvRplPack(uint32_t *status, uint32_t *val)
+{
+    int wait_cnt = 0;
+    uint32_t t_pktId = 0;
+    uint32_t t_opcode = 0;
+    uint32_t t_status = 0;
+
+    while(wait_cnt++ < 1000)
+    {
+        if(fio_hw_ptr_->int_status.rx_interrupt == 0)
+        {
+            usleep(1000);
+            continue;
+        }
+        t_pktId  = fio_hw_ptr_->back_regs.packet_id << 16;
+        t_status = fio_hw_ptr_->back_regs.status << 8;
+        t_opcode= fio_hw_ptr_->back_regs.opcode;
+        *status =  t_pktId + t_opcode + t_status;
+        *val = u32_byte_reverse(fio_hw_ptr_->back_regs.value);
+        /*printf("back_reg=%llx, id=%llx, status=%llx, opcode=%llx, pktid_status_cmd=[%llx], value=%llx\n",fio_hw_ptr_->back_regs,\
                 t_pktId,t_status,t_opcode, *pktid_status_cmd,*val);
         */
-        return 0;
+        return true;
     }
-    return 1;
-}
-
-
-
-bool FioDevice::getIsReal()
-{
-    return is_real_;
-}
-void FioDevice::heartBeatBreak()
-{
-    is_real_ = false;
-}
-
-
-void FioDevice::FioHeartBeatLoopQuery()
-{
-    int res = 0;
-    static int err_cnt=0;
-    uint32_t rep_dat1, rep_dat2;
-    if(is_real_)
-    {
-        FioSendCmdPack(38657, 0); //38657-->查询板卡状态-错误信息
-        if(res == 0)
-        {
-            res  = FioRecvReplyPack(&rep_dat1,&rep_dat2);
-            if(res==0)
-            {
-                err_cnt = 0;
-                printf("FioHeartBeatLoopQuery  dat1=0x%x, dat2=0x%x\n", rep_dat1, rep_dat2);
-            }
-            else
-            {
-                printf("FioHeartBeatLoopQuery  FioRecvReplyPack error");
-                err_cnt++;
-                if(err_cnt > 100)
-                {
-                    heartBeatBreak();
-                }
-            }
-        }
-    }
+    LogProducer::error("FioDevice", "fio device reply channel is empty, recieve data timeout");
+    return false;
 }
 
 ErrorCode FioDevice::updateStatus(void)
 {
-
-    return SUCCESS;
+    return sendCmdRcvRpl(READ_ERROR_STATE, 0, &(fio_status_.all));
 }
 
 

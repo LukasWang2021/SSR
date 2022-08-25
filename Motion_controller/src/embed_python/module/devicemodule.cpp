@@ -52,15 +52,27 @@ static PyObject *device_GetDIBit(PyObject *self, PyObject *args)
 static PyObject *device_ForceValue(PyObject *self, PyObject *args)
 {
     int id = 0;
-    double ft[6] = {0};
+    double force_val[6] = {0};
 
     if (!PyArg_ParseTuple(args, "i", &id))
         return NULL;
 
-    if(InterpDevice_GetForceValue(id, ft) != 0) 
+    if(InterpDevice_GetForceValue(id, force_val) != 0) 
         return NULL;
 
-    return NULL;
+    PyObject *ret_list = PyList_New(6);
+    if(ret_list == NULL)
+    {
+        PyErr_SetString(PyExc_OSError, "Memory alocate failed");
+        return NULL;
+    }
+
+    for(int i = 0; i < 6; ++i)
+    {
+        PyList_SET_ITEM(ret_list, i, PyFloat_FromDouble(force_val[i]));
+    }
+
+    return ret_list;
 }
 
 static PyMethodDef deviceMethods[] = {

@@ -282,6 +282,7 @@
     <ClCompile Include="app\rpc_controller.cpp" />
     <ClCompile Include="app\rpc_coord_manager.cpp" />
     <ClCompile Include="app\rpc_file_manager.cpp" />
+    <ClCompile Include="app\rpc_fio.cpp" />
     <ClCompile Include="app\rpc_group.cpp" />
     <ClCompile Include="app\rpc_interpreter.cpp" />
     <ClCompile Include="app\rpc_io.cpp" />

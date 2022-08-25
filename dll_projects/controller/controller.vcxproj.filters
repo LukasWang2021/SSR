@@ -868,6 +868,9 @@
     <ClCompile Include="protos\src\request\request_transmatrixlist.pb.c">
       <Filter>源文件\protos\request</Filter>
     </ClCompile>
+    <ClCompile Include="app\rpc_fio.cpp">
+      <Filter>源文件\app</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="Source.def">

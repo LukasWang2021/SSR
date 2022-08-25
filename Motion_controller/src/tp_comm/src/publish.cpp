@@ -67,3 +67,11 @@ void TpComm::handlePublishElement0x0000AEAB(Comm_Publish& package, int element_i
     }
 }
 
+/********publish/fio_feedback, MessageType_Uint32List(count=2)**********/	
+void TpComm::handlePublishElement0x00006EFB(Comm_Publish& package, int element_index, TpPublishElement& list_element)
+{
+	if(!encodePublishElement(package.element[element_index].data, MessageType_Uint32List_fields, list_element.data_ptr))
+    {
+        LogProducer::error("publish", "handlePublishElement0x00006EFB: failed to encode");
+    }
+}

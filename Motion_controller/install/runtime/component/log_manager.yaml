@@ -1,0 +1,8 @@
+display_enable: true
+log_enable: true
+cycle_time: 10000
+max_file_log_item: 50000          #50000 items can be log in a text file
+log_path: /root/ftp/log/
+max_log_size: 100                 #MB
+percent_log_retain: 80            #percent% will be retain if log excceed max size.
+#END

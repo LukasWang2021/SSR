@@ -127,6 +127,13 @@ typedef union
 	FioStatus_b bit;                   /**< Operated attribute by bit.*/
 }FioStatus_u;
 
+typedef struct
+{
+	uint32_t grind_speed; // grinder's speed
+    // ....
+}FioTopicVal_t;
+
+
 /**
  * @brief FielManager can be used to read or write a text file.
  */
@@ -150,6 +157,7 @@ public:
     // void FioHeartBeatLoopQuery();
     ErrorCode sendCmdRcvRpl(uint32_t cmd, uint32_t cmd_val, uint32_t *rpl_val);
     FioStatus_u getStatus(void) { return fio_status_; }
+    FioTopicVal_t getTopicVal(void) { return fio_topic_; }
 
 private:
     bool fioSendCmdPack(uint32_t cmd, uint32_t val);
@@ -161,6 +169,7 @@ private:
     bool is_real_;            /**< True indicates operating on the real device while false means no checking device.*/
     FioHw * fio_hw_ptr_;
     FioStatus_u fio_status_;
+    FioTopicVal_t fio_topic_;
     std::mutex fio_mutex_;
 };
 

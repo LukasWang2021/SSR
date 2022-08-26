@@ -79,7 +79,7 @@ ErrorCode FioDevice::rplResult(uint32_t status)
     REPLY_MAX_EXCEEDED       	9	            最大执行
     REPLY_DOWNLOAD_NOT_POSSIBLE	10              不能执行
     REPLY_CHIP_READ_FAILED  	11          	芯片读取错误
-    REPLY_DELAYED	128	延迟
+    REPLY_DELAYED	            128	            延迟
 */
     switch ((status & 0xFF00) >> 8)
     {
@@ -171,9 +171,12 @@ bool FioDevice::fioRecvRplPack(uint32_t *status, uint32_t *val)
         t_opcode= fio_hw_ptr_->back_regs.opcode;
         *status =  t_pktId + t_opcode + t_status;
         *val = u32_byte_reverse(fio_hw_ptr_->back_regs.value);
-        /*printf("back_reg=%llx, id=%llx, status=%llx, opcode=%llx, pktid_status_cmd=[%llx], value=%llx\n",fio_hw_ptr_->back_regs,\
-                t_pktId,t_status,t_opcode, *pktid_status_cmd,*val);
-        */
+    
+        // LogProducer::error("FioDevice", "back_reg=%llx, id=%llx, status=%llx, opcode=%llx, pktid_status_cmd=[%llx], value=%llx", 
+        // fio_hw_ptr_->back_regs, t_pktId, t_status, t_opcode, *status,*val);
+
+        fio_hw_ptr_->int_status.rx_interrupt = 0;
+        fio_hw_ptr_->int_status.timeout = 0;
         return true;
     }
     LogProducer::error("FioDevice", "fio device reply channel is empty, recieve data timeout");
@@ -182,7 +185,13 @@ bool FioDevice::fioRecvRplPack(uint32_t *status, uint32_t *val)
 
 ErrorCode FioDevice::updateStatus(void)
 {
-    return sendCmdRcvRpl(READ_ERROR_STATE, 0, &(fio_status_.all));
+    if(!is_real_) return SUCCESS;
+
+    ErrorCode err = sendCmdRcvRpl(READ_ERROR_STATE, 0, &(fio_status_.all));
+    if(err) return err;
+
+    err = sendCmdRcvRpl(GET_ACTUAL_SPEED, 0, &(fio_topic_.grind_speed));
+    return err;
 }
 
 

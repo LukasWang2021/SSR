@@ -48,6 +48,7 @@ INCLUDE_DIRS = [CROSS_ROOT + "/usr/include",
               "../../coordinate_manager/include",
               "../../tool_manager/include",
               "../../group/include",
+              "../../sensor_process/include",
               "../../motion_control/include",]
 
 

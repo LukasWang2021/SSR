@@ -75,7 +75,3 @@ void TpComm::handlePublishElement0x00006EFB(Comm_Publish& package, int element_i
         LogProducer::error("publish", "handlePublishElement0x00006EFB: failed to encode");
     }
 }
-<<<<<<< Updated upstream
-=======
-
->>>>>>> Stashed changes

@@ -24,7 +24,7 @@ static PyObject *linealg_Inverse(PyObject *self, PyObject *args)
     {
         return NULL;
     }
-    if (view.ndim != 1 || *(view.shape) != *(view.strides))
+    if (view.ndim <= 1 || *(view.shape) != *(view.strides))
     {
         char err_str[128];
         sprintf(err_str, "Invalid array shape[%d,%d]", (int)view.shape[0], (int)view.strides[0]);

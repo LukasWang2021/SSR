@@ -18,7 +18,8 @@
 #include <pthread.h>
 #include "sem_help.h"
 #include "motion_control.h"
-#include "io_1000.h"
+#include "base_device.h"
+#include "force_sensor.h"
 
 typedef uint64_t interpid_t;
 
@@ -69,7 +70,13 @@ public:
     // initialization, pls init api before init
     // bool setApi(axis_space::Axis **axis_ptr);
     bool init(void);
-    bool setApi(group_space::MotionControl **group_ptr, hal_space::BaseDevice *io_ptr);
+    bool setApi
+    (
+        group_space::MotionControl **group_ptr, 
+        std::vector<hal_space::BaseDevice *> io_ptr, 
+        sensors_space::ForceSensor *force_sn_ptr
+    );
+
     bool run(void);
 
     ErrorCode startNewFile(std::string file, bool in_real_thread=true);

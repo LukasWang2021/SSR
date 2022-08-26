@@ -22,8 +22,12 @@
 #include "error_queue.h"
 #include "interpreter_group.h"
 
+using namespace std;
 using namespace log_space;
 using namespace base_space;
+using namespace hal_space;
+using namespace group_space;
+using namespace sensors_space;
 
 // self instance definition
 InterpCtrl InterpCtrl::interp_ctrl_;
@@ -53,7 +57,12 @@ InterpCtrl::~InterpCtrl()
     // }
 }
 
-bool InterpCtrl::setApi(group_space::MotionControl **group_ptr, hal_space::BaseDevice *io_ptr)
+bool InterpCtrl::setApi
+(
+    MotionControl **group_ptr, 
+    vector<BaseDevice *> io_ptr,
+    ForceSensor *force_sn_ptr
+)
 {
     if(group_ptr == NULL)
     {
@@ -61,7 +70,7 @@ bool InterpCtrl::setApi(group_space::MotionControl **group_ptr, hal_space::BaseD
         return false;
     }
     InterpGroup_Init(group_ptr);
-    InterpDevice_Init(io_ptr);
+    InterpDevice_Init(io_ptr, force_sn_ptr);
     InterpReg_Init();
     return true;
 }

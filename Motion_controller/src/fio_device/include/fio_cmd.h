@@ -26,8 +26,8 @@ typedef enum
     READ_EEPROM_ID                 = 0x4100, // 读取EEPROM内的ID
     WRITE_EEPROM_ID                = 0x4200, // 将ID写入EEPROM
     READ_VERSION                   = 0x8800, // 读取版本号
-    WRITE_TMC4671_REG              = 0x9200, // + OFFSET[0~125] 将VALUE写入TMC4671的寄存器
-    READ_TMC4671_REG               = 0x9400, // + OFFSET[0~125] 读取TMC4671的寄存器
+    WRITE_TMC4671_REG              = 0x9200, // 0x9200 + OFFSET[0~125] 将VALUE写入TMC4671的寄存器[0-125]
+    READ_TMC4671_REG               = 0x9400, // 0x9400 + OFFSET[0~125] 读取TMC4671的寄存器[0-125]
     READ_ERROR_STATE               = 0x9701, // 读取错误状态
     REBOOT_TMC4671                 = 0x9800, // 重启板卡部件TMC4671
     REBOOT_DRV8302                 = 0x9801, // 重启板卡部件通道DRV8302

@@ -49,7 +49,7 @@ static PyObject *device_GetDIBit(PyObject *self, PyObject *args)
     return PyLong_FromUnsignedLong(return_val);//DI pin status
 }
 
-static PyObject *device_ForceValue(PyObject *self, PyObject *args)
+static PyObject *device_ForceRawValue(PyObject *self, PyObject *args)
 {
     int id = 0;
     double force_val[6] = {0};
@@ -57,7 +57,7 @@ static PyObject *device_ForceValue(PyObject *self, PyObject *args)
     if (!PyArg_ParseTuple(args, "i", &id))
         return NULL;
 
-    if(InterpDevice_GetForceValue(id, force_val) != 0) 
+    if(InterpDevice_GetForceRawValue(id, force_val) != 0) 
         return NULL;
 
     PyObject *ret_list = PyList_New(6);
@@ -75,11 +75,54 @@ static PyObject *device_ForceValue(PyObject *self, PyObject *args)
     return ret_list;
 }
 
+static PyObject *device_ForceCalibValue(PyObject *self, PyObject *args)
+{
+    int id = 0;
+    double force_val[6] = {0};
+
+    if (!PyArg_ParseTuple(args, "i", &id))
+        return NULL;
+
+    if(InterpDevice_GetForceRawValue(id, force_val) != 0) 
+        return NULL;
+
+    PyObject *ret_list = PyList_New(6);
+    if(ret_list == NULL)
+    {
+        PyErr_SetString(PyExc_OSError, "Memory alocate failed");
+        return NULL;
+    }
+
+    for(int i = 0; i < 6; ++i)
+    {
+        PyList_SET_ITEM(ret_list, i, PyFloat_FromDouble(force_val[i]));
+    }
+
+    return ret_list;
+}
+
+static PyObject *device_FioCtrl(PyObject *self, PyObject *args)
+{
+    uint32_t cmd_type = 0;
+    uint32_t cmd_value = 0;
+    uint32_t cmd_result = 0;
+
+    if (!PyArg_ParseTuple(args, "ii", &cmd_type, &cmd_value))
+        return PyLong_FromUnsignedLong(0);
+
+    if(InterpDevice_FioControl(cmd_type, cmd_value, &cmd_result) != 0) 
+        return PyLong_FromUnsignedLong(0);
+
+    return PyLong_FromUnsignedLong(cmd_result);
+}
+
 static PyMethodDef deviceMethods[] = {
-    {"GetDO",      device_GetDOBit,    METH_VARARGS, "read DO value of the index."},
-    {"SetDO",      device_SetDOBit,    METH_VARARGS, "write DO value of the index."},
-    {"GetDI",      device_GetDIBit,    METH_VARARGS, "read DI value of the index."},
-    {"ForceValue", device_ForceValue,  METH_VARARGS, "read force sensor value with the index."},
+    {"GetDO",      device_GetDOBit,       METH_VARARGS, "read DO value of the index."},
+    {"SetDO",      device_SetDOBit,       METH_VARARGS, "write DO value of the index."},
+    {"GetDI",      device_GetDIBit,       METH_VARARGS, "read DI value of the index."},
+    {"ForceRawValue",   device_ForceRawValue,  METH_VARARGS, "read force sensor raw value with the index."},
+    {"ForceCalibValue", device_ForceCalibValue,METH_VARARGS, "read force sensor calibrated value with the index."},
+    {"FioCtrl",    device_FioCtrl,        METH_VARARGS, "FIO device control set/get use specified cmd."},
     {NULL, NULL, 0, NULL}        /* Sentinel */
 };
 

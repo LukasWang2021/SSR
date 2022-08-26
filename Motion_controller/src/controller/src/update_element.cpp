@@ -115,10 +115,13 @@ void ControllerPublish::updateTorqueFdb()
 void ControllerPublish::updateFioInfoFdb()
 {
     hal_space::FioStatus_u tmp_st;
+    hal_space::FioTopicVal_t tmp_sub;
+
 	fio_info_fdb_.data_count = 2;
 	
 	tmp_st = fio_dev_ptr_->getStatus();
     fio_info_fdb_.data[0] = tmp_st.all;
-	fio_dev_ptr_->sendCmdRcvRpl(GET_ACTUAL_SPEED, 0, &fio_info_fdb_.data[1]);
+    tmp_sub = fio_dev_ptr_->getTopicVal();
+    fio_info_fdb_.data[1] = tmp_sub.grind_speed;
 }
 

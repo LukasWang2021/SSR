@@ -16,6 +16,7 @@ ErrorCode InterpDevice_GetDOBit(uint32_t offset, uint8_t &value);
 ErrorCode InterpDevice_SetDOBit(uint32_t offset, uint8_t value);
 ErrorCode InterpDevice_GetForceRawValue(uint32_t id, double value[6]);
 ErrorCode InterpDevice_GetForceCalibValue(uint32_t id, double value[6]);
+ErrorCode InterpDevice_ReloadForceParam(uint32_t id);
 ErrorCode InterpDevice_FioControl(uint32_t cmd_type, uint32_t cmd_value, uint32_t *cmd_result);
 
 #ifdef __cplusplus

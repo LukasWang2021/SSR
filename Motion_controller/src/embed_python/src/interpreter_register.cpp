@@ -21,7 +21,7 @@ ErrorCode InterpReg_GetRR(int id, RegValue *val)
     RValue value;
     memset(&value,0,sizeof(RValue));
 
-    if(!InterpCtrl::instance().runSyncCallback())
+    if(!InterpCtrl::instance().runExecSyncCallback())
         return INTERPRETER_ERROR_SYNC_CALL_FAILED;
 
     reg_manager.getRRegValueById(id, value);
@@ -35,7 +35,7 @@ ErrorCode InterpReg_SetRR(int id, RegValue *val)
     RRegDataIpc data;
     data.id = id;
     data.value.value = val->rr;
-    if(!InterpCtrl::instance().runSyncCallback())
+    if(!InterpCtrl::instance().runExecSyncCallback())
         return INTERPRETER_ERROR_SYNC_CALL_FAILED;
 
     reg_manager.updateRRegValue(&data);
@@ -48,7 +48,7 @@ ErrorCode InterpReg_GetSR(int id, RegValue *val)
     SrValue value;
     memset(&value,0,sizeof(SrValue));
 
-    if(!InterpCtrl::instance().runSyncCallback())
+    if(!InterpCtrl::instance().runExecSyncCallback())
         return INTERPRETER_ERROR_SYNC_CALL_FAILED;
 
     reg_manager.getSrRegValueById(id, value);
@@ -62,7 +62,7 @@ ErrorCode InterpReg_SetSR(int id, RegValue *val)
     SrRegDataIpc data;
     data.id = id;
     memcpy(data.value.value, val->sr, STRING_REG_MAX_LENGTH);
-    if(!InterpCtrl::instance().runSyncCallback())
+    if(!InterpCtrl::instance().runExecSyncCallback())
         return INTERPRETER_ERROR_SYNC_CALL_FAILED;
 
     //printf("===>1 enter InterpReg_SetSR,  SrRegDataIpc->id=%d, SrRegDataIpc->data->data = %s\n",id,data.value.value);
@@ -75,7 +75,7 @@ ErrorCode InterpReg_GetMR(int id, RegValue *val)
 {
     MrValue value;
     memset(&value,0,sizeof(MrValue));
-    if(!InterpCtrl::instance().runSyncCallback())
+    if(!InterpCtrl::instance().runExecSyncCallback())
         return INTERPRETER_ERROR_SYNC_CALL_FAILED;
 
     reg_manager.getMrRegValueById(id, value);
@@ -89,7 +89,7 @@ ErrorCode InterpReg_SetMR(int id, RegValue *val)
     MrRegDataIpc data;
     data.id = id;
     data.value.value = val->mr;
-    if(!InterpCtrl::instance().runSyncCallback())
+    if(!InterpCtrl::instance().runExecSyncCallback())
         return INTERPRETER_ERROR_SYNC_CALL_FAILED;
 
     reg_manager.updateMrRegValue(&data);
@@ -100,7 +100,7 @@ ErrorCode InterpReg_SetMR(int id, RegValue *val)
 ErrorCode InterpReg_GetPR(int id, RegValue *val)
 {
     PrValue value;
-    if(!InterpCtrl::instance().runSyncCallback())
+    if(!InterpCtrl::instance().runExecSyncCallback())
         return INTERPRETER_ERROR_SYNC_CALL_FAILED;
 
     reg_manager.getPrRegValueById(id, value);
@@ -137,7 +137,7 @@ ErrorCode InterpReg_GetPR(int id, RegValue *val)
 ErrorCode InterpReg_SetPR(int id, RegValue *val)
 {
     PrRegDataIpc data;
-    if(!InterpCtrl::instance().runSyncCallback())
+    if(!InterpCtrl::instance().runExecSyncCallback())
         return INTERPRETER_ERROR_SYNC_CALL_FAILED;
 
     LogProducer::info("InterpReg", "set P register[%d] coord:%d,group:%d," \

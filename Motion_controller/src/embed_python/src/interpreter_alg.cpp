@@ -5,8 +5,7 @@ using namespace basic_alg;
 
 ErrorCode InterpLinealg_Inverse(const double *p_matrix, int dim, double *p_inv)
 {
-    if(inverse(p_matrix, dim, p_inv)) return 0;
-
+    if(inverse(p_matrix, dim, p_inv)) return SUCCESS;
 
     return -1;
 }

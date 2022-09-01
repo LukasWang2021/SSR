@@ -21,6 +21,7 @@
 #include "interpreter_embed.h"
 #include "error_queue.h"
 #include "interpreter_group.h"
+#include "interpreter_sysmodel.h"
 
 using namespace std;
 using namespace log_space;
@@ -28,6 +29,8 @@ using namespace base_space;
 using namespace hal_space;
 using namespace group_space;
 using namespace sensors_space;
+using namespace system_model_space;
+
 
 // self instance definition
 InterpCtrl InterpCtrl::interp_ctrl_;
@@ -42,7 +45,7 @@ InterpCtrl::InterpCtrl(/* args */)
     curr_state_ = INTERP_STATE_IDLE;
     is_exit_ = false;
     index_ = 0;
-    sync_callbacks_.clear();
+    exec_sync_callbacks_.clear();
 }
 
 InterpCtrl::~InterpCtrl()
@@ -61,7 +64,8 @@ bool InterpCtrl::setApi
 (
     MotionControl **group_ptr, 
     vector<BaseDevice *> io_ptr,
-    ForceSensor *force_sn_ptr
+    ForceSensor *force_sn_ptr,
+    SystemModelManager *model_manager_ptr
 )
 {
     if(group_ptr == NULL)
@@ -72,6 +76,7 @@ bool InterpCtrl::setApi
     InterpGroup_Init(group_ptr);
     InterpDevice_Init(io_ptr, force_sn_ptr);
     InterpReg_Init();
+    InterpSysModel_Init(model_manager_ptr);
     return true;
 }
 
@@ -310,19 +315,19 @@ ErrorCode InterpCtrl::jumpLine(interpid_t id, int line)
     return ret;
 }
 
-bool InterpCtrl::regSyncCallback(const SyncCallback& callback)
+bool InterpCtrl::regExecSyncCallback(const SyncCallback& callback)
 {
     if(curr_state_ != INTERP_STATE_IDLE) return false;
 
-    sync_callbacks_.push_back(callback);
+    exec_sync_callbacks_.push_back(callback);
     return true;
 }
 
-bool InterpCtrl::runSyncCallback(interpid_t id)
+bool InterpCtrl::runExecSyncCallback(interpid_t id)
 {
-    LogProducer::info("interpctrl", "start sync calls all %d functions", sync_callbacks_.size());
-    auto it = sync_callbacks_.begin();
-    for(int i = 0; it != sync_callbacks_.end(); ++it, ++i)
+    LogProducer::info("interpctrl", "start sync calls all %d functions", exec_sync_callbacks_.size());
+    auto it = exec_sync_callbacks_.begin();
+    for(int i = 0; it != exec_sync_callbacks_.end(); ++it, ++i)
     {
         LogProducer::info("interpctrl", "call sync function %d", i);
         while(!(*it)()) // motion control nextMovePerimit
@@ -393,7 +398,7 @@ ErrorCode InterpCtrl::startNewFunc(void *pyfunc, bool in_real_thread)
 
 ErrorCode InterpCtrl::delay(double seconds)
 {
-    if(!runSyncCallback())
+    if(!runExecSyncCallback())
         return INTERPRETER_ERROR_SYNC_CALL_FAILED;
 
     uint32_t delay_time = (uint32_t)(seconds * 1000 * 1000);

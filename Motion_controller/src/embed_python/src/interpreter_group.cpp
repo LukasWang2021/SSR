@@ -150,7 +150,7 @@ ErrorCode InterpGroup_MoveJoint(int gid, MoveTrajInfo *traj)
     if(!trajInfo2MoveInst(traj))
         return INTERPRETER_ERROR_TRAJ_INFO_INVALID;
 
-    if(!InterpCtrl::instance().runSyncCallback())
+    if(!InterpCtrl::instance().runExecSyncCallback())
         return INTERPRETER_ERROR_SYNC_CALL_FAILED;
 
     LogProducer::info("interpgroup", "move joint");
@@ -166,7 +166,7 @@ ErrorCode InterpGroup_MoveLiner(int gid, MoveTrajInfo *traj)
     if(!trajInfo2MoveInst(traj))
         return INTERPRETER_ERROR_TRAJ_INFO_INVALID;
 
-    if(!InterpCtrl::instance().runSyncCallback())
+    if(!InterpCtrl::instance().runExecSyncCallback())
         return INTERPRETER_ERROR_SYNC_CALL_FAILED;
 
     LogProducer::info("interpgroup", "move liner");
@@ -182,7 +182,7 @@ ErrorCode InterpGroup_MoveCircl(int gid, MoveTrajInfo *traj)
     if(!trajInfo2MoveInst(traj))
         return INTERPRETER_ERROR_TRAJ_INFO_INVALID;
 
-    if(!InterpCtrl::instance().runSyncCallback())
+    if(!InterpCtrl::instance().runExecSyncCallback())
         return INTERPRETER_ERROR_SYNC_CALL_FAILED;
 
     LogProducer::info("interpgroup", "move circle");
@@ -195,7 +195,7 @@ ErrorCode InterpGroup_SetOVC(int gid, double val)
     ErrorCode ret = 0;
     mv_inst_->type = SET_OVC;
     mv_inst_->ovc = val;
-    if(!InterpCtrl::instance().runSyncCallback())
+    if(!InterpCtrl::instance().runExecSyncCallback())
         return INTERPRETER_ERROR_SYNC_CALL_FAILED;
     LogProducer::info("interpgroup", "set ovc %f", mv_inst_->ovc);
     ret = group_ptr_[gid]->autoMove(*mv_inst_);
@@ -207,7 +207,7 @@ ErrorCode InterpGroup_SetOAC(int gid, double val)
     ErrorCode ret = 0;
     mv_inst_->type = SET_OAC;
     mv_inst_->oac = val;
-    if(!InterpCtrl::instance().runSyncCallback())
+    if(!InterpCtrl::instance().runExecSyncCallback())
         return INTERPRETER_ERROR_SYNC_CALL_FAILED;
     LogProducer::info("interpgroup", "set oac %f", mv_inst_->oac);
     ret = group_ptr_[gid]->autoMove(*mv_inst_);
@@ -219,7 +219,7 @@ ErrorCode InterpGroup_SetPLD(int gid, int val)
     ErrorCode ret = 0;
     mv_inst_->type = SET_PAYLOAD;
     mv_inst_->payload_id = val;
-    if(!InterpCtrl::instance().runSyncCallback())
+    if(!InterpCtrl::instance().runExecSyncCallback())
         return INTERPRETER_ERROR_SYNC_CALL_FAILED;
     LogProducer::info("interpgroup", "set payload %d", mv_inst_->payload_id);
     ret = group_ptr_[gid]->autoMove(*mv_inst_);
@@ -231,7 +231,7 @@ ErrorCode InterpGroup_SetUF(int gid, int val)
     ErrorCode ret = 0;
     mv_inst_->type = SET_UF;
     mv_inst_->uf_id = val;
-    if(!InterpCtrl::instance().runSyncCallback())
+    if(!InterpCtrl::instance().runExecSyncCallback())
         return INTERPRETER_ERROR_SYNC_CALL_FAILED;
     LogProducer::info("interpgroup", "set uf %d", mv_inst_->uf_id);
     ret = group_ptr_[gid]->autoMove(*mv_inst_);
@@ -243,7 +243,7 @@ ErrorCode InterpGroup_SetTF(int gid, int val)
     ErrorCode ret = 0;
     mv_inst_->type = SET_TF;
     mv_inst_->tf_id = val;
-    if(!InterpCtrl::instance().runSyncCallback())
+    if(!InterpCtrl::instance().runExecSyncCallback())
         return INTERPRETER_ERROR_SYNC_CALL_FAILED;
     LogProducer::info("interpgroup", "set tf %d", mv_inst_->tf_id);
     ret = group_ptr_[gid]->autoMove(*mv_inst_);

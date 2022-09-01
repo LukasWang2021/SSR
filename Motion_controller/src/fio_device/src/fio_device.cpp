@@ -109,31 +109,39 @@ ErrorCode FioDevice::sendCmdRcvRpl(uint32_t cmd, uint32_t cmd_val, uint32_t *rpl
         LogProducer::warn("FioDevice", "fio device is not exist");
         return SUCCESS;
     }
+
     fio_mutex_.lock();
 
-    if(!fioSendCmdPack(cmd, cmd_val))
-    {
-        fio_mutex_.unlock();
-        return FIO_DEVICE_BUSY;
-    }
+    int32_t retry_cnt = 0; // max try for 3 times
+    uint32_t rpl_status = 0;
+    ErrorCode err_ret = SUCCESS;
 
-    uint32_t rpl_status;
-    if(!fioRecvRplPack(&rpl_status, rpl_val))
+    do
     {
-        fio_mutex_.unlock();
-        return FIO_DEVICE_NO_RPL;
-    }
+        err_ret = SUCCESS;
+        if(!fioSendCmdPack(cmd, cmd_val))
+        {
+            err_ret = FIO_DEVICE_BUSY;
+            continue;
+        }
+
+        if(!fioRecvRplPack(&rpl_status, rpl_val))
+        {
+            err_ret = FIO_DEVICE_NO_RPL;
+        }
+        LogProducer::debug("FioDevice", "fio device cmd tried for %d times", retry_cnt+1);
+    } while(err_ret != SUCCESS && retry_cnt++ < 3);
 
     fio_mutex_.unlock();
 
-    return rplResult(rpl_status);
+    return err_ret ? err_ret : rplResult(rpl_status);
 }
 
 bool FioDevice::fioSendCmdPack(uint32_t cmd, uint32_t val)
 {
     int wait_cnt = 0;
 
-    while(wait_cnt++ < 1000)
+    while(wait_cnt++ < 100)
     {
         if(fio_hw_ptr_->status.cmd_trans_valid == 1)
         {
@@ -159,7 +167,7 @@ bool FioDevice::fioRecvRplPack(uint32_t *status, uint32_t *val)
     uint32_t t_opcode = 0;
     uint32_t t_status = 0;
 
-    while(wait_cnt++ < 1000)
+    while(wait_cnt++ < 100)
     {
         if(fio_hw_ptr_->int_status.rx_interrupt == 0)
         {
@@ -188,9 +196,11 @@ ErrorCode FioDevice::updateStatus(void)
     if(!is_real_) return SUCCESS;
 
     ErrorCode err = sendCmdRcvRpl(READ_ERROR_STATE, 0, &(fio_status_.all));
-    if(err) return err;
+     // mcu handle recieve for 700us and others options all may coast about 1ms
+    if(err) return err; else usleep(2000);
 
     err = sendCmdRcvRpl(GET_ACTUAL_SPEED, 0, &(fio_topic_.grind_speed));
+
     return err;
 }
 

@@ -101,6 +101,20 @@ static PyObject *device_ForceCalibValue(PyObject *self, PyObject *args)
     return ret_list;
 }
 
+static PyObject *device_ForceReloadParam(PyObject *self, PyObject *args)
+{
+    int id = 0;
+    ErrorCode err = SUCCESS;
+
+    if (!PyArg_ParseTuple(args, "i", &id))
+        return PyLong_FromUnsignedLong(INTERPRETER_ERROR_MOD_INVALID_ARG);
+
+    if((err = InterpDevice_ReloadForceParam(id)) != 0) 
+        return PyLong_FromUnsignedLong(err);
+
+    return PyLong_FromUnsignedLong(err);
+}
+
 static PyObject *device_FioCtrl(PyObject *self, PyObject *args)
 {
     uint32_t cmd_type = 0;
@@ -120,8 +134,9 @@ static PyMethodDef deviceMethods[] = {
     {"GetDO",      device_GetDOBit,       METH_VARARGS, "read DO value of the index."},
     {"SetDO",      device_SetDOBit,       METH_VARARGS, "write DO value of the index."},
     {"GetDI",      device_GetDIBit,       METH_VARARGS, "read DI value of the index."},
-    {"ForceRawValue",   device_ForceRawValue,  METH_VARARGS, "read force sensor raw value with the index."},
-    {"ForceCalibValue", device_ForceCalibValue,METH_VARARGS, "read force sensor calibrated value with the index."},
+    {"ForceRawValue",    device_ForceRawValue,    METH_VARARGS, "read force sensor raw value with the index."},
+    {"ForceCalibValue",  device_ForceCalibValue,  METH_VARARGS, "read force sensor calibrated value with the index."},
+    {"ForceReloadParam", device_ForceReloadParam, METH_VARARGS, "read force sensor calibrated value with the index."},
     {"FioCtrl",    device_FioCtrl,        METH_VARARGS, "FIO device control set/get use specified cmd."},
     {NULL, NULL, 0, NULL}        /* Sentinel */
 };

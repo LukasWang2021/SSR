@@ -13,117 +13,94 @@ static PyObject *LinealgModuleError;
 
 static PyObject *linealg_Inverse(PyObject *self, PyObject *args)
 {
-    PyObject *bufobj = NULL; // recieve an array object
-    Py_buffer view;
+    PyObject *list;
 
-    if (!PyArg_ParseTuple(args, "O", bufobj))
+    if (!PyArg_ParseTuple(args, "O", &list))
+        return NULL;
+
+    Py_ssize_t len_r = PyList_GET_SIZE(list);
+    if(len_r <= 1)
+    {
+        PyErr_SetString(PyExc_TypeError, "Invalid matrix dimension");
+        return NULL;
+    }
+
+    Py_ssize_t len_c = 0;
+    double *p_mat = (double *)malloc(sizeof(double) * len_r * len_r);
+    if(p_mat == NULL)
+    {
+        PyErr_SetString(PyExc_OSError, "Memoey allocate failed for current matrix");
+        return NULL;
+    }
+
+    for(Py_ssize_t i = 0; i < len_r; ++i)
+    {
+        PyObject *v = PyList_GET_ITEM(list, i);
+        len_c = PyList_GET_SIZE(v);
+        if(len_c != len_r)
+        {
+            PyErr_SetString(PyExc_TypeError, "Invalid matrix shape");
             return NULL;
+        }
+        for(Py_ssize_t j = 0; j < len_c; ++j)
+        {
+            p_mat[i * len_r + j] = PyFloat_AS_DOUBLE(PyList_GET_ITEM(v, j));
+            // printf("#%lf ", p_mat[i * len_r + j]);
+        }
+        // printf("\n");
+    }
 
-    /* Attempt to extract buffer information from it */
-    if (PyObject_GetBuffer(bufobj, &view, PyBUF_ANY_CONTIGUOUS | PyBUF_FORMAT) == -1)
+    double *p_inv = (double *)malloc(sizeof(double) * len_r * len_r);
+    if(p_inv == NULL)
     {
-        return NULL;
-    }
-    if (view.ndim <= 1 || *(view.shape) != *(view.strides))
-    {
-        char err_str[128];
-        sprintf(err_str, "Invalid array shape[%d,%d]", (int)view.shape[0], (int)view.strides[0]);
-        PyErr_SetString(PyExc_TypeError, err_str);
-        PyBuffer_Release(&view);
-        return NULL;
-    }
-    /* Check the type of items in the array */
-    if (strcmp(view.format, "d") != 0)
-    {
-        PyErr_SetString(PyExc_TypeError, "Expected an array of doubles");
-        PyBuffer_Release(&view);
+        PyErr_SetString(PyExc_OSError, "Memoey allocate failed for inverse matrix");
         return NULL;
     }
 
-    double *p_inv = (double *)malloc(sizeof(double) * view.ndim * view.ndim);
-    if(p_inv == NULL) return NULL;
-
-    if(InterpLinealg_Inverse((double *)(view.buf), view.ndim, p_inv) != 0)
+    if(InterpLinealg_Inverse(p_mat, len_r, p_inv) != 0)
+    {
+        PyErr_SetString(PyExc_OSError, "Calculate matrix inverse failed");
         return NULL;
+    }
 
     PyObject *ret_list = PyList_New(0);
-    PyObject *list_item = PyList_New(view.ndim);
-    if(ret_list == NULL || list_item ==NULL)
+    if(ret_list == NULL)
     {
-        PyErr_SetString(PyExc_OSError, "Memory alocate failed");
+        PyErr_SetString(PyExc_OSError, "Memory alocate failed for result list");
         return NULL;
     }
 
-    for(int i = 0; i < view.ndim; ++i)
+    for(int i = 0; i < len_r; ++i)
     {
-        for(int j = 0; j < view.ndim; ++j)
+        PyObject *list_item = PyList_New(len_c);
+        if(ret_list == NULL)
         {
-            PyList_SET_ITEM(list_item, j, PyFloat_FromDouble(p_inv[i * view.ndim + j]));
-        }
-        if(PyList_Append(ret_list, list_item) < 0)
-        {
+            PyErr_SetString(PyExc_OSError, "Memory alocate failed for result list item");
             return NULL;
         }
+        for(int j = 0; j < len_c; ++j)
+        {
+            // printf("@%lf ", p_inv[i * len_r + j]);
+            PyList_SET_ITEM(list_item, j, PyFloat_FromDouble(p_inv[i * len_r + j]));
+        }
+        // printf("\n");
+        if(PyList_Append(ret_list, list_item) < 0)
+        {
+            PyErr_SetString(PyExc_OSError, "Append result list failed");
+            Py_DECREF(list_item);
+            return NULL;
+        }
+        Py_DECREF(list_item);
     }
-    Py_DECREF(list_item);
+
     free(p_inv);
+    free(p_mat);
     return ret_list;
 }
 
 static PyObject *linealg_Eigens(PyObject *self, PyObject *args)
 {
-    PyObject *bufobj = NULL; // recieve an array object
-    Py_buffer view;
-
-    if (!PyArg_ParseTuple(args, "O", bufobj))
-            return NULL;
-
-    /* Attempt to extract buffer information from it */
-    if (PyObject_GetBuffer(bufobj, &view, PyBUF_ANY_CONTIGUOUS | PyBUF_FORMAT) == -1)
-    {
-        return NULL;
-    }
-    if (view.ndim != 1 || *(view.shape) != *(view.strides))
-    {
-        char err_str[128];
-        sprintf(err_str, "Invalid array shape[%d,%d]", (int)view.shape[0], (int)view.strides[0]);
-        PyErr_SetString(PyExc_TypeError, err_str);
-        PyBuffer_Release(&view);
-        return NULL;
-    }
-    /* Check the type of items in the array */
-    if (strcmp(view.format, "d") != 0)
-    {
-        PyErr_SetString(PyExc_TypeError, "Expected an array of doubles");
-        PyBuffer_Release(&view);
-        return NULL;
-    }
-
-    double eig_val = 0;
-    double *eig_vec = (double *)malloc(sizeof(double) * view.ndim);
-
-    if(InterpLinealg_Eigens((double *)(view.buf), view.ndim, eig_vec, &eig_val) != 0)
-        return NULL;
-
-    PyObject *ret_list = PyList_New(0);
-    PyObject *list_item = PyList_New(view.ndim);
-    if(ret_list == NULL || list_item ==NULL)
-    {
-        PyErr_SetString(PyExc_OSError, "Memory alocate failed");
-        return NULL;
-    }
-
-    for(int i = 0; i < view.ndim; ++i)
-    {
-        PyList_SET_ITEM(list_item, i, PyFloat_FromDouble(eig_vec[i]));
-    }
-
-    if(PyList_Append(ret_list, PyFloat_FromDouble(eig_val)) < 0)
-    {
-        return NULL;
-    }
-    Py_DECREF(list_item);
-    return ret_list;
+    return NULL;
 }
 
 static PyMethodDef linealgMethods[] = {

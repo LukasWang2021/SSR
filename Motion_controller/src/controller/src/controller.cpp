@@ -227,9 +227,9 @@ ErrorCode Controller::init()
     rpc_.init(&tp_comm_, &publish_, cpu_comm_ptr_, servo_comm_ptr_, axis_ptr_, axis_model_ptr_, group_ptr_, &file_manager_, 
     io_digital_dev_ptr_, &tool_manager_, &coordinate_manager_, &reg_manager_, fio_device_ptr_, force_model_ptr_);
 	
-	if(!InterpCtrl::instance().setApi(group_ptr_, dev_ptr_list, &force_sensor_) ||
+	if(!InterpCtrl::instance().setApi(group_ptr_, dev_ptr_list, &force_sensor_, &model_manager_) ||
        !InterpCtrl::instance().init() || 
-       !InterpCtrl::instance().regSyncCallback(std::bind(&MotionControl::nextMovePermitted, group_ptr_[0])))
+       !InterpCtrl::instance().regExecSyncCallback(std::bind(&MotionControl::nextMovePermitted, group_ptr_[0])))
     {
         LogProducer::error("main", "Controller interpreter initialization failed");
         return CONTROLLER_INIT_FAILED;

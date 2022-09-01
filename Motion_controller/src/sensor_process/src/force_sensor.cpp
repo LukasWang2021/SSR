@@ -86,21 +86,25 @@ bool ForceSensor::calibratedForceSensor(int group_id, double *dst_dat_ptr, int n
     joint = group_ptr_[group_id]->getServoJoint();
     group_ptr_[group_id]->convertJointToTmx(joint, tmx);
     
-    b[0] = tmx.rotation_matrix_.matrix_[2][0]*force_calib_param_[group_id].mg_;
-    b[1] = tmx.rotation_matrix_.matrix_[2][1]*force_calib_param_[group_id].mg_;
-    b[2] = tmx.rotation_matrix_.matrix_[2][2]*force_calib_param_[group_id].mg_;
-    
-    force_calib[group_id].force[0] = force_src[group_id].force[0] - force_calib_param_[group_id].force_off_.x_ - b[0];
-    force_calib[group_id].force[1] = force_src[group_id].force[1] - force_calib_param_[group_id].force_off_.y_ - b[1];
-    force_calib[group_id].force[2] = force_src[group_id].force[2] - force_calib_param_[group_id].force_off_.z_ - b[2];
+	if(param_mutex[group_id].try_lock())
+	{
+		b[0] = tmx.rotation_matrix_.matrix_[2][0]*force_calib_param_[group_id].mg_;
+		b[1] = tmx.rotation_matrix_.matrix_[2][1]*force_calib_param_[group_id].mg_;
+		b[2] = tmx.rotation_matrix_.matrix_[2][2]*force_calib_param_[group_id].mg_;
+		
+		force_calib[group_id].force[0] = force_src[group_id].force[0] - force_calib_param_[group_id].force_off_.x_ - b[0];
+		force_calib[group_id].force[1] = force_src[group_id].force[1] - force_calib_param_[group_id].force_off_.y_ - b[1];
+		force_calib[group_id].force[2] = force_src[group_id].force[2] - force_calib_param_[group_id].force_off_.z_ - b[2];
 
-    c[0] = force_calib_param_[group_id].centroid_pos_.y_*b[2] - force_calib_param_[group_id].centroid_pos_.z_*b[1];
-    c[1] = force_calib_param_[group_id].centroid_pos_.z_*b[0] - force_calib_param_[group_id].centroid_pos_.x_*b[2];
-    c[2] = force_calib_param_[group_id].centroid_pos_.x_*b[1] - force_calib_param_[group_id].centroid_pos_.y_*b[0];
+		c[0] = force_calib_param_[group_id].centroid_pos_.y_*b[2] - force_calib_param_[group_id].centroid_pos_.z_*b[1];
+		c[1] = force_calib_param_[group_id].centroid_pos_.z_*b[0] - force_calib_param_[group_id].centroid_pos_.x_*b[2];
+		c[2] = force_calib_param_[group_id].centroid_pos_.x_*b[1] - force_calib_param_[group_id].centroid_pos_.y_*b[0];
 
-    force_calib[group_id].force[3] = force_src[group_id].force[3] - force_calib_param_[group_id].torque_off_.x_ - c[0];
-    force_calib[group_id].force[4] = force_src[group_id].force[4] - force_calib_param_[group_id].torque_off_.y_ - c[1];
-    force_calib[group_id].force[5] = force_src[group_id].force[5] - force_calib_param_[group_id].torque_off_.z_ - c[2];
+		force_calib[group_id].force[3] = force_src[group_id].force[3] - force_calib_param_[group_id].torque_off_.x_ - c[0];
+		force_calib[group_id].force[4] = force_src[group_id].force[4] - force_calib_param_[group_id].torque_off_.y_ - c[1];
+		force_calib[group_id].force[5] = force_src[group_id].force[5] - force_calib_param_[group_id].torque_off_.z_ - c[2];
+		param_mutex[group_id].unlock();
+	}
 
     if(dst_dat_ptr != NULL)
         memcpy(dst_dat_ptr, &force_calib[group_id].force[0], nums*sizeof(double));
@@ -115,42 +119,46 @@ bool ForceSensor::transCalibrated2Tool(int group_id, double *dst_dat_ptr, int nu
     if(group_id >= GROUP_NUM)
             return false;
 
-    force_tool[group_id].force[0] = tmx.matrix_[0][0]*force_calib[group_id].force[0]
-                            + tmx.matrix_[1][0]*force_calib[group_id].force[1]
-                            + tmx.matrix_[2][0]*force_calib[group_id].force[2];
-    force_tool[group_id].force[1] = tmx.matrix_[0][1]*force_calib[group_id].force[0]
-                            + tmx.matrix_[1][1]*force_calib[group_id].force[1]
-                            + tmx.matrix_[2][1]*force_calib[group_id].force[2];
-    force_tool[group_id].force[2] = tmx.matrix_[0][2]*force_calib[group_id].force[0]
-                            + tmx.matrix_[1][2]*force_calib[group_id].force[1]
-                            + tmx.matrix_[2][2]*force_calib[group_id].force[2];
+	if(param_mutex[group_id].try_lock())
+	{
+		force_tool[group_id].force[0] = tmx.matrix_[0][0]*force_calib[group_id].force[0]
+								+ tmx.matrix_[1][0]*force_calib[group_id].force[1]
+								+ tmx.matrix_[2][0]*force_calib[group_id].force[2];
+		force_tool[group_id].force[1] = tmx.matrix_[0][1]*force_calib[group_id].force[0]
+								+ tmx.matrix_[1][1]*force_calib[group_id].force[1]
+								+ tmx.matrix_[2][1]*force_calib[group_id].force[2];
+		force_tool[group_id].force[2] = tmx.matrix_[0][2]*force_calib[group_id].force[0]
+								+ tmx.matrix_[1][2]*force_calib[group_id].force[1]
+								+ tmx.matrix_[2][2]*force_calib[group_id].force[2];
 
-    b[0] = tmx.matrix_[0][0]*force_tool[group_id].force[0]
-                + tmx.matrix_[1][0]*force_tool[group_id].force[1]
-                + tmx.matrix_[2][0]*force_tool[group_id].force[2];
-    b[1] = tmx.matrix_[0][1]*force_tool[group_id].force[0]
-                + tmx.matrix_[1][1]*force_tool[group_id].force[1]
-                + tmx.matrix_[2][1]*force_tool[group_id].force[2];
-    b[2] = tmx.matrix_[0][2]*force_tool[group_id].force[0]
-                + tmx.matrix_[1][2]*force_tool[group_id].force[1]
-                + tmx.matrix_[2][2]*force_tool[group_id].force[2];
-    c[0] = force_calib_param_[group_id].centroid_pos_.y_*b[2] - force_calib_param_[group_id].centroid_pos_.z_*b[1];
-    c[1] = force_calib_param_[group_id].centroid_pos_.z_*b[0] - force_calib_param_[group_id].centroid_pos_.x_*b[2];
-    c[2] = force_calib_param_[group_id].centroid_pos_.x_*b[1] - force_calib_param_[group_id].centroid_pos_.y_*b[0];
+		b[0] = tmx.matrix_[0][0]*force_tool[group_id].force[0]
+					+ tmx.matrix_[1][0]*force_tool[group_id].force[1]
+					+ tmx.matrix_[2][0]*force_tool[group_id].force[2];
+		b[1] = tmx.matrix_[0][1]*force_tool[group_id].force[0]
+					+ tmx.matrix_[1][1]*force_tool[group_id].force[1]
+					+ tmx.matrix_[2][1]*force_tool[group_id].force[2];
+		b[2] = tmx.matrix_[0][2]*force_tool[group_id].force[0]
+					+ tmx.matrix_[1][2]*force_tool[group_id].force[1]
+					+ tmx.matrix_[2][2]*force_tool[group_id].force[2];
+		c[0] = force_calib_param_[group_id].centroid_pos_.y_*b[2] - force_calib_param_[group_id].centroid_pos_.z_*b[1];
+		c[1] = force_calib_param_[group_id].centroid_pos_.z_*b[0] - force_calib_param_[group_id].centroid_pos_.x_*b[2];
+		c[2] = force_calib_param_[group_id].centroid_pos_.x_*b[1] - force_calib_param_[group_id].centroid_pos_.y_*b[0];
 
-    c[0] = force_calib[group_id].force[4] - c[0];
-    c[1] = force_calib[group_id].force[5] - c[1];
-    c[2] = force_calib[group_id].force[6] - c[2];
+		c[0] = force_calib[group_id].force[4] - c[0];
+		c[1] = force_calib[group_id].force[5] - c[1];
+		c[2] = force_calib[group_id].force[6] - c[2];
 
-    force_tool[group_id].force[4] = tmx.matrix_[0][0]*c[0]
-                            + tmx.matrix_[1][0]*c[1]
-                            + tmx.matrix_[2][0]*c[2];
-    force_tool[group_id].force[5] = tmx.matrix_[0][1]*c[0]
-                            + tmx.matrix_[1][1]*c[1]
-                            + tmx.matrix_[2][1]*c[2];
-    force_tool[group_id].force[6] = tmx.matrix_[0][2]*c[0]
-                            + tmx.matrix_[1][2]*c[1]
-                            + tmx.matrix_[2][2]*c[2];
+		force_tool[group_id].force[4] = tmx.matrix_[0][0]*c[0]
+								+ tmx.matrix_[1][0]*c[1]
+								+ tmx.matrix_[2][0]*c[2];
+		force_tool[group_id].force[5] = tmx.matrix_[0][1]*c[0]
+								+ tmx.matrix_[1][1]*c[1]
+								+ tmx.matrix_[2][1]*c[2];
+		force_tool[group_id].force[6] = tmx.matrix_[0][2]*c[0]
+								+ tmx.matrix_[1][2]*c[1]
+								+ tmx.matrix_[2][2]*c[2];
+		param_mutex[group_id].unlock();
+	}
     
     if(dst_dat_ptr != NULL)
     {
@@ -172,7 +180,7 @@ bool ForceSensor::loadCalibrationParams(int group_id)
     
     src_ptr = &(params_tmp.fx_off);
     dst_ptr = &(force_calib_param_[group_id].force_off_.x_);
-    
+    param_mutex[group_id].lock();
     for(int i = FORCE_CALIB_PARAM_INDEX; i < (FORCE_CALIB_PARAM_INDEX + FORCE_CALIB_PARAM_NUMS); i++ )
     {
         force_model_ptr_[group_id]->force_param_ptr->get(i, src_ptr);
@@ -180,8 +188,15 @@ bool ForceSensor::loadCalibrationParams(int group_id)
         src_ptr++;
         dst_ptr++;
     }
-
+	param_mutex[group_id].unlock();
     is_param_load_[group_id] = true;
+
+	dst_ptr = &(force_calib_param_[group_id].force_off_.x_);
+
+	printf("force_param: %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf\n",
+			dst_ptr[0], dst_ptr[1], dst_ptr[2], dst_ptr[3], dst_ptr[4],
+			dst_ptr[5], dst_ptr[6], dst_ptr[7], dst_ptr[8], dst_ptr[9]);
+
     return true;
 }
 

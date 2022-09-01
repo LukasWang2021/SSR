@@ -187,7 +187,7 @@ class ForceSensor{
 	bool is_param_load_[GROUP_NUM];
 	Force_Val_t force_src[GROUP_NUM], force_calib[GROUP_NUM], force_tool[GROUP_NUM];
 	RotationMatrix tmx;
-	std::mutex force_src_mutex[GROUP_NUM], force_calib_mutex[GROUP_NUM];
+	std::mutex force_src_mutex[GROUP_NUM], force_calib_mutex[GROUP_NUM], param_mutex[GROUP_NUM];
 };
 }
 #endif

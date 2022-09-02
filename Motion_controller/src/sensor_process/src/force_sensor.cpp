@@ -191,12 +191,6 @@ bool ForceSensor::loadCalibrationParams(int group_id)
 	param_mutex[group_id].unlock();
     is_param_load_[group_id] = true;
 
-	dst_ptr = &(force_calib_param_[group_id].force_off_.x_);
-
-	printf("force_param: %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf\n",
-			dst_ptr[0], dst_ptr[1], dst_ptr[2], dst_ptr[3], dst_ptr[4],
-			dst_ptr[5], dst_ptr[6], dst_ptr[7], dst_ptr[8], dst_ptr[9]);
-
     return true;
 }
 

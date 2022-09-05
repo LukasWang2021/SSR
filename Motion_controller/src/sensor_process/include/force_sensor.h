@@ -179,7 +179,7 @@ class ForceSensor{
     
   private:    	
 	group_space::MotionControl* group_ptr_[GROUP_NUM];
-    system_model_space::ForceModel_t* force_model_ptr_[GROUP_NUM];	
+     system_model_space::ForceModel_t* force_model_ptr_[GROUP_NUM];	
 	servo_comm_space::ServoCpuCommBase* cpu_comm_ptr_;
 	
 	Force_Sensor_Calib_t force_calib_param_[GROUP_NUM];

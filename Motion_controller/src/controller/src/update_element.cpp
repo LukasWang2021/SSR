@@ -107,9 +107,9 @@ void ControllerPublish::updateTorqueFdb()
 	
 	force_sensor_ptr_->updateSourceValue(GROUP_0);
 	
-	force_sensor_ptr_->calibratedForceSensor(GROUP_0, &torque_fdb_.data[0], (int)torque_fdb_.data_count);
+	force_sensor_ptr_->calibratedForceSensor(GROUP_0);
 	
-	//force_sensor_ptr_->transCalibrated2Tool(GROUP_0, &torque_fdb_.data[0], torque_fdb_.data_count);
+	force_sensor_ptr_->transCalibrated2Tool(GROUP_0, &torque_fdb_.data[0], torque_fdb_.data_count);
 }
 
 void ControllerPublish::updateFioInfoFdb()

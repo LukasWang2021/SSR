@@ -144,17 +144,17 @@ bool ForceSensor::transCalibrated2Tool(int group_id, double *dst_dat_ptr, int nu
 		c[1] = force_calib_param_[group_id].centroid_pos_.z_*b[0] - force_calib_param_[group_id].centroid_pos_.x_*b[2];
 		c[2] = force_calib_param_[group_id].centroid_pos_.x_*b[1] - force_calib_param_[group_id].centroid_pos_.y_*b[0];
 
-		c[0] = force_calib[group_id].force[4] - c[0];
-		c[1] = force_calib[group_id].force[5] - c[1];
-		c[2] = force_calib[group_id].force[6] - c[2];
+		c[0] = force_calib[group_id].force[3] - c[0];
+		c[1] = force_calib[group_id].force[4] - c[1];
+		c[2] = force_calib[group_id].force[5] - c[2];
 
-		force_tool[group_id].force[4] = tmx.matrix_[0][0]*c[0]
+		force_tool[group_id].force[3] = tmx.matrix_[0][0]*c[0]
 								+ tmx.matrix_[1][0]*c[1]
 								+ tmx.matrix_[2][0]*c[2];
-		force_tool[group_id].force[5] = tmx.matrix_[0][1]*c[0]
+		force_tool[group_id].force[4] = tmx.matrix_[0][1]*c[0]
 								+ tmx.matrix_[1][1]*c[1]
 								+ tmx.matrix_[2][1]*c[2];
-		force_tool[group_id].force[6] = tmx.matrix_[0][2]*c[0]
+		force_tool[group_id].force[5] = tmx.matrix_[0][2]*c[0]
 								+ tmx.matrix_[1][2]*c[1]
 								+ tmx.matrix_[2][2]*c[2];
 		param_mutex[group_id].unlock();

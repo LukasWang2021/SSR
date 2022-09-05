@@ -41,9 +41,12 @@ Controller::Controller():
 Controller::~Controller()
 {
     rt_thread_.join();
+    rpc_thread_.join();
     planner_thread_.join();
     priority_thread_.join();
     routine_thread_.join();
+    online_traj_thread_.join();
+    dev_process_thread_.join();
 
     for(size_t i = 0; i < GROUP_NUM; ++i)
     {
@@ -102,16 +105,28 @@ ErrorCode Controller::init()
 
     /********************init self components***********************************/
     io_digital_dev_ptr_ = new hal_space::Io1000();
-    io_digital_dev_ptr_->init(config_ptr_->dio_exist_);
+    if(io_digital_dev_ptr_ == NULL || !io_digital_dev_ptr_->init(config_ptr_->dio_exist_))
+    {
+        LogProducer::error("main", "Controller io1000 initialization failed");
+        return CONTROLLER_INIT_FAILED;
+    }
     dev_ptr_list.push_back(io_digital_dev_ptr_);
 
     io_safety_dev_ptr_ = new hal_space::IoSafety();
-    if(io_safety_dev_ptr_->init(config_ptr_->safety_exist_) == false)
+    if(io_safety_dev_ptr_ == NULL || !io_safety_dev_ptr_->init(config_ptr_->safety_exist_))
     {
         LogProducer::error("main", "Controller safety io initialization failed");
         return CONTROLLER_INIT_FAILED;
     }
     dev_ptr_list.push_back(io_safety_dev_ptr_);
+
+    fio_device_ptr_ = new hal_space::FioDevice();
+    if(fio_device_ptr_ == NULL || !fio_device_ptr_->init(config_ptr_->fio_exist_))
+    {
+        LogProducer::error("main", "Controller fio device initialization failed");
+        return CONTROLLER_INIT_FAILED;
+    }
+    dev_ptr_list.push_back(fio_device_ptr_);
 
     //axis init
     for (size_t i = 0; i < axes_config_.size(); ++i)
@@ -207,11 +222,17 @@ ErrorCode Controller::init()
         LogProducer::error("main", "Controller TP comm initialization failed");
         return error_code;
     }
-	publish_.init(&tp_comm_, cpu_comm_ptr_, axis_ptr_, group_ptr_, io_digital_dev_ptr_, io_safety_dev_ptr_);
-    rpc_.init(&tp_comm_, &publish_, cpu_comm_ptr_, servo_comm_ptr_, axis_ptr_, axis_model_ptr_, group_ptr_, &file_manager_, io_digital_dev_ptr_, &tool_manager_, &coordinate_manager_, &reg_manager_, force_model_ptr_);
-    if(!InterpCtrl::instance().setApi(group_ptr_,io_digital_dev_ptr_) ||
+
+    //force sensor
+	force_sensor_.init(group_ptr_, cpu_comm_ptr_, &force_model_ptr_);
+
+	publish_.init(&tp_comm_, cpu_comm_ptr_, axis_ptr_, group_ptr_, io_digital_dev_ptr_, io_safety_dev_ptr_, &force_sensor_, fio_device_ptr_);
+    rpc_.init(&tp_comm_, &publish_, cpu_comm_ptr_, servo_comm_ptr_, axis_ptr_, axis_model_ptr_, group_ptr_, &file_manager_, 
+    io_digital_dev_ptr_, &tool_manager_, &coordinate_manager_, &reg_manager_, fio_device_ptr_, force_model_ptr_);
+	
+	if(!InterpCtrl::instance().setApi(group_ptr_, dev_ptr_list, &force_sensor_, &model_manager_) ||
        !InterpCtrl::instance().init() || 
-       !InterpCtrl::instance().regSyncCallback(std::bind(&MotionControl::nextMovePermitted, group_ptr_[0])))
+       !InterpCtrl::instance().regExecSyncCallback(std::bind(&MotionControl::nextMovePermitted, group_ptr_[0])))
     {
         LogProducer::error("main", "Controller interpreter initialization failed");
         return CONTROLLER_INIT_FAILED;
@@ -245,6 +266,11 @@ ErrorCode Controller::init()
     {
         return CONTROLLER_CREATE_ONLIE_THREAD_FAILED;
     }
+    if(!dev_process_thread_.run(&controllerDeviceProcessThreadFunc, this, config_ptr_->dev_process_thread_priority_))
+    {
+        return CONTROLLER_CREATE_DEV_PROC_FAILED;
+    }
+
     sleep(1);
     if(group_ptr_[0]->checkZeroOffset())
     {
@@ -326,6 +352,11 @@ void Controller::runRtThreadFunc()
     group_ptr_[0]->ringRealTimeTask();
 }
 
+void Controller::runDevProcessThreadFunc()
+{
+    usleep(config_ptr_->dev_process_cycle_time_);
+    processDevice();
+}
 
 ErrorCode Controller::bootUp(void)
 {
@@ -710,4 +741,18 @@ void* controllerRealTimeThreadFunc(void* arg)
     return NULL;
 }
 
+void* controllerDeviceProcessThreadFunc(void* arg)
+{
+    Controller* controller_ptr = static_cast<Controller*>(arg);
+    log_space::LogProducer log_manager;
+    log_manager.init("controller_dev", g_isr_ptr_);
+    LogProducer::warn("main","controller_dev TID is %ld", syscall(SYS_gettid));
+
+    while(!controller_ptr->isExit())
+    {
+        controller_ptr->runDevProcessThreadFunc();
+    }
+    std::cout<<"controller_dev exit"<<std::endl;
+    return NULL;
+}
 

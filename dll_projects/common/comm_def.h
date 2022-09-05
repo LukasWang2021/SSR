@@ -18,7 +18,7 @@
 #define MAX_EVENT_NUMBER 8
 #define AXIS_NUM 16
 #define GROUP_NUM 1
-#define TOPIC_ELEM_NUM 6
+#define TOPIC_ELEM_NUM 7
 
 #ifndef M_PI
 #define M_PI       3.14159265358979323846   // pi

@@ -18,7 +18,9 @@
 #include <pthread.h>
 #include "sem_help.h"
 #include "motion_control.h"
-#include "io_1000.h"
+#include "base_device.h"
+#include "force_sensor.h"
+#include "system_model_manager.h"
 
 typedef uint64_t interpid_t;
 
@@ -47,10 +49,20 @@ private:
     static InterpCtrl interp_ctrl_;
 
     InterpState curr_state_;
-    /*For synchronous with other thread.
-    Register the sync-function use regSyncCallback function bellow.
-    The sync-function will call in the trace function in every line execution*/
-    std::vector<SyncCallback> sync_callbacks_;
+    /*
+        For synchronous with other thread.
+        Register the sync-function use regExecSyncCallback function bellow.
+        The sync-function will call in the trace function in every line execution.
+    */
+    std::vector<SyncCallback> exec_sync_callbacks_;
+    /*
+        TODO 
+        for abort or pause call 
+        some device controlled by user program like the grind motor when program is abort 
+        the grind motor must be stopped.How to do this? 
+        the device must register the abort function below
+    */
+    std::vector<SyncCallback> stop_sync_callbacks_;
 
     InterpConfig config_;
     bool is_init_;
@@ -69,7 +81,14 @@ public:
     // initialization, pls init api before init
     // bool setApi(axis_space::Axis **axis_ptr);
     bool init(void);
-    bool setApi(group_space::MotionControl **group_ptr, hal_space::BaseDevice *io_ptr);
+    bool setApi
+    (
+        group_space::MotionControl **group_ptr, 
+        std::vector<hal_space::BaseDevice *> io_ptr, 
+        sensors_space::ForceSensor *force_sn_ptr,
+        system_model_space::SystemModelManager *model_manager_ptr
+    );
+
     bool run(void);
 
     ErrorCode startNewFile(std::string file, bool in_real_thread=true);
@@ -93,8 +112,11 @@ public:
 
     /* These synchronous functions registered by caller.
        These functions must return bool(true/fase).*/
-    bool regSyncCallback(const SyncCallback& callback);
-    bool runSyncCallback(interpid_t id=0);
+    bool regExecSyncCallback(const SyncCallback& callback);
+    bool runExecSyncCallback(interpid_t id=0);
+
+    bool regStopSyncCallback(const SyncCallback& callback);
+    bool runStopSyncCallback(interpid_t id=0);
 
     void stateThreadFunc(void);
 

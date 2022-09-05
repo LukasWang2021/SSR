@@ -1,6 +1,7 @@
 #include "interpreter_register.h"
 #include "reg_manager.h"
 #include "log_manager_producer.h"
+#include "interpreter_control.h"
 
 using namespace fst_ctrl;
 using namespace log_space;
@@ -19,6 +20,10 @@ ErrorCode InterpReg_GetRR(int id, RegValue *val)
 {
     RValue value;
     memset(&value,0,sizeof(RValue));
+
+    if(!InterpCtrl::instance().runExecSyncCallback())
+        return INTERPRETER_ERROR_SYNC_CALL_FAILED;
+
     reg_manager.getRRegValueById(id, value);
     val->rr = value.value;
     LogProducer::info("InterpReg", "get R[%d] register value %f", id, val->rr);
@@ -30,6 +35,9 @@ ErrorCode InterpReg_SetRR(int id, RegValue *val)
     RRegDataIpc data;
     data.id = id;
     data.value.value = val->rr;
+    if(!InterpCtrl::instance().runExecSyncCallback())
+        return INTERPRETER_ERROR_SYNC_CALL_FAILED;
+
     reg_manager.updateRRegValue(&data);
     LogProducer::info("InterpReg", "set R register[%d] value %f", id, val->rr);
     return 0;
@@ -39,7 +47,10 @@ ErrorCode InterpReg_GetSR(int id, RegValue *val)
 {
     SrValue value;
     memset(&value,0,sizeof(SrValue));
-    //printf("===>1 enter InterpReg_GetSR,  id=%d\n",id);
+
+    if(!InterpCtrl::instance().runExecSyncCallback())
+        return INTERPRETER_ERROR_SYNC_CALL_FAILED;
+
     reg_manager.getSrRegValueById(id, value);
     memcpy(val->sr, value.value, STRING_REG_MAX_LENGTH);
     LogProducer::info("InterpReg", "get S register[%d] value %s", id, val->sr);
@@ -51,6 +62,9 @@ ErrorCode InterpReg_SetSR(int id, RegValue *val)
     SrRegDataIpc data;
     data.id = id;
     memcpy(data.value.value, val->sr, STRING_REG_MAX_LENGTH);
+    if(!InterpCtrl::instance().runExecSyncCallback())
+        return INTERPRETER_ERROR_SYNC_CALL_FAILED;
+
     //printf("===>1 enter InterpReg_SetSR,  SrRegDataIpc->id=%d, SrRegDataIpc->data->data = %s\n",id,data.value.value);
     reg_manager.updateSrRegValue(&data);
     LogProducer::info("InterpReg", "set S register[%d] value %s", id, val->sr);
@@ -61,6 +75,9 @@ ErrorCode InterpReg_GetMR(int id, RegValue *val)
 {
     MrValue value;
     memset(&value,0,sizeof(MrValue));
+    if(!InterpCtrl::instance().runExecSyncCallback())
+        return INTERPRETER_ERROR_SYNC_CALL_FAILED;
+
     reg_manager.getMrRegValueById(id, value);
     val->mr = value.value;
     LogProducer::info("InterpReg", "get S register[%d] value %d", id, val->mr);
@@ -72,6 +89,9 @@ ErrorCode InterpReg_SetMR(int id, RegValue *val)
     MrRegDataIpc data;
     data.id = id;
     data.value.value = val->mr;
+    if(!InterpCtrl::instance().runExecSyncCallback())
+        return INTERPRETER_ERROR_SYNC_CALL_FAILED;
+
     reg_manager.updateMrRegValue(&data);
     LogProducer::info("InterpReg", "set M register[%d] value %d", id, val->mr);
     return 0;
@@ -80,7 +100,11 @@ ErrorCode InterpReg_SetMR(int id, RegValue *val)
 ErrorCode InterpReg_GetPR(int id, RegValue *val)
 {
     PrValue value;
+    if(!InterpCtrl::instance().runExecSyncCallback())
+        return INTERPRETER_ERROR_SYNC_CALL_FAILED;
+
     reg_manager.getPrRegValueById(id, value);
+
     LogProducer::info("InterpReg", "get P register[%d] coord:%d,group:%d," \
     "posture(%d,%d,%d,%d),turn(%d,%d,%d,%d%d,%d,%d,%d,%d),pos(%f,%f,%f,%f,%f,%f,%f,%f,%f)", id, 
     val->pr.coord = value.pos_type,
@@ -113,6 +137,8 @@ ErrorCode InterpReg_GetPR(int id, RegValue *val)
 ErrorCode InterpReg_SetPR(int id, RegValue *val)
 {
     PrRegDataIpc data;
+    if(!InterpCtrl::instance().runExecSyncCallback())
+        return INTERPRETER_ERROR_SYNC_CALL_FAILED;
 
     LogProducer::info("InterpReg", "set P register[%d] coord:%d,group:%d," \
     "posture(%d,%d,%d,%d),turn(%d,%d,%d,%d%d,%d,%d,%d,%d),pos(%f,%f,%f,%f,%f,%f,%f,%f,%f)", 

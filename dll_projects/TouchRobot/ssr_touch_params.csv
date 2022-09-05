@@ -1,0 +1,14 @@
+1,freq_touch,500,touch的采样频率 2ms
+2,filter_enum_xyz,0,0-butter;1-meanwindow;2-both
+3,filter_enum_abc,0,0-butter;1-meanwindow;2-both
+4,filter_fd_xyz,2,xyz截止频率
+5,filter_fd_abc,2,abc截止频率
+6,filter_mean_xyz_nums,10,
+7,filter_mean_xyz_nums,10,
+8,,,
+9,,,
+10,,,
+11,controller_ip,192.168.110.2,controller的ip地址
+12,online_trj_flag,1,在线轨迹flag
+13,cycle_time_controller,10,和controller的通信周期 10ms
+14,point_nums,5,每次给controller下发的轨迹点数

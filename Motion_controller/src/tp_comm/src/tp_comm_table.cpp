@@ -181,7 +181,9 @@ void TpComm::initRpcTable()
     rpc_service =	{	"/rpc/reg_manager/pr/moveReg",	0x0000D7C7,	"RequestMessageType.Int32List(count = 2) ",	"ResponseMessageType.Uint64",	&TpComm::handleRequest0x0000D7C7,	&TpComm::handleResponse0x0000D7C7,	Comm_Authority_TP_SIMMULATOR,	};	 rpc_table_.push_back(rpc_service);
     rpc_service =	{	"/rpc/reg_manager/pr/getChangedList",	0x0000B454,	"RequestMessageType.Int32List(count = 2) ",	"ResponseMessageType.Uint64_BaseRegSummaryList",	&TpComm::handleRequest0x0000B454,	&TpComm::handleResponse0x0000B454,	Comm_Authority_TP_SIMMULATOR,	};	 rpc_table_.push_back(rpc_service);
     rpc_service =	{	"/rpc/reg_manager/pr/getValidList",	0x00009354,	"RequestMessageType.Int32List(count = 2) ",	"ResponseMessageType.Uint64_BaseRegSummaryList",	&TpComm::handleRequest0x00009354,	&TpComm::handleResponse0x00009354,	Comm_Authority_TP_SIMMULATOR,	};	 rpc_table_.push_back(rpc_service);
-	rpc_service =	{	"/rpc/motion_control/axis_group/sendViaPoints",	0x0000A063,	"RequestMessageType.Int32_DoubleList",	"ResponseMessageType.Uint64",	&TpComm::handleRequest0x0000A063,	&TpComm::handleResponse0x0000A063,	Comm_Authority_TP_SIMMULATOR,	};	 rpc_table_.push_back(rpc_service);
+	rpc_service =	{	"/rpc/fio_device/sendFioCmdPack",	0x0000175B,	"RequestMessageType.Uint32List(count = 2) ",	"ResponseMessageType.Uint32List(count=2)",	&TpComm::handleRequest0x0000175B,	&TpComm::handleResponse0x0000175B,	Comm_Authority_TP_SIMMULATOR,	};	 rpc_table_.push_back(rpc_service);
+
+    rpc_service =	{	"/rpc/motion_control/axis_group/sendViaPoints",	0x0000A063,	"RequestMessageType.Int32_DoubleList",	"ResponseMessageType.Uint64",	&TpComm::handleRequest0x0000A063,	&TpComm::handleResponse0x0000A063,	Comm_Authority_TP_SIMMULATOR,	};	 rpc_table_.push_back(rpc_service);
 	rpc_service =	{	"/rpc/motion_control/axis_group/viaPointsToTrajWithGivenVelocity",	0x0000E479,	"RequestMessageType.String_Double",	"ResponseMessageType.Uint64_String",	&TpComm::handleRequest0x0000E479,	&TpComm::handleResponse0x0000E479,	Comm_Authority_TP_SIMMULATOR,	};	 rpc_table_.push_back(rpc_service);
 	rpc_service =	{	"/rpc/motion_control/axis_group/getDH",	0x00016078,	"RequestMessageType.Int32",	"ResponseMessageType.Uint64_DoubleList(DoubleList_count=28)",	&TpComm::handleRequest0x00016078,	&TpComm::handleResponse0x00016078,	Comm_Authority_TP_SIMMULATOR,	};	 rpc_table_.push_back(rpc_service);
 
@@ -204,6 +206,7 @@ void TpComm::initPublishElementTable()
     publish_service =   {   "/publish/servo1001/cpu_feedback",  0x00012FFB, "MessageType.Uint32List(count=15)",  &TpComm::handlePublishElement0x00012FFB,    Comm_Authority_TP_SIMMULATOR,   };  publish_element_table_.push_back(publish_service); 
     publish_service =   {   "/publish/io1000/io_feedback",  0x00013C8B, "MessageType.Uint32List(count=4)",  &TpComm::handlePublishElement0x00013C8B,    Comm_Authority_TP_SIMMULATOR,   };  publish_element_table_.push_back(publish_service); 
     publish_service =   {   "/publish/iosafety/safety_feedback",  0x0001472B, "MessageType.Uint32List(count=2)",  &TpComm::handlePublishElement0x0001472B,    Comm_Authority_TP_SIMMULATOR,   };  publish_element_table_.push_back(publish_service); 
-	publish_service =	{	"/publish/torque_feedback", 0x0000AEAB, "MessageType.DoubleList(count=6)",	&TpComm::handlePublishElement0x0000AEAB,	Comm_Authority_TP_SIMMULATOR,	};	publish_element_table_.push_back(publish_service); 
+	publish_service =	{	"/publish/torque_feedback", 0x0000AEAB, "MessageType.DoubleList(count=6)",	&TpComm::handlePublishElement0x0000AEAB,	Comm_Authority_TP_SIMMULATOR,	};	publish_element_table_.push_back(publish_service);
+	publish_service =	{	"/publish/fio_feedback",	0x00006EFB,	"MessageType.Uint32List(count=2)",	&TpComm::handlePublishElement0x00006EFB,	Comm_Authority_TP_SIMMULATOR,	};	publish_element_table_.push_back(publish_service); 
 
 }

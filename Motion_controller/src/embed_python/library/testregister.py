@@ -2,7 +2,7 @@ import time
 import ctypes
 import register as reg
 
-class POSTURE(ctypes.Structure):
+class Posture(ctypes.Structure):
     _fields_ = [('coord',ctypes.c_int), 
                 ('arm',ctypes.c_int),
                 ('elbow',ctypes.c_int),
@@ -56,7 +56,7 @@ def testSR():
         print("SR FAIL")
 
 def testPR():
-    pr = POSTURE(1,2,3,4,5,1,2,3,4,5,6,7,8,9,1,2,3,4,5,6,7,8,9)
+    pr = Posture(1,2,3,4,5,1,2,3,4,5,6,7,8,9,1,2,3,4,5,6,7,8,9)
     reg.SetPR(4,pr)
     d = reg.GetPR(4)
     print(d)

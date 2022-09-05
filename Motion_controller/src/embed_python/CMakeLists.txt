@@ -34,6 +34,8 @@ include_directories(
     ../coordinate_manager/include
     ../tool_manager/include
     ../motion_control/include
+    ../fio_device/include
+    ../sensor_process/include
 	${CROSS_ROOT}/usr/local/include/python3.9/internal
     ${CROSS_ROOT}/usr/local/include/python3.9/cpython
     ${CROSS_ROOT}/usr/local/include/python3.9

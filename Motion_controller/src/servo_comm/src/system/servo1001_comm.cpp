@@ -119,11 +119,12 @@ bool Servo1001::initServoCpuComm(CommBlockData_t* from_block_ptr, size_t from_bl
 
 bool Servo1001::doServoCmdTransCommState(CoreCommState_e expected_state)
 {
+    ErrorCode err = 0;
     for(uint32_t i = 0; i < AXIS_NUM; ++i)
     {
-        if(servo_ptr_[i]->doServoCmdTransCommState(expected_state) != SUCCESS)
+        if((err = servo_ptr_[i]->doServoCmdTransCommState(expected_state)) != SUCCESS)
         {
-            LogProducer::error("servo1001", "servo_ptr_[%d] trans state to %d failed", i, expected_state);
+            LogProducer::error("servo1001", "servo_ptr_[%d] trans state to %d failed %llx", i, expected_state, err);
             return false;
         }
     }

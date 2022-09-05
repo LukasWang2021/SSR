@@ -29,6 +29,8 @@
 #include "motion_control.h"
 #include "reg_manager.h"
 #include "interpreter_control.h"
+#include "fio_device.h"
+#include "force_sensor.h"
 
 /**
  * @brief user_space includes the user level implementation.
@@ -93,6 +95,7 @@ public:
 
     void runOnlineTrajThreadFunc();
     void runPriorityThreadFunc();
+    void runDevProcessThreadFunc();
     
     /**
      * @brief The realtime thread function.
@@ -119,6 +122,7 @@ private:
     base_space::ThreadHelp rt_thread_;
     base_space::ThreadHelp rpc_thread_;
     base_space::ThreadHelp online_traj_thread_;
+    base_space::ThreadHelp dev_process_thread_;
 
     servo_comm_space::Servo1001* servo_1001_ptr_;
     servo_comm_space::ServoCpuCommBase* cpu_comm_ptr_;
@@ -133,6 +137,7 @@ private:
     std::vector<hal_space::BaseDevice*> dev_ptr_list;
     hal_space::Io1000* io_digital_dev_ptr_;
     hal_space::IoSafety* io_safety_dev_ptr_;
+    hal_space::FioDevice* fio_device_ptr_;
 
     system_model_space::AxisModel_t* axis_model_ptr_[AXIS_NUM];
     axis_space::Axis* axis_ptr_[AXIS_NUM];
@@ -148,6 +153,8 @@ private:
 
     system_model_space::ForceModel_t* force_model_ptr_;
     std::vector<system_model_space::ForceConfig_t> forces_config_;
+
+	sensors_space::ForceSensor force_sensor_;
 
     uint32_t fdb_current_time_stamp_;
 
@@ -166,6 +173,7 @@ void* controllerPriorityThreadFunc(void* arg);
 void* controllerRealTimeThreadFunc(void* arg);
 void* controllerRpcThreadFunc(void* arg);
 void* controllerOnlineTrajThreadFunc(void* arg);
+void* controllerDeviceProcessThreadFunc(void* arg);
 
 
 #endif

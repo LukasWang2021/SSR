@@ -23,7 +23,7 @@ __ne__(self,another)         self != rhs       不等于
 """
 import ctypes
 import register as reg
-form innertypes import POSTURE
+form rtmtypes import Posture
 
 def is_number(s):   
     try:
@@ -162,7 +162,7 @@ class RegP:
     '''
      
     def setValue(self,spd):
-        setPrData = POSTURE()
+        setPrData = Posture()
         if isinstance(spd, dict):
             setPrData.coord = spd['coord']
             setPrData.arm   = spd['posture'][0]

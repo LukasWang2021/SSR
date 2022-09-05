@@ -1193,6 +1193,17 @@ COMM_INTERFACE_API uint64_t c_interpreterBackward(int program_id);
 
 COMM_INTERFACE_API uint64_t c_interpreterJump(int program_id);
 
+
+// FIO commands
+/***
+* 函数功能:与FIO板发送指令交互
+* 参数:
+* opcode_type:操作码和操作类型
+* set_value: 需要设置的数据
+* ret_data: 返回数据, 长度为2
+*/
+COMM_INTERFACE_API uint64_t c_sendFioCmdValue(uint32_t opcode_type, uint32_t set_value, uint32_t  ret_data[2]);
+
 #ifdef __cplusplus
 }
 #endif

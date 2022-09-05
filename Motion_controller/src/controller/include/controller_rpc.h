@@ -24,6 +24,7 @@
 #include "tool_manager.h"
 #include "coordinate_manager.h"
 #include "reg_manager.h"
+#include "fio_device.h"
 #include "interpreter_control.h"
 
 /**
@@ -65,6 +66,7 @@ public:
         system_model_space::AxisModel_t* axis_model_ptr[AXIS_NUM], group_space::MotionControl* group_ptr[GROUP_NUM],
         base_space::FileManager* file_manager_ptr, hal_space::Io1000* io_dev_ptr,
         fst_ctrl::ToolManager* tool_manager_ptr, fst_ctrl::CoordinateManager* coordinate_manager_ptr, fst_ctrl::RegManager* reg_manager_ptr,
+        hal_space::FioDevice* fio_device_ptr,
         system_model_space::ForceModel_t* force_model_ptr);
 
     /**
@@ -91,6 +93,7 @@ private:
     fst_ctrl::ToolManager* tool_manager_ptr_;
     fst_ctrl::CoordinateManager* coordinate_manager_ptr_;
     fst_ctrl::RegManager* reg_manager_ptr_;
+    hal_space::FioDevice* fio_device_ptr_;
     group_space::MotionControl* group_ptr_[GROUP_NUM];
     //For sampling thread to save file
     base_space::ThreadHelp save_file_thread_; 
@@ -459,6 +462,9 @@ private:
     void handleRpc0x0000B454(void* request_data_ptr, void* response_data_ptr);
     //"/rpc/reg_manager/pr/getValidList"	
     void handleRpc0x00009354(void* request_data_ptr, void* response_data_ptr);
+
+    //"/rpc/fio_device/sendFioCmdPack"	
+    void handleRpc0x0000175B(void* request_data_ptr, void* response_data_ptr);
 
 	//"/rpc/interpreter/start"	
     void handleRpc0x00006154(void* request_data_ptr, void* response_data_ptr);	

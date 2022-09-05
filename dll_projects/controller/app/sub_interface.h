@@ -116,12 +116,29 @@ COMM_INTERFACE_API uint64_t c_getSafetyIOFeedBack(uint32_t *low, uint32_t* high)
  * @brief Get torque feedback.
  * @details .
  * @param [out] low The low byte for safety io.
- * @param [out] high The high byte for safety io.
+ * @param [in] count of torque number.
  * @retval 0 Success.
  * @retval -1 Failure.
  */
 COMM_INTERFACE_API uint64_t c_getTorqueFeedBack(double *torque, int size);
 
+/**
+ * @brief Get state of fio device from fio feedback information.
+ * @details .
+ * @param [out] state of fio device.
+ * @retval 0 Success.
+ * @retval -1 Failure.
+ */
+COMM_INTERFACE_API uint64_t c_getFioInfoFeedBackDevieState(uint32_t* state);
+
+/**
+ * @brief Get actual speed of fio motor.
+ * @details .
+ * @param [out] the actual speed back of fio motor.
+ * @retval 0 Success.
+ * @retval -1 Failure.
+ */
+COMM_INTERFACE_API uint64_t c_getFioInfoFeedBackActualVelocity(uint32_t* vel);
 #ifdef __cplusplus
 }
 #endif

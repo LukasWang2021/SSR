@@ -40,9 +40,9 @@ int main(int argc, char** argv)
 		{ 0.0, 0.0, 1.570796, 0.0 },
 		{ 108.0 / 1000.0, 0.0, 0.0, 0.0 }
 	};
-	double joint_pos[6] = { 0, 0, 0, 0, 0, 0 };
-	double cart_pos[6];
-	double tool[6] = { 0, 0, 0, 1.570796, 0, 0 };
+	// double joint_pos[6] = { 0, 0, 0, 0, 0, 0 };
+	// double cart_pos[6];
+	// double tool[6] = { 0, 0, 0, 1.570796, 0, 0 };
 
 	KinematicsRTM* p_kinematics = new KinematicsRTM(base_dh, dh, 0);
 	//Transformation* p_transform = new Transformation();
@@ -50,7 +50,7 @@ int main(int argc, char** argv)
 
 	Joint joint_d, joint_ref, res_joint;
 	Joint ik_joint;
-	PoseEuler pose;
+	// PoseEuler pose;
 	TransMatrix tmtx;
 	Posture   posture;
 	posture.arm = 1;
@@ -94,7 +94,7 @@ int main(int argc, char** argv)
 	double freq[6] = { 3.530000,8.370000,0.900000,4.340000,0.580000,4.790000 };
 	double a[6] = { 1.0, 1.0, 0.3/* 2.0 */, 1.0, 2.0, 3.0 };
 	Joint joint, ref_joint;
-	/* ³õÊ¼»¯Ëæ»úÊý·¢ÉúÆ÷ */
+	/* ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ */
 	srand((unsigned)time(&t));
 
 	for (int i = 0; i < 6; i++)
@@ -105,7 +105,7 @@ int main(int argc, char** argv)
 	//fprintf(fp,"%lf,%lf,%lf,%lf,%lf,%lf\n", freq[0], freq[1], freq[2], freq[3], freq[4], freq[5]); //f = 10 * rand(1, 6);
 	printf("%lf,%lf,%lf,%lf,%lf,%lf\n", freq[0], freq[1], freq[2], freq[3], freq[4], freq[5]);
 	for (int i = 0; i < 2000; i++)
-	{	// Éú³É²âÊÔ¹ì¼£
+	{	// ï¿½ï¿½ï¿½É²ï¿½ï¿½Ô¹ì¼£
 		//qd(1, :) = [a(1) * sin(f(1) / s) a(2) * cos(f(2) / s) a(3) * sin(f(3) / s)  a(4) * cos(f(4) / s) a(5) * sin(f(5) / s) a(6) * cos(f(6) / s)];
 		joint[0] = a[0] * sin(freq[0] * i / s);
 		joint[1] = a[1] * cos(freq[1] * i / s);

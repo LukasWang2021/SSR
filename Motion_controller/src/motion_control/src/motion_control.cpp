@@ -2077,6 +2077,11 @@ ErrorCode MotionControl::convertJointToCart(const Joint &joint, int user_frame_i
     return group_ptr_->convertJointToCart(joint, uf, tf, pose);
 }
 
+ErrorCode MotionControl::convertJointToTmx(const Joint &joint, TransMatrix &tmx)
+{
+    return group_ptr_->convertJointToTmx(joint, tmx);  
+}
+
 Posture MotionControl::getPostureFromJoint(const Joint &joint)
 {
     return group_ptr_->getKinematicsPtr()->getPostureByJoint(joint);

@@ -140,3 +140,28 @@ uint64_t c_getTorqueFeedBack(double* torque, int size)
 	return 0;
 }
 
+uint64_t c_getFioInfoFeedBackDevieState(uint32_t* state)
+{
+	SubBasic* sub_ptr = SubBasic::getInstance();
+	if (state == NULL)
+		return HANDLE_SUB_FAILED;
+
+	TopicData* data_ptr = sub_ptr->getTopicDataPtr();
+	sub_ptr->lockTopicData();
+	*state = data_ptr->fio_info_feedback.data[0];
+	sub_ptr->unlockTopicData();
+	return 0;
+}
+
+uint64_t c_getFioInfoFeedBackActualVelocity(uint32_t* vel)
+{
+	SubBasic* sub_ptr = SubBasic::getInstance();
+	if (vel == NULL)
+		return HANDLE_SUB_FAILED;
+
+	TopicData* data_ptr = sub_ptr->getTopicDataPtr();
+	sub_ptr->lockTopicData();
+	*vel = data_ptr->fio_info_feedback.data[1];
+	sub_ptr->unlockTopicData();
+	return 0;
+}

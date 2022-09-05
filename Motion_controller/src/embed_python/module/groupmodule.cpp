@@ -295,6 +295,34 @@ static PyObject *group_SetPLD(PyObject *self, PyObject *args)
     return PyLong_FromUnsignedLongLong(ret);
 }
 
+static PyObject *group_SetUF(PyObject *self, PyObject *args)
+{
+    int val = 0;
+    ErrorCode ret = 0;
+
+    /*see https://docs.python.org/3/c-api/arg.html#arg-parsing for PyArg_ParseTuple details*/
+    if (!PyArg_ParseTuple(args, "i", &val))
+        return PyLong_FromUnsignedLongLong(INTERPRETER_ERROR_MOD_INVALID_ARG);
+    
+    ret = InterpGroup_SetUF(0, val);
+
+    return PyLong_FromUnsignedLongLong(ret);
+}
+
+static PyObject *group_SetTF(PyObject *self, PyObject *args)
+{
+    int val = 0;
+    ErrorCode ret = 0;
+
+    /*see https://docs.python.org/3/c-api/arg.html#arg-parsing for PyArg_ParseTuple details*/
+    if (!PyArg_ParseTuple(args, "i", &val))
+        return PyLong_FromUnsignedLongLong(INTERPRETER_ERROR_MOD_INVALID_ARG);
+    
+    ret = InterpGroup_SetTF(0, val);
+
+    return PyLong_FromUnsignedLongLong(ret);
+}
+
 static PyMethodDef groupMethods[] = {
     {"MoveJ",                group_MoveJ,    METH_VARARGS, "move joint."},
     {"MoveJwithAcc",         group_MoveJwithAcc,    METH_VARARGS, "move joint."},
@@ -311,6 +339,8 @@ static PyMethodDef groupMethods[] = {
     {"SetOAC",               group_SetOAC,   METH_VARARGS, "set global acceleration."},
     {"SetOVC",               group_SetOVC,   METH_VARARGS, "set global velocity."},
     {"SetPLD",               group_SetPLD,   METH_VARARGS, "set global payload."},
+    {"SetUF",                group_SetUF,    METH_VARARGS, "set user frame."},
+    {"SetTF",                group_SetTF,    METH_VARARGS, "set tool frame."},
     {NULL, NULL, 0, NULL}        /* Sentinel */
 };
 

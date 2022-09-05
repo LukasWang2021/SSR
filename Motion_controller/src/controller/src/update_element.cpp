@@ -1,5 +1,6 @@
 #include "controller_publish.h"
 #include "basic_alg_datatype.h"
+#include "fio_cmd.h"
 
 using namespace user_space;
 using namespace basic_alg;
@@ -102,18 +103,25 @@ void ControllerPublish::updateIOSafetyFdb()
 
 void ControllerPublish::updateTorqueFdb()
 {
-	CommRegTorqueData_t   t_data;
-	memset(&t_data, 0, sizeof(t_data));
-	 
 	torque_fdb_.data_count = 6;
 	
-    if (cpu_comm_ptr_->getTorqueSensorData(&t_data))
-    {
-        for(size_t i = 0; i < torque_fdb_.data_count; ++i)
-        {
-           	torque_fdb_.data[i] = (double)t_data.data[i]/1024.0;
-        }
-    }
-
-	cpu_comm_ptr_->setTorqueSensorSync(NULL);
+	force_sensor_ptr_->updateSourceValue(GROUP_0);
+	
+	force_sensor_ptr_->calibratedForceSensor(GROUP_0);
+	
+	force_sensor_ptr_->transCalibrated2Tool(GROUP_0, &torque_fdb_.data[0], torque_fdb_.data_count);
 }
+
+void ControllerPublish::updateFioInfoFdb()
+{
+    hal_space::FioStatus_u tmp_st;
+    hal_space::FioTopicVal_t tmp_sub;
+
+	fio_info_fdb_.data_count = 2;
+	
+	tmp_st = fio_dev_ptr_->getStatus();
+    fio_info_fdb_.data[0] = tmp_st.all;
+    tmp_sub = fio_dev_ptr_->getTopicVal();
+    fio_info_fdb_.data[1] = tmp_sub.grind_speed;
+}
+

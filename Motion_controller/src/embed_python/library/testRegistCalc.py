@@ -988,12 +988,12 @@ def test_cascad_asignment(): #级联赋值测试
 		print("128# test set R[MR[SR[]]] fail");
 
 def testPR():
-    pr = POSTURE(1,2,3,4,5,1,2,3,4,5,6,7,8,9,1,2,3,4,5,6,7,8,9)
+    pr = Posture(1,2,3,4,5,1,2,3,4,5,6,7,8,9,1,2,3,4,5,6,7,8,9)
     reg.SetPR(1,pr)
     d = reg.GetPR(1)
     print(d)
 def test_set_get_PR():
-	pr = POSTURE(45,2,3,4,5,1,2,3,4,5,6,7,8,9,1,2,3,4,5,6,7,8,9)
+	pr = Posture(45,2,3,4,5,1,2,3,4,5,6,7,8,9,1,2,3,4,5,6,7,8,9)
 	reg.SetPR(1,pr)
 	print("129# test set PR[1]=%s"%PR[1])
 	PR[2] = PR[1]

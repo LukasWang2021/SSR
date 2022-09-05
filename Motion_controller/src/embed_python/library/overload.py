@@ -1,5 +1,5 @@
 # for function overload
-from innertypes import *
+from rtmtypes import *
 
 registry = {}
 

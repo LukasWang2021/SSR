@@ -1,6 +1,6 @@
 import ctypes
 
-class POSTURE(ctypes.Structure):
+class Posture(ctypes.Structure):
     _fields_ = [('coord',ctypes.c_int), 
                 ('arm',ctypes.c_int),
                 ('elbow',ctypes.c_int),

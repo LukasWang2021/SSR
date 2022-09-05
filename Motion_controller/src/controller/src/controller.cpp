@@ -41,9 +41,12 @@ Controller::Controller():
 Controller::~Controller()
 {
     rt_thread_.join();
+    rpc_thread_.join();
     planner_thread_.join();
     priority_thread_.join();
     routine_thread_.join();
+    online_traj_thread_.join();
+    dev_process_thread_.join();
 
     for(size_t i = 0; i < GROUP_NUM; ++i)
     {

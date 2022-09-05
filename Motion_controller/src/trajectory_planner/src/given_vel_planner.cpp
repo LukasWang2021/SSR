@@ -192,10 +192,18 @@ bool GivenVelocityPlanner::abcQuatSmooth(int32_t smooth_window)
         quat_matrix_sum.matrix_[3][1] /= mean_quat.size();
         quat_matrix_sum.matrix_[3][2] /= mean_quat.size();
         quat_matrix_sum.matrix_[3][3] /= mean_quat.size();
-        if (!eigens(&quat_matrix_sum.matrix_[0][0], 4, eigvec, &eigval))
+
+        int32_t ret = 0;
+        if ((ret = eigens(&quat_matrix_sum.matrix_[0][0], 4, eigvec, &eigval)) == 0)
         {
+            return true;
+        }
+        else
+        {
+            LogProducer::error("GivenVelocityPlanner", "calculate matrix eigens failed return %d", ret);
             return false;
         }
+
         quat.x_ = eigvec[0]; quat.y_ = eigvec[1];
         quat.z_ = eigvec[2]; quat.w_ = eigvec[3];
         smooth_quat.push_back(quat);
@@ -713,9 +721,14 @@ bool GivenVelocityPlanner::spline
                 );
         }
     }
-    if (!inverse(H, points_cnts, inv_H))
+    int32_t ret = 0;
+    if ((ret = inverse(H, points_cnts, inv_H)) == 0)
     {
-        LogProducer::error("GivenVelocityPlanner", "inverse H failed");
+        return true;
+    }
+    else
+    {
+        LogProducer::error("GivenVelocityPlanner", "inverse H failed return %d", ret);
         return false;
     }
 
@@ -1018,9 +1031,15 @@ bool GivenVelocityPlanner::spline
             Y[i] = 6 * ((data[i + 1] - data[i]) / (times[i + 1] - times[i]) - (data[i] - data[i - 1]) / (times[i] - times[i - 1]));
         }
     }
-    if (!inverse(H, cnts, inv_H))
+
+    int32_t ret = 0;
+    if ((ret = inverse(H, cnts, inv_H)) == 0)
     {
-        LogProducer::error("GivenVelocityPlanner", "inverse H failed");
+        return true;
+    }
+    else
+    {
+        LogProducer::error("GivenVelocityPlanner", "inverse H failed return %d", ret);
         return false;
     }
 

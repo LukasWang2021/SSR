@@ -1,7 +1,7 @@
 import group
 from overload import *
 import ctypes
-from innertypes import * 
+from rtmtypes import * 
 
 """
 # via,trget are PR or P or [x,y,z,a,b,c] or [j1,j2,j3,j4,j5,j6]
@@ -34,29 +34,29 @@ COORD_CARTE = 1
 # Move joint functions
 ##############################################
 
-@overload(POSTURE,float,int,float)
+@overload(Posture,float,int,float)
 def MoveJ(target, vel, smooth_type, smooth_val):
     group.MoveJ(target, vel, smooth_type, smooth_val)
     pass
 
-@overload(POSTURE,float,int,float,float)
+@overload(Posture,float,int,float,float)
 def MoveJ(target, vel, smooth_type, smooth_val, acc):
     group.MoveJwithAcc(target, vel, smooth_type, smooth_val, acc)
     pass
 
-@overload(POSTURE,float,int,float,int,int)
+@overload(Posture,float,int,float,int,int)
 def MoveJ(target, vel, smooth_type, smooth_val, offset_type, offset_val):
     group.MoveJwithOffset(target, vel, smooth_type, smooth_val, offset_type, offset_val)
     pass
 
-@overload(POSTURE,float,int,float,float,int,int)
+@overload(Posture,float,int,float,float,int,int)
 def MoveJ(target, vel, smooth_type, smooth_val, acc, offset_type, offset_val):
     group.MoveJwithAccOffset(target, vel, smooth_type, smooth_val, acc, offset_type, offset_val)
     pass
 
 @overload(dict,float,int,float)
 def MoveJ(target, vel, smooth_type, smooth_val):
-    p = POSTURE()
+    p = Posture()
     p.coord = target['coord']
     p.arm   = target['posture'][0]
     p.elbow = target['posture'][1]
@@ -88,37 +88,37 @@ def MoveJ(target, vel, smooth_type, smooth_val):
 # Move liner functions
 ##############################################
 
-@overload(POSTURE,float,int,float)
+@overload(Posture,float,int,float)
 def MoveL(target, vel, smooth_type, smooth_val):
     group.MoveL(target, vel, smooth_type, smooth_val)
     pass
 
-@overload(POSTURE,int,int,float)
+@overload(Posture,int,int,float)
 def MoveL(target, vel, smooth_type, smooth_val):
     group.MoveL(target, float(vel), smooth_type, smooth_val)
     pass
 
-@overload(POSTURE,float,int,int)
+@overload(Posture,float,int,int)
 def MoveL(target, vel, smooth_type, smooth_val):
     group.MoveL(target, vel, smooth_type, float(smooth_val))
     pass
 
-@overload(POSTURE,int,int,int)
+@overload(Posture,int,int,int)
 def MoveL(target, vel, smooth_type, smooth_val):
     group.MoveL(target, float(vel), smooth_type, float(smooth_val))
     pass
 
-@overload(POSTURE,float,int,float,float)
+@overload(Posture,float,int,float,float)
 def MoveL(target, vel, smooth_type, smooth_val, acc):
     group.MoveLwithAcc(target, vel, smooth_type, smooth_val, acc)
     pass
 
-@overload(POSTURE,float,int,float,int,int)
+@overload(Posture,float,int,float,int,int)
 def MoveL(target, vel, smooth_type, smooth_val, offset_type, offset_val):
     group.MoveLwithOffset(target, vel, smooth_type, smooth_val, offset_type, offset_val)
     pass
 
-@overload(POSTURE,float,int,float,float,int,int)
+@overload(Posture,float,int,float,float,int,int)
 def MoveL(target, vel, smooth_type, smooth_val, acc, offset_type, offset_val):
     group.MoveLwithAccOffset(target, vel, smooth_type, smooth_val, acc, offset_type, offset_val)
     pass
@@ -128,22 +128,22 @@ def MoveL(target, vel, smooth_type, smooth_val, acc, offset_type, offset_val):
 # Move circular functions
 ##############################################
 
-@overload(POSTURE,POSTURE,float,int,float)
+@overload(Posture,Posture,float,int,float)
 def MoveC(via, target, vel, smooth_type, smooth_val):
     group.MoveC(via, target, vel, smooth_type, smooth_val)
     pass
 
-@overload(POSTURE,POSTURE,float,int,float,float)
+@overload(Posture,Posture,float,int,float,float)
 def MoveC(via, target, vel, smooth_type, smooth_val, acc):
     group.MoveCwithAcc(via, target, vel, smooth_type, smooth_val, acc)
     pass
 
-@overload(POSTURE,POSTURE,float,int,float,int,int)
+@overload(Posture,Posture,float,int,float,int,int)
 def MoveC(via, target, vel, smooth_type, smooth_val, offset_type, offset_val):
     group.MoveCwithOffset(via, target, vel, smooth_type, smooth_val, offset_type, offset_val)
     pass
 
-@overload(POSTURE,POSTURE,float,int,float,float,int,int)
+@overload(Posture,Posture,float,int,float,float,int,int)
 def MoveC(via, target, vel, smooth_type, smooth_val, acc, offset_type, offset_val):
     group.MoveCwithAccOffset(via, target, vel, smooth_type, smooth_val, acc, offset_type, offset_val)
     pass

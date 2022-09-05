@@ -29,7 +29,7 @@ static PyObject *linealg_Inverse(PyObject *self, PyObject *args)
     double *p_mat = (double *)malloc(sizeof(double) * len_r * len_r);
     if(p_mat == NULL)
     {
-        PyErr_SetString(PyExc_OSError, "Memoey allocate failed for current matrix");
+        PyErr_SetString(PyExc_OSError, "Memory allocate failed for current matrix");
         return NULL;
     }
 

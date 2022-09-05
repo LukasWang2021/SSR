@@ -1548,7 +1548,8 @@ inline bool binarySearch(double* datas, int length, double target, int& data_ind
     }	
 	return false;
 }
-// LDA means column
+/* LDA means column */
+/* the clapack function always return 0 */
 /**
 * @brief calculate the matrix eigenvalue and eigenvector
 * @param p_matrix           n*n array, the input matrix
@@ -1558,7 +1559,7 @@ inline bool binarySearch(double* datas, int length, double target, int& data_ind
 * @param eig_val            the the maximum eigenvalue
 * @return
 */
-bool eigens(const double *p_matrix, int dim, double *eig_vec, double *eig_val);
+int32_t eigens(const double *p_matrix, int dim, double *eig_vec, double *eig_val);
 
 /**
 * @brief calculate  the inverse of a matrix 
@@ -1570,7 +1571,7 @@ bool eigens(const double *p_matrix, int dim, double *eig_vec, double *eig_val);
 * @param eig_val            the the maximum eigenvalue
 * @return
 */
-bool inverse(const double* p_matrix, int dim, double* p_inv);
+int32_t inverse(const double* p_matrix, int dim, double* p_inv);
 }
 #endif
 

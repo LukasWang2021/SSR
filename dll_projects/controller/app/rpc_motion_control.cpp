@@ -512,27 +512,22 @@ uint64_t c_OfflineTrajectoryPlan(char* traj_name, double traj_vel, double via_po
 	send_vp_req_data.data1.data = 1; // first time is 1 means this is a new trajectory
 
 	double* p_vp = &via_points[0][0];
-	int32_t rest_of_vp = number_of_vp;
-	size_t cp_cnts = (number_of_vp * 6 * sizeof(double)) / sizeof(send_vp_req_data.data2.data) + 1;
-	for (size_t i = 0; i < cp_cnts; ++i, p_vp += send_vp_req_data.data2.data_count)
+	int32_t vps_to_copy = number_of_vp;
+	size_t copy_cnts = (size_t)ceil((number_of_vp * 6.0 * sizeof(double)) / sizeof(send_vp_req_data.data2.data)); // these vps copy coast how many times
+	int32_t copy_grps = sizeof(send_vp_req_data.data2.data) / (6 * sizeof(double)); //copy groups: buffer can copy how many vps at one time
+	do
 	{
-		if (rest_of_vp * 6 * sizeof(double) / sizeof(send_vp_req_data.data2.data) > 0)
-		{
-			memcpy(send_vp_req_data.data2.data, p_vp, sizeof(send_vp_req_data.data2.data) / 6);
-			send_vp_req_data.data2.data_count = sizeof(send_vp_req_data.data2.data) / 6 / sizeof(double);
-		}
-		else
-		{
-			memcpy(send_vp_req_data.data2.data, p_vp, rest_of_vp * 6 * sizeof(double));
-			send_vp_req_data.data2.data_count = rest_of_vp * 6;
-		}
-
+		vps_to_copy = vps_to_copy > copy_grps ? copy_grps : vps_to_copy;
+		send_vp_req_data.data2.data_count = vps_to_copy * 6;
+		memcpy(send_vp_req_data.data2.data, p_vp, send_vp_req_data.data2.data_count * sizeof(double));
 		if (!rpc_ptr->handleRpc(0x0000A063, &send_vp_req_data, RequestMessageType_Int32_DoubleList_fields, &send_vp_rep_data, ResponseMessageType_Uint64_fields))
 		{
 			return CORE_COMM_LOAD_PARAM_FAILED;
 		}
-		send_vp_req_data.data1.data = 0;
-	}
+		p_vp += vps_to_copy;
+		send_vp_req_data.data1.data = 0; // first time is 1 means this is a new trajectory
+		vps_to_copy = number_of_vp - vps_to_copy;
+	}while (--copy_cnts);
 
 	RequestMessageType_String_Double traj_plan_req_data;
 	ResponseMessageType_Uint64_String traj_plan_rep_data;

@@ -12,8 +12,11 @@
 #include <limits.h>
 #include <getopt.h>
 #include "log_manager_comsumer.h"
+#include "init_protector.h"
 
 using namespace log_space;
+
+#define LM_PROCESS_NAME "LOG_MANAGER"
 
 LogComsumer* LogComsumer::instance_ = NULL;
 
@@ -470,6 +473,16 @@ void logComsumerExit(int dunno)
 
 int main(int argc, char *argv[])
 {	
+	// init_protection
+	signal(SIGINT, user_space::init_signalHandler);
+    signal(SIGTERM, user_space::init_signalHandler2);
+    if(!user_space::init_protect(LM_PROCESS_NAME))
+    {
+        cout<<endl<<"INIT_PROTECTOR -> ERROR: "<<LM_PROCESS_NAME<<" initialization failed"<<endl;
+        return -1;
+    }
+
+	// initialization
     int level = 0;
 	std::vector<std::string> list;
     int c;
@@ -516,6 +529,7 @@ int main(int argc, char *argv[])
 		
 	}
 	delete comsumer_ptr;
+	user_space::init_clean();
 	std::cout<<"Log Comsumer exit success."<<std::endl;
 	return 0;
 }

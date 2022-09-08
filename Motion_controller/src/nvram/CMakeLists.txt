@@ -9,6 +9,7 @@ include_directories(
   ../log_manager/include
   ../thread_help/include 
   ../rtm_spi/include
+  ../init_protection/include
   ${rtm_INCLUDE_DIRS}
 )
 
@@ -31,6 +32,7 @@ target_link_libraries(nvram_server
     log_manager_producer
     thread_help
     rtm_spi
+    init_protection
 )
 
 target_link_libraries(nvram_handler 

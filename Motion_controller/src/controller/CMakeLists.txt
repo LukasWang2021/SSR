@@ -59,6 +59,7 @@ include_directories(
     ../motion_control/include
     ../embed_python/include
     ../sensor_process/include
+    ../init_protection/include
     ${PROJECT_BINARY_DIR}
 	${rtm_INCLUDE_DIRS}
 )
@@ -107,6 +108,7 @@ target_link_libraries(controller
     motion_control
     embed_python
     sensor_process
+    init_protection
 )
 install(FILES ./config/controller.yaml 
     DESTINATION ${CONFIG_FILE_OUTPUT_PATH}/component/

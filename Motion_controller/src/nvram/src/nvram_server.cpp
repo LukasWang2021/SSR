@@ -16,7 +16,9 @@
 #include "rtm_spi.h"
 #include "nvram.h"
 #include "log_manager_producer.h"
+#include "init_protector.h"
 
+#define NVRAM_PROCESS_NAME "NVRAM"
 #define NVRAM_INSTRUCTION_READ 	0x03
 #define NVRAM_INSTRUCTION_WRITE 0x02
 #define NVRAM_RW_BUFFER_SIZE (2 * 1024)
@@ -297,6 +299,16 @@ static void* server_func(void*)
 
 int main(int argc, char **argv)
 {
+	// init protection
+	signal(SIGINT, user_space::init_signalHandler);
+    signal(SIGTERM, user_space::init_signalHandler2);
+    if(!user_space::init_protect(NVRAM_PROCESS_NAME))
+    {
+        cout<<endl<<"INIT_PROTECTOR -> ERROR: "<<NVRAM_PROCESS_NAME<<" initialization failed"<<endl;
+        return -1;
+    }
+
+	// initialization
 	log_space::LogProducer log_manager;
 	uint32_t fake_isr = 0;
     log_manager.init("nvram_server", &fake_isr);
@@ -329,6 +341,8 @@ int main(int argc, char **argv)
 	server_thread.run(server_func, NULL, 20);
     signal(SIGINT, sigintHandle);
 	server_thread.join();
+
+	user_space::init_clean();
     return 0;
 }
 

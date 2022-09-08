@@ -16,12 +16,12 @@ void onExit(int dunno)
 {
     std::cout<<"on exiting controller process"<<std::endl;
     g_controller_ptr_->setExit();
+    user_space::init_clean();
 }
 
 int main(int argc, char **argv)
 {
-    signal(SIGINT, user_space::init_signalHandler);
-    signal(SIGTERM, user_space::init_signalHandler2);
+    // init protection
     if(!user_space::init_protect(CONTROLLER_PROCESS_NAME))
     {
         cout<<endl<<"INIT_PROTECTOR -> ERROR: "<<CONTROLLER_PROCESS_NAME<<" initialization failed"<<endl;
@@ -43,6 +43,8 @@ int main(int argc, char **argv)
             g_controller_ptr_ = controller_ptr;
             signal(SIGINT, onExit);
             signal(SIGTERM, onExit);  
+            signal(SIGHUP, onExit); 
+            signal(SIGQUIT, onExit); 
             while(!controller_ptr->isExit())
             {
                 usleep(500000);
@@ -50,7 +52,6 @@ int main(int argc, char **argv)
         }
     }
     delete controller_ptr;
-    user_space::init_clean();
     std::cout<<"controller exit"<<std::endl;
     return 0;
 }

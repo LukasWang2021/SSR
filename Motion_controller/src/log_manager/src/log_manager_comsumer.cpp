@@ -468,14 +468,13 @@ struct option g_long_options[] = {
 void logComsumerExit(int dunno)
 {
     std::cout<<"Log Comsumer is exiting."<<std::endl;
+	user_space::init_clean();
 	g_comsumer_ptr->setExit();
 }
 
 int main(int argc, char *argv[])
 {	
 	// init_protection
-	signal(SIGINT, user_space::init_signalHandler);
-    signal(SIGTERM, user_space::init_signalHandler2);
     if(!user_space::init_protect(LM_PROCESS_NAME))
     {
         cout<<endl<<"INIT_PROTECTOR -> ERROR: "<<LM_PROCESS_NAME<<" initialization failed"<<endl;
@@ -522,6 +521,8 @@ int main(int argc, char *argv[])
 		g_comsumer_ptr = comsumer_ptr;
 		signal(SIGINT, logComsumerExit);
 		signal(SIGTERM, logComsumerExit);
+		signal(SIGHUP, logComsumerExit);
+		signal(SIGQUIT, logComsumerExit);
 		while(!comsumer_ptr->isExit())
 		{
 		    comsumer_ptr->runLogComsuming();
@@ -529,7 +530,6 @@ int main(int argc, char *argv[])
 		
 	}
 	delete comsumer_ptr;
-	user_space::init_clean();
 	std::cout<<"Log Comsumer exit success."<<std::endl;
 	return 0;
 }

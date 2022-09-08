@@ -11,4 +11,5 @@ namespace user_space
     void init_clean();
     void init_signalHandler(int signum);
     void init_signalHandler2(int signum);
+    void init_signalHandler3(int signum);
 }

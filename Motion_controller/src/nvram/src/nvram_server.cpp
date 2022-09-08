@@ -252,6 +252,7 @@ static void sigintHandle(int num)
     LogProducer::warn("nvramServer", "Interrupt request catched.");
 	usleep(500 * 1000);
     g_running = false;
+	user_space::init_clean();
 }
 
 static void* server_func(void*)
@@ -300,8 +301,6 @@ static void* server_func(void*)
 int main(int argc, char **argv)
 {
 	// init protection
-	signal(SIGINT, user_space::init_signalHandler);
-    signal(SIGTERM, user_space::init_signalHandler2);
     if(!user_space::init_protect(NVRAM_PROCESS_NAME))
     {
         cout<<endl<<"INIT_PROTECTOR -> ERROR: "<<NVRAM_PROCESS_NAME<<" initialization failed"<<endl;
@@ -340,9 +339,11 @@ int main(int argc, char **argv)
 	base_space::ThreadHelp server_thread;
 	server_thread.run(server_func, NULL, 20);
     signal(SIGINT, sigintHandle);
+	signal(SIGHUP, sigintHandle);
+	signal(SIGTERM, sigintHandle);
+	signal(SIGQUIT, sigintHandle);
 	server_thread.join();
 
-	user_space::init_clean();
     return 0;
 }
 

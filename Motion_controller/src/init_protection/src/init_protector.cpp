@@ -38,7 +38,7 @@ void user_space::init_clean()
     s += temp;
     system(s.c_str());
 }
-
+// handle signal SIGINT (ctrl+c)
 void user_space::init_signalHandler(int signum)
 {
         cout<<endl<<"INIT_PROTECTOR -> INFO: program ended by ctrl+c (SIGINT)"<<endl;
@@ -46,9 +46,18 @@ void user_space::init_signalHandler(int signum)
         exit(signum);
 }
 
+// handle signal SIGTERM (command kill)
 void user_space::init_signalHandler2(int signum)
 {
     cout<<endl<<"INIT_PROTECTOR -> INFO: program ended by kill command (SIGTERM)"<<endl;
+    user_space::init_clean();
+    std::exit(signum);
+}
+
+// handle signal SIGHUP (close terminal window)
+void user_space::init_signalHandler3(int signum)
+{
+    cout<<endl<<"INIT_PROTECTOR -> INFO: program ended by close terminal windows (SIGHUP)"<<endl;
     user_space::init_clean();
     std::exit(signum);
 }

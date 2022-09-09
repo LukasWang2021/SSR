@@ -152,6 +152,8 @@ void BaseGroup::doStateMachine(void)
         pause_to_auto_request_ = false;
     }
 
+    // if(mc_state == OFFLINE && foot step off) // foot boasr pause falling edge and off
+    // if(mc_state == PAUSED_OFFLINE && foot step on) // foot board resume rise edge trig and on
 
     if (stop_barecore_ && (servo_state == SERVO_DISABLE))
     {
@@ -278,6 +280,9 @@ void BaseGroup::doStateMachine(void)
             }
             else if (standby_to_offline_request_)
             {
+                // to add 
+                // check the foot step
+                // if foot board on goto 
                 mc_state_ = STANDBY_TO_OFFLINE;
                 LogProducer::warn("mc_sm","MC-state switch to MC_STANDBY_TO_OFFLINE");
             }

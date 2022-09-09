@@ -129,7 +129,7 @@ ErrorCode FioDevice::sendCmdRcvRpl(uint32_t cmd, uint32_t cmd_val, uint32_t *rpl
         {
             err_ret = FIO_DEVICE_NO_RPL;
         }
-        LogProducer::debug("FioDevice", "fio device cmd tried for %d times", retry_cnt+1);
+        LogProducer::debug("FioDevice", "fio device cmd tried for %d times", retry_cnt + 1);
     } while(err_ret != SUCCESS && retry_cnt++ < 3);
 
     fio_mutex_.unlock();
@@ -197,7 +197,7 @@ ErrorCode FioDevice::updateStatus(void)
 
     ErrorCode err = sendCmdRcvRpl(READ_ERROR_STATE, 0, &(fio_status_.all));
      // mcu handle recieve for 700us and others options all may coast about 1ms
-    if(err) return err; else usleep(2000);
+    if(err) return err; else usleep(1000);
 
     err = sendCmdRcvRpl(GET_ACTUAL_SPEED, 0, &(fio_topic_.grind_speed));
 

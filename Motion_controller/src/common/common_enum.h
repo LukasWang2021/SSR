@@ -13,8 +13,9 @@ typedef enum
     USER_OP_MODE_NONE             = 0,
     USER_OP_MODE_AUTO             = 1,
     USER_OP_MODE_SLOWLY_MANUAL    = 2,
-    USER_OP_MODE_MANUAL = 3,
-    USER_OP_MODE_ONLINE = 4,
+    USER_OP_MODE_MANUAL  = 3,
+    USER_OP_MODE_ONLINE  = 4,
+    USER_OP_MODE_OFFLINE = 5,
 }UserOpMode;
 
 enum ServiceID
@@ -46,6 +47,7 @@ enum MotionType
     MOTION_LINE   = 2,
     MOTION_CIRCLE = 3,
     MOTION_XPOS   = 4,
+    MOTION_XPATH  = 5,
 };
 
 enum SmoothType

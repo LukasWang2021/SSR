@@ -30,7 +30,7 @@
 #include "pause_resume_planner.h"
 #include "group.h"
 #include "onlineTrj_planner.h"
-#include "given_vel_planner.h"
+#include "xpath_planner.h"
 
 
 #define TRAJECTORY_CACHE_SIZE     8
@@ -312,7 +312,7 @@ class BaseGroup
     basic_alg::Transformation   transformation_;
     basic_alg::DynamicAlg   *dynamics_ptr_;
 
-    GivenVelocityPlanner offline_planner_;
+    XpathPlanner offline_planner_;
     std::ifstream offline_trajectory_file_;
     std::ifstream offline_euler_trajectory_file_;
     std::string offline_trajectory_file_name_;

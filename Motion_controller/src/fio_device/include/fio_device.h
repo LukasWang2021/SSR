@@ -130,6 +130,7 @@ typedef union
 typedef struct
 {
 	uint32_t grind_speed; // grinder's speed
+	uint32_t foot_board;  // foot board state
     // ....
 }FioTopicVal_t;
 

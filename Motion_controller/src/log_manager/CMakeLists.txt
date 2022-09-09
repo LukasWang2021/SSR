@@ -10,6 +10,7 @@ include_directories(
 	../yaml_help/include
 	../thread_help/include 
     ../basic_alg/include
+	../init_protection/include
 	${rtm_INCLUDE_DIRS}
 )
 
@@ -27,6 +28,7 @@ target_link_libraries(log_manager_producer
     ${rtm_LIBRARIES}
     yaml_help
     thread_help
+	init_protection
 )
 
 install(FILES ./config/log_manager.yaml 
@@ -46,6 +48,7 @@ target_link_libraries(log_manager_comsumer
 	${rtm_LIBRARIES}
 	yaml_help
 	thread_help
+	init_protection
 )
 
 

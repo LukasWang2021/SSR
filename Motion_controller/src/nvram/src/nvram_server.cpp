@@ -16,7 +16,9 @@
 #include "rtm_spi.h"
 #include "nvram.h"
 #include "log_manager_producer.h"
+#include "init_protector.h"
 
+#define NVRAM_PROCESS_NAME "NVRAM"
 #define NVRAM_INSTRUCTION_READ 	0x03
 #define NVRAM_INSTRUCTION_WRITE 0x02
 #define NVRAM_RW_BUFFER_SIZE (2 * 1024)
@@ -250,6 +252,7 @@ static void sigintHandle(int num)
     LogProducer::warn("nvramServer", "Interrupt request catched.");
 	usleep(500 * 1000);
     g_running = false;
+	user_space::init_clean();
 }
 
 static void* server_func(void*)
@@ -297,6 +300,14 @@ static void* server_func(void*)
 
 int main(int argc, char **argv)
 {
+	// init protection
+    if(!user_space::init_protect(NVRAM_PROCESS_NAME))
+    {
+        cout<<endl<<"INIT_PROTECTOR -> ERROR: "<<NVRAM_PROCESS_NAME<<" initialization failed"<<endl;
+        return -1;
+    }
+
+	// initialization
 	log_space::LogProducer log_manager;
 	uint32_t fake_isr = 0;
     log_manager.init("nvram_server", &fake_isr);
@@ -328,7 +339,11 @@ int main(int argc, char **argv)
 	base_space::ThreadHelp server_thread;
 	server_thread.run(server_func, NULL, 20);
     signal(SIGINT, sigintHandle);
+	signal(SIGHUP, sigintHandle);
+	signal(SIGTERM, sigintHandle);
+	signal(SIGQUIT, sigintHandle);
 	server_thread.join();
+
     return 0;
 }
 

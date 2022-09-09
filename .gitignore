@@ -6,3 +6,5 @@ dll_projects/x64
 dll_projects/out
 Motion_controller/install
 Motion_controller/build
+.vscode
+

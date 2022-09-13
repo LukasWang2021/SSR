@@ -205,7 +205,7 @@ ErrorCode Controller::init()
                 }
             }
         }
-        error_code = group_ptr_[i]->initApplication(&coordinate_manager_, &tool_manager_);
+        error_code = group_ptr_[i]->initApplication(&coordinate_manager_, &tool_manager_, fio_device_ptr_);
         if (SUCCESS != error_code)
         {
             LogProducer::error("main", "Controller group[%d] application initialization failed", group_config_[i].group_id);

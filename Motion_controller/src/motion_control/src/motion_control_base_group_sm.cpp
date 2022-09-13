@@ -7,10 +7,12 @@
 #include <basic_alg.h>
 #include <motion_control_base_group.h>
 #include "log_manager_producer.h"
+#include "fio_device.h"
 
 using namespace std;
 using namespace basic_alg;
 using namespace log_space;
+using namespace hal_space;
 
 namespace group_space
 {
@@ -151,9 +153,25 @@ void BaseGroup::doStateMachine(void)
     {
         pause_to_auto_request_ = false;
     }
+    FioDevice *fio_ptr = (FioDevice *)fio_ptr_;
+    FioTopicVal_t fio_state = fio_ptr->getTopicVal();
+    static FioTopicVal_t fio_last_state;
 
-    // if(mc_state == OFFLINE && foot step off) // foot boasr pause falling edge and off
-    // if(mc_state == PAUSED_OFFLINE && foot step on) // foot board resume rise edge trig and on
+    // foot board pause falling edge and off
+    if(mc_state == OFFLINE && fio_state.foot_board ^ fio_last_state.foot_board && !fio_state.foot_board)
+    {
+        // pause
+        pauseMove();
+    }
+
+    // foot board resume rise edge trig and on
+    if(mc_state == PAUSED_OFFLINE && fio_state.foot_board ^ fio_last_state.foot_board && fio_state.foot_board)
+    {
+        // resume
+        restartMove();
+    }
+
+    fio_last_state = fio_state;
 
     if (stop_barecore_ && (servo_state == SERVO_DISABLE))
     {
@@ -283,8 +301,11 @@ void BaseGroup::doStateMachine(void)
                 // to add 
                 // check the foot step
                 // if foot board on goto 
-                mc_state_ = STANDBY_TO_OFFLINE;
-                LogProducer::warn("mc_sm","MC-state switch to MC_STANDBY_TO_OFFLINE");
+                if(fio_state.foot_board)
+                {
+                    mc_state_ = STANDBY_TO_OFFLINE;
+                    LogProducer::warn("mc_sm","MC-state switch to MC_STANDBY_TO_OFFLINE");
+                }
             }
             else if(standby_to_online_request_)
             {

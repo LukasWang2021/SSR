@@ -23,7 +23,7 @@ class ArmGroup : public BaseGroup
 
     virtual ErrorCode initGroup(fst_ctrl::CoordinateManager *coordinate_manager_ptr, fst_ctrl::ToolManager *tool_manager_ptr, 
         std::map<int32_t, axis_space::Axis*>* axis_group_ptr, GroupSm* sm_ptr, servo_comm_space::ServoCpuCommBase* cpu_comm_ptr,
-        system_model_space::GroupModel_t* db_ptr);
+        system_model_space::GroupModel_t* db_ptr, hal_space::BaseDevice *fio_dev_ptr);
 
     ErrorCode checkGroupZeroOffset(void);
 

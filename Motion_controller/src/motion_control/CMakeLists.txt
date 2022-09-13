@@ -31,6 +31,7 @@ include_directories(
     ../dynamic_alg/include 
     ../transformation/include
     ../trajectory_planner/include
+    ../fio_device/include
     ${rtm_INCLUDE_DIRS}
 )
 
@@ -68,6 +69,7 @@ target_link_libraries(motion_control
     kinematics_alg
     transformation
     trajectory_planner
+    fio_device
 )
 
 install(FILES ./config/base_group.yaml

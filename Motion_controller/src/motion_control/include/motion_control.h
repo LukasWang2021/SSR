@@ -24,7 +24,7 @@ public:
     MotionControl(int32_t id);
     ~MotionControl();
 
-    ErrorCode initApplication(fst_ctrl::CoordinateManager *coordinate_manager_ptr, fst_ctrl::ToolManager *tool_manager_ptr);
+    ErrorCode initApplication(fst_ctrl::CoordinateManager *coordinate_manager_ptr, fst_ctrl::ToolManager *tool_manager_ptr, hal_space::BaseDevice *fio_dev_ptr);
 
     // API for teaching
     ManualFrame getManualFrame(void);

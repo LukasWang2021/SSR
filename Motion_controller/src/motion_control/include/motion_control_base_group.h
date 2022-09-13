@@ -31,6 +31,7 @@
 #include "group.h"
 #include "onlineTrj_planner.h"
 #include "xpath_planner.h"
+#include "base_device.h"
 
 
 #define TRAJECTORY_CACHE_SIZE     8
@@ -71,7 +72,7 @@ class BaseGroup
 
     virtual ErrorCode initGroup(fst_ctrl::CoordinateManager *coordinate_manager_ptr, fst_ctrl::ToolManager *tool_manager_ptr, 
         std::map<int32_t, axis_space::Axis*>* axis_group_ptr, GroupSm* sm_ptr,servo_comm_space::ServoCpuCommBase* cpu_comm_ptr,
-        system_model_space::GroupModel_t* db_ptr) = 0;
+        system_model_space::GroupModel_t* db_ptr, hal_space::BaseDevice *fio_dev_ptr) = 0;
     virtual ErrorCode checkGroupZeroOffset(void) = 0;
 
     virtual ErrorCode stopGroup(void);
@@ -384,6 +385,7 @@ class BaseGroup
 	  GroupSm* sm_ptr_;                                       /**< The state machine of the group.*/
     servo_comm_space::ServoCpuCommBase* cpu_comm_ptr_;      /**< The pointer to communicate with the other cpu.*/
     system_model_space::GroupModel_t* db_ptr_;              /**< The pointer of the parameters of the group model.*/
+    hal_space::BaseDevice *fio_ptr_;
 };
 
 

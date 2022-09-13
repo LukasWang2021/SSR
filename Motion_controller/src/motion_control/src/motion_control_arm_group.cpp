@@ -22,6 +22,7 @@ using namespace fst_ctrl;
 using namespace base_space;
 using namespace basic_alg;
 using namespace log_space;
+using namespace hal_space;
 
 
 namespace group_space
@@ -29,7 +30,7 @@ namespace group_space
 
 ErrorCode ArmGroup::initGroup(CoordinateManager *coordinate_manager_ptr, ToolManager *tool_manager_ptr,
     std::map<int32_t,axis_space::Axis*>* axis_group_ptr, GroupSm* sm_ptr, servo_comm_space::ServoCpuCommBase* cpu_comm_ptr,
-    system_model_space::GroupModel_t* db_ptr)
+    system_model_space::GroupModel_t* db_ptr, BaseDevice *fio_dev_ptr)
 {
     vel_ratio_ = 0.1;
     acc_ratio_ = 1.0;

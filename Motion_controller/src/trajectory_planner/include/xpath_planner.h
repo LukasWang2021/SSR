@@ -27,7 +27,7 @@ public:
     7. abc transfer to quaternion and resampling with spline
     */
     bool viaPoints2Traj(double traj_vel);
-    bool viaPoints2Traj(std::vector<basic_alg::PoseEuler> via_points, double traj_vel);
+    bool viaPoints2Traj(const std::vector<basic_alg::PoseEuler> &via_points, double traj_vel);
     bool setViaPoints(const std::vector<basic_alg::PoseEuler> &via_points, bool is_new);
     void reset(void);
     
@@ -84,13 +84,13 @@ private:
 
     /*spline function sepreated with xyz and abc for the efficiency of calculation */
     bool spline(
-        const std::vector<basic_alg::Point> via_points_pose,
-        const std::vector<basic_alg::Quaternion> via_points_quat,
-        const basic_alg::Point init_pose_vel,
-        const basic_alg::Point final_pose_vel,
-        const basic_alg::Quaternion init_quat_vel,
-        const basic_alg::Quaternion final_quat_vel,
-        const std::vector<double> via_points_time,
+        const std::vector<basic_alg::Point> &via_points_pose,
+        const std::vector<basic_alg::Quaternion> &via_points_quat,
+        const basic_alg::Point &init_pose_vel,
+        const basic_alg::Point &final_pose_vel,
+        const basic_alg::Quaternion &init_quat_vel,
+        const basic_alg::Quaternion &final_quat_vel,
+        const std::vector<double> &via_points_time,
         std::vector<basic_alg::PoseEuler>& out_traj);
 
     bool spline(
@@ -101,8 +101,8 @@ private:
         std::vector<double>& out);
 
     void spline_value(
-        const std::vector<double> via_points_time, 
-        const std::vector<double> resampled_time, 
+        const std::vector<double> &via_points_time, 
+        const std::vector<double> &resampled_time, 
         std::vector<basic_alg::PoseEuler>& out_traj);
 
 private:

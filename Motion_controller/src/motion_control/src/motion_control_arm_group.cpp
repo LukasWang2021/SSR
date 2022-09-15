@@ -36,7 +36,8 @@ ErrorCode ArmGroup::initGroup(CoordinateManager *coordinate_manager_ptr, ToolMan
     acc_ratio_ = 1.0;
     cycle_time_ = 0.001;
     id_ = 1;
-
+    fio_ptr_ = fio_dev_ptr;
+    
     if (coordinate_manager_ptr == NULL || tool_manager_ptr == NULL || axis_group_ptr == NULL 
         || sm_ptr == NULL || cpu_comm_ptr == NULL)
     {

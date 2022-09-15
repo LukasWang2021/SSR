@@ -154,18 +154,18 @@ void BaseGroup::doStateMachine(void)
         pause_to_auto_request_ = false;
     }
     FioDevice *fio_ptr = (FioDevice *)fio_ptr_;
-    FioTopicVal_t fio_state = fio_ptr->getTopicVal();
-    static FioTopicVal_t fio_last_state;
+    FioStatus_u fio_state = fio_ptr->getStatus();
+    static FioStatus_u fio_last_state;
 
     // foot board pause falling edge and off
-    if(mc_state == OFFLINE && fio_state.foot_board ^ fio_last_state.foot_board && !fio_state.foot_board)
+    if(mc_state == OFFLINE && fio_ptr->isReal() && fio_state.bit.footboard_state ^ fio_last_state.bit.footboard_state && !fio_state.bit.footboard_state)
     {
         // pause
         pauseMove();
     }
 
     // foot board resume rise edge trig and on
-    if(mc_state == PAUSED_OFFLINE && fio_state.foot_board ^ fio_last_state.foot_board && fio_state.foot_board)
+    if(mc_state == PAUSED_OFFLINE && fio_ptr->isReal() && fio_state.bit.footboard_state ^ fio_last_state.bit.footboard_state && fio_state.bit.footboard_state)
     {
         // resume
         restartMove();
@@ -301,7 +301,15 @@ void BaseGroup::doStateMachine(void)
                 // to add 
                 // check the foot step
                 // if foot board on goto 
-                if(fio_state.foot_board)
+                if(fio_ptr->isReal())
+                {
+                    if(fio_state.bit.footboard_state)
+                    {
+                        mc_state_ = STANDBY_TO_OFFLINE;
+                        LogProducer::warn("mc_sm","MC-state switch to MC_STANDBY_TO_OFFLINE");
+                    }
+                }
+                else
                 {
                     mc_state_ = STANDBY_TO_OFFLINE;
                     LogProducer::warn("mc_sm","MC-state switch to MC_STANDBY_TO_OFFLINE");

@@ -13,6 +13,7 @@
 #include <basic_constants.h>
 #include <common_enum.h>
 #include <kinematics.h>
+#include <vector>
 
 namespace group_space
 {
@@ -103,9 +104,11 @@ struct MotionTarget     // 用于move指令的数据结构
     FrameOffset user_frame_offset;
     FrameOffset tool_frame_offset;
 
-    int prPos[PR_POS_LEN];
+    // int prPos[PR_POS_LEN];
     TargetPoint target;   // moveJ和moveL时使用
     TargetPoint via;      // moveC时用作中间一个辅助点
+    int target_cnt;
+    TargetPoint *vt;      // to adapt MOVEX  if movel only one if movec it will two
 };
 
 struct TrajectoryPoint  // 差值得到的轨迹点

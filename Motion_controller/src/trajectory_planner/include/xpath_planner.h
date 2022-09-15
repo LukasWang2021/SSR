@@ -1,5 +1,5 @@
-#ifndef _GIVEN_VEL_PLANNER_H_
-#define _GIVEN_VEL_PLANNER_H_
+#ifndef _XPATH_PLANNER_H_
+#define _XPATH_PLANNER_H_
 #include <vector>
 #include "basic_alg.h"
 #include "quaternion.h"
@@ -9,11 +9,11 @@
 #include "pose_euler.h"
 #include "traj_params.h"
 
-class GivenVelocityPlanner
+class XpathPlanner
 {
 public:
-    GivenVelocityPlanner();
-    ~GivenVelocityPlanner();
+    XpathPlanner();
+    ~XpathPlanner();
     /*
     Generate trajectory through given via points. The trajectory velocity is constant.
     1. get the via points' quaternion
@@ -27,7 +27,7 @@ public:
     7. abc transfer to quaternion and resampling with spline
     */
     bool viaPoints2Traj(double traj_vel);
-    bool viaPoints2Traj(std::vector<basic_alg::PoseEuler> via_points, double traj_vel);
+    bool viaPoints2Traj(const std::vector<basic_alg::PoseEuler> &via_points, double traj_vel);
     bool setViaPoints(const std::vector<basic_alg::PoseEuler> &via_points, bool is_new);
     void reset(void);
     
@@ -81,15 +81,16 @@ private:
         double time_start, double time_end,
         double fs, double pos_give, 
         double results[4]);
+
     /*spline function sepreated with xyz and abc for the efficiency of calculation */
     bool spline(
-        const std::vector<basic_alg::Point> via_points_pose,
-        const std::vector<basic_alg::Quaternion> via_points_quat,
-        const basic_alg::Point init_pose_vel,
-        const basic_alg::Point final_pose_vel,
-        const basic_alg::Quaternion init_quat_vel,
-        const basic_alg::Quaternion final_quat_vel,
-        const std::vector<double> via_points_time,
+        const std::vector<basic_alg::Point> &via_points_pose,
+        const std::vector<basic_alg::Quaternion> &via_points_quat,
+        const basic_alg::Point &init_pose_vel,
+        const basic_alg::Point &final_pose_vel,
+        const basic_alg::Quaternion &init_quat_vel,
+        const basic_alg::Quaternion &final_quat_vel,
+        const std::vector<double> &via_points_time,
         std::vector<basic_alg::PoseEuler>& out_traj);
 
     bool spline(
@@ -100,8 +101,8 @@ private:
         std::vector<double>& out);
 
     void spline_value(
-        const std::vector<double> via_points_time, 
-        const std::vector<double> resampled_time, 
+        const std::vector<double> &via_points_time, 
+        const std::vector<double> &resampled_time, 
         std::vector<basic_alg::PoseEuler>& out_traj);
 
 private:
@@ -121,20 +122,14 @@ private:
     std::vector<double> traj_points_dist_;
 
     double traj_vel_set_; // mm/s
-    double traj_time_set_;
+    double traj_time_set_; // s
     size_t traj_size_;
 
-    double vel_even_;
-    double acc_;
-    double dec_;
+    double acc_, vel_, dec_;
 
-    double acc_end_time_;
-    double even_end_time_;
-    double dec_end_time_;
-
-    double acc_end_dist_;
-    double even_end_dist_;
-    double dec_end_dist_;
+    double acc_end_time_, acc_end_dist_;   // acceleration time and distance
+    double even_end_time_, even_end_dist_; // speed hold on time and distance
+    double dec_end_time_, dec_end_dist_;   // decceleration time and distance
 
     int paused_index_;
 

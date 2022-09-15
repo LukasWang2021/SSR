@@ -83,7 +83,7 @@ static PyObject *device_ForceCalibValue(PyObject *self, PyObject *args)
     if (!PyArg_ParseTuple(args, "i", &id))
         return NULL;
 
-    if(InterpDevice_GetForceRawValue(id, force_val) != 0) 
+    if(InterpDevice_GetForceCalibValue(id, force_val) != 0) 
         return NULL;
 
     PyObject *ret_list = PyList_New(6);

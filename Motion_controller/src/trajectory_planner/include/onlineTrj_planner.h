@@ -25,7 +25,8 @@ typedef struct{
     int N_step_Q;//计算姿态-取VQ的采样点间隔--->每25个采样点取一个abc向量
     double N_interp_P;//((NstepP*Tsample)/GEN_TN)
     double N_interp_Q;//((NstepQ*Tsample)/GEN_TN)
-    double trj_ratio;
+    double trj_ratio_xyz;
+    double trj_ratio_abc;
     int online_receive_Tmatrix_buff_len;
 }onlineTrjAlgParam;
 
@@ -45,7 +46,7 @@ public:
     double roundn(double x, int precision);//精确设置小数点位数精度
     Matrix33 rpy2r(double a, double b, double c);//欧拉角转旋转矩阵
     Vector3 rtm_rpy(Matrix33& R);//旋转矩阵转欧拉角
-
+    void get_matrix44f_inverse(Matrix44 m44,Matrix44 &resT);
     Quaternion rtm_r2quat(Matrix33& R);//矩阵转四元数
     Matrix33 rtm_quat2r(Quaternion& q);//四元数转矩阵
 
@@ -68,20 +69,25 @@ public:
     void traj_on_Squad(int Nstep, Vector3 VPp_abc[], int NVP, Quaternion Qnew[], Vector3 abc[], Quaternion Qold[]);
     //int traj_on_FIR_Bspline(Vector3 xyz, Vector3 abc,int status);
     int  traj_on_FIR_Bspline(Vector3 xyz, Vector3 abc,int status, int online_TrjpointBufIndex);
+    
     void Fir_Bspline_algorithm_test(void);
     void Fir_Bspline_algorithm_test2(void);
     void TrjPointPlanning();
     void pointer_fuzhi_test(Quaternion q_in[], int num, Quaternion q_out[]);
     void function_test();
     bool FixedBaseCoordTransformation(Matrix44& T_touchm,Matrix44& resM);
-    bool DynamicBaseCoordTransformation(Matrix44 T_r0_R, Matrix44 Touch_h0_v,  Matrix44 Touch_ht_v, double k,Matrix44& resM);
+    Matrix44 OnlineTrajectoryPlanner::rtm_reorthog(Matrix44 &T);
+    Matrix33 OnlineTrajectoryPlanner::rtm_reorthog(Matrix33 &T);
+    bool DynamicBaseCoordTransformation(Matrix44 T_r0_R, Matrix44 Touch_h0_v,  Matrix44 Touch_ht_v, double k_xyz,double k_abc, Matrix44& resM);
     bool get_increment_matrix(Matrix44 T_ck,Matrix44 T_k1, Matrix44 T_k, Matrix44 &resT);
     void rtm_r2xyzabc(Matrix44& u,Vector3& res_xyz, Vector3& res_abc);
    
     onlineTrjAlgParam online_alg_params_;
     void online_trajectory_algorithm_params_init();
-    int setOnlineTrjRatio(double data_ratio);
-    double get_online_trj_ratio();
+    int setOnlineTrjRatio_xyz(double data_ratio);
+    int setOnlineTrjRatio_abc(double data_ratio);
+    double get_online_trj_ratio_xyz();
+    double get_online_trj_ratio_abc();
 
     bool load_OnlineMove_params_Config();
 private:

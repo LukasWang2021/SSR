@@ -54,8 +54,10 @@ public:
     ErrorCode MotionStateOnlineToStandby(void); //从ONLINE状态切换到STANDBY状态并做相关变量设置
     //ErrorCode setOnlinePointBufptr(double * ptr);
     ErrorCode setOnlinePointBufptr();
-    ErrorCode setOnlineTrajectoryRatio(double ratio);
-    double getOnlineTrajectoryRatio();
+    ErrorCode setOnlineTrajectoryRatio_xyz(double ratio);
+    ErrorCode setOnlineTrajectoryRatio_abc(double ratio);
+    double getOnlineTrajectoryRatio_xyz();
+    double getOnlineTrajectoryRatio_abc();
     ErrorCode setOnlineVpointCache(int num_matrix,int * p_status, double * p_marixArray);
     // API for off line trajectory
     ErrorCode convertEulerTraj2JointTraj(const std::string &offline_euler_trajectory_fileName);

@@ -528,15 +528,25 @@ TTT.matrix_[3][0]=0;TTT.matrix_[3][1]=0;TTT.matrix_[3][2]=0;TTT.matrix_[3][3]=1;
     res_abc.print_abc("res_abc=");
 }
 
-ErrorCode MotionControl::setOnlineTrajectoryRatio(double ratio)
+ErrorCode MotionControl::setOnlineTrajectoryRatio_xyz(double ratio)
 {
     ErrorCode ret;
-    ret = online_trj_planner_ptr->setOnlineTrjRatio(ratio);
+    ret = online_trj_planner_ptr->setOnlineTrjRatio_xyz(ratio);
     return ret;
 }
-double MotionControl::getOnlineTrajectoryRatio()
+ErrorCode MotionControl::setOnlineTrajectoryRatio_abc(double ratio)
 {
-    return online_trj_planner_ptr->get_online_trj_ratio();
+    ErrorCode ret;
+    ret = online_trj_planner_ptr->setOnlineTrjRatio_abc(ratio);
+    return ret;
+}
+double MotionControl::getOnlineTrajectoryRatio_xyz()
+{
+    return online_trj_planner_ptr->get_online_trj_ratio_xyz();
+}
+double MotionControl::getOnlineTrajectoryRatio_abc()
+{
+    return online_trj_planner_ptr->get_online_trj_ratio_abc();
 }
 
 /****
@@ -589,7 +599,7 @@ ErrorCode MotionControl::setOnlineVpointCache(int num_matrix,int * p_status, dou
 int MotionControl::JointInConstraint_axisCnt(basic_alg::Joint &joint, int cnt)
 {
     const double constraint_lower[6]={-1.57, -1.3, -2, -3.1, -1.6, -3.1};
-    const double constraint_upper[6]={1.57, 1.5, -0.25, 3.1, -0.1, 3.1};
+    const double constraint_upper[6]={1.57, 1.5, -0.25, 3.1, -0.2, 3.1};
     double precision_val = 0.0001;
     if(cnt==1)
     {
@@ -657,7 +667,8 @@ ErrorCode MotionControl::receive_T_matrix_data(int status, double * p_marixArray
     Matrix44 Touch_ht_v;
     Matrix44 T_k;//当前输入的T矩阵经过动态基坐标转换得到的T_k
     Matrix44 Ttemp;//获取增量后的机械臂末端位姿矩阵
-    double k = online_trj_planner_ptr->online_alg_params_.trj_ratio; //机械臂移动距离与touch移动距离的比例系数,    即机械臂移动距离=K*touch移动距离
+    double k_xyz = online_trj_planner_ptr->online_alg_params_.trj_ratio_xyz; //机械臂移动距离与touch移动距离的比例系数,    即机械臂移动距离=K*touch移动距离
+    double k_abc = online_trj_planner_ptr->online_alg_params_.trj_ratio_abc;
     Vector3 res_xyz,res_abc;
     PoseEuler StartPositionPose;
     TransMatrix start_trans_matrix;
@@ -746,8 +757,8 @@ v_xyz.x_, v_xyz.y_, v_xyz.z_, v_abc.x_, v_abc.y_, v_abc.z_);
         Touch_ht_v.matrix_[1][0]=*(p_marixArray+1); Touch_ht_v.matrix_[1][1]=*(p_marixArray+5); Touch_ht_v.matrix_[1][2]=*(p_marixArray+9);  Touch_ht_v.matrix_[1][3]=*(p_marixArray+13);  // /1000;
         Touch_ht_v.matrix_[2][0]=*(p_marixArray+2); Touch_ht_v.matrix_[2][1]=*(p_marixArray+6); Touch_ht_v.matrix_[2][2]=*(p_marixArray+10); Touch_ht_v.matrix_[2][3]=*(p_marixArray+14);  // /1000;
         Touch_ht_v.matrix_[3][0]=*(p_marixArray+3); Touch_ht_v.matrix_[3][1]=*(p_marixArray+7); Touch_ht_v.matrix_[3][2]=*(p_marixArray+11); Touch_ht_v.matrix_[3][3]=*(p_marixArray+15);
-Touch_ht_v.print("Touch_ht_v");
-        online_trj_planner_ptr->DynamicBaseCoordTransformation(T_r0_R, Touch_h0_v, Touch_ht_v, k, T_k);
+//Touch_ht_v.print("Touch_ht_v");
+        online_trj_planner_ptr->DynamicBaseCoordTransformation(T_r0_R, Touch_h0_v, Touch_ht_v, k_xyz, k_abc, T_k);
 //T_k.print("CoordTransformed T_k:");
         //T_c.print("Tc:");
         //last_T_k.print("T_1");

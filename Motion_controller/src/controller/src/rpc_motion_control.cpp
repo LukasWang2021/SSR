@@ -1206,26 +1206,47 @@ void ControllerRpc::handleRpc0x00008A31(void* request_data_ptr, void* response_d
     }
     #endif
 }
-//rpc/motion_conrtol/axis_group/setOnlineTrajectoryRatio  : 设置在线轨迹运动比例系数2022-0414
-void ControllerRpc::handleRpc0x0000B35F(void* request_data_ptr, void* response_data_ptr)
+//rpc/motion_conrtol/axis_group/setOnlineTrajectoryRatio_xyz  : 设置在线轨迹运动比例系数2022-0414
+void ControllerRpc::handleRpc0x0000D37A(void* request_data_ptr, void* response_data_ptr)
 {
     RequestMessageType_Double* rq_data_ptr = static_cast<RequestMessageType_Double*>(request_data_ptr);
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
-    rs_data_ptr->data.data = group_ptr_[0]->setOnlineTrajectoryRatio(rq_data_ptr->data.data);
+    rs_data_ptr->data.data = group_ptr_[0]->setOnlineTrajectoryRatio_xyz(rq_data_ptr->data.data);
     if (rs_data_ptr->data.data != SUCCESS)
     {
-        LogProducer::error("rpc", "/rpc/group/setOnlineTrajectoryRatio failed, ret = %llx", rs_data_ptr->data.data);
+        LogProducer::error("rpc", "/rpc/group/setOnlineTrajectoryRatio_xyz failed, ret = %llx", rs_data_ptr->data.data);
         return;
     }
-    LogProducer::info("rpc", "/rpc/group/setOnlineTrajectoryRatio success");
+    LogProducer::info("rpc", "/rpc/group/setOnlineTrajectoryRatio_xyz success");
 }
-//"/rpc/motion_conrtol/axis_group/getOnlineTrajectoryRatio  : 获取在线轨迹运动比例系数
-void ControllerRpc::handleRpc0x00004DEF(void* request_data_ptr, void* response_data_ptr)
+//"/rpc/motion_control/axis_group/setOnlineTrajectoryRatio_abc"	
+void ControllerRpc::handleRpc0x00010AF3(void* request_data_ptr, void* response_data_ptr){
+    RequestMessageType_Double* rq_data_ptr = static_cast<RequestMessageType_Double*>(request_data_ptr);
+    ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
+    rs_data_ptr->data.data = group_ptr_[0]->setOnlineTrajectoryRatio_abc(rq_data_ptr->data.data);
+    if (rs_data_ptr->data.data != SUCCESS)
+    {
+        LogProducer::error("rpc", "/rpc/group/setOnlineTrajectoryRatio_abc failed, ret = %llx", rs_data_ptr->data.data);
+        return;
+    }
+    LogProducer::info("rpc", "/rpc/group/setOnlineTrajectoryRatio_abc success");
+}
+
+//"/rpc/motion_conrtol/axis_group/getOnlineTrajectoryRatio_xyz  : 获取在线轨迹运动xyz比例系数
+void ControllerRpc::handleRpc0x0001487A(void* request_data_ptr, void* response_data_ptr)
 {
     ResponseMessageType_Uint64_Double* rs_data_ptr = static_cast<ResponseMessageType_Uint64_Double*>(response_data_ptr);
     rs_data_ptr->error_code.data = SUCCESS;
-    rs_data_ptr->data.data = group_ptr_[0]->getOnlineTrajectoryRatio();
-    LogProducer::info("rpc", "/rpc/group/getOnlineTrajectoryRatio success");
+    rs_data_ptr->data.data = group_ptr_[0]->getOnlineTrajectoryRatio_xyz();
+    LogProducer::info("rpc", "/rpc/group/getOnlineTrajectoryRatio_xyz success");
+}
+
+//"/rpc/motion_control/axis_group/getOnlineTrajectoryRatio_abc"	
+void ControllerRpc::handleRpc0x00017FF3(void* request_data_ptr, void* response_data_ptr){
+    ResponseMessageType_Uint64_Double* rs_data_ptr = static_cast<ResponseMessageType_Uint64_Double*>(response_data_ptr);
+    rs_data_ptr->error_code.data = SUCCESS;
+    rs_data_ptr->data.data = group_ptr_[0]->getOnlineTrajectoryRatio_abc();
+    LogProducer::info("rpc", "/rpc/group/getOnlineTrajectoryRatio_abc success");
 }
 
 //"/rpc/motion_control/axis_group/getJointManualStep"	

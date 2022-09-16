@@ -8,6 +8,7 @@
 #include "math.h"
 #include <cmath>
 #include <iomanip>
+#include  "basic_alg.h"
 
 
 float VPp[1][6] = { {0.1, 0.2, 0.3, 0, 0, 0}
@@ -19,13 +20,13 @@ float VPv[2][6] = { {0.0, 0.0, 0.0, 0, 0, 0},
                     //{0.3, 0.3, 0.2, 0.1*PI, 0.2*PI, 0.3*PI},
                 };
 
-#define LAMBDA 10  //B样条3级串联滤波器脉冲响应系数索引值[1,10,100]
+#define LAMBDA 10  //hfir[] B样条3级串联滤波器脉冲响应系数索引值
 #if(LAMBDA == 1)
-double hfir[6] = {0.4018,0.2424,0.0841,0.0041,-0.0174,-0.0140};
+double hfir[6] = {0.401782, 0.242382, 0.084082, 0.004082, -0.01742, -0.01401818};
 #elif(LAMBDA == 10)
-double hfir[6] = {0.1952,0.1666,0.1183,0.0714,0.0350,0.0112};
+double hfir[6] = {0.197604, 0.167796, 0.117796, 0.077796, 0.037796, 0.00001402};
 #elif(LAMBDA == 100)
-double hfir[6] = {0.1252,0.1191,0.1056,0.0886,0.0706,0.0535};
+double hfir[6] = {0.1252, 0.1191, 0.1056, 0.0886, 0.0706, 0.0535};
 #endif
 
 
@@ -506,13 +507,12 @@ int  OnlineTrajectoryPlanner::traj_on_FIR_Bspline(Vector3 xyz, Vector3 abc,int s
     static int vq_cnt = 0;//vq点计数
     bool flag_getVpFromTouch = false;
     bool flag_getVqFromTouch = false;
-
-    static double VPx[31],VPy[31],VPz[31];
-    static double cx[5],cy[5],cz[5];
-    static double cx_ts[50],cy_ts[50],cz_ts[50];//实际使用长度40
+    static Vector3 vp[14];//前13个逐个迭代
+    Vector3 c_xyz[7];
+    Vector3 p_fil[43];
+    Vector3 offset, vp_off[14], remainder[4], p_new[10];//单次xyz规划输出
     const int hfir_idx[11] = {5,4,3,2,1,0,1,2,3,4,5};
     int hfir_idxidx = 0;
-    static Vector3 px_new[31];//单次xyz规划输出,实际使用31
 
     static Quaternion Q0,Q1,Q2,Q3;
     double dq;
@@ -527,6 +527,9 @@ int  OnlineTrajectoryPlanner::traj_on_FIR_Bspline(Vector3 xyz, Vector3 abc,int s
     static int out_cnt=0;
     static int out_status=0;//默认输出轨迹点状态为起点
     int NP = static_cast<int>(online_alg_params_.N_interp_P);//has been static_cast to int when init().
+    int Pre_seg = ceil((3*NP-3)/NP);
+    Vector3 v3_zero;
+    v3_zero.zero();
     int res_PointCnt = 0;
 
     //每NstepP记录一个VP NstepP==5
@@ -538,14 +541,9 @@ int  OnlineTrajectoryPlanner::traj_on_FIR_Bspline(Vector3 xyz, Vector3 abc,int s
     if(status == 0)//轨迹起点--按下按键后立即传入静止状态的机械臂末端位姿
     {
         sp_cnt = 0; vp_cnt = 0; vq_cnt = 0;j=0;
-//cout <<"start point"<<endl;
-        for(int i=0;i<m;i++){cx[i] = xyz.x_;cy[i] = xyz.y_;cz[i] = xyz.z_;}//cx=ones(1,m)*px(0);
-        for(int i=0;i<m*NP;i++){cx_ts[i] = cx[0];cy_ts[i] = cy[0];cz_ts[i] = cz[0];}//cx_ts=ones(1,m*NinterpP)*cx(0);
-        for(int i=0;i<2*m;i++)//0~2m-1
+        for(int i=0;i<(2*m+Pre_seg+1);i++)
         {
-            VPx[i] = xyz.x_;
-            VPy[i] = xyz.y_;
-            VPz[i] = xyz.z_;
+            vp[i] = xyz;
         }
         flag_getVpFromTouch = true;
         flag_getVqFromTouch = true;
@@ -573,83 +571,66 @@ int  OnlineTrajectoryPlanner::traj_on_FIR_Bspline(Vector3 xyz, Vector3 abc,int s
     sp_cnt++;//采样点计数自增
     if(flag_getVpFromTouch)
     {
-        VPx[2*m] = xyz.x_;//vp_cnt = 2*m;
-        VPy[2*m] = xyz.y_;
-        VPz[2*m] = xyz.z_;
-        if(vp_cnt < (2*m+1)) vp_cnt++;
-        double t_sum_cx=0,t_sum_cy=0,t_sum_cz=0;
-        hfir_idxidx = 5-m;//确定hfir_idx的查找起始下标
-        for(int i=0;i<(2*m+1);i++)
+        vp[2*m+Pre_seg] = xyz;
+        if(vp_cnt == 0)
         {
-            t_sum_cx += hfir[hfir_idx[hfir_idxidx]]*VPx[i];
-            t_sum_cy += hfir[hfir_idx[hfir_idxidx]]*VPy[i];
-            t_sum_cz += hfir[hfir_idx[hfir_idxidx]]*VPz[i];
-            hfir_idxidx++;
-        }
-        cx[3] = t_sum_cx;
-        cy[3] = t_sum_cy;
-        cz[3] = t_sum_cz;
-        for(int i=0;i<NP;i++)//每一个VP点要生成Ninterp个cx_ts
-        {
-            cx_ts[3*NP + i] = cx[3];
-            cy_ts[3*NP + i] = cy[3];
-            cz_ts[3*NP + i] = cz[3];
-        }
-        for(int i=0;i<2*m;i++)
-        {
-            VPx[i] = VPx[i+1];VPy[i] = VPy[i+1];VPz[i] = VPz[i+1];
-        }
-        //滤波函数
-        if(vp_cnt == 1)
-        {
-            for(int i=0;i<NP;i++)
+            for(int i=0;i<(2*m+Pre_seg);i++)
             {
-                switch(i){
-                    case 0:
-                    {
-                        px_new[0].x_ =cx[0] + (cx_ts[3*NP]-3*cx_ts[2*NP]+3*cx_ts[NP]-cx_ts[0])/pow(NP,3);
-                        px_new[0].y_ =cy[0] + (cy_ts[3*NP]-3*cy_ts[2*NP]+3*cy_ts[NP]-cy_ts[0])/pow(NP,3);
-                        px_new[0].z_ =cz[0] + (cz_ts[3*NP]-3*cz_ts[2*NP]+3*cz_ts[NP]-cz_ts[0])/pow(NP,3);
-                    }break;
-                    case 1: {
-                        px_new[1].x_ = 3*px_new[0].x_ -2*cx[0] + (cx_ts[3*NP+1]-3*cx_ts[2*NP+1]+3*cx_ts[NP+1]-cx_ts[1])/pow(NP,3);
-                        px_new[1].y_ = 3*px_new[0].y_ -2*cy[0] + (cy_ts[3*NP+1]-3*cy_ts[2*NP+1]+3*cy_ts[NP+1]-cy_ts[1])/pow(NP,3);
-                        px_new[1].z_ = 3*px_new[0].z_ -2*cz[0] + (cz_ts[3*NP+1]-3*cz_ts[2*NP+1]+3*cz_ts[NP+1]-cz_ts[1])/pow(NP,3);
-                    }break;
-                    case 2: {
-                        px_new[2].x_ = 3*px_new[1].x_- 3*px_new[0].x_+cx[0] + (cx_ts[3*NP+2]-3*cx_ts[2*NP+2]+3*cx_ts[NP+2]-cx_ts[2])/pow(NP,3);
-                        px_new[2].y_ = 3*px_new[1].y_- 3*px_new[0].y_+cy[0] + (cy_ts[3*NP+2]-3*cy_ts[2*NP+2]+3*cy_ts[NP+2]-cy_ts[2])/pow(NP,3);
-                        px_new[2].z_ = 3*px_new[1].z_- 3*px_new[0].z_+cz[0] + (cz_ts[3*NP+2]-3*cz_ts[2*NP+2]+3*cz_ts[NP+2]-cz_ts[2])/pow(NP,3);
-                    }break;
-                    default:
-                        px_new[i].x_ = 3*px_new[i-1].x_-3*px_new[i-2].x_+px_new[i-3].x_ + (cx_ts[3*NP+i]-3*cx_ts[2*NP+i]+3*cx_ts[NP+i]-cx_ts[i])/pow(NP,3);
-                        px_new[i].y_ = 3*px_new[i-1].y_-3*px_new[i-2].y_+px_new[i-3].y_ + (cy_ts[3*NP+i]-3*cy_ts[2*NP+i]+3*cy_ts[NP+i]-cy_ts[i])/pow(NP,3);
-                        px_new[i].z_ = 3*px_new[i-1].z_-3*px_new[i-2].z_+px_new[i-3].z_ + (cz_ts[3*NP+i]-3*cz_ts[2*NP+i]+3*cz_ts[NP+i]-cz_ts[i])/pow(NP,3);
-                    break;
-                }
-//px_new[i].print();//输出第一次xyz规划结果
-                //out_xyz_buf[out_xyz_cnt]=px_new[i]; out_xyz_cnt++;//前10个不算输出xyz规划
+                vp[i] = vp[2*m+Pre_seg];
             }
         }
-        else
+        offset = vp[0];
+        for(int i=0;i<(2*m+Pre_seg+1);i++)
+        {
+            vp_off[i] = vp[i] - offset;
+        }
+        if(vp_cnt < (2*m+1)) vp_cnt++;
+        hfir_idxidx = 5-m;//确定hfir_idx的查找起始下标
+        c_xyz[0] = c_xyz[1] = c_xyz[2] = v3_zero;//初始化c_xyz[]前3个为零向量
+        c_xyz[3] = c_xyz[4] = c_xyz[5] = c_xyz[6] = v3_zero;
+        for(int i=0;i<(2*m+1);i++)
+        {
+            c_xyz[3].x_ += hfir[hfir_idx[hfir_idxidx]]*vp_off[i].x_;
+            c_xyz[3].y_ += hfir[hfir_idx[hfir_idxidx]]*vp_off[i].y_;
+            c_xyz[3].z_ += hfir[hfir_idx[hfir_idxidx]]*vp_off[i].z_;
+            c_xyz[4].x_ += hfir[hfir_idx[hfir_idxidx]]*vp_off[i+1].x_;
+            c_xyz[4].y_ += hfir[hfir_idx[hfir_idxidx]]*vp_off[i+1].y_;
+            c_xyz[4].z_ += hfir[hfir_idx[hfir_idxidx]]*vp_off[i+1].z_;
+            c_xyz[5].x_ += hfir[hfir_idx[hfir_idxidx]]*vp_off[i+2].x_;
+            c_xyz[5].y_ += hfir[hfir_idx[hfir_idxidx]]*vp_off[i+2].y_;
+            c_xyz[5].z_ += hfir[hfir_idx[hfir_idxidx]]*vp_off[i+2].z_;
+            c_xyz[6].x_ += hfir[hfir_idx[hfir_idxidx]]*vp_off[i+3].x_;
+            c_xyz[6].y_ += hfir[hfir_idx[hfir_idxidx]]*vp_off[i+3].y_;
+            c_xyz[6].z_ += hfir[hfir_idx[hfir_idxidx]]*vp_off[i+3].z_;
+            hfir_idxidx++;
+        }
+        //先计算好滤波公式后半部分余项
+        for(int i=0;i<4;i++)
+        {
+            remainder[i].x_ = (c_xyz[i+3].x_ - 3*c_xyz[i+2].x_ + 3*c_xyz[i+1].x_ - c_xyz[i].x_)/1000;
+            remainder[i].y_ = (c_xyz[i+3].y_ - 3*c_xyz[i+2].y_ + 3*c_xyz[i+1].y_ - c_xyz[i].y_)/1000;
+            remainder[i].z_ = (c_xyz[i+3].z_ - 3*c_xyz[i+2].z_ + 3*c_xyz[i+1].z_ - c_xyz[i].z_)/1000;
+        }
+        //滤波函数
+        p_fil[0]=p_fil[1]=p_fil[2]=v3_zero;//初始化p_fil[]前3个为零向量
+        int remainder_idx = 0;
+        for(int i=0; i<40;i++)
+        {
+            remainder_idx = round(i/10);
+            p_fil[i+3].x_ = 3*p_fil[i+2].x_ - 3*p_fil[i+1].x_ + p_fil[i].x_ + remainder[remainder_idx].x_;
+            p_fil[i+3].y_ = 3*p_fil[i+2].y_ - 3*p_fil[i+1].y_ + p_fil[i].y_ + remainder[remainder_idx].y_;
+            p_fil[i+3].z_ = 3*p_fil[i+2].z_ - 3*p_fil[i+1].z_ + p_fil[i].z_ + remainder[remainder_idx].z_;
+        }
+        if(vp_cnt != 1)
         {
             for(int i=0;i<NP; i++)//输出
             {
-                px_new[NP+i].x_ = 3*px_new[NP+i-1].x_-3*px_new[NP+i-2].x_+px_new[NP+i-3].x_ + (cx_ts[3*NP+i]-3*cx_ts[2*NP+i]+3*cx_ts[1*NP+i]-cx_ts[i])/pow(NP,3);
-                px_new[NP+i].y_ = 3*px_new[NP+i-1].y_-3*px_new[NP+i-2].y_+px_new[NP+i-3].y_ + (cy_ts[3*NP+i]-3*cy_ts[2*NP+i]+3*cy_ts[1*NP+i]-cy_ts[i])/pow(NP,3);
-                px_new[NP+i].z_ = 3*px_new[NP+i-1].z_-3*px_new[NP+i-2].z_+px_new[NP+i-3].z_ + (cz_ts[3*NP+i]-3*cz_ts[2*NP+i]+3*cz_ts[1*NP+i]-cz_ts[i])/pow(NP,3);
-//px_new[10+i].print();//输出xyz规划结果
-                out_xyz_buf[out_xyz_cnt]=px_new[NP+i]; out_xyz_cnt++;
-            }
-            for(int i=0;i<NP;i++)//迭代
-            {
-                px_new[i].x_ = px_new[i+NP].x_;
-                px_new[i].y_ = px_new[i+NP].y_;
-                px_new[i].z_ = px_new[i+NP].z_;
+                p_new[i] = p_fil[i+33]+offset;//px_new[10+i].print();//输出xyz规划结果
+                out_xyz_buf[out_xyz_cnt]=p_new[i]; 
+                out_xyz_cnt++;
             }
         }
-        for(int i=0;i<3;i++){cx[i] = cx[i+1];cy[i] = cy[i+1];cz[i] = cz[i+1];}
-        for(int i=0;i<3*NP;i++){cx_ts[i] = cx_ts[i+NP];cy_ts[i] = cy_ts[i+NP];cz_ts[i] = cz_ts[i+NP];}
+        for(int i=0;i<(2*m+Pre_seg);i++){vp[i]=vp[i+1];}
 //cout <<"-----------------------------out_xyz_cnt="<<out_xyz_cnt<<" out_abc_cnt="<<out_abc_cnt<<endl;
     }
     if(flag_getVqFromTouch)
@@ -806,16 +787,88 @@ bool OnlineTrajectoryPlanner::FixedBaseCoordTransformation(Matrix44& T_touchm,Ma
     return true;
 }
 
+
+
+Matrix44 OnlineTrajectoryPlanner::rtm_reorthog(Matrix44 &T)
+{
+    Matrix44 T_new;//result;
+    Vector3 a,b,a_ort, b_ort,c_ort,a_new,b_new,c_new;
+    a.x_ = T.matrix_[0][0];
+    a.y_ = T.matrix_[0][1];
+    a.z_ = T.matrix_[0][2];
+
+    b.x_ = T.matrix_[1][0];
+    b.y_ = T.matrix_[1][1];
+    b.z_ = T.matrix_[1][2];
+
+    double t;
+    t = a.dotProduct(b)/2;
+    a_ort = a - b*t;
+    b_ort = b - a*t;
+    a_ort.crossProduct(b_ort,c_ort);
+
+    t = (3-a_ort.dotProduct(a_ort))/2;
+    a_new = a_ort*t;
+
+    t = (3-b_ort.dotProduct(b_ort))/2;
+    b_new = b_ort*t;
+
+    t = (3-c_ort.dotProduct(c_ort))/2;
+    c_new = c_ort*t;
+
+    T_new.matrix_[0][0] = a_new.x_;T_new.matrix_[0][1] = a_new.y_;T_new.matrix_[0][2] = a_new.z_; T_new.matrix_[0][3] = T.matrix_[0][3];
+    T_new.matrix_[1][0] = b_new.x_;T_new.matrix_[1][1] = b_new.y_;T_new.matrix_[1][2] = b_new.z_; T_new.matrix_[1][3] = T.matrix_[1][3];
+    T_new.matrix_[2][0] = c_new.x_;T_new.matrix_[2][1] = c_new.y_;T_new.matrix_[2][2] = c_new.z_; T_new.matrix_[2][3] = T.matrix_[2][3];
+    T_new.matrix_[3][0] = T.matrix_[3][0];T_new.matrix_[3][1] =T.matrix_[3][1];T_new.matrix_[3][2] = T.matrix_[3][2]; T_new.matrix_[3][3] = T.matrix_[3][3];
+    return T_new;
+}
+
+
+/*
+* 函数功能: 将输入的矩阵正交化
+*/
+Matrix33 OnlineTrajectoryPlanner::rtm_reorthog(Matrix33 &T)
+{
+    Matrix33 T_new;//result;
+    Vector3 a,b,a_ort, b_ort,c_ort,a_new,b_new,c_new;
+    a.x_ = T.matrix_[0][0];
+    a.y_ = T.matrix_[0][1];
+    a.z_ = T.matrix_[0][2];
+
+    b.x_ = T.matrix_[1][0];
+    b.y_ = T.matrix_[1][1];
+    b.z_ = T.matrix_[1][2];
+
+    double t;
+    t = a.dotProduct(b)/2;
+    a_ort = a - b*t;
+    b_ort = b - a*t;
+    a_ort.crossProduct(b_ort,c_ort);
+
+    t = (3-a_ort.dotProduct(a_ort))/2;
+    a_new = a_ort*t;
+
+    t = (3-b_ort.dotProduct(b_ort))/2;
+    b_new = b_ort*t;
+
+    t = (3-c_ort.dotProduct(c_ort))/2;
+    c_new = c_ort*t;
+    T_new.matrix_[0][0] = a_new.x_;T_new.matrix_[0][1] = a_new.y_;T_new.matrix_[0][2] = a_new.z_;
+    T_new.matrix_[1][0] = b_new.x_;T_new.matrix_[1][1] = b_new.y_;T_new.matrix_[1][2] = b_new.z_;
+    T_new.matrix_[2][0] = c_new.x_;T_new.matrix_[2][1] = c_new.y_;T_new.matrix_[2][2] = c_new.z_;
+    return T_new;
+}
 /**
 *函数功能: 动态基坐标关联法计算机械臂当前末端磨钻的目标位姿在机械臂基坐标下的位姿矩阵
 *参数说明:
 * T_r0_R: 按下按钮瞬间,机械臂当前末端磨钻位姿在机械臂基坐标系下的位姿矩阵
 * Touch_h0_v: 按下按钮瞬间,touch当前末端假想位姿在touch基坐标系下的位姿矩阵
 * Touch_ht_v: 在规划过程中 touch当前末端假想位姿在touch基坐标系下的位姿矩阵
-* k: touch移动距离与机械臂移动距离之间的比例系数
+* k_xyz: touch移动距离与机械臂移动距离之间的比例系数
+* k_abc: touch移动角度与机械臂移动角度之间的比例系数
 * resM: 计算结果
 */
-bool OnlineTrajectoryPlanner::DynamicBaseCoordTransformation(Matrix44 T_r0_R, Matrix44 Touch_h0_v,  Matrix44 Touch_ht_v, double k,Matrix44& resM)
+bool OnlineTrajectoryPlanner::DynamicBaseCoordTransformation(Matrix44 T_r0_R, Matrix44 Touch_h0_v,  Matrix44 Touch_ht_v, double k_xyz,double k_abc, Matrix44& resM)
 {
     Matrix44 T_v_h0;
     Matrix44 T_ht_h0;
@@ -834,14 +887,69 @@ bool OnlineTrajectoryPlanner::DynamicBaseCoordTransformation(Matrix44 T_r0_R, Ma
     T_rt_r0.matrix_[0][0] = T_ht_h0.matrix_[0][0];T_rt_r0.matrix_[0][1] = T_ht_h0.matrix_[0][1];T_rt_r0.matrix_[0][2] = T_ht_h0.matrix_[0][2];
     T_rt_r0.matrix_[1][0] = T_ht_h0.matrix_[1][0];T_rt_r0.matrix_[1][1] = T_ht_h0.matrix_[1][1];T_rt_r0.matrix_[1][2] = T_ht_h0.matrix_[1][2];
     T_rt_r0.matrix_[2][0] = T_ht_h0.matrix_[2][0];T_rt_r0.matrix_[2][1] = T_ht_h0.matrix_[2][1];T_rt_r0.matrix_[2][2] = T_ht_h0.matrix_[2][2];
-    T_rt_r0.matrix_[0][3] = k*T_ht_h0.matrix_[0][3];
-    T_rt_r0.matrix_[1][3] = k*T_ht_h0.matrix_[1][3];
-    T_rt_r0.matrix_[2][3] = k*T_ht_h0.matrix_[2][3];
+    T_rt_r0.matrix_[0][3] = k_xyz*T_ht_h0.matrix_[0][3];
+    T_rt_r0.matrix_[1][3] = k_xyz*T_ht_h0.matrix_[1][3];
+    T_rt_r0.matrix_[2][3] = k_xyz*T_ht_h0.matrix_[2][3];
     T_rt_r0.matrix_[3][0]=0;T_rt_r0.matrix_[3][1]=0;T_rt_r0.matrix_[3][2]=0;T_rt_r0.matrix_[3][3]=1;
 
+    Matrix33 dr_temp, M33_dRr;//T_rt_r0 33
+    Quaternion Qtemp,Qzero;
+    Qzero.w_=1;Qzero.x_=0;Qzero.y_=0;Qzero.z_=0;
+    dr_temp.matrix_[0][0] = T_rt_r0.matrix_[0][0]; dr_temp.matrix_[0][1] = T_rt_r0.matrix_[0][1]; dr_temp.matrix_[0][2] = T_rt_r0.matrix_[0][2];
+    dr_temp.matrix_[1][0] = T_rt_r0.matrix_[1][0]; dr_temp.matrix_[1][1] = T_rt_r0.matrix_[1][1]; dr_temp.matrix_[1][2] = T_rt_r0.matrix_[1][2];
+    dr_temp.matrix_[2][0] = T_rt_r0.matrix_[2][0]; dr_temp.matrix_[2][1] = T_rt_r0.matrix_[2][1]; dr_temp.matrix_[2][2] = T_rt_r0.matrix_[2][2];  
+    dr_temp = rtm_reorthog(dr_temp);//正交化
+    Qtemp = rtm_r2quat(dr_temp);
+    Qtemp = rtm_Slerpt(Qzero,Qtemp,k_abc);
+    M33_dRr = rtm_quat2r(Qtemp);
+    T_rt_r0.matrix_[0][0] = M33_dRr.matrix_[0][0];T_rt_r0.matrix_[0][1] = M33_dRr.matrix_[0][1];T_ht_h0.matrix_[0][2] = M33_dRr.matrix_[0][2];
+    T_rt_r0.matrix_[1][0] = M33_dRr.matrix_[1][0];T_rt_r0.matrix_[1][1] = M33_dRr.matrix_[1][1];T_ht_h0.matrix_[1][2] = M33_dRr.matrix_[1][2];
+    T_rt_r0.matrix_[2][0] = M33_dRr.matrix_[2][0];T_rt_r0.matrix_[2][1] = M33_dRr.matrix_[2][1];T_ht_h0.matrix_[2][2] = M33_dRr.matrix_[2][2];
     resM = T_r0_R.rightMultiply(T_rt_r0);
     return true;
 }
+
+
+void OnlineTrajectoryPlanner::get_matrix44f_inverse(Matrix44 m44,Matrix44 &resT)
+{
+    double p_matrix[16],p_inv[16];
+    p_matrix[0] = m44.matrix_[0][0];
+    p_matrix[1] = m44.matrix_[0][1];
+    p_matrix[2] = m44.matrix_[0][2];
+    p_matrix[3] = m44.matrix_[0][3],
+    p_matrix[4] = m44.matrix_[1][0],
+    p_matrix[5] = m44.matrix_[1][1],
+    p_matrix[6] = m44.matrix_[1][2],
+    p_matrix[7] = m44.matrix_[1][3],
+    p_matrix[8] = m44.matrix_[2][0],
+    p_matrix[9] = m44.matrix_[2][1],
+    p_matrix[10] = m44.matrix_[2][2],
+    p_matrix[11] = m44.matrix_[2][3],
+    p_matrix[12] = m44.matrix_[3][0],
+    p_matrix[13] = m44.matrix_[3][1],
+    p_matrix[14] = m44.matrix_[3][2],
+    p_matrix[15] = m44.matrix_[3][3];
+
+    basic_alg::inverse(p_matrix,4,p_inv);
+
+    resT.matrix_[0][0] = p_inv[0];
+    resT.matrix_[0][1] = p_inv[1];
+    resT.matrix_[0][2] = p_inv[2];
+    resT.matrix_[0][3] = p_inv[3];
+    resT.matrix_[1][0] = p_inv[4];
+    resT.matrix_[1][1] = p_inv[5];
+    resT.matrix_[1][2] = p_inv[6];
+    resT.matrix_[1][3] = p_inv[7];
+    resT.matrix_[2][0] = p_inv[8];
+    resT.matrix_[2][1] = p_inv[9];
+    resT.matrix_[2][2] = p_inv[10];
+    resT.matrix_[2][3] = p_inv[11];
+    resT.matrix_[3][0] = p_inv[12];
+    resT.matrix_[3][1] = p_inv[13];
+    resT.matrix_[3][2] = p_inv[14];
+    resT.matrix_[3][3] = p_inv[15];
+}
+
 
 /*
 * 函数功能: 计算获取增量后的位姿矩阵
@@ -850,7 +958,8 @@ bool OnlineTrajectoryPlanner::DynamicBaseCoordTransformation(Matrix44 T_r0_R, Ma
 bool OnlineTrajectoryPlanner::get_increment_matrix(Matrix44 T_ck,Matrix44 T_k1, Matrix44 T_k, Matrix44 &resT)
 {
     Matrix44 inv_T_k1;
-    T_k1.transmatrix_inverse_matrix44(inv_T_k1);
+    //T_k1.transmatrix_inverse_matrix44(inv_T_k1);
+    get_matrix44f_inverse(T_k1,inv_T_k1);
     //inv_T_k1.print("inv_T_k1:");
     T_ck.rightMultiply(inv_T_k1,resT);
     //resT.print("res = T_c*inv_T_k1=");
@@ -1085,7 +1194,8 @@ bool OnlineTrajectoryPlanner::load_OnlineMove_params_Config()
         || !yaml_help_.getParam("online_N_step_Q", online_alg_params_.N_step_Q)
         || !yaml_help_.getParam("online_N_interp_P", online_alg_params_.N_interp_P)
         || !yaml_help_.getParam("online_N_interp_Q", online_alg_params_.N_interp_Q)
-        || !yaml_help_.getParam("online_trj_ratio", online_alg_params_.trj_ratio)
+        || !yaml_help_.getParam("online_trj_ratio_xyz", online_alg_params_.trj_ratio_xyz)
+        || !yaml_help_.getParam("online_trj_ratio_abc", online_alg_params_.trj_ratio_abc)
         || !yaml_help_.getParam("online_receive_Tmatrix_buff_len", online_alg_params_.online_receive_Tmatrix_buff_len))
     {
         std::cout << " Failed load config_OnlineMove_params.yaml " << std::endl;
@@ -1098,7 +1208,8 @@ bool OnlineTrajectoryPlanner::load_OnlineMove_params_Config()
             online_alg_params_.N_step_Q,
             online_alg_params_.N_interp_P,
             online_alg_params_.N_interp_Q,
-            online_alg_params_.trj_ratio,
+            online_alg_params_.trj_ratio_xyz,
+            online_alg_params_.trj_ratio_abc,
             online_alg_params_.online_receive_Tmatrix_buff_len);
     return true;
 }
@@ -1115,30 +1226,42 @@ void OnlineTrajectoryPlanner::online_trajectory_algorithm_params_init()
     load_OnlineMove_params_Config();
 }
 
-int OnlineTrajectoryPlanner::setOnlineTrjRatio(double data_ratio)
+int OnlineTrajectoryPlanner::setOnlineTrjRatio_xyz(double data_ratio)
 {
-    online_alg_params_.trj_ratio = data_ratio;
-    if(!yaml_help_.setParam("online_trj_ratio", data_ratio) || !yaml_help_.dumpParamFile(config_OnlineMove_params_file_path_.c_str()))
+    online_alg_params_.trj_ratio_xyz = data_ratio;
+    if(!yaml_help_.setParam("online_trj_ratio_xyz", data_ratio) || !yaml_help_.dumpParamFile(config_OnlineMove_params_file_path_.c_str()))
     {
         return 1;//FAIL
     }
     return 0;//SUCCESS
 }
-
-double OnlineTrajectoryPlanner::get_online_trj_ratio()
+int OnlineTrajectoryPlanner::setOnlineTrjRatio_abc(double data_ratio)
 {
-    printf("\nonline_trajectory_algorithm_params_init:\nsample_time=%lf,generate_interval=%lf,N_step_P=%d,N_step_Q=%d,N_interpP=%lf,N_interpQ=%lf,trj_ratio=%lf,recvTmatrix_buffLen=%d\n",
+    online_alg_params_.trj_ratio_xyz = data_ratio;
+    if(!yaml_help_.setParam("online_trj_ratio_abc", data_ratio) || !yaml_help_.dumpParamFile(config_OnlineMove_params_file_path_.c_str()))
+    {
+        return 1;//FAIL
+    }
+    return 0;//SUCCESS
+}
+double OnlineTrajectoryPlanner::get_online_trj_ratio_xyz()
+{
+    printf("\nonline_trajectory_algorithm_params_init:\nsample_time=%lf,generate_interval=%lf,N_step_P=%d,N_step_Q=%d,N_interpP=%lf,N_interpQ=%lf,trj_ratio_xyz=%lf,trj_ratio_abc=%lf,recvTmatrix_buffLen=%d\n",
             online_alg_params_.sample_time,
             online_alg_params_.generate_traj_interval,
             online_alg_params_.N_step_P,
             online_alg_params_.N_step_Q,
             online_alg_params_.N_interp_P,
             online_alg_params_.N_interp_Q,
-            online_alg_params_.trj_ratio,
+            online_alg_params_.trj_ratio_xyz,
+            online_alg_params_.trj_ratio_abc,
             online_alg_params_.online_receive_Tmatrix_buff_len);
-    return online_alg_params_.trj_ratio;
+    return online_alg_params_.trj_ratio_xyz;
 }
-
+double OnlineTrajectoryPlanner::get_online_trj_ratio_abc()
+{
+    return online_alg_params_.trj_ratio_abc;
+}
 
 
 

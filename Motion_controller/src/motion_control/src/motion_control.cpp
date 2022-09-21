@@ -625,7 +625,9 @@ bool MotionControl::isAxisAngleOutSpeed(bool startFlag, Joint jnt)
 {
     static Joint last_jnt;
     //const double limit_axis_cha[6] = {0.000267, 0.002571, 0.002624, 0.001545,0.001258, 0.001125};
-    const double limit_axis_cha[6] = {0.00267, 0.02571, 0.02624, 0.01545,0.01258, 0.01125};
+    //const double limit_axis_cha[6] = {0.00267, 0.02571, 0.02624, 0.01545,0.01258, 0.01125};
+    const double limit_axis_cha[6] = {0.003000,0.004495,0.004420,0.003565,0.003220,0.003000};
+
     Joint jnt_speed;
     if(startFlag)
     {
@@ -646,6 +648,7 @@ bool MotionControl::isAxisAngleOutSpeed(bool startFlag, Joint jnt)
         {
             if(jnt_speed[i] > limit_axis_cha[i])
             {
+                LogProducer::info("joint diff_angle_speed && limit angle_speed","=(%lf,%lf)",jnt_speed[i], limit_axis_cha[i]);
                 return true;
             }
         } 
@@ -823,7 +826,7 @@ v_xyz.x_, v_xyz.y_, v_xyz.z_, v_abc.x_, v_abc.y_, v_abc.z_);
             
             if(status == 1)//中间途经点
             {
-                LogProducer::info("v_xyzabc->Bspline","#%lf,%lf,%lf,%lf,%lf,%lf",v_xyz.x_,v_xyz.y_,v_xyz.z_,v_abc.x_,v_abc.y_,v_abc.z_);
+                //LogProducer::info("v_xyzabc->Bspline","#%lf,%lf,%lf,%lf,%lf,%lf",v_xyz.x_,v_xyz.y_,v_xyz.z_,v_abc.x_,v_abc.y_,v_abc.z_);
                 online_alg_out_trjPointCnt += online_trj_planner_ptr->traj_on_FIR_Bspline(v_xyz,v_abc,1,online_alg_out_trjPointCnt);//途中点
             }
             else if(status == 2)//终点
@@ -850,7 +853,7 @@ v_xyz.x_, v_xyz.y_, v_xyz.z_, v_abc.x_, v_abc.y_, v_abc.z_);
         #if 1 //逆解失败 继续迭代 v_xyz,v_abc没有更新, 也不判断是否超限
             if(status == 1)//中间途经点
             {
-                LogProducer::info("ik error. v_xyzabc->Bspline","#%lf,%lf,%lf,%lf,%lf,%lf",v_xyz.x_,v_xyz.y_,v_xyz.z_,v_abc.x_,v_abc.y_,v_abc.z_);
+                //LogProducer::info("ik error. v_xyzabc->Bspline","#%lf,%lf,%lf,%lf,%lf,%lf",v_xyz.x_,v_xyz.y_,v_xyz.z_,v_abc.x_,v_abc.y_,v_abc.z_);
                 online_alg_out_trjPointCnt += online_trj_planner_ptr->traj_on_FIR_Bspline(v_xyz,v_abc,1,online_alg_out_trjPointCnt);//途中点
             }
             else if(status == 2)//终点
@@ -1014,7 +1017,7 @@ ErrorCode MotionControl::setOnlinePointBufptr()
             pos.posture.elbow = 1;
             pos.posture.wrist = 1;
             pos.posture.flip  = 0;
-LogProducer::info("AlgOutputPos","(%d) %lf,%lf,%lf,%lf,%lf,%lf status=%d",i,pos.pose.point_.x_,pos.pose.point_.y_,pos.pose.point_.z_,pos.pose.euler_.a_,pos.pose.euler_.b_,pos.pose.euler_.c_,online_trj_planner_ptr->trj_point_buf[i].status);
+//LogProducer::info("AlgOutputPos","(%d) %lf,%lf,%lf,%lf,%lf,%lf status=%d",i,pos.pose.point_.x_,pos.pose.point_.y_,pos.pose.point_.z_,pos.pose.euler_.a_,pos.pose.euler_.b_,pos.pose.euler_.c_,online_trj_planner_ptr->trj_point_buf[i].status);
             memset(&(pos.turn), 0, 9*sizeof(int));
             memset(&jnt, 0, sizeof(jnt));
             pos.pose.euler_.a_ = online_trj_planner_ptr->trj_point_buf[i].c_;
@@ -1042,8 +1045,8 @@ LogProducer::info("AlgOutputPos","(%d) %lf,%lf,%lf,%lf,%lf,%lf status=%d",i,pos.
                 tmp_OnlineJointPointBuf[i*6+3]=jnt.j4_;
                 tmp_OnlineJointPointBuf[i*6+4]=jnt.j5_;
                 tmp_OnlineJointPointBuf[i*6+5]=jnt.j6_;
-                LogProducer::info("setOnlinePointBufptr","converted tmp_OnlineJointPointBuf[%d]=<%lf,%lf,%lf,%lf,%lf,%lf> status=%d",
-                    i,tmp_OnlineJointPointBuf[i*6+0],tmp_OnlineJointPointBuf[i*6+1],tmp_OnlineJointPointBuf[i*6+2],tmp_OnlineJointPointBuf[i*6+3],tmp_OnlineJointPointBuf[i*6+4],tmp_OnlineJointPointBuf[i*6+5],online_trj_planner_ptr->trj_point_buf[i].status);
+                //LogProducer::info("setOnlinePointBufptr","converted tmp_OnlineJointPointBuf[%d]=<%lf,%lf,%lf,%lf,%lf,%lf> status=%d",
+                //    i,tmp_OnlineJointPointBuf[i*6+0],tmp_OnlineJointPointBuf[i*6+1],tmp_OnlineJointPointBuf[i*6+2],tmp_OnlineJointPointBuf[i*6+3],tmp_OnlineJointPointBuf[i*6+4],tmp_OnlineJointPointBuf[i*6+5],online_trj_planner_ptr->trj_point_buf[i].status);
                     
             #else
             if(err == SUCCESS)

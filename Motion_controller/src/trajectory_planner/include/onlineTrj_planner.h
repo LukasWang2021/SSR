@@ -76,8 +76,8 @@ public:
     void pointer_fuzhi_test(Quaternion q_in[], int num, Quaternion q_out[]);
     void function_test();
     bool FixedBaseCoordTransformation(Matrix44& T_touchm,Matrix44& resM);
-    Matrix44 OnlineTrajectoryPlanner::rtm_reorthog(Matrix44 &T);
-    Matrix33 OnlineTrajectoryPlanner::rtm_reorthog(Matrix33 &T);
+    Matrix44 rtm_reorthog(Matrix44 &T);
+    Matrix33 rtm_reorthog(Matrix33 &T);
     bool DynamicBaseCoordTransformation(Matrix44 T_r0_R, Matrix44 Touch_h0_v,  Matrix44 Touch_ht_v, double k_xyz,double k_abc, Matrix44& resM);
     bool get_increment_matrix(Matrix44 T_ck,Matrix44 T_k1, Matrix44 T_k, Matrix44 &resT);
     void rtm_r2xyzabc(Matrix44& u,Vector3& res_xyz, Vector3& res_abc);

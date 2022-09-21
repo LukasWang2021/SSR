@@ -880,7 +880,8 @@ bool OnlineTrajectoryPlanner::DynamicBaseCoordTransformation(Matrix44 T_r0_R, Ma
     Tr2Ti.matrix_[2][0]=0;  Tr2Ti.matrix_[2][1]=0;  Tr2Ti.matrix_[2][2]=-1; Tr2Ti.matrix_[2][3]=0;
     Tr2Ti.matrix_[3][0]=0;  Tr2Ti.matrix_[3][1]=0;  Tr2Ti.matrix_[3][2]=0;  Tr2Ti.matrix_[3][3]=1;
     Touch_h0_v.rightMultiply(Tr2Ti);
-    Touch_h0_v.transmatrix_inverse_matrix44(T_v_h0);
+    //Touch_h0_v.transmatrix_inverse_matrix44(T_v_h0);
+    get_matrix44f_inverse(Touch_h0_v,T_v_h0);
     Touch_ht_v.rightMultiply(Tr2Ti);
     T_ht_h0 = T_v_h0.rightMultiply(Touch_ht_v);
 

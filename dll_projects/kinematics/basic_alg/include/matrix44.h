@@ -75,6 +75,13 @@ public:
      */
     Matrix44& operator=(const Matrix44& matrix);
     void print(std::string comment = "") const;
+    /**
+     * @brief Operator= overload.
+     * @details Envalue a Matrix44 object to self.\n
+     * @param [in] matrix The source object.
+     * @return A reference to self.
+     */
+    
 
 private:  
      /**

@@ -70,14 +70,22 @@ COMM_INTERFACE_API uint64_t c_setWorkMode(uint32_t mode);
 COMM_INTERFACE_API uint64_t c_getWorkMode(uint32_t* mode);
 
 /****
-*ÉèÖÃÔÚÏß¹ì¼£ÔË¶¯±ÈÀýÏµÊý
+* @brief set the online trajectory xyz/abc ratio
+* @details ratio cannot be 0, suggestted range 0.000001 - 1
+* @param [in] ratio value
+* @return error_code
 */
-COMM_INTERFACE_API uint64_t c_setOnlineTrajectoryRatio(double ratio);
+COMM_INTERFACE_API uint64_t c_setOnlineTrajectoryRatio_xyz(double ratio);
+COMM_INTERFACE_API uint64_t c_setOnlineTrajectoryRatio_abc(double ratio);
 
 /**
- * »ñÈ¡ÔÚÏß¹ì¼£ÔË¶¯±ÈÀýÏµÊý
+* @brief get the online trajectory xyz/abc ratio
+* @details ratio cannot be 0, suggestted range 0.000001 - 1
+* @param [in] ratio value
+* @return error_code
  */
-COMM_INTERFACE_API uint64_t c_getOnlineTrajectoryRatio(double* ratio);
+COMM_INTERFACE_API uint64_t c_getOnlineTrajectoryRatio_xyz(double* ratio);
+COMM_INTERFACE_API uint64_t c_getOnlineTrajectoryRatio_abc(double* ratio);
 
 /**
  * @brief Set the servo control mode of Controller.

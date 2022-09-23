@@ -601,7 +601,7 @@ bool Controller::downloadServoParams(int32_t axis_id)
             usleep(10000);
             count++;
         }
-        if (count > 100)
+        if (count > 200)
         {
             LogProducer::error("main", "Controller axis[%d] download servo parameter timeout", axis_id);
             return false;

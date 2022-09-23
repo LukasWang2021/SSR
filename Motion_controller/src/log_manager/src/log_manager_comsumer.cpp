@@ -43,7 +43,7 @@ LogComsumer::~LogComsumer(void)
 		log_queue_ptr_ = NULL;
 	}
 	munmap(shmem_ptr_, LOG_SHMEM_SIZE);
-	//printf("~LogComsumer success\n");
+
 }
 
 LogComsumer* LogComsumer::getInstance()

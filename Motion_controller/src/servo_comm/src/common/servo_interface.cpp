@@ -210,6 +210,7 @@ bool doServoCmdNormalService(CommBlockData_t* block_ptr,
 
     if(timeout)
     {
+        printf("ERROR:: %s\n", "return time out");
         return false;
     }
     if(res_data_ptr->cmd == req_data_ptr->cmd)
@@ -218,6 +219,7 @@ bool doServoCmdNormalService(CommBlockData_t* block_ptr,
     }
     else
     {
+        printf("ERROR:: cmd return res & req value:%d \t %d", res_data_ptr->cmd, req_data_ptr->cmd);
         return false;
     }
 }

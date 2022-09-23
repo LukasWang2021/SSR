@@ -626,7 +626,7 @@ bool MotionControl::isAxisAngleOutSpeed(bool startFlag, Joint jnt)
     static Joint last_jnt;
     //const double limit_axis_cha[6] = {0.000267, 0.002571, 0.002624, 0.001545,0.001258, 0.001125};
     //const double limit_axis_cha[6] = {0.00267, 0.02571, 0.02624, 0.01545,0.01258, 0.01125};
-    const double limit_axis_cha[6] = {0.003000,0.004495,0.004420,0.003565,0.003220,0.003000};
+    const double limit_axis_cha[6] = {0.002600,0.002600,0.02700,0.003500,0.002600,0.003500};
 
     Joint jnt_speed;
     if(startFlag)

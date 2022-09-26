@@ -11,16 +11,15 @@
 #include  "basic_alg.h"
 
 
-float VPp[1][6] = { {0.1, 0.2, 0.3, 0, 0, 0}
-                    //{0.1, 0.2, 0.3, 0.2*PI, 0.3*PI, 0.3*PI},
-                    //{0.2, 0.3, 0.8, 0.3*PI, 0.2*PI, 0.1*PI},
-                };
+float VPp[1][6] = { {0.1, 0.2, 0.3, 0, 0, 0} 
+                  };
+
 float VPv[2][6] = { {0.0, 0.0, 0.0, 0, 0, 0},
                     {0.1, 0.2, 0.1, 0.1*PI, 0.2*PI, 0.3*PI},
-                    //{0.3, 0.3, 0.2, 0.1*PI, 0.2*PI, 0.3*PI},
-                };
+                  };
 
-#define LAMBDA 1  //hfir[] B样条3级串联滤波器脉冲响应系数索引值
+//B-Spline 3 order FIR impulse response constant 
+#define LAMBDA 1  
 #if(LAMBDA == 1)
 double hfir[6] = {0.401782, 0.242382, 0.084082, 0.004082, -0.01742, -0.01401818};
 #elif(LAMBDA == 10)
@@ -32,9 +31,13 @@ double hfir[6] = {0.1252, 0.1191, 0.1056, 0.0886, 0.0706, 0.0535};
 
 OnlineTrajectoryPlanner::OnlineTrajectoryPlanner()
 {
-    config_OnlineMove_params_file_path_ = config_OnlineMove_params_file_path_ + ALGORITHM_DIR + "config_OnlineMove_params.yaml";
+    config_OnlineMove_params_file_path_ = config_OnlineMove_params_file_path_ 
+                                            + ALGORITHM_DIR 
+                                            + "config_OnlineMove_params.yaml";
     load_OnlineMove_params_Config();
 }
+
+
 OnlineTrajectoryPlanner::~OnlineTrajectoryPlanner()
 {
 
@@ -45,16 +48,15 @@ int OnlineTrajectoryPlanner::sign(double x)
     if(x < 0) return -1;
     else return 1;
 }
-/****************************************
- * 计算指定精度后的浮点数
- * *******************************************/
-double OnlineTrajectoryPlanner::roundn(double x, int precision)
-{
-    stringstream ss;
-    ss <<fixed<<setprecision(precision)<<x;
-    ss >> x;
-    return x;
-}
+
+
+// double OnlineTrajectoryPlanner::roundn(double x, int precision)
+// {
+//     stringstream ss;
+//     ss <<fixed<<setprecision(precision)<<x;
+//     ss >> x;
+//     return x;
+// }
 
 //abc转旋转矩阵
 Matrix33 OnlineTrajectoryPlanner::rpy2r(double a, double b, double c)
@@ -86,7 +88,7 @@ Matrix33 OnlineTrajectoryPlanner::rpy2r(double a, double b, double c)
     result_R = result_R.rightMultiply(Rx);
     return result_R;
 }
-//旋转矩阵转四元数
+
 Quaternion OnlineTrajectoryPlanner::rtm_r2quat(Matrix33& R)
 {
     Quaternion q;
@@ -106,31 +108,7 @@ Quaternion OnlineTrajectoryPlanner::rtm_r2quat(Matrix33& R)
     q.z_ = 0.5*sign(r21-r12)*sqrt(r33-r11-r22+1);
     return q;
 }
-//旋转矩阵转四元数
-/*
-Quaternion OnlineTrajectoryPlanner::rtm_r2quat(Matrix33& R)
-{
-    int accurate = 8;//精确到小数点后8位
-    Quaternion q;
-    double r11,r12,r13,r21,r22,r23,r31,r32,r33;
-    r11 = roundn(R.matrix_[0][0],accurate);
-    r12 = roundn(R.matrix_[0][1],accurate);
-    r13 = roundn(R.matrix_[0][2],accurate);
-    r21 = roundn(R.matrix_[1][0],accurate);
-    r22 = roundn(R.matrix_[1][1],accurate);
-    r23 = roundn(R.matrix_[1][2],accurate);
-    r31 = roundn(R.matrix_[2][0],accurate);
-    r32 = roundn(R.matrix_[2][1],accurate);
-    r33 = roundn(R.matrix_[2][2],accurate);
-    q.w_ = 0.5*sqrt(roundn(r11+r22+r33+1,accurate));
-    q.x_ = 0.5*sign(r32-r23)*sqrt(roundn(r11-r22-r33+1,accurate));
-    q.y_ = 0.5*sign(r13-r31)*sqrt(roundn(r22-r11-r33+1,accurate));
-    q.z_ = 0.5*sign(r21-r12)*sqrt(roundn(r33-r11-r22+1,accurate));
-    return q;
-}
-*/
 
-//四元数转矩阵
 Matrix33 OnlineTrajectoryPlanner::rtm_quat2r(Quaternion& q)
 {
     /*
@@ -155,28 +133,25 @@ Matrix33 OnlineTrajectoryPlanner::rtm_quat2r(Quaternion& q)
     R.matrix_[2][2] = 1-2*(pow(x,2)+pow(y,2));
     return R;
 }
-/********************************
- * 函数功能: 三维向量按照下图方式转矩阵
- * |x|         | 0   -z   y |
- * |y| ===>    | z   0   -x |
- * |z|         |-y   x    0 |
-**********************************/
-Matrix33 OnlineTrajectoryPlanner::skew(Vector3& vec3)
-{
-    Matrix33 resMat;
-    resMat.matrix_[0][0] = 0;resMat.matrix_[0][1] = -vec3.z_;resMat.matrix_[0][2] = vec3.y_;
-    resMat.matrix_[1][0] = vec3.z_;resMat.matrix_[1][1] = 0;resMat.matrix_[1][2] = -vec3.x_;
-    resMat.matrix_[2][0] = -vec3.y_;resMat.matrix_[2][1] = vec3.x_;resMat.matrix_[2][2] = 0;
-    return resMat;
-}
-//四元数点乘
-double OnlineTrajectoryPlanner::quat_dot_multiply(Quaternion& q1, Quaternion& q2)
-{
-    double res;
-    res = q1.w_ * q2.w_ + q1.x_ * q2.x_ + q1.y_ * q2.y_ + q1.z_ * q2.z_;
-    return res;
-}
-//四元数叉乘
+
+// Matrix33 OnlineTrajectoryPlanner::skew(Vector3& vec3)
+// {
+//     Matrix33 resMat;
+//     resMat.matrix_[0][0] = 0;resMat.matrix_[0][1] = -vec3.z_;resMat.matrix_[0][2] = vec3.y_;
+//     resMat.matrix_[1][0] = vec3.z_;resMat.matrix_[1][1] = 0;resMat.matrix_[1][2] = -vec3.x_;
+//     resMat.matrix_[2][0] = -vec3.y_;resMat.matrix_[2][1] = vec3.x_;resMat.matrix_[2][2] = 0;
+//     return resMat;
+// }
+
+
+// double OnlineTrajectoryPlanner::quat_dot_multiply(Quaternion& q1, Quaternion& q2)
+// {
+//     double res;
+//     res = q1.w_ * q2.w_ + q1.x_ * q2.x_ + q1.y_ * q2.y_ + q1.z_ * q2.z_;
+//     return res;
+// }
+
+
 Quaternion OnlineTrajectoryPlanner::quatmultiply(Quaternion& q1, Quaternion& q2)
 {
     Quaternion res_quat;
@@ -290,7 +265,8 @@ Vector3 OnlineTrajectoryPlanner::rtm_rpy(Matrix33& u)
     angle1.z_ = phi_1;
     return angle1;
 }
-//四元数转方向向量
+
+
 Vector3 OnlineTrajectoryPlanner::rtm_quat2abc(Quaternion& Q)
 {
     Matrix33 R;
@@ -307,7 +283,7 @@ Vector3 OnlineTrajectoryPlanner::rtm_quat2abc(Quaternion& Q)
     abc = rtm_rpy(R);
     return abc;
 }
-//方向向量转四元数
+
 Quaternion OnlineTrajectoryPlanner::rtm_abc2quat(Vector3& abc)
 {
     Matrix33 mrt;
@@ -316,36 +292,36 @@ Quaternion OnlineTrajectoryPlanner::rtm_abc2quat(Vector3& abc)
     resq = rtm_r2quat(mrt);
     return resq;
 }
-//wgoal=((inv(M))*(2*Qtemp(2:4)-alpha*(Tmin^2)/2)')'+alpha*ts; %这里vgoal就是论文里的vk+1_goal
-Vector3 OnlineTrajectoryPlanner::update_wgoal(Matrix33& M, Quaternion& qtemp, Vector3& alpha, double tTmin, double ts)
-{
-    Matrix33 invM;
-    Vector3 resV;
-    Vector3 vtempL3;//用于暂存qtemp的后三个数字
 
-    invM = M;
-    invM.inverse(0.0);
-    vtempL3.x_ = qtemp.x_*2 - alpha.x_*(pow(tTmin,2)/2);
-    vtempL3.y_ = qtemp.y_*2 - alpha.y_*(pow(tTmin,2)/2);
-    vtempL3.z_ = qtemp.z_*2 - alpha.z_*(pow(tTmin,2)/2);
 
-    resV.x_ = invM.matrix_[0][0]*vtempL3.x_ + invM.matrix_[0][1]*vtempL3.y_ + invM.matrix_[0][2]*vtempL3.z_ + alpha.x_*ts;
-    resV.y_ = invM.matrix_[1][0]*vtempL3.x_ + invM.matrix_[1][1]*vtempL3.y_ + invM.matrix_[1][2]*vtempL3.z_ + alpha.y_*ts;
-    resV.z_ = invM.matrix_[2][0]*vtempL3.x_ + invM.matrix_[2][1]*vtempL3.y_ + invM.matrix_[2][2]*vtempL3.z_ + alpha.z_*ts;
-    return resV;
-}
-/********************************************
- * 计算当前轴角速度分别在xyz的投影，即绕xyz旋转的分量
- * abc是当前RPY值，abc_rate是当前RPY的角微分量
- * *******************************************/
-Vector3 OnlineTrajectoryPlanner::rtm_abcDiff(Vector3& abc,Vector3 abc_rate)
-{
-    Vector3 resV;
-    resV.x_ = cos(abc.y_)*cos(abc.z_)*abc_rate.x_ - sin(abc.z_)*abc_rate.y_;
-    resV.y_ = cos(abc.y_)*sin(abc.z_)*abc_rate.x_ + cos(abc.z_)*abc_rate.y_;
-    resV.z_ = -sin(abc.y_)*abc_rate.x_ + abc_rate.z_;
-    return resV;
-}
+// wgoal=((inv(M))*(2*Qtemp(2:4)-alpha*(Tmin^2)/2)')'+alpha*ts; %这里vgoal就是论文里的vk+1_goal
+// Vector3 OnlineTrajectoryPlanner::update_wgoal(Matrix33& M, Quaternion& qtemp, Vector3& alpha, double tTmin, double ts)
+// {
+//     Matrix33 invM;
+//     Vector3 resV;
+//     Vector3 vtempL3;//用于暂存qtemp的后三个数字
+
+//     invM = M;
+//     invM.inverse(0.0);
+//     vtempL3.x_ = qtemp.x_*2 - alpha.x_*(pow(tTmin,2)/2);
+//     vtempL3.y_ = qtemp.y_*2 - alpha.y_*(pow(tTmin,2)/2);
+//     vtempL3.z_ = qtemp.z_*2 - alpha.z_*(pow(tTmin,2)/2);
+
+//     resV.x_ = invM.matrix_[0][0]*vtempL3.x_ + invM.matrix_[0][1]*vtempL3.y_ + invM.matrix_[0][2]*vtempL3.z_ + alpha.x_*ts;
+//     resV.y_ = invM.matrix_[1][0]*vtempL3.x_ + invM.matrix_[1][1]*vtempL3.y_ + invM.matrix_[1][2]*vtempL3.z_ + alpha.y_*ts;
+//     resV.z_ = invM.matrix_[2][0]*vtempL3.x_ + invM.matrix_[2][1]*vtempL3.y_ + invM.matrix_[2][2]*vtempL3.z_ + alpha.z_*ts;
+//     return resV;
+// }
+
+
+// Vector3 OnlineTrajectoryPlanner::rtm_abcDiff(Vector3& abc,Vector3 abc_rate)
+// {
+//     Vector3 resV;
+//     resV.x_ = cos(abc.y_)*cos(abc.z_)*abc_rate.x_ - sin(abc.z_)*abc_rate.y_;
+//     resV.y_ = cos(abc.y_)*sin(abc.z_)*abc_rate.x_ + cos(abc.z_)*abc_rate.y_;
+//     resV.z_ = -sin(abc.y_)*abc_rate.x_ + abc_rate.z_;
+//     return resV;
+// }
 
 //获取q0到q1的t时刻插补值
 Quaternion OnlineTrajectoryPlanner::rtm_Slerpt(Quaternion& q0, Quaternion& q1, double t)
@@ -438,57 +414,57 @@ Quaternion OnlineTrajectoryPlanner::rtm_Squad(Quaternion& q0, Quaternion& q1, Qu
  * abc[]----输出矩阵,n行3列
  * Qold[]---输出
  * ******************************************/
-void OnlineTrajectoryPlanner::traj_on_Squad(int Nstep, Vector3 VPp_abc[], int NVP, Quaternion Qnew[], Vector3 abc[], Quaternion Qold[])
-{
-    double t_NinterpP = online_alg_params_.N_interp_P;//2022-6-10 pm
-    Quaternion Qs[255];
-    Quaternion Q0,Q1,Q2,Q3;
-    double dq;
+// void OnlineTrajectoryPlanner::traj_on_Squad(int Nstep, Vector3 VPp_abc[], int NVP, Quaternion Qnew[], Vector3 abc[], Quaternion Qold[])
+// {
+//     double t_NinterpP = online_alg_params_.N_interp_P;//2022-6-10 pm
+//     Quaternion Qs[255];
+//     Quaternion Q0,Q1,Q2,Q3;
+//     double dq;
 
-    int i=0,j=0,k=0,end;
-    double s;
-    for(i=0;i<NVP;i=i+Nstep)//每Nstep个点加载一个VP点
-    {
-        //Qs(ceil(i/Nstep),:)=rtm_abc2quat(VPp(i,4:6));
-        end = ceil(i/Nstep);
-        end = end-1;//c++数组下标从0开始
-        Qs[end] = rtm_abc2quat(VPp_abc[i]);
-        if(i>=(2*Nstep+1))//需要至少三个VP点才能开始规划
-        {
-            Q0 = Qs[end-1];
-            Q1 = Qs[end];
-            dq = Q0.w_*Q1.w_ + Q0.x_*Q1.x_ + Q0.y_*Q1.y_ + Q0.z_*Q1.z_;
-            if(dq < 0)
-            {
-                //两四元数的dot product表示两个Q之间的夹角余弦，取反后，选取最短路径
-                Qs[end].w_ = -Q1.w_;
-                Qs[end].x_ = -Q1.x_;
-                Qs[end].y_ = -Q1.y_;
-                Qs[end].z_ = -Q1.z_;
-            }
-            if(j==0)//初始段
-            {
-                Q0 = Qs[0];  Q1 = Q0;  Q2 = Qs[2]; Q3 = Qs[3];
-            }
-            else if(j == ceil(NVP/Nstep))//最后一段
-            {
-                Q0 = Qs[end-2]; Q1 = Qs[end-1]; Q2 = Qs[end]; Q3 = Q2;
-            }
-            else
-            {
-                Q0 = Qs[j-1]; Q1 = Qs[j]; Q2 = Qs[j+1]; Q3 = Qs[j+2];
-            }
-            for(k=0;k<t_NinterpP;k++)
-            {
-                s = k/t_NinterpP;
-                Qnew[static_cast<int>(k+t_NinterpP*(j-1)+1)] = rtm_Squad(Q0,Q1,Q2,Q3,s);
-                abc[static_cast<int>(k+t_NinterpP*(j-1)+1)] = rtm_quat2abc(Qnew[static_cast<int>(k+t_NinterpP*(j-1)+1)]);//
-            }
-            j = j+1;
-        }
-    }
-    Qold = Qs;
-}
+//     int i=0,j=0,k=0,end;
+//     double s;
+//     for(i=0;i<NVP;i=i+Nstep)//每Nstep个点加载一个VP点
+//     {
+//         //Qs(ceil(i/Nstep),:)=rtm_abc2quat(VPp(i,4:6));
+//         end = ceil(i/Nstep);
+//         end = end-1;//c++数组下标从0开始
+//         Qs[end] = rtm_abc2quat(VPp_abc[i]);
+//         if(i>=(2*Nstep+1))//需要至少三个VP点才能开始规划
+//         {
+//             Q0 = Qs[end-1];
+//             Q1 = Qs[end];
+//             dq = Q0.w_*Q1.w_ + Q0.x_*Q1.x_ + Q0.y_*Q1.y_ + Q0.z_*Q1.z_;
+//             if(dq < 0)
+//             {
+//                 //两四元数的dot product表示两个Q之间的夹角余弦，取反后，选取最短路径
+//                 Qs[end].w_ = -Q1.w_;
+//                 Qs[end].x_ = -Q1.x_;
+//                 Qs[end].y_ = -Q1.y_;
+//                 Qs[end].z_ = -Q1.z_;
+//             }
+//             if(j==0)//初始段
+//             {
+//                 Q0 = Qs[0];  Q1 = Q0;  Q2 = Qs[2]; Q3 = Qs[3];
+//             }
+//             else if(j == ceil(NVP/Nstep))//最后一段
+//             {
+//                 Q0 = Qs[end-2]; Q1 = Qs[end-1]; Q2 = Qs[end]; Q3 = Q2;
+//             }
+//             else
+//             {
+//                 Q0 = Qs[j-1]; Q1 = Qs[j]; Q2 = Qs[j+1]; Q3 = Qs[j+2];
+//             }
+//             for(k=0;k<t_NinterpP;k++)
+//             {
+//                 s = k/t_NinterpP;
+//                 Qnew[static_cast<int>(k+t_NinterpP*(j-1)+1)] = rtm_Squad(Q0,Q1,Q2,Q3,s);
+//                 abc[static_cast<int>(k+t_NinterpP*(j-1)+1)] = rtm_quat2abc(Qnew[static_cast<int>(k+t_NinterpP*(j-1)+1)]);//
+//             }
+//             j = j+1;
+//         }
+//     }
+//     Qold = Qs;
+// }
 
 
 /********************
@@ -776,16 +752,16 @@ cout << "***************************************************Ending abc planing:"
 * 函数功能:固定基坐标系关联法,将touch发送的T矩阵所在的坐标系转换到机械臂所在的工作空间坐标系
 * 使用时具体参数待修改
 */
-bool OnlineTrajectoryPlanner::FixedBaseCoordTransformation(Matrix44& T_touchm,Matrix44& resM)
-{
-    Matrix44 T_ms;
-    T_ms.matrix_[0][0]=0;T_ms.matrix_[0][1]=1;T_ms.matrix_[0][2]=0;T_ms.matrix_[0][3]=0.172;
-    T_ms.matrix_[1][0]=1;T_ms.matrix_[1][1]=0;T_ms.matrix_[1][2]=0;T_ms.matrix_[1][3]=0;
-    T_ms.matrix_[2][0]=0;T_ms.matrix_[2][1]=0;T_ms.matrix_[2][2]=-1;T_ms.matrix_[2][3]=0.0645;
-    T_ms.matrix_[3][0]=0;T_ms.matrix_[3][1]=0;T_ms.matrix_[3][2]=0;T_ms.matrix_[3][3]=1;
-    resM = T_touchm.rightMultiply(T_ms);
-    return true;
-}
+// bool OnlineTrajectoryPlanner::FixedBaseCoordTransformation(Matrix44& T_touchm,Matrix44& resM)
+// {
+//     Matrix44 T_ms;
+//     T_ms.matrix_[0][0]=0;T_ms.matrix_[0][1]=1;T_ms.matrix_[0][2]=0;T_ms.matrix_[0][3]=0.172;
+//     T_ms.matrix_[1][0]=1;T_ms.matrix_[1][1]=0;T_ms.matrix_[1][2]=0;T_ms.matrix_[1][3]=0;
+//     T_ms.matrix_[2][0]=0;T_ms.matrix_[2][1]=0;T_ms.matrix_[2][2]=-1;T_ms.matrix_[2][3]=0.0645;
+//     T_ms.matrix_[3][0]=0;T_ms.matrix_[3][1]=0;T_ms.matrix_[3][2]=0;T_ms.matrix_[3][3]=1;
+//     resM = T_touchm.rightMultiply(T_ms);
+//     return true;
+// }
 
 
 
@@ -1147,44 +1123,44 @@ void OnlineTrajectoryPlanner::Fir_Bspline_algorithm_test(void)
     }
 }
 
-void OnlineTrajectoryPlanner::pointer_fuzhi_test(Quaternion q_in[], int num, Quaternion q_out[])
-{
-    for(int i=0;i<num;i++)
-    {
-        q_out[i] = q_in[i];
-    }
-}
+// void OnlineTrajectoryPlanner::pointer_fuzhi_test(Quaternion q_in[], int num, Quaternion q_out[])
+// {
+//     for(int i=0;i<num;i++)
+//     {
+//         q_out[i] = q_in[i];
+//     }
+// }
 
-void OnlineTrajectoryPlanner::function_test()
-{
-    cout << "##############################################"<<endl;
-    Quaternion q0,q1,q2,q3,q_res;
-    q0.w_ = 0.1826;
-    q0.x_ = 0.3651;
-    q0.y_ = 0.5477;
-    q0.z_ = 0.7303;
+// void OnlineTrajectoryPlanner::function_test()
+// {
+//     cout << "##############################################"<<endl;
+//     Quaternion q0,q1,q2,q3,q_res;
+//     q0.w_ = 0.1826;
+//     q0.x_ = 0.3651;
+//     q0.y_ = 0.5477;
+//     q0.z_ = 0.7303;
 
-    q1.w_ = 0.3235;
-    q1.x_ = 0.4313;
-    q1.y_ = 0.5392;
-    q1.z_ = 0.6470;
+//     q1.w_ = 0.3235;
+//     q1.x_ = 0.4313;
+//     q1.y_ = 0.5392;
+//     q1.z_ = 0.6470;
 
-    q2.w_ = 0.3563;
-    q2.x_ = 0.4454;
-    q2.y_ = 0.5345;
-    q2.z_ = 0.6236;
+//     q2.w_ = 0.3563;
+//     q2.x_ = 0.4454;
+//     q2.y_ = 0.5345;
+//     q2.z_ = 0.6236;
 
-    q3.w_ = 0.3563;
-    q3.x_ = 0.4454;
-    q3.y_ = 0.5345;
-    q3.z_ = 0.6236;
+//     q3.w_ = 0.3563;
+//     q3.x_ = 0.4454;
+//     q3.y_ = 0.5345;
+//     q3.z_ = 0.6236;
 
-    q_res = rtm_Squad(q0, q1, q2, q3, 0.5);
-    q_res.print("q_res=");
+//     q_res = rtm_Squad(q0, q1, q2, q3, 0.5);
+//     q_res.print("q_res=");
 
-    q_res = rtm_Slerpt(q0,q1,0.5);
-    q_res.print("q_res=rtm_Slerpt");
-}
+//     q_res = rtm_Slerpt(q0,q1,0.5);
+//     q_res.print("q_res=rtm_Slerpt");
+// }
 
 bool OnlineTrajectoryPlanner::load_OnlineMove_params_Config()
 {
@@ -1202,7 +1178,7 @@ bool OnlineTrajectoryPlanner::load_OnlineMove_params_Config()
         std::cout << " Failed load config_OnlineMove_params.yaml " << std::endl;
         return false;
     }
-    printf("\nload_OnlineMove_params_Config:\nsample_time=%lf,generate_interval=%lf,N_step_P=%d,N_step_Q=%d,N_interpP=%lf,N_interpQ=%lf,trj_ratio=%lf,recvTmatrix_buffLen=%d\n",
+    printf("\nload_OnlineMove_params_Config:\nsample_time=%lf,generate_interval=%lf,N_step_P=%d,N_step_Q=%d,N_interpP=%lf,N_interpQ=%lf,trj_ratio_xyz=%lf,trj_ratio_abc=%lf,recvTmatrix_buffLen=%d\n",
             online_alg_params_.sample_time,
             online_alg_params_.generate_traj_interval,
             online_alg_params_.N_step_P,

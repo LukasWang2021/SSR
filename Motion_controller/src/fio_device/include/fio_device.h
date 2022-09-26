@@ -84,24 +84,27 @@ typedef	struct {
 }FioHw;
 
 /*
-读取错误状态，type=1。返回值VALUE
-bit 0 MCU出错.LDO 3.3v 和LDO 5V 
-bit 1 TMC4671板子出错
-bit 2 保留
-bit 3 保留
-bit 4 保留
-bit 5 保留
-bit 6 MCU电压低
-bit 7 TMC4671电压低
-bit 8 DRV8302电压低
-bit 9 MCU电压高
-bit 10 TMC4671电压高
-bit 11 DRV8302电压高
-bit 12 TMC4671芯片报错
-bit 13 DRV8302报错
-bit 14 ADS8688报错
-bit 15:16 0代表停止，1代表 正在运行，2代表磨钻出错。
-其他：保留
+    读取错误状态，type=1。返回值VALUE
+    bit 0 MCU出错.LDO 3.3v 和LDO 5V 
+    bit 1 TMC4671板子出错
+    bit 2 保留
+    bit 3 保留
+    bit 4 保留
+    bit 5 保留
+    bit 6 MCU电压低，未实现
+    bit 7 TMC4671电压低 ，未实现
+    bit 8 DRV8302电压低，未实现
+    bit 9 MCU电压高，未实现
+    bit 10 TMC4671电压高
+    bit 11 DRV8302电压高
+    bit 12 TMC4671芯片报错
+    bit 13 DRV8302报错
+    bit 14 ADS8688报错
+    bit 15  0 电机停止  1 电机运行。
+    bit 16  0电机无错误，1 电机出错
+    bit 17  帧间隔时间超时
+    bit 18  0 踏板未踩下 1 踏板踩下 
+    其他：保留
 */
 typedef struct
 {
@@ -117,20 +120,24 @@ typedef struct
     uint32_t tmc_ret_err:1;  // MCU cmd to TMC return error
     uint32_t drv_ret_err:1;  // DRV8302 return error
     uint32_t ads_ret_err:1;  // ADS8688(force sensor ADC)
-    uint32_t grind_state:2;  // the grind motor state, 00:stopped, 01:running, 10:motor error
-    uint32_t reserved_2:15;  // reserved
+    uint32_t grind_state:1;  // the grind motor state, 0:stopped, 1:running
+    uint32_t grind_error:1;  // the grind motor error or not, 0:ok, 1:error
+    uint32_t heartbeat_loss:1;  // the master side always ask about the salve state every 100ms 
+    // if slave side do not recive the cmd more than 300ms it will report error
+    uint32_t footboard_state:1;  // the master side always ask about the salve state every 100ms 
+    uint32_t reserved_2:13;  // reserved
 }FioStatus_b;
 
 typedef union
 {
-	uint32_t all;                          /**< Operated attribute by double word.*/
+	uint32_t all;                      /**< Operated attribute by double word.*/
 	FioStatus_b bit;                   /**< Operated attribute by bit.*/
 }FioStatus_u;
 
 typedef struct
 {
 	uint32_t grind_speed; // grinder's speed
-    // ....
+    // ...
 }FioTopicVal_t;
 
 

@@ -11,6 +11,7 @@ set(CONFIG_FILE_OUTPUT_PATH ${RtmProject_SOURCE_DIR}/../install/runtime)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -O0 -D PB_FIELD_32BIT")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -g -O0 -Wno-unused-but-set-variable -Wno-unused-local-typedefs -fpermissive -lrt -DPB_FIELD_32BIT")
 
+add_subdirectory(init_protection)
 add_subdirectory(pb)
 add_subdirectory(protos)
 add_subdirectory(xml_help)
@@ -49,3 +50,4 @@ add_subdirectory(sensor_process)
 add_subdirectory(motion_control)
 add_subdirectory(controller)
 add_subdirectory(embed_python)
+

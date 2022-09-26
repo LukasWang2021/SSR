@@ -14,6 +14,7 @@
 #include "error_queue.h"
 #include <math.h>
 #include "onlineTrj_planner.h"
+#include "fio_device.h"
 
 using namespace std;
 using namespace basic_alg;
@@ -21,6 +22,7 @@ using namespace group_space;
 using namespace fst_ctrl;
 using namespace base_space;
 using namespace log_space;
+using namespace hal_space;
 
 double tmp_OnlineJointPointBuf[1800] = {0};//6*300
 int tmp_OnlineJointPointLevelBuf[300]={0};
@@ -220,7 +222,7 @@ MotionControl::~MotionControl()
     if (group_ptr_ != NULL)     {delete group_ptr_; group_ptr_ = NULL;};
 }
 
-ErrorCode MotionControl::initApplication(fst_ctrl::CoordinateManager* coordinate_manager_ptr, fst_ctrl::ToolManager* tool_manager_ptr)
+ErrorCode MotionControl::initApplication(fst_ctrl::CoordinateManager* coordinate_manager_ptr, fst_ctrl::ToolManager* tool_manager_ptr, BaseDevice *fio_dev_ptr)
 {
     if (pthread_mutex_init(&instruction_mutex_, NULL) != 0)
     {
@@ -246,7 +248,7 @@ ErrorCode MotionControl::initApplication(fst_ctrl::CoordinateManager* coordinate
     user_frame_id_ = 0;
     tool_frame_id_ = 0;
 
-    ErrorCode  err = group_ptr_->initGroup(coordinate_manager_ptr_, tool_manager_ptr_, &axis_group_, &sm_, cpu_comm_ptr_, db_ptr_);
+    ErrorCode  err = group_ptr_->initGroup(coordinate_manager_ptr_, tool_manager_ptr_, &axis_group_, &sm_, cpu_comm_ptr_, db_ptr_, fio_dev_ptr);
     if (err != SUCCESS)
     {
         LogProducer::error("mc","Fail to init motion group");

@@ -7,10 +7,12 @@
 #include <basic_alg.h>
 #include <motion_control_base_group.h>
 #include "log_manager_producer.h"
+#include "fio_device.h"
 
 using namespace std;
 using namespace basic_alg;
 using namespace log_space;
+using namespace hal_space;
 
 namespace group_space
 {
@@ -151,7 +153,25 @@ void BaseGroup::doStateMachine(void)
     {
         pause_to_auto_request_ = false;
     }
+    FioDevice *fio_ptr = (FioDevice *)fio_ptr_;
+    FioStatus_u fio_state = fio_ptr->getStatus();
+    static FioStatus_u fio_last_state;
 
+    // foot board pause falling edge and off
+    if(mc_state == OFFLINE && fio_ptr->isReal() && fio_state.bit.footboard_state ^ fio_last_state.bit.footboard_state && !fio_state.bit.footboard_state)
+    {
+        // pause
+        pauseMove();
+    }
+
+    // foot board resume rise edge trig and on
+    if(mc_state == PAUSED_OFFLINE && fio_ptr->isReal() && fio_state.bit.footboard_state ^ fio_last_state.bit.footboard_state && fio_state.bit.footboard_state)
+    {
+        // resume
+        restartMove();
+    }
+
+    fio_last_state = fio_state;
 
     if (stop_barecore_ && (servo_state == SERVO_DISABLE))
     {
@@ -278,8 +298,22 @@ void BaseGroup::doStateMachine(void)
             }
             else if (standby_to_offline_request_)
             {
-                mc_state_ = STANDBY_TO_OFFLINE;
-                LogProducer::warn("mc_sm","MC-state switch to MC_STANDBY_TO_OFFLINE");
+                // to add 
+                // check the foot step
+                // if foot board on goto 
+                if(fio_ptr->isReal())
+                {
+                    if(fio_state.bit.footboard_state)
+                    {
+                        mc_state_ = STANDBY_TO_OFFLINE;
+                        LogProducer::warn("mc_sm","MC-state switch to MC_STANDBY_TO_OFFLINE");
+                    }
+                }
+                else
+                {
+                    mc_state_ = STANDBY_TO_OFFLINE;
+                    LogProducer::warn("mc_sm","MC-state switch to MC_STANDBY_TO_OFFLINE");
+                }
             }
             else if(standby_to_online_request_)
             {

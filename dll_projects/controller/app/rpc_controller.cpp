@@ -94,7 +94,7 @@ uint64_t c_getWorkMode(uint32_t* mode)
 	return rep_data.error_code.data;
 }
 
-uint64_t c_setOnlineTrajectoryRatio(double ratio)
+uint64_t c_setOnlineTrajectoryRatio_xyz(double ratio)
 {
 	if (!rpc_valid)
 		return HANDLE_RPC_FAILED;
@@ -105,14 +105,32 @@ uint64_t c_setOnlineTrajectoryRatio(double ratio)
 	req_data.header.time_stamp = 122;
 	req_data.data.data = ratio;
 	req_data.property.authority = Comm_Authority_TP_SIMMULATOR;
-	if (!rpc_ptr->handleRpc(0x0000B35F, &req_data, RequestMessageType_Double_fields, &rep_data, ResponseMessageType_Uint64_fields))
+	if (!rpc_ptr->handleRpc(0x0000D37A, &req_data, RequestMessageType_Double_fields, &rep_data, ResponseMessageType_Uint64_fields))
 	{
 		return HANDLE_RPC_FAILED;
 	}
 	return rep_data.data.data;
 }
 
-uint64_t c_getOnlineTrajectoryRatio(double* ratio)
+uint64_t c_setOnlineTrajectoryRatio_abc(double ratio)
+{
+	if (!rpc_valid)
+		return HANDLE_RPC_FAILED;
+	RpcBasic* rpc_ptr = RpcBasic::getInstance();
+	RequestMessageType_Double req_data;
+	ResponseMessageType_Uint64 rep_data;
+
+	req_data.header.time_stamp = 122;
+	req_data.data.data = ratio;
+	req_data.property.authority = Comm_Authority_TP_SIMMULATOR;
+	if (!rpc_ptr->handleRpc(0x00010AF3, &req_data, RequestMessageType_Double_fields, &rep_data, ResponseMessageType_Uint64_fields))
+	{
+		return HANDLE_RPC_FAILED;
+	}
+	return rep_data.data.data;
+}
+
+uint64_t c_getOnlineTrajectoryRatio_xyz(double* ratio)
 {
 	if (!rpc_valid)
 		return HANDLE_RPC_FAILED;
@@ -122,7 +140,25 @@ uint64_t c_getOnlineTrajectoryRatio(double* ratio)
 
 	req_data.header.time_stamp = 122;
 	req_data.property.authority = Comm_Authority_TP_SIMMULATOR;
-	if (!rpc_ptr->handleRpc(0x00004DEF, &req_data, RequestMessageType_Void_fields, &rep_data, ResponseMessageType_Double_fields))
+	if (!rpc_ptr->handleRpc(0x0001487A, &req_data, RequestMessageType_Void_fields, &rep_data, ResponseMessageType_Double_fields))
+	{
+		return HANDLE_RPC_FAILED;
+	}
+	*ratio = rep_data.data.data;
+	return 0;
+}
+
+uint64_t c_getOnlineTrajectoryRatio_abc(double* ratio)
+{
+	if (!rpc_valid)
+		return HANDLE_RPC_FAILED;
+	RpcBasic* rpc_ptr = RpcBasic::getInstance();
+	RequestMessageType_Void req_data;
+	ResponseMessageType_Double rep_data;
+
+	req_data.header.time_stamp = 122;
+	req_data.property.authority = Comm_Authority_TP_SIMMULATOR;
+	if (!rpc_ptr->handleRpc(0x00017FF3, &req_data, RequestMessageType_Void_fields, &rep_data, ResponseMessageType_Double_fields))
 	{
 		return HANDLE_RPC_FAILED;
 	}

@@ -22,15 +22,8 @@
 
 using namespace std;
 
-int main(int argc, char* argv[])
+int main()
 {
-    int needed_data_count = 1;
-    if (argc < needed_data_count + 1)
-    {
-        cout << "more parameters are needed: vel_ratio" << endl;
-        return -1;
-    }
-
     TpCommTest test;
     if (!test.initRpcSocket())
     {
@@ -41,20 +34,13 @@ int main(int argc, char* argv[])
     uint8_t buf[MAX_REQ_BUFFER_SIZE];
     int buf_size = MAX_REQ_BUFFER_SIZE;
 
-    unsigned int hash_value = 0x0000B35F;
+    unsigned int hash_value = 0x0001487A;
 
-    RequestMessageType_Double msg;
-    msg.header.time_stamp = 122;
-    msg.property.authority = Comm_Authority_TP_SIMMULATOR;
-    msg.data.data = atof(argv[1]);
+    RequestMessageType_Void void_msg;
+    void_msg.header.time_stamp = 122;
+    void_msg.property.authority = Comm_Authority_TP_SIMMULATOR;
 
-    if(1 < msg.data.data || msg.data.data < 0)
-    {
-        cout << "Request : data is out range: 0 - 1" << endl;
-        return -1;
-    }
-
-    if (!test.generateRequestMessageType(hash_value, (void*)&msg, RequestMessageType_Double_fields, buf, buf_size))
+    if (!test.generateRequestMessageType(hash_value, (void*)&void_msg, RequestMessageType_Void_fields, buf, buf_size))
     {
         cout << "Request : encode buf failed" << endl;
         return -1;
@@ -73,9 +59,9 @@ int main(int argc, char* argv[])
         return -1;
     }
 
-    ResponseMessageType_Uint64 recv_msg;
+    ResponseMessageType_Uint64_Double recv_msg;
     unsigned int recv_hash = 0;
-    if (!test.decodeResponseMessageType(recv_hash, (void*)&recv_msg, ResponseMessageType_Uint64_fields, buf, buf_size))
+    if (!test.decodeResponseMessageType(recv_hash, (void*)&recv_msg, ResponseMessageType_Uint64_Double_fields, buf, buf_size))
     {
         cout << "Reply : recv msg decode failed" << endl;
         return -1;
@@ -90,7 +76,8 @@ int main(int argc, char* argv[])
     cout << "Reply : msg.header.package_left = " << recv_msg.header.package_left << endl;
     cout << "Reply : msg.header.error_code = " << recv_msg.header.error_code << endl;
     cout << "Reply : msg.property.authority = " << recv_msg.property.authority << endl;
-    printf("Reply : error_code = 0x%llx\n", (long long unsigned int)recv_msg.data.data);
+    printf("Reply : error_code = 0x%llx\n", (long long unsigned int)recv_msg.error_code.data);
+    cout << "Reply : msg.data.data = " << recv_msg.data.data << endl;
 
     usleep(200000);
 

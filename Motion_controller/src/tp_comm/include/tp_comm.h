@@ -522,10 +522,15 @@ private:
     void handleRequest0x00018470(int recv_bytes);
     /********rpc/motion_control/axis_group/setOnlineTrajectoryData, RequestMessageType_TransMatrixList**********/
     void handleRequest0x00008A31(int recv_bytes);
-    /********rpc/motion_control/axis_group/setOnlineTrajectoryRatio, RequestMessageType_Double**********/
-    void handleRequest0x0000B35F(int recv_bytes);
-    /********rpc/motion_control/axis_group/getOnlineTrajectoryRatio, RequestMessageType_void**********/
-    void handleRequest0x00004DEF(int recv_bytes);
+    /********rpc/motion_control/axis_group/setOnlineTrajectoryRatio_xyz, RequestMessageType_Double**********/
+    void handleRequest0x0000D37A(int recv_bytes);
+    /********rpc/motion_control/axis_group/setOnlineTrajectoryRatio_abc, RequestMessageType_Double**********/
+    void handleRequest0x00010AF3(int recv_bytes);
+    /********rpc/motion_control/axis_group/getOnlineTrajectoryRatio_xyz, RequestMessageType_void**********/
+    void handleRequest0x0001487A(int recv_bytes);
+    /********rpc/motion_control/axis_group/getOnlineTrajectoryRatio_abc, RequestMessageType_void**********/
+    void handleRequest0x00017FF3(int recv_bytes);
+
     /********rpc/motion_control/axis_group/getDH, RequestMessageType_Void**********/	
     void handleRequest0x00016078(int recv_bytes);		
 
@@ -889,10 +894,15 @@ private:
     void handleResponse0x00018470(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
     /********rpc/motion_control/axis_group/setOnlineTrajectoryData, ResponseMessageType_Uint64**********/
     void handleResponse0x00008A31(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
-    /********rpc/motion_control/axis_group/setOnlineTrajectoryRatio, ResponseMessageType_Uint64**********/
-    void handleResponse0x0000B35F(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
-    /********rpc/motion_control/axis_group/getOnlineTrajectoryRatio, ResponseMessageType_Uint64_Double**********/
-    void handleResponse0x00004DEF(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/motion_control/axis_group/setOnlineTrajectoryRatio_xyz, ResponseMessageType_Uint64**********/
+    void handleResponse0x0000D37A(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/motion_control/axis_group/setOnlineTrajectoryRatio_abc, ResponseMessageType_Uint64**********/	
+    void handleResponse0x00010AF3(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+
+    /********rpc/motion_control/axis_group/getOnlineTrajectoryRatio_xyz, ResponseMessageType_Uint64_Double**********/
+    void handleResponse0x0001487A(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/motion_control/axis_group/getOnlineTrajectoryRatio_abc, ResponseMessageType_Uint64_Double**********/	
+    void handleResponse0x00017FF3(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
 
     /********rpc/motion_control/axis_group/getJointManualStep, ResponseMessageType_Uint64_DoubleList(DoubleList_count=9)**********/	
     void handleResponse0x00006D10(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);

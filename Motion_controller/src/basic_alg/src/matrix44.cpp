@@ -20,34 +20,7 @@ void Matrix44::setZero()
     this->matrix_[2][0]=0.0; this->matrix_[2][1]=0.0; this->matrix_[2][2]=0.0; this->matrix_[2][3]=0.0;
     this->matrix_[3][0]=0.0; this->matrix_[3][1]=0.0; this->matrix_[3][2]=0.0; this->matrix_[3][3]=0.0;
 }
-bool Matrix44::transmatrix_inverse_matrix44(Matrix44& result_matrix)
-{
-    //memset(result_matrix,0,sizeof(Matrix44));
-    //result_matrix.setZero();
-    result_matrix.matrix_[0][0] = this->matrix_[0][0];
-    result_matrix.matrix_[0][1] = this->matrix_[1][0];
-    result_matrix.matrix_[0][2] = this->matrix_[2][0];
-    result_matrix.matrix_[1][0] = this->matrix_[0][1];
-    result_matrix.matrix_[1][1] = this->matrix_[1][1];
-    result_matrix.matrix_[1][2] = this->matrix_[2][1];
-    result_matrix.matrix_[2][0] = this->matrix_[0][2];
-    result_matrix.matrix_[2][1] = this->matrix_[1][2];
-    result_matrix.matrix_[2][2] = this->matrix_[2][2];
-    result_matrix.matrix_[0][3] = -(this->matrix_[0][3]*this->matrix_[0][0]
-                                                                        +this->matrix_[1][3]*this->matrix_[1][0]
-                                                                        +this->matrix_[2][3]*this->matrix_[2][0]);
-    result_matrix.matrix_[1][3] = -(this->matrix_[0][3]*this->matrix_[0][1]
-                                                                    +this->matrix_[1][3]*this->matrix_[1][1]
-                                                                    +this->matrix_[2][3]*this->matrix_[2][1]);
-    result_matrix.matrix_[2][3] = -(this->matrix_[0][3]*this->matrix_[0][2]
-                                                                    +this->matrix_[1][3]*this->matrix_[1][2]
-                                                                    +this->matrix_[2][3]*this->matrix_[2][2]);
-    result_matrix.matrix_[3][0] = 0;
-    result_matrix.matrix_[3][1] = 0;
-    result_matrix.matrix_[3][2] = 0;
-    result_matrix.matrix_[3][3] = 1;
-    return true;
-}
+
 
 bool Matrix44::isEqual(const Matrix44& matrix, double valve) const
 {

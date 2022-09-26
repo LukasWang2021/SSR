@@ -45,7 +45,6 @@ add_executable(log_manager_cleaner
 	src/log_manager_cleaner.cpp
 )
 
-
 link_directories(
 	../../install/lib
 )

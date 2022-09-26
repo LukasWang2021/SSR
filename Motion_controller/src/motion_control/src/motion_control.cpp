@@ -530,15 +530,25 @@ TTT.matrix_[3][0]=0;TTT.matrix_[3][1]=0;TTT.matrix_[3][2]=0;TTT.matrix_[3][3]=1;
     res_abc.print_abc("res_abc=");
 }
 
-ErrorCode MotionControl::setOnlineTrajectoryRatio(double ratio)
+ErrorCode MotionControl::setOnlineTrajectoryRatio_xyz(double ratio)
 {
     ErrorCode ret;
-    ret = online_trj_planner_ptr->setOnlineTrjRatio(ratio);
+    ret = online_trj_planner_ptr->setOnlineTrjRatio_xyz(ratio);
     return ret;
 }
-double MotionControl::getOnlineTrajectoryRatio()
+ErrorCode MotionControl::setOnlineTrajectoryRatio_abc(double ratio)
 {
-    return online_trj_planner_ptr->get_online_trj_ratio();
+    ErrorCode ret;
+    ret = online_trj_planner_ptr->setOnlineTrjRatio_abc(ratio);
+    return ret;
+}
+double MotionControl::getOnlineTrajectoryRatio_xyz()
+{
+    return online_trj_planner_ptr->get_online_trj_ratio_xyz();
+}
+double MotionControl::getOnlineTrajectoryRatio_abc()
+{
+    return online_trj_planner_ptr->get_online_trj_ratio_abc();
 }
 
 /****
@@ -591,7 +601,7 @@ ErrorCode MotionControl::setOnlineVpointCache(int num_matrix,int * p_status, dou
 int MotionControl::JointInConstraint_axisCnt(basic_alg::Joint &joint, int cnt)
 {
     const double constraint_lower[6]={-1.57, -1.3, -2, -3.1, -1.6, -3.1};
-    const double constraint_upper[6]={1.57, 1.5, -0.25, 3.1, -0.1, 3.1};
+    const double constraint_upper[6]={1.57, 1.5, -0.25, 3.1, -0.2, 3.1};
     double precision_val = 0.0001;
     if(cnt==1)
     {
@@ -617,7 +627,9 @@ bool MotionControl::isAxisAngleOutSpeed(bool startFlag, Joint jnt)
 {
     static Joint last_jnt;
     //const double limit_axis_cha[6] = {0.000267, 0.002571, 0.002624, 0.001545,0.001258, 0.001125};
-    const double limit_axis_cha[6] = {0.00267, 0.02571, 0.02624, 0.01545,0.01258, 0.01125};
+    //const double limit_axis_cha[6] = {0.00267, 0.02571, 0.02624, 0.01545,0.01258, 0.01125};
+    const double limit_axis_cha[6] = {0.002600,0.002600,0.02700,0.003500,0.002600,0.003500};
+
     Joint jnt_speed;
     if(startFlag)
     {
@@ -638,6 +650,7 @@ bool MotionControl::isAxisAngleOutSpeed(bool startFlag, Joint jnt)
         {
             if(jnt_speed[i] > limit_axis_cha[i])
             {
+                LogProducer::info("joint diff_angle_speed && limit angle_speed","=(%lf,%lf)",jnt_speed[i], limit_axis_cha[i]);
                 return true;
             }
         } 
@@ -659,7 +672,8 @@ ErrorCode MotionControl::receive_T_matrix_data(int status, double * p_marixArray
     Matrix44 Touch_ht_v;
     Matrix44 T_k;//当前输入的T矩阵经过动态基坐标转换得到的T_k
     Matrix44 Ttemp;//获取增量后的机械臂末端位姿矩阵
-    double k = online_trj_planner_ptr->online_alg_params_.trj_ratio; //机械臂移动距离与touch移动距离的比例系数,    即机械臂移动距离=K*touch移动距离
+    double k_xyz = online_trj_planner_ptr->online_alg_params_.trj_ratio_xyz; //机械臂移动距离与touch移动距离的比例系数,    即机械臂移动距离=K*touch移动距离
+    double k_abc = online_trj_planner_ptr->online_alg_params_.trj_ratio_abc;
     Vector3 res_xyz,res_abc;
     PoseEuler StartPositionPose;
     TransMatrix start_trans_matrix;
@@ -748,8 +762,8 @@ v_xyz.x_, v_xyz.y_, v_xyz.z_, v_abc.x_, v_abc.y_, v_abc.z_);
         Touch_ht_v.matrix_[1][0]=*(p_marixArray+1); Touch_ht_v.matrix_[1][1]=*(p_marixArray+5); Touch_ht_v.matrix_[1][2]=*(p_marixArray+9);  Touch_ht_v.matrix_[1][3]=*(p_marixArray+13);  // /1000;
         Touch_ht_v.matrix_[2][0]=*(p_marixArray+2); Touch_ht_v.matrix_[2][1]=*(p_marixArray+6); Touch_ht_v.matrix_[2][2]=*(p_marixArray+10); Touch_ht_v.matrix_[2][3]=*(p_marixArray+14);  // /1000;
         Touch_ht_v.matrix_[3][0]=*(p_marixArray+3); Touch_ht_v.matrix_[3][1]=*(p_marixArray+7); Touch_ht_v.matrix_[3][2]=*(p_marixArray+11); Touch_ht_v.matrix_[3][3]=*(p_marixArray+15);
-Touch_ht_v.print("Touch_ht_v");
-        online_trj_planner_ptr->DynamicBaseCoordTransformation(T_r0_R, Touch_h0_v, Touch_ht_v, k, T_k);
+//Touch_ht_v.print("Touch_ht_v");
+        online_trj_planner_ptr->DynamicBaseCoordTransformation(T_r0_R, Touch_h0_v, Touch_ht_v, k_xyz, k_abc, T_k);
 //T_k.print("CoordTransformed T_k:");
         //T_c.print("Tc:");
         //last_T_k.print("T_1");
@@ -814,7 +828,7 @@ Touch_ht_v.print("Touch_ht_v");
             
             if(status == 1)//中间途经点
             {
-                LogProducer::info("v_xyzabc->Bspline","#%lf,%lf,%lf,%lf,%lf,%lf",v_xyz.x_,v_xyz.y_,v_xyz.z_,v_abc.x_,v_abc.y_,v_abc.z_);
+                //LogProducer::info("v_xyzabc->Bspline","#%lf,%lf,%lf,%lf,%lf,%lf",v_xyz.x_,v_xyz.y_,v_xyz.z_,v_abc.x_,v_abc.y_,v_abc.z_);
                 online_alg_out_trjPointCnt += online_trj_planner_ptr->traj_on_FIR_Bspline(v_xyz,v_abc,1,online_alg_out_trjPointCnt);//途中点
             }
             else if(status == 2)//终点
@@ -841,7 +855,7 @@ Touch_ht_v.print("Touch_ht_v");
         #if 1 //逆解失败 继续迭代 v_xyz,v_abc没有更新, 也不判断是否超限
             if(status == 1)//中间途经点
             {
-                LogProducer::info("ik error. v_xyzabc->Bspline","#%lf,%lf,%lf,%lf,%lf,%lf",v_xyz.x_,v_xyz.y_,v_xyz.z_,v_abc.x_,v_abc.y_,v_abc.z_);
+                //LogProducer::info("ik error. v_xyzabc->Bspline","#%lf,%lf,%lf,%lf,%lf,%lf",v_xyz.x_,v_xyz.y_,v_xyz.z_,v_abc.x_,v_abc.y_,v_abc.z_);
                 online_alg_out_trjPointCnt += online_trj_planner_ptr->traj_on_FIR_Bspline(v_xyz,v_abc,1,online_alg_out_trjPointCnt);//途中点
             }
             else if(status == 2)//终点
@@ -1005,7 +1019,7 @@ ErrorCode MotionControl::setOnlinePointBufptr()
             pos.posture.elbow = 1;
             pos.posture.wrist = 1;
             pos.posture.flip  = 0;
-LogProducer::info("AlgOutputPos","(%d) %lf,%lf,%lf,%lf,%lf,%lf status=%d",i,pos.pose.point_.x_,pos.pose.point_.y_,pos.pose.point_.z_,pos.pose.euler_.a_,pos.pose.euler_.b_,pos.pose.euler_.c_,online_trj_planner_ptr->trj_point_buf[i].status);
+//LogProducer::info("AlgOutputPos","(%d) %lf,%lf,%lf,%lf,%lf,%lf status=%d",i,pos.pose.point_.x_,pos.pose.point_.y_,pos.pose.point_.z_,pos.pose.euler_.a_,pos.pose.euler_.b_,pos.pose.euler_.c_,online_trj_planner_ptr->trj_point_buf[i].status);
             memset(&(pos.turn), 0, 9*sizeof(int));
             memset(&jnt, 0, sizeof(jnt));
             pos.pose.euler_.a_ = online_trj_planner_ptr->trj_point_buf[i].c_;
@@ -1033,8 +1047,8 @@ LogProducer::info("AlgOutputPos","(%d) %lf,%lf,%lf,%lf,%lf,%lf status=%d",i,pos.
                 tmp_OnlineJointPointBuf[i*6+3]=jnt.j4_;
                 tmp_OnlineJointPointBuf[i*6+4]=jnt.j5_;
                 tmp_OnlineJointPointBuf[i*6+5]=jnt.j6_;
-                LogProducer::info("setOnlinePointBufptr","converted tmp_OnlineJointPointBuf[%d]=<%lf,%lf,%lf,%lf,%lf,%lf> status=%d",
-                    i,tmp_OnlineJointPointBuf[i*6+0],tmp_OnlineJointPointBuf[i*6+1],tmp_OnlineJointPointBuf[i*6+2],tmp_OnlineJointPointBuf[i*6+3],tmp_OnlineJointPointBuf[i*6+4],tmp_OnlineJointPointBuf[i*6+5],online_trj_planner_ptr->trj_point_buf[i].status);
+                //LogProducer::info("setOnlinePointBufptr","converted tmp_OnlineJointPointBuf[%d]=<%lf,%lf,%lf,%lf,%lf,%lf> status=%d",
+                //    i,tmp_OnlineJointPointBuf[i*6+0],tmp_OnlineJointPointBuf[i*6+1],tmp_OnlineJointPointBuf[i*6+2],tmp_OnlineJointPointBuf[i*6+3],tmp_OnlineJointPointBuf[i*6+4],tmp_OnlineJointPointBuf[i*6+5],online_trj_planner_ptr->trj_point_buf[i].status);
                     
             #else
             if(err == SUCCESS)

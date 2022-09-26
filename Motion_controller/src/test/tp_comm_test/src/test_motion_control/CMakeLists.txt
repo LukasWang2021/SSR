@@ -24,10 +24,10 @@ target_link_libraries(global_acc_ratio_get ${rtm_LIBRARIES} pb tp_comm_test prot
 
 
 ######### online trajectory ratio set/get #########
-add_executable(online_trajectory_ratio_set ./online_trajectory_ratio_set.cpp)
-target_link_libraries(online_trajectory_ratio_set ${rtm_LIBRARIES} pb tp_comm_test protos)
-add_executable(online_trajectory_ratio_get ./online_trajectory_ratio_get.cpp)
-target_link_libraries(online_trajectory_ratio_get ${rtm_LIBRARIES} pb tp_comm_test protos)
+add_executable(online_trajectory_ratio_xyz_set ./online_trajectory_ratio_xyz_set.cpp)
+target_link_libraries(online_trajectory_ratio_xyz_set ${rtm_LIBRARIES} pb tp_comm_test protos)
+add_executable(online_trajectory_ratio_xyz_get ./online_trajectory_ratio_xyz_get.cpp)
+target_link_libraries(online_trajectory_ratio_xyz_get ${rtm_LIBRARIES} pb tp_comm_test protos)
 
 
 ######### get_postrue_by_joint #########

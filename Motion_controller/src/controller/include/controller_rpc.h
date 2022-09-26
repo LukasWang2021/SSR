@@ -413,10 +413,16 @@ private:
     void handleRpc0x00018470(void* request_data_ptr, void* response_data_ptr);
     //"/rpc/motion_conrtol/axis_group/setOnlineTrajectoryData" 实时下发在线轨迹数据_2021-12-07
     void handleRpc0x00008A31(void* request_data_ptr, void* response_data_ptr);
-    //"/rpc/motion_conrtol/axis_group/setOnlineTrajectoryRatio  : 设置在线轨迹运动比例系数2022-0414
-    void handleRpc0x0000B35F(void* request_data_ptr, void* response_data_ptr);
-    //"/rpc/motion_conrtol/axis_group/getOnlineTrajectoryRatio  : 获取在线轨迹运动比例系数
-    void handleRpc0x00004DEF(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/motion_conrtol/axis_group/setOnlineTrajectoryRatio_xyz  : 设置在线轨迹运动比例系数2022-0414
+    void handleRpc0x0000D37A(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/motion_control/axis_group/setOnlineTrajectoryRatio_abc"	
+    void handleRpc0x00010AF3(void* request_data_ptr, void* response_data_ptr);
+
+    //"/rpc/motion_conrtol/axis_group/getOnlineTrajectoryRatio_xyz  : 获取在线轨迹运动比例系数
+    void handleRpc0x0001487A(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/motion_control/axis_group/getOnlineTrajectoryRatio_abc"	
+    void handleRpc0x00017FF3(void* request_data_ptr, void* response_data_ptr);
+
     //"/rpc/motion_control/axis_group/getJointManualStep"	
     void handleRpc0x00006D10(void* request_data_ptr, void* response_data_ptr);
     //"/rpc/motion_control/axis_group/setCartesianManualStep"	

@@ -346,10 +346,12 @@ ErrorCode ServoCommBase::triggerServoCmdUploadParameters(int32_t** async_ack_ptr
     bool ret = doServoCmdAsyncService(comm_ptr_->service_ptr, &req_data, &res_data, async_ack_ptr_ptr);
     if(!ret)
     {
+        printf("ERROR::doServoCmdAsyncService() failed\n");
         return CORE_COMM_SEND_CORE_PROCESS_CALL_FAILED;
     }
     if(res_data.param1 != 0)
     {
+        printf("ERROR:: res_data.param is: %d\n", res_data.param1);
         return CORE_COMM_EXEC_CORE_PROCESS_CALL_FAILED;
     }
     return SUCCESS;  

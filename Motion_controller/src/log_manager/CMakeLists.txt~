@@ -9,7 +9,7 @@ include_directories(
 	../common
 	../yaml_help/include
 	../thread_help/include 
-    ../basic_alg/include
+    	../basic_alg/include
 	../init_protection/include
 	${rtm_INCLUDE_DIRS}
 )

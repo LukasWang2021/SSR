@@ -1594,7 +1594,7 @@ void ControllerRpc::handleRpc0x0000A063(void* request_data_ptr, void* response_d
 
     PoseEuler pos;
     vector<PoseEuler> vps; // via points
-    LogProducer::info("rpc", "recieved via point count %d", rq_data_ptr->data2.data_count);
+    LogProducer::info("rpc", "recieved data point count %d", rq_data_ptr->data2.data_count);
     for(uint32_t i = 0; i < rq_data_ptr->data2.data_count; i+=6)
     {
         // pos.point_.x_ = rq_data_ptr->data2.data[i+0];

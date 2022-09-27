@@ -5,30 +5,30 @@
 #include <math.h>
 #include <fstream>
 #include <sstream>
-#include "xpath_planner.h"
+#include "vpath_planner.h"
 #include "log_manager_producer.h"
 
 using namespace std;
 using namespace basic_alg;
 using namespace log_space;
 
-XpathPlanner::XpathPlanner()
+VpathPlanner::VpathPlanner()
 {
     sampling_freq_ = 0.001;
     traj_time_set_ = 10;
-    acc_time_ratio_ = 0.33333333;
-    dec_time_ratio_ = 0.33333333;
+    acc_time_ratio_ = 0.3;
+    dec_time_ratio_ = 0.3;
     via_points_cnt_ = 0;
     xyz_fit_rate_ = 0.99999;
     abc_smooth_window_ = 7;
 }
 
-XpathPlanner::~XpathPlanner()
+VpathPlanner::~VpathPlanner()
 {
 
 }
 
-void XpathPlanner::reset(void)
+void VpathPlanner::reset(void)
 {
     via_points_pose_.clear();
     via_points_quat_.clear();
@@ -51,10 +51,11 @@ void XpathPlanner::reset(void)
     fa3_qw_.clear(); fa3_qx_.clear(); fa3_qy_.clear(); fa3_qz_.clear();
 }
 
-bool XpathPlanner::setViaPoints(const vector<PoseEuler> &via_points, bool is_new)
+bool VpathPlanner::setViaPoints(const vector<PoseEuler> &via_points, bool is_new)
 {
      /* plan a new trajectory */
     if(is_new) { reset(); }
+    LogProducer::error("VpathPlanner","setViaPoints %d all %ld", is_new, via_points.size());
 
     Point tmp_pose;
     Quaternion tmp_quat;
@@ -71,17 +72,17 @@ bool XpathPlanner::setViaPoints(const vector<PoseEuler> &via_points, bool is_new
     return true;
 }
 
-bool XpathPlanner::viaPoints2Traj(double traj_vel)
+bool VpathPlanner::viaPoints2Traj(double traj_vel)
 {
     if(traj_vel < MINIMUM_E3)
     {
-        LogProducer::error("XpathPlanner","trajectory speed %lf invalid", traj_vel);
+        LogProducer::error("VpathPlanner","trajectory speed %lf invalid", traj_vel);
         return false;
     }
 #if 0 // do not need smooth now
     if (via_points_cnt_ >= 10 && (!xyzFitSmooth(xyz_fit_rate_) || !abcQuatSmooth(abc_smooth_window_)))
     {
-        LogProducer::error("XpathPlanner","via points smooth failed");
+        LogProducer::error("VpathPlanner","via points smooth failed");
         return false;
     }
 #endif
@@ -114,18 +115,18 @@ bool XpathPlanner::viaPoints2Traj(double traj_vel)
     return true;
 }
 
-bool XpathPlanner::viaPoints2Traj(const vector<PoseEuler> &via_points, double traj_vel)
+bool VpathPlanner::viaPoints2Traj(const vector<PoseEuler> &via_points, double traj_vel)
 {
     setViaPoints(via_points, true);
     return viaPoints2Traj(traj_vel);
 }
 
-bool XpathPlanner::xyzFitSmooth(double fit_rate)
+bool VpathPlanner::xyzFitSmooth(double fit_rate)
 {
     return true;
 }
 
-bool XpathPlanner::abcQuatSmooth(int32_t smooth_window)
+bool VpathPlanner::abcQuatSmooth(int32_t smooth_window)
 {
     if (smooth_window % 2 == 0)
     {
@@ -197,7 +198,7 @@ bool XpathPlanner::abcQuatSmooth(int32_t smooth_window)
         int32_t ret = 0;
         if ((ret = eigens(&quat_matrix_sum.matrix_[0][0], 4, eigvec, &eigval)) != 0)
         {
-            LogProducer::error("XpathPlanner", "calculate matrix eigens failed return %d", ret);
+            LogProducer::error("VpathPlanner", "calculate matrix eigens failed return %d", ret);
             return false;
         }
 
@@ -209,9 +210,10 @@ bool XpathPlanner::abcQuatSmooth(int32_t smooth_window)
     return true;
 }
 
-bool XpathPlanner::pathInfoCalc(void)
+bool VpathPlanner::pathInfoCalc(void)
 {
     /*calculate distance between via points*/
+    LogProducer::info("VpathPlanner", "via points counts %d", via_points_cnt_);
     double distance = 0;
     via_points_dist_.resize(via_points_cnt_);
     via_points_dist_[0] = distance;
@@ -225,7 +227,7 @@ bool XpathPlanner::pathInfoCalc(void)
     acc_end_time_ = acc_time_ratio_ * traj_time_set_;
     even_end_time_ = acc_end_time_ + traj_time_set_ * (1 - (acc_time_ratio_ + dec_time_ratio_));
     dec_end_time_ = traj_time_set_;
-    LogProducer::info("XpathPlanner", "counts %d distance %lf, traj vel %lf, traj time %lf", via_points_cnt_, distance, traj_vel_set_, traj_time_set_);
+    LogProducer::info("VpathPlanner", "distance %lf, traj vel %lf, traj time %lf", distance, traj_vel_set_, traj_time_set_);
 
     vel_ = via_points_dist_.back() / traj_time_set_ * (1 / (1 - (acc_time_ratio_ + dec_time_ratio_) / 2));
     acc_ = vel_ / acc_end_time_;
@@ -238,7 +240,7 @@ bool XpathPlanner::pathInfoCalc(void)
 }
 
 
-bool XpathPlanner::trajPlanWithPathInfo(void)
+bool VpathPlanner::trajPlanWithPathInfo(void)
 {
     double pos_give = 0.0;
     double ploy_sets[4] = {0, 0, 0, 0};
@@ -268,7 +270,7 @@ bool XpathPlanner::trajPlanWithPathInfo(void)
     return true;
 }
 
-bool XpathPlanner::poly5(
+bool VpathPlanner::poly5(
     double pos_start, double pos_end, 
     double vel_start, double vel_end, 
     double acc_start, double acc_end, 
@@ -317,14 +319,14 @@ bool XpathPlanner::poly5(
     return true;
 }
 
-bool XpathPlanner::xyzTrajResampling(void)
+bool VpathPlanner::xyzTrajResampling(void)
 {
     // if (!xyzSpline()) return false;
 
     return true;
 }
 
-bool XpathPlanner::abcTrajResampling(void)
+bool VpathPlanner::abcTrajResampling(void)
 {
     double dq = 0.0;
     vector<Quaternion> resampled_quat;
@@ -350,7 +352,7 @@ bool XpathPlanner::abcTrajResampling(void)
     return true;
 }
 
-bool XpathPlanner::calcResampledPointDist(void)
+bool VpathPlanner::calcResampledPointDist(void)
 {
     double distance = 0;
     traj_points_dist_.clear();
@@ -365,11 +367,11 @@ bool XpathPlanner::calcResampledPointDist(void)
     return true;
 }
 
-bool XpathPlanner::trajPausePlan(uint32_t index, double vel, double vel_ratio, double acc_ratio, double jerk_ratio)
+bool VpathPlanner::trajPausePlan(uint32_t index, double vel, double vel_ratio, double acc_ratio, double jerk_ratio)
 {
     if(index > traj_points_dist_.size() - 1)
     {
-        LogProducer::info("XpathPlanner", "pause index %u out of traj range %ld", index, traj_points_dist_.size());
+        LogProducer::info("VpathPlanner", "pause index %u out of traj range %ld", index, traj_points_dist_.size());
         return false;
     }
     pause_traj_.clear();
@@ -396,10 +398,10 @@ bool XpathPlanner::trajPausePlan(uint32_t index, double vel, double vel_ratio, d
         {
             paused_index_ = i;
             paused_pos = traj_points_dist_[paused_index_];
-            LogProducer::info("XpathPlanner", "paused index %d", paused_index_);
             break;
         }
     }
+    LogProducer::info("VpathPlanner", "paused index %d", paused_index_);
     // means can not stop in time just go on org traj
     if (paused_index_ == 0)
     {
@@ -414,8 +416,8 @@ bool XpathPlanner::trajPausePlan(uint32_t index, double vel, double vel_ratio, d
     double pause_time = index * sampling_freq_; // unit seconds,start pause time
     double stop_time = sqrt(2 * (paused_pos - traj_points_dist_[index]) / dec_max) + pause_time; // mm/ms
     stop_time = ceil(stop_time / sampling_freq_) * sampling_freq_; // paused time
-    // LogProducer::info("XpathPlanner", "stop_time %lf, pause_time %lf", stop_time, pause_time);
-    // LogProducer::info("XpathPlanner", "paused_pos %lf, traj_points_dist_ %lf", paused_pos, traj_points_dist_[index]);
+    // LogProducer::info("VpathPlanner", "stop_time %lf, pause_time %lf", stop_time, pause_time);
+    // LogProducer::info("VpathPlanner", "paused_pos %lf, traj_points_dist_ %lf", paused_pos, traj_points_dist_[index]);
 
     vector<double> org_traj_time;
     org_traj_time.push_back(pause_time);
@@ -477,7 +479,7 @@ bool XpathPlanner::trajPausePlan(uint32_t index, double vel, double vel_ratio, d
     return true;
 }
 
-bool XpathPlanner::trajResumePlan(double vel, double vel_ratio, double acc_ratio, double jerk_ratio)
+bool VpathPlanner::trajResumePlan(double vel, double vel_ratio, double acc_ratio, double jerk_ratio)
 {
     // calc the rest of traj distance 
     // double dist = traj_points_dist_.back() - traj_points_dist_[paused_index_];
@@ -514,19 +516,19 @@ bool XpathPlanner::trajResumePlan(double vel, double vel_ratio, double acc_ratio
     return true;
 }
 
-vector<Quaternion> XpathPlanner::testQuatSmooth(const vector<Quaternion>& quat_in)
+vector<Quaternion> VpathPlanner::testQuatSmooth(const vector<Quaternion>& quat_in)
 {
     via_points_quat_ = quat_in;
     abcQuatSmooth(abc_smooth_window_);
     return via_points_quat_;
 }
 
-vector<Point> XpathPlanner::testPoseSmooth(const vector<Point>& pos_in)
+vector<Point> VpathPlanner::testPoseSmooth(const vector<Point>& pos_in)
 {
     return via_points_pose_;
 }
 
-bool XpathPlanner::spline
+bool VpathPlanner::spline
 (
     const vector<Point> &via_points_pose,
     const vector<Quaternion> &via_points_quat,
@@ -542,7 +544,7 @@ bool XpathPlanner::spline
         || via_points_time.size() != via_points_pose.size()
         || via_points_pose.size() <= 1)
     {
-        LogProducer::error("XpathPlanner","spline factor size invalid pose=%ld, quat=%ld time=%ld", via_points_pose.size(), via_points_quat.size(), via_points_time.size());
+        LogProducer::error("VpathPlanner","spline factor size invalid pose=%ld, quat=%ld time=%ld", via_points_pose.size(), via_points_quat.size(), via_points_time.size());
         return false;
     }
 
@@ -574,7 +576,7 @@ bool XpathPlanner::spline
     || H == NULL || inv_H == NULL || inv_H_px_Y == NULL || inv_H_py_Y == NULL || inv_H_pz_Y == NULL 
     || inv_H_qw_Y == NULL || inv_H_qx_Y == NULL || inv_H_qy_Y == NULL || inv_H_qz_Y == NULL)
     {
-        LogProducer::error("XpathPlanner","allocate memory failed");
+        LogProducer::error("VpathPlanner","allocate memory failed");
         return false;
     }
 
@@ -744,7 +746,7 @@ bool XpathPlanner::spline
     int32_t ret = 0;
     if ((ret = inverse(H, points_cnts, inv_H)) != 0)
     {
-        LogProducer::error("XpathPlanner", "inverse H failed return %d", ret);
+        LogProducer::error("VpathPlanner", "inverse H failed return %d", ret);
         return false;
     }
 
@@ -854,7 +856,7 @@ bool XpathPlanner::spline
     PoseEuler tmp_pos;
     Quaternion tmp_quat;
     auto out_traj_iter = out_traj.begin();
-    LogProducer::info("XpathPlanner", "start %lf, end %lf", via_points_time.front(), via_points_time.back());
+    LogProducer::info("VpathPlanner", "start %lf, end %lf", via_points_time.front(), via_points_time.back());
     // for (double t = via_points_time.front(); t <= via_points_time.back(); t += sampling_freq_)
     double t = 0.0;
     for(size_t i =0; i < traj_size_; ++i, t+=sampling_freq_)
@@ -867,7 +869,7 @@ bool XpathPlanner::spline
                 break;
             }
         }
-        // LogProducer::info("XpathPlanner", "t %lf index %d f %lf %lf %lf %lf", t, index, fa3_px_[index], fa2_px_[index], fa1_px_[index], fa0_px_[index]);
+        // LogProducer::info("VpathPlanner", "t %lf index %d f %lf %lf %lf %lf", t, index, fa3_px_[index], fa2_px_[index], fa1_px_[index], fa0_px_[index]);
         // usleep(1000);
         tmp_pos.point_.x_ = fa3_px_[index] * pow(t - via_points_time[index], 3)
             + fa2_px_[index] * pow(t - via_points_time[index], 2)
@@ -934,7 +936,7 @@ bool XpathPlanner::spline
     return true;
 }
 
-void XpathPlanner::spline_value
+void VpathPlanner::spline_value
 (
     const std::vector<double> &via_points_time, 
     const std::vector<double> &resampled_time, 
@@ -999,7 +1001,7 @@ void XpathPlanner::spline_value
     }
 }
 
-bool XpathPlanner::spline
+bool VpathPlanner::spline
 (
     const vector<double>& data, 
     const double& init, 
@@ -1056,7 +1058,7 @@ bool XpathPlanner::spline
     int32_t ret = 0;
     if ((ret = inverse(H, cnts, inv_H)) != 0)
     {
-        LogProducer::error("XpathPlanner", "inverse H failed return %d", ret);
+        LogProducer::error("VpathPlanner", "inverse H failed return %d", ret);
         return false;
     }
 

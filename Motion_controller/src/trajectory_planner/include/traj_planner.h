@@ -18,7 +18,7 @@
 #include <joint_planner.h>
 #include <circle_planner.h>
 #include <traj_params.h>
-#include "xpath_planner.h"
+#include "vpath_planner.h"
 
 namespace group_space
 {

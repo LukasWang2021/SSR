@@ -188,7 +188,9 @@ public:
     virtual void processFBQ();
     virtual void processTBQ();
     virtual void clearBQ();
-    
+#ifdef OFFLINE_SEG
+    void pickOfflineViaPoints();
+#endif
 private:
     ErrorCode autoMove(const MotionTarget &target);
     ErrorCode offsetToolFrame(int tool_id, const basic_alg::PoseEuler &offset, basic_alg::PoseEuler &tool_frame);
@@ -200,7 +202,12 @@ private:
     int  tool_frame_id_;
     UserOpMode work_mode_;
     bool motion_error_flag_;
-
+#ifdef OFFLINE_SEG
+    std::string offline_traj_name_;
+    double offline_traj_vel_;
+    int32_t vps_read_cnt_;
+    std::vector<PoseEuler> vps_;
+#endif
     std::queue<struct Instruction> instruction_fifo_;
     pthread_mutex_t  instruction_mutex_;
     uint32_t instructions_recv_counter_;

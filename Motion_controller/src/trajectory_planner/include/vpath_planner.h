@@ -1,5 +1,5 @@
-#ifndef _XPATH_PLANNER_H_
-#define _XPATH_PLANNER_H_
+#ifndef _VPATH_PLANNER_H_
+#define _VPATH_PLANNER_H_
 #include <vector>
 #include "basic_alg.h"
 #include "quaternion.h"
@@ -9,11 +9,11 @@
 #include "pose_euler.h"
 #include "traj_params.h"
 
-class XpathPlanner
+class VpathPlanner
 {
 public:
-    XpathPlanner();
-    ~XpathPlanner();
+    VpathPlanner();
+    ~VpathPlanner();
     /*
     Generate trajectory through given via points. The trajectory velocity is constant.
     1. get the via points' quaternion

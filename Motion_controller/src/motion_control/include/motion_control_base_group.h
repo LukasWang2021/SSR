@@ -30,7 +30,7 @@
 #include "pause_resume_planner.h"
 #include "group.h"
 #include "onlineTrj_planner.h"
-#include "xpath_planner.h"
+#include "vpath_planner.h"
 #include "base_device.h"
 
 
@@ -105,7 +105,10 @@ class BaseGroup
     virtual ErrorCode planOfflineTrajectory(std::string traj_name, double traj_vel);
     virtual ErrorCode planOfflinePause(void);
     virtual ErrorCode planOfflineResume(void);
-
+#ifdef OFFLINE_SEG
+    bool getOfflineStandby() {return offline_to_standby_state_;}
+    void setOfflineStandby(bool state) {offline_to_standby_state_ = state;}
+#endif
     // Manual teach APIs:
     virtual ManualFrame getManualFrame(void);
     virtual ErrorCode setManualFrame(ManualFrame frame);
@@ -313,7 +316,7 @@ class BaseGroup
     basic_alg::Transformation   transformation_;
     basic_alg::DynamicAlg   *dynamics_ptr_;
 
-    XpathPlanner offline_planner_;
+    VpathPlanner offline_planner_;
     std::ifstream offline_trajectory_file_;
     std::ifstream offline_euler_trajectory_file_;
     std::string offline_trajectory_file_name_;
@@ -324,6 +327,9 @@ class BaseGroup
     bool online_trajectory_last_point_;
     uint32_t offline_trajectory_size_;
     basic_alg::Joint offline_start_joint_;
+    #ifdef OFFLINE_SEG
+    bool offline_to_standby_state_;
+    #endif
     TrajectoryPoint offline_trajectory_cache_[OFFLINE_TRAJECTORY_CACHE_SIZE];
     uint32_t offline_trajectory_cache_head_, offline_trajectory_cache_tail_;
     uint32_t offline_traj_point_read_cnt_;

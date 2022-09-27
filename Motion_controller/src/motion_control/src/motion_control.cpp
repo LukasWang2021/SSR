@@ -31,6 +31,16 @@ int online_alg_out_trjPointCnt = 0;
 
 void MotionControl::ringCommonTask(void)
 {
+#ifdef OFFLINE_SEG
+    if(group_ptr_->getOfflineStandby() && vps_read_cnt_ < vps_.size() - 1)
+    {
+        Instruction instruction;
+        instruction.type = MOTION;
+        instruction.target.type = MOTION_VPATH;
+        group_ptr_->setOfflineStandby(false);
+        autoMove(instruction);
+    }
+#endif
     group_ptr_->doCommonLoop();
 }
 
@@ -135,6 +145,32 @@ void MotionControl::ringPlannerTask(void)
 
         if (instruction.type == MOTION)
         {
+#ifdef OFFLINE_SEG
+            if(instruction.target.type == MOTION_VPATH)
+            {
+                err = planOfflineTrajectory(offline_traj_name_, offline_traj_vel_);
+                if(err == SUCCESS) 
+                {
+                    err = moveOfflineTrajectory();
+                }
+            }
+            else
+            {
+                if (instruction.user_op_mode == USER_OP_MODE_SLOWLY_MANUAL)
+                {
+                    if (instruction.target.type == MOTION_JOINT)
+                    {
+                        instruction.target.vel = instruction.target.vel > 0.322886 ? 0.322886 : instruction.target.vel;
+                    }
+                    else if (instruction.target.type == MOTION_LINE || instruction.target.type == MOTION_CIRCLE)
+                    {
+                        instruction.target.vel = instruction.target.vel > 250 ? 250 : instruction.target.vel;
+                    }
+                }
+
+                err = autoMove(instruction.target);
+            }
+#else
             if (instruction.user_op_mode == USER_OP_MODE_SLOWLY_MANUAL)
             {
                 if (instruction.target.type == MOTION_JOINT)
@@ -148,6 +184,7 @@ void MotionControl::ringPlannerTask(void)
             }
 
             err = autoMove(instruction.target);
+#endif
         }
         else if (instruction.type == SET_UF)
         {
@@ -188,7 +225,7 @@ void MotionControl::ringPlannerTask(void)
             if (err_level >= 3 && err_level <= 7)
             {
                 LogProducer::error("mc", "Call interpreter pause, line: %d", instruction.line_num);
-                (*instruction.INTERP_STATE_PAUSE)();
+                // (*instruction.INTERP_STATE_PAUSE)();
                 // (*instruction.set_line_num)(instruction.line_num);
             }
             
@@ -920,15 +957,55 @@ ErrorCode MotionControl::moveOfflineTrajectory(void)
 
 ErrorCode MotionControl::setOfflineViaPoints(const vector<PoseEuler> &via_points, bool is_new)
 {
+#ifdef OFFLINE_SEG
+    if(is_new) { vps_.clear(); vps_read_cnt_ = 0;}
+    KinematicsRTM *kine = (KinematicsRTM *)(group_ptr_->getKinematicsPtr());
+    Joint ik_joint;
+	Posture   posture;
+	posture.arm = 1;
+	posture.elbow = 1;
+	posture.wrist = 1;
+	posture.flip = 0;
+    LogProducer::error("mc","set vps is new %d size %ld", is_new, via_points.size());
+    for (auto iter = via_points.begin(); iter != via_points.end(); ++iter)
+    {
+        if(!kine->doIK(*iter, posture, ik_joint))
+        {
+            LogProducer::error("mc","Fail to calc ik");
+            // return MC_COMPUTE_IK_FAIL;
+        }
+
+        vps_.push_back(*iter);
+    }
+#else
     group_ptr_->setOfflineViaPoints(via_points, is_new);
+#endif
     return 0;
 }
+
+#ifdef OFFLINE_SEG
+void MotionControl::pickOfflineViaPoints()
+{
+    vector<PoseEuler> tmp_vp;
+    for(int i = 0; vps_read_cnt_ < vps_.size() && i < 5; ++i)
+    {
+        tmp_vp.push_back(vps_[vps_read_cnt_++]);
+    }
+    group_ptr_->setOfflineViaPoints(tmp_vp, true);
+    --vps_read_cnt_;
+    LogProducer::error("mc","pick offline via points %d all %ld", vps_read_cnt_, vps_.size());
+}
+#endif
 
 ErrorCode MotionControl::planOfflineTrajectory(string traj_name, double traj_vel)
 {
     ErrorCode err = SUCCESS;
     char file_name[100];
     string trajectory_file = "/root/robot_data/trajectory/";
+#ifdef OFFLINE_SEG
+    offline_traj_vel_ = traj_vel;
+    offline_traj_name_ = traj_name;
+#endif
     if(traj_name == "")
     {
         time_t t;
@@ -941,9 +1018,12 @@ ErrorCode MotionControl::planOfflineTrajectory(string traj_name, double traj_vel
     {
         trajectory_file += traj_name;
     }
+#ifdef OFFLINE_SEG
+    pickOfflineViaPoints();
+#endif
     err = group_ptr_->planOfflineTrajectory(trajectory_file, traj_vel);
     if(err != 0) return err;
-    usleep(10000);
+    // usleep(10000);
     err = setOfflineTrajectory(traj_name);
     if(err != 0) return err;
 

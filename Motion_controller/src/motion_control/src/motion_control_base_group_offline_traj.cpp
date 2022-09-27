@@ -140,7 +140,7 @@ ErrorCode BaseGroup::setOfflineTrajectory(const std::string &offline_trajectory)
         LogProducer::error("mc_offline_traj","Fail to set offline trajectory, state = 0x%x", mc_state_);
         return INVALID_SEQUENCE;
     }
-
+#ifdef OFFLINE_FILE
     if (offline_trajectory_file_.is_open())
     {
         offline_trajectory_file_.close();
@@ -197,6 +197,19 @@ ErrorCode BaseGroup::setOfflineTrajectory(const std::string &offline_trajectory)
     offline_trajectory_time_stamp_ = cycle_time_;
     LogProducer::info("mc_offline_traj","Set offline trajectory success, trajectory size: %d", offline_trajectory_size_);
     LogProducer::info("mc_offline_traj","Start of the trajectory: %s", printDBLine(&offline_start_joint_[0], buffer, LOG_TEXT_SIZE));
+#else
+    offline_traj_point_read_cnt_ = 0;
+    offline_trajectory_size_ = (uint32_t)origin_trajectory_.size();
+
+    for (uint32_t i = 0; i < 6; i++)
+    {
+        offline_start_joint_[i] = origin_trajectory_[0].angle[i];
+    }
+    offline_trajectory_time_stamp_ = cycle_time_;
+    char buffer[LOG_TEXT_SIZE];
+    LogProducer::info("mc_offline_traj","Set offline trajectory success, trajectory size: %d", offline_trajectory_size_);
+    LogProducer::info("mc_offline_traj","Start of the trajectory: %s", printDBLine(&offline_start_joint_[0], buffer, LOG_TEXT_SIZE));
+#endif
 
     return SUCCESS;
 }
@@ -242,11 +255,12 @@ ErrorCode BaseGroup::planOfflineTrajectory(string traj_name, double traj_vel)
     joint_state.omega.zero();
     joint_state.torque.zero();
     JointState last_state;
-
+#ifdef OFFLINE_FILE
     std::ofstream traj_out_file(traj_name, ios::out);
     // write the traj file head
     traj_out_file << getNumberOfJoint() << " " << 0.001 << " " << xyz_traj.size() << "\n";
     traj_out_file << fixed << setprecision(10);
+#endif 
     auto org_traj_iter = origin_trajectory_.begin();
     for(auto iter = xyz_traj.begin(); iter != xyz_traj.end(); ++iter)
     {
@@ -261,6 +275,7 @@ ErrorCode BaseGroup::planOfflineTrajectory(string traj_name, double traj_vel)
         }
         if(iter == xyz_traj.begin())
         {
+#ifdef OFFLINE_FILE
             // write the first joint angle to file
             traj_out_file
             << joint_state.angle.j1_ << " " << joint_state.angle.j2_ << " " 
@@ -275,11 +290,13 @@ ErrorCode BaseGroup::planOfflineTrajectory(string traj_name, double traj_vel)
             << 0 << " " << 0 << " " << 0 << " " << 0 << " " << 0 << " " << 0 << " "
             << 0 << " " << 0 << " " << 0 << " " << 0 << " " << 0 << " " << 0 << " "
             << 0 << " " << 0 << " " << 0 << " " << 0 << " " << 0 << " " << 0 << "\n";
+#endif
         }
         else
         {
             // calc the angle speed
             joint_state.omega = joint_state.angle - last_state.angle;
+#ifdef OFFLINE_FILE
             // write the first joint state to file
             traj_out_file
             << joint_state.angle.j1_ << " " << joint_state.angle.j2_ << " " 
@@ -297,12 +314,14 @@ ErrorCode BaseGroup::planOfflineTrajectory(string traj_name, double traj_vel)
             << joint_state.torque.j1_ << " " << joint_state.torque.j2_ << " " 
             << joint_state.torque.j3_ << " " << joint_state.torque.j4_ << " " 
             << joint_state.torque.j5_ << " " << joint_state.torque.j6_ << "\n";
+#endif
         }
         *org_traj_iter++ = joint_state;
         last_state = joint_state;
     }
+#ifdef OFFLINE_FILE
     traj_out_file.close();
-
+#endif
     return SUCCESS;
 }
 
@@ -378,7 +397,8 @@ ErrorCode BaseGroup::planOfflineResume(void)
     joint_state.jerk.zero();
     joint_state.omega.zero();
     joint_state.torque.zero();
-    resume_trajectory_.clear();
+    // resume_trajectory_.clear();
+    origin_trajectory_.clear();
     for(auto iter = resume_traj.begin(); iter != resume_traj.end(); ++iter)
     {
         if(!kinematics_ptr_->doIK(*iter, posture, joint_state.angle))
@@ -392,6 +412,7 @@ ErrorCode BaseGroup::planOfflineResume(void)
         }
         if(iter == resume_traj.begin())
         {
+#if ONLINE_FILE
             // write the first joint angle to file
             traj_out_file
             << joint_state.angle.j1_ << " " << joint_state.angle.j2_ << " " 
@@ -406,11 +427,13 @@ ErrorCode BaseGroup::planOfflineResume(void)
             << 0 << " " << 0 << " " << 0 << " " << 0 << " " << 0 << " " << 0 << " "
             << 0 << " " << 0 << " " << 0 << " " << 0 << " " << 0 << " " << 0 << " "
             << 0 << " " << 0 << " " << 0 << " " << 0 << " " << 0 << " " << 0 << "\n";
+#endif
         }
         else
         {
             // calc the angle speed
             joint_state.omega = joint_state.angle - last_state.angle;
+#if ONLINE_FILE
             // write the first joint state to file
             traj_out_file
             << joint_state.angle.j1_ << " " << joint_state.angle.j2_ << " " 
@@ -428,11 +451,19 @@ ErrorCode BaseGroup::planOfflineResume(void)
             << joint_state.torque.j1_ << " " << joint_state.torque.j2_ << " " 
             << joint_state.torque.j3_ << " " << joint_state.torque.j4_ << " " 
             << joint_state.torque.j5_ << " " << joint_state.torque.j6_ << "\n";
+#endif
         }
-        resume_trajectory_.push_back(joint_state);
+        // resume_trajectory_.push_back(joint_state);
+        origin_trajectory_.push_back(joint_state);
         last_state = joint_state;
     }
+#if ONLINE_FILE
     resume_trajectory_.shrink_to_fit();
+#else
+    offline_traj_point_read_cnt_ = 0;
+    origin_trajectory_.shrink_to_fit();
+    offline_trajectory_size_ = (uint32_t)origin_trajectory_.size();
+#endif
     LogProducer::info("BaseGroup", "offline resume traj file filled");
 
     traj_out_file.close();
@@ -454,10 +485,12 @@ uint32_t BaseGroup::getOfflineCacheSize(void)
 
 bool BaseGroup::fillOfflineCache(void)
 {
-    const static uint32_t joint_number = getNumberOfJoint();
     const static uint32_t local_cache_size = 50;
+#ifdef OFFLINE_FILE
+    const static uint32_t joint_number = getNumberOfJoint();
     static uint32_t picked_number = 0;
     static char line_str[512];
+#endif
     static TrajectoryPoint local_cache[local_cache_size];
 
     pthread_mutex_lock(&offline_mutex_);
@@ -469,7 +502,7 @@ bool BaseGroup::fillOfflineCache(void)
     }
 
     pthread_mutex_unlock(&offline_mutex_);
-
+#ifdef OFFLINE_FILE
     for(picked_number = 0; picked_number < local_cache_size; picked_number++)
     {
         if (offline_trajectory_file_.getline(line_str, sizeof(line_str)))
@@ -515,6 +548,27 @@ bool BaseGroup::fillOfflineCache(void)
     }
     if(offline_trajectory_size_ == offline_traj_point_read_cnt_) offline_trajectory_last_point_ = true;//取到最后一点,标记结束点
     //LogProducer::info("fillOfflineCache","picked: %d, last = %d", picked_number, offline_trajectory_last_point_);
+#else
+    uint32_t pick_cnt = 0;
+    for(pick_cnt = 0; pick_cnt < local_cache_size; ++pick_cnt)
+    {
+        if(offline_traj_point_read_cnt_ < offline_trajectory_size_)
+        {
+            local_cache[pick_cnt].state = origin_trajectory_[offline_traj_point_read_cnt_++];
+        }
+        else
+        {
+            offline_trajectory_last_point_ = true;
+            break;
+        }
+        
+        local_cache[pick_cnt].time_stamp = offline_trajectory_time_stamp_;
+        local_cache[pick_cnt].level = POINT_MIDDLE;
+        offline_trajectory_time_stamp_ += cycle_time_;
+    }
+#endif
+    if (pick_cnt == 0) return false;
+
     if (offline_trajectory_first_point_)
     {
         local_cache[0].level = POINT_START;
@@ -524,14 +578,14 @@ bool BaseGroup::fillOfflineCache(void)
     if (offline_trajectory_last_point_)
     {
         LogProducer::info("fillOfflineCache","point ending");
-        local_cache[picked_number - 1].level = POINT_ENDING;
-        start_joint_ = local_cache[picked_number - 1].state.angle;
+        local_cache[pick_cnt - 1].level = POINT_ENDING;
+        start_joint_ = local_cache[pick_cnt - 1].state.angle;
         offline_trajectory_last_point_ = false;
     }
     
     pthread_mutex_lock(&offline_mutex_);
 
-    for (uint32_t i = 0; i < picked_number; i++)
+    for (uint32_t i = 0; i < pick_cnt; i++)
     {
         offline_trajectory_cache_[offline_trajectory_cache_tail_] = local_cache[i];
         offline_trajectory_cache_tail_ = offline_trajectory_cache_tail_ + 1 < OFFLINE_TRAJECTORY_CACHE_SIZE ? offline_trajectory_cache_tail_ + 1 : 0;

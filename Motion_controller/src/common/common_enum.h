@@ -47,7 +47,7 @@ enum MotionType
     MOTION_LINE   = 2,
     MOTION_CIRCLE = 3,
     MOTION_XPOS   = 4,
-    MOTION_XPATH  = 5,
+    MOTION_VPATH  = 5,
 };
 
 enum SmoothType

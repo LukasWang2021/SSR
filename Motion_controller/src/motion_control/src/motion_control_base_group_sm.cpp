@@ -298,7 +298,6 @@ void BaseGroup::doStateMachine(void)
             }
             else if (standby_to_offline_request_)
             {
-                // to add 
                 // check the foot step
                 // if foot board on goto 
                 if(fio_ptr->isReal())
@@ -763,6 +762,9 @@ void BaseGroup::doOfflineToStandby(const ServoState &servo_state, uint32_t &fail
 	if (servo_state == SERVO_IDLE)
 	{
 		mc_state_ = STANDBY;
+#ifdef OFFLINE_SEG
+        offline_to_standby_state_ = true;
+#endif
 		LogProducer::warn("mc_sm","MC-state switch to MC_STANDBY.");
 	}
 

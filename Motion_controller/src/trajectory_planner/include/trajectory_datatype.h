@@ -108,7 +108,7 @@ struct MotionTarget     // 用于move指令的数据结构
     TargetPoint target;   // moveJ和moveL时使用
     TargetPoint via;      // moveC时用作中间一个辅助点
     int target_cnt;
-    TargetPoint *vt;      // to adapt MOVEX  if movel only one if movec it will two
+    TargetPoint *vt;      // for MoveV
 };
 
 struct TrajectoryPoint  // 差值得到的轨迹点

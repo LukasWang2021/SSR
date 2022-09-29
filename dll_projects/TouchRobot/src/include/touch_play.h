@@ -6,7 +6,7 @@ extern "C" {
 
 
 #define KEY_NUMS 2
-#define KEY_PRESSED_KEEP_CNT 60 // need 0.5s
+#define KEY_PRESSED_KEEP_CNT 20 // need 0.12s
 //#define KEY_PRESSED_RELEASE_KEEP_CNT 70 // need 0.5s
 
 typedef enum{

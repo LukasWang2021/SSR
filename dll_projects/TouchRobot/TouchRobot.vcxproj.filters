@@ -27,9 +27,6 @@
     <ClCompile Include="src\source\err_proc.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="src\source\main.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="src\source\ring_buffer.cpp">
       <Filter>源文件</Filter>
     </ClCompile>

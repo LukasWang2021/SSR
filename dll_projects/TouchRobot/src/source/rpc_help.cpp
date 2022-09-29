@@ -20,12 +20,12 @@ int rpc_help_comm_init(char *ip)
 	GetErrPtr(&err_buff, ERR_RPC);
 #ifdef _RPC_OPEN_
 #ifndef _MAKE_DLL_
-	err_code = c_initRpc(ip);
+	/*err_code = c_initRpc(ip);
 	if(err_code)
 	{
 		strcpy_s(err_buff, ERR_INFO_BYTES, "Init RPC Failed!");
 		return -1;
-	}
+	}*/
 	//err_code = c_deleteTopic();
 	err_code = c_addTopic();
 	if (err_code)

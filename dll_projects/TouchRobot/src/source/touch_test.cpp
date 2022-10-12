@@ -176,7 +176,7 @@ bool TouchTest::TouchCfgInit(void)
 	int* ptr = (int*)&touch_params_.freq_touch;
 
 	GetErrPtr(&err_buff, ERR_CONFIG);
-	fp = fopen("ssr_touch_params.csv", "r");
+	fopen_s(&fp,"ssr_touch_params.csv", "r");
 	if (fp == NULL)
 	{
 		PushErrInfo(ERR_CONFIG, "Err: can't open config file!");
@@ -400,7 +400,7 @@ void TouchTest::ServiceStatemachine(void)
 
 			case PRE_WORK_STAT:
 			
-				if (key_st_a == LONG_PRESS)
+				if (key_st_b == LONG_PRESS)
 				{
 					//emit start read signal
 					sig_read_start_ = 1;
@@ -412,7 +412,7 @@ void TouchTest::ServiceStatemachine(void)
 
 			case WORK_STAT:
 				
-				if (key_st_a == NOT_PRESS)
+				if (key_st_b == NOT_PRESS)
 				{
 					//emit stop send signal
 					sig_read_start_ = 0;
@@ -425,7 +425,7 @@ void TouchTest::ServiceStatemachine(void)
 
 			case ERR_STAT:
 
-				if (key_st_a == T_DOUBLE_CLICK)		// back door for reseting fault, not feasible in DLL
+				if (key_st_b == T_DOUBLE_CLICK)		// back door for reseting fault, not feasible in DLL
 				{	
 #ifdef _RPC_OPEN_
 					if (CtrlCommInit() == true)

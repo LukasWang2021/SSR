@@ -19,7 +19,7 @@ int main(int argc, char **argv)
 
     if (ret < 0)
     {
-        printf("Touch Enable Failed!\n");
+        //printf("Touch Enable Failed!\n");
     }
     else {
         printf("Touch Enable Succeed!\n");

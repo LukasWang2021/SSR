@@ -46,7 +46,7 @@
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v142</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
@@ -148,7 +148,6 @@
     <ClCompile Include="src\source\data_proc.cpp" />
     <ClCompile Include="src\source\dlist_help.cpp" />
     <ClCompile Include="src\source\err_proc.cpp" />
-    <ClCompile Include="src\source\main.cpp" />
     <ClCompile Include="src\source\ring_buffer.cpp" />
     <ClCompile Include="src\source\rpc_help.cpp" />
     <ClCompile Include="src\source\touch_interface.cpp" />

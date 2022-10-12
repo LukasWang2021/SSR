@@ -57,7 +57,7 @@ void HLCALLBACK computeForceCB(HDdouble force[3], HLcache* cache, void* userdata
 	// use rpc get force
 	if (force_feedback_enable_ && (rpc_help_getForce(force_tmp, size) == 0))
 	{
-		printf("force_val: %lf %lf %lf\n", force_tmp[0], force_tmp[1], force_tmp[2]);
+		//printf("force_val: %lf %lf %lf\n", force_tmp[0], force_tmp[1], force_tmp[2]);
 		//force transformation
 		force[0] = force_tmp[0];
 		force[1] = force_tmp[1];

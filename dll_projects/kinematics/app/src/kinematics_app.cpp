@@ -161,3 +161,95 @@ uint64_t c_km_getPostureByJoint(double joint_pos[6], int32_t posture[4])
 	return 0;
 }
 
+
+uint64_t c_km_getJointByPoseEuler(const double pose_euler[6], const int32_t posture[4], double joint[6])
+{
+	Posture pt;
+	pt.arm = posture[0];
+	pt.elbow = posture[1];
+	pt.wrist = posture[2];
+	pt.flip = posture[3];
+
+	Joint jt; jt.zero();
+	PoseEuler pe;
+	pe.point_.x_ = pose_euler[0];
+	pe.point_.y_ = pose_euler[1];
+	pe.point_.z_ = pose_euler[2];
+	pe.euler_.a_ = pose_euler[3];
+	pe.euler_.b_ = pose_euler[4];
+	pe.euler_.c_ = pose_euler[5];
+
+	if (!p_kinematics->doIK(pe, pt, jt))
+	{
+		return 1;
+	}
+	for (int i = 0; i < 6; ++i)
+	{
+		joint[i] = jt[i];
+	}
+	return 0;
+}
+
+uint64_t c_km_getJointByPoseQuat(const double pose_quat[7], const int32_t posture[4], double joint[6])
+{
+	Posture pt;
+	pt.arm = posture[0];
+	pt.elbow = posture[1];
+	pt.wrist = posture[2];
+	pt.flip = posture[3];
+
+	Joint jt; jt.zero();
+	PoseQuaternion pq;
+	pq.point_.x_ = pose_quat[0];
+	pq.point_.y_ = pose_quat[1];
+	pq.point_.z_ = pose_quat[2];
+	pq.quaternion_.w_ = pose_quat[3];
+	pq.quaternion_.x_ = pose_quat[4];
+	pq.quaternion_.y_ = pose_quat[5];
+	pq.quaternion_.z_ = pose_quat[5];
+
+	if (!p_kinematics->doIK(pq, pt, jt))
+	{
+		return 1;
+	}
+	for (int i = 0; i < 6; ++i)
+	{
+		joint[i] = jt[i];
+	}
+	return 0;
+}
+
+uint64_t c_km_getJointByTransMatrix(const double trans_matrix[16], const int32_t posture[4], double joint[6])
+{
+	Posture pt;
+	pt.arm = posture[0];
+	pt.elbow = posture[1];
+	pt.wrist = posture[2];
+	pt.flip = posture[3];
+
+	Joint jt; jt.zero();
+	TransMatrix tm;
+	tm.trans_vector_.x_ = trans_matrix[3];
+	tm.trans_vector_.y_ = trans_matrix[7];
+	tm.trans_vector_.z_ = trans_matrix[11];
+
+	tm.rotation_matrix_.matrix_[0][0] = trans_matrix[0];
+	tm.rotation_matrix_.matrix_[0][1] = trans_matrix[1];
+	tm.rotation_matrix_.matrix_[0][2] = trans_matrix[2];
+	tm.rotation_matrix_.matrix_[1][0] = trans_matrix[4];
+	tm.rotation_matrix_.matrix_[1][1] = trans_matrix[5];
+	tm.rotation_matrix_.matrix_[1][2] = trans_matrix[6];
+	tm.rotation_matrix_.matrix_[2][0] = trans_matrix[8];
+	tm.rotation_matrix_.matrix_[2][1] = trans_matrix[9];
+	tm.rotation_matrix_.matrix_[2][2] = trans_matrix[10];
+
+	if (!p_kinematics->doIK(tm, pt, jt))
+	{
+		return 1;
+	}
+	for (int i = 0; i < 6; ++i)
+	{
+		joint[i] = jt[i];
+	}
+	return 0;
+}

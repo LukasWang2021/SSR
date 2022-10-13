@@ -85,6 +85,18 @@ extern "C"
 	 */
 	COMM_INTERFACE_API uint64_t c_km_getPostureByJoint(double joint_pos[6], int32_t posture[4]);
 
+	/**
+	 * @brief Get the joint pose with given arm position.
+	 * @details
+	 * @param [in] joint_pos The current position of the joints.rad.
+	 * @param [out] posture The posture {arm, elbow, wrist, flip}.
+	 * @retval 0 Success.
+	 * @retval others Failure.
+	 */
+	COMM_INTERFACE_API uint64_t c_km_getJointByPoseEuler(const double pose_euler[6], const int32_t posture[4], double joint[6]);
+	COMM_INTERFACE_API uint64_t c_km_getJointByPoseQuat(const double pose_quat[7], const int32_t posture[4], double joint[6]);
+	COMM_INTERFACE_API uint64_t c_km_getJointByTransMatrix(const double trans_matrix[16], const int32_t posture[4], double joint[6]);
+
 	//COMM_INTERFACE_API uint64_t c_km_convertCartToJoint(double joint_pos[6], double joint_pos[6]);
 	//COMM_INTERFACE_API uint64_t c_km_convertJointToCart(double joint_pos[6], double joint_pos[6]);
 

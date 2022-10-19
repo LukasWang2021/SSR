@@ -54,9 +54,9 @@ typedef	struct{
 }FioRxLostNum;//接收遗失字节数
 
 typedef	struct{
-    uint32_t  time_out_base;//接收超时时间,软件设定超时时间,读写
-    uint32_t  time_out:16;//接收超时标识寄存器.   发送后开启超时计数,若TimeOutBase*10ns未收到返回包,该位为1只读
     uint32_t  cmd_trans_valid:16;//发送有效寄存器 1:正在发送 0:发送完毕 只读
+    uint32_t  time_out:16;//接收超时标识寄存器.   发送后开启超时计数,若TimeOutBase*10ns未收到返回包,该位为1只读
+    uint32_t  time_out_base;//接收超时时间,软件设定超时时间,读写
 }FioStatus;//状态寄存器
 
 typedef	struct{

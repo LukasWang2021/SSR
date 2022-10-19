@@ -108,28 +108,32 @@ void MotionControl::OnlineMove_exceedJointLimit_pause()
 
 void MotionControl::OnlineMove_exceedJointLimit_pause2(TrjPoint point)
 {
-    int  t_Nstep_Q = 25;//online_trj_planner_ptr->online_alg_params_.N_step_Q;
-    int t_mod = receive_T_matrix_iterCnt%t_Nstep_Q;
+    //online_trj_planner_ptr->online_alg_params_.N_step_Q;
+    int t_Nstep_Q = 25;
+    int t_mod = receive_T_matrix_iterCnt % t_Nstep_Q;
     int cha = t_Nstep_Q-t_mod;
-    Vector3 in_xyz, in_abc;
+
+    Point in_xyz;
+    Euler in_abc;
+    // Vector3 in_xyz, in_abc;
     in_xyz.x_ = point.x_;
     in_xyz.y_ = point.y_;
     in_xyz.z_ = point.z_;
-    in_abc.x_ = point.a_;
-    in_abc.y_ = point.b_;
-    in_abc.z_ = point.c_;
+    in_abc.a_ = point.a_;
+    in_abc.b_ = point.b_;
+    in_abc.c_ = point.c_;
 
-    LogProducer::info("OnlineMove_exceedJointLimit_pause2",">>>END >>> t_Nstep_Q=%d, t_mod=%d,cha=%d END_point=[%lf,%lf,%lf,%lf,%lf,%lf]",
-    t_Nstep_Q,t_mod,cha,in_xyz.x_,in_xyz.y_,in_xyz.z_,in_abc.x_,in_abc.y_,in_abc.z_);
-    for(int i=0;i<(cha-1);i++)
+    LogProducer::info("OnlineMove_exceedJointLimit_pause2",">>>END apend>>> t_Nstep_Q=%d, t_mod=%d,cha=%d END_point=[%lf,%lf,%lf,%lf,%lf,%lf]",
+    t_Nstep_Q,t_mod,cha,in_xyz.x_,in_xyz.y_,in_xyz.z_,in_abc.a_,in_abc.b_,in_abc.c_);
+    for(int i = 0; i < (cha - 1); ++i)
     {
-        online_alg_out_trjPointCnt += online_trj_planner_ptr->traj_on_FIR_Bspline(in_xyz,in_abc,1,online_alg_out_trjPointCnt);//
+        online_alg_out_trjPointCnt += online_trj_planner_ptr->traj_on_FIR_Bspline(in_xyz, in_abc, 1, online_alg_out_trjPointCnt);
         LogProducer::info("OnlineMove_exceedJointLimit_pause2",">>>END apend>>> %d|%d,online_alg_out_trjPointCnt=%d",i,cha,online_alg_out_trjPointCnt);
     }
-    online_alg_out_trjPointCnt += online_trj_planner_ptr->traj_on_FIR_Bspline(in_xyz,in_abc,2,online_alg_out_trjPointCnt);//终点
+    online_alg_out_trjPointCnt += online_trj_planner_ptr->traj_on_FIR_Bspline(in_xyz, in_abc, 2, online_alg_out_trjPointCnt);
     flag_recv_new_VPMatrix_ = false;
     setOnlinePointBufptr();
-    checkOnlineMoveError(1);//重置成功
+    checkOnlineMoveError(1);// reset SUCCESS
 }
 
 void MotionControl::ringPlannerTask(void)
@@ -515,44 +519,46 @@ ErrorCode MotionControl::convertEulerTraj2JointTraj(const std::string &offline_e
     return 0;
 }
 
-ErrorCode MotionControl::Fir_Bspline_algorithm_test2(void)
-{
-    string euler_trajectory_filePath = "/root/robot_data/trajectory/VPp.csv";
-    vector< vector<double> > euler_trajArr;//二维数组暂存读入的数据
-    Vector3 Pdata;
-    Vector3 Qdata;
-    int datalineCnt=0;
-    if(group_ptr_->readEulerTrajectoryFile(euler_trajectory_filePath, euler_trajArr) == SUCCESS)
-    {
-        datalineCnt = euler_trajArr.size();
-        //printf("******************convert result*****************datalineCnt = %d\n",datalineCnt);
-        for(int i=0;i<1000;i++)
-        {
-            Pdata.x_ = euler_trajArr[i][0];
-            Pdata.y_ = euler_trajArr[i][1];
-            Pdata.z_ = euler_trajArr[i][2];
-            Qdata.x_ = euler_trajArr[i][3];
-            Qdata.y_ = euler_trajArr[i][4];
-            Qdata.z_ = euler_trajArr[i][5];
+// ErrorCode MotionControl::Fir_Bspline_algorithm_test2(void)
+// {
+//     string euler_trajectory_filePath = "/root/robot_data/trajectory/VPp.csv";
+//     vector< vector<double> > euler_trajArr;//二维数组暂存读入的数据
+//     Point Pdata;
+//     Euler Qdata;
+//     //Vector3 Pdata;
+//     //Vector3 Qdata;
+//     int datalineCnt=0;
+//     if(group_ptr_->readEulerTrajectoryFile(euler_trajectory_filePath, euler_trajArr) == SUCCESS)
+//     {
+//         datalineCnt = euler_trajArr.size();
+//         //printf("******************convert result*****************datalineCnt = %d\n",datalineCnt);
+//         for(int i = 0; i < 1000; ++i)
+//         {
+//             Pdata.x_ = euler_trajArr[i][0];
+//             Pdata.y_ = euler_trajArr[i][1];
+//             Pdata.z_ = euler_trajArr[i][2];
+//             Qdata.a_ = euler_trajArr[i][3];
+//             Qdata.b_ = euler_trajArr[i][4];
+//             Qdata.c_ = euler_trajArr[i][5];
 
-            if(i==0)
-            {
-                cout << "[input "<<i<<" (" << Pdata.x_ <<"," << Pdata.y_ <<"," << Pdata.z_ <<"," << Qdata.x_ <<"," << Qdata.y_ <<"," << Qdata.z_<<") Start point"<<endl;
-                online_trj_planner_ptr->traj_on_FIR_Bspline(Pdata,Qdata,0,0);
-            }
-            else if(i<999)
-            {
-                cout << "[input "<<i<<" (" << Pdata.x_ <<"," << Pdata.y_ <<"," << Pdata.z_ <<"," << Qdata.x_ <<"," << Qdata.y_ <<"," << Qdata.z_<<") Middle point"<<endl;
-                online_trj_planner_ptr->traj_on_FIR_Bspline(Pdata,Qdata,1,0);
-            }else if(i==999)
-            {
-                cout << "[input "<<i<<" (" << Pdata.x_ <<"," << Pdata.y_ <<"," << Pdata.z_ <<"," << Qdata.x_ <<"," << Qdata.y_ <<"," << Qdata.z_<<") Ending point"<<endl;
-                online_trj_planner_ptr->traj_on_FIR_Bspline(Pdata,Qdata,2,0);
-            }
-        }
-    }
-    return 0;
-}
+//             if(i == 0)
+//             {
+//                 cout << "[input "<<i<<" (" << Pdata.x_ <<"," << Pdata.y_ <<"," << Pdata.z_ <<"," << Qdata.a_ <<"," << Qdata.b_ <<"," << Qdata.c_<<") Start point"<<endl;
+//                 online_trj_planner_ptr->traj_on_FIR_Bspline(Pdata, Qdata, 0, 0);
+//             }
+//             else if(i < 999)
+//             {
+//                 cout << "[input "<<i<<" (" << Pdata.x_ <<"," << Pdata.y_ <<"," << Pdata.z_ <<"," << Qdata.a_ <<"," << Qdata.b_ <<"," << Qdata.c_<<") Middle point"<<endl;
+//                 online_trj_planner_ptr->traj_on_FIR_Bspline(Pdata, Qdata, 1, 0);
+//             }else if(i == 999)
+//             {
+//                 cout << "[input "<<i<<" (" << Pdata.x_ <<"," << Pdata.y_ <<"," << Pdata.z_ <<"," << Qdata.a_ <<"," << Qdata.b_ <<"," << Qdata.c_<<") Ending point"<<endl;
+//                 online_trj_planner_ptr->traj_on_FIR_Bspline(Pdata, Qdata, 2, 0);
+//             }
+//         }
+//     }
+//     return 0;
+// }
 
 void MotionControl::xzc_funTest()
 {
@@ -696,37 +702,282 @@ bool MotionControl::isAxisAngleOutSpeed(bool startFlag, Joint jnt)
     return false;
 }
 
-/**
- * 逐个T矩阵输入到此函数
- * **/
+
+// ErrorCode MotionControl::receive_T_matrix_data(int status, double * p_marixArray)
+// {
+//     ErrorCode err;
+//     static TransMatrix T_r0_R;
+//     static TransMatrix Touch_h0_v;
+//     static TransMatrix T_c;// current robot end-point pose matrix
+//     static TransMatrix last_T_k;// last t_k after dynamic coordinate transformation
+    
+//     TransMatrix Touch_ht_v;
+//     TransMatrix T_k;// current t_k after dynamic corrdinate transformation
+//     TransMatrix Ttemp;// end pose matrix after increment
+//     double k_xyz = online_trj_planner_ptr->online_alg_params_.trj_ratio_xyz; // xyz mirroring ratio, change in yaml file on board
+//     double k_abc = online_trj_planner_ptr->online_alg_params_.trj_ratio_abc; // abc mirroring ratio, change in yaml file on board
+    
+//     PoseEuler StartPositionPose;
+//     TransMatrix start_trans_matrix;
+//     PoseAndPosture pos_posture;  
+//     Joint temp_jnt;
+
+//     Point res_xyz;
+//     Euler res_abc;
+//     static Point v_xyz;
+//     static Euler v_abc;
+
+//     ++receive_T_matrix_iterCnt;
+
+
+//     if(status == 0)
+//     {
+//         group_ptr_->setOnlineTrjFirstPointCondition();
+//         online_alg_out_trjPointCnt = 0;
+//         receive_T_matrix_iterCnt = 1;
+//         StartPositionPose = getCurrentPose();
+//         StartPositionPose.convertToTransMatrix(T_r0_R);
+//         T_c = T_r0_R;
+//         last_T_k = T_c;
+
+//         v_xyz = StartPositionPose.point_;
+//         v_abc = StartPositionPose.euler_;
+
+//         pos_posture.pose.point_ = StartPositionPose.point_;
+//         pos_posture.pose.euler_.a_ = StartPositionPose.euler_.c_;
+//         pos_posture.pose.euler_.b_ = StartPositionPose.euler_.b_;
+//         pos_posture.pose.euler_.c_ = StartPositionPose.euler_.a_;
+
+//         pos_posture.posture.arm = 1;
+//         pos_posture.posture.elbow = 1;
+//         pos_posture.posture.wrist = 1;
+//         pos_posture.posture.flip = 0;
+//         memset(&(pos_posture.turn), 0, 9 * sizeof(int));
+//         memset(&temp_jnt, 0, sizeof(temp_jnt));
+//         // do IK and turn xyzabc to joints
+//         err = convertCartToJoint(pos_posture, user_frame_id_, tool_frame_id_, temp_jnt);
+
+//         if(err == SUCCESS)
+//         {
+//             err = JointInConstraint_axisCnt(temp_jnt, 1);
+
+//             if(err == 6)
+//             {
+//                 isAxisAngleOutSpeed(true,temp_jnt);
+//                 online_alg_out_trjPointCnt += online_trj_planner_ptr->traj_on_FIR_Bspline(v_xyz,v_abc,0,online_alg_out_trjPointCnt);
+//                 Touch_h0_v.rotation_matrix_.matrix_[0][0] = *(p_marixArray+0);
+//                 Touch_h0_v.rotation_matrix_.matrix_[1][0] = *(p_marixArray+1);
+//                 Touch_h0_v.rotation_matrix_.matrix_[2][0] = *(p_marixArray+2);
+//                 Touch_h0_v.rotation_matrix_.matrix_[0][1] = *(p_marixArray+4);
+//                 Touch_h0_v.rotation_matrix_.matrix_[1][1] = *(p_marixArray+5);
+//                 Touch_h0_v.rotation_matrix_.matrix_[2][1] = *(p_marixArray+6);
+//                 Touch_h0_v.rotation_matrix_.matrix_[0][2] = *(p_marixArray+8);
+//                 Touch_h0_v.rotation_matrix_.matrix_[1][2] = *(p_marixArray+9);
+//                 Touch_h0_v.rotation_matrix_.matrix_[2][2] = *(p_marixArray+10);
+//                 Touch_h0_v.trans_vector_.x_ =* (p_marixArray+12);
+//                 Touch_h0_v.trans_vector_.y_ =* (p_marixArray+13);
+//                 Touch_h0_v.trans_vector_.z_ =* (p_marixArray+14);
+//             } else {
+//                 LogProducer::error("receive_T_matrix_data","start joint axis%d is not in constraint. temp_jnt= %lf,%lf,%lf,%lf,%lf,%lf",err+1,temp_jnt.j1_,temp_jnt.j2_, temp_jnt.j3_,temp_jnt.j4_,temp_jnt.j5_,temp_jnt.j6_);
+//                 checkOnlineMoveError(5);
+//                 flag_recv_new_VPMatrix_ = false;
+//                 group_ptr_->setOnlineTrjFirstPointCondition();
+//             }
+//         } else {
+//             LogProducer::error("receive_T_matrix_data",">>>start point do ik error");
+//             checkOnlineMoveError(6);
+//             flag_recv_new_VPMatrix_ = false;
+//             group_ptr_->setOnlineTrjFirstPointCondition();
+//         }
+        
+//     } else { // mid_points or end_point
+//         Touch_ht_v.rotation_matrix_.matrix_[0][0] =* (p_marixArray+0);
+//         Touch_ht_v.rotation_matrix_.matrix_[1][0] =* (p_marixArray+1);
+//         Touch_ht_v.rotation_matrix_.matrix_[2][0] =* (p_marixArray+2);
+//         Touch_ht_v.rotation_matrix_.matrix_[0][1] =* (p_marixArray+4);
+//         Touch_ht_v.rotation_matrix_.matrix_[1][1] =* (p_marixArray+5);
+//         Touch_ht_v.rotation_matrix_.matrix_[2][1] =* (p_marixArray+6);
+//         Touch_ht_v.rotation_matrix_.matrix_[0][2] =* (p_marixArray+8);
+//         Touch_ht_v.rotation_matrix_.matrix_[1][2] =* (p_marixArray+9);
+//         Touch_ht_v.rotation_matrix_.matrix_[2][2] =* (p_marixArray+10);
+//         Touch_ht_v.trans_vector_.x_ =* (p_marixArray+12);
+//         Touch_ht_v.trans_vector_.y_ =* (p_marixArray+13);
+//         Touch_ht_v.trans_vector_.z_ =* (p_marixArray+14);
+
+//         online_trj_planner_ptr->DynamicBaseCoordTransformation(T_r0_R, Touch_h0_v, Touch_ht_v, k_xyz, k_abc, T_k);
+
+//         online_trj_planner_ptr->get_increment_matrix(T_c,last_T_k,T_k,Ttemp);
+
+//         last_T_k = T_k;
+
+//         PoseEuler pos_temp;
+//         Ttemp.convertToPoseEuler(pos_temp);
+//         pos_posture.pose.point_ = pos_temp.point_;
+//         pos_posture.pose.euler_.a_ = pos_temp.euler_.c_;
+//         pos_posture.pose.euler_.b_ = pos_temp.euler_.b_;
+//         pos_posture.pose.euler_.c_ = pos_temp.euler_.a_;
+//         pos_posture.posture.arm   = 1;
+//         pos_posture.posture.elbow = 1;
+//         pos_posture.posture.wrist = 1;
+//         pos_posture.posture.flip  = 0;
+//         memset(&(pos_posture.turn), 0, 9 * sizeof(int));
+//         memset(&temp_jnt, 0, sizeof(temp_jnt));
+//         err = convertCartToJoint(pos_posture, user_frame_id_, tool_frame_id_, temp_jnt);
+//         int t_Nstep_Q = online_trj_planner_ptr->online_alg_params_.N_step_Q;
+//         int t_mod, cha;
+
+//         if(err == SUCCESS)
+//         {
+//             err = JointInConstraint_axisCnt(temp_jnt, receive_T_matrix_iterCnt); 
+//             if(err == 6)
+//             {
+//                 if(!isAxisAngleOutSpeed(false,temp_jnt))
+//                 {
+//                     T_c = Ttemp;//更新T_c
+//                     v_xyz = pos_temp.point_;
+//                     v_abc = pos_temp.euler_;
+//                 } else
+//                 {
+//                     t_mod = receive_T_matrix_iterCnt % t_Nstep_Q;
+//                     cha = t_Nstep_Q - t_mod;
+//                     checkOnlineMoveError(4);
+//                     for(int i = 0; i < (cha - 1); ++i) 
+//                     {
+//                         online_alg_out_trjPointCnt += online_trj_planner_ptr->traj_on_FIR_Bspline(v_xyz,v_abc,1,online_alg_out_trjPointCnt);
+//                         LogProducer::warn("receive_T_matrix_data",">>>Angular overspeed. END apend>>> %d|%d,online_alg_out_trjPointCnt=%d",i,cha,online_alg_out_trjPointCnt);
+//                     }
+//                     online_alg_out_trjPointCnt += online_trj_planner_ptr->traj_on_FIR_Bspline(v_xyz,v_abc,2,online_alg_out_trjPointCnt);
+//                     LogProducer::warn("receive_T_matrix_data",">>>Angular overspeed. THE END,online_alg_out_trjPointCnt=%d end_input=(%lf,%lf,%lf,%lf,%lf,%lf)",online_alg_out_trjPointCnt,
+//                     v_xyz.x_, v_xyz.y_, v_xyz.z_, v_abc.a_, v_abc.b_, v_abc.c_);
+//                     T_r0_R.print("T_r0_R start");
+//                     Touch_h0_v.print("Touch_h0_v");
+//                     flag_recv_new_VPMatrix_ = false;
+//                     group_ptr_->setOnlineTrjFirstPointCondition();
+//                     return 0x1117;// over speed in online movement
+//                 }
+//             } else {
+//                 LogProducer::error("receive_T_matrix_data ","axis%d is not in constraint (%lf,%lf,%lf,%lf,%lf,%lf)",err+1,
+//                 temp_jnt.j1_, temp_jnt.j2_, temp_jnt.j3_, temp_jnt.j4_, temp_jnt.j5_, temp_jnt.j6_);
+//             }
+
+//             if(status == 1)
+//             {
+//                 online_alg_out_trjPointCnt += online_trj_planner_ptr->traj_on_FIR_Bspline(v_xyz,v_abc,1,online_alg_out_trjPointCnt);
+//             } else if(status == 2)
+//             {
+//                 t_mod = receive_T_matrix_iterCnt % t_Nstep_Q;
+//                 cha = t_Nstep_Q - t_mod;
+//                 for(int i = 0; i < (cha - 1); ++i)
+//                 {
+//                     online_alg_out_trjPointCnt += online_trj_planner_ptr->traj_on_FIR_Bspline(v_xyz,v_abc,1,online_alg_out_trjPointCnt);//
+//                     LogProducer::warn("receive_T_matrix_data",">>>END apend>>> %d|%d,online_alg_out_trjPointCnt=%d v_xyzabc=<%lf,%lf,%lf,%lf,%lf,%lf>",i,cha,online_alg_out_trjPointCnt,v_xyz.x_,v_xyz.y_,v_xyz.z_,v_abc.a_,v_abc.b_,v_abc.c_);
+//                 }
+//                 LogProducer::warn("end-point v_xyzabc->Bspline","#%lf,%lf,%lf,%lf,%lf,%lf",v_xyz.x_,v_xyz.y_,v_xyz.z_,v_abc.a_,v_abc.b_,v_abc.c_);
+//                 online_alg_out_trjPointCnt += online_trj_planner_ptr->traj_on_FIR_Bspline(v_xyz,v_abc,2,online_alg_out_trjPointCnt);//终点
+//                 LogProducer::warn("receive_T_matrix_data",">>>THE END,online_alg_out_trjPointCnt=%d end_input=(%lf,%lf,%lf,%lf,%lf,%lf)",online_alg_out_trjPointCnt,
+//                 v_xyz.x_, v_xyz.y_, v_xyz.z_, v_abc.a_, v_abc.b_, v_abc.c_);
+//                 T_r0_R.print("T_r0_R start");
+//                 Touch_h0_v.print("Touch_h0_v");
+//                 flag_recv_new_VPMatrix_ = false;
+//                 return BASE_GROUP_RECV_ONLINE_NORMAL_END;
+//             }
+//         } else {
+
+//             #if 1 //逆解失败 继续迭代 v_xyz,v_abc没有更新, 也不判断是否超限
+//             if(status == 1)//中间途经点
+//             {
+//                 //LogProducer::info("ik error. v_xyzabc->Bspline","#%lf,%lf,%lf,%lf,%lf,%lf",v_xyz.x_,v_xyz.y_,v_xyz.z_,v_abc.x_,v_abc.y_,v_abc.z_);
+//                 online_alg_out_trjPointCnt += online_trj_planner_ptr->traj_on_FIR_Bspline(v_xyz,v_abc,1,online_alg_out_trjPointCnt);//途中点
+//             }
+//             else if(status == 2)//终点
+//             {
+//                 t_mod = receive_T_matrix_iterCnt%t_Nstep_Q;
+//                 cha = t_Nstep_Q-t_mod;
+//                 for(int i=0;i<(cha-1);i++)
+//                 {
+//                     online_alg_out_trjPointCnt += online_trj_planner_ptr->traj_on_FIR_Bspline(v_xyz,v_abc,1,online_alg_out_trjPointCnt);//
+//                     LogProducer::warn("receive_T_matrix_data",">>>IK error END apend>>> %d|%d,online_alg_out_trjPointCnt=%d v_xyzabc=<%lf,%lf,%lf,%lf,%lf,%lf>",i,cha,online_alg_out_trjPointCnt,v_xyz.x_,v_xyz.y_,v_xyz.z_,v_abc.a_,v_abc.b_,v_abc.c_);
+//                 }
+//                 LogProducer::warn("IK error end-point v_xyzabc->Bspline","#%lf,%lf,%lf,%lf,%lf,%lf",v_xyz.x_,v_xyz.y_,v_xyz.z_,v_abc.a_,v_abc.b_,v_abc.c_);
+//                 online_alg_out_trjPointCnt += online_trj_planner_ptr->traj_on_FIR_Bspline(v_xyz,v_abc,2,online_alg_out_trjPointCnt);//终点
+//                 LogProducer::warn("receive_T_matrix_data",">>>IK error END,online_alg_out_trjPointCnt=%d end_input=(%lf,%lf,%lf,%lf,%lf,%lf)",online_alg_out_trjPointCnt,
+//                 v_xyz.x_, v_xyz.y_, v_xyz.z_, v_abc.a_, v_abc.b_, v_abc.c_);
+//                 T_r0_R.print("T_r0_R start");
+//                 Touch_h0_v.print("Touch_h0_v");
+//                 flag_recv_new_VPMatrix_ = false;
+//                 return BASE_GROUP_RECV_ONLINE_NORMAL_END;
+//             }
+//             #else  //逆解失败 提前结束
+//                 t_mod = receive_T_matrix_iterCnt%t_Nstep_Q;
+//                 cha = t_Nstep_Q-t_mod;
+//                 checkOnlineMoveError(3);
+//                 //LogProducer::error("receive_T_matrix_data",">>>END >>> t_Nstep_Q=%d, t_mod=%d,cha=%d",t_Nstep_Q,t_mod,cha);
+//                 for(int i=0;i<(cha-1);i++) 
+//                 {
+//                     v_xyz.print("v_xyz=");
+//                     v_abc.print("v_abc");
+//                     online_alg_out_trjPointCnt += online_trj_planner_ptr->traj_on_FIR_Bspline(v_xyz,v_abc,1,online_alg_out_trjPointCnt);//
+//                     LogProducer::warn("receive_T_matrix_data",">>>DO IK error. END apend>>> %d|%d,online_alg_out_trjPointCnt=%d",i,cha,online_alg_out_trjPointCnt);
+//                 }
+//                 online_alg_out_trjPointCnt += online_trj_planner_ptr->traj_on_FIR_Bspline(v_xyz,v_abc,2,online_alg_out_trjPointCnt);//终点
+//                 LogProducer::warn("receive_T_matrix_data",">>>DO IK error. THE END,online_alg_out_trjPointCnt=%d",online_alg_out_trjPointCnt);
+//                 flag_recv_new_VPMatrix_ = false;
+//                 group_ptr_->setOnlineTrjFirstPointCondition();
+//                 return BASE_GROUP_RECV_ONLINE_DOIK_ERROR;
+//             #endif
+
+//         }
+//     }
+//     return SUCCESS;
+// }
+
+
+
+
+
 ErrorCode MotionControl::receive_T_matrix_data(int status, double * p_marixArray)
 {
+
+    // new value for dynamic-base-cord-trans test 
+    static TransMatrix T_r0_R_p;// T_r0_R
+    static TransMatrix Touch_h0_v_p; // Touch_h0_v
+    TransMatrix Touch_ht_v_p; // Touch_ht_v
+    TransMatrix T_k_p; // T_k
+    
+
     ErrorCode err;
     static Matrix44 T_r0_R;
     static Matrix44 Touch_h0_v;
-    static Matrix44 T_c;//当前机械臂末端位姿矩阵
-    static Matrix44 last_T_k;//上一次输入的T矩阵经过动态基坐标转换得到的T_k
+    static Matrix44 T_c;// current robot end-point pose matrix
+    static Matrix44 last_T_k;// last t_k after dynamic coordinate transformation
     Matrix44 Touch_ht_v;
-    Matrix44 T_k;//当前输入的T矩阵经过动态基坐标转换得到的T_k
-    Matrix44 Ttemp;//获取增量后的机械臂末端位姿矩阵
-    double k_xyz = online_trj_planner_ptr->online_alg_params_.trj_ratio_xyz; //机械臂移动距离与touch移动距离的比例系数,    即机械臂移动距离=K*touch移动距离
-    double k_abc = online_trj_planner_ptr->online_alg_params_.trj_ratio_abc;
-    Vector3 res_xyz,res_abc;
+    Matrix44 T_k;// current t_k after dynamic corrdinate transformation
+    Matrix44 Ttemp;// end pose matrix after increment
+    double k_xyz = online_trj_planner_ptr->online_alg_params_.trj_ratio_xyz; // xyz mirroring ratio, change in yaml file on board
+    double k_abc = online_trj_planner_ptr->online_alg_params_.trj_ratio_abc; // abc mirroring ratio, change in yaml file on board
+    
     PoseEuler StartPositionPose;
     TransMatrix start_trans_matrix;
     PoseAndPosture pos_posture;  
     Joint temp_jnt;
+    
+    // Point res_xyz;
+    // Euler res_abc;
+    // static Point v_xyz;
+    // static Euler v_abc;
+
+    Vector3 res_xyz, res_abc;
     static Vector3 v_xyz;
     static Vector3 v_abc;
-//cout << "status="<<status<<endl;
+    //cout << "status="<<status<<endl;
     receive_T_matrix_iterCnt++;
     if(status == 0)//起点
-    {
+    {   
         group_ptr_->setOnlineTrjFirstPointCondition();
         online_alg_out_trjPointCnt = 0;
         receive_T_matrix_iterCnt=1;
         StartPositionPose = getCurrentPose();
-//StartPositionPose.print("StartPositionPose");
+        //StartPositionPose.print("StartPositionPose");
         StartPositionPose.convertToTransMatrix(start_trans_matrix);
         T_r0_R.matrix_[0][0]=start_trans_matrix.rotation_matrix_.matrix_[0][0];
         T_r0_R.matrix_[0][1]=start_trans_matrix.rotation_matrix_.matrix_[0][1]; 
@@ -741,15 +992,22 @@ ErrorCode MotionControl::receive_T_matrix_data(int status, double * p_marixArray
         T_r0_R.matrix_[2][2]=start_trans_matrix.rotation_matrix_.matrix_[2][2];
         T_r0_R.matrix_[2][3]=start_trans_matrix.trans_vector_.z_;
         T_r0_R.matrix_[3][0]=0;T_r0_R.matrix_[3][1]=0;T_r0_R.matrix_[3][2]=0;T_r0_R.matrix_[3][3]=1;
-T_r0_R.print("T_r0_R start");
+        T_r0_R.print("T_r0_R start");
+
+        // test of dynamic
+        T_r0_R_p = start_trans_matrix;
+
+
         T_c = T_r0_R;
         last_T_k = T_c;
         online_trj_planner_ptr->rtm_r2xyzabc(T_r0_R,res_xyz,res_abc);
         v_xyz = res_xyz;
         v_abc = res_abc;
-LogProducer::warn("StartPositionPose","%lf,%lf,%lf,%lf,%lf,%lf\nstartPoint_v_xyzabc2alg=%lf,%lf,%lf,%lf,%lf,%lf",
-StartPositionPose.point_.x_,StartPositionPose.point_.y_,StartPositionPose.point_.z_,StartPositionPose.euler_.a_,StartPositionPose.euler_.b_,StartPositionPose.euler_.c_,
-v_xyz.x_, v_xyz.y_, v_xyz.z_, v_abc.x_, v_abc.y_, v_abc.z_);
+
+        LogProducer::warn("StartPositionPose","%lf,%lf,%lf,%lf,%lf,%lf\nstartPoint_v_xyzabc2alg=%lf,%lf,%lf,%lf,%lf,%lf",
+        StartPositionPose.point_.x_,StartPositionPose.point_.y_,StartPositionPose.point_.z_,StartPositionPose.euler_.a_,StartPositionPose.euler_.b_,StartPositionPose.euler_.c_,
+        v_xyz.x_, v_xyz.y_, v_xyz.z_, v_abc.x_, v_abc.y_, v_abc.z_);
+
         pos_posture.pose.point_.x_ = res_xyz.x_;
         pos_posture.pose.point_.y_ = res_xyz.y_;
         pos_posture.pose.point_.z_ = res_xyz.z_;
@@ -770,12 +1028,24 @@ v_xyz.x_, v_xyz.y_, v_xyz.z_, v_abc.x_, v_abc.y_, v_abc.z_);
             if(err == 6)
             {
                 isAxisAngleOutSpeed(true,temp_jnt);
-                online_alg_out_trjPointCnt += online_trj_planner_ptr->traj_on_FIR_Bspline(v_xyz,v_abc,0,online_alg_out_trjPointCnt);//起点
+                // temp use, turn vector3 to point or euler, will change later
+                Point v_xyz_p;
+                v_xyz_p.x_ = v_xyz.x_; v_xyz_p.y_ = v_xyz.y_; v_xyz_p.z_ = v_xyz.z_;
+                Euler v_abc_e;
+                v_abc_e.a_ = v_abc.x_; v_abc_e.b_ = v_abc.y_; v_abc_e.c_ = v_abc.z_;
+                // end of temp use
+                online_alg_out_trjPointCnt += online_trj_planner_ptr->traj_on_FIR_Bspline(v_xyz_p,v_abc_e,0,online_alg_out_trjPointCnt);//起点
                 Touch_h0_v.matrix_[0][0]=*(p_marixArray+0); Touch_h0_v.matrix_[0][1]=*(p_marixArray+4); Touch_h0_v.matrix_[0][2]=*(p_marixArray+8);  Touch_h0_v.matrix_[0][3]=*(p_marixArray+12);   //  /1000;
                 Touch_h0_v.matrix_[1][0]=*(p_marixArray+1); Touch_h0_v.matrix_[1][1]=*(p_marixArray+5); Touch_h0_v.matrix_[1][2]=*(p_marixArray+9);  Touch_h0_v.matrix_[1][3]=*(p_marixArray+13);  //  /1000;
                 Touch_h0_v.matrix_[2][0]=*(p_marixArray+2); Touch_h0_v.matrix_[2][1]=*(p_marixArray+6); Touch_h0_v.matrix_[2][2]=*(p_marixArray+10); Touch_h0_v.matrix_[2][3]=*(p_marixArray+14);   //  /1000;
                 Touch_h0_v.matrix_[3][0]=*(p_marixArray+3); Touch_h0_v.matrix_[3][1]=*(p_marixArray+7); Touch_h0_v.matrix_[3][2]=*(p_marixArray+11); Touch_h0_v.matrix_[3][3]=*(p_marixArray+15);
                 Touch_h0_v.print("Touch_h0_v");
+
+                // test of dynamic
+                Touch_h0_v_p.rotation_matrix_.matrix_[0][0] = *(p_marixArray+0);Touch_h0_v_p.rotation_matrix_.matrix_[0][1] = *(p_marixArray+4);Touch_h0_v_p.rotation_matrix_.matrix_[0][2] = *(p_marixArray+8);Touch_h0_v_p.trans_vector_.x_ = *(p_marixArray+12);
+                Touch_h0_v_p.rotation_matrix_.matrix_[1][0] = *(p_marixArray+1);Touch_h0_v_p.rotation_matrix_.matrix_[1][1] = *(p_marixArray+5);Touch_h0_v_p.rotation_matrix_.matrix_[1][2] = *(p_marixArray+9);Touch_h0_v_p.trans_vector_.y_ = *(p_marixArray+13);
+                Touch_h0_v_p.rotation_matrix_.matrix_[2][0] = *(p_marixArray+2);Touch_h0_v_p.rotation_matrix_.matrix_[2][1] = *(p_marixArray+6);Touch_h0_v_p.rotation_matrix_.matrix_[2][2] = *(p_marixArray+10);Touch_h0_v_p.trans_vector_.z_ = *(p_marixArray+14);
+
             }
             else
             {
@@ -799,16 +1069,59 @@ v_xyz.x_, v_xyz.y_, v_xyz.z_, v_abc.x_, v_abc.y_, v_abc.z_);
         Touch_ht_v.matrix_[1][0]=*(p_marixArray+1); Touch_ht_v.matrix_[1][1]=*(p_marixArray+5); Touch_ht_v.matrix_[1][2]=*(p_marixArray+9);  Touch_ht_v.matrix_[1][3]=*(p_marixArray+13);  // /1000;
         Touch_ht_v.matrix_[2][0]=*(p_marixArray+2); Touch_ht_v.matrix_[2][1]=*(p_marixArray+6); Touch_ht_v.matrix_[2][2]=*(p_marixArray+10); Touch_ht_v.matrix_[2][3]=*(p_marixArray+14);  // /1000;
         Touch_ht_v.matrix_[3][0]=*(p_marixArray+3); Touch_ht_v.matrix_[3][1]=*(p_marixArray+7); Touch_ht_v.matrix_[3][2]=*(p_marixArray+11); Touch_ht_v.matrix_[3][3]=*(p_marixArray+15);
-//Touch_ht_v.print("Touch_ht_v");
+        //Touch_ht_v.print("Touch_ht_v");
+
+        // test dynamic ------------------------------------
+        Touch_ht_v_p.rotation_matrix_.matrix_[0][0]= *(p_marixArray+0); Touch_ht_v_p.rotation_matrix_.matrix_[0][1]= *(p_marixArray+4); Touch_ht_v_p.rotation_matrix_.matrix_[0][2]= *(p_marixArray+8);  Touch_ht_v_p.trans_vector_.x_= *(p_marixArray+12);  // /1000;
+        Touch_ht_v_p.rotation_matrix_.matrix_[1][0]= *(p_marixArray+1); Touch_ht_v_p.rotation_matrix_.matrix_[1][1]= *(p_marixArray+5); Touch_ht_v_p.rotation_matrix_.matrix_[1][2]= *(p_marixArray+9);  Touch_ht_v_p.trans_vector_.y_= *(p_marixArray+13);  // /1000;
+        Touch_ht_v_p.rotation_matrix_.matrix_[2][0]= *(p_marixArray+2); Touch_ht_v_p.rotation_matrix_.matrix_[2][1]= *(p_marixArray+6); Touch_ht_v_p.rotation_matrix_.matrix_[2][2]= *(p_marixArray+10); Touch_ht_v_p.trans_vector_.z_= *(p_marixArray+14);  // /1000;
+
+
+
         online_trj_planner_ptr->DynamicBaseCoordTransformation(T_r0_R, Touch_h0_v, Touch_ht_v, k_xyz, k_abc, T_k);
-//T_k.print("CoordTransformed T_k:");
+        online_trj_planner_ptr->DynamicBaseCoordTransformation(T_r0_R_p, Touch_h0_v_p, Touch_ht_v_p, k_xyz, k_abc, T_k_p);
+
+        // test -- are output the same?
+        // using old dynamic function but check new function's output with old function output
+        cout<<"dynamic output check::"<<endl;
+        for(int ii = 0; ii < 3; ++ii)
+        {
+            for(int jj = 0; jj < 3; ++jj)
+            {
+                if(!(fabs(T_k.matrix_[ii][jj] - T_k_p.rotation_matrix_.matrix_[ii][jj]) > 0.000001))
+                {
+                    cout<<"dynamic output check::Ratation Matrix: the "<<ii<<"th "<<jj<<"th element of two dynamic output is different"<<endl;
+                    cout<<"dynamic output check::m44 & transmatrix results are: "<<T_k.matrix_[ii][jj]<<"\t"<<T_k_p.rotation_matrix_.matrix_[ii][jj]<<endl;
+                }
+            }
+        }
+        if(!(fabs(T_k.matrix_[0][3] - T_k_p.trans_vector_.x_) > 0.000001))
+        {
+            cout<<"dynamic output check::XYZ Vector: the 0th 3rd element of two dynamic output is different"<<endl;
+            cout<<"dynamic output check::m44 & transmatrix results are : "<<T_k.matrix_[0][3]<<"\t"<<T_k_p.trans_vector_.x_<<endl;
+        }
+        if(!(fabs(T_k.matrix_[1][3] - T_k_p.trans_vector_.y_) > 0.000001))
+        {
+            cout<<"dynamic output check::XYZ Vector: the 1th 3rd element of two dynamic output is different"<<endl;
+            cout<<"dynamic output check::m44 & transmatrix results are : "<<T_k.matrix_[1][3]<<"\t"<<T_k_p.trans_vector_.y_<<endl;
+        }
+        if(!(fabs(T_k.matrix_[2][3] - T_k_p.trans_vector_.z_) > 0.000001))
+        {
+            cout<<"dynamic output check::XYZ Vector: the 2th 3rd element of two dynamic output is different"<<endl;
+            cout<<"dynamic output check::m44 & transmatrix results are : "<<T_k.matrix_[2][3]<<"\t"<<T_k_p.trans_vector_.z_<<endl;
+        }
+
+
+        //T_k.print("CoordTransformed T_k:");
         //T_c.print("Tc:");
         //last_T_k.print("T_1");
+
+
         online_trj_planner_ptr->get_increment_matrix(T_c,last_T_k,T_k,Ttemp);
-//Ttemp.print("Ttemp=");
+        //Ttemp.print("Ttemp=");
         last_T_k = T_k;
         online_trj_planner_ptr->rtm_r2xyzabc(Ttemp,res_xyz,res_abc);
-//LogProducer::info("Ttemp to xyzabc","#%lf,%lf,%lf,%lf,%lf,%lf",res_xyz.x_,res_xyz.y_,res_xyz.z_,res_abc.x_,res_abc.y_,res_abc.z_);
+        //LogProducer::info("Ttemp to xyzabc","#%lf,%lf,%lf,%lf,%lf,%lf",res_xyz.x_,res_xyz.y_,res_xyz.z_,res_abc.x_,res_abc.y_,res_abc.z_);
         pos_posture.pose.point_.x_ = res_xyz.x_;
         pos_posture.pose.point_.y_ = res_xyz.y_;
         pos_posture.pose.point_.z_ = res_xyz.z_;
@@ -844,10 +1157,26 @@ v_xyz.x_, v_xyz.y_, v_xyz.z_, v_abc.x_, v_abc.y_, v_abc.z_);
                     //LogProducer::error("receive_T_matrix_data",">>>END >>> t_Nstep_Q=%d, t_mod=%d,cha=%d",t_Nstep_Q,t_mod,cha);
                     for(int i=0;i<(cha-1);i++) 
                     {
-                        online_alg_out_trjPointCnt += online_trj_planner_ptr->traj_on_FIR_Bspline(v_xyz,v_abc,1,online_alg_out_trjPointCnt);//
+
+                        // temp use only -------------------------------------------------------
+                        Point v_xyz_p;
+                        v_xyz_p.x_ = v_xyz.x_; v_xyz_p.y_ = v_xyz.y_; v_xyz_p.z_ = v_xyz.z_;
+                        Euler v_abc_e;
+                        v_abc_e.a_ = v_abc.x_; v_abc_e.b_ = v_abc.y_; v_abc_e.c_ = v_abc.z_;
+                        // end of temp use --------------------------------------------------------
+
+                        online_alg_out_trjPointCnt += online_trj_planner_ptr->traj_on_FIR_Bspline(v_xyz_p,v_abc_e,1,online_alg_out_trjPointCnt);//
                         LogProducer::warn("receive_T_matrix_data",">>>Angular overspeed. END apend>>> %d|%d,online_alg_out_trjPointCnt=%d",i,cha,online_alg_out_trjPointCnt);
                     }
-                    online_alg_out_trjPointCnt += online_trj_planner_ptr->traj_on_FIR_Bspline(v_xyz,v_abc,2,online_alg_out_trjPointCnt);//终点
+
+                    // temp use only ---------------------------------------------------------
+                    Point v_xyz_p;
+                    v_xyz_p.x_ = v_xyz.x_; v_xyz_p.y_ = v_xyz.y_; v_xyz_p.z_ = v_xyz.z_;
+                    Euler v_abc_e;
+                    v_abc_e.a_ = v_abc.x_; v_abc_e.b_ = v_abc.y_; v_abc_e.c_ = v_abc.z_;
+                    // end of temp use --------------------------------------------------------
+
+                    online_alg_out_trjPointCnt += online_trj_planner_ptr->traj_on_FIR_Bspline(v_xyz_p,v_abc_e,2,online_alg_out_trjPointCnt);//终点
                     LogProducer::warn("receive_T_matrix_data",">>>Angular overspeed. THE END,online_alg_out_trjPointCnt=%d end_input=(%lf,%lf,%lf,%lf,%lf,%lf)",online_alg_out_trjPointCnt,
                     v_xyz.x_, v_xyz.y_, v_xyz.z_, v_abc.x_, v_abc.y_, v_abc.z_);
                     T_r0_R.print("T_r0_R start");
@@ -865,8 +1194,16 @@ v_xyz.x_, v_xyz.y_, v_xyz.z_, v_abc.x_, v_abc.y_, v_abc.z_);
             
             if(status == 1)//中间途经点
             {
+
+                // temp use only ---------------------------------------------------------
+                    Point v_xyz_p;
+                    v_xyz_p.x_ = v_xyz.x_; v_xyz_p.y_ = v_xyz.y_; v_xyz_p.z_ = v_xyz.z_;
+                    Euler v_abc_e;
+                    v_abc_e.a_ = v_abc.x_; v_abc_e.b_ = v_abc.y_; v_abc_e.c_ = v_abc.z_;
+                    // end of temp use --------------------------------------------------------
+
                 //LogProducer::info("v_xyzabc->Bspline","#%lf,%lf,%lf,%lf,%lf,%lf",v_xyz.x_,v_xyz.y_,v_xyz.z_,v_abc.x_,v_abc.y_,v_abc.z_);
-                online_alg_out_trjPointCnt += online_trj_planner_ptr->traj_on_FIR_Bspline(v_xyz,v_abc,1,online_alg_out_trjPointCnt);//途中点
+                online_alg_out_trjPointCnt += online_trj_planner_ptr->traj_on_FIR_Bspline(v_xyz_p,v_abc_e,1,online_alg_out_trjPointCnt);//途中点
             }
             else if(status == 2)//终点
             {
@@ -874,11 +1211,26 @@ v_xyz.x_, v_xyz.y_, v_xyz.z_, v_abc.x_, v_abc.y_, v_abc.z_);
                 cha = t_Nstep_Q-t_mod;
                 for(int i=0;i<(cha-1);i++)
                 {
-                    online_alg_out_trjPointCnt += online_trj_planner_ptr->traj_on_FIR_Bspline(v_xyz,v_abc,1,online_alg_out_trjPointCnt);//
+                    // temp use only ---------------------------------------------------------
+                    Point v_xyz_p;
+                    v_xyz_p.x_ = v_xyz.x_; v_xyz_p.y_ = v_xyz.y_; v_xyz_p.z_ = v_xyz.z_;
+                    Euler v_abc_e;
+                    v_abc_e.a_ = v_abc.x_; v_abc_e.b_ = v_abc.y_; v_abc_e.c_ = v_abc.z_;
+                    // end of temp use --------------------------------------------------------
+
+                    online_alg_out_trjPointCnt += online_trj_planner_ptr->traj_on_FIR_Bspline(v_xyz_p,v_abc_e,1,online_alg_out_trjPointCnt);//
                     LogProducer::warn("receive_T_matrix_data",">>>END apend>>> %d|%d,online_alg_out_trjPointCnt=%d v_xyzabc=<%lf,%lf,%lf,%lf,%lf,%lf>",i,cha,online_alg_out_trjPointCnt,v_xyz.x_,v_xyz.y_,v_xyz.z_,v_abc.x_,v_abc.y_,v_abc.z_);
                 }
+
+                // temp use only ---------------------------------------------------------
+                    Point v_xyz_p;
+                    v_xyz_p.x_ = v_xyz.x_; v_xyz_p.y_ = v_xyz.y_; v_xyz_p.z_ = v_xyz.z_;
+                    Euler v_abc_e;
+                    v_abc_e.a_ = v_abc.x_; v_abc_e.b_ = v_abc.y_; v_abc_e.c_ = v_abc.z_;
+                    // end of temp use --------------------------------------------------------
+
                 LogProducer::warn("end-point v_xyzabc->Bspline","#%lf,%lf,%lf,%lf,%lf,%lf",v_xyz.x_,v_xyz.y_,v_xyz.z_,v_abc.x_,v_abc.y_,v_abc.z_);
-                online_alg_out_trjPointCnt += online_trj_planner_ptr->traj_on_FIR_Bspline(v_xyz,v_abc,2,online_alg_out_trjPointCnt);//终点
+                online_alg_out_trjPointCnt += online_trj_planner_ptr->traj_on_FIR_Bspline(v_xyz_p,v_abc_e,2,online_alg_out_trjPointCnt);//终点
                 LogProducer::warn("receive_T_matrix_data",">>>THE END,online_alg_out_trjPointCnt=%d end_input=(%lf,%lf,%lf,%lf,%lf,%lf)",online_alg_out_trjPointCnt,
                 v_xyz.x_, v_xyz.y_, v_xyz.z_, v_abc.x_, v_abc.y_, v_abc.z_);
                 T_r0_R.print("T_r0_R start");
@@ -892,8 +1244,15 @@ v_xyz.x_, v_xyz.y_, v_xyz.z_, v_abc.x_, v_abc.y_, v_abc.z_);
         #if 1 //逆解失败 继续迭代 v_xyz,v_abc没有更新, 也不判断是否超限
             if(status == 1)//中间途经点
             {
+                // temp use only ---------------------------------------------------------
+                    Point v_xyz_p;
+                    v_xyz_p.x_ = v_xyz.x_; v_xyz_p.y_ = v_xyz.y_; v_xyz_p.z_ = v_xyz.z_;
+                    Euler v_abc_e;
+                    v_abc_e.a_ = v_abc.x_; v_abc_e.b_ = v_abc.y_; v_abc_e.c_ = v_abc.z_;
+                    // end of temp use --------------------------------------------------------
+
                 //LogProducer::info("ik error. v_xyzabc->Bspline","#%lf,%lf,%lf,%lf,%lf,%lf",v_xyz.x_,v_xyz.y_,v_xyz.z_,v_abc.x_,v_abc.y_,v_abc.z_);
-                online_alg_out_trjPointCnt += online_trj_planner_ptr->traj_on_FIR_Bspline(v_xyz,v_abc,1,online_alg_out_trjPointCnt);//途中点
+                online_alg_out_trjPointCnt += online_trj_planner_ptr->traj_on_FIR_Bspline(v_xyz_p,v_abc_e,1,online_alg_out_trjPointCnt);//途中点
             }
             else if(status == 2)//终点
             {
@@ -901,11 +1260,26 @@ v_xyz.x_, v_xyz.y_, v_xyz.z_, v_abc.x_, v_abc.y_, v_abc.z_);
                 cha = t_Nstep_Q-t_mod;
                 for(int i=0;i<(cha-1);i++)
                 {
-                    online_alg_out_trjPointCnt += online_trj_planner_ptr->traj_on_FIR_Bspline(v_xyz,v_abc,1,online_alg_out_trjPointCnt);//
+                    // temp use only ---------------------------------------------------------
+                    Point v_xyz_p;
+                    v_xyz_p.x_ = v_xyz.x_; v_xyz_p.y_ = v_xyz.y_; v_xyz_p.z_ = v_xyz.z_;
+                    Euler v_abc_e;
+                    v_abc_e.a_ = v_abc.x_; v_abc_e.b_ = v_abc.y_; v_abc_e.c_ = v_abc.z_;
+                    // end of temp use --------------------------------------------------------
+
+                    online_alg_out_trjPointCnt += online_trj_planner_ptr->traj_on_FIR_Bspline(v_xyz_p,v_abc_e,1,online_alg_out_trjPointCnt);//
                     LogProducer::warn("receive_T_matrix_data",">>>IK error END apend>>> %d|%d,online_alg_out_trjPointCnt=%d v_xyzabc=<%lf,%lf,%lf,%lf,%lf,%lf>",i,cha,online_alg_out_trjPointCnt,v_xyz.x_,v_xyz.y_,v_xyz.z_,v_abc.x_,v_abc.y_,v_abc.z_);
                 }
                 LogProducer::warn("IK error end-point v_xyzabc->Bspline","#%lf,%lf,%lf,%lf,%lf,%lf",v_xyz.x_,v_xyz.y_,v_xyz.z_,v_abc.x_,v_abc.y_,v_abc.z_);
-                online_alg_out_trjPointCnt += online_trj_planner_ptr->traj_on_FIR_Bspline(v_xyz,v_abc,2,online_alg_out_trjPointCnt);//终点
+                
+                // temp use only ---------------------------------------------------------
+                    Point v_xyz_p;
+                    v_xyz_p.x_ = v_xyz.x_; v_xyz_p.y_ = v_xyz.y_; v_xyz_p.z_ = v_xyz.z_;
+                    Euler v_abc_e;
+                    v_abc_e.a_ = v_abc.x_; v_abc_e.b_ = v_abc.y_; v_abc_e.c_ = v_abc.z_;
+                    // end of temp use --------------------------------------------------------
+
+                online_alg_out_trjPointCnt += online_trj_planner_ptr->traj_on_FIR_Bspline(v_xyz_p,v_abc_e,2,online_alg_out_trjPointCnt);//终点
                 LogProducer::warn("receive_T_matrix_data",">>>IK error END,online_alg_out_trjPointCnt=%d end_input=(%lf,%lf,%lf,%lf,%lf,%lf)",online_alg_out_trjPointCnt,
                 v_xyz.x_, v_xyz.y_, v_xyz.z_, v_abc.x_, v_abc.y_, v_abc.z_);
                 T_r0_R.print("T_r0_R start");

@@ -1076,45 +1076,50 @@ ErrorCode MotionControl::receive_T_matrix_data(int status, double * p_marixArray
         Touch_ht_v_p.rotation_matrix_.matrix_[1][0]= *(p_marixArray+1); Touch_ht_v_p.rotation_matrix_.matrix_[1][1]= *(p_marixArray+5); Touch_ht_v_p.rotation_matrix_.matrix_[1][2]= *(p_marixArray+9);  Touch_ht_v_p.trans_vector_.y_= *(p_marixArray+13);  // /1000;
         Touch_ht_v_p.rotation_matrix_.matrix_[2][0]= *(p_marixArray+2); Touch_ht_v_p.rotation_matrix_.matrix_[2][1]= *(p_marixArray+6); Touch_ht_v_p.rotation_matrix_.matrix_[2][2]= *(p_marixArray+10); Touch_ht_v_p.trans_vector_.z_= *(p_marixArray+14);  // /1000;
 
-
-
+        printf("\n");
+        printf("in this cycle process: \n");
         online_trj_planner_ptr->DynamicBaseCoordTransformation(T_r0_R, Touch_h0_v, Touch_ht_v, k_xyz, k_abc, T_k);
         online_trj_planner_ptr->DynamicBaseCoordTransformation(T_r0_R_p, Touch_h0_v_p, Touch_ht_v_p, k_xyz, k_abc, T_k_p);
-
+        // use the result of new dynamic base coordinate transformation function
+        online_trj_planner_ptr->turnT2M(T_k_p, T_k);
+        
         // test -- are output the same?
         // using old dynamic function but check new function's output with old function output
-        cout<<"dynamic output check::"<<endl;
-        for(int ii = 0; ii < 3; ++ii)
-        {
-            for(int jj = 0; jj < 3; ++jj)
-            {
-                if(!(fabs(T_k.matrix_[ii][jj] - T_k_p.rotation_matrix_.matrix_[ii][jj]) > 0.000001))
-                {
-                    cout<<"dynamic output check::Ratation Matrix: the "<<ii<<"th "<<jj<<"th element of two dynamic output is different"<<endl;
-                    cout<<"dynamic output check::m44 & transmatrix results are: "<<T_k.matrix_[ii][jj]<<"\t"<<T_k_p.rotation_matrix_.matrix_[ii][jj]<<endl;
-                }
-            }
-        }
-        if(!(fabs(T_k.matrix_[0][3] - T_k_p.trans_vector_.x_) > 0.000001))
-        {
-            cout<<"dynamic output check::XYZ Vector: the 0th 3rd element of two dynamic output is different"<<endl;
-            cout<<"dynamic output check::m44 & transmatrix results are : "<<T_k.matrix_[0][3]<<"\t"<<T_k_p.trans_vector_.x_<<endl;
-        }
-        if(!(fabs(T_k.matrix_[1][3] - T_k_p.trans_vector_.y_) > 0.000001))
-        {
-            cout<<"dynamic output check::XYZ Vector: the 1th 3rd element of two dynamic output is different"<<endl;
-            cout<<"dynamic output check::m44 & transmatrix results are : "<<T_k.matrix_[1][3]<<"\t"<<T_k_p.trans_vector_.y_<<endl;
-        }
-        if(!(fabs(T_k.matrix_[2][3] - T_k_p.trans_vector_.z_) > 0.000001))
-        {
-            cout<<"dynamic output check::XYZ Vector: the 2th 3rd element of two dynamic output is different"<<endl;
-            cout<<"dynamic output check::m44 & transmatrix results are : "<<T_k.matrix_[2][3]<<"\t"<<T_k_p.trans_vector_.z_<<endl;
-        }
+        // printf("dynamic output check::\n");
+        // for(int ii = 0; ii < 3; ++ii)
+        // {
+        //     for(int jj = 0; jj < 3; ++jj)
+        //     {
+        //         if(!(fabs(T_k.matrix_[ii][jj] - T_k_p.rotation_matrix_.matrix_[ii][jj]) < 0.000001))
+        //         {
+        //             printf("dynamic output check::Ratation Matrix: %d th - %d th element different\n", ii, jj);
+        //             printf("dynamic output check::m44 & transmatrix results are: %.6f \t %.6f \n", T_k.matrix_[ii][jj], T_k_p.rotation_matrix_.matrix_[ii][jj]);
+        //         }
+        //     }
+        // }
+        // if(!(fabs(T_k.matrix_[0][3] - T_k_p.trans_vector_.x_) < 0.000001))
+        // {
+        //     printf("dynamic output check::XYZ Vector: 0th 3rd element different\n");
+        //     printf("dynamic output check::m44 & transmatrix results are : %.6f \t %.6f \n", T_k.matrix_[0][3], T_k_p.trans_vector_.x_);
+        // }
+        // if(!(fabs(T_k.matrix_[1][3] - T_k_p.trans_vector_.y_) < 0.000001))
+        // {
+        //     printf("dynamic output check::XYZ Vector: 1th 3rd element different\n");
+        //     printf("dynamic output check::m44 & transmatrix results are : %.6f \t %.6f \n", T_k.matrix_[1][3], T_k_p.trans_vector_.y_);
+        // }
+        // if(!(fabs(T_k.matrix_[2][3] - T_k_p.trans_vector_.z_) < 0.000001))
+        // {
+        //     printf("dynamic output check::XYZ Vector: 2th 3rd element different\n");
+        //     printf("dynamic output check::m44 & transmatrix results are : %.6f \t %.6f \n", T_k.matrix_[2][3], T_k_p.trans_vector_.z_);
+        // }
 
 
         //T_k.print("CoordTransformed T_k:");
         //T_c.print("Tc:");
         //last_T_k.print("T_1");
+
+        
+
 
 
         online_trj_planner_ptr->get_increment_matrix(T_c,last_T_k,T_k,Ttemp);

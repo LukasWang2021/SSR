@@ -1296,9 +1296,8 @@ Matrix44 OnlineTrajectoryPlanner::rtm_reorthog(Matrix44 &T)
 }
 
 
-/*
-* 函数功能: 将输入的矩阵正交化
-*/
+
+    
 Matrix33 OnlineTrajectoryPlanner::rtm_reorthog(Matrix33 &T)
 {
     Matrix33 T_new;//result;
@@ -1333,7 +1332,8 @@ Matrix33 OnlineTrajectoryPlanner::rtm_reorthog(Matrix33 &T)
 
 RotationMatrix OnlineTrajectoryPlanner::rtm_reorthog(RotationMatrix &T)
 {
-    RotationMatrix T_new;//result;
+    // result stores in this variable
+    RotationMatrix T_new;
     Vector3 a,b,a_ort, b_ort,c_ort,a_new,b_new,c_new;
     a.x_ = T.matrix_[0][0];
     a.y_ = T.matrix_[0][1];
@@ -1364,7 +1364,7 @@ RotationMatrix OnlineTrajectoryPlanner::rtm_reorthog(RotationMatrix &T)
 }
 
 
-void OnlineTrajectoryPlanner::turnM2T(Matrix44 ma, TransMatrix mb)
+void OnlineTrajectoryPlanner::turnM2T(const Matrix44 ma, TransMatrix mb)
 {
     // copy Rotation Matrix
     for(int i=0;i<3;++i)
@@ -1379,19 +1379,13 @@ void OnlineTrajectoryPlanner::turnM2T(Matrix44 ma, TransMatrix mb)
     mb.trans_vector_.y_ = ma.matrix_[1][3];
     mb.trans_vector_.z_ = ma.matrix_[2][3];
 
-
-    // print test
-    cout<<"turnM2T::test print: "<<endl;
-    cout<<"turnM2T::input matrix 44 is : "<<endl;
-    ma.print();
-    cout<<"turnM2T::output transmatrix is : ";
-    mb.print();
-
 }
 
-void OnlineTrajectoryPlanner::turnT2M(TransMatrix ma, Matrix44 mb)
+void OnlineTrajectoryPlanner::turnT2M(const TransMatrix ma, Matrix44 mb)
 {
+    // clean mb structure
     mb.setZero();
+    
     for(int i=0;i<3;++i)
     {
         for(int j=0;j<3;++j)
@@ -1404,17 +1398,7 @@ void OnlineTrajectoryPlanner::turnT2M(TransMatrix ma, Matrix44 mb)
     mb.matrix_[2][3] = ma.trans_vector_.z_;
     mb.matrix_[3][3] = 1;
 
-    // print test 
-    cout<<"turnT2M::test print: "<<endl;
-    cout<<"turnT2M::input transmatrix is : ";
-    ma.print();
-    cout<<"turnT2M::output matrix 44 is : "<<endl;
-    mb.print();
 }
-
-/*
-* function: translate current robot tool pos from cartesian to robot_base coordinate
-*/
 
 
 bool OnlineTrajectoryPlanner::DynamicBaseCoordTransformation(TransMatrix T_r0_R, TransMatrix Touch_h0_v,  TransMatrix Touch_ht_v, double k_xyz,double k_abc, TransMatrix& resM)
@@ -1435,59 +1419,38 @@ bool OnlineTrajectoryPlanner::DynamicBaseCoordTransformation(TransMatrix T_r0_R,
     Tr2Ti.rotation_matrix_.matrix_[0][1] = -1;
     Tr2Ti.rotation_matrix_.matrix_[1][0] = -1;
     Tr2Ti.rotation_matrix_.matrix_[2][2] = -1;
-
-    double tempn[16];
-    tempn[0] = Touch_h0_v.rotation_matrix_.matrix_[0][0];
-    tempn[1] = Touch_h0_v.rotation_matrix_.matrix_[0][1];
-    tempn[2] = Touch_h0_v.rotation_matrix_.matrix_[0][2];
-    tempn[3] = Touch_h0_v.trans_vector_.x_;
-    tempn[4] = Touch_h0_v.rotation_matrix_.matrix_[1][0];
-    tempn[5] = Touch_h0_v.rotation_matrix_.matrix_[1][1];
-    tempn[6] = Touch_h0_v.rotation_matrix_.matrix_[1][2];
-    tempn[7] = Touch_h0_v.trans_vector_.y_;
-    tempn[8] = Touch_h0_v.rotation_matrix_.matrix_[2][0];
-    tempn[9] = Touch_h0_v.rotation_matrix_.matrix_[2][1];
-    tempn[10] = Touch_h0_v.rotation_matrix_.matrix_[2][2];
-    tempn[11] = Touch_h0_v.trans_vector_.z_;
-    tempn[12] = 0;
-    tempn[13] = 0;
-    tempn[14] = 0;
-    tempn[15] = 1;
-    
-    printf("TransMatrix (double form) touch input: ");
-    for(int i = 0; i < 16; ++i)
-    {
-        //cout << std::setprecision(2) << tempn[i] << "\t";
-        printf("%./2f\t", tempn[i]);
-        if((i+1) % 4 == 0 && i != 0)
-        {
-            printf("\n");
-        }
-    }
-    printf("\n");
+  
     Touch_h0_v.rightMultiply(Tr2Ti);
-    
 
     online_getMatrixInv(Touch_h0_v,T_v_h0);
 
-    
     Touch_ht_v.rightMultiply(Tr2Ti);
     T_ht_h0 = T_v_h0.rightMultiply(Touch_ht_v);
-
     T_rt_r0.rotation_matrix_ = T_ht_h0.rotation_matrix_;
     T_rt_r0.trans_vector_ = T_ht_h0.trans_vector_ * k_xyz;
 
+
     RotationMatrix dr_temp, M33_dRr;
     Quaternion Qtemp,Qzero;
+
     Qzero.zero();
+
     Qzero.w_ = 1;
+
     dr_temp = T_rt_r0.rotation_matrix_;
+
     dr_temp = rtm_reorthog(dr_temp);
+
     dr_temp.convertToQuaternion(Qtemp);
+
     Qtemp = rtm_Slerpt(Qzero, Qtemp, k_abc);
+
     Qtemp.convertToRotationMatrix(M33_dRr);
+
     T_rt_r0.rotation_matrix_ = M33_dRr;
+
     resM = T_r0_R.rightMultiply(T_rt_r0);
+
     return true;
 }
 
@@ -1517,43 +1480,12 @@ bool OnlineTrajectoryPlanner::DynamicBaseCoordTransformation(Matrix44 T_r0_R, Ma
     Tr2Ti.matrix_[2][0]=0;  Tr2Ti.matrix_[2][1]=0;  Tr2Ti.matrix_[2][2]=-1; Tr2Ti.matrix_[2][3]=0;
     Tr2Ti.matrix_[3][0]=0;  Tr2Ti.matrix_[3][1]=0;  Tr2Ti.matrix_[3][2]=0;  Tr2Ti.matrix_[3][3]=1;
 
-
-    double tempn[16];
-    tempn[0] = Touch_h0_v.matrix_[0][0];
-    tempn[1] = Touch_h0_v.matrix_[0][1];
-    tempn[2] = Touch_h0_v.matrix_[0][2];
-    tempn[3] = Touch_h0_v.matrix_[0][3];
-    tempn[4] = Touch_h0_v.matrix_[1][0];
-    tempn[5] = Touch_h0_v.matrix_[1][1];
-    tempn[6] = Touch_h0_v.matrix_[1][2];
-    tempn[7] = Touch_h0_v.matrix_[1][3];
-    tempn[8] = Touch_h0_v.matrix_[2][0];
-    tempn[9] = Touch_h0_v.matrix_[2][1];
-    tempn[10] = Touch_h0_v.matrix_[2][2];
-    tempn[11] = Touch_h0_v.matrix_[2][3];
-    tempn[12] = Touch_h0_v.matrix_[3][0];
-    tempn[13] = Touch_h0_v.matrix_[3][1];
-    tempn[14] = Touch_h0_v.matrix_[3][2];
-    tempn[15] = Touch_h0_v.matrix_[3][3];
-    
-    printf("Matrix44 (double form) touch input: ");
-    for(int i = 0; i < 16; ++i)
-    {
-        //cout << std::setprecision(2) << tempn[i] << "\t";
-        printf("%./2f\t", tempn[i]);
-        if((i+1) % 4 == 0 && i != 0)
-        {
-            printf("\n");
-        }
-    }
-    printf("\n");
     Touch_h0_v.rightMultiply(Tr2Ti);
 
- 
     online_getMatrixInv(Touch_h0_v,T_v_h0);
-   
-    
+ 
     Touch_ht_v.rightMultiply(Tr2Ti);
+
     T_ht_h0 = T_v_h0.rightMultiply(Touch_ht_v);
 
     T_rt_r0.matrix_[0][0] = T_ht_h0.matrix_[0][0];
@@ -1573,6 +1505,8 @@ bool OnlineTrajectoryPlanner::DynamicBaseCoordTransformation(Matrix44 T_r0_R, Ma
     T_rt_r0.matrix_[3][2]=0;
     T_rt_r0.matrix_[3][3]=1;
 
+
+
     Matrix33 dr_temp, M33_dRr;//T_rt_r0 33
     Quaternion Qtemp,Qzero;
     Qzero.w_=1;Qzero.x_=0;Qzero.y_=0;Qzero.z_=0;
@@ -1589,18 +1523,57 @@ bool OnlineTrajectoryPlanner::DynamicBaseCoordTransformation(Matrix44 T_r0_R, Ma
     Qtemp = rtm_r2quat(dr_temp);
     Qtemp = rtm_Slerpt(Qzero,Qtemp,k_abc);
     M33_dRr = rtm_quat2r(Qtemp);
-    T_rt_r0.matrix_[0][0] = M33_dRr.matrix_[0][0];T_rt_r0.matrix_[0][1] = M33_dRr.matrix_[0][1];T_ht_h0.matrix_[0][2] = M33_dRr.matrix_[0][2];
-    T_rt_r0.matrix_[1][0] = M33_dRr.matrix_[1][0];T_rt_r0.matrix_[1][1] = M33_dRr.matrix_[1][1];T_ht_h0.matrix_[1][2] = M33_dRr.matrix_[1][2];
-    T_rt_r0.matrix_[2][0] = M33_dRr.matrix_[2][0];T_rt_r0.matrix_[2][1] = M33_dRr.matrix_[2][1];T_ht_h0.matrix_[2][2] = M33_dRr.matrix_[2][2];
+
+    printf("Matrix44 M33_dRr: \n");
+    for(int ii = 0; ii < 3; ++ii)
+    {
+        for(int jj = 0; jj < 3; ++jj)
+        {
+            printf("%.6f\t", M33_dRr.matrix_[ii][jj]);
+        }
+        printf("\n");
+    }
+
+    printf("Matrix44 MT_rt_r0: \n");
+    for(int ii = 0; ii < 3; ++ii)
+    {
+        for(int jj = 0; jj < 3; ++jj)
+        {
+            printf("%.6f\t", T_rt_r0.matrix_[ii][jj]);
+        }
+        printf("\n");
+    }
+
+    T_rt_r0.matrix_[0][0] = M33_dRr.matrix_[0][0];
+    T_rt_r0.matrix_[0][1] = M33_dRr.matrix_[0][1];
+    T_rt_r0.matrix_[0][2] = M33_dRr.matrix_[0][2];
+    T_rt_r0.matrix_[1][0] = M33_dRr.matrix_[1][0];
+    T_rt_r0.matrix_[1][1] = M33_dRr.matrix_[1][1];
+    T_rt_r0.matrix_[1][2] = M33_dRr.matrix_[1][2];
+    T_rt_r0.matrix_[2][0] = M33_dRr.matrix_[2][0];
+    T_rt_r0.matrix_[2][1] = M33_dRr.matrix_[2][1];
+    T_rt_r0.matrix_[2][2] = M33_dRr.matrix_[2][2];
+    
+    printf("Matrix44 T_rt_r0's after move: \n");
+    for(int ii = 0; ii < 3; ++ii)
+    {
+        for(int jj = 0; jj < 3; ++jj)
+        {
+            printf("%.6f\t", T_rt_r0.matrix_[ii][jj]);
+        }
+        printf("\n");
+    }
+
+
     resM = T_r0_R.rightMultiply(T_rt_r0);
+
     return true;
 }
 
 
 void OnlineTrajectoryPlanner::online_getMatrixInv(Matrix44 m44,Matrix44 &resT)
 {
-    cout<<"matrix44 inv function used"<<endl;
-    
+
     double p_matrix[16],p_inv[16];
     p_matrix[0] = m44.matrix_[0][0];
     p_matrix[1] = m44.matrix_[0][1];
@@ -1622,48 +1595,7 @@ void OnlineTrajectoryPlanner::online_getMatrixInv(Matrix44 m44,Matrix44 &resT)
     p_matrix[14] = m44.matrix_[3][2],
     p_matrix[15] = m44.matrix_[3][3];
 
-
-    // check whether the last line is 0 0 0 1
-    // for(int i=12;i<15;++i)
-    // {
-    //     if(!(fabs(p_matrix[i]) < 0.0000001))
-    //     {
-    //         cout<<"the 13-15th input matrix from touch is not 0 0 0"<<endl;
-    //         cout<<"they are: "<<p_matrix[12]<<"\t"<<p_matrix[13]<<"\t"<<p_matrix[14]<<endl;
-    //         break;
-    //     }
-    // }
-    // if(!(fabs(p_matrix[15] - 1) < 0.0000001))
-    // {
-    //     cout<<"the 16th input matrix from touch is not 1"<<endl;
-    //     cout<<"it is: "<<p_matrix[15]<<endl;
-    // }
-
-    // print before inv
-    // cout<<"Matrix44 (double form) BEFORE inv: "<<endl;
-    // for(int i=0;i<16;++i)
-    // {
-    //     cout<<std::setprecision(2)<<p_matrix[i]<<"\t";
-    //     if((i+1)%4 == 0 && i != 0)
-    //     {
-    //         cout<<endl;
-    //     }
-    // }
-    // cout<<endl;
-
     basic_alg::inverse(p_matrix,4,p_inv);
-
-    // print after inv
-    // cout<<"Matrix44 (double form) AFTER inv: "<<endl;
-    // for(int i=0;i<16;++i)
-    // {
-    //     cout<<std::setprecision(2)<<p_inv[i]<<"\t";
-    //     if((i+1)%4 == 0 && i != 0)
-    //     {
-    //         cout<<endl;
-    //     }
-    // }
-    // cout<<endl;
 
     resT.matrix_[0][0] = p_inv[0];
     resT.matrix_[0][1] = p_inv[1];
@@ -1688,8 +1620,7 @@ void OnlineTrajectoryPlanner::online_getMatrixInv(Matrix44 m44,Matrix44 &resT)
 
 void OnlineTrajectoryPlanner::online_getMatrixInv(TransMatrix m44,TransMatrix &resT)
 {
-    cout<<"transmatrix inv function used"<<endl;
-    
+   
     double p_matrix[16],p_inv[16];
     p_matrix[0] = m44.rotation_matrix_.matrix_[0][0];
     p_matrix[1] = m44.rotation_matrix_.matrix_[0][1];
@@ -1711,31 +1642,7 @@ void OnlineTrajectoryPlanner::online_getMatrixInv(TransMatrix m44,TransMatrix &r
     p_matrix[14] = 0;
     p_matrix[15] = 1;
 
-    // print before inv
-    // cout<<"TransMatrix (double form) BEFORE inv: "<<endl;
-    // for(int i=0;i<16;++i)
-    // {
-    //     cout<<std::setprecision(2)<<p_matrix[i]<<"\t";
-    //     if((i+1)%4 == 0 && i != 0)
-    //     {
-    //         cout<<endl;
-    //     }
-    // }
-    // cout<<endl;
-
     basic_alg::inverse(p_matrix,4,p_inv);
-
-    // print after inv
-    // cout<<"TransMatrix (double form) AFTER inv: "<<endl;
-    // for(int i=0;i<16;++i)
-    // {
-    //     cout<<std::setprecision(2)<<p_inv[i]<<"\t";
-    //     if((i+1)%4 == 0 && i != 0)
-    //     {
-    //         cout<<endl;
-    //     }
-    // }
-    // cout<<endl;
 
     resT.rotation_matrix_.matrix_[0][0] = p_inv[0];
     resT.rotation_matrix_.matrix_[0][1] = p_inv[1];

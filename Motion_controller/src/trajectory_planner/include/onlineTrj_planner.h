@@ -210,20 +210,45 @@ public:
     */
     int traj_on_FIR_Bspline(Point xyz, Euler abc,int status, int online_TrjpointBufIndex);
     //int traj_on_FIR_Bspline(Vector3 xyz, Vector3 abc,int status, int online_TrjpointBufIndex);
+
+    
     /**
-    * @brief orthogonalize given 4*4 or 3*3 matrix
-    * @param [in] T Matrix44 or Matrix33
-    * @return Matrix44 or Matrix33
+    * @brief orthogonalize the input matrix
+    * @param [in] T input Matrix33 / Matrix44 / RotationMatrix
+    * @details this function WILL NOT change the input matrix variable
+    * @return the orthogonalized matrix
     */
     Matrix44 rtm_reorthog(Matrix44 &T);
     Matrix33 rtm_reorthog(Matrix33 &T);
     RotationMatrix rtm_reorthog(RotationMatrix &T);
 
 
+    /**
+    * @brief transfer Matrix44 to TransMatrix
+    * @param [in] ma the input Matrix44 type
+    * @param [out] mb the output TransMatrix type, should be empty and initialized for input
+    * @return void
+    */
+    void turnM2T(const Matrix44 ma, TransMatrix mb);
+
+    /**
+    * @brief transfer TransMatrix to Matrix44
+    * @param [in] ma the input TransMatrix type
+    * @param [out] mb the output Matrix44 type, should be empty and initialized for input
+    * @details this function will clean mb before data transfer
+    * @return void
+    */
+    void turnT2M(const TransMatrix ma, Matrix44 mb);
+
 
     /**
     * @brief transfer touch device's position to robots' position, for more detail ,see tech docs
-    * @return boolean, whether it is success or not
+    * @details T_r0_R: initial robot end-matrix when press the button
+    *          Touch_h0_v: initial touch end-matrix in touch coordinates when press the button
+    *          Touch_ht_v: touch end-matrix when moving (holding button and not release after initial press)
+    *          k_xyz / k_abc: ratio of mapping touch device movement to robot
+    *          resM: output matrix (of robot)
+    * @return always return true
     */
     bool DynamicBaseCoordTransformation(Matrix44 T_r0_R, Matrix44 Touch_h0_v,  Matrix44 Touch_ht_v, double k_xyz,double k_abc, Matrix44& resM);
     bool DynamicBaseCoordTransformation(TransMatrix T_r0_R, TransMatrix Touch_h0_v,  TransMatrix Touch_ht_v, double k_xyz,double k_abc, TransMatrix& resM);
@@ -285,10 +310,6 @@ public:
     void Fir_Bspline_algorithm_test(void);
     void Fir_Bspline_algorithm_test2(void);
 
-    // turn Matrix44 to TransMatrix
-    void turnM2T(Matrix44 ma, TransMatrix mb);
-    // turn TransMatrix to Matrix44
-    void turnT2M(TransMatrix ma, Matrix44 mb);
     
 
     /**

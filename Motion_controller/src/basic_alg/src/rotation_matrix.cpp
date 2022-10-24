@@ -146,4 +146,10 @@ void RotationMatrix::inverse(RotationMatrix& result_matrix) const
     result_matrix.matrix_[2][2] = this->matrix_[2][2];
 }
 
+// RotationMatrix& RotationMatrix::operator=(const RotationMatrix& matrix)
+// {
+//     memcpy(&matrix_, &matrix.matrix_, sizeof(matrix_));
+//     return *this;
+// }
+
 

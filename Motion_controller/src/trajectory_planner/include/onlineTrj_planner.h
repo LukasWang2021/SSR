@@ -104,7 +104,7 @@ public:
     * @return euler angles data (XYZ)
     */
     Vector3 online_turnMatrixEuler(Matrix33& rotation_matrix);
-
+    Euler online_turnMatrixEuler_(Matrix33& rotation_matrix);
 
     /**
     * @brief turn input matrix inverse, and write into the second parameter
@@ -268,7 +268,8 @@ public:
     * @return void
     */
     void rtm_r2xyzabc(Matrix44& u,Vector3& res_xyz, Vector3& res_abc);
-   
+    void rtm_r2xyzabc(TransMatrix& u, Point& res_xyz, Euler& res_abc);
+
     /**
     * @brief get params from yaml file for online trajectory planning
     * @return void

@@ -266,6 +266,58 @@ Vector3 OnlineTrajectoryPlanner::online_turnMatrixEuler(Matrix33& rotation_matri
     return angle1;
 }
 
+Euler OnlineTrajectoryPlanner::online_turnMatrixEuler_(Matrix33& rotation_matrix)
+{
+    double min_value = 1e-18;
+    Vector3 angle1,angle2;
+    Euler temp_result_;
+    double phi_1, phi_2, psi_1, psi_2, theta_1,theta_2;
+    angle1.zero();
+    angle2.zero();
+
+    if((abs(rotation_matrix.matrix_[2][0]-1) < min_value)  || (abs(rotation_matrix.matrix_[2][0]+1) < min_value))
+    {
+        if(abs(rotation_matrix.matrix_[2][0]+1) < min_value)
+        {
+            theta_1 = PI/2;
+            phi_1 = 0;
+            psi_1 = phi_1 + atan2(rotation_matrix.matrix_[0][1], rotation_matrix.matrix_[0][2]);
+        }
+        else
+        {
+            theta_1 = -PI/2;
+            phi_1 = 0;
+            psi_1 = -phi_1 + atan2(-rotation_matrix.matrix_[0][1], -rotation_matrix.matrix_[0][2]);
+        }
+    }
+    else
+    {
+        theta_1 = -asin(rotation_matrix.matrix_[2][0]);
+        theta_2 = PI - theta_1;
+        psi_1 = atan2(rotation_matrix.matrix_[2][1]/cos(theta_1), rotation_matrix.matrix_[2][2]/cos(theta_1));
+        psi_2 = atan2(rotation_matrix.matrix_[2][1]/cos(theta_2), rotation_matrix.matrix_[2][2]/cos(theta_2));
+        phi_1 = atan2(rotation_matrix.matrix_[1][0]/cos(theta_1), rotation_matrix.matrix_[0][0]/cos(theta_1));
+        phi_2 = atan2(rotation_matrix.matrix_[1][0]/cos(theta_2), rotation_matrix.matrix_[0][0]/cos(theta_2));
+        
+        /*if(phi_1 < 0)
+        {
+            phi_1 = phi_1 + 2*PI;
+        }
+        if(phi_2 < 0)
+        {
+            phi_2 = phi_2 + 2*PI;
+        }*/
+    }
+    angle1.x_ = psi_1;
+    angle1.y_ = theta_1;
+    angle1.z_ = phi_1;
+    temp_result_.a_ = angle1.x_;
+    temp_result_.b_ = angle1.y_;
+    temp_result_.c_ = angle1.z_;
+
+    return temp_result_;
+}
+
 
 Vector3 OnlineTrajectoryPlanner::rtm_quat2abc(Quaternion& Q)
 {
@@ -465,17 +517,6 @@ Quaternion OnlineTrajectoryPlanner::rtm_Squad(Quaternion& q0, Quaternion& q1, Qu
 
 int OnlineTrajectoryPlanner::traj_on_FIR_Bspline(Point xyz, Euler abc,int status, int online_TrjpointBufIndex)
 {
-    // test only, turn input variables into fitted type
-    // Point xyz;
-    // Euler abc;
-    // xyz.x_ = xyz_o.x_;
-    // xyz.y_ = xyz_o.y_;
-    // xyz.z_ = xyz_o.z_;
-    // abc.a_ = abc_o.x_;
-    // abc.b_ = abc_o.y_;
-    // abc.c_ = abc_o.z_;
-
-
     // B-Spline step number, larger number brings more accurate result, but delay may increase
     // suggest range 3~5
     int m = 5;
@@ -1524,25 +1565,25 @@ bool OnlineTrajectoryPlanner::DynamicBaseCoordTransformation(Matrix44 T_r0_R, Ma
     Qtemp = rtm_Slerpt(Qzero,Qtemp,k_abc);
     M33_dRr = rtm_quat2r(Qtemp);
 
-    printf("Matrix44 M33_dRr: \n");
-    for(int ii = 0; ii < 3; ++ii)
-    {
-        for(int jj = 0; jj < 3; ++jj)
-        {
-            printf("%.6f\t", M33_dRr.matrix_[ii][jj]);
-        }
-        printf("\n");
-    }
+    // printf("Matrix44 M33_dRr: \n");
+    // for(int ii = 0; ii < 3; ++ii)
+    // {
+    //     for(int jj = 0; jj < 3; ++jj)
+    //     {
+    //         printf("%.6f\t", M33_dRr.matrix_[ii][jj]);
+    //     }
+    //     printf("\n");
+    // }
 
-    printf("Matrix44 MT_rt_r0: \n");
-    for(int ii = 0; ii < 3; ++ii)
-    {
-        for(int jj = 0; jj < 3; ++jj)
-        {
-            printf("%.6f\t", T_rt_r0.matrix_[ii][jj]);
-        }
-        printf("\n");
-    }
+    // printf("Matrix44 MT_rt_r0: \n");
+    // for(int ii = 0; ii < 3; ++ii)
+    // {
+    //     for(int jj = 0; jj < 3; ++jj)
+    //     {
+    //         printf("%.6f\t", T_rt_r0.matrix_[ii][jj]);
+    //     }
+    //     printf("\n");
+    // }
 
     T_rt_r0.matrix_[0][0] = M33_dRr.matrix_[0][0];
     T_rt_r0.matrix_[0][1] = M33_dRr.matrix_[0][1];
@@ -1554,15 +1595,15 @@ bool OnlineTrajectoryPlanner::DynamicBaseCoordTransformation(Matrix44 T_r0_R, Ma
     T_rt_r0.matrix_[2][1] = M33_dRr.matrix_[2][1];
     T_rt_r0.matrix_[2][2] = M33_dRr.matrix_[2][2];
     
-    printf("Matrix44 T_rt_r0's after move: \n");
-    for(int ii = 0; ii < 3; ++ii)
-    {
-        for(int jj = 0; jj < 3; ++jj)
-        {
-            printf("%.6f\t", T_rt_r0.matrix_[ii][jj]);
-        }
-        printf("\n");
-    }
+    // printf("Matrix44 T_rt_r0's after move: \n");
+    // for(int ii = 0; ii < 3; ++ii)
+    // {
+    //     for(int jj = 0; jj < 3; ++jj)
+    //     {
+    //         printf("%.6f\t", T_rt_r0.matrix_[ii][jj]);
+    //     }
+    //     printf("\n");
+    // }
 
 
     resM = T_r0_R.rightMultiply(T_rt_r0);
@@ -1664,8 +1705,6 @@ void OnlineTrajectoryPlanner::online_getMatrixInv(TransMatrix m44,TransMatrix &r
 bool OnlineTrajectoryPlanner::get_increment_matrix(TransMatrix T_ck, TransMatrix T_k1, TransMatrix T_k, TransMatrix &resT)
 {
     TransMatrix inv_T_k1;
-    // double inv_status;
-    // T_k1.inverse(inv_T_k1, inv_status);
     online_getMatrixInv(T_k1, inv_T_k1);
     T_ck.rightMultiply(inv_T_k1, resT);
     resT.rightMultiply(T_k);
@@ -1680,51 +1719,9 @@ bool OnlineTrajectoryPlanner::get_increment_matrix(TransMatrix T_ck, TransMatrix
 bool OnlineTrajectoryPlanner::get_increment_matrix(Matrix44 T_ck,Matrix44 T_k1, Matrix44 T_k, Matrix44 &resT)
 {
     Matrix44 inv_T_k1;
-    //T_k1.transmatrix_inverse_matrix44(inv_T_k1);
     online_getMatrixInv(T_k1,inv_T_k1);
-    //inv_T_k1.print("inv_T_k1:");
-
-    // test - is rightmultiply the same?
-    // TransMatrix T_ck_p, inv_T_k1_p, resT_p;
-    // turnM2T(T_ck, T_ck_p);
-    // turnM2T(inv_T_k1, inv_T_k1_p);
-    // turnM2T(resT, resT_p);
-
-    // T_ck_p.rightMultiply(inv_T_k1_p, resT_p);
     T_ck.rightMultiply(inv_T_k1,resT);
-
-    //cout<<"right multiply check"<<endl;
-    // for(int ii = 0; ii < 3; ++ii)
-    //     {
-    //         for(int jj = 0; jj < 3; ++jj)
-    //         {
-    //             if(!(fabs(resT.matrix_[ii][jj] - resT_p.rotation_matrix_.matrix_[ii][jj]) < 0.000001))
-    //             {
-    //                 cout<<"Ratation Matrix: the "<<ii<<"th "<<jj<<"th element of two dynamic output is different"<<endl;
-    //                 cout<<"m44 & transmatrix results are: "<<resT.matrix_[ii][jj]<<"\t"<<resT_p.rotation_matrix_.matrix_[ii][jj]<<endl;
-    //             }
-    //         }
-    //     }
-    //     if(!(fabs(resT.matrix_[0][3] - resT_p.trans_vector_.x_) < 0.000001))
-    //     {
-    //         cout<<"XYZ Vector: the 0th 3rd element of two dynamic output is different"<<endl;
-    //         cout<<"m44 & transmatrix results are : "<<resT.matrix_[0][3]<<"\t"<<resT_p.trans_vector_.x_<<endl;
-    //     }
-    //     if(!(fabs(resT.matrix_[1][3] - resT_p.trans_vector_.y_) < 0.000001))
-    //     {
-    //         cout<<"XYZ Vector: the 1th 3rd element of two dynamic output is different"<<endl;
-    //         cout<<"m44 & transmatrix results are : "<<resT.matrix_[1][3]<<"\t"<<resT_p.trans_vector_.y_<<endl;
-    //     }
-    //     if(!(fabs(resT.matrix_[2][3] - resT_p.trans_vector_.z_) < 0.000001))
-    //     {
-    //         cout<<"XYZ Vector: the 2th 3rd element of two dynamic output is different"<<endl;
-    //         cout<<"m44 & transmatrix results are : "<<resT.matrix_[2][3]<<"\t"<<resT_p.trans_vector_.z_<<endl;
-    //     }
-
-
-    //resT.print("res = T_c*inv_T_k1=");
     resT.rightMultiply(T_k);
-    //resT.print("res = res*T_k=");
     return true;
 }
 
@@ -1738,6 +1735,18 @@ void OnlineTrajectoryPlanner::rtm_r2xyzabc(Matrix44& u,Vector3& res_xyz, Vector3
     m33.matrix_[1][0] = u.matrix_[1][0];m33.matrix_[1][1] = u.matrix_[1][1];m33.matrix_[1][2] = u.matrix_[1][2];
     m33.matrix_[2][0] = u.matrix_[2][0];m33.matrix_[2][1] = u.matrix_[2][1];m33.matrix_[2][2] = u.matrix_[2][2];
     res_abc = online_turnMatrixEuler(m33);
+}
+
+void OnlineTrajectoryPlanner::rtm_r2xyzabc(TransMatrix& u, Point& res_xyz, Euler& res_abc)
+{
+    res_xyz.zero();
+    res_abc.zero();
+    res_xyz.x_ = u.trans_vector_.x_;res_xyz.y_ = u.trans_vector_.y_;res_xyz.z_ = u.trans_vector_.z_;
+    Matrix33 m33;
+    m33.matrix_[0][0] = u.rotation_matrix_.matrix_[0][0];m33.matrix_[0][1] = u.rotation_matrix_.matrix_[0][1];m33.matrix_[0][2] = u.rotation_matrix_.matrix_[0][2];
+    m33.matrix_[1][0] = u.rotation_matrix_.matrix_[1][0];m33.matrix_[1][1] = u.rotation_matrix_.matrix_[1][1];m33.matrix_[1][2] = u.rotation_matrix_.matrix_[1][2];
+    m33.matrix_[2][0] = u.rotation_matrix_.matrix_[2][0];m33.matrix_[2][1] = u.rotation_matrix_.matrix_[2][1];m33.matrix_[2][2] = u.rotation_matrix_.matrix_[2][2];
+    res_abc = online_turnMatrixEuler_(m33);
 }
 
 // void OnlineTrajectoryPlanner::Fir_Bspline_algorithm_test(void)

@@ -205,9 +205,27 @@ int main()
 						printf("\n");
 					}
 					break;
+				}
+                case 0x000045C3://"/publish/controller/system_status"
+				{
+					MessageType_DoubleList fdb;
+					if(!test.decodeMessageType(msg.element[i].data.bytes, msg.element[i].data.size, 
+						(void*)&fdb, MessageType_DoubleList_fields))
+					{
+						printf("Sub : parse data msg failed !!\n");
+					}
+					else 
+					{
+						printf("Sub : /publish/controller/system_status, hash = 0x%x, count=%d\n", msg.element[i].hash, fdb.data_count);
+						for (size_t i = 0; i < fdb.data_count; ++i)
+						{
+							printf("%.4f, ", fdb.data[i]);
+						}
+						printf("\n");
+					}
+					break;
 
 				}
-
                 default:
                 {
                     printf("unknow hash\n");

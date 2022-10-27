@@ -211,5 +211,6 @@ void TpComm::initPublishElementTable()
     publish_service =   {   "/publish/iosafety/safety_feedback",  0x0001472B, "MessageType.Uint32List(count=2)",  &TpComm::handlePublishElement0x0001472B,    Comm_Authority_TP_SIMMULATOR,   };  publish_element_table_.push_back(publish_service); 
 	publish_service =	{	"/publish/torque_feedback", 0x0000AEAB, "MessageType.DoubleList(count=6)",	&TpComm::handlePublishElement0x0000AEAB,	Comm_Authority_TP_SIMMULATOR,	};	publish_element_table_.push_back(publish_service);
 	publish_service =	{	"/publish/fio_feedback",	0x00006EFB,	"MessageType.Uint32List(count=2)",	&TpComm::handlePublishElement0x00006EFB,	Comm_Authority_TP_SIMMULATOR,	};	publish_element_table_.push_back(publish_service); 
+	publish_service =	{	"/publish/controller/system_status",	0x000045C3,	"MessageType.DoubleList",	&TpComm::handlePublishElement0x000045C3,	Comm_Authority_TP_SIMMULATOR,	};	publish_element_table_.push_back(publish_service); 
 
 }

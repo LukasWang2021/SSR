@@ -75,3 +75,12 @@ void TpComm::handlePublishElement0x00006EFB(Comm_Publish& package, int element_i
         LogProducer::error("publish", "handlePublishElement0x00006EFB: failed to encode");
     }
 }
+
+/********publish/controller/system_status, MessageType_DoubleList**********/	
+void TpComm::handlePublishElement0x000045C3(Comm_Publish& package, int element_index, TpPublishElement& list_element)
+{
+	if(!encodePublishElement(package.element[element_index].data, MessageType_DoubleList_fields, list_element.data_ptr))
+    {
+        LogProducer::error("publish", "handlePublishElement0x000045C3: failed to encode");
+    }
+}

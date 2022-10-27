@@ -163,6 +163,7 @@ private:
     MessageType_Uint32List io_safety_fdb_;
 	MessageType_DoubleList torque_fdb_;
 	MessageType_Uint32List fio_info_fdb_;
+	MessageType_DoubleList system_status_fdb_;
 
     void initPublishTable();
     void initPublishQuickSearchTable();
@@ -175,6 +176,7 @@ private:
     void* getIOSafetyFdbPtr();
     void* getTorqueFdbPtr();
 	void* getFioInfoPtr();
+	void* getSystemStatusPtr();
 	
     // update publish element
     void updateAxisFdb();
@@ -184,6 +186,7 @@ private:
     void updateIOSafetyFdb();
 	void updateTorqueFdb();
 	void updateFioInfoFdb();
+	void updateSystemStatusFdb();
 };
 
 }

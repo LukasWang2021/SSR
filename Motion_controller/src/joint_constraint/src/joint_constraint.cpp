@@ -75,7 +75,7 @@ bool Constraint::isMask(uint32_t index)
 
 void Constraint::setConstraint(const Joint &lower, const Joint &upper)
 {
-    for (uint32_t i = 0; i < joint_num_; i++)
+    for (uint32_t i = 0; i < joint_num_; ++i)
     {
         constraint_.lower[i] = lower[i];
         constraint_.upper[i] = upper[i];
@@ -84,13 +84,13 @@ void Constraint::setConstraint(const Joint &lower, const Joint &upper)
 
 void Constraint::getConstraint(Joint &lower, Joint &upper) const
 {
-    for (uint32_t i = 0; i < joint_num_; i++)
+    for (uint32_t i = 0; i < joint_num_; ++i)
     {
         lower[i] = constraint_.lower[i];
         upper[i] = constraint_.upper[i];
     }
 
-    for (uint32_t i = joint_num_; i < NUM_OF_JOINT; i++)
+    for (uint32_t i = joint_num_; i < NUM_OF_JOINT; ++i)
     {
         lower[i] = 0;
         upper[i] = 0;

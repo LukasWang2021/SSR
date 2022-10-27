@@ -16,6 +16,7 @@
 #include "onlineTrj_planner.h"
 #include "fio_device.h"
 
+
 using namespace std;
 using namespace basic_alg;
 using namespace group_space;
@@ -72,31 +73,37 @@ void MotionControl::ringOnlineTrajTask(void)
         t_vp_cahce_status = online_vp_status_[online_trj_planner_ptr->read_TmatrixCnt];
         memcpy(t_vp_cache_data, &online_vp_cache_[(online_trj_planner_ptr->read_TmatrixCnt)*16], 16*sizeof(double));
         online_trj_planner_ptr->read_TmatrixCnt++;
+
         if(online_trj_planner_ptr->read_TmatrixCnt >= 1000)
         {
             online_trj_planner_ptr->read_TmatrixCnt = 0;
         } 
-        //LogProducer::info("ringOnlineTrajTask","read_TmatrixCnt|receive_TmatrixCnt = %d|%d",online_trj_planner_ptr->read_TmatrixCnt,online_trj_planner_ptr->receive_TmatrixCnt);
+
         ret_receive_T_matrix = receive_T_matrix_data(t_vp_cahce_status,t_vp_cache_data);
+
         if(ret_receive_T_matrix != 0 )
         {
             flag_recv_new_VPMatrix_ = false;
             online_trj_planner_ptr->read_TmatrixCnt = 0;
             online_trj_planner_ptr->receive_TmatrixCnt = 0;
         }
+
         if(!flag_recv_new_VPMatrix_)
         {
             break;
         }
     }
     setOnlinePointBufptr();
-    // online_vp_cache is empty, OPEN this flag until sys rececives new matrixs data
+
+    // online_vp_cache is empty, OPEN this flag until program rececives new matrixs data
     flag_recv_new_VPMatrix_ = false;
+
     online_trajData_mutex_.unlock();
 }
 
+
 /*
-* 函数功能: 在线轨迹运动过程中检测到轴角位置超限, 运动暂停处理
+* details: check whether joint goes over soft_constraint, if it is, stop moving
 */
 void MotionControl::OnlineMove_exceedJointLimit_pause()
 {
@@ -113,7 +120,9 @@ void MotionControl::OnlineMove_exceedJointLimit_pause()
     receive_T_matrix_data(2,temp_matrix_data);
     setOnlinePointBufptr();
     */
-    checkOnlineMoveError(1);//重置成功
+
+    // reset successfully
+    checkOnlineMoveError(1);
 }
 
 void MotionControl::OnlineMove_exceedJointLimit_pause2(TrjPoint point)
@@ -125,6 +134,7 @@ void MotionControl::OnlineMove_exceedJointLimit_pause2(TrjPoint point)
 
     Point in_xyz;
     Euler in_abc;
+
     // Vector3 in_xyz, in_abc;
     in_xyz.x_ = point.x_;
     in_xyz.y_ = point.y_;
@@ -134,16 +144,20 @@ void MotionControl::OnlineMove_exceedJointLimit_pause2(TrjPoint point)
     in_abc.c_ = point.c_;
 
     LogProducer::info("OnlineMove_exceedJointLimit_pause2",">>>END apend>>> t_Nstep_Q=%d, t_mod=%d,cha=%d END_point=[%lf,%lf,%lf,%lf,%lf,%lf]",
-    t_Nstep_Q,t_mod,cha,in_xyz.x_,in_xyz.y_,in_xyz.z_,in_abc.a_,in_abc.b_,in_abc.c_);
+                        t_Nstep_Q, t_mod,cha, in_xyz.x_, in_xyz.y_, in_xyz.z_, in_abc.a_, in_abc.b_, in_abc.c_);
     for(int i = 0; i < (cha - 1); ++i)
     {
         online_alg_out_trjPointCnt += online_trj_planner_ptr->traj_on_FIR_Bspline(in_xyz, in_abc, 1, online_alg_out_trjPointCnt);
-        LogProducer::info("OnlineMove_exceedJointLimit_pause2",">>>END apend>>> %d|%d,online_alg_out_trjPointCnt=%d",i,cha,online_alg_out_trjPointCnt);
+
+        LogProducer::info("OnlineMove_exceedJointLimit_pause2",">>>END apend>>> %d|%d,online_alg_out_trjPointCnt=%d",
+                        i, cha, online_alg_out_trjPointCnt);
     }
     online_alg_out_trjPointCnt += online_trj_planner_ptr->traj_on_FIR_Bspline(in_xyz, in_abc, 2, online_alg_out_trjPointCnt);
     flag_recv_new_VPMatrix_ = false;
     setOnlinePointBufptr();
-    checkOnlineMoveError(1);// reset SUCCESS
+
+    // reset successfully
+    checkOnlineMoveError(1);
 }
 
 void MotionControl::ringPlannerTask(void)
@@ -574,10 +588,10 @@ void MotionControl::xzc_funTest()
 {
     Matrix44  TTT;
     Vector3 res_xyz,res_abc;
-TTT.matrix_[0][0]=1;TTT.matrix_[0][1]=0;TTT.matrix_[0][2]=0;TTT.matrix_[0][3]=0;
-TTT.matrix_[1][0]=0;TTT.matrix_[1][1]=-1;TTT.matrix_[1][2]=0;TTT.matrix_[1][3]=0;
-TTT.matrix_[2][0]=0;TTT.matrix_[2][1]=0;TTT.matrix_[2][2]=-1;TTT.matrix_[2][3]=0;
-TTT.matrix_[3][0]=0;TTT.matrix_[3][1]=0;TTT.matrix_[3][2]=0;TTT.matrix_[3][3]=1;
+    TTT.matrix_[0][0]=1;TTT.matrix_[0][1]=0;TTT.matrix_[0][2]=0;TTT.matrix_[0][3]=0;
+    TTT.matrix_[1][0]=0;TTT.matrix_[1][1]=-1;TTT.matrix_[1][2]=0;TTT.matrix_[1][3]=0;
+    TTT.matrix_[2][0]=0;TTT.matrix_[2][1]=0;TTT.matrix_[2][2]=-1;TTT.matrix_[2][3]=0;
+    TTT.matrix_[3][0]=0;TTT.matrix_[3][1]=0;TTT.matrix_[3][2]=0;TTT.matrix_[3][3]=1;
     online_trj_planner_ptr->rtm_r2xyzabc(TTT,res_xyz,res_abc);
     res_xyz.print("res_xyz=");
     res_abc.print_abc("res_abc=");
@@ -616,45 +630,38 @@ ErrorCode MotionControl::setOnlineVpointCache(int num_matrix,int * p_status, dou
 {
     assert(p_marixArray != NULL);
     ErrorCode ret_code = 1;
-    online_trajData_mutex_.lock();//------------------------------------------------------------------
+    online_trajData_mutex_.lock();
 
-    if(*p_status == 0)//判断该包数据中第一个点是否为起点(起点一定在某包数据中的第一个点)
+    // ------------------------------------------------------------------
+    // check whether the first point of the package is the beginning point (beginning point must be the first point of one of the given packages)
+    if(*p_status == 0)
     {
         online_trj_planner_ptr->online_trajectory_algorithm_params_init();
         online_trj_planner_ptr->receive_TmatrixCnt = 0;
         online_trj_planner_ptr->read_TmatrixCnt = 0;
-        /*
-        LogProducer::info("setOnlineVpointCache","sample_time=%lf,generate_interval=%lf,N_step_P=%d,N_step_Q=%d,N_interpP=%lf,N_interpQ=%lf,trj_ratio=%lf,recvTmatrix_buffLen=%d\n",
-            online_trj_planner_ptr->online_alg_params_.sample_time,
-            online_trj_planner_ptr->online_alg_params_.generate_traj_interval,
-            online_trj_planner_ptr->online_alg_params_.N_step_P,
-            online_trj_planner_ptr->online_alg_params_.N_step_Q,
-            online_trj_planner_ptr->online_alg_params_.N_interp_P,
-            online_trj_planner_ptr->online_alg_params_.N_interp_Q,
-            online_trj_planner_ptr->online_alg_params_.trj_ratio,
-            online_trj_planner_ptr->online_alg_params_.online_receive_Tmatrix_buff_len);
-        */
     }
     memcpy(&online_vp_status_[online_trj_planner_ptr->receive_TmatrixCnt],p_status,num_matrix*sizeof(int));
     memcpy(&online_vp_cache_[online_trj_planner_ptr->receive_TmatrixCnt*16], p_marixArray, 16*num_matrix*sizeof(double));
     online_trj_planner_ptr->receive_TmatrixCnt += num_matrix;
-    //LogProducer::info("setOnlineVpointCache","online_trj_planner_ptr->receive_TmatrixCnt=%d",online_trj_planner_ptr->receive_TmatrixCnt);
-    //if(online_trj_planner_ptr->receive_TmatrixCnt > online_trj_planner_ptr->get_onlineRecvTmatrixBuffLen())
+
     if(online_trj_planner_ptr->receive_TmatrixCnt >= 1000)
     {
         online_trj_planner_ptr->receive_TmatrixCnt = 0;
     }
     flag_recv_new_VPMatrix_ = true;
     ret_code = SUCCESS;
-    online_trajData_mutex_.unlock();//----------------------------------------------------------------------
+    online_trajData_mutex_.unlock();
+    // ----------------------------------------------------------------------
     return ret_code;
 }
 
 // check through axis 1 to 6, return the legal axis number before error (if there it is). if no error, return 6
 int MotionControl::JointInConstraint_axisCnt(basic_alg::Joint &joint, int cnt)
 {
-    const double constraint_lower[6]={-1.57, -1.3, -2, -3.1, -1.6, -3.1};
-    const double constraint_upper[6]={1.57, 1.5, -0.25, 3.1, -0.2, 3.1};
+
+
+    //const double constraint_lower[6]={-1.57, -1.3, -2, -3.1, -1.6, -3.1};
+    //const double constraint_upper[6]={1.57, 1.5, -0.25, 3.1, -0.2, 3.1};
     double precision_val = 0.0001;
     if(cnt==1)
     {
@@ -665,13 +672,29 @@ int MotionControl::JointInConstraint_axisCnt(basic_alg::Joint &joint, int cnt)
         precision_val = 0.000001;
     }
     
+    auto k1 = online_trj_planner_ptr->online_upper.begin();
+    auto k2 = online_trj_planner_ptr->online_lower.begin();
+
+    // test print
+    printf("online_soft_constraint check: current upper and lower are:\t%.2f\t%.2f\n", (*k1), (*k2));
+
+    // for (uint32_t i = 0; i < 6; ++i)
+    // {
+    //     if(!((joint[i] > (constraint_lower[i]-precision_val)) && (joint[i] < (constraint_upper[i]+precision_val))))
+    //     {
+    //         return i;
+    //     }
+    // }
     for (uint32_t i = 0; i < 6; ++i)
     {
-        if(!((joint[i] > (constraint_lower[i]-precision_val)) && (joint[i] < (constraint_upper[i]+precision_val))))
+        if(!((joint[i] > ((*k2))-precision_val)) && (joint[i] < ((*k1)+precision_val)))
         {
             return i;
         }
+        ++k1;
+        ++k2;
     }
+
     return 6;
 }
 
@@ -681,7 +704,7 @@ bool MotionControl::isAxisAngleOutSpeed(bool startFlag, Joint jnt)
     static Joint last_jnt;
     //const double limit_axis_cha[6] = {0.000267, 0.002571, 0.002624, 0.001545,0.001258, 0.001125};
     //const double limit_axis_cha[6] = {0.002670, 0.025710, 0.026240, 0.015450,0.012580, 0.011250};
-    const double limit_axis_cha[6] = {0.002600, 0.002600, 0.0027000, 0.002500, 0.002600, 0.003500};
+    const double limit_axis_cha[6] = {0.002600, 0.002600, 0.0027000, 0.002500, 0.002600, 0.002700};
 
     Joint jnt_speed;
     if(startFlag)
@@ -737,15 +760,17 @@ ErrorCode MotionControl::receive_T_matrix_data(int status, double * p_marixArray
     // abc mirroring ratio, this value read from yaml file in /root/robotdata
     double k_abc = online_trj_planner_ptr->online_alg_params_.trj_ratio_abc; 
     
-    PoseEuler StartPositionPose;
-    TransMatrix start_trans_matrix;
+    PoseEuler      StartPositionPose;
+    TransMatrix    start_trans_matrix;
     PoseAndPosture pos_posture;  
-    Joint temp_jnt;
+    Joint          temp_jnt;
 
-    Point res_xyz;
-    Euler res_abc;
+
     static Point v_xyz;
     static Euler v_abc;
+    Point        res_xyz;
+    Euler        res_abc;
+    
 
     ++receive_T_matrix_iterCnt;
 
@@ -753,26 +778,27 @@ ErrorCode MotionControl::receive_T_matrix_data(int status, double * p_marixArray
     {
         group_ptr_->setOnlineTrjFirstPointCondition();
         online_alg_out_trjPointCnt = 0;
-        receive_T_matrix_iterCnt = 1;
+        receive_T_matrix_iterCnt   = 1;
+        
         StartPositionPose = getCurrentPose();
         StartPositionPose.convertToTransMatrix(T_r0_R);
 
-        T_c = T_r0_R;
+        T_c      = T_r0_R;
         last_T_k = T_c;
 
         online_trj_planner_ptr->rtm_r2xyzabc(T_r0_R,res_xyz,res_abc);
         v_xyz = res_xyz;
         v_abc = res_abc;
 
-        pos_posture.pose.point_ = res_xyz;
+        pos_posture.pose.point_    = res_xyz;
         pos_posture.pose.euler_.a_ = res_abc.c_;
         pos_posture.pose.euler_.b_ = res_abc.b_;
         pos_posture.pose.euler_.c_ = res_abc.a_;
 
-        pos_posture.posture.arm =   1;
+        pos_posture.posture.arm   = 1;
         pos_posture.posture.elbow = 1;
         pos_posture.posture.wrist = 1;
-        pos_posture.posture.flip =  0;
+        pos_posture.posture.flip  = 0;
         memset(&(pos_posture.turn), 0, 9 * sizeof(int));
         memset(&temp_jnt, 0, sizeof(temp_jnt));
 
@@ -1489,7 +1515,7 @@ ErrorCode MotionControl::setOnlinePointBufptr()
     {
         //LogProducer::warn("setOnlinePointBufptr","[###setOnlinePointBufptr### online_alg_out_trjPointCnt=%d]",online_alg_out_trjPointCnt);
         PoseAndPosture pos;  Joint jnt;
-        for(int i =0;i<online_alg_out_trjPointCnt; i++)
+        for(int i = 0; i < online_alg_out_trjPointCnt; ++i)
         {
             switch(online_trj_planner_ptr->trj_point_buf[i].status)
             {
@@ -1508,7 +1534,8 @@ ErrorCode MotionControl::setOnlinePointBufptr()
             pos.posture.elbow = 1;
             pos.posture.wrist = 1;
             pos.posture.flip  = 0;
-//LogProducer::info("AlgOutputPos","(%d) %lf,%lf,%lf,%lf,%lf,%lf status=%d",i,pos.pose.point_.x_,pos.pose.point_.y_,pos.pose.point_.z_,pos.pose.euler_.a_,pos.pose.euler_.b_,pos.pose.euler_.c_,online_trj_planner_ptr->trj_point_buf[i].status);
+
+            //LogProducer::info("AlgOutputPos","(%d) %lf,%lf,%lf,%lf,%lf,%lf status=%d",i,pos.pose.point_.x_,pos.pose.point_.y_,pos.pose.point_.z_,pos.pose.euler_.a_,pos.pose.euler_.b_,pos.pose.euler_.c_,online_trj_planner_ptr->trj_point_buf[i].status);
             memset(&(pos.turn), 0, 9*sizeof(int));
             memset(&jnt, 0, sizeof(jnt));
             pos.pose.euler_.a_ = online_trj_planner_ptr->trj_point_buf[i].c_;
@@ -1520,15 +1547,16 @@ ErrorCode MotionControl::setOnlinePointBufptr()
                     err = JointInConstraint_axisCnt(jnt,0xFF);
                     if(err != 6)
                     {
-                        LogProducer::warn("setOnlinePointBufptr convertCartToJoint","axis%d may not in constraint (%lf,%lf,%lf,%lf,%lf,%lf)",err+1,
-                        jnt.j1_,jnt.j2_,jnt.j3_,jnt.j4_,jnt.j5_,jnt.j6_);
+                        LogProducer::warn("setOnlinePointBufptr convertCartToJoint","axis%d may not in constraint (%lf,%lf,%lf,%lf,%lf,%lf)",
+                                            err+1, jnt.j1_,jnt.j2_,jnt.j3_,jnt.j4_,jnt.j5_,jnt.j6_);
                     }
                 }
                 else
                 {
                     LogProducer::error("setOnlinePointBufptr convertCartToJoint","doIK error!!!---Alg_output_error_pos i=%d (%lf,%lf,%lf,%lf,%lf,%lf) status=%d",
-                    i,pos.pose.point_.x_,pos.pose.point_.y_,pos.pose.point_.z_,pos.pose.euler_.c_,pos.pose.euler_.b_,pos.pose.euler_.a_,
-                    tmp_OnlineJointPointLevelBuf[i]);
+                                            i, pos.pose.point_.x_, pos.pose.point_.y_, pos.pose.point_.z_,
+                                            pos.pose.euler_.c_, pos.pose.euler_.b_, pos.pose.euler_.a_,
+                                            tmp_OnlineJointPointLevelBuf[i]);
                 }
                 tmp_OnlineJointPointBuf[i*6+0]=jnt.j1_;
                 tmp_OnlineJointPointBuf[i*6+1]=jnt.j2_;

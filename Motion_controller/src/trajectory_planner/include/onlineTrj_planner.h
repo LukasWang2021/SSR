@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <string>
 #include "yaml_help.h"
+#include "common_file_path.h"
 
 /**
  * @brief structure of online trajectory points
@@ -67,6 +68,10 @@ class OnlineTrajectoryPlanner
 public:
     // storage of necessary parameters
     onlineTrjAlgParam online_alg_params_;
+    // storage of constraints for online function
+    vector<double> online_upper;
+    vector<double> online_lower;
+
     // temporary cache buffter for Bspline algorithm output
     TrjPoint trj_point_buf[160];
     // data of receving matrixes from 3Dtouch device
@@ -276,6 +281,7 @@ public:
     */
     void online_trajectory_algorithm_params_init();
     bool load_OnlineMove_params_Config();
+    bool load_online_constraints();
 
     /**
     * @brief functions of setting cartesian ratio (from touch to robot), this will change yaml file

@@ -35,6 +35,7 @@ OnlineTrajectoryPlanner::OnlineTrajectoryPlanner()
                                             + ALGORITHM_DIR 
                                             + "config_OnlineMove_params.yaml";
     load_OnlineMove_params_Config();
+    load_online_constraints();
 }
 
 
@@ -591,7 +592,7 @@ int OnlineTrajectoryPlanner::traj_on_FIR_Bspline(Point xyz, Euler abc,int status
         sp_cnt = 0;
         vp_cnt = 0;
         vq_cnt = 0;
-        j = 0;
+        j      = 0;
 
         for(int i = 0; i < (2 * m + Pre_seg + 1); ++i)
         {
@@ -605,15 +606,15 @@ int OnlineTrajectoryPlanner::traj_on_FIR_Bspline(Point xyz, Euler abc,int status
         Q2.zero();
         Q3.zero();
 
-        memset(Qnew, 0, 50 * sizeof(Quaternion));
-        memset(out_abc, 0, 50 * sizeof(Euler));
+        memset(Qnew,        0, 50 * sizeof(Quaternion));
+        memset(out_abc,     0, 50 * sizeof(Euler));
         memset(out_xyz_buf, 0, 255 * sizeof(Point));
         memset(out_abc_buf, 0, 255 * sizeof(Euler));
 
         out_xyz_cnt = 0;
         out_abc_cnt = 0;
-        out_cnt = 0;
-        out_status = 0;
+        out_cnt     = 0;
+        out_status  = 0;
 
     } else if(status == 2) // if end
     {
@@ -1961,10 +1962,10 @@ bool OnlineTrajectoryPlanner::load_OnlineMove_params_Config()
         || !yaml_help_.getParam("online_trj_ratio_abc", online_alg_params_.trj_ratio_abc)
         || !yaml_help_.getParam("online_receive_Tmatrix_buff_len", online_alg_params_.online_receive_Tmatrix_buff_len))
     {
-        std::cout << " Failed load config_OnlineMove_params.yaml " << std::endl;
+        printf("OnlineTrajectoryPlanner -> ERROR::Failed load config_OnlineMove_params.yaml\n");
         return false;
     }
-    printf("\nload_OnlineMove_params_Config:\nsample_time=%lf,generate_interval=%lf,N_step_P=%d,N_step_Q=%d,N_interpP=%lf,N_interpQ=%lf,trj_ratio_xyz=%lf,trj_ratio_abc=%lf,recvTmatrix_buffLen=%d\n",
+    printf("OnlineTrajectoryPlanner -> SUCCESS::load_OnlineMove_params_Config:\nsample_time=%lf\tgenerate_interval=%lf\tN_step_P=%d\tN_step_Q=%d\tN_interpP=%lf\tN_interpQ=%lf\ntrj_ratio_xyz=%lf\ttrj_ratio_abc=%lf\t,recvTmatrix_buffLen=%d\n",
             online_alg_params_.sample_time,
             online_alg_params_.generate_traj_interval,
             online_alg_params_.N_step_P,
@@ -1976,6 +1977,31 @@ bool OnlineTrajectoryPlanner::load_OnlineMove_params_Config()
             online_alg_params_.online_receive_Tmatrix_buff_len);
     return true;
 }
+
+bool OnlineTrajectoryPlanner::load_online_constraints()
+{
+    if (!yaml_help_.loadParamFile(AXIS_GROUP_DIR"soft_constraint.yaml")
+        || !yaml_help_.getParam("soft_constraint/upper", online_upper)
+        || !yaml_help_.getParam("soft_constraint/lower", online_lower))
+    {
+        printf("OnlineTrajectoryPlanner -> ERROR::Failed load soft_constraints.yaml\n");
+        return false;
+    }
+    printf("OnlineTrajectoryPlanner -> SUCCESS::online_upper:\t");
+    for(auto i = online_upper.begin();i!=online_upper.end();++i)
+    {
+        printf("%.2f\t", *i);
+    }
+    printf("\nOnlineTrajectoryPlanner -> SUCCESS::online_lower:\t");
+    for(auto i = online_lower.begin();i!=online_lower.end();++i)
+    {
+        printf("%.2f\t", *i);
+    }
+    printf("\n");
+    return true;
+}
+
+
 /*
 sample_time : 0.002 #touch采样时间间隔
 generate_traj_interval  : 0.001 #生成轨迹间隔

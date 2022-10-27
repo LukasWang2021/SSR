@@ -224,6 +224,7 @@ private:
     bool flag_recv_new_VPMatrix_= false;// false-现在没有收到VP点矩阵, true-收到VP点矩阵
     int *online_vp_status_; //用于暂存在线轨迹接收途经点矩阵状态
     double *online_vp_cache_;//用于暂存在线轨迹接收途经点矩阵数据
+    
 
     fst_ctrl::CoordinateManager* coordinate_manager_ptr_;
     fst_ctrl::ToolManager* tool_manager_ptr_;

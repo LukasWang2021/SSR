@@ -659,9 +659,6 @@ ErrorCode MotionControl::setOnlineVpointCache(int num_matrix,int * p_status, dou
 int MotionControl::JointInConstraint_axisCnt(basic_alg::Joint &joint, int cnt)
 {
 
-
-    //const double constraint_lower[6]={-1.57, -1.3, -2, -3.1, -1.6, -3.1};
-    //const double constraint_upper[6]={1.57, 1.5, -0.25, 3.1, -0.2, 3.1};
     double precision_val = 0.0001;
     if(cnt==1)
     {
@@ -675,16 +672,6 @@ int MotionControl::JointInConstraint_axisCnt(basic_alg::Joint &joint, int cnt)
     auto k1 = online_trj_planner_ptr->online_upper.begin();
     auto k2 = online_trj_planner_ptr->online_lower.begin();
 
-    // test print
-    printf("online_soft_constraint check: current upper and lower are:\t%.2f\t%.2f\n", (*k1), (*k2));
-
-    // for (uint32_t i = 0; i < 6; ++i)
-    // {
-    //     if(!((joint[i] > (constraint_lower[i]-precision_val)) && (joint[i] < (constraint_upper[i]+precision_val))))
-    //     {
-    //         return i;
-    //     }
-    // }
     for (uint32_t i = 0; i < 6; ++i)
     {
         if(!((joint[i] > ((*k2))-precision_val)) && (joint[i] < ((*k1)+precision_val)))

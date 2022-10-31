@@ -117,7 +117,7 @@ public:
      */
     bool inverse(TransMatrix& result_matrix, double valve = 0.001);
     void print(std::string comment = "") const;
-    void print_(std::string comment = "transmatrix doesnt have last line") const;
+    void print_(std::string comment = "") const;
 	
 	void inverse_simplify(void);	
 	void inverse_simplify(TransMatrix& result_matrix);

@@ -137,7 +137,6 @@ ERROR:
 
 int32_t basic_alg::inverse(const double *p_matrix, int dim, double *p_inv)
 {
-    //printf("MotionController :: basic_inverse has been used\n");
     integer row = dim;
     integer col = dim;
     integer ret_info = 0;

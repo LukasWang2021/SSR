@@ -1542,16 +1542,23 @@ ErrorCode MotionControl::setOnlinePointBufptr()
             pos.pose.euler_.c_ = online_trj_planner_ptr->trj_point_buf[i].a_;
             err = convertCartToJoint(pos,user_frame_id_,tool_frame_id_,jnt);//将xyzabc逆解为轴角
             #if 1
-                if(err == SUCCESS)
-                {
-                    err = JointInConstraint_axisCnt(jnt,0xFF);
-                    if(err != 6)
-                    {
-                        LogProducer::warn("setOnlinePointBufptr convertCartToJoint","axis%d may not in constraint (%lf,%lf,%lf,%lf,%lf,%lf)",
-                                            err+1, jnt.j1_,jnt.j2_,jnt.j3_,jnt.j4_,jnt.j5_,jnt.j6_);
-                    }
-                }
-                else
+                // if(err == SUCCESS)
+                // {
+                //     err = JointInConstraint_axisCnt(jnt,0xFF);
+                //     if(err != 6)
+                //     {
+                //         LogProducer::warn("setOnlinePointBufptr convertCartToJoint","axis%d may not in constraint (%lf,%lf,%lf,%lf,%lf,%lf)",
+                //                             err+1, jnt.j1_,jnt.j2_,jnt.j3_,jnt.j4_,jnt.j5_,jnt.j6_);
+                //     }
+                // }
+                // else
+                // {
+                //     LogProducer::error("setOnlinePointBufptr convertCartToJoint","doIK error!!!---Alg_output_error_pos i=%d (%lf,%lf,%lf,%lf,%lf,%lf) status=%d",
+                //                             i, pos.pose.point_.x_, pos.pose.point_.y_, pos.pose.point_.z_,
+                //                             pos.pose.euler_.c_, pos.pose.euler_.b_, pos.pose.euler_.a_,
+                //                             tmp_OnlineJointPointLevelBuf[i]);
+                // }
+                if(err != SUCCESS)
                 {
                     LogProducer::error("setOnlinePointBufptr convertCartToJoint","doIK error!!!---Alg_output_error_pos i=%d (%lf,%lf,%lf,%lf,%lf,%lf) status=%d",
                                             i, pos.pose.point_.x_, pos.pose.point_.y_, pos.pose.point_.z_,
@@ -1565,7 +1572,7 @@ ErrorCode MotionControl::setOnlinePointBufptr()
                 tmp_OnlineJointPointBuf[i*6+4]=jnt.j5_;
                 tmp_OnlineJointPointBuf[i*6+5]=jnt.j6_;
                 //LogProducer::info("setOnlinePointBufptr","converted tmp_OnlineJointPointBuf[%d]=<%lf,%lf,%lf,%lf,%lf,%lf> status=%d",
-                //    i,tmp_OnlineJointPointBuf[i*6+0],tmp_OnlineJointPointBuf[i*6+1],tmp_OnlineJointPointBuf[i*6+2],tmp_OnlineJointPointBuf[i*6+3],tmp_OnlineJointPointBuf[i*6+4],tmp_OnlineJointPointBuf[i*6+5],online_trj_planner_ptr->trj_point_buf[i].status);
+                //                      i,tmp_OnlineJointPointBuf[i*6+0],tmp_OnlineJointPointBuf[i*6+1],tmp_OnlineJointPointBuf[i*6+2],tmp_OnlineJointPointBuf[i*6+3],tmp_OnlineJointPointBuf[i*6+4],tmp_OnlineJointPointBuf[i*6+5],online_trj_planner_ptr->trj_point_buf[i].status);
                     
             #else
             if(err == SUCCESS)

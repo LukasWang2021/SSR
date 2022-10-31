@@ -34,7 +34,10 @@ OnlineTrajectoryPlanner::OnlineTrajectoryPlanner()
     config_OnlineMove_params_file_path_ = config_OnlineMove_params_file_path_ 
                                             + ALGORITHM_DIR 
                                             + "config_OnlineMove_params.yaml";
+    // load necessary params for online algorithms
     load_OnlineMove_params_Config();
+
+    // load soft constraints
     load_online_constraints();
 }
 
@@ -325,12 +328,14 @@ Vector3 OnlineTrajectoryPlanner::rtm_quat2abc(Quaternion& Q)
     Matrix33 R;
     Vector3 abc;
     double norm = Q.norm();
+    double norm_inv = 1.0 / Q.norm();
+
     if(norm != 0)
     {
-        Q.w_ = Q.w_/norm;
-        Q.x_ = Q.x_/norm;
-        Q.y_ = Q.y_/norm;
-        Q.z_ = Q.z_/norm;
+        Q.w_ = Q.w_ * norm_inv;
+        Q.x_ = Q.x_ * norm_inv;
+        Q.y_ = Q.y_ * norm_inv;
+        Q.z_ = Q.z_ * norm_inv;
     }
     R = rtm_quat2r(Q);
     abc = online_turnMatrixEuler(R);
@@ -403,18 +408,18 @@ Quaternion OnlineTrajectoryPlanner::rtm_Slerpt(Quaternion& q0, Quaternion& q1, d
     Q_theta = acos(dq);
     if(abs(Q_theta) > 1e-8)
     {
-        sinv = 1/(sin(Q_theta));
-        k0 = sin((1-t)*Q_theta);
-        k1 = sin(t*Q_theta);
-        Qt = q0*k0;
+        sinv = 1 / (sin(Q_theta));
+        k0 = sin((1-t) * Q_theta);
+        k1 = sin(t * Q_theta);
+        Qt = q0 * k0;
         Qt = Qt + q1*k1;
-        Qt = Qt*sinv;
+        Qt = Qt * sinv;
     }
     else
     {
         Qt = q1;
     }
-    Qt = Qt/(Qt.norm());
+    Qt = Qt / (Qt.norm());
     return Qt;
 }
 
@@ -664,7 +669,7 @@ int OnlineTrajectoryPlanner::traj_on_FIR_Bspline(Point xyz, Euler abc,int status
 
         for(int i = 0; i < (2 * m + 1); ++i)
         {
-            c_xyz[3] += vp_off[i] * hfir[hfir_idx[hfir_idxidx]];
+            c_xyz[3] += vp_off[i]   * hfir[hfir_idx[hfir_idxidx]];
             c_xyz[4] += vp_off[i+1] * hfir[hfir_idx[hfir_idxidx]];
             c_xyz[5] += vp_off[i+2] * hfir[hfir_idx[hfir_idxidx]];
             c_xyz[6] += vp_off[i+3] * hfir[hfir_idx[hfir_idxidx]];
@@ -673,7 +678,7 @@ int OnlineTrajectoryPlanner::traj_on_FIR_Bspline(Point xyz, Euler abc,int status
 
         for(int i = 0; i < 4; ++i)
         {
-            double temp = 0.001; 
+            double temp  = 0.001; 
             remainder[i] = (c_xyz[i + 3] 
                             - (c_xyz[i + 2] * 3) 
                             + (c_xyz[i + 1] * 3) 
@@ -714,15 +719,15 @@ int OnlineTrajectoryPlanner::traj_on_FIR_Bspline(Point xyz, Euler abc,int status
         abc.convertToQuaternion(Q3);
 
         #if 1
-        dq = Q2.w_ * Q3.w_ 
+        dq =  Q2.w_ * Q3.w_ 
             + Q2.x_ * Q3.x_ 
             + Q2.y_ * Q3.y_ 
             + Q2.z_ * Q3.z_;
 
             if(dq < 0)
-                {
-                    Q3 = Q3 * (-1);
-                }
+            {
+                Q3 = Q3 * (-1);
+            }
         #endif
 
         // requires at least 3 via points for planning

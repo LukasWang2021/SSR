@@ -44,8 +44,8 @@ int main()
     int test = munmap(shmem_ptr_, LOG_SHMEM_SIZE);
 	if(test != 0)
 	{
-		printf("ERROR ----- Log_Shared_Memory cannot be released ----- ERROR");
+		printf("ERROR ----- Log_Shared_Memory cannot be released ----- ERROR\n");
 	}
-	printf("SUCCESS ----- Log_Shared_Memory has been released ----- SUCCESS");
+	printf("SUCCESS ----- Log_Shared_Memory has been released ----- SUCCESS\n");
     return 0;
 }

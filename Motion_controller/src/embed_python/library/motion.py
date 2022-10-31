@@ -45,7 +45,7 @@ def MoveJ(target, vel, smooth_type, smooth_val, acc):
     pass
 
 @overload(Posture,float,int,float,int,int)
-def MoveJ(target, vel, smooth_type, smooth_val, offset_type, offset_val):
+def MoveJ(target, vel, smooth_type, smooth_val, offset_type: int, offset_val: int):
     group.MoveJwithOffset(target, vel, smooth_type, smooth_val, offset_type, offset_val)
     pass
 

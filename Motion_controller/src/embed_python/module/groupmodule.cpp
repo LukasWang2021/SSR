@@ -46,7 +46,6 @@ static PyObject *group_MoveJwithAcc(PyObject *self, PyObject *args)
 
 static PyObject *group_MoveJwithOffset(PyObject *self, PyObject *args)
 {
-    printf("PythonDebug->SUCCESS::use the function that I want to use\n");
     ErrorCode ret = 0;
     int offset_type = -1, offset_id = -1;
     Py_buffer buffer;
@@ -55,7 +54,6 @@ static PyObject *group_MoveJwithOffset(PyObject *self, PyObject *args)
     if (!PyArg_ParseTuple(args, "w*didii", &buffer, &g_traj.vel, &g_traj.smooth_type, &g_traj.smooth_value, &offset_type, &offset_id))
             return PyLong_FromUnsignedLongLong(INTERPRETER_ERROR_MOD_INVALID_ARG);
 
-    printf("PythonDebug->SUCCESS::current 5th value offset_type is:\t%d\n", offset_type);
     if(offset_type == 1) g_traj.uf_id = offset_id;
     memcpy(&g_traj.tgt, buffer.buf, sizeof(PostureInfo));
     // call robot system interface

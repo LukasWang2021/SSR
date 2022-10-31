@@ -41,7 +41,7 @@ static bool trajInfo2MoveInst(MoveTrajInfo *traj)
     if(fabs(traj->acc) < 0.000001)
     {
         traj->acc = 0.0000011;
-        printf("ACC cannot be 0, set ACC as minumum_value");
+        LogProducer::info("interpgroup", "acceleration can not be 0, set acc as 0.0000011");
     }
 
     LogProducer::info("interpgroup", "SmoothType=%d,SmoothValue=%f,VEL=%f,TgtType=%d,ViaType=%d,ACC=%f,UFID=%d,TFID=%d",

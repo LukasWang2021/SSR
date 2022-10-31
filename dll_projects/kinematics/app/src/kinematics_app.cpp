@@ -57,6 +57,8 @@ uint64_t c_km_exitKinematics(void)
 	if (p_kinematics != NULL) delete p_kinematics;
 	if (p_transform != NULL) delete p_transform;
 
+	initialized = false;
+
 	return 0;
 }
 
@@ -175,9 +177,9 @@ uint64_t c_km_getJointByPoseEuler(const double pose_euler[6], const int32_t post
 	pe.point_.x_ = pose_euler[0];
 	pe.point_.y_ = pose_euler[1];
 	pe.point_.z_ = pose_euler[2];
-	pe.euler_.a_ = pose_euler[3];
+	pe.euler_.a_ = pose_euler[5];
 	pe.euler_.b_ = pose_euler[4];
-	pe.euler_.c_ = pose_euler[5];
+	pe.euler_.c_ = pose_euler[3];
 
 	if (!p_kinematics->doIK(pe, pt, jt))
 	{

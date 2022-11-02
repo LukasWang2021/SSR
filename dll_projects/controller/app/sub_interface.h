@@ -139,6 +139,25 @@ COMM_INTERFACE_API uint64_t c_getFioInfoFeedBackDevieState(uint32_t* state);
  * @retval -1 Failure.
  */
 COMM_INTERFACE_API uint64_t c_getFioInfoFeedBackActualVelocity(uint32_t* vel);
+
+/**
+ * @brief Get actual speed of fio motor.
+ * @details .
+ * @param [out] the actual speed back of fio motor.
+ * @retval 0 Success.
+ * @retval -1 Failure.
+ */
+COMM_INTERFACE_API uint64_t c_getTopicSystemState(double* data);
+COMM_INTERFACE_API uint64_t c_getTopicArmState(uint32_t* data);
+COMM_INTERFACE_API uint64_t c_getTopicMotionControlState(uint32_t* data);
+COMM_INTERFACE_API uint64_t c_getTopicServoState(uint32_t* data);
+COMM_INTERFACE_API uint64_t c_getTopicGloableVel(double* data);
+COMM_INTERFACE_API uint64_t c_getTopicGloableAcc(double* data);
+COMM_INTERFACE_API uint64_t c_getTopicWorkMode(uint32_t* data);
+COMM_INTERFACE_API uint64_t c_getTopicControlMode(uint32_t* data);
+COMM_INTERFACE_API uint64_t c_getTopicToolFrame(uint32_t* data);
+COMM_INTERFACE_API uint64_t c_getTopicUserFrame(uint32_t* data);
+
 #ifdef __cplusplus
 }
 #endif

@@ -127,7 +127,7 @@ void ControllerPublish::updateFioInfoFdb()
 
 void ControllerPublish::updateSystemStatusFdb()
 {
-    system_status_fdb_.data_count = 8;
+    system_status_fdb_.data_count = 9;
     // arm state
     GroupStatus_e status = GROUP_STATUS_UNKNOWN;
     bool in_pos = false;
@@ -143,12 +143,14 @@ void ControllerPublish::updateSystemStatusFdb()
     system_status_fdb_.data[4] = group_ptr_[0]->getGlobalAccRatio();
     // work mode
     system_status_fdb_.data[5] = group_ptr_[0]->getWorkMode();
+    // servo control mode
+    system_status_fdb_.data[6] = cpu_comm_ptr_->getServoControlMode();
     // uf
     int id = 0;
     group_ptr_[0]->getUserFrame(id);
-    system_status_fdb_.data[6] = id;
+    system_status_fdb_.data[7] = id;
     // tf
     group_ptr_[0]->getToolFrame(id);
-    system_status_fdb_.data[7] = id;
+    system_status_fdb_.data[8] = id;
 }
 

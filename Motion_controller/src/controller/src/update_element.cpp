@@ -125,3 +125,32 @@ void ControllerPublish::updateFioInfoFdb()
     fio_info_fdb_.data[1] = tmp_sub.grind_speed;
 }
 
+void ControllerPublish::updateSystemStatusFdb()
+{
+    system_status_fdb_.data_count = 9;
+    // arm state
+    GroupStatus_e status = GROUP_STATUS_UNKNOWN;
+    bool in_pos = false;
+    group_ptr_[0]->mcGroupReadStatus(status, in_pos);
+    system_status_fdb_.data[0] = status;
+    // mc state
+    system_status_fdb_.data[1] = group_ptr_[0]->getMotionControlState();
+    // servo state
+    system_status_fdb_.data[2] = group_ptr_[0]->getServoState();
+    // gloable vel
+    system_status_fdb_.data[3] = group_ptr_[0]->getGlobalVelRatio();
+    // gloable acc
+    system_status_fdb_.data[4] = group_ptr_[0]->getGlobalAccRatio();
+    // work mode
+    system_status_fdb_.data[5] = group_ptr_[0]->getWorkMode();
+    // servo control mode
+    system_status_fdb_.data[6] = cpu_comm_ptr_->getServoControlMode();
+    // uf
+    int id = 0;
+    group_ptr_[0]->getUserFrame(id);
+    system_status_fdb_.data[7] = id;
+    // tf
+    group_ptr_[0]->getToolFrame(id);
+    system_status_fdb_.data[8] = id;
+}
+

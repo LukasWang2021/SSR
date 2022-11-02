@@ -139,6 +139,34 @@ COMM_INTERFACE_API uint64_t c_getFioInfoFeedBackDevieState(uint32_t* state);
  * @retval -1 Failure.
  */
 COMM_INTERFACE_API uint64_t c_getFioInfoFeedBackActualVelocity(uint32_t* vel);
+
+/**
+ * @brief Get system state publish.
+ * @details .
+ * @param [out] system state data.
+ * data[0]:arm state same as c_getTopicArmState
+ * data[1]:motion control state same as c_getTopicMotionControlState
+ * data[2]:servo state same as c_getTopicServoState
+ * data[3]:gloable velocity same as c_getTopicGloableVel
+ * data[4]:gloable acceleration same as c_getTopicGloableAcc
+ * data[5]:motion control work mode same as c_getTopicWorkMode
+ * data[6]:servo control mode same as c_getTopicControlMode
+ * data[7]:motion control tool frame id same as c_getTopicToolFrame
+ * data[8]:motion control user frame id same as c_getTopicUserFrame
+ * @retval 0 Success.
+ * @retval -1 Failure.
+ */
+COMM_INTERFACE_API uint64_t c_getTopicSystemState(double* data);
+COMM_INTERFACE_API uint64_t c_getTopicArmState(uint32_t* data);
+COMM_INTERFACE_API uint64_t c_getTopicMotionControlState(uint32_t* data);
+COMM_INTERFACE_API uint64_t c_getTopicServoState(uint32_t* data);
+COMM_INTERFACE_API uint64_t c_getTopicGloableVel(double* data);
+COMM_INTERFACE_API uint64_t c_getTopicGloableAcc(double* data);
+COMM_INTERFACE_API uint64_t c_getTopicWorkMode(uint32_t* data);
+COMM_INTERFACE_API uint64_t c_getTopicControlMode(uint32_t* data);
+COMM_INTERFACE_API uint64_t c_getTopicToolFrame(uint32_t* data);
+COMM_INTERFACE_API uint64_t c_getTopicUserFrame(uint32_t* data);
+
 #ifdef __cplusplus
 }
 #endif

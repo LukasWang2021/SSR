@@ -38,4 +38,8 @@ void* ControllerPublish::getFioInfoPtr()
 	return (void*)&fio_info_fdb_;
 }
 
+void* ControllerPublish::getSystemStatusPtr()
+{
+    return (void*)&system_status_fdb_;
+}
 

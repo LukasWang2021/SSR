@@ -165,3 +165,135 @@ uint64_t c_getFioInfoFeedBackActualVelocity(uint32_t* vel)
 	sub_ptr->unlockTopicData();
 	return 0;
 }
+
+uint64_t c_getTopicSystemState(double* data)
+{
+	SubBasic* sub_ptr = SubBasic::getInstance();
+	if (data == NULL)
+		return HANDLE_SUB_FAILED;
+
+	TopicData* data_ptr = sub_ptr->getTopicDataPtr();
+	sub_ptr->lockTopicData();
+	data = data_ptr->sys_status_feedback.data;
+	sub_ptr->unlockTopicData();
+	return 0;
+}
+
+uint64_t c_getTopicArmState(uint32_t* data)
+{
+	SubBasic* sub_ptr = SubBasic::getInstance();
+	if (data == NULL)
+		return HANDLE_SUB_FAILED;
+
+	TopicData* data_ptr = sub_ptr->getTopicDataPtr();
+	sub_ptr->lockTopicData();
+	*data = (uint32_t)data_ptr->sys_status_feedback.data[0];
+	sub_ptr->unlockTopicData();
+	return 0;
+}
+
+uint64_t c_getTopicMotionControlState(uint32_t* data)
+{
+	SubBasic* sub_ptr = SubBasic::getInstance();
+	if (data == NULL)
+		return HANDLE_SUB_FAILED;
+
+	TopicData* data_ptr = sub_ptr->getTopicDataPtr();
+	sub_ptr->lockTopicData();
+	*data = (uint32_t)data_ptr->sys_status_feedback.data[1];
+	sub_ptr->unlockTopicData();
+	return 0;
+}
+
+uint64_t c_getTopicServoState(uint32_t* data)
+{
+	SubBasic* sub_ptr = SubBasic::getInstance();
+	if (data == NULL)
+		return HANDLE_SUB_FAILED;
+
+	TopicData* data_ptr = sub_ptr->getTopicDataPtr();
+	sub_ptr->lockTopicData();
+	*data = (uint32_t)data_ptr->sys_status_feedback.data[2];
+	sub_ptr->unlockTopicData();
+	return 0;
+}
+
+uint64_t c_getTopicGloableVel(double* data)
+{
+	SubBasic* sub_ptr = SubBasic::getInstance();
+	if (data == NULL)
+		return HANDLE_SUB_FAILED;
+
+	TopicData* data_ptr = sub_ptr->getTopicDataPtr();
+	sub_ptr->lockTopicData();
+	*data = data_ptr->sys_status_feedback.data[3];
+	sub_ptr->unlockTopicData();
+	return 0;
+}
+
+uint64_t c_getTopicGloableAcc(double* data)
+{
+	SubBasic* sub_ptr = SubBasic::getInstance();
+	if (data == NULL)
+		return HANDLE_SUB_FAILED;
+
+	TopicData* data_ptr = sub_ptr->getTopicDataPtr();
+	sub_ptr->lockTopicData();
+	*data = data_ptr->sys_status_feedback.data[4];
+	sub_ptr->unlockTopicData();
+	return 0;
+}
+
+uint64_t c_getTopicWorkMode(uint32_t* data)
+{
+	SubBasic* sub_ptr = SubBasic::getInstance();
+	if (data == NULL)
+		return HANDLE_SUB_FAILED;
+
+	TopicData* data_ptr = sub_ptr->getTopicDataPtr();
+	sub_ptr->lockTopicData();
+	*data = (uint32_t)data_ptr->sys_status_feedback.data[5];
+	sub_ptr->unlockTopicData();
+	return 0;
+}
+
+uint64_t c_getTopicControlMode(uint32_t* data)
+{
+	SubBasic* sub_ptr = SubBasic::getInstance();
+	if (data == NULL)
+		return HANDLE_SUB_FAILED;
+
+	TopicData* data_ptr = sub_ptr->getTopicDataPtr();
+	sub_ptr->lockTopicData();
+	*data = (uint32_t)data_ptr->sys_status_feedback.data[6];
+	sub_ptr->unlockTopicData();
+	return 0;
+}
+
+uint64_t c_getTopicToolFrame(uint32_t* data)
+{
+	SubBasic* sub_ptr = SubBasic::getInstance();
+	if (data == NULL)
+		return HANDLE_SUB_FAILED;
+
+	TopicData* data_ptr = sub_ptr->getTopicDataPtr();
+	sub_ptr->lockTopicData();
+	*data = (uint32_t)data_ptr->sys_status_feedback.data[7];
+	sub_ptr->unlockTopicData();
+	return 0;
+}
+
+uint64_t c_getTopicUserFrame(uint32_t* data)
+{
+	SubBasic* sub_ptr = SubBasic::getInstance();
+	if (data == NULL)
+		return HANDLE_SUB_FAILED;
+
+	TopicData* data_ptr = sub_ptr->getTopicDataPtr();
+	sub_ptr->lockTopicData();
+	*data = (uint32_t)data_ptr->sys_status_feedback.data[8];
+	sub_ptr->unlockTopicData();
+	return 0;
+}
+
+

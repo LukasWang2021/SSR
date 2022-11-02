@@ -24,6 +24,7 @@ uint64_t c_addTopic()
 	req_data.data.element_hash_list[4] = 0x0001472B;	// iosafety_feedback
 	req_data.data.element_hash_list[5] = 0x0000AEAB;	// torque_feedback
 	req_data.data.element_hash_list[6] = 0x00006EFB;	// fio_feedback
+	req_data.data.element_hash_list[6] = 0x000045C3;	// fio_feedback
 
 	if (!rpc_ptr->handleRpc(0x000050E3, &req_data, RequestMessageType_Topic_fields, &rep_data, ResponseMessageType_Uint64_fields))
 	{

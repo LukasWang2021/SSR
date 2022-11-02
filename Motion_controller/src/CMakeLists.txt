@@ -9,7 +9,7 @@ set(LIBRARY_OUTPUT_PATH ${RtmProject_SOURCE_DIR}/../install/lib)
 set(CONFIG_FILE_OUTPUT_PATH ${RtmProject_SOURCE_DIR}/../install/runtime)
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -O0 -D PB_FIELD_32BIT")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -g -O0 -Wno-unused-but-set-variable -Wno-unused-local-typedefs -fpermissive -lrt -DPB_FIELD_32BIT")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -g -O0 -Wno-unused-but-set-variable -Wno-unused-local-typedefs -fpermissive -lrt -DPB_FIELD_32BIT -DOFFLINE_SEG")
 
 add_subdirectory(init_protection)
 add_subdirectory(pb)

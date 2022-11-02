@@ -206,6 +206,7 @@ const Point Point::operator-(const Point& point) const
     return result;
 }
 
+
 Point& Point::operator+=(const Point& point)
 {
     x_ += point.x_;

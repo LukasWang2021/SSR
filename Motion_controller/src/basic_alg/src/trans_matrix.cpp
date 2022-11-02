@@ -136,6 +136,27 @@ void TransMatrix::print(std::string comment) const
     rotation_matrix_.print("rotation matrix:");
     trans_vector_.print("trans vector:");
 }
+void TransMatrix::print_(std::string comment) const
+{
+    std::cout<<comment<<std::endl;
+
+    printf("%.5f \t %.5f \t %.5f \t %.5f \n", 
+            rotation_matrix_.matrix_[0][0], 
+            rotation_matrix_.matrix_[0][1], 
+            rotation_matrix_.matrix_[0][2], 
+            trans_vector_.x_);
+    printf("%.5f \t %.5f \t %.5f \t %.5f \n", 
+            rotation_matrix_.matrix_[1][0], 
+            rotation_matrix_.matrix_[1][1], 
+            rotation_matrix_.matrix_[1][2], 
+            trans_vector_.y_);
+    printf("%.5f \t %.5f \t %.5f \t %.5f \n", 
+            rotation_matrix_.matrix_[2][0], 
+            rotation_matrix_.matrix_[2][1], 
+            rotation_matrix_.matrix_[2][2], 
+            trans_vector_.z_);
+    printf("0 \t 0 \t 0 \t 1 \n");
+}
 
 void TransMatrix::multiply(const TransMatrix& left_matrix, const TransMatrix& right_matrix, TransMatrix& result_matrix) const
 {

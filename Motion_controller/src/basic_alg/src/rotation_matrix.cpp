@@ -147,3 +147,4 @@ void RotationMatrix::inverse(RotationMatrix& result_matrix) const
 }
 
 
+

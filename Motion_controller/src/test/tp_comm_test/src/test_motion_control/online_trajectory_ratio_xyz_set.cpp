@@ -90,7 +90,7 @@ int main(int argc, char* argv[])
     cout << "Reply : msg.header.package_left = " << recv_msg.header.package_left << endl;
     cout << "Reply : msg.header.error_code = " << recv_msg.header.error_code << endl;
     cout << "Reply : msg.property.authority = " << recv_msg.property.authority << endl;
-    printf("Reply : error_code = 0x%llx\n", (long long unsigned int)recv_msg.data.data);
+    printf( "Reply : error_code = 0x%llx\n", (long long unsigned int)recv_msg.data.data);
 
     usleep(200000);
 

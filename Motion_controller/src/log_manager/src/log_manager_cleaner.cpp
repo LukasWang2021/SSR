@@ -24,14 +24,13 @@ int main()
     if (shmem_ptr_ == MAP_FAILED)
 	{
 		close(fd);
-		printf("Failed to map share memory\n");
+		printf("ERROR ----- Log_Shared_Memory cannot be mapped ----- ERROR\n");
 		return -1;
 	}
 	close(fd);
 
 
 	//  clean memory occupied value
-
     uint32_t block_step_ = LOG_CTRL_AREA_SIZE + LOG_ITEM_AREA_SIZE * LOG_BLOCK_TEXT_ITEM;
 	LogControlArea * ctrl_area_ptr = (LogControlArea *)(shmem_ptr_);
 	for (size_t i = 0; i < LOG_BLOCK_NUMBER; ++i)
@@ -44,8 +43,8 @@ int main()
     int test = munmap(shmem_ptr_, LOG_SHMEM_SIZE);
 	if(test != 0)
 	{
-		printf("ERROR ----- Log_Shared_Memory cannot be released ----- ERROR");
+		printf("ERROR ----- Log_Shared_Memory cannot be released ----- ERROR\n");
 	}
-	printf("SUCCESS ----- Log_Shared_Memory has been released ----- SUCCESS");
+	printf("SUCCESS ----- Log_Shared_Memory has been released ----- SUCCESS\n");
     return 0;
 }

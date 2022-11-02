@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <string>
 #include "yaml_help.h"
+#include "common_file_path.h"
 
 /**
  * @brief structure of online trajectory points
@@ -67,6 +68,10 @@ class OnlineTrajectoryPlanner
 public:
     // storage of necessary parameters
     onlineTrjAlgParam online_alg_params_;
+    // storage of constraints for online function
+    vector<double> online_upper;
+    vector<double> online_lower;
+
     // temporary cache buffter for Bspline algorithm output
     TrjPoint trj_point_buf[160];
     // data of receving matrixes from 3Dtouch device
@@ -85,34 +90,35 @@ public:
     * @param x the input double number
     * @return integer, -1 for x < 0, else return 0
     */
-    int sign(double x);
+    //int sign(double x);
 
     
     /**
-    * @brief turn euler angles (Radians) to rotating matrix
-    * @param [in] a euler angle
-    * @param [in] b euler angle
-    * @param [in] c euler angle
-    * @return rotating matrix
+    * @brief turn euler angles (Radians) to rotating matrix (ZYX)
+    * @param [in] x euler angle
+    * @param [in] y euler angle
+    * @param [in] z euler angle
+    * @return A Matrix33, which is a rotation matrix
     */
-    Matrix33 rpy2r(double a, double b, double c);
+    Matrix33 online_turnEulerMatrix(double x, double y, double z);
 
 
     /**
     * @brief turn rotating matrix (Matrix33&) to euler angles
-    * @param [in] R the input Matrix33&
-    * @return with euler angles data
+    * @param [in] rotation_matrix the input Matrix33&
+    * @return euler angles data (XYZ)
     */
-    Vector3 rtm_rpy(Matrix33& R);
-
+    Vector3 online_turnMatrixEuler(Matrix33& rotation_matrix);
+    Euler online_turnMatrixEuler_(Matrix33& rotation_matrix);
 
     /**
     * @brief turn input matrix inverse, and write into the second parameter
-    * @param [in] m44 the input Matrix44
-    * @param [out] resT the output Matrix44
+    * @param [in] matrix_in the input Matrix44
+    * @param [out] matrix_out the address of output Matrix44 (&matrix_out)
     * @return void
     */
-    void get_matrix44f_inverse(Matrix44 m44,Matrix44 &resT);
+    void online_getMatrixInv(Matrix44 matrix_in,Matrix44 &matrix_out);
+    void online_getMatrixInv(TransMatrix m44,TransMatrix &resT);
 
 
     /**
@@ -179,40 +185,139 @@ public:
     */
     Quaternion rtm_abc2quat(Vector3& abc);
 
-
+    /**
+    * @brief get interpolation from q0 to q1
+    * @param [in] q0 begin quaternion
+    * @param [in] q1 end quaternion
+    * @param [in] t time
+    * @return result in Quaternion
+    */
     Quaternion rtm_Slerpt(Quaternion& q0, Quaternion& q1, double t);
 
-
+    /**
+    * @brief get interpolation from q1 to q2, q0 and q3 are vp points for algorithm
+    * @param [in] q0 vp point at front
+    * @param [in] q1 begin quaternion
+    * @param [in] q2 end quaternion
+    * @param [in] q3 vp point follow behind
+    * @param [in] t time
+    * @return result in Quaternion
+    */
     Quaternion rtm_Squad(Quaternion& q0, Quaternion& q1, Quaternion& q2,Quaternion& q3,double t);
     
-    
-    int traj_on_FIR_Bspline(Vector3 xyz, Vector3 abc,int status, int online_TrjpointBufIndex);
-    
-    void Fir_Bspline_algorithm_test(void);
-    void Fir_Bspline_algorithm_test2(void);
+    /**
+    * @brief smooth algorithm using Bspline
+    * @param [in] xyz cartesian data
+    * @param [in] abc quaternion data
+    * @param [in] status 0 means beginning, 1 means moving(holding touch button), 2 means stop(release touch button)
+    * @param [in] online_TrijpointBufIndex get index of output from buffer list 'trj_point_buf[]'
+    * @return number of total points
+    */
+    int traj_on_FIR_Bspline(Point xyz, Euler abc,int status, int online_TrjpointBufIndex);
+    //int traj_on_FIR_Bspline(Vector3 xyz, Vector3 abc,int status, int online_TrjpointBufIndex);
 
-
+    
+    /**
+    * @brief orthogonalize the input matrix
+    * @param [in] T input Matrix33 / Matrix44 / RotationMatrix
+    * @details this function WILL NOT change the input matrix variable
+    * @return the orthogonalized matrix
+    */
     Matrix44 rtm_reorthog(Matrix44 &T);
     Matrix33 rtm_reorthog(Matrix33 &T);
+    RotationMatrix rtm_reorthog(RotationMatrix &T);
 
 
+    /**
+    * @brief transfer Matrix44 to TransMatrix
+    * @param [in] ma the input Matrix44 type
+    * @param [out] mb the output TransMatrix type, should be empty and initialized for input
+    * @return void
+    */
+    void turnM2T(const Matrix44 ma, TransMatrix mb);
+
+    /**
+    * @brief transfer TransMatrix to Matrix44
+    * @param [in] ma the input TransMatrix type
+    * @param [out] mb the output Matrix44 type, should be empty and initialized for input
+    * @details this function will clean mb before data transfer
+    * @return void
+    */
+    void turnT2M(const TransMatrix ma, Matrix44 mb);
+
+
+    /**
+    * @brief transfer touch device's position to robots' position, for more detail ,see tech docs
+    * @details T_r0_R: initial robot end-matrix when press the button
+    *          Touch_h0_v: initial touch end-matrix in touch coordinates when press the button
+    *          Touch_ht_v: touch end-matrix when moving (holding button and not release after initial press)
+    *          k_xyz / k_abc: ratio of mapping touch device movement to robot
+    *          resM: output matrix (of robot)
+    * @return always return true
+    */
     bool DynamicBaseCoordTransformation(Matrix44 T_r0_R, Matrix44 Touch_h0_v,  Matrix44 Touch_ht_v, double k_xyz,double k_abc, Matrix44& resM);
-    bool get_increment_matrix(Matrix44 T_ck,Matrix44 T_k1, Matrix44 T_k, Matrix44 &resT);
-    void rtm_r2xyzabc(Matrix44& u,Vector3& res_xyz, Vector3& res_abc);
-   
-    
-    void online_trajectory_algorithm_params_init();
+    bool DynamicBaseCoordTransformation(TransMatrix T_r0_R, TransMatrix Touch_h0_v,  TransMatrix Touch_ht_v, double k_xyz,double k_abc, TransMatrix& resM);
 
+    /**
+    * @brief get increment process
+    * @return boolean, whether it is success or not
+    */
+    bool get_increment_matrix(Matrix44 T_ck,Matrix44 T_k1, Matrix44 T_k, Matrix44 &resT);
+    bool get_increment_matrix(TransMatrix T_ck, TransMatrix T_k1, TransMatrix T_k, TransMatrix &resT);
+
+    /**
+    * @brief turn matrix44 to xyzabc
+    * @param [in] u type &Matrix44
+    * @param [out] res_xyz the output cartesian coordinate xyz
+    * @param [out] res_abc the output quaternion 
+    * @return void
+    */
+    void rtm_r2xyzabc(Matrix44& u,Vector3& res_xyz, Vector3& res_abc);
+    void rtm_r2xyzabc(TransMatrix& u, Point& res_xyz, Euler& res_abc);
+
+    /**
+    * @brief get params from yaml file for online trajectory planning
+    * @return void
+    */
+    void online_trajectory_algorithm_params_init();
+    bool load_OnlineMove_params_Config();
+    bool load_online_constraints();
+
+    /**
+    * @brief functions of setting cartesian ratio (from touch to robot), this will change yaml file
+    * @return 1 for fail, 0 for success
+    */
     int setOnlineTrjRatio_xyz(double data_ratio);
+
+    /**
+    * @brief functions of setting quaternion ratio (from touch to robot), this will change yaml file
+    * @return 1 for fail, 0 for success
+    */
     int setOnlineTrjRatio_abc(double data_ratio);
 
+    /**
+    * @brief functions of asking for cartesian ratio
+    * @return current ratio
+    */
     double get_online_trj_ratio_xyz();
+
+    /**
+    * @brief functions of asking for quaternion ratio
+    * @return current ratio
+    */
     double get_online_trj_ratio_abc();
 
-    bool load_OnlineMove_params_Config();
 
 
     // ------------------------------- unused or undefined functions ------------------------------------------
+
+    /**
+    * @brief test functions for Bspline
+    */
+    void Fir_Bspline_algorithm_test(void);
+    void Fir_Bspline_algorithm_test2(void);
+
+    
 
     /**
     * @brief set double precision

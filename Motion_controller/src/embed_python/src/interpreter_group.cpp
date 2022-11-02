@@ -37,6 +37,13 @@ bool InterpGroup_Init(MotionControl **group_ptr)
 
 static bool trajInfo2MoveInst(MoveTrajInfo *traj)
 {
+
+    if(fabs(traj->acc) < 0.000001)
+    {
+        traj->acc = 0.0000011;
+        LogProducer::info("interpgroup", "acceleration can not be 0, set acc as 0.0000011");
+    }
+
     LogProducer::info("interpgroup", "SmoothType=%d,SmoothValue=%f,VEL=%f,TgtType=%d,ViaType=%d,ACC=%f,UFID=%d,TFID=%d",
     mv_inst_->target.smooth_type = (SmoothType)traj->smooth_type,
     mv_inst_->target.cnt = traj->smooth_value,
@@ -46,6 +53,8 @@ static bool trajInfo2MoveInst(MoveTrajInfo *traj)
     mv_inst_->target.acc = traj->acc,
     mv_inst_->target.user_frame_id = traj->uf_id,
     mv_inst_->target.tool_frame_id = traj->tf_id);
+
+    
 
     if(mv_inst_->target.target.type == COORDINATE_JOINT)
     {

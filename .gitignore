@@ -7,3 +7,4 @@ dll_projects/out
 Motion_controller/install
 Motion_controller/build
 *.vscode
+Motion_controller/quick_upload.sh

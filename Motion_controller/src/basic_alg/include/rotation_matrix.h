@@ -87,6 +87,8 @@ public:
 
 	virtual bool inverse(double valve = 0.001);
     void inverse(RotationMatrix& result_matrix) const;
+
+
 };
 
 }

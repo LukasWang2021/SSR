@@ -19,15 +19,28 @@ link_directories(
 	../../../install/lib
 )
 
-add_executable(test_trajectory_planner
-    test_trajectory_planner.cpp
+# add_executable(test_trajectory_planner
+#     test_trajectory_planner.cpp
+# )
+
+add_executable(test_TM
+    TransMatrix_Matrix44_test.cpp
 )
 
-add_executable(test_ds_curve
-    test_ds_curve.cpp
-)
+# add_executable(test_ds_curve
+#     test_ds_curve.cpp
+# )
 
-target_link_libraries(test_trajectory_planner
+# target_link_libraries(test_trajectory_planner
+#     ${rtm_LIBRARIES}
+#     yaml_help
+#     joint_constraint
+#     kinematics_alg
+#     dynamic_alg
+#     trajectory_planner
+# )
+
+target_link_libraries(test_TM
     ${rtm_LIBRARIES}
     yaml_help
     joint_constraint
@@ -36,7 +49,7 @@ target_link_libraries(test_trajectory_planner
     trajectory_planner
 )
 
-target_link_libraries(test_ds_curve
-    ${rtm_LIBRARIES}
-    trajectory_planner
-)
+# target_link_libraries(test_ds_curve
+#     ${rtm_LIBRARIES}
+#     trajectory_planner
+# )

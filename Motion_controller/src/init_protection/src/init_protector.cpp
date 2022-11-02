@@ -3,6 +3,7 @@
 #include <cstdio>
 #include <string>
 #include <fstream>
+
 using namespace std;
 
 #define PROCESS_ADDRESS "/tmp/"
@@ -18,12 +19,12 @@ bool user_space::init_protect(const char* f_name)
     if(access(file_location.c_str(), F_OK) != 0)
     {
         ofstream lout(file_location.c_str());
-        cout<<"INIT_PROTECTOR -> SUCCESS: "<<rec_name<<" does not exist"<<endl;
-        cout<<"INIT_PROTECTOR -> SUCCESS: new "<<rec_name<<" has now been created in tmp"<<endl;
+        cout << "INIT_PROTECTOR -> SUCCESS: " << f_name << endl;
     }
     else
     {
-        cout<<"INIT_PROTECTOR -> WARNING: "<<rec_name<<" founded"<<endl;
+        cout << "INIT_PROTECTOR -> ERROR: " << rec_name << " founded" << endl;
+        cout << "Please clean /tmp or check the running process" << endl;
         return false;
     }
 
@@ -32,7 +33,7 @@ bool user_space::init_protect(const char* f_name)
 
 void user_space::init_clean()
 {
-    string s = "rm ";
+    string s = "rm -f ";
     s += PROCESS_ADDRESS;
     string temp = "*.initpro";
     s += temp;

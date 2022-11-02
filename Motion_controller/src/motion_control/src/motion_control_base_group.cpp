@@ -1089,6 +1089,7 @@ ErrorCode BaseGroup::checkMotionTarget(const MotionInfo &info)
         return INVALID_PARAMETER;
     }
 
+    // acc should be 0 ~ 1, cannot be 0 but can be 1
     if (info.acc < MINIMUM_E6 || info.acc > 1 + MINIMUM_E6)
     {
         LogProducer::error("mc_base","Invalid acc: %.6f", info.acc);

@@ -615,7 +615,7 @@ ErrorCode BaseGroup::pickOnlinePoint(TrajectoryPoint &point, int pickIdx)
         online_trajectory_point_data_update_flag = false;
         return 1;
     }
-    point.level = OnlinePointLevelBuf[pickIdx];
+    point.level = (PointLevel)OnlinePointLevelBuf[pickIdx];
     point.state.angle.j1_ = OnlinePointBuf[pickIdx*24+0];
     point.state.angle.j2_ = OnlinePointBuf[pickIdx*24+1];
     point.state.angle.j3_ = OnlinePointBuf[pickIdx*24+2];

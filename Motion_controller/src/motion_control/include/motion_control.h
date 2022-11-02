@@ -109,8 +109,13 @@ public:
     ErrorCode isLinearPathReachable(uint32_t group_id, 
                                     int32_t start_coord_id, int32_t start_tool_id, const PoseAndPosture &start, 
                                     int32_t target_coord_id, int32_t target_tool_id, const PoseAndPosture &target);
+
+    // check through axis 1 to 6, return the legal axis number before error (if there it is). if no error, return 6
     int JointInConstraint_axisCnt(basic_alg::Joint &joint, int cnt);      
-    bool isAxisAngleOutSpeed(bool startFlag, Joint jnt);                          
+
+    // check whether servo status of power-generator, see if it is angular_velocity overspeed
+    bool isAxisAngleOutSpeed(bool startFlag, Joint jnt);                     
+         
     ErrorCode isPoseReachable(uint32_t group_id, const basic_alg::Joint &joint);
     ErrorCode isPoseReachable(uint32_t group_id, int32_t coord_id, int32_t tool_id, const PoseAndPosture &pose);
     ErrorCode convertCartToJoint(const PoseAndPosture &pose, int user_frame_id, int tool_frame_id, basic_alg::Joint &joint);
@@ -219,6 +224,7 @@ private:
     bool flag_recv_new_VPMatrix_= false;// false-现在没有收到VP点矩阵, true-收到VP点矩阵
     int *online_vp_status_; //用于暂存在线轨迹接收途经点矩阵状态
     double *online_vp_cache_;//用于暂存在线轨迹接收途经点矩阵数据
+    
 
     fst_ctrl::CoordinateManager* coordinate_manager_ptr_;
     fst_ctrl::ToolManager* tool_manager_ptr_;

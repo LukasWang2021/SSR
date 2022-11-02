@@ -1055,7 +1055,7 @@ bool KinematicsRTM::doNumericalIK(const TransMatrix& trans_matrix, const Joint& 
 		err[2] = dT.trans_vector_.z_;
 		err[3] = 0.5*(dT.rotation_matrix_.matrix_[2][1]-dT.rotation_matrix_.matrix_[1][2]);
 		err[4] = 0.5*(dT.rotation_matrix_.matrix_[0][2]-dT.rotation_matrix_.matrix_[2][0]);
-        err[5] = 0.5 * (dT.rotation_matrix_.matrix_[1][0] - dT.rotation_matrix_.matrix_[0][1]);  //printf("%d-err:", k); err.print();
+        err[5] = 0.5 * (dT.rotation_matrix_.matrix_[1][0] - dT.rotation_matrix_.matrix_[0][1]);
 		err_norm = err[0]*err[0] + err[1]*err[1] \
 					+ err[2]*err[2] + err[3]*err[3] \
 					+ err[4]*err[4] +  err[5]*err[5];

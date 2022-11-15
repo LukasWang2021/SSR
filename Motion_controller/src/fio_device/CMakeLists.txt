@@ -20,6 +20,9 @@ target_link_libraries(fio_device
         ${rtm_LIBRARIES}
 )
 
+install(FILES ./config/fio_config.yaml 
+    DESTINATION ${CONFIG_FILE_OUTPUT_PATH}/component/
+)
 
 
 

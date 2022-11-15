@@ -6,10 +6,12 @@
 #include "fio_device.h"
 #include <stdio.h>
 #include "log_manager_producer.h"
+#include "common_file_path.h"
 
 using namespace std;
 using namespace hal_space;
 using namespace log_space;
+using namespace base_space;
 
 FioDevice::FioDevice():
     BaseDevice(DEVICE_TYPE_FIO)
@@ -35,9 +37,17 @@ bool FioDevice::init(bool is_real)
         LogProducer::error("FioDevice", "open fio device failed");
         return false;
     }
+    YamlHelp yaml_help;
+    int32_t serial_timeout = 0;
+    if(!yaml_help.loadParamFile(string(COMPONENT_PARAM_FILE_DIR) + "fio_config.yaml")
+    || !yaml_help.getParam("serial_time_out", serial_timeout))
+    {
+        return false;
+    }
 
     fio_hw_ptr_ = (FioHw * )fio_device_->device_ptr;
-    fio_hw_ptr_->status.time_out_base = 0xFFFF;
+    // hardware unit is 10ns
+    fio_hw_ptr_->status.time_out_base = (uint32_t)serial_timeout * 100000;
     memset(&(fio_hw_ptr_->int_status), 0, sizeof(FioIntStatus));
 
     return true;
@@ -122,14 +132,18 @@ ErrorCode FioDevice::sendCmdRcvRpl(uint32_t cmd, uint32_t cmd_val, uint32_t *rpl
         if(!fioSendCmdPack(cmd, cmd_val))
         {
             err_ret = FIO_DEVICE_BUSY;
-            continue;
+            goto RETRY;
         }
 
         if(!fioRecvRplPack(&rpl_status, rpl_val))
         {
             err_ret = FIO_DEVICE_NO_RPL;
         }
-        LogProducer::debug("FioDevice", "fio device cmd tried for %d times", retry_cnt + 1);
+RETRY:
+        if(retry_cnt > 0)
+        {
+            LogProducer::warn("FioDevice", "fio device cmd[0x%X] tried for %d time(s)", cmd, retry_cnt);
+        }
     } while((err_ret != SUCCESS || rplResult(rpl_status) == FIO_CMD_CRC_ERR) && retry_cnt++ < 3);
 
     fio_mutex_.unlock();
@@ -145,7 +159,7 @@ bool FioDevice::fioSendCmdPack(uint32_t cmd, uint32_t val)
     {
         if(fio_hw_ptr_->status.cmd_trans_valid == 1)
         {
-            usleep(1000);
+            usleep(1000);// if cmd channel is busy wait about 100ms
             continue;
         }
         fio_hw_ptr_->cmd_regs.status = 1;

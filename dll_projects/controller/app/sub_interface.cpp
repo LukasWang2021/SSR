@@ -174,7 +174,7 @@ uint64_t c_getTopicSystemState(double* data)
 
 	TopicData* data_ptr = sub_ptr->getTopicDataPtr();
 	sub_ptr->lockTopicData();
-	data = data_ptr->sys_status_feedback.data;
+	memcpy(data, data_ptr->sys_status_feedback.data, data_ptr->sys_status_feedback.data_count);
 	sub_ptr->unlockTopicData();
 	return 0;
 }

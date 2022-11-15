@@ -20,6 +20,7 @@
 #include "base_device.h"
 #include "common_error_code.h"
 #include <mutex>
+#include "yaml_help.h"
 
 namespace hal_space
 {

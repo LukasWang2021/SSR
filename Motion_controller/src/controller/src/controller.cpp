@@ -224,7 +224,7 @@ ErrorCode Controller::init()
     }
 
     //force sensor
-	force_sensor_.init(group_ptr_, cpu_comm_ptr_, &force_model_ptr_);
+	force_sensor_.init(group_ptr_, cpu_comm_ptr_, &force_model_ptr_, config_ptr_->force_exist_);
 
 	publish_.init(&tp_comm_, cpu_comm_ptr_, axis_ptr_, group_ptr_, io_digital_dev_ptr_, io_safety_dev_ptr_, &force_sensor_, fio_device_ptr_);
     rpc_.init(&tp_comm_, &publish_, cpu_comm_ptr_, servo_comm_ptr_, axis_ptr_, axis_model_ptr_, group_ptr_, &file_manager_, 

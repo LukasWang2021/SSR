@@ -81,7 +81,8 @@ class ForceSensor{
      */
     bool init(group_space::MotionControl* group_ptr[GROUP_NUM], 
     			servo_comm_space::ServoCpuCommBase* cpu_comm_ptr,
-   		 	system_model_space::ForceModel_t** force_model_ptr);
+   		 	system_model_space::ForceModel_t** force_model_ptr,
+               vector<bool> force_exist);
 	
 	/**
      * @brief Update source value of force sensor.
@@ -187,6 +188,7 @@ class ForceSensor{
 	bool is_param_load_[GROUP_NUM];
 	Force_Val_t force_src[GROUP_NUM], force_calib[GROUP_NUM], force_tool[GROUP_NUM];
 	RotationMatrix tmx;
+     bool force_exist_[GROUP_NUM];
 	std::mutex force_src_mutex[GROUP_NUM], force_calib_mutex[GROUP_NUM], param_mutex[GROUP_NUM];
 };
 }

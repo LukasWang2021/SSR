@@ -6,10 +6,10 @@
  * @brief The file is the header file of class "ControllerConfig".
  * @author Feng.Wu
  */
-
+#include "common_datatype.h"
 #include "yaml_help.h"
 #include <string>
-
+#include <vector>
 /**
  * @brief user_space includes the user level implementation.
  */
@@ -65,6 +65,7 @@ public:
     bool dio_exist_;
     bool safety_exist_;
     bool fio_exist_;
+    std::vector<bool> force_exist_;
 
 private:
     base_space::YamlHelp yaml_help_;

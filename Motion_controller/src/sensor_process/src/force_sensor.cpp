@@ -26,10 +26,11 @@ ForceSensor::~ForceSensor()
 bool ForceSensor::init(group_space::MotionControl* group_ptr[GROUP_NUM], 
                             servo_comm_space::ServoCpuCommBase* cpu_comm_ptr,
                             system_model_space::ForceModel_t** force_model_ptr,
-                            bool force_exist[GROUP_MAX])
+                            vector<bool> force_exist)
 {
     if(cpu_comm_ptr == NULL) 
         return false;
+
     cpu_comm_ptr_ = cpu_comm_ptr;
     
     for(int i = 0 ; i < GROUP_NUM; i++)
@@ -54,11 +55,7 @@ bool ForceSensor::init(group_space::MotionControl* group_ptr[GROUP_NUM],
 bool ForceSensor::updateSourceValue(int group_id, double *dst_dat_ptr, int nums)
 {
     if(force_exist_[group_id]==false)
-    {
-        if(dst_dat_ptr!=NULL)
-            memset(dst_dat_ptr, 0, nums*sizeof(double));
         return false;
-    }
        
     CommRegTorqueData_t t_data = {0};
 
@@ -88,11 +85,7 @@ bool ForceSensor::calibratedForceSensor(int group_id, double *dst_dat_ptr, int n
     double c[3]={0.0};
     
     if(force_exist_[group_id]==false)
-    {
-        if(dst_dat_ptr != NULL)
-            memset(dst_dat_ptr, 0, nums*sizeof(double));
         return false;
-    }
 
     if(group_id >= GROUP_NUM)
         return false;
@@ -132,14 +125,10 @@ bool ForceSensor::transCalibrated2Tool(int group_id, double *dst_dat_ptr, int nu
     double b[3], c[3];
 
     if(force_exist_[group_id]==false)
-    {
-        if(dst_dat_ptr != NULL)
-            memset(dst_dat_ptr, 0, nums*sizeof(double));
         return false;
-    }
 
     if(group_id >= GROUP_NUM)
-            return false;
+        return false;
 
 	if(param_mutex[group_id].try_lock())
 	{
@@ -242,15 +231,13 @@ bool ForceSensor::getRotationEnd2Tool(int group_id)
 
 bool ForceSensor::getSourceValue(int group_id, double *dat_ptr, int nums)
 {
+    if(force_exist_[group_id]==false)
+        return false;
+
     if(dat_ptr == NULL)
         return false;
 
-    if(force_exist_[group_id]==false)
-    {
-        memcpy(dat_ptr,0, nums*sizeof(double));
-        return false;
-    }
-
+    
     if(force_src_mutex[group_id].try_lock())
     {
         memcpy(dat_ptr, &force_src[group_id].force[0], nums*sizeof(double));
@@ -263,14 +250,11 @@ bool ForceSensor::getSourceValue(int group_id, double *dat_ptr, int nums)
 
 bool ForceSensor::getCalibratedValue(int group_id, double *dat_ptr, int nums)
 {
-    if(dat_ptr == NULL)
+    if(force_exist_[group_id]==false)
         return false;
 
-    if(force_exist_[group_id]==false)
-    {
-        memcpy(dat_ptr,0, nums*sizeof(double));
-        return false;
-    }
+    if(dat_ptr == NULL)
+        return false;    
     
     if(force_calib_mutex[group_id].try_lock())
     {

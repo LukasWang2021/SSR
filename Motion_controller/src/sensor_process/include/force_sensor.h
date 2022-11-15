@@ -82,7 +82,7 @@ class ForceSensor{
     bool init(group_space::MotionControl* group_ptr[GROUP_NUM], 
     			servo_comm_space::ServoCpuCommBase* cpu_comm_ptr,
    		 	system_model_space::ForceModel_t** force_model_ptr,
-               bool force_exist[GROUP_MAX]);
+               vector<bool> force_exist);
 	
 	/**
      * @brief Update source value of force sensor.

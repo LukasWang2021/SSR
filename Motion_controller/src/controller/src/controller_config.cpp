@@ -51,8 +51,7 @@ bool ControllerConfig::load()
         || !yaml_help_.getParam("dio_exist", dio_exist_)
         || !yaml_help_.getParam("safety_exist", safety_exist_)
         || !yaml_help_.getParam("fio_exist", fio_exist_)
-        || !yaml_help_.getParam("force0_exist", force_exist_[0])
-        || !yaml_help_.getParam("force1_exist", force_exist_[1]))
+        || !yaml_help_.getParam("force_exist", force_exist_))
     {
         return false;
     }

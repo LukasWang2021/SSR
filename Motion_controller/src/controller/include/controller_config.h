@@ -9,7 +9,7 @@
 #include "common_datatype.h"
 #include "yaml_help.h"
 #include <string>
-
+#include <vector>
 /**
  * @brief user_space includes the user level implementation.
  */
@@ -65,7 +65,7 @@ public:
     bool dio_exist_;
     bool safety_exist_;
     bool fio_exist_;
-    bool force_exist_[GROUP_MAX];
+    std::vector<bool> force_exist_;
 
 private:
     base_space::YamlHelp yaml_help_;

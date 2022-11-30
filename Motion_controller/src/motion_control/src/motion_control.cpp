@@ -674,7 +674,8 @@ int MotionControl::JointInConstraint_axisCnt(basic_alg::Joint &joint, int cnt)
 
     for (uint32_t i = 0; i < 6; ++i)
     {
-        if(!((joint[i] > ((*k2))-precision_val)) && (joint[i] < ((*k1)+precision_val)))
+        // if current joint less then lower or larger then upper
+        if((joint[i] < (*k2)-precision_val) || (joint[i] > (*k1)+precision_val))
         {
             return i;
         }

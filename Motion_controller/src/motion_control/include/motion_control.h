@@ -163,7 +163,11 @@ public:
     void OnlineMove_exceedJointLimit_pause();
     void OnlineMove_exceedJointLimit_pause2(TrjPoint point);
     TrjPoint getOnlineMoveLastWithinPoint();
+
+
     ErrorCode checkOnlineMoveError(int op_code);
+
+    
     UserOpMode getWorkMode(void);
 
     // parameter access

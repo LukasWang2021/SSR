@@ -835,6 +835,9 @@ ErrorCode BaseGroup::autoMove(const MotionInfo &info)
     const PoseEuler &pose = info.target.pose.pose;
     const Posture &posture = info.target.pose.posture;
 
+    // update start_joint_ before moving
+    start_joint_ = getLatestJoint();
+
     LogProducer::info("mc_base","Auto move request received, type = %d", info.type);
     LogProducer::info("mc_base","vel = %.6f, acc = %.6f, cnt = %.6f, swift = %d", info.vel, info.acc, info.cnt, info.is_swift);
     LogProducer::info("mc_base","start-joint: %s", printDBLine(&start_joint_.j1_, buffer, LOG_TEXT_SIZE));

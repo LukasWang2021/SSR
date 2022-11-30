@@ -1992,6 +1992,18 @@ bool OnlineTrajectoryPlanner::load_online_constraints()
         printf("OnlineTrajectoryPlanner -> ERROR::Failed load soft_constraints.yaml\n");
         return false;
     }
+
+    // give 10 degree safe_zone for online constraint
+    for(auto i = online_upper.begin(); i!= online_upper.end(); ++i)
+    {
+        (*i) -= 0.174444;
+    }
+    for(auto i = online_lower.begin(); i!= online_lower.end(); ++i)
+    {
+        (*i) += 0.174444;
+    }
+
+
     printf("OnlineTrajectoryPlanner -> SUCCESS::online_upper:\t");
     for(auto i = online_upper.begin();i!=online_upper.end();++i)
     {

@@ -1488,5 +1488,9 @@ bool BaseGroup::isSameJoint(const Joint &joint1, const Joint &joint2, const Join
     return true;
 }
 
+bool BaseGroup::getOnlineFirstPointStatus()
+{
+    return online_trajectory_first_point_;
+}
 
 } // namespace fst_mc

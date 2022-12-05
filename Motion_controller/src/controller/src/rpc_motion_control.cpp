@@ -1158,31 +1158,37 @@ void ControllerRpc::handleRpc0x00008A31(void* request_data_ptr, void* response_d
     int matrix_state[10];
     double matrix_data[160];
     
-    #if 0 
-    LogProducer::info("rpc-8A31","recv_matrixLen=%d",recv_matrixLen);
+    //#if 0 
+    LogProducer::debug("rpc-8A31","recv_matrixLen=%d",recv_matrixLen);
     for(int i=0;i<recv_matrixLen;i++)
     {
-        LogProducer::info("handleRpc0x8A31","state=%d,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf", 
+        LogProducer::debug("handleRpc0x8A31","state=%d,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf", 
         rq_data_ptr->data.matrices[i].state,
         rq_data_ptr->data.matrices[i].matrix[0],rq_data_ptr->data.matrices[i].matrix[1],rq_data_ptr->data.matrices[i].matrix[2],rq_data_ptr->data.matrices[i].matrix[3],
         rq_data_ptr->data.matrices[i].matrix[4],rq_data_ptr->data.matrices[i].matrix[5],rq_data_ptr->data.matrices[i].matrix[6],rq_data_ptr->data.matrices[i].matrix[7],
         rq_data_ptr->data.matrices[i].matrix[8],rq_data_ptr->data.matrices[i].matrix[9],rq_data_ptr->data.matrices[i].matrix[10],rq_data_ptr->data.matrices[i].matrix[11],
         rq_data_ptr->data.matrices[i].matrix[12],rq_data_ptr->data.matrices[i].matrix[13],rq_data_ptr->data.matrices[i].matrix[14],rq_data_ptr->data.matrices[i].matrix[15]);
     }
-    #endif
+    //#endif
     
-    group_ptr_[0]->moveOnlineTrajectory();//检查运控状态是否处于ONLINE状态,如果不是则切换到ONLINE状态并初始化
+    // check whether the status is online, if not, switch to online and initialize
+    group_ptr_[0]->moveOnlineTrajectory();
+
     rs_data_ptr->data.data = SUCCESS;
-    if (group_ptr_[0]->getWorkMode() != USER_OP_MODE_ONLINE)//检查控制器工作模式
+
+    // check work_mode, if it is not online mode, return error
+    if (group_ptr_[0]->getWorkMode() != USER_OP_MODE_ONLINE)
     {
         rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
         return;
     }
-    for(int i=0;i<recv_matrixLen;i++)
+
+    for(int i = 0; i < recv_matrixLen; ++i)
     {
         matrix_state[i] = rq_data_ptr->data.matrices[i].state;
         memcpy(&matrix_data[i*16],&rq_data_ptr->data.matrices[i].matrix[0], 16*sizeof(double));
     }
+
     if(group_ptr_[0]->checkOnlineMoveError(0))
     {
         rs_data_ptr->data.data = group_ptr_[0]->checkOnlineMoveError(0);

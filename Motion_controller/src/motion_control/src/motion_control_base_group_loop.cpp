@@ -501,6 +501,9 @@ int BaseGroup::fillOnlineFIFO(int startIdx)
             */
         }
     }
+
+    LogProducer::warn("fill_online_fifo_","online_fifo_pointCnt= %d  enable_send_online_fifoPoint_flag = %d;", online_fifo_pointCnt, enable_send_online_fifoPoint_flag);
+
     if(!online_trajectory_first_point_)//运控轨迹点缓存150个以后再向伺服发送
     {
         if(online_fifo_pointCnt > 0)

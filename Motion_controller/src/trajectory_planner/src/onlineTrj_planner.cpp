@@ -1994,15 +1994,34 @@ bool OnlineTrajectoryPlanner::load_online_constraints()
     }
 
     // give 10 degree safe_zone for online constraint
-    for(auto i = online_upper.begin(); i!= online_upper.end(); ++i)
+    int temp_count = 0;
+    auto i1 = online_upper.begin();
+    auto i2 = online_lower.begin();
+
+    // do value process for online function
+    while(i1 != online_upper.end() && i2 != online_lower.end() && temp_count < 6)
     {
-        (*i) -= 0.174444;
-    }
-    for(auto i = online_lower.begin(); i!= online_lower.end(); ++i)
-    {
-        (*i) += 0.174444;
+        if(temp_count == 2 || temp_count == 4)
+        {
+            (*i1) = (-0.174);
+            (*i2) = (-1.57 + 0.087);
+        }else{
+            (*i1) -= 0.087;
+            (*i2) += 0.087;
+        }
+        ++i1;
+        ++i2;
+        ++temp_count;
     }
 
+    // for(auto i = online_upper.begin(); i!= online_upper.end(); ++i)
+    // {
+    //     (*i) -= 0.087;
+    // }
+    // for(auto i = online_lower.begin(); i!= online_lower.end(); ++i)
+    // {
+    //     (*i) += 0.087;
+    // }
 
     printf("OnlineTrajectoryPlanner -> SUCCESS::online_upper:\t");
     for(auto i = online_upper.begin();i!=online_upper.end();++i)

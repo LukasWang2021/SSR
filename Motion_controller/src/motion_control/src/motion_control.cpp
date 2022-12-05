@@ -730,10 +730,12 @@ ErrorCode MotionControl::receive_T_matrix_data(int status, double * p_marixArray
 
     // current robot end-point pose matrix
     static TransMatrix T_c;
+
     // last t_k after dynamic coordinate transformation
     static TransMatrix last_T_k;
 
     static TransMatrix T_r0_R;
+
     static TransMatrix Touch_h0_v;
     
     // current t_k after dynamic corrdinate transformation
@@ -745,6 +747,7 @@ ErrorCode MotionControl::receive_T_matrix_data(int status, double * p_marixArray
     
     // xyz mirroring ratio, this value read from yaml file in /root/robotdata
     double k_xyz = online_trj_planner_ptr->online_alg_params_.trj_ratio_xyz; 
+
     // abc mirroring ratio, this value read from yaml file in /root/robotdata
     double k_abc = online_trj_planner_ptr->online_alg_params_.trj_ratio_abc; 
     
@@ -830,18 +833,18 @@ ErrorCode MotionControl::receive_T_matrix_data(int status, double * p_marixArray
         }
         
     } else { // mid_points or end_point
-        Touch_ht_v.rotation_matrix_.matrix_[0][0] =* (p_marixArray+0);
-        Touch_ht_v.rotation_matrix_.matrix_[1][0] =* (p_marixArray+1);
-        Touch_ht_v.rotation_matrix_.matrix_[2][0] =* (p_marixArray+2);
-        Touch_ht_v.rotation_matrix_.matrix_[0][1] =* (p_marixArray+4);
-        Touch_ht_v.rotation_matrix_.matrix_[1][1] =* (p_marixArray+5);
-        Touch_ht_v.rotation_matrix_.matrix_[2][1] =* (p_marixArray+6);
-        Touch_ht_v.rotation_matrix_.matrix_[0][2] =* (p_marixArray+8);
-        Touch_ht_v.rotation_matrix_.matrix_[1][2] =* (p_marixArray+9);
-        Touch_ht_v.rotation_matrix_.matrix_[2][2] =* (p_marixArray+10);
-        Touch_ht_v.trans_vector_.x_ =* (p_marixArray+12);
-        Touch_ht_v.trans_vector_.y_ =* (p_marixArray+13);
-        Touch_ht_v.trans_vector_.z_ =* (p_marixArray+14);
+        Touch_ht_v.rotation_matrix_.matrix_[0][0] = *(p_marixArray+0);
+        Touch_ht_v.rotation_matrix_.matrix_[1][0] = *(p_marixArray+1);
+        Touch_ht_v.rotation_matrix_.matrix_[2][0] = *(p_marixArray+2);
+        Touch_ht_v.rotation_matrix_.matrix_[0][1] = *(p_marixArray+4);
+        Touch_ht_v.rotation_matrix_.matrix_[1][1] = *(p_marixArray+5);
+        Touch_ht_v.rotation_matrix_.matrix_[2][1] = *(p_marixArray+6);
+        Touch_ht_v.rotation_matrix_.matrix_[0][2] = *(p_marixArray+8);
+        Touch_ht_v.rotation_matrix_.matrix_[1][2] = *(p_marixArray+9);
+        Touch_ht_v.rotation_matrix_.matrix_[2][2] = *(p_marixArray+10);
+        Touch_ht_v.trans_vector_.x_ = *(p_marixArray+12);
+        Touch_ht_v.trans_vector_.y_ = *(p_marixArray+13);
+        Touch_ht_v.trans_vector_.z_ = *(p_marixArray+14);
 
         online_trj_planner_ptr->DynamicBaseCoordTransformation(T_r0_R, Touch_h0_v, Touch_ht_v, k_xyz, k_abc, T_k);
 
@@ -903,7 +906,8 @@ ErrorCode MotionControl::receive_T_matrix_data(int status, double * p_marixArray
                     group_ptr_->setOnlineTrjFirstPointCondition();
 
                     // over speed in online movement
-                    return 0x1117;
+                    LogProducer::debug("receive_T_matrix_data", "the status of first_point status is: %d", group_ptr_->getOnlineFirstPointStatus());
+                    return BASE_GROUP_RECV_ONLINE_OVERSPEED_ERROR;
                 }
             } else {
 
@@ -941,6 +945,8 @@ ErrorCode MotionControl::receive_T_matrix_data(int status, double * p_marixArray
                 T_r0_R.print_("T_r0_R start");
                 Touch_h0_v.print_("Touch_h0_v");
                 flag_recv_new_VPMatrix_ = false;
+
+                LogProducer::debug("receive_T_matrix_data", "the status of first_point status is: %d", group_ptr_->getOnlineFirstPointStatus());
                 return BASE_GROUP_RECV_ONLINE_NORMAL_END;
             }
         } else {
@@ -978,6 +984,8 @@ ErrorCode MotionControl::receive_T_matrix_data(int status, double * p_marixArray
                 T_r0_R.print_("T_r0_R start");
                 Touch_h0_v.print_("Touch_h0_v");
                 flag_recv_new_VPMatrix_ = false;
+
+                LogProducer::debug("receive_T_matrix_data", "the status of first_point status is: %d", group_ptr_->getOnlineFirstPointStatus());
                 return BASE_GROUP_RECV_ONLINE_NORMAL_END;
             }
             #else  // IK failed, end early
@@ -1472,12 +1480,7 @@ ErrorCode MotionControl::moveOnlineTrajectory(void)
     return group_ptr_->switchToOnlineState();
 }
 
-/***************************
-* 函数功能:检查ONLINE运动过程中是否有错误--提供给RPC8A31函数使用
-* 参数说明: 
-* op_code 0-查询 1-重置成功 其他-设置值
-* 4-超速
-************************************************/
+
 ErrorCode MotionControl::checkOnlineMoveError(int op_code)
 {
     static ErrorCode  ret_err = 0;

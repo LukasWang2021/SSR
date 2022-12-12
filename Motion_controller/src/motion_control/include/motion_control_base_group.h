@@ -173,6 +173,8 @@ class BaseGroup
     ErrorCode isLinearPathReachable(const IntactPoint &start, const IntactPoint &target);
 
     double decouplingAxis6ByRad(double fifth_pos, double sixth_pos);
+
+    bool getOnlineFirstPointStatus();
     
     virtual basic_alg::Transformation* getTransformationPtr(void);
     virtual basic_alg::Kinematics* getKinematicsPtr(void);
@@ -325,6 +327,7 @@ class BaseGroup
     bool offline_trajectory_last_point_;
     bool online_trajectory_first_point_;
     bool online_trajectory_last_point_;
+
     uint32_t offline_trajectory_size_;
     basic_alg::Joint offline_start_joint_;
     #ifdef OFFLINE_SEG

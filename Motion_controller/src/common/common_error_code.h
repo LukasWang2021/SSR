@@ -25,12 +25,13 @@ typedef unsigned long long int ErrorCode;
 #define CORE_COMM_RECV_CORE_PROCESS_CALL_FAILED 0x100E
 #define CORE_COMM_RECV_CORE_PROCESS_CALL_TIMEOUT 0x100F
 #define CORE_COMM_EXEC_CORE_PROCESS_CALL_FAILED 0x1010
-#define BASE_GROUP_PICK_POINTS_FROM_OFFLINECACHE_NULL 0x1111//从离线轨迹缓存取点数据为空
-#define BASE_GROUP_PICK_POINTS_FROM_ONLINECACHE_NULL 0x1112//从在线轨迹缓存取点数据为空
-#define BASE_GROUP_FILL_ONLINE_FIFO_ERROR 0x1113 //填充在线轨迹数据队列失败
-#define BASE_GROUP_RECV_ONLINE_DOIK_ERROR 0x1114 //在线轨迹 逆解失败
-#define BASE_GROUP_RECV_ONLINE_JOINT_OUTLIMIT 0x1115 //填充在线轨迹数据队列失败
-#define BASE_GROUP_RECV_ONLINE_NORMAL_END 0x1116 //填充在线轨迹数据队列失败
+#define BASE_GROUP_PICK_POINTS_FROM_OFFLINECACHE_NULL 0x1111// pick null data from offline_trajectory buffer
+#define BASE_GROUP_PICK_POINTS_FROM_ONLINECACHE_NULL 0x1112// pick null data from online_trajectory buffer
+#define BASE_GROUP_FILL_ONLINE_FIFO_ERROR 0x1113 //fill online_trajectory_buffer failed
+#define BASE_GROUP_RECV_ONLINE_DOIK_ERROR 0x1114 // online_trajectory movement IK error
+#define BASE_GROUP_RECV_ONLINE_JOINT_OUTLIMIT 0x1115 // online_trajectory joint out of limit
+#define BASE_GROUP_RECV_ONLINE_NORMAL_END 0x1116 // online_trajectory movement normal ending
+#define BASE_GROUP_RECV_ONLINE_OVERSPEED_ERROR 0x1117 // overspeed during online_trajectory movement
 #define CONTROLLER_INIT_FAILED 0x2000
 #define CONTROLLER_CREATE_ROUTINE_THREAD_FAILED 0x2001
 #define CONTROLLER_CREATE_ALG_THREAD_FAILED 0x2002

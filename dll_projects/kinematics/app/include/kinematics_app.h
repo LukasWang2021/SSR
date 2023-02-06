@@ -97,6 +97,28 @@ extern "C"
 	COMM_INTERFACE_API uint64_t c_km_getJointByPoseQuat(const double pose_quat[7], const int32_t posture[4], double joint[6]);
 	COMM_INTERFACE_API uint64_t c_km_getJointByTransMatrix(const double trans_matrix[16], const int32_t posture[4], double joint[6]);
 
+	/**
+	 * @brief Get inverse matrix
+	 * @details
+	 * @param [in] p_matrix the original matrix
+	 * @param [in] dim the dimension of this matrix, note that the input matirx must be a square matrix
+	 * @param [out] p_inv the output inverse matrix
+	 * @retval 0 Success.
+	 * @retval others Failure.
+	 */
+	COMM_INTERFACE_API uint64_t c_km_getMatrixInv(const double* p_matrix, int dim, double* p_inv);
+
+	COMM_INTERFACE_API uint64_t c_km_turnQuat2Euler(const double(&quaternion_)[4], double(&res)[3]);
+
+	COMM_INTERFACE_API uint64_t c_km_turnEuler2Quat(const double(&euler_)[3], double(&res)[4]);
+	
+	COMM_INTERFACE_API uint64_t c_km_turnPoseEuler2Matrix(const double(&pose_)[6], double(&m)[4][4]);
+
+	COMM_INTERFACE_API uint64_t c_km_turnMatrix2PoseEuler(const double(&m)[4][4], double(&pose_)[6]);
+
+	COMM_INTERFACE_API uint64_t c_km_mulMatrix2Matrix(const double(&m)[4][4], const double(&n)[4][4], double(&res)[4][4]);
+
+
 	//COMM_INTERFACE_API uint64_t c_km_convertCartToJoint(double joint_pos[6], double joint_pos[6]);
 	//COMM_INTERFACE_API uint64_t c_km_convertJointToCart(double joint_pos[6], double joint_pos[6]);
 

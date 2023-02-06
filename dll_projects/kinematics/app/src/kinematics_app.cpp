@@ -256,3 +256,92 @@ uint64_t c_km_getJointByTransMatrix(const double trans_matrix[16], const int32_t
 	}
 	return 0;
 }
+
+uint64_t c_km_getMatrixInv(const double* p_matrix, int dim, double* p_inv)
+{
+	inverse(p_matrix, dim, p_inv);
+	return 0;
+}
+
+uint64_t c_km_turnQuat2Euler(const double(&quaternion_)[4], double(&res)[3])
+{
+	Quaternion quaternion;
+	quaternion.w_ = quaternion_[0];
+	quaternion.x_ = quaternion_[1];
+	quaternion.y_ = quaternion_[2];
+	quaternion.z_ = quaternion_[3];
+
+	Euler euler;
+	Quaternion q(quaternion);
+
+	// if (fabs(sqrt(q.w_ * q.w_ + q.x_ * q.x_ + q.y_ * q.y_ + q.z_ * q.z_) - 1) > 0.0005)
+	// {
+	normalizeQuaternion(q);
+	// }
+
+	euler.c_ = atan2((q.w_ * q.x_ + q.y_ * q.z_) * 2, 1 - (q.x_ * q.x_ + q.y_ * q.y_) * 2);
+	euler.b_ = asin((q.w_ * q.y_ - q.z_ * q.x_) * 2);
+	euler.a_ = atan2((q.w_ * q.z_ + q.x_ * q.y_) * 2, 1 - (q.y_ * q.y_ + q.z_ * q.z_) * 2);
+	res[0] = euler.a_;
+	res[1] = euler.b_;
+	res[2] = euler.c_;
+	return 0;
+
+}
+
+uint64_t c_km_turnEuler2Quat(const double(&euler_)[3], double(&res)[4])
+{
+	Euler euler;
+	euler.a_ = euler_[0];
+	euler.b_ = euler_[1];
+	euler.c_ = euler_[2];
+
+	Quaternion quat;
+
+	quat = Euler2Quaternion(euler);
+
+	res[0] = quat.w_;
+	res[1] = quat.x_;
+	res[2] = quat.y_;
+	res[3] = quat.z_;
+
+	return 0;
+
+}
+
+uint64_t c_km_turnPoseEuler2Matrix(const double(&pose_)[6], double(&m)[4][4])
+{
+	PoseEuler pose;
+	pose.point_.x_ = pose_[0];
+	pose.point_.y_ = pose_[1];
+	pose.point_.z_ = pose_[2];
+	pose.euler_.a_ = pose_[3];
+	pose.euler_.b_ = pose_[4];
+	pose.euler_.c_ = pose_[5];
+
+	PoseEuler2Matrix(pose, m);
+
+	return 0;
+
+}
+
+uint64_t c_km_turnMatrix2PoseEuler(const double(&m)[4][4], double(&pose_)[6])
+{
+	PoseEuler res;
+	Matrix2PoseEuler(m, res);
+	pose_[0] = res.point_.x_;
+	pose_[1] = res.point_.y_;
+	pose_[2] = res.point_.z_;
+
+	pose_[3] = res.euler_.a_;
+	pose_[4] = res.euler_.b_;
+	pose_[5] = res.euler_.c_;
+
+	return 0;
+}
+
+uint64_t c_km_mulMatrix2Matrix(const double(&m)[4][4], const double(&n)[4][4], double(&res)[4][4])
+{
+	mulMatrix2Matrix(m, n, res);
+	return 0;
+}

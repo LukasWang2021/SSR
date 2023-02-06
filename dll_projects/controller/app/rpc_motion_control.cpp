@@ -155,9 +155,9 @@ uint64_t c_mcDoGotoCartesianMove(int32_t group_index, double x, double y, double
 	req_data.data2.pose_and_posture.pose.data[0] = x;
 	req_data.data2.pose_and_posture.pose.data[1] = y;
 	req_data.data2.pose_and_posture.pose.data[2] = z;
-	req_data.data2.pose_and_posture.pose.data[3] = a;
+	req_data.data2.pose_and_posture.pose.data[3] = c;
 	req_data.data2.pose_and_posture.pose.data[4] = b;
-	req_data.data2.pose_and_posture.pose.data[5] = c;
+	req_data.data2.pose_and_posture.pose.data[5] = a;
 	req_data.data2.pose_and_posture.posture.arm_back_front = arm_front_back; // 1: front arm, -1:back arm
 	req_data.data2.pose_and_posture.posture.arm_up_down = elbow_up_down;     // 1: elbow above wrist, -1:elbow below wrist
 	req_data.data2.pose_and_posture.posture.wrist_flip = wrist_down_up;      // 1: wrist down, -1: wrist up

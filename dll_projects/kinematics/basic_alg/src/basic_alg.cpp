@@ -140,6 +140,8 @@ bool basic_alg::eigens(const double *p_matrix, int dim, double *eig_vec, double 
 
 bool basic_alg::inverse(const double *p_matrix, int dim, double *p_inv)
 {
+
+
 	if (p_matrix == NULL || p_inv == NULL)
 	{
 		return false;
@@ -155,10 +157,16 @@ bool basic_alg::inverse(const double *p_matrix, int dim, double *p_inv)
 	integer work_dim = dim;
 
 	dgetrf_(&row, &col, mat, &row, piviot, &ret_info);
-	if (ret_info != 0) return false;
-
+	if (ret_info != 0) 
+	{
+		return false;
+	}
+	
 	dgetri_(&row, mat, &col, piviot, work_space, &work_dim, &ret_info);
-	if (ret_info != 0) return false;
+	if (ret_info != 0)
+	{
+		return false;
+	}
 
 	memcpy(p_inv, mat, sizeof(double) * dim * dim);
 

@@ -67,7 +67,8 @@ uint64_t c_km_setDH(double  dh[7][4])
 	if (!initialized) return KINEMATICS_NOT_INIT_ERR;
 
 	DH base_dh, arm_dh[6];
-	memcpy(&base_dh, dh, sizeof(DH) * 7);
+	memcpy(&base_dh, dh, sizeof(DH));
+	memcpy(&arm_dh, dh[1], sizeof(DH) * 6);
 
 	p_kinematics->setDH(base_dh, arm_dh);
 	return 0;

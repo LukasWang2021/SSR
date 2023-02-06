@@ -1,0 +1,44 @@
+﻿  pch.cpp
+  kinematics_app.cpp
+E:\repos\mc_application\dll_projects\kinematics\app\src\kinematics_app.cpp(196,1): fatal error C1010: 在查找预编译头时遇到意外的文件结尾。是否忘记了向源中添加“#include "pch.h"”?
+  basic_alg.cpp
+E:\repos\mc_application\dll_projects\kinematics\basic_alg\src\basic_alg.cpp(171,1): fatal error C1010: 在查找预编译头时遇到意外的文件结尾。是否忘记了向源中添加“#include "pch.h"”?
+  double_array9.cpp
+E:\repos\mc_application\dll_projects\kinematics\basic_alg\src\double_array9.cpp(121,1): fatal error C1010: 在查找预编译头时遇到意外的文件结尾。是否忘记了向源中添加“#include "pch.h"”?
+  euler.cpp
+E:\repos\mc_application\dll_projects\kinematics\basic_alg\src\euler.cpp(102,1): fatal error C1010: 在查找预编译头时遇到意外的文件结尾。是否忘记了向源中添加“#include "pch.h"”?
+  int32_array9.cpp
+E:\repos\mc_application\dll_projects\kinematics\basic_alg\src\int32_array9.cpp(121,1): fatal error C1010: 在查找预编译头时遇到意外的文件结尾。是否忘记了向源中添加“#include "pch.h"”?
+  joint.cpp
+E:\repos\mc_application\dll_projects\kinematics\basic_alg\src\joint.cpp(127,1): fatal error C1010: 在查找预编译头时遇到意外的文件结尾。是否忘记了向源中添加“#include "pch.h"”?
+  joint_acceleration.cpp
+E:\repos\mc_application\dll_projects\kinematics\basic_alg\src\joint_acceleration.cpp(115,1): fatal error C1010: 在查找预编译头时遇到意外的文件结尾。是否忘记了向源中添加“#include "pch.h"”?
+  joint_torque.cpp
+E:\repos\mc_application\dll_projects\kinematics\basic_alg\src\joint_torque.cpp(115,1): fatal error C1010: 在查找预编译头时遇到意外的文件结尾。是否忘记了向源中添加“#include "pch.h"”?
+  joint_velocity.cpp
+E:\repos\mc_application\dll_projects\kinematics\basic_alg\src\joint_velocity.cpp(115,1): fatal error C1010: 在查找预编译头时遇到意外的文件结尾。是否忘记了向源中添加“#include "pch.h"”?
+  matrix33.cpp
+E:\repos\mc_application\dll_projects\kinematics\basic_alg\src\matrix33.cpp(190,1): fatal error C1010: 在查找预编译头时遇到意外的文件结尾。是否忘记了向源中添加“#include "pch.h"”?
+  matrix44.cpp
+E:\repos\mc_application\dll_projects\kinematics\basic_alg\src\matrix44.cpp(206,1): fatal error C1010: 在查找预编译头时遇到意外的文件结尾。是否忘记了向源中添加“#include "pch.h"”?
+  point.cpp
+E:\repos\mc_application\dll_projects\kinematics\basic_alg\src\point.cpp(261,1): fatal error C1010: 在查找预编译头时遇到意外的文件结尾。是否忘记了向源中添加“#include "pch.h"”?
+  pose_euler.cpp
+E:\repos\mc_application\dll_projects\kinematics\basic_alg\src\pose_euler.cpp(46,1): fatal error C1010: 在查找预编译头时遇到意外的文件结尾。是否忘记了向源中添加“#include "pch.h"”?
+  pose_quaternion.cpp
+E:\repos\mc_application\dll_projects\kinematics\basic_alg\src\pose_quaternion.cpp(47,1): fatal error C1010: 在查找预编译头时遇到意外的文件结尾。是否忘记了向源中添加“#include "pch.h"”?
+  quaternion.cpp
+E:\repos\mc_application\dll_projects\kinematics\basic_alg\src\quaternion.cpp(197,1): fatal error C1010: 在查找预编译头时遇到意外的文件结尾。是否忘记了向源中添加“#include "pch.h"”?
+  rotation_matrix.cpp
+E:\repos\mc_application\dll_projects\kinematics\basic_alg\src\rotation_matrix.cpp(129,1): fatal error C1010: 在查找预编译头时遇到意外的文件结尾。是否忘记了向源中添加“#include "pch.h"”?
+  trans_matrix.cpp
+E:\repos\mc_application\dll_projects\kinematics\basic_alg\src\trans_matrix.cpp(149,1): fatal error C1010: 在查找预编译头时遇到意外的文件结尾。是否忘记了向源中添加“#include "pch.h"”?
+  vector3.cpp
+E:\repos\mc_application\dll_projects\kinematics\basic_alg\src\vector3.cpp(269,1): fatal error C1010: 在查找预编译头时遇到意外的文件结尾。是否忘记了向源中添加“#include "pch.h"”?
+  kinematics_rtm.cpp
+E:\repos\mc_application\dll_projects\kinematics\kinematics_alg\src\kinematics_rtm.cpp(989,1): fatal error C1010: 在查找预编译头时遇到意外的文件结尾。是否忘记了向源中添加“#include "pch.h"”?
+  main.cpp
+E:\repos\mc_application\dll_projects\kinematics\main.cpp(436,1): fatal error C1010: 在查找预编译头时遇到意外的文件结尾。是否忘记了向源中添加“#include "pch.h"”?
+  正在编译...
+  transformation.cpp
+E:\repos\mc_application\dll_projects\kinematics\transformation\src\transformation.cpp(301,1): fatal error C1010: 在查找预编译头时遇到意外的文件结尾。是否忘记了向源中添加“#include "pch.h"”?

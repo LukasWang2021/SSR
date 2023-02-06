@@ -6,6 +6,7 @@
 #include "kinematics_err.h"
 #include <string.h>
 
+
 using namespace basic_alg;
 
 static KinematicsRTM* p_kinematics = NULL;
@@ -56,8 +57,6 @@ uint64_t c_km_exitKinematics(void)
 {
 	if (p_kinematics != NULL) delete p_kinematics;
 	if (p_transform != NULL) delete p_transform;
-
-	initialized = false;
 
 	return 0;
 }
@@ -164,94 +163,91 @@ uint64_t c_km_getPostureByJoint(double joint_pos[6], int32_t posture[4])
 }
 
 
-uint64_t c_km_getJointByPoseEuler(const double pose_euler[6], const int32_t posture[4], double joint[6])
+uint64_t c_km_getMatrixInv(const double* p_matrix, int dim, double* p_inv)
 {
-	Posture pt;
-	pt.arm = posture[0];
-	pt.elbow = posture[1];
-	pt.wrist = posture[2];
-	pt.flip = posture[3];
-
-	Joint jt; jt.zero();
-	PoseEuler pe;
-	pe.point_.x_ = pose_euler[0];
-	pe.point_.y_ = pose_euler[1];
-	pe.point_.z_ = pose_euler[2];
-	pe.euler_.a_ = pose_euler[5];
-	pe.euler_.b_ = pose_euler[4];
-	pe.euler_.c_ = pose_euler[3];
-
-	if (!p_kinematics->doIK(pe, pt, jt))
-	{
-		return 1;
-	}
-	for (int i = 0; i < 6; ++i)
-	{
-		joint[i] = jt[i];
-	}
+	inverse(p_matrix, dim, p_inv);
 	return 0;
 }
 
-uint64_t c_km_getJointByPoseQuat(const double pose_quat[7], const int32_t posture[4], double joint[6])
+uint64_t c_km_turnQuat2Euler(const double (&quaternion_)[4], double (&res)[3])
 {
-	Posture pt;
-	pt.arm = posture[0];
-	pt.elbow = posture[1];
-	pt.wrist = posture[2];
-	pt.flip = posture[3];
+	Quaternion quaternion;
+	quaternion.w_ = quaternion_[0];
+	quaternion.x_ = quaternion_[1];
+	quaternion.y_ = quaternion_[2];
+	quaternion.z_ = quaternion_[3];
 
-	Joint jt; jt.zero();
-	PoseQuaternion pq;
-	pq.point_.x_ = pose_quat[0];
-	pq.point_.y_ = pose_quat[1];
-	pq.point_.z_ = pose_quat[2];
-	pq.quaternion_.w_ = pose_quat[3];
-	pq.quaternion_.x_ = pose_quat[4];
-	pq.quaternion_.y_ = pose_quat[5];
-	pq.quaternion_.z_ = pose_quat[5];
+	Euler euler;
+	Quaternion q(quaternion);
 
-	if (!p_kinematics->doIK(pq, pt, jt))
-	{
-		return 1;
-	}
-	for (int i = 0; i < 6; ++i)
-	{
-		joint[i] = jt[i];
-	}
+	// if (fabs(sqrt(q.w_ * q.w_ + q.x_ * q.x_ + q.y_ * q.y_ + q.z_ * q.z_) - 1) > 0.0005)
+	// {
+	normalizeQuaternion(q);
+	// }
+
+	euler.c_ = atan2((q.w_ * q.x_ + q.y_ * q.z_) * 2, 1 - (q.x_ * q.x_ + q.y_ * q.y_) * 2);
+	euler.b_ = asin((q.w_ * q.y_ - q.z_ * q.x_) * 2);
+	euler.a_ = atan2((q.w_ * q.z_ + q.x_ * q.y_) * 2, 1 - (q.y_ * q.y_ + q.z_ * q.z_) * 2);
+	res[0] = euler.a_;
+	res[1] = euler.b_;
+	res[2] = euler.c_;
 	return 0;
 }
 
-uint64_t c_km_getJointByTransMatrix(const double trans_matrix[16], const int32_t posture[4], double joint[6])
+uint64_t c_km_turnEuler2Quat(const double (&euler_)[3], double (&res)[4])
 {
-	Posture pt;
-	pt.arm = posture[0];
-	pt.elbow = posture[1];
-	pt.wrist = posture[2];
-	pt.flip = posture[3];
+	Euler euler;
+	euler.a_ = euler_[0];
+	euler.b_ = euler_[1];
+	euler.c_ = euler_[2];
 
-	Joint jt; jt.zero();
-	TransMatrix tm;
-	tm.trans_vector_.x_ = trans_matrix[3];
-	tm.trans_vector_.y_ = trans_matrix[7];
-	tm.trans_vector_.z_ = trans_matrix[11];
+	Quaternion quat;
 
-	tm.rotation_matrix_.matrix_[0][0] = trans_matrix[0];
-	tm.rotation_matrix_.matrix_[0][1] = trans_matrix[1];
-	tm.rotation_matrix_.matrix_[0][2] = trans_matrix[2];
-	tm.rotation_matrix_.matrix_[1][0] = trans_matrix[4];
-	tm.rotation_matrix_.matrix_[1][1] = trans_matrix[5];
-	tm.rotation_matrix_.matrix_[1][2] = trans_matrix[6];
-	tm.rotation_matrix_.matrix_[2][0] = trans_matrix[8];
-	tm.rotation_matrix_.matrix_[2][1] = trans_matrix[9];
-	tm.rotation_matrix_.matrix_[2][2] = trans_matrix[10];
+	quat = Euler2Quaternion(euler);
 
-	if (!p_kinematics->doIK(tm, pt, jt))
-	{
-		return 1;
-	}
-	for (int i = 0; i < 6; ++i)
-	{
-		joint[i] = jt[i];
-	}
+	res[0] = quat.w_;
+	res[1] = quat.x_;
+	res[2] = quat.y_;
+	res[3] = quat.z_;
+
 	return 0;
 }
+
+uint64_t c_km_turnPoseEuler2Matrix(const double (&pose_)[6], double(&m)[4][4])
+{
+	PoseEuler pose;
+	pose.point_.x_ = pose_[0];
+	pose.point_.y_ = pose_[1];
+	pose.point_.z_ = pose_[2];
+	pose.euler_.a_ = pose_[3];
+	pose.euler_.b_ = pose_[4];
+	pose.euler_.c_ = pose_[5];
+
+	PoseEuler2Matrix(pose, m);
+
+	return 0;
+
+}
+
+uint64_t c_km_turnMatrix2PoseEuler(const double(&m)[4][4], double (&pose_)[6])
+{
+	PoseEuler res;
+	Matrix2PoseEuler(m, res);
+	pose_[0] = res.point_.x_;
+	pose_[1] = res.point_.y_;
+	pose_[2] = res.point_.z_;
+
+	pose_[3] = res.euler_.a_;
+	pose_[4] = res.euler_.b_;
+	pose_[5] = res.euler_.c_;
+
+	return 0;
+}
+
+uint64_t c_km_mulMatrix2Matrix(const double(&m)[4][4], const double(&n)[4][4], double(&res)[4][4])
+{
+	mulMatrix2Matrix(m,n,res);
+	return 0;
+}
+
+

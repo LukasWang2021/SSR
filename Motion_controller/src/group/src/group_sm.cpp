@@ -88,6 +88,27 @@ bool GroupSm::transferStateToGroupMoving(void)
     return false;
 }
 
+bool GroupSm::transferStateToGroupStandby(void)
+{
+    if (group_state_ == GROUP_STATUS_STANDBY)
+    {
+        LogProducer::warn("GroupSm", "Group[%d] transfer from %s to GROUP_STANDBY success", id_, getGroupStatusString(group_state_).c_str());
+        group_state_ = GROUP_STATUS_STANDBY;
+        target_reached_count_ = 0;
+        return true;
+    }
+
+    if (group_state_ == GROUP_STATUS_MOVING)
+    {
+		LogProducer::warn("GroupSm", "Group[%d] transfer from %s to GROUP_STANDBY success", id_, getGroupStatusString(group_state_).c_str());
+	    group_state_ = GROUP_STATUS_STANDBY;
+        target_reached_count_ = 0;
+        return true;
+    }
+	LogProducer::warn("GroupSm", "Group[%d] transfer from %s to GROUP_STANDBY failed", id_, getGroupStatusString(group_state_).c_str());
+    return false;
+}
+
 void GroupSm::setError(void)
 {
     is_err_exist_ = true;

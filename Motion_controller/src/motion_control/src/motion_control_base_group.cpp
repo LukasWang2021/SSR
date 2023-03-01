@@ -63,6 +63,9 @@ BaseGroup::BaseGroup()
     standby_to_online_request_ = false;
     online_to_standby_request_ = false;
     online_to_pause_request_ = false;
+    online_barecore_send_cnt_clear_request_ = false;
+    online_barecore_send_cnt_err_request_ = false;
+
     auto_to_standby_request_ = false;
     offline_to_standby_request_ = false;
     manual_to_standby_request_ = false;

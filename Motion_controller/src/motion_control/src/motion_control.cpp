@@ -628,6 +628,7 @@ double MotionControl::getOnlineTrajectoryRatio_abc()
 */
 ErrorCode MotionControl::setOnlineVpointCache(int num_matrix,int * p_status, double * p_marixArray)
 {
+    //LogProducer::warn("mc", "setOnlineVpointCache has been called");
     assert(p_marixArray != NULL);
     ErrorCode ret_code = 1;
     online_trajData_mutex_.lock();

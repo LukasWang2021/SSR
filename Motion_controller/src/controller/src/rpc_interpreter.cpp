@@ -16,13 +16,26 @@ void ControllerRpc::handleRpc0x00006154(void* request_data_ptr, void* response_d
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
     bool in_position;
-    group_space::GroupStatus_e status;
-    group_ptr_[0]->mcGroupReadStatus(status, in_position);
+    // edit in 2023-02-27
+    // group_space::GroupStatus_e status;
+    // group_ptr_[0]->mcGroupReadStatus(status, in_position);
+
+    ServoState status_;
+    status_ = group_ptr_[0]->getServoState();
 
     LogProducer::info("rpc", "/rpc/interpreter/start %s, state interpreter:%d, group:%d", 
-    rq_data_ptr->data.data, InterpCtrl::instance().getState(0), status);
+    rq_data_ptr->data.data, InterpCtrl::instance().getState(0), status_);
 
-    if(status == group_space::GROUP_STATUS_STANDBY)
+    // if(status == group_space::GROUP_STATUS_STANDBY)
+    // {
+    //     rs_data_ptr->data.data = InterpCtrl::instance().start(rq_data_ptr->data.data);
+    // }
+    // else
+    // {
+    //     rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION_START;
+    // }
+
+    if(status_ == group_space::SERVO_IDLE)
     {
         rs_data_ptr->data.data = InterpCtrl::instance().start(rq_data_ptr->data.data);
     }

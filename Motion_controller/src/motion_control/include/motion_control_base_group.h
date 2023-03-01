@@ -196,6 +196,12 @@ class BaseGroup
 
     // state machine
     void doStateMachine(void);
+    void doStateMachine_(void);
+    // check request before goes to real state machine
+    void transStateMachineCheck(MotionControlState mc_state);
+    // filter out some unused requests
+    void handleUnusedRequests();
+
     void doDisableToStandby(const ServoState &servo_state, uint32_t &fail_counter);
     void doStandbyToDisable(const ServoState &servo_state, uint32_t &fail_counter);
     void doAutoToStandby(const ServoState &servo_state, uint32_t &fail_counter, uint32_t &fine_counter);
@@ -350,10 +356,13 @@ class BaseGroup
 
     bool auto_to_pause_request_;
     bool pause_to_auto_request_;
-    bool pause_to_manual_request_;
+    
     bool standby_to_auto_request_;
     bool auto_to_standby_request_;
+
     bool manual_to_pause_request_;
+    bool pause_to_manual_request_;
+
     bool standby_to_manual_request_;
     bool manual_to_standby_request_;
 
@@ -369,6 +378,9 @@ class BaseGroup
     bool standby_to_online_request_;
     bool online_to_standby_request_;
     bool online_to_pause_request_;
+    bool online_barecore_send_cnt_err_request_;
+    bool online_barecore_send_cnt_clear_request_;
+
 
 
     size_t  disable_to_standby_timeout_;

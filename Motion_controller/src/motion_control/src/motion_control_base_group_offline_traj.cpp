@@ -140,64 +140,7 @@ ErrorCode BaseGroup::setOfflineTrajectory(const std::string &offline_trajectory)
         LogProducer::error("mc_offline_traj","Fail to set offline trajectory, state = 0x%x", mc_state_);
         return INVALID_SEQUENCE;
     }
-#ifdef OFFLINE_FILE
-    if (offline_trajectory_file_.is_open())
-    {
-        offline_trajectory_file_.close();
-    }
 
-    offline_trajectory_file_.open(offline_trajectory);
-
-    if (!offline_trajectory_file_.is_open())
-    {
-        LogProducer::error("mc_offline_traj","Fail to open offline trajectory file");
-        return INVALID_PARAMETER;
-    }
-    offline_trajectory_file_name_ = offline_trajectory;
-    offline_traj_point_read_cnt_ = 0;
-    uint32_t joint_num;
-    double cycle_time;
-    char line_str[512];
-    offline_trajectory_file_.getline(line_str, sizeof(line_str));
-    stringstream ss;
-    ss << line_str;
-
-    ss >> joint_num;
-    ss >> cycle_time;
-    ss >> offline_trajectory_size_;
-
-    if (joint_num != getNumberOfJoint())
-    {
-        LogProducer::error("mc_offline_traj","Invalid num of joint = %d, while %d expected", joint_num, getNumberOfJoint());
-        return INVALID_PARAMETER;
-    }
-
-    if (fabs(cycle_time - cycle_time_) > MINIMUM_E9)
-    {
-        LogProducer::error("mc_offline_traj","Invalid cycle time = %.9f, while %.9f expected", cycle_time, cycle_time_);
-        return INVALID_PARAMETER;
-    }
-
-    if (offline_trajectory_size_ == 0 || offline_trajectory_size_ > 60 * 1000)
-    {
-        LogProducer::error("mc_offline_traj","Invalid trajectory size = %d", offline_trajectory_size_);
-        return INVALID_PARAMETER;
-    }
-
-    offline_trajectory_file_.getline(line_str, sizeof(line_str));
-    ss.clear();
-    ss << line_str;
-
-    for (uint32_t i = 0; i < joint_num; i++)
-    {
-        ss >> offline_start_joint_[i];
-    }
-
-    char buffer[LOG_TEXT_SIZE];
-    offline_trajectory_time_stamp_ = cycle_time_;
-    LogProducer::info("mc_offline_traj","Set offline trajectory success, trajectory size: %d", offline_trajectory_size_);
-    LogProducer::info("mc_offline_traj","Start of the trajectory: %s", printDBLine(&offline_start_joint_[0], buffer, LOG_TEXT_SIZE));
-#else
     offline_traj_point_read_cnt_ = 0;
     offline_trajectory_size_ = (uint32_t)origin_trajectory_.size();
 
@@ -209,7 +152,6 @@ ErrorCode BaseGroup::setOfflineTrajectory(const std::string &offline_trajectory)
     char buffer[LOG_TEXT_SIZE];
     LogProducer::info("mc_offline_traj","Set offline trajectory success, trajectory size: %d", offline_trajectory_size_);
     LogProducer::info("mc_offline_traj","Start of the trajectory: %s", printDBLine(&offline_start_joint_[0], buffer, LOG_TEXT_SIZE));
-#endif
 
     return SUCCESS;
 }
@@ -255,12 +197,7 @@ ErrorCode BaseGroup::planOfflineTrajectory(string traj_name, double traj_vel)
     joint_state.omega.zero();
     joint_state.torque.zero();
     JointState last_state;
-#ifdef OFFLINE_FILE
-    std::ofstream traj_out_file(traj_name, ios::out);
-    // write the traj file head
-    traj_out_file << getNumberOfJoint() << " " << 0.001 << " " << xyz_traj.size() << "\n";
-    traj_out_file << fixed << setprecision(10);
-#endif 
+
     auto org_traj_iter = origin_trajectory_.begin();
     for(auto iter = xyz_traj.begin(); iter != xyz_traj.end(); ++iter)
     {
@@ -275,53 +212,18 @@ ErrorCode BaseGroup::planOfflineTrajectory(string traj_name, double traj_vel)
         }
         if(iter == xyz_traj.begin())
         {
-#ifdef OFFLINE_FILE
-            // write the first joint angle to file
-            traj_out_file
-            << joint_state.angle.j1_ << " " << joint_state.angle.j2_ << " " 
-            << joint_state.angle.j3_ << " " << joint_state.angle.j4_ << " " 
-            << joint_state.angle.j5_ << " " << joint_state.angle.j6_ << "\n";
-            // write the first joint state to file
-            traj_out_file
-            << joint_state.angle.j1_ << " " << joint_state.angle.j2_ << " " 
-            << joint_state.angle.j3_ << " " << joint_state.angle.j4_ << " " 
-            << joint_state.angle.j5_ << " " << joint_state.angle.j6_ << " "
-            // first point is zero
-            << 0 << " " << 0 << " " << 0 << " " << 0 << " " << 0 << " " << 0 << " "
-            << 0 << " " << 0 << " " << 0 << " " << 0 << " " << 0 << " " << 0 << " "
-            << 0 << " " << 0 << " " << 0 << " " << 0 << " " << 0 << " " << 0 << "\n";
-#endif
+
         }
         else
         {
             // calc the angle speed
             joint_state.omega = joint_state.angle - last_state.angle;
-#ifdef OFFLINE_FILE
-            // write the first joint state to file
-            traj_out_file
-            << joint_state.angle.j1_ << " " << joint_state.angle.j2_ << " " 
-            << joint_state.angle.j3_ << " " << joint_state.angle.j4_ << " " 
-            << joint_state.angle.j5_ << " " << joint_state.angle.j6_ << " "
 
-            << joint_state.omega.j1_ * 1000 << " " << joint_state.omega.j2_ * 1000 << " " 
-            << joint_state.omega.j3_ * 1000 << " " << joint_state.omega.j4_ * 1000 << " " 
-            << joint_state.omega.j5_ * 1000 << " " << joint_state.omega.j6_ * 1000 << " "
-
-            << joint_state.alpha.j1_ << " " << joint_state.alpha.j2_ << " " 
-            << joint_state.alpha.j3_ << " " << joint_state.alpha.j4_ << " " 
-            << joint_state.alpha.j5_ << " " << joint_state.alpha.j6_ << " "
-
-            << joint_state.torque.j1_ << " " << joint_state.torque.j2_ << " " 
-            << joint_state.torque.j3_ << " " << joint_state.torque.j4_ << " " 
-            << joint_state.torque.j5_ << " " << joint_state.torque.j6_ << "\n";
-#endif
         }
         *org_traj_iter++ = joint_state;
         last_state = joint_state;
     }
-#ifdef OFFLINE_FILE
-    traj_out_file.close();
-#endif
+
     return SUCCESS;
 }
 
@@ -486,11 +388,6 @@ uint32_t BaseGroup::getOfflineCacheSize(void)
 bool BaseGroup::fillOfflineCache(void)
 {
     const static uint32_t local_cache_size = 50;
-#ifdef OFFLINE_FILE
-    const static uint32_t joint_number = getNumberOfJoint();
-    static uint32_t picked_number = 0;
-    static char line_str[512];
-#endif
     static TrajectoryPoint local_cache[local_cache_size];
 
     pthread_mutex_lock(&offline_mutex_);
@@ -502,53 +399,7 @@ bool BaseGroup::fillOfflineCache(void)
     }
 
     pthread_mutex_unlock(&offline_mutex_);
-#ifdef OFFLINE_FILE
-    for(picked_number = 0; picked_number < local_cache_size; picked_number++)
-    {
-        if (offline_trajectory_file_.getline(line_str, sizeof(line_str)))
-        {
-            stringstream ss;
-            ss << line_str;
 
-            for (uint32_t j = 0; j < joint_number; j++)
-            {
-                ss >> local_cache[picked_number].state.angle[j];
-            }
-            offline_traj_point_read_cnt_++;
-            //LogProducer::info("mc_offline_traj","read point [%d]-(%f,%f,%f,%f,%f,%f),", offline_traj_point_read_cnt_,local_cache[picked_number].state.angle[0],local_cache[picked_number].state.angle[1],local_cache[picked_number].state.angle[2],local_cache[picked_number].state.angle[3],local_cache[picked_number].state.angle[4],local_cache[picked_number].state.angle[5]);
-            for (uint32_t j = 0; j < joint_number; j++)
-            {
-                ss >> local_cache[picked_number].state.omega[j];
-            }
-
-            for (uint32_t j = 0; j < joint_number; j++)
-            {
-                ss >> local_cache[picked_number].state.alpha[j];
-            }
-
-            for (uint32_t j = 0; j < joint_number; j++)
-            {
-                ss >> local_cache[picked_number].state.torque[j];
-            }
-        }
-        else
-        {
-            offline_trajectory_last_point_ = true;
-            break;
-        }
-
-        local_cache[picked_number].time_stamp = offline_trajectory_time_stamp_;
-        local_cache[picked_number].level = POINT_MIDDLE;
-        offline_trajectory_time_stamp_ += cycle_time_;
-    }
-
-    if (picked_number == 0)
-    {
-        return false;
-    }
-    if(offline_trajectory_size_ == offline_traj_point_read_cnt_) offline_trajectory_last_point_ = true;//取到最后一点,标记结束点
-    //LogProducer::info("fillOfflineCache","picked: %d, last = %d", picked_number, offline_trajectory_last_point_);
-#else
     uint32_t pick_cnt = 0;
     for(pick_cnt = 0; pick_cnt < local_cache_size; ++pick_cnt)
     {
@@ -558,6 +409,7 @@ bool BaseGroup::fillOfflineCache(void)
         }
         else
         {
+            LogProducer::info("fillOfflineCache","flag change segment 1");
             offline_trajectory_last_point_ = true;
             break;
         }
@@ -566,7 +418,7 @@ bool BaseGroup::fillOfflineCache(void)
         local_cache[pick_cnt].level = POINT_MIDDLE;
         offline_trajectory_time_stamp_ += cycle_time_;
     }
-#endif
+
     if (pick_cnt == 0) return false;
 
     if (offline_trajectory_first_point_)
@@ -637,9 +489,10 @@ bool BaseGroup::fillOfflinePauseCache(void)
     }
 
     if(offline_trajectory_size_ == offline_traj_point_read_cnt_)
+    {
         offline_trajectory_last_point_ = true;//取到最后一点,标记结束点
-    //LogProducer::info("fillOfflineCache","picked: %d, last = %d", picked_number, offline_trajectory_last_point_);
-
+    }
+        
     if (offline_trajectory_last_point_)
     {
         LogProducer::info("fillOfflinePauseCache","pause point ending");

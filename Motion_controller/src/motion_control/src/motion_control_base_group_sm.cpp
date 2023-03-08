@@ -162,6 +162,7 @@ void BaseGroup::doStateMachine(void)
     if(mc_state == OFFLINE && fio_ptr->isReal() && fio_state.bit.footboard_state ^ fio_last_state.bit.footboard_state && !fio_state.bit.footboard_state)
     {
         // pause
+        LogProducer::info("mc_sm", "pauseMove() has been called, mc_state == OFFLINE");
         pauseMove();
     }
 
@@ -169,6 +170,7 @@ void BaseGroup::doStateMachine(void)
     if(mc_state == PAUSED_OFFLINE && fio_ptr->isReal() && fio_state.bit.footboard_state ^ fio_last_state.bit.footboard_state && fio_state.bit.footboard_state)
     {
         // resume
+        LogProducer::info("mc_sm", "restartMove() has been called, mc_state == PAUSED_OFFLINE");
         restartMove();
     }
 
@@ -1129,6 +1131,25 @@ void BaseGroup::doStateMachine_(void)
     // check state machine change request conditions
     transStateMachineCheck(mc_state);
 
+    // // foot board pause falling edge and off
+    // if(mc_state == OFFLINE && fio_ptr->isReal() && fio_state.bit.footboard_state ^ fio_last_state.bit.footboard_state && !fio_state.bit.footboard_state)
+    // {
+    //     // pause
+    //     LogProducer::info("mc_sm", "[OUTSIDE]pauseMove() has been called, mc_state == OFFLINE");
+    //     pauseMove();
+    // }
+
+    // // foot board resume rise edge trig and on
+    // if(mc_state == PAUSED_OFFLINE && fio_ptr->isReal() && fio_state.bit.footboard_state ^ fio_last_state.bit.footboard_state && fio_state.bit.footboard_state)
+    // {
+    //     // resume
+    //     LogProducer::info("mc_sm", "[OUTSIDE]restartMove() has been called, mc_state == PAUSED_OFFLINE");
+    //     restartMove();
+    // }
+    
+    // // update fio status
+    // fio_last_state = fio_state;
+
     // handle barecore_ stop signal && servo diabled status
     if (stop_barecore_ && (servo_state == SERVO_DISABLE))
     {
@@ -1163,6 +1184,7 @@ void BaseGroup::doStateMachine_(void)
         }
     }
 
+    
     // state machine process
     switch (mc_state)
     {
@@ -1277,6 +1299,7 @@ void BaseGroup::doStateMachine_(void)
             if(fio_ptr->isReal() && fio_state.bit.footboard_state ^ fio_last_state.bit.footboard_state && !fio_state.bit.footboard_state)
             {
                 // pause
+                LogProducer::info("mc_sm", "[INSIDE]pauseMove() has been called, mc_state == OFFLINE");
                 pauseMove();
             }
 
@@ -1345,6 +1368,7 @@ void BaseGroup::doStateMachine_(void)
             if(mc_state == PAUSED_OFFLINE && fio_ptr->isReal() && fio_state.bit.footboard_state ^ fio_last_state.bit.footboard_state && fio_state.bit.footboard_state)
             {
                 // resume
+                LogProducer::info("mc_sm", "[OUTSIDE]restartMove() has been called, mc_state == PAUSED_OFFLINE");
                 restartMove();
             }
 
@@ -1402,6 +1426,8 @@ void BaseGroup::doStateMachine_(void)
     
     // update fio status
     fio_last_state = fio_state;
+    
+    
 }
 
 void BaseGroup::transStateMachineCheck(MotionControlState mc_state)

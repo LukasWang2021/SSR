@@ -201,6 +201,9 @@ void MotionControl::ringPlannerTask(void)
 #else
             if (instruction.user_op_mode == USER_OP_MODE_SLOWLY_MANUAL)
             {
+                // test print added 2023-03-02
+                LogProducer::info("QYPTest", "Manual move uses planner instructions");
+                
                 if (instruction.target.type == MOTION_JOINT)
                 {
                     instruction.target.vel = instruction.target.vel > 0.322886 ? 0.322886 : instruction.target.vel;
@@ -1647,35 +1650,6 @@ void MotionControl::clearErrorFlag(void)
 
 ErrorCode MotionControl::autoMove(const struct Instruction &instruction)
 {
-    /*
-    MotionControlState state = group_ptr_->getMotionControlState();
-    ServoState servo_state = group_ptr_->getServoState();
-
-    if (state != STANDBY && state != STANDBY_TO_AUTO && state != AUTO)
-    {
-        LogProducer::error("mc","Cannot autoMove in current state: 0x%x", state);
-        return INVALID_SEQUENCE;
-    }
-
-    if (servo_state != SERVO_IDLE && servo_state != SERVO_RUNNING)
-    {
-        LogProducer::error("mc","Cannot autoMove in current servo-state: 0x%x", servo_state);
-        return INVALID_SEQUENCE;
-    }
-    */
-
-    // if (state != STANDBY && state != STANDBY_TO_AUTO && state != AUTO)
-    // {
-    //     LogProducer::error("mc","Cannot autoMove in current state: 0x%x", state);
-    //     return INVALID_SEQUENCE;
-    // }
-
-    // if (servo_state != SERVO_IDLE && servo_state != SERVO_RUNNING)
-    // {
-    //     LogProducer::error("mc","Cannot autoMove in current servo-state: 0x%x", servo_state);
-    //     return INVALID_SEQUENCE;
-    // }
-
     pthread_mutex_lock(&instruction_mutex_);
     instruction_fifo_.push(instruction);
     instructions_recv_counter_ ++;

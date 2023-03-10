@@ -568,6 +568,7 @@ void Controller::processDevice(void)
         ret = (*iter)->updateStatus();
         if (ret != SUCCESS)
         {
+            LogProducer::error("main", "processDevice()::updateStatus() return failed");
             ErrorQueue::instance().push(ret);
         }
     }

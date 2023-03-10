@@ -54,6 +54,7 @@ BaseGroup::BaseGroup()
     stop_barecore_ = false;
     clear_teach_request_ = false;
     standby_to_offline_request_ = false;
+    offline_ready_to_pause_request_ = false;
     auto_to_pause_request_ = false;
     pause_to_auto_request_ = false;
     manual_to_pause_request_ = false;

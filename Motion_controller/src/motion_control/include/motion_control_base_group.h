@@ -370,6 +370,7 @@ class BaseGroup
     bool pause_to_offline_request_;
     bool pause_offline_to_standby_request_;
     bool pausing_offline_to_pause_request_;
+    bool offline_ready_to_pause_request_;
     bool standby_to_offline_request_;
     bool offline_to_standby_request_;
 

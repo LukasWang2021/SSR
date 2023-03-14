@@ -90,22 +90,22 @@ bool GroupSm::transferStateToGroupMoving(void)
 
 bool GroupSm::transferStateToGroupStandby(void)
 {
+    LogProducer::info("GroupSm","transferStateToGroupStandby has been called");
     if (group_state_ == GROUP_STATUS_STANDBY)
     {
-        LogProducer::warn("GroupSm", "Group[%d] transfer from %s to GROUP_STANDBY success", id_, getGroupStatusString(group_state_).c_str());
+        LogProducer::warn("GroupSm", "[transferStateToGroupStandby] Group[%d] already in GROUP_STANDBY", id_, getGroupStatusString(group_state_).c_str());
         group_state_ = GROUP_STATUS_STANDBY;
         target_reached_count_ = 0;
         return true;
     }
-
-    if (group_state_ == GROUP_STATUS_MOVING)
+    else if (group_state_ == GROUP_STATUS_MOVING)
     {
-		LogProducer::warn("GroupSm", "Group[%d] transfer from %s to GROUP_STANDBY success", id_, getGroupStatusString(group_state_).c_str());
+		LogProducer::warn("GroupSm", "[transferStateToGroupStandby] Group[%d] transfer from %s to GROUP_STANDBY success", id_, getGroupStatusString(group_state_).c_str());
 	    group_state_ = GROUP_STATUS_STANDBY;
         target_reached_count_ = 0;
         return true;
     }
-	LogProducer::warn("GroupSm", "Group[%d] transfer from %s to GROUP_STANDBY failed", id_, getGroupStatusString(group_state_).c_str());
+	LogProducer::warn("GroupSm", "[transferStateToGroupStandby] Group[%d] transfer from %s to GROUP_STANDBY failed", id_, getGroupStatusString(group_state_).c_str());
     return false;
 }
 

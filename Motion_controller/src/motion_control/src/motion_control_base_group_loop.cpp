@@ -450,9 +450,13 @@ void BaseGroup::fillTrajectoryFifo(void)
             reportError(err);
         }
     }
-    else if (mc_state_ == PAUSING_OFFLINE)
+    else if (mc_state_ == PAUSING_OFFLINE && !offline_ready_to_pause_request_) // only when angle has been pushed, it will start filling
     {
-        fillOfflinePauseCache();
+        bool temp_err = fillOfflinePauseCache();
+        if(!temp_err)
+        {
+            LogProducer::error("fillTrajectoryFifo()", "fill offline pause cache failed !!!");
+        }
     }
     /*
     else if (mc_state_ == ONLINE )
@@ -476,10 +480,12 @@ int BaseGroup::fillOnlineFIFO(int startIdx)
     int push_cnt = 0;
     int pick_idx = startIdx;
     pthread_mutex_lock(&online_traj_mutex_);
-    if(online_fifo_pointCnt > 150)//300-150=150 如果剩余空间不够150点存储
+    
+    //300-150=150 如果剩余空间不够150点存储
+    if(online_fifo_pointCnt > 150)
     {
         pthread_mutex_unlock(&online_traj_mutex_);
-        printf("online_fifo_error--->online_fifo_pointCnt=%d > 150 !!!\n",online_fifo_pointCnt);
+        LogProducer::error("fillOnlineFIFO()" "online_fifo_pointCnt > 150, current fifo cnt is %d", online_fifo_pointCnt);
         return 0;
     }
     //运控状态机处于在线轨迹下发状态且在线轨迹点数据已更新(避免重复填数据)
@@ -798,12 +804,20 @@ void BaseGroup::sendTrajectoryFlow(void)
     else if (mc_state == PAUSING_OFFLINE && !offline_to_pause_request_)
     {
         err = sendOfflineTrajectoryFlow();
+        if(err != SUCCESS)
+        {
+            LogProducer::error("sendTrajectoryFlow()", "send offline trajectory flow failed !!!");
+        }
     }
     else if (mc_state == PAUSING_OFFLINE && offline_to_pause_request_)
     {
         if (!bare_core_.isPointCacheEmpty())
         {
             err = bare_core_.sendPoint() ? SUCCESS : MC_SEND_TRAJECTORY_FAIL;
+            if(err != SUCCESS)
+            {
+                LogProducer::error("sendTrajectoryFlow()", "offline bare core send point failed !!!");
+            }
         }
     }
     else if (mc_state == PAUSING && !pausing_to_pause_request_)

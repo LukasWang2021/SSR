@@ -758,6 +758,7 @@ void BaseGroup::doStandbyToOffline(void)
 	offline_trajectory_cache_tail_ = 0;
 	offline_trajectory_first_point_ = true;
 	offline_trajectory_last_point_ = false;
+    LogProducer::info("mc_sm", "set offline last point status to false");
 	pthread_mutex_unlock(&offline_mutex_);
 	while (fillOfflineCache());
     mc_state_ = OFFLINE;
@@ -1107,6 +1108,7 @@ void BaseGroup::doStateMachine_(void)
             offline_trajectory_first_point_ = false;
             offline_trajectory_last_point_ = false;
             pthread_mutex_unlock(&offline_mutex_);
+            LogProducer::info("mc_sm", "[clear request] set offline flags to false and rest head & tail");
 
             // clear online cache
             pthread_mutex_lock(&online_traj_mutex_);
@@ -1134,6 +1136,45 @@ void BaseGroup::doStateMachine_(void)
 
     // check state machine change request conditions
     transStateMachineCheck(mc_state);
+
+    // if fio board connected, process fio command
+    if(mc_state == OFFLINE && fio_ptr->isReal() && fio_state.bit.footboard_state ^ fio_last_state.bit.footboard_state && !fio_state.bit.footboard_state)
+    {
+        // pause, return 0 if success
+        LogProducer::warn("mc_sm", "[OFFLINE] pauseMove() will be called from state machine");
+        ErrorCode err = pauseMove();
+        LogProducer::info("mc_sm", "[OFFLINE] pauseMove() has been called, current footboard state = %d, last footboard state = %d", fio_state.bit.footboard_state, fio_last_state.bit.footboard_state);
+
+        // if pause error, print error
+        if(err)
+        {
+            LogProducer::warn("mc_sm", "[OFFLINE] pauseMove() failed, WARNING");
+        }
+
+    }
+    else
+    {
+        // if fio board disconnected
+        if(!fio_ptr->isReal())
+        {
+            LogProducer::warn("mc_sm", "[OFFLINE] fio_device not detected! fio_ptr->isReal(): %d, current footboard state: %d, last footboard state: %d", fio_ptr->isReal(), fio_state.bit.footboard_state, fio_last_state.bit.footboard_state);
+        }
+    }
+
+    // process fio motion for priority
+    if(mc_state == PAUSED_OFFLINE && fio_ptr->isReal() && fio_state.bit.footboard_state ^ fio_last_state.bit.footboard_state && fio_state.bit.footboard_state)
+    {
+        // resume
+        LogProducer::info("mc_sm", "[PAUSED_OFFLINE]]restartMove() has been called");
+        restartMove();
+    }
+
+    // update fio status
+    if(fio_last_state.bit.footboard_state ^ fio_state.bit.footboard_state)
+    {
+        LogProducer::info("mc_sm", "footboard has been changed!");
+    }
+    fio_last_state = fio_state;
     
 
     // handle barecore_ stop signal && servo diabled status
@@ -1281,43 +1322,27 @@ void BaseGroup::doStateMachine_(void)
 
 		case OFFLINE:
         {
-            // process fio motion for priority
-            if(fio_ptr->isReal() && fio_state.bit.footboard_state ^ fio_last_state.bit.footboard_state && !fio_state.bit.footboard_state)
-            {
-                // pause
-                ErrorCode err = pauseMove();
-                LogProducer::info("mc_sm", "[OFFLINE] pauseMove() has been called");
 
-                if(!err)
-                {
-                    LogProducer::info("mc_sm", "[OFFLINE] pauseMove() failed, WARNING");
-                }
-
-            }else
-            {
-                LogProducer::info("mc_sm", "[OFFLINE] fio_device not detected! fio_ptr->isReal(): %d, current footboard state: %d, last footboard state: %d", fio_ptr->isReal(), fio_state.bit.footboard_state, fio_last_state.bit.footboard_state);
-
-            }
-
-            // standard process for offline mode
+            // standard process for offline operation
             fillOfflineCache();
 
+            // listening to flags, either to pause or to end
             if(offline_to_pause_request_)
             {
                 mc_state_ = PAUSING_OFFLINE;
                 LogProducer::warn("mc_sm","MC-state switch to PAUSING_OFFLINE");
-                offline_to_pause_request_ = false;
                 pause_joint_ = pause_trajectory_.back().angle;
-                LogProducer::info("mc_sm","[OFFLINE] pushed pause_joint_ to pause_trajectory_ SUCCESS!"); 
+                LogProducer::info("mc_sm","[OFFLINE] pushed pause_joint_ to pause_trajectory_ SUCCESS!");
+                offline_to_pause_request_ = false; 
             }
-
-            if (offline_to_standby_request_)
+            else if (offline_to_standby_request_)
             {
                 offline_to_standby_cnt = 0;
                 mc_state_ = OFFLINE_TO_STANDBY;
                 offline_to_standby_request_ = false;
                 LogProducer::warn("mc_sm","MC-state switch to MC_OFFLINE_TO_STANDBY");
             }
+            
 
             break;
         }
@@ -1336,16 +1361,14 @@ void BaseGroup::doStateMachine_(void)
         
         case PAUSING_OFFLINE:
         {
-            LogProducer::info("mc_sm","[PAUSING_OFFLINE] start listening flags , wait to stop offline movement");
-
             if(!offline_ready_to_pause_request_)
             {
+                LogProducer::info("mc_sm","[PAUSING_OFFLINE] start listening flags , wait to stop offline movement");
+
                 if (pausing_offline_to_pause_request_)
                 {
                     LogProducer::info("mc_sm","[PAUSING_OFFLINE] flag heard!");
-                    // pausing_to_pause_cnt = 0;
                     offline_to_standby_cnt = 0;
-                    // mc_state_ = PAUSING_OFFLINE_TO_PAUSE;
                     pausing_offline_to_pause_request_ = false;
                     offline_ready_to_pause_request_ = true;
 
@@ -1356,7 +1379,8 @@ void BaseGroup::doStateMachine_(void)
             {
                 doPausingOfflineToPause(servo_state, pausing_offline_to_pause_cnt);
             }
-            
+
+            break;
         }
         
         case PAUSING_OFFLINE_TO_PAUSE:
@@ -1367,19 +1391,13 @@ void BaseGroup::doStateMachine_(void)
         
         case PAUSED_OFFLINE:
         {
-            // process fio motion for priority
-            if(mc_state == PAUSED_OFFLINE && fio_ptr->isReal() && fio_state.bit.footboard_state ^ fio_last_state.bit.footboard_state && fio_state.bit.footboard_state)
-            {
-                // resume
-                LogProducer::info("mc_sm", "[OUTSIDE]restartMove() has been called, mc_state == PAUSED_OFFLINE");
-                restartMove();
-            }
 
             if(pause_to_offline_request_) // resume
             {
                 // check is the same 
                 if (!isSameJoint(pause_joint_, start_joint_))
                 {
+                    LogProducer::warn("mc_sm","pause joint is not the same as restart joint!");
                     mc_state_ = STANDBY;
                     pause_to_offline_request_ = false;
                     LogProducer::warn("mc_sm","MC-state switch to MC_STANDBY");
@@ -1402,7 +1420,7 @@ void BaseGroup::doStateMachine_(void)
                 online_to_standby_request_ = false;
                 online_fifo_.clear();
                 online_to_standby_cnt = 0;
-                LogProducer::warn("mc_sm","MC-state switch to MC_STANDBY");
+                LogProducer::warn("mc_sm","[Online] MC-state switch to MC_STANDBY");
             }
 
             if (online_barecore_send_cnt_err_request_)
@@ -1426,11 +1444,6 @@ void BaseGroup::doStateMachine_(void)
             break;
         }
     }
-
-    // update fio status
-    fio_last_state = fio_state;
-
-    
     
 }
 

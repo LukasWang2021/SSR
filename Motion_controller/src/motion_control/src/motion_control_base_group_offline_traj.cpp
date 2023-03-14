@@ -409,8 +409,8 @@ bool BaseGroup::fillOfflineCache(void)
         }
         else
         {
-            LogProducer::info("fillOfflineCache","flag change segment 1");
             offline_trajectory_last_point_ = true;
+            LogProducer::info("fillOfflineCache","set last point status to true");
             break;
         }
         
@@ -433,6 +433,7 @@ bool BaseGroup::fillOfflineCache(void)
         local_cache[pick_cnt - 1].level = POINT_ENDING;
         start_joint_ = local_cache[pick_cnt - 1].state.angle;
         offline_trajectory_last_point_ = false;
+        LogProducer::info("fillOfflineCache","set last point status to false");
     }
     
     pthread_mutex_lock(&offline_mutex_);
@@ -472,6 +473,7 @@ bool BaseGroup::fillOfflinePauseCache(void)
         else
         {
             offline_trajectory_last_point_ = true;
+            LogProducer::info("fillOfflinePauseCache", "set last point status to true");
             break;
         }
         local_cache[picked_number].time_stamp = pause_trajectory_time_stamp_;
@@ -491,6 +493,7 @@ bool BaseGroup::fillOfflinePauseCache(void)
     if(offline_trajectory_size_ == offline_traj_point_read_cnt_)
     {
         offline_trajectory_last_point_ = true;//取到最后一点,标记结束点
+        LogProducer::info("fillOfflinePauseCache", "set last_point status to true");
     }
         
     if (offline_trajectory_last_point_)
@@ -499,6 +502,7 @@ bool BaseGroup::fillOfflinePauseCache(void)
         local_cache[picked_number - 1].level = POINT_ENDING;
         start_joint_ = local_cache[picked_number - 1].state.angle;
         offline_trajectory_last_point_ = false;
+        LogProducer::info("fillOfflinePauseCache", "set last_point status to false");
     }
     
     pthread_mutex_lock(&offline_mutex_);
@@ -573,7 +577,7 @@ ErrorCode BaseGroup::sendOfflineTrajectoryFlow(void)
             {
                 offline_to_standby_request_ = true;
             }
-            else if(mc_state_ == PAUSING_OFFLINE)
+            else if(mc_state_ == PAUSING_OFFLINE && !offline_ready_to_pause_request_)
             {
                 pausing_offline_to_pause_request_ = true;
             }

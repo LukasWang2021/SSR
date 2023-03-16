@@ -246,10 +246,10 @@ ErrorCode Controller::init()
     {
         return CONTROLLER_CREATE_ROUTINE_THREAD_FAILED;
     } 
-    if(!planner_thread_.run(&controllerPlannerThreadFunc, this, config_ptr_->planner_thread_priority_))
-    {
-        return CONTROLLER_CREATE_ROUTINE_THREAD_FAILED;
-    } 
+    // if(!planner_thread_.run(&controllerPlannerThreadFunc, this, config_ptr_->planner_thread_priority_))
+    // {
+    //     return CONTROLLER_CREATE_ROUTINE_THREAD_FAILED;
+    // } 
     if(!priority_thread_.run(&controllerPriorityThreadFunc, this, config_ptr_->priority_thread_priority_))
     {
         return CONTROLLER_CREATE_ROUTINE_THREAD_FAILED;
@@ -266,10 +266,10 @@ ErrorCode Controller::init()
     {
         return CONTROLLER_CREATE_ONLIE_THREAD_FAILED;
     }
-    if(!dev_process_thread_.run(&controllerDeviceProcessThreadFunc, this, config_ptr_->dev_process_thread_priority_))
-    {
-        return CONTROLLER_CREATE_DEV_PROC_FAILED;
-    }
+    // if(!dev_process_thread_.run(&controllerDeviceProcessThreadFunc, this, config_ptr_->dev_process_thread_priority_))
+    // {
+    //     return CONTROLLER_CREATE_DEV_PROC_FAILED;
+    // }
 
     sleep(1);
     if(group_ptr_[0]->checkZeroOffset())
@@ -316,6 +316,13 @@ void Controller::runRoutineThreadFunc()
         group_ptr_[i]->processFdbPdo();
         group_ptr_[i]->processStateMachine();
     }
+
+    // planner thread merge
+    group_ptr_[0]->ringPlannerTask();
+    
+    // thread merge
+    processDevice();
+
     // rpc_.processRpc();
 	publish_.processPublish();
     uploadErrorCode();

@@ -200,10 +200,7 @@ void MotionControl::ringPlannerTask(void)
             }
 #else
             if (instruction.user_op_mode == USER_OP_MODE_SLOWLY_MANUAL)
-            {
-                // test print added 2023-03-02
-                LogProducer::info("QYPTest", "Manual move uses planner instructions");
-                
+            {   
                 if (instruction.target.type == MOTION_JOINT)
                 {
                     instruction.target.vel = instruction.target.vel > 0.322886 ? 0.322886 : instruction.target.vel;
@@ -217,10 +214,6 @@ void MotionControl::ringPlannerTask(void)
             err = autoMove(instruction.target);
 #endif
         }
-        else if (instruction.type == SET_UF)
-        {
-            err = setUserFrame(instruction.uf_id);
-        }
         else if (instruction.type == SET_TF)
         {
             err = setToolFrame(instruction.tf_id);
@@ -233,10 +226,14 @@ void MotionControl::ringPlannerTask(void)
         {
             err = group_ptr_->setGlobalAccRatio(instruction.oac);
         }
-        else if (instruction.type == SET_PAYLOAD)
-        {
-            err = setPayload(instruction.payload_id);
-        }
+        // else if (instruction.type == SET_PAYLOAD)
+        // {
+        //     err = setPayload(instruction.payload_id);
+        // }
+        // else if (instruction.type == SET_UF)
+        // {
+        //     err = setUserFrame(instruction.uf_id);
+        // }
         else
         {
             LogProducer::error("mc","Invalid instruction type: %d", instruction.type);

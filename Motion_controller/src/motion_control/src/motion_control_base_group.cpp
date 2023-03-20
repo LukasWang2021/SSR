@@ -54,6 +54,7 @@ BaseGroup::BaseGroup()
     stop_barecore_ = false;
     clear_teach_request_ = false;
     standby_to_offline_request_ = false;
+    offline_ready_to_pause_request_ = false;
     auto_to_pause_request_ = false;
     pause_to_auto_request_ = false;
     manual_to_pause_request_ = false;
@@ -63,6 +64,9 @@ BaseGroup::BaseGroup()
     standby_to_online_request_ = false;
     online_to_standby_request_ = false;
     online_to_pause_request_ = false;
+    online_barecore_send_cnt_clear_request_ = false;
+    online_barecore_send_cnt_err_request_ = false;
+
     auto_to_standby_request_ = false;
     offline_to_standby_request_ = false;
     manual_to_standby_request_ = false;
@@ -449,7 +453,12 @@ ErrorCode BaseGroup::pauseMove(void)
     else if(mc_state == OFFLINE && !offline_to_pause_request_)
     {
         ErrorCode err = planOfflinePause();
-        if (err != SUCCESS) return err;
+        
+        if (err != SUCCESS)
+        {
+            LogProducer::error("mc_base", "planOfflinePause() failed");
+            return err;
+        } 
 
         offline_to_pause_request_ = true;
         return SUCCESS;
@@ -729,10 +738,20 @@ ErrorCode BaseGroup::restartMove(void)
     else if(mc_state == PAUSED_OFFLINE && servo_state == SERVO_IDLE)
     {
         err = planOfflineResume();
-        if(err != SUCCESS) return err;
+        if(err != SUCCESS)
+        {
+            LogProducer::error("mc_base", "Restart move failed, planOfflineResume failed");
+            return err;
+        }
+        
         usleep(10000);
+
         err = setOfflineTrajectory(offline_trajectory_file_name_);
-        if(err != SUCCESS) return err;
+        if(err != SUCCESS)
+        {
+            LogProducer::error("mc_base", "Restart move failed, setOfflineTrajectory failed");
+            return err;
+        }
 
         pause_to_offline_request_ = true;
 

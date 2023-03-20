@@ -164,10 +164,15 @@ public:
     void OnlineMove_exceedJointLimit_pause2(TrjPoint point);
     TrjPoint getOnlineMoveLastWithinPoint();
 
-
+    /**
+     * @brief RESET or SEARCH for current online_move_error
+     * @details 
+     *  1. input op_code = 0, SEARCH for current error_code
+     *  2. input op_code = 1, RESET current error_code
+     * @param [in] op_code 
+     */
     ErrorCode checkOnlineMoveError(int op_code);
 
-    
     UserOpMode getWorkMode(void);
 
     // parameter access
@@ -178,6 +183,11 @@ public:
     void ringRealTimeTask(void);
     void ringPriorityTask(void);
     void ringOnlineTrajTask(void);
+
+/**
+ * @brief simulate while loop's function
+ */ 
+    void ringWhileLoopTask(void);
 
     //pure function no realization
     virtual ErrorCode mcGroupHalt(double dec, double jerk);

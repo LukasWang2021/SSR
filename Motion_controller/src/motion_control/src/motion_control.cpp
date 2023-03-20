@@ -101,13 +101,31 @@ void MotionControl::ringOnlineTrajTask(void)
     online_trajData_mutex_.unlock();
 }
 
+void MotionControl::ringWhileLoopTask(void)
+{
+    /* ----- ThreadTest ----- 
+    // static int while_loop_cnt = 0;
+    // if(while_loop_cnt == 100)
+    // {
+    //     LogProducer::info("MotionControl","while loop is running!");
+    //     while_loop_cnt = 0;
+    // }else
+    // {
+    //     while_loop_cnt++;
+    // }
+       ----- ThreadTest ----- */
+
+
+    group_ptr_->doWhileLoop();
+}
+
 
 /*
 * details: check whether joint goes over soft_constraint, if it is, stop moving
 */
 void MotionControl::OnlineMove_exceedJointLimit_pause()
 {
-    /*
+    /* ----- Original Implementation of this function -----
     double temp_matrix_data[16]={0};
     flag_recv_new_VPMatrix_ = false;
     int temp_idx = online_trj_planner_ptr->read_TmatrixCnt-2;
@@ -119,9 +137,9 @@ void MotionControl::OnlineMove_exceedJointLimit_pause()
     memcpy(temp_matrix_data, &online_vp_cache_[temp_idx*16], 16*sizeof(double));
     receive_T_matrix_data(2,temp_matrix_data);
     setOnlinePointBufptr();
-    */
+      ----- Original Implementation of this function ----- */
 
-    // reset successfully
+    // reset error
     checkOnlineMoveError(1);
 }
 
@@ -200,7 +218,7 @@ void MotionControl::ringPlannerTask(void)
             }
 #else
             if (instruction.user_op_mode == USER_OP_MODE_SLOWLY_MANUAL)
-            {
+            {   
                 if (instruction.target.type == MOTION_JOINT)
                 {
                     instruction.target.vel = instruction.target.vel > 0.322886 ? 0.322886 : instruction.target.vel;
@@ -214,10 +232,6 @@ void MotionControl::ringPlannerTask(void)
             err = autoMove(instruction.target);
 #endif
         }
-        else if (instruction.type == SET_UF)
-        {
-            err = setUserFrame(instruction.uf_id);
-        }
         else if (instruction.type == SET_TF)
         {
             err = setToolFrame(instruction.tf_id);
@@ -230,10 +244,14 @@ void MotionControl::ringPlannerTask(void)
         {
             err = group_ptr_->setGlobalAccRatio(instruction.oac);
         }
-        else if (instruction.type == SET_PAYLOAD)
-        {
-            err = setPayload(instruction.payload_id);
-        }
+        // else if (instruction.type == SET_PAYLOAD)
+        // {
+        //     err = setPayload(instruction.payload_id);
+        // }
+        // else if (instruction.type == SET_UF)
+        // {
+        //     err = setUserFrame(instruction.uf_id);
+        // }
         else
         {
             LogProducer::error("mc","Invalid instruction type: %d", instruction.type);
@@ -628,6 +646,7 @@ double MotionControl::getOnlineTrajectoryRatio_abc()
 */
 ErrorCode MotionControl::setOnlineVpointCache(int num_matrix,int * p_status, double * p_marixArray)
 {
+    //LogProducer::warn("mc", "setOnlineVpointCache has been called");
     assert(p_marixArray != NULL);
     ErrorCode ret_code = 1;
     online_trajData_mutex_.lock();
@@ -1646,34 +1665,18 @@ void MotionControl::clearErrorFlag(void)
 
 ErrorCode MotionControl::autoMove(const struct Instruction &instruction)
 {
-    /*
     MotionControlState state = group_ptr_->getMotionControlState();
     ServoState servo_state = group_ptr_->getServoState();
-
-    if (state != STANDBY && state != STANDBY_TO_AUTO && state != AUTO)
+    if(state != STANDBY && state != STANDBY_TO_AUTO && state != AUTO)
     {
-        LogProducer::error("mc","Cannot autoMove in current state: 0x%x", state);
+        LogProducer::error("mc", "Cannot autoMove in current state: 0x%x", state);
         return INVALID_SEQUENCE;
     }
-
-    if (servo_state != SERVO_IDLE && servo_state != SERVO_RUNNING)
+    if(servo_state != SERVO_IDLE && servo_state != SERVO_RUNNING)
     {
-        LogProducer::error("mc","Cannot autoMove in current servo-state: 0x%x", servo_state);
+        LogProducer::error("mc", "Cannot autoMove in current servo-state: 0x%x", servo_state);
         return INVALID_SEQUENCE;
     }
-    */
-
-    // if (state != STANDBY && state != STANDBY_TO_AUTO && state != AUTO)
-    // {
-    //     LogProducer::error("mc","Cannot autoMove in current state: 0x%x", state);
-    //     return INVALID_SEQUENCE;
-    // }
-
-    // if (servo_state != SERVO_IDLE && servo_state != SERVO_RUNNING)
-    // {
-    //     LogProducer::error("mc","Cannot autoMove in current servo-state: 0x%x", servo_state);
-    //     return INVALID_SEQUENCE;
-    // }
 
     pthread_mutex_lock(&instruction_mutex_);
     instruction_fifo_.push(instruction);

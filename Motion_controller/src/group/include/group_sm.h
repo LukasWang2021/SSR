@@ -80,6 +80,8 @@ class GroupSm {
      */
 	bool transferStateToGroupMoving(void);
 
+    bool transferStateToGroupStandby(void);
+
     /**
      * @brief Inform the state machine that the internal error happens in the group.
      * @details Set error in order to process the state to ErrorStop.

@@ -63,7 +63,7 @@ namespace group_space
 void BaseGroup::doCommonLoop(void)
 {
     updateJointRecorder();
-    doStateMachine();
+    doStateMachine_();
 }
 /***
  * 设置在线轨迹点的level状态,
@@ -80,6 +80,7 @@ void BaseGroup::doPriorityLoop(void)
     //checkEncoderState();
     fillTrajectoryFifo();
 }
+
 
 void BaseGroup::doRealtimeLoop(void)
 {
@@ -117,7 +118,10 @@ void BaseGroup::updateServoStateAndJoint(void)
     if (bare_core_.getLatestJoint(barecore_joint, encoder_state, barecore_state))
     {
         pthread_mutex_lock(&servo_mutex_);
+
         servo_state_ = barecore_state;
+        //servo_state_ = getServoState();
+
         servo_joint_ = barecore_joint;
         memcpy(encoder_state_, encoder_state, sizeof(encoder_state_));
         pthread_mutex_unlock(&servo_mutex_);
@@ -178,6 +182,39 @@ void BaseGroup::checkEncoderState(void)
     }
 }
 */
+
+
+// test for while loop
+void BaseGroup::doWhileLoop(void)
+{
+    bool while_loop_err = true;
+    static int standby_to_offline_cnt = 0;
+
+    if(mc_state_ == STANDBY_TO_OFFLINE && (!standby_to_offline_ready))
+    {
+        if(standby_to_offline_cnt == 0)
+        {
+            pthread_mutex_lock(&offline_mutex_);
+            offline_trajectory_cache_head_ = 0;
+            offline_trajectory_cache_tail_ = 0;
+            offline_trajectory_first_point_ = true;
+            offline_trajectory_last_point_ = false;
+            LogProducer::info("mc_sm", "set offline last point status to false");
+            pthread_mutex_unlock(&offline_mutex_);
+        }
+
+        while_loop_err = fillOfflineCache();
+        standby_to_offline_cnt++;
+        
+        LogProducer::info("mc_base", "fill offline cache %d times", standby_to_offline_cnt);
+        if(!while_loop_err)
+        {
+            standby_to_offline_ready = true;
+            standby_to_offline_cnt = 0;
+        }
+    }
+}
+
 
 void BaseGroup::fillTrajectoryFifo(void)
 {
@@ -447,9 +484,13 @@ void BaseGroup::fillTrajectoryFifo(void)
             reportError(err);
         }
     }
-    else if (mc_state_ == PAUSING_OFFLINE)
+    else if (mc_state_ == PAUSING_OFFLINE && !offline_ready_to_pause_request_) // only when angle has been pushed, it will start filling
     {
-        fillOfflinePauseCache();
+        bool temp_err = fillOfflinePauseCache();
+        if(!temp_err)
+        {
+            LogProducer::error("fillTrajectoryFifo()", "fill offline pause cache failed !!!");
+        }
     }
     /*
     else if (mc_state_ == ONLINE )
@@ -473,10 +514,12 @@ int BaseGroup::fillOnlineFIFO(int startIdx)
     int push_cnt = 0;
     int pick_idx = startIdx;
     pthread_mutex_lock(&online_traj_mutex_);
-    if(online_fifo_pointCnt > 150)//300-150=150 如果剩余空间不够150点存储
+    
+    //300-150=150 如果剩余空间不够150点存储
+    if(online_fifo_pointCnt > 150)
     {
         pthread_mutex_unlock(&online_traj_mutex_);
-        printf("online_fifo_error--->online_fifo_pointCnt=%d > 150 !!!\n",online_fifo_pointCnt);
+        LogProducer::error("fillOnlineFIFO()" "online_fifo_pointCnt > 150, current fifo cnt is %d", online_fifo_pointCnt);
         return 0;
     }
     //运控状态机处于在线轨迹下发状态且在线轨迹点数据已更新(避免重复填数据)
@@ -502,7 +545,7 @@ int BaseGroup::fillOnlineFIFO(int startIdx)
         }
     }
 
-    LogProducer::warn("fill_online_fifo_","online_fifo_pointCnt= %d  enable_send_online_fifoPoint_flag = %d;", online_fifo_pointCnt, enable_send_online_fifoPoint_flag);
+    // LogProducer::warn("fill_online_fifo_","online_fifo_pointCnt= %d  enable_send_online_fifoPoint_flag = %d;", online_fifo_pointCnt, enable_send_online_fifoPoint_flag);
 
     if(!online_trajectory_first_point_)//运控轨迹点缓存150个以后再向伺服发送
     {
@@ -794,13 +837,22 @@ void BaseGroup::sendTrajectoryFlow(void)
     }
     else if (mc_state == PAUSING_OFFLINE && !offline_to_pause_request_)
     {
+        // when pausing, send the rest points before the pause_trajectory finish planning
         err = sendOfflineTrajectoryFlow();
+        if(err != SUCCESS)
+        {
+            LogProducer::debug("sendTrajectoryFlow()", "send offline trajectory flow failed when pausing");
+        }
     }
     else if (mc_state == PAUSING_OFFLINE && offline_to_pause_request_)
     {
         if (!bare_core_.isPointCacheEmpty())
         {
             err = bare_core_.sendPoint() ? SUCCESS : MC_SEND_TRAJECTORY_FAIL;
+            if(err != SUCCESS)
+            {
+                LogProducer::error("sendTrajectoryFlow()", "offline bare_core.sendPoint() failed when pausing");
+            }
         }
     }
     else if (mc_state == PAUSING && !pausing_to_pause_request_)
@@ -851,7 +903,7 @@ void BaseGroup::sendTrajectoryFlow(void)
             err = bare_core_.sendPoint() ? SUCCESS : MC_SEND_TRAJECTORY_FAIL;
         }
     }
-    else if (mc_state == ONLINE && !online_to_pause_request_)
+    else if (mc_state == ONLINE && !online_to_standby_request_)
     {
         if(enable_send_online_fifoPoint_flag)
         {
@@ -860,6 +912,7 @@ void BaseGroup::sendTrajectoryFlow(void)
         else
         {
             err = SUCCESS;
+            online_barecore_send_cnt_err_request_ = true;
         }
     }
     if (err == SUCCESS)
@@ -1047,6 +1100,7 @@ ErrorCode BaseGroup::sendOnlineTrajectoryFlow(void)
 {
     ErrorCode err;
     static TrajectoryPoint last_Point;
+
     if(bare_core_.isPointCacheEmpty())
     {
         size_t length = 10;
@@ -1055,79 +1109,38 @@ ErrorCode BaseGroup::sendOnlineTrajectoryFlow(void)
         if(err != SUCCESS)
         {
             LogProducer::warn("mc_base","sendOnlineTrajectoryFlow: cannot pick point from OnlineTrajecgtory.  online_fifo_pointCnt=%d, picked_len=%d",online_fifo_pointCnt, length);
-            //return err;
-            //2022-06-14
+
             if(online_fifo_.empty())
             {
                 LogProducer::warn("mc_base","sendOnlineTrajectoryFlow: online_fifo_ is empty. reset online_fifo_pointCnt=0");
                 online_fifo_pointCnt = 0;
             }
-            /*if(online_fifo_pointCnt<=0)
-            {
-                for(int i=0;i<10;i++)
-                {
-                    online_time_ += cycle_time_;
-                    points[i] = last_Point;
-                    points[i].level = 0;
-                    points[i].time_stamp = online_time_;
-                    LogProducer::warn("repeat current TrajectoryPoint","%d) level=%d time_stamp=%.4f (%.6f,%.6f,%.6f,%.6f,%.6f,%.6f)",
-                    i+1,points[i].level, points[i].time_stamp, 
-                    points[i].state.angle.j1_, points[i].state.angle.j2_, points[i].state.angle.j3_, 
-                    points[i].state.angle.j4_, points[i].state.angle.j5_, points[i].state.angle.j6_);
-                }
-                online_fifo_pointCnt+=10; 
-            }*/ 
         }
         else
         {
-            last_Point=points[9];
+            last_Point = points[9];
         }
-        //err = bare_core_.fillPointCache(points, length, POINT_POS);
+
         err = bare_core_.fillPointCache(points, length, POINT_POS_VEL);
+
         if(points[length - 1].level == POINT_ENDING)
         {
             if (mc_state_ == ONLINE) 
             {
-                online_to_standby_request_ = true;
-            }
-            else if(mc_state_ == PAUSE_ONLINE) 
-            {
-                online_to_pause_request_ = true;
+                LogProducer::warn("mc_base", "sendOnlineTrajectoryFlow: switchOnlineStateToStandby() has been called");
+                switchOnlineStateToStandby();
             }
         }
-        if(err == true)//debug infomation
+
+        if(err == true)
         {
             for (size_t i = 0; i < length; i++)
             {
                 online_fifo_pointCnt--;
-                /*
-                if(online_fifo_pointCnt <=0)
-                {
-                    enable_send_online_fifoPoint_flag = false;
-                }*/
-                /*
-                LogProducer::info("barecore_fillPointCache","%d) level=%d time_stamp=%.4f (%.6f,%.6f,%.6f,%.6f,%.6f,%.6f, %.6f,%.6f,%.6f,%.6f,%.6f,%.6f) onlineFifoCnt=%d",
-                i+1,points[i].level, points[i].time_stamp, 
-                points[i].state.angle.j1_, points[i].state.angle.j2_, points[i].state.angle.j3_, 
-                points[i].state.angle.j4_, points[i].state.angle.j5_, points[i].state.angle.j6_,
-                points[i].state.omega.j1_, points[i].state.omega.j2_, points[i].state.omega.j3_, 
-                points[i].state.omega.j4_, points[i].state.omega.j5_, points[i].state.omega.j6_, 
-                online_fifo_pointCnt);*/
-                /*
-                LogProducer::info("barecore_fillPointCache","%d) level=%d time_stamp=%.4f (%.6f,%.6f,%.6f,%.6f,%.6f,%.6f) onlineFifoCnt=%d",
-                i+1,points[i].level, points[i].time_stamp, 
-                points[i].state.angle.j1_, points[i].state.angle.j2_, points[i].state.angle.j3_, 
-                points[i].state.angle.j4_, points[i].state.angle.j5_, points[i].state.angle.j6_,
-                online_fifo_pointCnt);
-                */
             }
-            //LogProducer::warn("barecore_fillPointCache","onlineFifoCnt=%d",online_fifo_pointCnt);
         }
     }
-    else
-    {
-        //LogProducer::warn("sendOnlineTrajectoryFlow","bare_core_ is not PointCacheEmpty");
-    }
+
     return bare_core_.sendPoint() ? SUCCESS : MC_SEND_TRAJECTORY_FAIL;
 }
 
@@ -1142,10 +1155,6 @@ ErrorCode BaseGroup::pickPointsFromOnlineTrajectory(TrajectoryPoint *points, siz
         {
             online_fifo_.fetch(points[i]);
             picked ++;
-            /*LogProducer::info("pickPointsFromOnlineFifo","picked=%d| level=%d time_stamp=%.4f (%.6f,%.6f,%.6f,%.6f,%.6f,%.6f)", 
-            picked,points[i].level, points[i].time_stamp, 
-            points[i].state.angle.j1_, points[i].state.angle.j2_, points[i].state.angle.j3_,
-            points[i].state.angle.j4_, points[i].state.angle.j5_, points[i].state.angle.j6_);*/
         }
         else
         {
@@ -1196,15 +1205,12 @@ ErrorCode BaseGroup::switchToOnlineState()
 }
 ErrorCode BaseGroup::switchOnlineStateToStandby()
 {
-    if(mc_state_ == ONLINE)
-    {
-        online_to_standby_request_ = true;
-        LogProducer::warn("mc_base","switchOnlineStateToStandby: online_to_standby_request_ = true;");
-        online_time_ = 0;
-        online_fifo_pointCnt=0;
-        enable_send_online_fifoPoint_flag = false;
-        online_fifo_.clear();
-    }
+    online_to_standby_request_ = true;
+    LogProducer::warn("mc_base","switchOnlineStateToStandby: online_to_standby_request_ = true;");
+    online_time_ = 0;
+    online_fifo_pointCnt=0;
+    enable_send_online_fifoPoint_flag = false;
+    online_fifo_.clear();
     return SUCCESS;
 }
 Joint BaseGroup::getLatestJoint(void)

@@ -169,13 +169,11 @@ bool BareCoreInterface::sendPoint(void)
         }
         else
         {
-            //LogProducer::error("BareCoreInterface","sendPoint: WriteShareMem fail!");//xzc-20211217
             return false;
         }
     }
     else
     {
-        //LogProducer::error("BareCoreInterface","sendPoint: point_cache_.is_empty!!!");//xzc-20211217
         return false;
     }
 
@@ -211,17 +209,8 @@ bool BareCoreInterface::WriteShareMem(PointCache& cache, unsigned int valid_leve
         if (cache.axis[i].current_point != cache.axis[i].total_points)
         {
             result = false;
-            //if(i==0)
-            //LogProducer::info("mc_core","WriteShareMem:i=%d, actual=%d, current=%d, total=%d",i,actual_element_number,cache.axis[i].current_point,cache.axis[i].total_points);
         }
-        /*
-        if (actual_element_number == 0)
-        {
-            flag_actual_element_number_zero = true;
-            result = true;
-            LogProducer::warn("WriteShareMem","actual_element_number == 0");
-        }
-        */
+
     }
     //如果是新轨迹，置各轴同步信号
     if (cache.is_start)
@@ -243,7 +232,7 @@ bool BareCoreInterface::getLatestJoint(Joint &joint, uint32_t (&encoder_state)[N
         encoder_state[i] = it->second->rtmGetEncoderState();
     }
     state = (ServoState)sm_ptr_->getGroupStatus();
-
+    
     return true;
 }
 

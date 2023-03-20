@@ -94,6 +94,13 @@ public:
     void runPlannerThreadFunc();
 
     void runOnlineTrajThreadFunc();
+
+    /**
+     * @brief set cycle time for this thread
+     * @return void
+     */
+    void runWhileLoopThreadFunc();
+
     void runPriorityThreadFunc();
     void runDevProcessThreadFunc();
     
@@ -123,6 +130,7 @@ private:
     base_space::ThreadHelp rpc_thread_;
     base_space::ThreadHelp online_traj_thread_;
     base_space::ThreadHelp dev_process_thread_;
+    base_space::ThreadHelp while_loop_thread_;
 
     servo_comm_space::Servo1001* servo_1001_ptr_;
     servo_comm_space::ServoCpuCommBase* cpu_comm_ptr_;
@@ -173,6 +181,13 @@ void* controllerPriorityThreadFunc(void* arg);
 void* controllerRealTimeThreadFunc(void* arg);
 void* controllerRpcThreadFunc(void* arg);
 void* controllerOnlineTrajThreadFunc(void* arg);
+
+/**
+ * @brief initialize log_manager for while loop thread and run thread
+ * @return void
+ */
+void* controllerWhileLoopThreadFunc(void* arg);
+
 void* controllerDeviceProcessThreadFunc(void* arg);
 
 

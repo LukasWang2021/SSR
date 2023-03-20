@@ -81,6 +81,7 @@ void BaseGroup::doPriorityLoop(void)
     fillTrajectoryFifo();
 }
 
+
 void BaseGroup::doRealtimeLoop(void)
 {
     sendTrajectoryFlow();
@@ -181,6 +182,39 @@ void BaseGroup::checkEncoderState(void)
     }
 }
 */
+
+
+// test for while loop
+void BaseGroup::doWhileLoop(void)
+{
+    bool while_loop_err = true;
+    static int standby_to_offline_cnt = 0;
+
+    if(mc_state_ == STANDBY_TO_OFFLINE && (!standby_to_offline_ready))
+    {
+        if(standby_to_offline_cnt == 0)
+        {
+            pthread_mutex_lock(&offline_mutex_);
+            offline_trajectory_cache_head_ = 0;
+            offline_trajectory_cache_tail_ = 0;
+            offline_trajectory_first_point_ = true;
+            offline_trajectory_last_point_ = false;
+            LogProducer::info("mc_sm", "set offline last point status to false");
+            pthread_mutex_unlock(&offline_mutex_);
+        }
+
+        while_loop_err = fillOfflineCache();
+        standby_to_offline_cnt++;
+        
+        LogProducer::info("mc_base", "fill offline cache %d times", standby_to_offline_cnt);
+        if(!while_loop_err)
+        {
+            standby_to_offline_ready = true;
+            standby_to_offline_cnt = 0;
+        }
+    }
+}
+
 
 void BaseGroup::fillTrajectoryFifo(void)
 {

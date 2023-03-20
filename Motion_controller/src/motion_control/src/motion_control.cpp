@@ -101,13 +101,31 @@ void MotionControl::ringOnlineTrajTask(void)
     online_trajData_mutex_.unlock();
 }
 
+void MotionControl::ringWhileLoopTask(void)
+{
+    /* ----- ThreadTest ----- 
+    // static int while_loop_cnt = 0;
+    // if(while_loop_cnt == 100)
+    // {
+    //     LogProducer::info("MotionControl","while loop is running!");
+    //     while_loop_cnt = 0;
+    // }else
+    // {
+    //     while_loop_cnt++;
+    // }
+       ----- ThreadTest ----- */
+
+
+    group_ptr_->doWhileLoop();
+}
+
 
 /*
 * details: check whether joint goes over soft_constraint, if it is, stop moving
 */
 void MotionControl::OnlineMove_exceedJointLimit_pause()
 {
-    /*
+    /* ----- Original Implementation of this function -----
     double temp_matrix_data[16]={0};
     flag_recv_new_VPMatrix_ = false;
     int temp_idx = online_trj_planner_ptr->read_TmatrixCnt-2;
@@ -119,9 +137,9 @@ void MotionControl::OnlineMove_exceedJointLimit_pause()
     memcpy(temp_matrix_data, &online_vp_cache_[temp_idx*16], 16*sizeof(double));
     receive_T_matrix_data(2,temp_matrix_data);
     setOnlinePointBufptr();
-    */
+      ----- Original Implementation of this function ----- */
 
-    // reset successfully
+    // reset error
     checkOnlineMoveError(1);
 }
 

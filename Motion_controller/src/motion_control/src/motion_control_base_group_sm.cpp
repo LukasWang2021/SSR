@@ -753,16 +753,30 @@ void BaseGroup::doPausingOfflineToPause(const ServoState &servo_state, uint32_t 
 
 void BaseGroup::doStandbyToOffline(void)
 {
-	pthread_mutex_lock(&offline_mutex_);
-	offline_trajectory_cache_head_ = 0;
-	offline_trajectory_cache_tail_ = 0;
-	offline_trajectory_first_point_ = true;
-	offline_trajectory_last_point_ = false;
-    LogProducer::info("mc_sm", "set offline last point status to false");
-	pthread_mutex_unlock(&offline_mutex_);
-	while (fillOfflineCache());
-    mc_state_ = OFFLINE;
-	LogProducer::warn("mc_sm","MC-state switch to MC_OFFLINE");
+    /* ----- Original Implementation of This Function ----- 
+	// pthread_mutex_lock(&offline_mutex_);
+	// offline_trajectory_cache_head_ = 0;
+	// offline_trajectory_cache_tail_ = 0;
+	// offline_trajectory_first_point_ = true;
+	// offline_trajectory_last_point_ = false;
+    // LogProducer::info("mc_sm", "initialize offline last point status");
+	// pthread_mutex_unlock(&offline_mutex_);
+    // while (fillOfflineCache());
+    // mc_state_ = OFFLINE;
+	// LogProducer::warn("mc_sm","MC-state switch to MC_OFFLINE");
+       ----- Original Implementation of This Function -----  */ 
+
+    // New Implementation of This Function on 2023-03-20 by Qinyuan Pu
+    if(!standby_to_offline_ready)
+    {
+        LogProducer::info("mc_sm", "[STANDBY_TO_OFFLINE] OFFLINE Trajectory not ready!");
+    }else
+    {
+        LogProducer::warn("mc_sm", "[STANDBY_TO_OFFLINE] OFFLINE Trajectory ready to go!");
+        mc_state_ = OFFLINE;
+        standby_to_offline_ready = false;
+        LogProducer::warn("mc_sm","MC-state switch to MC_OFFLINE");
+    }
 }
 
 void BaseGroup::doOfflineToStandby(const ServoState &servo_state, uint32_t &fail_counter)
@@ -1218,13 +1232,12 @@ void BaseGroup::doStateMachine_(void)
         case STANDBY:
         {
             pthread_mutex_lock(&planner_list_mutex_);
-
             if (pick_traj_ptr_->valid && standby_to_auto_request_ == false)
             {
-                LogProducer::info("mc_sm","MC-state: MC_STANDBY, pick_traj_ptr_->valid is true but standby_to_auto_request_ is false, set request");
+                LogProducer::info("mc_sm","[MC_STANDBY]] pick_traj_ptr_->valid is true but standby_to_auto_request_ isn't");
                 standby_to_auto_request_ = true;
+                LogProducer::info("mc_sm","[MC_STANDBY]] activate standby_to_auto_request_ SUCCESS!");
             }
-    
             pthread_mutex_unlock(&planner_list_mutex_);
 
             if (standby_to_auto_request_)
@@ -1234,36 +1247,37 @@ void BaseGroup::doStateMachine_(void)
                 start_of_motion_ = true;
                 mc_state_ = STANDBY_TO_AUTO;
                 standby_to_auto_request_ = false;
-                LogProducer::warn("mc_sm","MC-state switch to MC_STANDBY_TO_AUTO");
+                LogProducer::warn("mc_sm","[MC_STANDBY] MC-state switch to MC_STANDBY_TO_AUTO");
             }
             else if (standby_to_manual_request_)
             {
                 mc_state_ = STANDBY_TO_MANUAL;
                 standby_to_manual_request_ = false;
-                LogProducer::warn("mc_sm","MC-state switch to MC_STANDBY_TO_MANUAL");
+                LogProducer::warn("mc_sm","[MC_STANDBY] MC-state switch to MC_STANDBY_TO_MANUAL");
             }
             else if (standby_to_offline_request_)
             {
-                // check the foot step
-                // if foot board on goto 
+                // check the footboard
                 if(fio_ptr->isReal())
                 {
                     if(fio_state.bit.footboard_state)
                     {
+                        standby_to_offline_ready = false;
                         mc_state_ = STANDBY_TO_OFFLINE;
-                        LogProducer::warn("mc_sm","MC-state switch to MC_STANDBY_TO_OFFLINE");
+                        LogProducer::warn("mc_sm","[MC_STANDBY] MC-state switch to MC_STANDBY_TO_OFFLINE");
                     }
                 }
                 else
                 {
+                    standby_to_offline_ready = false;
                     mc_state_ = STANDBY_TO_OFFLINE;
-                    LogProducer::warn("mc_sm","MC-state switch to MC_STANDBY_TO_OFFLINE");
+                    LogProducer::warn("mc_sm","[MC_STANDBY] MC-state switch to MC_STANDBY_TO_OFFLINE");
                 }
             }
             else if(standby_to_online_request_)
             {
                 mc_state_ = ONLINE;
-                LogProducer::warn("mc_sm","MC-state switch to ONLINE from STANDBY");
+                LogProducer::warn("mc_sm","[MC_STANDBY] MC-state switch to ONLINE from STANDBY");
                 online_time_ = 0;
 	            online_trajectory_last_point_ = false;
             }
@@ -1278,7 +1292,7 @@ void BaseGroup::doStateMachine_(void)
                 auto_to_standby_cnt = 0;
                 mc_state_ = AUTO_TO_STANDBY;
                 auto_to_standby_request_ = false;
-                LogProducer::warn("mc_sm","MC-state switch to MC_AUTO_TO_STANDBY");
+                LogProducer::warn("mc_sm","[MC_AUTO] MC-state switch to MC_AUTO_TO_STANDBY");
             }
             break;
         }
@@ -1302,7 +1316,7 @@ void BaseGroup::doStateMachine_(void)
                 manual_to_standby_cnt = 0;
                 mc_state_ = MANUAL_TO_STANDBY;
                 manual_to_standby_request_ = false;
-                LogProducer::warn("mc_sm","MC-state state switch to MC_MANUAL_TO_STANDBY");
+                LogProducer::warn("mc_sm","[MC_MANUAL] MC-state state switch to MC_MANUAL_TO_STANDBY");
             }
             handleContinueousManualRpcTimeOut();
             break;
@@ -1330,9 +1344,9 @@ void BaseGroup::doStateMachine_(void)
             if(offline_to_pause_request_)
             {
                 mc_state_ = PAUSING_OFFLINE;
-                LogProducer::warn("mc_sm","MC-state switch to PAUSING_OFFLINE");
+                LogProducer::warn("mc_sm","[MC_OFFLINE] MC-state switch to PAUSING_OFFLINE");
                 pause_joint_ = pause_trajectory_.back().angle;
-                LogProducer::info("mc_sm","[OFFLINE] pushed pause_joint_ to pause_trajectory_ SUCCESS!");
+                LogProducer::info("mc_sm","[MC_OFFLINE] pushed pause_joint_ to pause_trajectory_ SUCCESS!");
                 offline_to_pause_request_ = false; 
             }
             else if (offline_to_standby_request_)
@@ -1340,7 +1354,7 @@ void BaseGroup::doStateMachine_(void)
                 offline_to_standby_cnt = 0;
                 mc_state_ = OFFLINE_TO_STANDBY;
                 offline_to_standby_request_ = false;
-                LogProducer::warn("mc_sm","MC-state switch to MC_OFFLINE_TO_STANDBY");
+                LogProducer::warn("mc_sm","[MC_OFFLINE] MC-state switch to MC_OFFLINE_TO_STANDBY");
             }
             
 
@@ -1363,16 +1377,15 @@ void BaseGroup::doStateMachine_(void)
         {
             if(!offline_ready_to_pause_request_)
             {
-                LogProducer::info("mc_sm","[PAUSING_OFFLINE] start listening flags , wait to stop offline movement");
+                LogProducer::info("mc_sm","[MC_PAUSING_OFFLINE] start listening flags , wait to stop offline movement");
 
                 if (pausing_offline_to_pause_request_)
                 {
-                    LogProducer::info("mc_sm","[PAUSING_OFFLINE] flag heard!");
+                    LogProducer::info("mc_sm","[MC_PAUSING_OFFLINE] flag heard!");
                     offline_to_standby_cnt = 0;
                     pausing_offline_to_pause_request_ = false;
                     offline_ready_to_pause_request_ = true;
-
-                    LogProducer::warn("mc_sm","offline_ready_to_pause_request_ == true, ready to pause from PAUSING_OFFLINE to PAUSED_OFFLINE!");
+                    LogProducer::warn("mc_sm","[MC_PAUSING_OFFLINE] offline_ready_to_pause_request_ == true, plan pausing!");
                 }
             }
             else
@@ -1391,21 +1404,20 @@ void BaseGroup::doStateMachine_(void)
         
         case PAUSED_OFFLINE:
         {
-
             if(pause_to_offline_request_) // resume
             {
                 // check is the same 
                 if (!isSameJoint(pause_joint_, start_joint_))
                 {
-                    LogProducer::warn("mc_sm","pause joint is not the same as restart joint!");
+                    LogProducer::warn("mc_sm","[MC_PAUSED_OFFLINE] pause joint is not the same as restart joint!");
                     mc_state_ = STANDBY;
                     pause_to_offline_request_ = false;
-                    LogProducer::warn("mc_sm","MC-state switch to MC_STANDBY");
+                    LogProducer::warn("mc_sm","[MC_PAUSED_OFFLINE] MC-state switch to MC_STANDBY");
                     break;
                 }
                 pause_joint_ = pause_trajectory_.back().angle;
                 doStandbyToOffline();
-                LogProducer::info("mc_sm","MC-state switch to OFFLINE.");
+                LogProducer::info("mc_sm","[MC_PAUSED_OFFLINE] MC-state switch to OFFLINE.");
                 pause_to_offline_request_ = false;
             }
             break;
@@ -1420,14 +1432,14 @@ void BaseGroup::doStateMachine_(void)
                 online_to_standby_request_ = false;
                 online_fifo_.clear();
                 online_to_standby_cnt = 0;
-                LogProducer::warn("mc_sm","[Online] MC-state switch to MC_STANDBY");
+                LogProducer::warn("mc_sm","[MC_ONLINE] MC-state switch to MC_STANDBY");
             }
 
             if (online_barecore_send_cnt_err_request_)
             {
                 online_barecore_send_cnt_err_request_ = false;
                 online_to_standby_cnt++;
-                LogProducer::warn("mc_sm","Online barecore send err received, cnt %d", online_to_standby_cnt);
+                LogProducer::warn("mc_sm","[MC_ONLINE] Online barecore send err received, cnt %d", online_to_standby_cnt);
                 if(online_to_standby_cnt>100)
                 {
                     switchOnlineStateToStandby();
@@ -1439,7 +1451,7 @@ void BaseGroup::doStateMachine_(void)
 
         default:
         {
-            LogProducer::error("mc_sm","MC-state is invalid: 0x%x", getMontionControlStatusString(mc_state).c_str());
+            LogProducer::error("mc_sm","[STATE_MACHINE] MC-state is invalid: 0x%x", getMontionControlStatusString(mc_state).c_str());
             reportError(MC_INTERNAL_FAULT);
             break;
         }

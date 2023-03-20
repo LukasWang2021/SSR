@@ -186,6 +186,7 @@ class BaseGroup
     virtual void doCommonLoop(void);
     virtual void doPriorityLoop(void);
     virtual void doRealtimeLoop(void);
+    virtual void doWhileLoop(void);
 
     virtual char* printDBLine(const int *data, char *buffer, size_t length) = 0;
     virtual char* printDBLine(const double *data, char *buffer, size_t length) = 0;
@@ -197,9 +198,17 @@ class BaseGroup
     // state machine
     void doStateMachine(void);
     void doStateMachine_(void);
-    // check request before goes to real state machine
+
+    /**
+     * @brief check some request's legitimacy before processing
+     * @param [in] mc_state 
+     */
     void transStateMachineCheck(MotionControlState mc_state);
-    // filter out some unused requests
+
+    /**
+     * @brief screen out some unused requests
+     * @return void
+     */
     void handleUnusedRequests();
 
     void doDisableToStandby(const ServoState &servo_state, uint32_t &fail_counter);
@@ -211,7 +220,18 @@ class BaseGroup
     void doStandbyToManual(void);
     void doPauseToManual(void);
     void doOfflineToStandby(const ServoState &servo_state, uint32_t &fail_counter);
+    
+    /**
+     * @brief wait until trajectory points are ready
+     * @details 
+     *  1. this function SEND a signal to while-loop thread
+     *  2. while-loop thread will CALCULATE the first 50 trajectory points
+     *  3. when while-loop FINISH its job, it will SEND a signal back to this function
+     *  4. when this function RECEIVE the finish signal, it SWITCHES to OFFLINE state
+     * @return void
+     */
     void doStandbyToOffline(void);
+
     void doPausingToPause(const ServoState &servo_state, uint32_t &fail_counter);
     void doPausingOfflineToPause(const ServoState &servo_state, uint32_t &fail_counter);
     
@@ -342,6 +362,10 @@ class BaseGroup
     TrajectoryPoint offline_trajectory_cache_[OFFLINE_TRAJECTORY_CACHE_SIZE];
     uint32_t offline_trajectory_cache_head_, offline_trajectory_cache_tail_;
     uint32_t offline_traj_point_read_cnt_;
+
+    // a flag use for transfering mc_state from STANDBY to OFFLINE
+    bool standby_to_offline_ready;
+
     pthread_mutex_t     planner_list_mutex_;
     pthread_mutex_t     manual_traj_mutex_;
     pthread_mutex_t     manual_rpc_mutex_;

@@ -42,11 +42,13 @@ Controller::~Controller()
 {
     rt_thread_.join();
     rpc_thread_.join();
-    planner_thread_.join();
     priority_thread_.join();
     routine_thread_.join();
     online_traj_thread_.join();
-    dev_process_thread_.join();
+    while_loop_thread_.join();
+
+    //planner_thread_.join();
+    //dev_process_thread_.join();
 
     for(size_t i = 0; i < GROUP_NUM; ++i)
     {
@@ -245,11 +247,7 @@ ErrorCode Controller::init()
     if(!routine_thread_.run(&controllerRoutineThreadFunc, this, config_ptr_->routine_thread_priority_))
     {
         return CONTROLLER_CREATE_ROUTINE_THREAD_FAILED;
-    } 
-    // if(!planner_thread_.run(&controllerPlannerThreadFunc, this, config_ptr_->planner_thread_priority_))
-    // {
-    //     return CONTROLLER_CREATE_ROUTINE_THREAD_FAILED;
-    // } 
+    }  
     if(!priority_thread_.run(&controllerPriorityThreadFunc, this, config_ptr_->priority_thread_priority_))
     {
         return CONTROLLER_CREATE_ROUTINE_THREAD_FAILED;
@@ -266,9 +264,19 @@ ErrorCode Controller::init()
     {
         return CONTROLLER_CREATE_ONLIE_THREAD_FAILED;
     }
+    // for while loop test
+    if(!while_loop_thread_.run(&controllerWhileLoopThreadFunc, this, 40))
+    {
+        return CONTROLLER_CREATE_WHILE_THREAD_FAILED;
+    }
+    
     // if(!dev_process_thread_.run(&controllerDeviceProcessThreadFunc, this, config_ptr_->dev_process_thread_priority_))
     // {
     //     return CONTROLLER_CREATE_DEV_PROC_FAILED;
+    // }
+    // if(!planner_thread_.run(&controllerPlannerThreadFunc, this, config_ptr_->planner_thread_priority_))
+    // {
+    //     return CONTROLLER_CREATE_ROUTINE_THREAD_FAILED;
     // }
 
     sleep(1);
@@ -345,6 +353,12 @@ void Controller::runOnlineTrajThreadFunc()
 {
     usleep(config_ptr_->online_traj_cycle_time_);
     group_ptr_[0]->ringOnlineTrajTask();
+}
+
+void Controller::runWhileLoopThreadFunc()
+{
+    usleep(3000);
+    group_ptr_[0]->ringWhileLoopTask();
 }
 
 void Controller::runPriorityThreadFunc()
@@ -705,6 +719,21 @@ void* controllerOnlineTrajThreadFunc(void* arg)
         controller_ptr->runOnlineTrajThreadFunc();
     }
     std::cout<<"controller_online_traj exit"<<std::endl;
+    return NULL;
+}
+
+// simulate while loop
+void* controllerWhileLoopThreadFunc(void* arg)
+{
+    Controller* controller_ptr = static_cast<Controller*>(arg);
+    log_space::LogProducer log_manager;
+    log_manager.init("while_loop", g_isr_ptr_);
+    LogProducer::warn("main","while_loop TID is %ld", syscall(SYS_gettid));
+    while(!controller_ptr->isExit())
+    {
+        controller_ptr->runWhileLoopThreadFunc();  
+    }
+    std::cout<<"while loop exit"<<std::endl;
     return NULL;
 }
 

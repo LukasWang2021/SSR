@@ -837,10 +837,11 @@ void BaseGroup::sendTrajectoryFlow(void)
     }
     else if (mc_state == PAUSING_OFFLINE && !offline_to_pause_request_)
     {
+        // when pausing, send the rest points before the pause_trajectory finish planning
         err = sendOfflineTrajectoryFlow();
         if(err != SUCCESS)
         {
-            LogProducer::error("sendTrajectoryFlow()", "send offline trajectory flow failed !!!");
+            LogProducer::debug("sendTrajectoryFlow()", "send offline trajectory flow failed when pausing");
         }
     }
     else if (mc_state == PAUSING_OFFLINE && offline_to_pause_request_)
@@ -850,7 +851,7 @@ void BaseGroup::sendTrajectoryFlow(void)
             err = bare_core_.sendPoint() ? SUCCESS : MC_SEND_TRAJECTORY_FAIL;
             if(err != SUCCESS)
             {
-                LogProducer::error("sendTrajectoryFlow()", "offline bare core send point failed !!!");
+                LogProducer::error("sendTrajectoryFlow()", "offline bare_core.sendPoint() failed when pausing");
             }
         }
     }

@@ -1665,11 +1665,11 @@ void MotionControl::clearErrorFlag(void)
 
 ErrorCode MotionControl::autoMove(const struct Instruction &instruction)
 {
-    MotionControlState state = group_ptr->getMotionControlState();
-    ServoState servo_state = group_ptr->getServoState();
+    MotionControlState state = group_ptr_->getMotionControlState();
+    ServoState servo_state = group_ptr_->getServoState();
     if(state != STANDBY && state != STANDBY_TO_AUTO && state != AUTO)
     {
-        logProducer::error("mc", "Cannot autoMove in current state: 0x%x", state);
+        LogProducer::error("mc", "Cannot autoMove in current state: 0x%x", state);
         return INVALID_SEQUENCE;
     }
     if(servo_state != SERVO_IDLE && servo_state != SERVO_RUNNING)

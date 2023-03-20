@@ -43,7 +43,7 @@ void ControllerRpc::handleRpc0x00003615(void* request_data_ptr, void* response_d
         if (status == GROUP_STATUS_ERROR_STOP || status == GROUP_STATUS_DISABLED)
         {
             group_ptr_[group_id]->clearGroup();
-            //group_ptr_[group_id]->clearTeachGroup();
+            group_ptr_[group_id]->clearTeachGroup();
         }
         //check if the zero offset is valid.
         if(group_ptr_[group_id]->getCalibrateState() == MOTION_FORBIDDEN)
@@ -53,7 +53,7 @@ void ControllerRpc::handleRpc0x00003615(void* request_data_ptr, void* response_d
                 InterpCtrl::instance().abort();
                 group_ptr_[group_id]->stopGroup();
                 group_ptr_[group_id]->clearGroup();
-                //group_ptr_[group_id]->clearTeachGroup();  
+                group_ptr_[group_id]->clearTeachGroup();  
             }
             rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
             LogProducer::error("rpc","/rpc/group/mcGroupEnable check offset failure");

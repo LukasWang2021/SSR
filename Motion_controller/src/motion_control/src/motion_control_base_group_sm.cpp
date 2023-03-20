@@ -988,7 +988,7 @@ void BaseGroup::doManualToStandby(const ServoState &servo_state, uint32_t &fail_
 	{
 		mc_state_ = STANDBY;
         clearGroup();
-        //clearTeachGroup();//todo check
+        clearTeachGroup();//todo check
 		LogProducer::warn("mc_sm","MC-state switch to MC_STANDBY.");
 	}
 

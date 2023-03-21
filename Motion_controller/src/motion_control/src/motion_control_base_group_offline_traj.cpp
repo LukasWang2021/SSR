@@ -85,6 +85,7 @@ inline double string_to_float(string str){
 * 参数:offline_euler_trajectory_filePath---文件名称
 * 返回值:错误码
 *******************************************************/
+
 ErrorCode BaseGroup::readEulerTrajectoryFile(const std::string &offline_euler_trajectory_filePath, vector<vector<double> >&euler_trajArr)
 {
     if (mc_state_ == OFFLINE || mc_state_ == OFFLINE_TO_STANDBY || mc_state_ == STANDBY_TO_OFFLINE)

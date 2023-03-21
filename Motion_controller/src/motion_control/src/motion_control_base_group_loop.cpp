@@ -22,19 +22,19 @@
 #include "log_manager_producer.h"
 #include "onlineTrj_planner.h"
 
-
-
 using namespace std;
 using namespace group_space;
 using namespace basic_alg;
 using namespace base_space;
 using namespace log_space;
+
 double OnlinePointBuf[12000] = {0};//500*24==12000 在线轨迹点数据(轴角弧度位置,角速度,角加速度,力矩)
 int OnlinePointBuf_pointNum=0;
 int OnlinePointLevelBuf[500]={0};
 bool online_trajectory_point_data_update_flag = false;//在线轨迹点数据更新标记
 bool enable_send_online_fifoPoint_flag = false;
 int online_fifo_pointCnt = 0;//在线轨迹缓存队列里的点数
+
 static void dumpShareMemory(void)
 {
     ofstream  shm_out("/root/share_memory.dump");
@@ -56,7 +56,6 @@ static void dumpShareMemory(void)
     shm_out.close();
 }
 
-
 namespace group_space
 {
 
@@ -65,6 +64,7 @@ void BaseGroup::doCommonLoop(void)
     updateJointRecorder();
     doStateMachine_();
 }
+
 /***
  * 设置在线轨迹点的level状态,
  * 参数: idx--缓存数组下标,注意不能超过99
@@ -74,6 +74,7 @@ void BaseGroup::setOnlinePointLevelBuf(int idx, int value)
 {
     OnlinePointLevelBuf[idx]=value;
 }
+
 void BaseGroup::doPriorityLoop(void)
 {
     updateServoStateAndJoint();
@@ -81,12 +82,10 @@ void BaseGroup::doPriorityLoop(void)
     fillTrajectoryFifo();
 }
 
-
 void BaseGroup::doRealtimeLoop(void)
 {
     sendTrajectoryFlow();
 }
-
 
 void BaseGroup::updateJointRecorder(void)
 {
@@ -183,7 +182,6 @@ void BaseGroup::checkEncoderState(void)
 }
 */
 
-
 /**
  * @brief simulate while loop function before core migration
  * @details
@@ -198,7 +196,7 @@ void BaseGroup::doWhileLoop(void)
     static int standby_to_offline_cnt = 0;
 
     // process for STANDBY to OFFLINE - 离线轨迹启动计算
-    if(mc_state_ == STANDBY_TO_OFFLINE && (!standby_to_offline_ready))
+    if((mc_state_ == STANDBY_TO_OFFLINE && (!standby_to_offline_ready)) || (mc_state_ == PAUSED_OFFLINE && (!standby_to_offline_ready)))
     {
         if(standby_to_offline_cnt == 0)
         {
@@ -273,14 +271,7 @@ void BaseGroup::doWhileLoop(void)
         LogProducer::info("mc_base", "[WhileLoop] fillOfflineCache() success");  
         }
     }
-
-    
-
-
-
-    
 }
-
 
 void BaseGroup::fillTrajectoryFifo(void)
 {
@@ -1162,6 +1153,7 @@ ErrorCode BaseGroup::pickPointsFromManualTrajectory(TrajectoryPoint *points, siz
         return err;
     }
 }
+
 ErrorCode BaseGroup::sendOnlineTrajectoryFlow(void) 
 {
     ErrorCode err;
@@ -1255,6 +1247,7 @@ void BaseGroup::setOnlineTrjFirstPointCondition()
     online_trajectory_first_point_ = true;//标记轨迹起点
     online_fifo_.clear();
 }
+
 ErrorCode BaseGroup::switchToOnlineState()
 {
     if(mc_state_ != ONLINE)
@@ -1269,6 +1262,7 @@ ErrorCode BaseGroup::switchToOnlineState()
     }
     return SUCCESS;
 }
+
 ErrorCode BaseGroup::switchOnlineStateToStandby()
 {
     online_to_standby_request_ = true;
@@ -1279,6 +1273,7 @@ ErrorCode BaseGroup::switchOnlineStateToStandby()
     online_fifo_.clear();
     return SUCCESS;
 }
+
 Joint BaseGroup::getLatestJoint(void)
 {
     pthread_mutex_lock(&servo_mutex_);

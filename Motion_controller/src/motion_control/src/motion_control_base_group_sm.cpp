@@ -773,8 +773,8 @@ void BaseGroup::doStandbyToOffline(void)
     }else
     {
         LogProducer::warn("mc_sm", "[STANDBY_TO_OFFLINE] OFFLINE Trajectory ready to go!");
-        mc_state_ = OFFLINE;
         standby_to_offline_ready = false;
+        mc_state_ = OFFLINE;
         LogProducer::warn("mc_sm","MC-state switch to MC_OFFLINE");
     }
 }
@@ -1193,7 +1193,7 @@ void BaseGroup::doStateMachine_(void)
         LogProducer::info("mc_sm","Barecore stop, MC-state = %s, servo-state = %s", getMontionControlStatusString(mc_state).c_str(), getMCServoStatusString(servo_state).c_str());
         stop_barecore_ = false;
 
-        if (mc_state == MANUAL || mc_state == MANUAL_TO_STANDBY || mc_state == STANDBY_TO_MANUAL ||
+        if (mc_state == MANUAL || mc_state == MANUAL_TO_STANDBY || mc_state == STANDBY_TO_MANUAL || mc_state == PAUSED_OFFLINE ||
             mc_state == OFFLINE || mc_state == OFFLINE_TO_STANDBY || mc_state == STANDBY_TO_OFFLINE || mc_state == ONLINE)
         {
             mc_state_ = STANDBY;
@@ -1360,9 +1360,7 @@ void BaseGroup::doStateMachine_(void)
             
             break;
         }
-        
-
-        
+                
         case OFFLINE_TO_STANDBY:
         {
             doOfflineToStandby(servo_state, offline_to_standby_cnt);
@@ -1406,11 +1404,18 @@ void BaseGroup::doStateMachine_(void)
                     break;
                 }
                 pause_joint_ = pause_trajectory_.back().angle;
+                mc_state_ = RESUME_OFFLINE;
+                
                 doStandbyToOffline();
                 LogProducer::info("mc_sm","[MC_PAUSED_OFFLINE] MC-state switch to OFFLINE.");
                 pause_to_offline_request_ = false;
             }
             break;
+        }
+
+        case RESUME_OFFLINE:
+        {
+
         }
 
         case ONLINE:

@@ -763,8 +763,8 @@ ErrorCode BaseGroup::restartMove(void)
         pause_to_offline_request_ = true;
            ----- original implementation -----*/
 
-        offline_restartmove_ready = true;
-
+        pause_to_offline_request_ = true;
+        
         return SUCCESS;
     }
     else if (mc_state == STANDBY && servo_state == SERVO_IDLE)

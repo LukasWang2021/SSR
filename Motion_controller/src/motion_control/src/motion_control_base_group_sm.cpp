@@ -779,6 +779,11 @@ void BaseGroup::doStandbyToOffline(void)
     }
 }
 
+void BaseGroup::doPausedOfflineToOffline()
+{
+
+}
+
 void BaseGroup::doOfflineToStandby(const ServoState &servo_state, uint32_t &fail_counter)
 {
 	if (servo_state == SERVO_IDLE)
@@ -1061,6 +1066,9 @@ void BaseGroup::doStateMachine_(void)
     static uint32_t pausing_offline_to_pause_cnt = 0;
     static uint32_t online_to_standby_cnt = 0;
     static uint32_t fine_counter = 0;
+
+    static uint32_t offline_resume_cnt = 0;
+    
     static FioStatus_u fio_last_state;
 
     // get current state_machine info and servo state_machine info
@@ -1175,9 +1183,8 @@ void BaseGroup::doStateMachine_(void)
     // process fio motion for priority
     if(mc_state == PAUSED_OFFLINE && fio_ptr->isReal() && fio_state.bit.footboard_state ^ fio_last_state.bit.footboard_state && fio_state.bit.footboard_state)
     {
-        // resume
-        LogProducer::info("mc_sm", "[PAUSED_OFFLINE]]restartMove() has been called");
-        restartMove();
+        // offline resume signal received
+        ErrorCode err = restartMove();
     }
 
     // update fio status
@@ -1394,20 +1401,8 @@ void BaseGroup::doStateMachine_(void)
         {
             if(pause_to_offline_request_) // resume
             {
-                // check is the same 
-                if (!isSameJoint(pause_joint_, start_joint_))
-                {
-                    LogProducer::warn("mc_sm","[MC_PAUSED_OFFLINE] pause joint is not the same as restart joint!");
-                    mc_state_ = STANDBY;
-                    pause_to_offline_request_ = false;
-                    LogProducer::warn("mc_sm","[MC_PAUSED_OFFLINE] MC-state switch to MC_STANDBY");
-                    break;
-                }
-                pause_joint_ = pause_trajectory_.back().angle;
                 mc_state_ = RESUME_OFFLINE;
-                
-                doStandbyToOffline();
-                LogProducer::info("mc_sm","[MC_PAUSED_OFFLINE] MC-state switch to OFFLINE.");
+                LogProducer::warn("mc_sm","[MC_PAUSED_OFFLINE] MC-state switch to MC_RESUME_OFFLINE");
                 pause_to_offline_request_ = false;
             }
             break;
@@ -1415,6 +1410,12 @@ void BaseGroup::doStateMachine_(void)
 
         case RESUME_OFFLINE:
         {
+            if(offline_restartmove_ready)
+            {
+                mc_state_ = OFFLINE;
+                LogProducer::warn("mc_sm","[MC_RESUME_OFFLINE] MC-state switch to MC_OFFLINE");
+                offline_restartmove_ready = false;
+            }
 
         }
 

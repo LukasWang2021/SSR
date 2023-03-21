@@ -194,9 +194,11 @@ void BaseGroup::doWhileLoop(void)
 {
     bool while_loop_err = true;
     static int standby_to_offline_cnt = 0;
+    static int resume_offline_to_offline_cnt = 0;
+    static bool resume_offline_prepare_ = false;
 
     // process for STANDBY to OFFLINE - 离线轨迹启动计算
-    if((mc_state_ == STANDBY_TO_OFFLINE && (!standby_to_offline_ready)) || (mc_state_ == PAUSED_OFFLINE && (!standby_to_offline_ready)))
+    if(mc_state_ == STANDBY_TO_OFFLINE && (!standby_to_offline_ready))
     {
         if(standby_to_offline_cnt == 0)
         {
@@ -233,8 +235,8 @@ void BaseGroup::doWhileLoop(void)
         offline_to_pause_request_ = true;
     }
 
-    // check offline's restart signal - 离线轨迹恢复委托
-    if(mc_state_ == PAUSED_OFFLINE && offline_restartmove_ready)
+    // check offline's restart signal - 离线轨迹 预恢复 规划
+    if(mc_state_ == RESUME_OFFLINE && !resume_offline_prepare_)
     {
         while_loop_err = planOfflineResume();
         if (while_loop_err != SUCCESS)
@@ -252,8 +254,47 @@ void BaseGroup::doWhileLoop(void)
             return while_loop_err;
         }
 
-        offline_restartmove_ready = false;
-        pause_to_offline_request_ = true;
+        resume_offline_prepare_ = true;
+    }
+
+    // offline restart calculation - 离线轨迹 恢复 计算处理
+    if(mc_state_ == RESUME_OFFLINE && resume_offline_prepare_)
+    {
+        // if it is the first time execution
+        if(resume_offline_to_offline_cnt == 0)
+        {
+            if (!isSameJoint(pause_joint_, start_joint_))
+            {
+                LogProducer::warn("mc_sm","[WhileLoop] pause joint is not the same as restart joint!");
+                mc_state_ = STANDBY;
+                resume_offline_prepare_ = false;
+                LogProducer::warn("mc_sm","[WhileLoop] MC-state switch to MC_STANDBY");
+                clear_request_ = true;
+                LogProducer::warn("mc_sm","[WhileLoop] clear request sent");
+                break;
+            }
+            pause_joint_ = pause_trajectory_.back().angle;
+
+            pthread_mutex_lock(&offline_mutex_);
+            offline_trajectory_cache_head_ = 0;
+            offline_trajectory_cache_tail_ = 0;
+            offline_trajectory_first_point_ = true;
+            offline_trajectory_last_point_ = false;
+            LogProducer::info("mc_base", "[WhileLoop] set offline last point status to false");
+            pthread_mutex_unlock(&offline_mutex_);
+        }
+
+        while_loop_err = fillOfflineCache();
+        resume_offline_to_offline_cnt++;
+        
+        LogProducer::info("mc_base", "[WhileLoop] resume fill offline cache %d times", resume_offline_to_offline_cnt);
+        if(!while_loop_err)
+        {
+            offline_restartmove_ready = true;
+            resume_offline_to_offline_cnt = 0;
+            usleep(10000);
+            resume_offline_prepare_ == false;
+        }
     }
 
     // process offline calculation - 离线轨迹过程计算处理

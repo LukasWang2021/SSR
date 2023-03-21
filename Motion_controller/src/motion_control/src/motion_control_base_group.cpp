@@ -70,6 +70,7 @@ BaseGroup::BaseGroup()
     // offline flags initialization
     standby_to_offline_ready = false;
     offline_pausemove_ready = false;
+    offline_restartmove_ready = false;
 
 
     auto_to_standby_request_ = false;
@@ -745,23 +746,24 @@ ErrorCode BaseGroup::restartMove(void)
     }
     else if(mc_state == PAUSED_OFFLINE && servo_state == SERVO_IDLE)
     {
+        /* ----- original implementation -----
         err = planOfflineResume();
         if(err != SUCCESS)
         {
             LogProducer::error("mc_base", "Restart move failed, planOfflineResume failed");
             return err;
         }
-        
         usleep(10000);
-
         err = setOfflineTrajectory(offline_trajectory_file_name_);
         if(err != SUCCESS)
         {
             LogProducer::error("mc_base", "Restart move failed, setOfflineTrajectory failed");
             return err;
         }
-
         pause_to_offline_request_ = true;
+           ----- original implementation -----*/
+
+        offline_restartmove_ready = true;
 
         return SUCCESS;
     }

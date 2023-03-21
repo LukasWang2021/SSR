@@ -188,6 +188,8 @@ void BaseGroup::checkEncoderState(void)
  * @brief simulate while loop function before core migration
  * @details
  *  1. if receive standby_to_offline_ready request, it will calculate for offline
+ *  2. if in OFFLINE workmode, it keep calculating points for offline trajectory
+ *  3. if receive pause or restart request during OFFLINE mode, it will process for it
  * @return void
  */
 void BaseGroup::doWhileLoop(void)
@@ -195,7 +197,7 @@ void BaseGroup::doWhileLoop(void)
     bool while_loop_err = true;
     static int standby_to_offline_cnt = 0;
 
-    // process for STANDBY to OFFLINE
+    // process for STANDBY to OFFLINE - 离线轨迹启动计算
     if(mc_state_ == STANDBY_TO_OFFLINE && (!standby_to_offline_ready))
     {
         if(standby_to_offline_cnt == 0)
@@ -220,8 +222,8 @@ void BaseGroup::doWhileLoop(void)
         }
     }
     
-    // check pause signal
-    if(offline_pausemove_ready)
+    // check offline's pause signal - 离线轨迹暂停委托
+    if(mc_state_ == OFFLINE && offline_pausemove_ready)
     {
         while_loop_err = planOfflinePause();
         if (while_loop_err != SUCCESS)
@@ -229,11 +231,34 @@ void BaseGroup::doWhileLoop(void)
             LogProducer::error("mc_base", "[WhileLoop] planOfflinePause() failed");
             return while_loop_err;
         } 
-        offline_to_pause_request_ = true;
         offline_pausemove_ready = false;
+        offline_to_pause_request_ = true;
     }
 
-    // process offline calculation
+    // check offline's restart signal - 离线轨迹恢复委托
+    if(mc_state_ == PAUSED_OFFLINE && offline_restartmove_ready)
+    {
+        while_loop_err = planOfflineResume();
+        if (while_loop_err != SUCCESS)
+        {
+            LogProducer::error("mc_base", "[WhileLoop] Restart move failed, planOfflineResume failed");
+            return while_loop_err;
+        } 
+
+        usleep(10000);
+
+        while_loop_err = setOfflineTrajectory(offline_trajectory_file_name_);
+        if(while_loop_err != SUCCESS)
+        {
+            LogProducer::error("mc_base", "[WhileLoop] Restart move failed, setOfflineTrajectory failed");
+            return while_loop_err;
+        }
+
+        offline_restartmove_ready = false;
+        pause_to_offline_request_ = true;
+    }
+
+    // process offline calculation - 离线轨迹过程计算处理
     if(mc_state_ == OFFLINE && !offline_to_pause_request_)
     {
         LogProducer::info("mc_base", "[WhileLoop] receive calculation request from OFFLINE");
@@ -248,6 +273,8 @@ void BaseGroup::doWhileLoop(void)
         LogProducer::info("mc_base", "[WhileLoop] fillOfflineCache() success");  
         }
     }
+
+    
 
 
 

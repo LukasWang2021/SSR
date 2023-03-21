@@ -1162,7 +1162,6 @@ void BaseGroup::doStateMachine_(void)
         {
             LogProducer::warn("mc_sm", "[OFFLINE] pauseMove() failed, WARNING");
         }
-
     }
     else
     {
@@ -1188,7 +1187,6 @@ void BaseGroup::doStateMachine_(void)
     }
     fio_last_state = fio_state;
     
-
     // handle barecore_ stop signal && servo diabled status
     if (stop_barecore_ && (servo_state == SERVO_DISABLE))
     {
@@ -1223,8 +1221,7 @@ void BaseGroup::doStateMachine_(void)
         }
     }
 
-    
-    // state machine process
+    // Motion Control State Machine Process
     switch (mc_state)
     {
         case STANDBY:
@@ -1392,12 +1389,6 @@ void BaseGroup::doStateMachine_(void)
                 doPausingOfflineToPause(servo_state, pausing_offline_to_pause_cnt);
             }
 
-            break;
-        }
-        
-        case PAUSING_OFFLINE_TO_PAUSE:
-        {
-            doPausingOfflineToPause(servo_state, pausing_offline_to_pause_cnt);
             break;
         }
         

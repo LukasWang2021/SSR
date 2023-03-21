@@ -377,8 +377,10 @@ class BaseGroup
 
     // a flag use for transfering mc_state from STANDBY to OFFLINE
     bool standby_to_offline_ready;
-
+    // a flag use for pause OFFLINE movement
     bool offline_pausemove_ready;
+    // a flag use for restart OFFLINE movement
+    bool offline_restartmove_ready;
 
     pthread_mutex_t     planner_list_mutex_;
     pthread_mutex_t     manual_traj_mutex_;

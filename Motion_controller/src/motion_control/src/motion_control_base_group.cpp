@@ -71,6 +71,7 @@ BaseGroup::BaseGroup()
     standby_to_offline_ready = false;
     offline_pausemove_ready = false;
     offline_restartmove_ready = false;
+    offline_restartmove_failed = false;
 
 
     auto_to_standby_request_ = false;
@@ -764,7 +765,7 @@ ErrorCode BaseGroup::restartMove(void)
            ----- original implementation -----*/
 
         pause_to_offline_request_ = true;
-        
+
         return SUCCESS;
     }
     else if (mc_state == STANDBY && servo_state == SERVO_IDLE)

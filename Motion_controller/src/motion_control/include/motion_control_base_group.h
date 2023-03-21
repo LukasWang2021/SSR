@@ -391,6 +391,8 @@ class BaseGroup
     bool offline_pausemove_ready;
     // a flag use for restart OFFLINE movement
     bool offline_restartmove_ready;
+    // a flag use for procee restart OFFLINE movement failure
+    bool offline_restartmove_failed;
 
     pthread_mutex_t     planner_list_mutex_;
     pthread_mutex_t     manual_traj_mutex_;

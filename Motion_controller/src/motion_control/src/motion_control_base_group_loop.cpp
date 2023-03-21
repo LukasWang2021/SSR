@@ -263,16 +263,15 @@ void BaseGroup::doWhileLoop(void)
         // if it is the first time execution
         if(resume_offline_to_offline_cnt == 0)
         {
+            // it joint different, end this cycle and send error signal to state machine
             if (!isSameJoint(pause_joint_, start_joint_))
             {
-                LogProducer::warn("mc_sm","[WhileLoop] pause joint is not the same as restart joint!");
-                mc_state_ = STANDBY;
+                offline_restartmove_failed = true;
                 resume_offline_prepare_ = false;
-                LogProducer::warn("mc_sm","[WhileLoop] MC-state switch to MC_STANDBY");
-                clear_request_ = true;
-                LogProducer::warn("mc_sm","[WhileLoop] clear request sent");
-                break;
+                usleep(10000);
+                return;
             }
+
             pause_joint_ = pause_trajectory_.back().angle;
 
             pthread_mutex_lock(&offline_mutex_);
@@ -288,6 +287,7 @@ void BaseGroup::doWhileLoop(void)
         resume_offline_to_offline_cnt++;
         
         LogProducer::info("mc_base", "[WhileLoop] resume fill offline cache %d times", resume_offline_to_offline_cnt);
+        
         if(!while_loop_err)
         {
             offline_restartmove_ready = true;

@@ -1410,6 +1410,16 @@ void BaseGroup::doStateMachine_(void)
 
         case RESUME_OFFLINE:
         {
+            if(offline_restartmove_failed)
+            {
+                LogProducer::warn("mc_sm","[MC_RESUME_OFFLINE] pause joint is not the same as restart joint!");
+                mc_state_ = STANDBY;
+                LogProducer::warn("mc_sm","[MC_RESUME_OFFLINE] MC-state switch to MC_STANDBY");
+                clear_request_ = true;
+                LogProducer::warn("mc_sm","[MC_RESUME_OFFLINE] clear request sent");
+                break;
+            }
+
             if(offline_restartmove_ready)
             {
                 mc_state_ = OFFLINE;
@@ -1417,6 +1427,7 @@ void BaseGroup::doStateMachine_(void)
                 offline_restartmove_ready = false;
             }
 
+            break;
         }
 
         case ONLINE:

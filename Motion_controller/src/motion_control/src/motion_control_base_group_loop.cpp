@@ -184,12 +184,18 @@ void BaseGroup::checkEncoderState(void)
 */
 
 
-// test for while loop
+/**
+ * @brief simulate while loop function before core migration
+ * @details
+ *  1. if receive standby_to_offline_ready request, it will calculate for offline
+ * @return void
+ */
 void BaseGroup::doWhileLoop(void)
 {
     bool while_loop_err = true;
     static int standby_to_offline_cnt = 0;
 
+    // process for STANDBY to OFFLINE
     if(mc_state_ == STANDBY_TO_OFFLINE && (!standby_to_offline_ready))
     {
         if(standby_to_offline_cnt == 0)
@@ -199,20 +205,53 @@ void BaseGroup::doWhileLoop(void)
             offline_trajectory_cache_tail_ = 0;
             offline_trajectory_first_point_ = true;
             offline_trajectory_last_point_ = false;
-            LogProducer::info("mc_sm", "set offline last point status to false");
+            LogProducer::info("mc_base", "[WhileLoop] set offline last point status to false");
             pthread_mutex_unlock(&offline_mutex_);
         }
 
         while_loop_err = fillOfflineCache();
         standby_to_offline_cnt++;
         
-        LogProducer::info("mc_base", "fill offline cache %d times", standby_to_offline_cnt);
+        LogProducer::info("mc_base", "[WhileLoop] fill offline cache %d times", standby_to_offline_cnt);
         if(!while_loop_err)
         {
             standby_to_offline_ready = true;
             standby_to_offline_cnt = 0;
         }
     }
+    
+    // check pause signal
+    if(offline_pausemove_ready)
+    {
+        while_loop_err = planOfflinePause();
+        if (while_loop_err != SUCCESS)
+        {
+            LogProducer::error("mc_base", "[WhileLoop] planOfflinePause() failed");
+            return while_loop_err;
+        } 
+        offline_to_pause_request_ = true;
+        offline_pausemove_ready = false;
+    }
+
+    // process offline calculation
+    if(mc_state_ == OFFLINE && !offline_to_pause_request_)
+    {
+        LogProducer::info("mc_base", "[WhileLoop] receive calculation request from OFFLINE");
+        while_loop_err = fillOfflineCache();
+
+        // test print
+        if(!while_loop_err)
+        {
+        LogProducer::warn("mc_base", "[WhileLoop] fillOfflineCache() not success");
+        }else
+        {
+        LogProducer::info("mc_base", "[WhileLoop] fillOfflineCache() success");  
+        }
+    }
+
+
+
+    
 }
 
 
@@ -846,14 +885,14 @@ void BaseGroup::sendTrajectoryFlow(void)
     }
     else if (mc_state == PAUSING_OFFLINE && offline_to_pause_request_)
     {
-        if (!bare_core_.isPointCacheEmpty())
-        {
-            err = bare_core_.sendPoint() ? SUCCESS : MC_SEND_TRAJECTORY_FAIL;
-            if(err != SUCCESS)
-            {
-                LogProducer::error("sendTrajectoryFlow()", "offline bare_core.sendPoint() failed when pausing");
-            }
-        }
+        // if (!bare_core_.isPointCacheEmpty())
+        // {
+        //     err = bare_core_.sendPoint() ? SUCCESS : MC_SEND_TRAJECTORY_FAIL;
+        //     if(err != SUCCESS)
+        //     {
+        //         LogProducer::error("sendTrajectoryFlow()", "offline bare_core.sendPoint() failed when pausing");
+        //     }
+        // }
     }
     else if (mc_state == PAUSING && !pausing_to_pause_request_)
     {

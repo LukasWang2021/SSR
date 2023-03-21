@@ -230,10 +230,13 @@ ErrorCode BaseGroup::planOfflineTrajectory(string traj_name, double traj_vel)
 ErrorCode BaseGroup::planOfflinePause(void)
 {
     pthread_mutex_lock(&offline_mutex_);
-    uint32_t left_points = getOfflineCacheSize(); // local cache left points
+    // local cache left points
+    uint32_t left_points = getOfflineCacheSize(); 
     pthread_mutex_unlock(&offline_mutex_);
+
     // offline plan
     LogProducer::warn("BaseGroup", "start offline pause plan on index %u, cache left points %u", offline_traj_point_read_cnt_, left_points);
+    
     if(!offline_planner_.trajPausePlan(offline_traj_point_read_cnt_, 0, 0, 0, 0))
     {
         LogProducer::error("BaseGroup", "offline pause plan failed");

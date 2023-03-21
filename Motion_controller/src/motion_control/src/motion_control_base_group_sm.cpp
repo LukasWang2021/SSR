@@ -1155,9 +1155,7 @@ void BaseGroup::doStateMachine_(void)
     if(mc_state == OFFLINE && fio_ptr->isReal() && fio_state.bit.footboard_state ^ fio_last_state.bit.footboard_state && !fio_state.bit.footboard_state)
     {
         // pause, return 0 if success
-        LogProducer::warn("mc_sm", "[OFFLINE] pauseMove() will be called from state machine");
         ErrorCode err = pauseMove();
-        LogProducer::info("mc_sm", "[OFFLINE] pauseMove() has been called, current footboard state = %d, last footboard state = %d", fio_state.bit.footboard_state, fio_last_state.bit.footboard_state);
 
         // if pause error, print error
         if(err)
@@ -1333,12 +1331,18 @@ void BaseGroup::doStateMachine_(void)
             doManualToStandby(servo_state, manual_to_standby_cnt);
             break;
         }
+        
+        case STANDBY_TO_OFFLINE:
+        {
+			doStandbyToOffline();
+            break;
+        }
 
 		case OFFLINE:
         {
 
             // standard process for offline operation
-            fillOfflineCache();
+            // fillOfflineCache();
 
             // listening to flags, either to pause or to end
             if(offline_to_pause_request_)
@@ -1346,7 +1350,7 @@ void BaseGroup::doStateMachine_(void)
                 mc_state_ = PAUSING_OFFLINE;
                 LogProducer::warn("mc_sm","[MC_OFFLINE] MC-state switch to PAUSING_OFFLINE");
                 pause_joint_ = pause_trajectory_.back().angle;
-                LogProducer::info("mc_sm","[MC_OFFLINE] pushed pause_joint_ to pause_trajectory_ SUCCESS!");
+                LogProducer::info("mc_sm","[MC_OFFLINE] pushed pause_joint_ from pause_trajectory_.back() SUCCESS");
                 offline_to_pause_request_ = false; 
             }
             else if (offline_to_standby_request_)
@@ -1357,15 +1361,10 @@ void BaseGroup::doStateMachine_(void)
                 LogProducer::warn("mc_sm","[MC_OFFLINE] MC-state switch to MC_OFFLINE_TO_STANDBY");
             }
             
-
             break;
         }
         
-        case STANDBY_TO_OFFLINE:
-        {
-			doStandbyToOffline();
-            break;
-        }
+
         
         case OFFLINE_TO_STANDBY:
         {
@@ -1531,5 +1530,6 @@ void BaseGroup::handleUnusedRequests()
     }
    
 }
+
 
 }

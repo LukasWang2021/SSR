@@ -67,6 +67,11 @@ BaseGroup::BaseGroup()
     online_barecore_send_cnt_clear_request_ = false;
     online_barecore_send_cnt_err_request_ = false;
 
+    // offline flags initialization
+    standby_to_offline_ready = false;
+    offline_pausemove_ready = false;
+
+
     auto_to_standby_request_ = false;
     offline_to_standby_request_ = false;
     manual_to_standby_request_ = false;
@@ -452,15 +457,18 @@ ErrorCode BaseGroup::pauseMove(void)
     }
     else if(mc_state == OFFLINE && !offline_to_pause_request_)
     {
-        ErrorCode err = planOfflinePause();
-        
-        if (err != SUCCESS)
-        {
-            LogProducer::error("mc_base", "planOfflinePause() failed");
-            return err;
-        } 
+        offline_pausemove_ready = true;
+        LogProducer::warn("mc_base", "pasue move request from footboard during OFFLINE has been sent to while loop");
 
-        offline_to_pause_request_ = true;
+        // ErrorCode err = planOfflinePause();
+        
+        // if (err != SUCCESS)
+        // {
+        //     LogProducer::error("mc_base", "planOfflinePause() failed");
+        //     return err;
+        // } 
+
+        // offline_to_pause_request_ = true;
         return SUCCESS;
     }
     else

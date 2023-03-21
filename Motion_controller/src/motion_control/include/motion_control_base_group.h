@@ -103,7 +103,14 @@ class BaseGroup
     virtual basic_alg::Joint getStartJointOfOfflineTrajectory(void);
     virtual ErrorCode moveOfflineTrajectory(void);
     virtual ErrorCode planOfflineTrajectory(std::string traj_name, double traj_vel);
+
+    /**
+     * @brief plan pause trajectory and put points into pause_trajectory_
+     * @return [ErrorCode] if plan failed, return errorcode, else return SUCCESS(0)
+     */
     virtual ErrorCode planOfflinePause(void);
+
+
     virtual ErrorCode planOfflineResume(void);
 #ifdef OFFLINE_SEG
     bool getOfflineStandby() {return offline_to_standby_state_;}
@@ -268,7 +275,12 @@ class BaseGroup
     bool isSameJoint(const basic_alg::Joint &joint1, const basic_alg::Joint &joint2, double thres = MINIMUM_E6);
     bool isSameJoint(const basic_alg::Joint &joint1, const basic_alg::Joint &joint2, const basic_alg::Joint &thres);
 
+    /**
+     * @brief fill points from origin_trajectory_ into offline_trajectory_cache_
+     * @return [boolean] return false if fill point failed, and true for success
+     */
     bool fillOfflineCache(void);
+
     bool fillOfflinePauseCache(void);
     uint32_t getOfflineCacheSize(void);
     ErrorCode sendOfflineTrajectoryFlow(void);
@@ -365,6 +377,8 @@ class BaseGroup
 
     // a flag use for transfering mc_state from STANDBY to OFFLINE
     bool standby_to_offline_ready;
+
+    bool offline_pausemove_ready;
 
     pthread_mutex_t     planner_list_mutex_;
     pthread_mutex_t     manual_traj_mutex_;

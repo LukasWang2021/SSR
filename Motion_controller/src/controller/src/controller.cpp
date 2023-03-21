@@ -248,6 +248,7 @@ ErrorCode Controller::init()
     {
         return CONTROLLER_CREATE_ROUTINE_THREAD_FAILED;
     }  
+#if 0
     if(!priority_thread_.run(&controllerPriorityThreadFunc, this, config_ptr_->priority_thread_priority_))
     {
         return CONTROLLER_CREATE_ROUTINE_THREAD_FAILED;
@@ -255,7 +256,8 @@ ErrorCode Controller::init()
     if(!rt_thread_.run(&controllerRealTimeThreadFunc, this, config_ptr_->realtime_thread_priority_))
     {
         return CONTROLLER_CREATE_RT_THREAD_FAILED;
-    }    
+    } 
+#endif   
     if(!rpc_thread_.run(&controllerRpcThreadFunc, this, config_ptr_->rpc_thread_priority_))
     {
         return CONTROLLER_CREATE_RPC_THREAD_FAILED;
@@ -303,6 +305,9 @@ void Controller::runRoutineThreadFunc()
 {
     usleep(config_ptr_->routine_cycle_time_);
 
+    // merge realtime thread
+    group_ptr_[0]->ringRealTimeTask();
+
     axis_ptr_[9]->processFdbPdoCurrent(&fdb_current_time_stamp_);
     axis_ptr_[0]->processFdbPdoSync(fdb_current_time_stamp_);
     axis_ptr_[1]->processFdbPdoSync(fdb_current_time_stamp_);
@@ -335,6 +340,9 @@ void Controller::runRoutineThreadFunc()
 	publish_.processPublish();
     uploadErrorCode();
     group_ptr_[0]->ringCommonTask();
+
+    // merge priority thread
+    group_ptr_[0]->ringPriorityTask();
 }
 
 void Controller::runRpcThreadFunc()

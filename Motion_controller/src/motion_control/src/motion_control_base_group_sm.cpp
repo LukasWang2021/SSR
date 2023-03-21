@@ -1169,7 +1169,7 @@ void BaseGroup::doStateMachine_(void)
     else
     {
         // if fio board disconnected
-        if(!fio_ptr->isReal())
+        if(mc_state == OFFLINE && !fio_ptr->isReal())
         {
             LogProducer::warn("mc_sm", "[OFFLINE] fio_device not detected! fio_ptr->isReal(): %d, current footboard state: %d, last footboard state: %d", fio_ptr->isReal(), fio_state.bit.footboard_state, fio_last_state.bit.footboard_state);
         }

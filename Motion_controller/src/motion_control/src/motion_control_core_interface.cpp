@@ -205,7 +205,9 @@ bool BareCoreInterface::WriteShareMem(PointCache& cache, unsigned int valid_leve
         int32_t expect_element_number = cache.axis[i].total_points - current_index;
         int32_t actual_element_number = 0;
         it->second->getServoCommPtr()->processCtrlPdoBufferMode((uint8_t*)&cache.axis[i].set_point[current_index], expect_element_number, &actual_element_number);
+        
         cache.axis[i].current_point += actual_element_number;
+        
         if (cache.axis[i].current_point != cache.axis[i].total_points)
         {
             result = false;

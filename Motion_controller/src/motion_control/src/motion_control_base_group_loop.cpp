@@ -267,6 +267,7 @@ void BaseGroup::doWhileLoop(void)
             if (!isSameJoint(pause_joint_, start_joint_))
             {
                 offline_restartmove_failed = true;
+                LogProducer::info("mc_base", "[WhileLoop] set offline restart move to false");
                 resume_offline_prepare_ = false;
                 resume_offline_to_offline_cnt = 0;
                 usleep(10000);
@@ -294,7 +295,7 @@ void BaseGroup::doWhileLoop(void)
             offline_restartmove_ready = true;
             resume_offline_to_offline_cnt = 0;
             resume_offline_prepare_ == false;
-            usleep(10000);
+            usleep(15000);
         }
     }
 

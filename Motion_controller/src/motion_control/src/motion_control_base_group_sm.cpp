@@ -1091,6 +1091,8 @@ void BaseGroup::doStateMachine_(void)
     {
         handleFioStatus(mc_state, fio_ptr, fio_state, fio_last_state);
     }
+
+    //handleFioStatus(mc_state, fio_ptr, fio_state, fio_last_state);
     
     // handle barecore_ stop signal && servo diabled status
     handleBareCoreAndServoStatus(stop_barecore_, servo_state, mc_state);

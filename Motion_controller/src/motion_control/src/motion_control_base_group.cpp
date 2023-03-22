@@ -737,25 +737,7 @@ ErrorCode BaseGroup::restartMove(void)
     }
     else if(mc_state == PAUSED_OFFLINE && servo_state == SERVO_IDLE)
     {
-        /* ----- original implementation -----
-        err = planOfflineResume();
-        if(err != SUCCESS)
-        {
-            LogProducer::error("mc_base", "Restart move failed, planOfflineResume failed");
-            return err;
-        }
-        usleep(10000);
-        err = setOfflineTrajectory(offline_trajectory_file_name_);
-        if(err != SUCCESS)
-        {
-            LogProducer::error("mc_base", "Restart move failed, setOfflineTrajectory failed");
-            return err;
-        }
         pause_to_offline_request_ = true;
-           ----- original implementation -----*/
-
-        pause_to_offline_request_ = true;
-
         return SUCCESS;
     }
     else if (mc_state == STANDBY && servo_state == SERVO_IDLE)

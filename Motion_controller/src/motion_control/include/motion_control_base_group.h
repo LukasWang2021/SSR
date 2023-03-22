@@ -218,6 +218,38 @@ class BaseGroup
      */
     void handleUnusedRequests();
 
+    /**
+     * @brief process fio board logic
+     * @details
+     *  1. mainly serve for OFFLINE function
+     *  2. fio_last_state will be take as input for logic process, but it will also be update at the function ending
+     * @param [in] mc_state 
+     * @param [in] fio_ptr 
+     * @param [in] fio_state 
+     * @param [in] fio_last_state
+     * @param [out] fio_last_state 
+     * @return void
+     */
+    void handleFioStatus(otionControlState mc_state, FioDevice* fio_ptr, FioStatus_u &fio_state, FioStatus_u &fio_last_state);
+
+    /**
+     * @brief process servo error or bare_core error
+     * @param stop_barecore_ 
+     * @param servo_state 
+     * @param mc_state 
+     */
+    void BaseGroup::handleBareCoreAndServoStatus(bool &stop_barecore_, ServoState &servo_state, MotionControlState &mc_state);
+    
+    /**
+     * @brief handle clear request process
+     * @details
+     *  1. clean some flags when clear request received
+     * @param [in] mc_state
+     * @return void
+     */
+    void BaseGroup::handleClearRequest(MotionControlState mc_state)
+
+
     void doDisableToStandby(const ServoState &servo_state, uint32_t &fail_counter);
     void doStandbyToDisable(const ServoState &servo_state, uint32_t &fail_counter);
     void doAutoToStandby(const ServoState &servo_state, uint32_t &fail_counter, uint32_t &fine_counter);

@@ -1078,77 +1078,7 @@ void BaseGroup::doStateMachine_(void)
     FioStatus_u fio_state = fio_ptr->getStatus();
       
     // handle clear request
-    if (clear_request_)
-    {
-        // special situation for manual mode
-        if (mc_state == PAUSE_MANUAL || mc_state == PAUSE_TO_PAUSE_MANUAL || mc_state == PAUSE_MANUAL_TO_PAUSE)
-        {
-            pthread_mutex_lock(&manual_traj_mutex_);
-            manual_time_ = 0;
-            clear_teach_request_ = false;
-            manual_trajectory_check_fail_ = false;
-
-            mc_state_ = PAUSE;
-            pause_to_manual_request_ = false;
-            manual_to_pause_request_ = false;
-
-            bare_core_.clearPointCache();
-
-            pthread_mutex_unlock(&manual_traj_mutex_);
-            LogProducer::info("mc_sm","Teach group cleared, MC-state = %s", getMontionControlStatusString(mc_state).c_str());
-        }
-        else if (mc_state == STANDBY || mc_state == PAUSE || mc_state == PAUSED_OFFLINE || mc_state == MANUAL || mc_state == MANUAL_TO_STANDBY || mc_state == STANDBY_TO_MANUAL)
-        {
-            LogProducer::info("mc_sm","Clear group, MC-state = %s", getMontionControlStatusString(mc_state).c_str());
-            mc_state_ = STANDBY;
-            
-            // clear auto cache
-            pthread_mutex_lock(&planner_list_mutex_);
-            auto_time_ = 0;
-            trajectory_a_.valid = false;
-            trajectory_b_.valid = false;
-            plan_traj_ptr_ = &trajectory_a_;
-            pick_traj_ptr_ = &trajectory_a_;
-            traj_fifo_.clear();
-            bare_core_.clearPointCache();
-            fine_enable_ = false;
-            standby_to_auto_request_ = false;
-            auto_to_standby_request_ = false;
-            auto_to_pause_request_ = false;
-            pause_to_auto_request_ = false;
-            pthread_mutex_unlock(&planner_list_mutex_);
-
-            // clear offline cache
-            pthread_mutex_lock(&offline_mutex_);
-            standby_to_offline_request_ = false;
-            offline_to_standby_request_ = false;
-            offline_trajectory_cache_head_ = 0;
-            offline_trajectory_cache_tail_ = 0;
-            offline_trajectory_first_point_ = false;
-            offline_trajectory_last_point_ = false;
-            pthread_mutex_unlock(&offline_mutex_);
-            LogProducer::info("mc_sm", "[clear request] set offline flags to false and rest head & tail");
-
-            // clear online cache
-            pthread_mutex_lock(&online_traj_mutex_);
-            online_trajectory_last_point_ = false;
-            pthread_mutex_unlock(&online_traj_mutex_);
-
-            // clear manual cache
-            pthread_mutex_lock(&manual_traj_mutex_);
-            manual_time_ = 0;
-            manual_trajectory_check_fail_ = false;
-            standby_to_manual_request_ = false;
-            manual_to_standby_request_ = false;
-            pause_to_manual_request_ = false;
-            manual_to_pause_request_ = false;
-            pthread_mutex_unlock(&manual_traj_mutex_);
-
-            clear_request_ = false;
-            stop_barecore_ = false;
-            LogProducer::info("mc_sm","Group cleared.");
-        }
-    }
+    handleClearRequest(mc_state);
 
     // filter out some unused requests
     handleUnusedRequests();
@@ -1156,66 +1086,14 @@ void BaseGroup::doStateMachine_(void)
     // check state machine change request conditions
     transStateMachineCheck(mc_state);
 
-    // if fio board connected, process fio command
-    if(mc_state == OFFLINE && fio_ptr->isReal() && fio_state.bit.footboard_state ^ fio_last_state.bit.footboard_state && !fio_state.bit.footboard_state)
+    // process fio logic
+    if(!offline_to_pause_request_ && !(mc_state == PAUSING_OFFLINE) && !(mc_state == RESUME_OFFLINE))
     {
-        // pause, return 0 if success
-        ErrorCode err = pauseMove();
-
-        // if pause error, print error
-        if(err)
-        {
-            LogProducer::warn("mc_sm", "[OFFLINE] pauseMove() failed, WARNING");
-        }
+        handleFioStatus(mc_state, fio_ptr, fio_state, fio_last_state);
     }
-
-    // process fio motion for priority
-    if(mc_state == PAUSED_OFFLINE && fio_ptr->isReal() && fio_state.bit.footboard_state ^ fio_last_state.bit.footboard_state && fio_state.bit.footboard_state)
-    {
-        // offline resume signal received
-        ErrorCode err = restartMove();
-    }
-
-    // update fio status
-    if(fio_last_state.bit.footboard_state ^ fio_state.bit.footboard_state)
-    {
-        LogProducer::info("mc_sm", "footboard has been changed!");
-    }
-    fio_last_state = fio_state;
     
     // handle barecore_ stop signal && servo diabled status
-    if (stop_barecore_ && (servo_state == SERVO_DISABLE))
-    {
-        LogProducer::info("mc_sm","Barecore stop, MC-state = %s, servo-state = %s", getMontionControlStatusString(mc_state).c_str(), getMCServoStatusString(servo_state).c_str());
-        stop_barecore_ = false;
-
-        if (mc_state == MANUAL || mc_state == MANUAL_TO_STANDBY || mc_state == STANDBY_TO_MANUAL || mc_state == PAUSED_OFFLINE ||
-            mc_state == OFFLINE || mc_state == OFFLINE_TO_STANDBY || mc_state == STANDBY_TO_OFFLINE || mc_state == ONLINE)
-        {
-            mc_state_ = STANDBY;
-            clear_request_ = true;
-            LogProducer::warn("mc_sm","MC-state switch to MC_STANDBY.");
-        }
-        else if (mc_state == AUTO_TO_STANDBY)
-        {
-            mc_state_ = STANDBY;
-            LogProducer::warn("mc_sm","MC-state switch from AUTO_TO_STANDBY to MC_STANDBY.");
-        }
-        else if (mc_state == AUTO && auto_to_standby_request_ == true)
-        {
-            mc_state_ = STANDBY;
-            bare_core_.clearPointCache();
-            LogProducer::warn("mc_sm","MC-state switch from AUTO to MC_STANDBY with request.");
-        }
-        else if (mc_state == AUTO || mc_state == STANDBY_TO_AUTO)
-        {
-            mc_state_ = STANDBY;
-            LogProducer::warn("mc_sm","MC-state switch from AUTO || STANDBY_TO_AUTO to MC_STANDBY.");
-            remain_trajectory_.clear();
-            TrajectoryPoint point;
-            bare_core_.clearPointCache();
-        }
-    }
+    handleBareCoreAndServoStatus(stop_barecore_, servo_state, mc_state);
 
     // Motion Control State Machine Process
     switch (mc_state)
@@ -1520,5 +1398,149 @@ void BaseGroup::handleUnusedRequests()
    
 }
 
+void BaseGroup::handleFioStatus(MotionControlState mc_state, FioDevice* fio_ptr, FioStatus_u &fio_state, FioStatus_u &fio_last_state)
+{
+    // if fio board connected, process fio command
+    if(mc_state == OFFLINE && fio_ptr->isReal() && fio_state.bit.footboard_state ^ fio_last_state.bit.footboard_state && !fio_state.bit.footboard_state)
+    {
+        // pause, return 0 if success
+        ErrorCode err = pauseMove();
+
+        // if pause error, print error
+        if(err)
+        {
+            LogProducer::warn("mc_sm", "[OFFLINE] pauseMove() failed, WARNING");
+        }
+    }
+
+    // process fio motion for priority
+    if(mc_state == PAUSED_OFFLINE && fio_ptr->isReal() && fio_state.bit.footboard_state ^ fio_last_state.bit.footboard_state && fio_state.bit.footboard_state)
+    {
+        // offline resume signal received
+        ErrorCode err = restartMove();
+    }
+
+    // update fio status
+    if(fio_last_state.bit.footboard_state ^ fio_state.bit.footboard_state)
+    {
+        LogProducer::info("mc_sm", "footboard status changed");
+    }
+
+    fio_last_state = fio_state;
+}
+
+void BaseGroup::handleBareCoreAndServoStatus(bool &stop_barecore_, ServoState &servo_state, MotionControlState &mc_state)
+{
+    // handle barecore_ stop signal && servo diabled status
+    if (stop_barecore_ && (servo_state == SERVO_DISABLE))
+    {
+        LogProducer::info("mc_sm","Barecore stop, MC-state = %s, servo-state = %s", getMontionControlStatusString(mc_state).c_str(), getMCServoStatusString(servo_state).c_str());
+        stop_barecore_ = false;
+
+        if (mc_state == MANUAL || mc_state == MANUAL_TO_STANDBY || mc_state == STANDBY_TO_MANUAL || mc_state == PAUSED_OFFLINE ||
+            mc_state == OFFLINE || mc_state == OFFLINE_TO_STANDBY || mc_state == STANDBY_TO_OFFLINE || mc_state == ONLINE)
+        {
+            mc_state_ = STANDBY;
+            clear_request_ = true;
+            LogProducer::warn("mc_sm","MC-state switch to MC_STANDBY.");
+        }
+        else if (mc_state == AUTO_TO_STANDBY)
+        {
+            mc_state_ = STANDBY;
+            LogProducer::warn("mc_sm","MC-state switch from AUTO_TO_STANDBY to MC_STANDBY.");
+        }
+        else if (mc_state == AUTO && auto_to_standby_request_ == true)
+        {
+            mc_state_ = STANDBY;
+            bare_core_.clearPointCache();
+            LogProducer::warn("mc_sm","MC-state switch from AUTO to MC_STANDBY with request.");
+        }
+        else if (mc_state == AUTO || mc_state == STANDBY_TO_AUTO)
+        {
+            mc_state_ = STANDBY;
+            LogProducer::warn("mc_sm","MC-state switch from AUTO || STANDBY_TO_AUTO to MC_STANDBY.");
+            remain_trajectory_.clear();
+            TrajectoryPoint point;
+            bare_core_.clearPointCache();
+        }
+    }
+
+}
+
+void BaseGroup::handleClearRequest(MotionControlState &mc_state)
+{
+    // handle clear request
+    if (clear_request_)
+    {
+        // special situation for manual mode
+        if (mc_state == PAUSE_MANUAL || mc_state == PAUSE_TO_PAUSE_MANUAL || mc_state == PAUSE_MANUAL_TO_PAUSE)
+        {
+            pthread_mutex_lock(&manual_traj_mutex_);
+            manual_time_ = 0;
+            clear_teach_request_ = false;
+            manual_trajectory_check_fail_ = false;
+
+            mc_state_ = PAUSE;
+            pause_to_manual_request_ = false;
+            manual_to_pause_request_ = false;
+
+            bare_core_.clearPointCache();
+
+            pthread_mutex_unlock(&manual_traj_mutex_);
+            LogProducer::info("mc_sm","Teach group cleared, MC-state = %s", getMontionControlStatusString(mc_state).c_str());
+        }
+        else if (mc_state == STANDBY || mc_state == PAUSE || mc_state == PAUSED_OFFLINE || mc_state == MANUAL || mc_state == MANUAL_TO_STANDBY || mc_state == STANDBY_TO_MANUAL)
+        {
+            LogProducer::info("mc_sm","Clear group, MC-state = %s", getMontionControlStatusString(mc_state).c_str());
+            mc_state_ = STANDBY;
+            
+            // clear auto cache
+            pthread_mutex_lock(&planner_list_mutex_);
+            auto_time_ = 0;
+            trajectory_a_.valid = false;
+            trajectory_b_.valid = false;
+            plan_traj_ptr_ = &trajectory_a_;
+            pick_traj_ptr_ = &trajectory_a_;
+            traj_fifo_.clear();
+            bare_core_.clearPointCache();
+            fine_enable_ = false;
+            standby_to_auto_request_ = false;
+            auto_to_standby_request_ = false;
+            auto_to_pause_request_ = false;
+            pause_to_auto_request_ = false;
+            pthread_mutex_unlock(&planner_list_mutex_);
+
+            // clear offline cache
+            pthread_mutex_lock(&offline_mutex_);
+            standby_to_offline_request_ = false;
+            offline_to_standby_request_ = false;
+            offline_trajectory_cache_head_ = 0;
+            offline_trajectory_cache_tail_ = 0;
+            offline_trajectory_first_point_ = false;
+            offline_trajectory_last_point_ = false;
+            pthread_mutex_unlock(&offline_mutex_);
+            LogProducer::info("mc_sm", "[clear request] set offline flags to false and rest head & tail");
+
+            // clear online cache
+            pthread_mutex_lock(&online_traj_mutex_);
+            online_trajectory_last_point_ = false;
+            pthread_mutex_unlock(&online_traj_mutex_);
+
+            // clear manual cache
+            pthread_mutex_lock(&manual_traj_mutex_);
+            manual_time_ = 0;
+            manual_trajectory_check_fail_ = false;
+            standby_to_manual_request_ = false;
+            manual_to_standby_request_ = false;
+            pause_to_manual_request_ = false;
+            manual_to_pause_request_ = false;
+            pthread_mutex_unlock(&manual_traj_mutex_);
+
+            clear_request_ = false;
+            stop_barecore_ = false;
+            LogProducer::info("mc_sm","Group cleared.");
+        }
+    }
+}
 
 }

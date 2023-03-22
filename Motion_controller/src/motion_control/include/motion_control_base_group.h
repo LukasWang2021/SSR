@@ -32,12 +32,13 @@
 #include "onlineTrj_planner.h"
 #include "vpath_planner.h"
 #include "base_device.h"
+#include "fio_device.h"
 
 
-#define TRAJECTORY_CACHE_SIZE     8
-#define OFFLINE_TRAJECTORY_CACHE_SIZE  150// 512
-#define TRAJECTORY_LOG_CONTROL_SIZE 1024    // 1KB
-#define TRAJECTORY_LOG_DATA_SIZE 67108864   // 64MB
+#define TRAJECTORY_CACHE_SIZE            8
+#define OFFLINE_TRAJECTORY_CACHE_SIZE    150        // 512
+#define TRAJECTORY_LOG_CONTROL_SIZE      1024       // 1KB
+#define TRAJECTORY_LOG_DATA_SIZE         67108864   // 64MB
 
 namespace group_space
 {
@@ -230,7 +231,7 @@ class BaseGroup
      * @param [out] fio_last_state 
      * @return void
      */
-    void handleFioStatus(otionControlState mc_state, FioDevice* fio_ptr, FioStatus_u &fio_state, FioStatus_u &fio_last_state);
+    void handleFioStatus(MotionControlState mc_state, hal_space::FioDevice* fio_ptr, hal_space::FioStatus_u &fio_state, hal_space::FioStatus_u &fio_last_state);
 
     /**
      * @brief process servo error or bare_core error
@@ -238,7 +239,7 @@ class BaseGroup
      * @param servo_state 
      * @param mc_state 
      */
-    void BaseGroup::handleBareCoreAndServoStatus(bool &stop_barecore_, ServoState &servo_state, MotionControlState &mc_state);
+    void handleBareCoreAndServoStatus(bool &stop_barecore_, ServoState &servo_state, MotionControlState &mc_state);
     
     /**
      * @brief handle clear request process
@@ -247,7 +248,7 @@ class BaseGroup
      * @param [in] mc_state
      * @return void
      */
-    void BaseGroup::handleClearRequest(MotionControlState mc_state)
+    void handleClearRequest(MotionControlState &mc_state);
 
 
     void doDisableToStandby(const ServoState &servo_state, uint32_t &fail_counter);

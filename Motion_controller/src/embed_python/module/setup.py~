@@ -50,7 +50,7 @@ INCLUDE_DIRS = [CROSS_ROOT + "/usr/include",
               "../../group/include",
               "../../sensor_process/include",
               "../../motion_control/include",
-              "../../fio_device/include",]
+              "../../fio_device/include”,]
 
 
 controller_module = Extension('controller',

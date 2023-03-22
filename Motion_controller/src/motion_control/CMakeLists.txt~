@@ -14,7 +14,7 @@ include_directories(
     ../base_device/include 
     ../algorithm_base/include 
     ../core_comm/include 
-    ../servo_comm/include
+	../servo_comm/include
     ../system_model_manager/include
     ../reg_manager/include
     ../coordinate_manager/include

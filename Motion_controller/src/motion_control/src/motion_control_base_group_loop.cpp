@@ -196,8 +196,9 @@ void BaseGroup::doWhileLoop(void)
     static int standby_to_offline_cnt = 0;
     static int resume_offline_to_offline_cnt = 0;
     static bool resume_offline_prepare_ = false;
+    static bool pause_offline_prepare_ = false;
 
-    // process for STANDBY to OFFLINE - 离线轨迹启动计算
+    // process for STANDBY to OFFLINE - 离线轨迹 启动 规划
     if(mc_state_ == STANDBY_TO_OFFLINE && (!standby_to_offline_ready))
     {
         if(standby_to_offline_cnt == 0)
@@ -222,8 +223,8 @@ void BaseGroup::doWhileLoop(void)
         }
     }
     
-    // check offline's pause signal - 离线轨迹暂停委托
-    if(mc_state_ == OFFLINE && offline_pausemove_ready)
+    // plan offline pause trajectory - 离线轨迹 暂停 规划
+    if(mc_state_ == OFFLINE && offline_to_pause_request_ && !offline_pausemove_ready)
     {
         while_loop_err = planOfflinePause();
         if (while_loop_err != SUCCESS)
@@ -231,11 +232,10 @@ void BaseGroup::doWhileLoop(void)
             LogProducer::error("mc_base", "[WhileLoop] planOfflinePause() failed");
             return while_loop_err;
         } 
-        offline_pausemove_ready = false;
-        offline_to_pause_request_ = true;
+        offline_pausemove_ready = true;
     }
 
-    // check offline's restart signal - 离线轨迹 预恢复 规划
+    // check offline's resume trajectory planning - 离线轨迹 预恢复 规划
     if(mc_state_ == RESUME_OFFLINE && !resume_offline_prepare_)
     {
         while_loop_err = planOfflineResume();
@@ -257,7 +257,7 @@ void BaseGroup::doWhileLoop(void)
         resume_offline_prepare_ = true;
     }
 
-    // offline restart calculation - 离线轨迹 恢复 计算处理
+    // offline resume point filling - 离线轨迹 恢复 规划
     if(mc_state_ == RESUME_OFFLINE && resume_offline_prepare_)
     {
         // if it is the first time execution
@@ -268,6 +268,7 @@ void BaseGroup::doWhileLoop(void)
             {
                 offline_restartmove_failed = true;
                 resume_offline_prepare_ = false;
+                resume_offline_to_offline_cnt = 0;
                 usleep(10000);
                 return;
             }
@@ -292,12 +293,12 @@ void BaseGroup::doWhileLoop(void)
         {
             offline_restartmove_ready = true;
             resume_offline_to_offline_cnt = 0;
-            usleep(10000);
             resume_offline_prepare_ == false;
+            usleep(10000);
         }
     }
 
-    // process offline calculation - 离线轨迹过程计算处理
+    // process offline point filling - 离线轨迹 过程 规划
     if(mc_state_ == OFFLINE && !offline_to_pause_request_)
     {
         LogProducer::info("mc_base", "[WhileLoop] receive calculation request from OFFLINE");
@@ -582,22 +583,10 @@ void BaseGroup::fillTrajectoryFifo(void)
             reportError(err);
         }
     }
-    else if (mc_state_ == PAUSING_OFFLINE && !offline_ready_to_pause_request_) // only when angle has been pushed, it will start filling
+    else if (mc_state_ == PAUSING_OFFLINE && !pausing_offline_to_pause_request_)
     {
-        bool temp_err = fillOfflinePauseCache();
-        if(!temp_err)
-        {
-            LogProducer::error("fillTrajectoryFifo()", "fill offline pause cache failed !!!");
-        }
+        fillOfflinePauseCache();
     }
-    /*
-    else if (mc_state_ == ONLINE )
-    {
-        err = fillOnlineFIFO();
-        if (err != SUCCESS)
-        {reportError(err);}
-    }
-    */
     filling_points_into_traj_fifo_ = false;
 }
 
@@ -933,7 +922,7 @@ void BaseGroup::sendTrajectoryFlow(void)
             err = bare_core_.sendPoint() ? SUCCESS : MC_SEND_TRAJECTORY_FAIL;
         }
     }
-    else if (mc_state == PAUSING_OFFLINE && !offline_to_pause_request_)
+    else if (mc_state == PAUSING_OFFLINE && !pausing_offline_to_pause_request_)
     {
         // when pausing, send the rest points before the pause_trajectory finish planning
         err = sendOfflineTrajectoryFlow();
@@ -941,17 +930,6 @@ void BaseGroup::sendTrajectoryFlow(void)
         {
             LogProducer::debug("sendTrajectoryFlow()", "send offline trajectory flow failed when pausing");
         }
-    }
-    else if (mc_state == PAUSING_OFFLINE && offline_to_pause_request_)
-    {
-        // if (!bare_core_.isPointCacheEmpty())
-        // {
-        //     err = bare_core_.sendPoint() ? SUCCESS : MC_SEND_TRAJECTORY_FAIL;
-        //     if(err != SUCCESS)
-        //     {
-        //         LogProducer::error("sendTrajectoryFlow()", "offline bare_core.sendPoint() failed when pausing");
-        //     }
-        // }
     }
     else if (mc_state == PAUSING && !pausing_to_pause_request_)
     {

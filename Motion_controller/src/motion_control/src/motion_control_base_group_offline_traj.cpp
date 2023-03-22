@@ -581,7 +581,7 @@ ErrorCode BaseGroup::sendOfflineTrajectoryFlow(void)
             {
                 offline_to_standby_request_ = true;
             }
-            else if(mc_state_ == PAUSING_OFFLINE && !offline_ready_to_pause_request_)
+            else if(mc_state_ == PAUSING_OFFLINE)
             {
                 pausing_offline_to_pause_request_ = true;
             }

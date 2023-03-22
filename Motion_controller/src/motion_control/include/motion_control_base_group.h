@@ -239,16 +239,6 @@ class BaseGroup
      */
     void doStandbyToOffline(void);
 
-    /**
-     * @brief wait until trajectory points are redy
-     * @details
-     *  1. this function SEND a signal to while-loop thread
-     *  2. while-loop thread will CALCULATE the first 50 trajectory points
-     *  3. when while-loop FINISH its job, it will SEND a signal back to this function
-     *  4. when this function RECEIVE the finish signal, it SWITCHES to OFFLINE state
-     */
-    void doPausedOfflineToOffline(void);
-
     void doPausingToPause(const ServoState &servo_state, uint32_t &fail_counter);
     void doPausingOfflineToPause(const ServoState &servo_state, uint32_t &fail_counter);
     
@@ -422,7 +412,6 @@ class BaseGroup
     bool pause_to_offline_request_;
     bool pause_offline_to_standby_request_;
     bool pausing_offline_to_pause_request_;
-    bool offline_ready_to_pause_request_;
     bool standby_to_offline_request_;
     bool offline_to_standby_request_;
 

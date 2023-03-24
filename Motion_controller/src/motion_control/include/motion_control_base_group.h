@@ -203,8 +203,17 @@ class BaseGroup
     void sendTrajectoryFlow(void);
     void updateServoStateAndJoint(void);
 
-    // state machine
+    /**
+     * @brief old version state machine function, no longer use it anymore
+     * @details
+     *  1. BUT DO NOT DELETE IT
+     */
     void doStateMachine(void);
+
+    /**
+     * @brief 
+     * 
+     */
     void doStateMachine_(void);
 
     /**

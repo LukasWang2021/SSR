@@ -787,10 +787,9 @@ void BaseGroup::doOfflineToStandby(const ServoState &servo_state, uint32_t &fail
 	if (servo_state == SERVO_IDLE)
 	{
 		mc_state_ = STANDBY;
-#ifdef OFFLINE_SEG
-        offline_to_standby_state_ = true;
-#endif
-		LogProducer::warn("mc_sm","MC-state switch to MC_STANDBY.");
+        
+        clear_request_ = true;
+		LogProducer::warn("mc_sm","[MC_OFFLINE_TO_STANDBY] MC-state switch to MC_STANDBY.");
 	}
 
 	fail_counter ++;
@@ -798,8 +797,10 @@ void BaseGroup::doOfflineToStandby(const ServoState &servo_state, uint32_t &fail
 	if (fail_counter > offline_to_standby_timeout_)
 	{
         mc_state_ = STANDBY;
+
+        clear_request_ = true;
 		reportError(MC_SWITCH_STATE_TIMEOUT);
-        LogProducer::error("mc_sm","Offline to standby timeout.");
+        LogProducer::error("mc_sm","[MC_OFFLINE_TO_STANDBY] Offline to standby timeout.");
 	}
 }
 
@@ -1224,7 +1225,6 @@ void BaseGroup::doStateMachine_(void)
                     offline_pausemove_ready = false;
                     offline_to_pause_request_ = false;
                 }
-                
             }
             else if (offline_to_standby_request_)
             {
@@ -1249,6 +1249,7 @@ void BaseGroup::doStateMachine_(void)
             { 
                 pausing_offline_to_pause_cnt++;
             }
+
             if(pausing_offline_to_pause_cnt > 0)
             {
                 doPausingOfflineToPause(servo_state, pausing_offline_to_pause_cnt);
@@ -1265,6 +1266,7 @@ void BaseGroup::doStateMachine_(void)
                 LogProducer::warn("mc_sm","[MC_PAUSED_OFFLINE] MC-state switch to MC_RESUME_OFFLINE");
                 pause_to_offline_request_ = false;
             }
+
             break;
         }
 
@@ -1278,6 +1280,7 @@ void BaseGroup::doStateMachine_(void)
                 clear_request_ = true;
                 LogProducer::warn("mc_sm","[MC_RESUME_OFFLINE] clear request sent");
                 offline_restartmove_failed = false;
+
                 break;
             }
 
@@ -1541,6 +1544,14 @@ void BaseGroup::handleClearRequest(MotionControlState &mc_state)
             clear_request_ = false;
             stop_barecore_ = false;
             LogProducer::info("mc_sm","Group cleared.");
+        }
+        else if(mc_state == OFFLINE_TO_STANDBY)
+        {
+            // safe exit of offline motion
+            LogProducer::info("mc_sm","Clear group, MC-state = %s", getMontionControlStatusString(mc_state).c_str());
+            mc_state_ = STANDBY;
+
+            
         }
     }
 }

@@ -208,18 +208,19 @@ void BaseGroup::doWhileLoop(void)
             offline_trajectory_cache_tail_ = 0;
             offline_trajectory_first_point_ = true;
             offline_trajectory_last_point_ = false;
-            LogProducer::info("mc_base", "[WhileLoop] set offline last point status to false");
             pthread_mutex_unlock(&offline_mutex_);
         }
 
         while_loop_err = fillOfflineCache();
         standby_to_offline_cnt++;
         
-        LogProducer::info("mc_base", "[WhileLoop] fill offline cache %d times", standby_to_offline_cnt);
+        LogProducer::debug("mc_base", "[While Thread] OFFLINE initializing");
         if(!while_loop_err)
         {
+            LogProducer::info("mc_base", "[While Thread] OFFLINE initializd - fill offline cache %d times", standby_to_offline_cnt);
             standby_to_offline_ready = true;
             standby_to_offline_cnt = 0;
+            usleep(10500);      
         }
     }
     
@@ -229,7 +230,7 @@ void BaseGroup::doWhileLoop(void)
         while_loop_err = planOfflinePause();
         if (while_loop_err != SUCCESS)
         {
-            LogProducer::error("mc_base", "[WhileLoop] planOfflinePause() failed");
+            LogProducer::error("mc_base", "[While Thread] planOfflinePause() failed");
             return while_loop_err;
         } 
         offline_pausemove_ready = true;
@@ -241,7 +242,7 @@ void BaseGroup::doWhileLoop(void)
         while_loop_err = planOfflineResume();
         if (while_loop_err != SUCCESS)
         {
-            LogProducer::error("mc_base", "[WhileLoop] Restart move failed, planOfflineResume failed");
+            LogProducer::error("mc_base", "[While Thread] Restart move failed, planOfflineResume failed");
             return while_loop_err;
         } 
 
@@ -250,7 +251,7 @@ void BaseGroup::doWhileLoop(void)
         while_loop_err = setOfflineTrajectory(offline_trajectory_file_name_);
         if(while_loop_err != SUCCESS)
         {
-            LogProducer::error("mc_base", "[WhileLoop] Restart move failed, setOfflineTrajectory failed");
+            LogProducer::error("mc_base", "[While Thread] Restart move failed, setOfflineTrajectory failed");
             return while_loop_err;
         }
 
@@ -267,7 +268,7 @@ void BaseGroup::doWhileLoop(void)
             if (!isSameJoint(pause_joint_, start_joint_))
             {
                 offline_restartmove_failed = true;
-                LogProducer::info("mc_base", "[WhileLoop] set offline restart move to false");
+                LogProducer::error("mc_base", "[While Thread] restart move failed, not the same joint!");
                 resume_offline_prepare_ = false;
                 resume_offline_to_offline_cnt = 0;
                 usleep(10000);
@@ -281,17 +282,18 @@ void BaseGroup::doWhileLoop(void)
             offline_trajectory_cache_tail_ = 0;
             offline_trajectory_first_point_ = true;
             offline_trajectory_last_point_ = false;
-            LogProducer::info("mc_base", "[WhileLoop] set offline last point status to false");
+            LogProducer::info("mc_base", "[While Thread] set offline last point status to false");
             pthread_mutex_unlock(&offline_mutex_);
         }
 
         while_loop_err = fillOfflineCache();
         resume_offline_to_offline_cnt++;
         
-        LogProducer::info("mc_base", "[WhileLoop] resume fill offline cache %d times", resume_offline_to_offline_cnt);
+        LogProducer::info("mc_base", "[While Thread] OFFLINE RESUMING");
         
         if(!while_loop_err)
         {
+            LogProducer::info("mc_base", "[While Thread] OFFLINE RESUMED - fill offline cache %d times", resume_offline_to_offline_cnt);
             offline_restartmove_ready = true;
             resume_offline_to_offline_cnt = 0;
             resume_offline_prepare_ == false;
@@ -302,17 +304,17 @@ void BaseGroup::doWhileLoop(void)
     // process offline point filling - 离线轨迹 过程 规划
     if(mc_state_ == OFFLINE && !offline_to_pause_request_)
     {
-        LogProducer::info("mc_base", "[WhileLoop] receive calculation request from OFFLINE");
+        // LogProducer::debug("mc_base", "[WhileLoop] receive calculation request from OFFLINE");
         while_loop_err = fillOfflineCache();
 
         // test print
-        if(!while_loop_err)
-        {
-        LogProducer::warn("mc_base", "[WhileLoop] fillOfflineCache() not success");
-        }else
-        {
-        LogProducer::info("mc_base", "[WhileLoop] fillOfflineCache() success");  
-        }
+        // if(!while_loop_err)
+        // {
+        //     LogProducer::debug("mc_base", "[WhileLoop] fillOfflineCache() not success");
+        // }else
+        // {
+        //     LogProducer::debug("mc_base", "[WhileLoop] fillOfflineCache() success");  
+        // }
     }
 }
 
@@ -916,7 +918,7 @@ void BaseGroup::sendTrajectoryFlow(void)
     {
         err = sendOfflineTrajectoryFlow();
     }
-    else if ((mc_state == OFFLINE && offline_to_standby_request_) || mc_state == OFFLINE_TO_STANDBY)
+    else if ((mc_state == OFFLINE && offline_to_standby_request_) || mc_state == OFFLINE_TO_STANDBY) // means offline mode end normally, ready to reset
     {
         if (!bare_core_.isPointCacheEmpty())
         {

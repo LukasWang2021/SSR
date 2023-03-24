@@ -1550,8 +1550,7 @@ void ControllerRpc::handleRpc0x000051E9(void* request_data_ptr, void* response_d
     bool in_position = false;
     group_ptr_[0]->mcGroupReadStatus(status, in_position);
     
-    if (group_ptr_[0]->getWorkMode() != USER_OP_MODE_AUTO
-        || group_ptr_[0]->getWorkMode() == USER_OP_MODE_NONE
+    if (group_ptr_[0]->getWorkMode() == USER_OP_MODE_NONE
         || status != GROUP_STATUS_STANDBY)
     {
         rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;

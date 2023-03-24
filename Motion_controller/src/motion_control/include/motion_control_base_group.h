@@ -410,13 +410,25 @@ class BaseGroup
 
     uint32_t offline_trajectory_size_;
     basic_alg::Joint offline_start_joint_;
-    #ifdef OFFLINE_SEG
-    bool offline_to_standby_state_;
-    #endif
+    
     TrajectoryPoint offline_trajectory_cache_[OFFLINE_TRAJECTORY_CACHE_SIZE];
     uint32_t offline_trajectory_cache_head_, offline_trajectory_cache_tail_;
     uint32_t offline_traj_point_read_cnt_;
 
+    /* ----- offline workmode requests ----- */
+    #ifdef OFFLINE_SEG
+    bool offline_to_standby_state_;
+    #endif
+
+    bool standby_to_offline_request_;
+    
+    bool offline_to_standby_request_;
+
+    bool offline_to_pause_request_;
+
+    bool pause_to_offline_request_;
+    // use for transfering mc_state from PAUSING_OFFLINE to PAUSED_OFFLINE
+    bool pausing_offline_to_pause_request_;
     // a flag use for transfering mc_state from STANDBY to OFFLINE
     bool standby_to_offline_ready;
     // a flag use for pause OFFLINE movement
@@ -425,6 +437,9 @@ class BaseGroup
     bool offline_restartmove_ready;
     // a flag use for procee restart OFFLINE movement failure
     bool offline_restartmove_failed;
+
+    /* ----- offline workmode requests ----- */
+    
 
     pthread_mutex_t     planner_list_mutex_;
     pthread_mutex_t     manual_traj_mutex_;
@@ -450,12 +465,10 @@ class BaseGroup
     bool standby_to_manual_request_;
     bool manual_to_standby_request_;
 
-    bool offline_to_pause_request_;
-    bool pause_to_offline_request_;
-    bool pause_offline_to_standby_request_;
-    bool pausing_offline_to_pause_request_;
-    bool standby_to_offline_request_;
-    bool offline_to_standby_request_;
+    
+    
+
+    
 
     bool pause_return_to_pause_request_;
     bool pausing_to_pause_request_;
@@ -464,6 +477,9 @@ class BaseGroup
     bool online_to_pause_request_;
     bool online_barecore_send_cnt_err_request_;
     bool online_barecore_send_cnt_clear_request_;
+
+
+    
 
 
 

@@ -16,7 +16,7 @@
 
 namespace group_space
 {
-#define JC_POINT_NUM 10
+#define JC_POINT_NUM 20
 #define JOINT_IN_GROUP 6
 #define START_POINT 1
 #define END_POINT 2

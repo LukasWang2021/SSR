@@ -564,8 +564,8 @@ ErrorCode BaseGroup::sendOfflineTrajectoryFlow(void)
 {
     if (bare_core_.isPointCacheEmpty())
     {
-        size_t length = 10;
-        TrajectoryPoint points[10];
+        size_t length = JC_POINT_NUM;
+        TrajectoryPoint points[JC_POINT_NUM];
         ErrorCode err = pickPointsFromOfflineCache(points, length);//length < 1时返回0x1111
         if (err != SUCCESS)
         {

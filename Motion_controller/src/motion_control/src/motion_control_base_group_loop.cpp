@@ -1118,8 +1118,8 @@ ErrorCode BaseGroup::sendManualTrajectoryFlow(void)
 
     if (bare_core_.isPointCacheEmpty())
     {
-        size_t length = 10;
-        TrajectoryPoint points[10];
+        size_t length = JC_POINT_NUM;
+        TrajectoryPoint points[JC_POINT_NUM];
         err = pickPointsFromManualTrajectory(points, length);
 
         if (err != SUCCESS)

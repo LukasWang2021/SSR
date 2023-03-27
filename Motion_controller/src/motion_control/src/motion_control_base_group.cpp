@@ -54,7 +54,6 @@ BaseGroup::BaseGroup()
     stop_barecore_ = false;
     clear_teach_request_ = false;
     standby_to_offline_request_ = false;
-    offline_ready_to_pause_request_ = false;
     auto_to_pause_request_ = false;
     pause_to_auto_request_ = false;
     manual_to_pause_request_ = false;
@@ -66,6 +65,13 @@ BaseGroup::BaseGroup()
     online_to_pause_request_ = false;
     online_barecore_send_cnt_clear_request_ = false;
     online_barecore_send_cnt_err_request_ = false;
+
+    // offline flags initialization
+    standby_to_offline_ready = false;
+    offline_pausemove_ready = false;
+    offline_restartmove_ready = false;
+    offline_restartmove_failed = false;
+
 
     auto_to_standby_request_ = false;
     offline_to_standby_request_ = false;
@@ -452,15 +458,9 @@ ErrorCode BaseGroup::pauseMove(void)
     }
     else if(mc_state == OFFLINE && !offline_to_pause_request_)
     {
-        ErrorCode err = planOfflinePause();
-        
-        if (err != SUCCESS)
-        {
-            LogProducer::error("mc_base", "planOfflinePause() failed");
-            return err;
-        } 
-
         offline_to_pause_request_ = true;
+        LogProducer::warn("mc_base", "pasue move request from footboard during OFFLINE has been sent to while loop");
+   
         return SUCCESS;
     }
     else
@@ -737,24 +737,7 @@ ErrorCode BaseGroup::restartMove(void)
     }
     else if(mc_state == PAUSED_OFFLINE && servo_state == SERVO_IDLE)
     {
-        err = planOfflineResume();
-        if(err != SUCCESS)
-        {
-            LogProducer::error("mc_base", "Restart move failed, planOfflineResume failed");
-            return err;
-        }
-        
-        usleep(10000);
-
-        err = setOfflineTrajectory(offline_trajectory_file_name_);
-        if(err != SUCCESS)
-        {
-            LogProducer::error("mc_base", "Restart move failed, setOfflineTrajectory failed");
-            return err;
-        }
-
         pause_to_offline_request_ = true;
-
         return SUCCESS;
     }
     else if (mc_state == STANDBY && servo_state == SERVO_IDLE)

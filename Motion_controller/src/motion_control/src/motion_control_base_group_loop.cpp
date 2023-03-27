@@ -22,19 +22,19 @@
 #include "log_manager_producer.h"
 #include "onlineTrj_planner.h"
 
-
-
 using namespace std;
 using namespace group_space;
 using namespace basic_alg;
 using namespace base_space;
 using namespace log_space;
+
 double OnlinePointBuf[12000] = {0};//500*24==12000 在线轨迹点数据(轴角弧度位置,角速度,角加速度,力矩)
 int OnlinePointBuf_pointNum=0;
 int OnlinePointLevelBuf[500]={0};
 bool online_trajectory_point_data_update_flag = false;//在线轨迹点数据更新标记
 bool enable_send_online_fifoPoint_flag = false;
 int online_fifo_pointCnt = 0;//在线轨迹缓存队列里的点数
+
 static void dumpShareMemory(void)
 {
     ofstream  shm_out("/root/share_memory.dump");
@@ -56,7 +56,6 @@ static void dumpShareMemory(void)
     shm_out.close();
 }
 
-
 namespace group_space
 {
 
@@ -65,6 +64,7 @@ void BaseGroup::doCommonLoop(void)
     updateJointRecorder();
     doStateMachine_();
 }
+
 /***
  * 设置在线轨迹点的level状态,
  * 参数: idx--缓存数组下标,注意不能超过99
@@ -74,6 +74,7 @@ void BaseGroup::setOnlinePointLevelBuf(int idx, int value)
 {
     OnlinePointLevelBuf[idx]=value;
 }
+
 void BaseGroup::doPriorityLoop(void)
 {
     updateServoStateAndJoint();
@@ -81,12 +82,10 @@ void BaseGroup::doPriorityLoop(void)
     fillTrajectoryFifo();
 }
 
-
 void BaseGroup::doRealtimeLoop(void)
 {
     sendTrajectoryFlow();
 }
-
 
 void BaseGroup::updateJointRecorder(void)
 {
@@ -183,13 +182,23 @@ void BaseGroup::checkEncoderState(void)
 }
 */
 
-
-// test for while loop
+/**
+ * @brief simulate while loop function before core migration
+ * @details
+ *  1. if receive standby_to_offline_ready request, it will calculate for offline
+ *  2. if in OFFLINE workmode, it keep calculating points for offline trajectory
+ *  3. if receive pause or restart request during OFFLINE mode, it will process for it
+ * @return void
+ */
 void BaseGroup::doWhileLoop(void)
 {
     bool while_loop_err = true;
     static int standby_to_offline_cnt = 0;
+    static int resume_offline_to_offline_cnt = 0;
+    static bool resume_offline_prepare_ = false;
+    static bool pause_offline_prepare_ = false;
 
+    // process for STANDBY to OFFLINE - 离线轨迹 启动 规划
     if(mc_state_ == STANDBY_TO_OFFLINE && (!standby_to_offline_ready))
     {
         if(standby_to_offline_cnt == 0)
@@ -199,22 +208,115 @@ void BaseGroup::doWhileLoop(void)
             offline_trajectory_cache_tail_ = 0;
             offline_trajectory_first_point_ = true;
             offline_trajectory_last_point_ = false;
-            LogProducer::info("mc_sm", "set offline last point status to false");
             pthread_mutex_unlock(&offline_mutex_);
         }
 
         while_loop_err = fillOfflineCache();
         standby_to_offline_cnt++;
         
-        LogProducer::info("mc_base", "fill offline cache %d times", standby_to_offline_cnt);
+        LogProducer::debug("mc_base", "[While Thread] OFFLINE initializing");
         if(!while_loop_err)
         {
+            LogProducer::info("mc_base", "[While Thread] OFFLINE initializd - fill offline cache %d times", standby_to_offline_cnt);
             standby_to_offline_ready = true;
             standby_to_offline_cnt = 0;
+            usleep(10500);      
         }
     }
-}
+    
+    // plan offline pause trajectory - 离线轨迹 暂停 规划
+    if(mc_state_ == OFFLINE && offline_to_pause_request_ && !offline_pausemove_ready)
+    {
+        while_loop_err = planOfflinePause();
+        if (while_loop_err != SUCCESS)
+        {
+            LogProducer::error("mc_base", "[While Thread] planOfflinePause() failed");
+            return while_loop_err;
+        } 
+        offline_pausemove_ready = true;
+    }
 
+    // check offline's resume trajectory planning - 离线轨迹 预恢复 规划
+    if(mc_state_ == RESUME_OFFLINE && !resume_offline_prepare_)
+    {
+        while_loop_err = planOfflineResume();
+        if (while_loop_err != SUCCESS)
+        {
+            LogProducer::error("mc_base", "[While Thread] Restart move failed, planOfflineResume failed");
+            return while_loop_err;
+        } 
+
+        usleep(10000);
+
+        while_loop_err = setOfflineTrajectory(offline_trajectory_file_name_);
+        if(while_loop_err != SUCCESS)
+        {
+            LogProducer::error("mc_base", "[While Thread] Restart move failed, setOfflineTrajectory failed");
+            return while_loop_err;
+        }
+
+        resume_offline_prepare_ = true;
+    }
+
+    // offline resume point filling - 离线轨迹 恢复 规划
+    if(mc_state_ == RESUME_OFFLINE && resume_offline_prepare_)
+    {
+        // if it is the first time execution
+        if(resume_offline_to_offline_cnt == 0)
+        {
+            // it joint different, end this cycle and send error signal to state machine
+            if (!isSameJoint(pause_joint_, start_joint_))
+            {
+                offline_restartmove_failed = true;
+                LogProducer::error("mc_base", "[While Thread] restart move failed, not the same joint!");
+                resume_offline_prepare_ = false;
+                resume_offline_to_offline_cnt = 0;
+                usleep(10000);
+                return;
+            }
+
+            pause_joint_ = pause_trajectory_.back().angle;
+
+            pthread_mutex_lock(&offline_mutex_);
+            offline_trajectory_cache_head_ = 0;
+            offline_trajectory_cache_tail_ = 0;
+            offline_trajectory_first_point_ = true;
+            offline_trajectory_last_point_ = false;
+            LogProducer::info("mc_base", "[While Thread] set offline last point status to false");
+            pthread_mutex_unlock(&offline_mutex_);
+        }
+
+        while_loop_err = fillOfflineCache();
+        resume_offline_to_offline_cnt++;
+        
+        LogProducer::info("mc_base", "[While Thread] OFFLINE RESUMING");
+        
+        if(!while_loop_err)
+        {
+            LogProducer::info("mc_base", "[While Thread] OFFLINE RESUMED - fill offline cache %d times", resume_offline_to_offline_cnt);
+            offline_restartmove_ready = true;
+            resume_offline_to_offline_cnt = 0;
+            resume_offline_prepare_ == false;
+            usleep(15000);
+        }
+    }
+
+    // process offline point filling - 离线轨迹 过程 规划
+    if(mc_state_ == OFFLINE && !offline_to_pause_request_)
+    {
+        // LogProducer::debug("mc_base", "[WhileLoop] receive calculation request from OFFLINE");
+        while_loop_err = fillOfflineCache();
+
+        // test print
+        // if(!while_loop_err)
+        // {
+        //     LogProducer::debug("mc_base", "[WhileLoop] fillOfflineCache() not success");
+        // }else
+        // {
+        //     LogProducer::debug("mc_base", "[WhileLoop] fillOfflineCache() success");  
+        // }
+    }
+}
 
 void BaseGroup::fillTrajectoryFifo(void)
 {
@@ -484,22 +586,10 @@ void BaseGroup::fillTrajectoryFifo(void)
             reportError(err);
         }
     }
-    else if (mc_state_ == PAUSING_OFFLINE && !offline_ready_to_pause_request_) // only when angle has been pushed, it will start filling
+    else if (mc_state_ == PAUSING_OFFLINE && !pausing_offline_to_pause_request_)
     {
-        bool temp_err = fillOfflinePauseCache();
-        if(!temp_err)
-        {
-            LogProducer::error("fillTrajectoryFifo()", "fill offline pause cache failed !!!");
-        }
+        fillOfflinePauseCache();
     }
-    /*
-    else if (mc_state_ == ONLINE )
-    {
-        err = fillOnlineFIFO();
-        if (err != SUCCESS)
-        {reportError(err);}
-    }
-    */
     filling_points_into_traj_fifo_ = false;
 }
 
@@ -828,31 +918,20 @@ void BaseGroup::sendTrajectoryFlow(void)
     {
         err = sendOfflineTrajectoryFlow();
     }
-    else if ((mc_state == OFFLINE && offline_to_standby_request_) || mc_state == OFFLINE_TO_STANDBY)
+    else if ((mc_state == OFFLINE && offline_to_standby_request_) || mc_state == OFFLINE_TO_STANDBY) // means offline mode end normally, ready to reset
     {
         if (!bare_core_.isPointCacheEmpty())
         {
             err = bare_core_.sendPoint() ? SUCCESS : MC_SEND_TRAJECTORY_FAIL;
         }
     }
-    else if (mc_state == PAUSING_OFFLINE && !offline_to_pause_request_)
+    else if (mc_state == PAUSING_OFFLINE && !pausing_offline_to_pause_request_)
     {
         // when pausing, send the rest points before the pause_trajectory finish planning
         err = sendOfflineTrajectoryFlow();
         if(err != SUCCESS)
         {
             LogProducer::debug("sendTrajectoryFlow()", "send offline trajectory flow failed when pausing");
-        }
-    }
-    else if (mc_state == PAUSING_OFFLINE && offline_to_pause_request_)
-    {
-        if (!bare_core_.isPointCacheEmpty())
-        {
-            err = bare_core_.sendPoint() ? SUCCESS : MC_SEND_TRAJECTORY_FAIL;
-            if(err != SUCCESS)
-            {
-                LogProducer::error("sendTrajectoryFlow()", "offline bare_core.sendPoint() failed when pausing");
-            }
         }
     }
     else if (mc_state == PAUSING && !pausing_to_pause_request_)
@@ -1096,6 +1175,7 @@ ErrorCode BaseGroup::pickPointsFromManualTrajectory(TrajectoryPoint *points, siz
         return err;
     }
 }
+
 ErrorCode BaseGroup::sendOnlineTrajectoryFlow(void) 
 {
     ErrorCode err;
@@ -1189,6 +1269,7 @@ void BaseGroup::setOnlineTrjFirstPointCondition()
     online_trajectory_first_point_ = true;//标记轨迹起点
     online_fifo_.clear();
 }
+
 ErrorCode BaseGroup::switchToOnlineState()
 {
     if(mc_state_ != ONLINE)
@@ -1203,6 +1284,7 @@ ErrorCode BaseGroup::switchToOnlineState()
     }
     return SUCCESS;
 }
+
 ErrorCode BaseGroup::switchOnlineStateToStandby()
 {
     online_to_standby_request_ = true;
@@ -1213,6 +1295,7 @@ ErrorCode BaseGroup::switchOnlineStateToStandby()
     online_fifo_.clear();
     return SUCCESS;
 }
+
 Joint BaseGroup::getLatestJoint(void)
 {
     pthread_mutex_lock(&servo_mutex_);

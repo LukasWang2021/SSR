@@ -35,7 +35,7 @@ include_directories(
     ../tp_comm/include
     ../io_1000/include
     ../io_safety/include
-    ../fio_device/include
+    ../fio_deivce/include
 	${rtm_INCLUDE_DIRS}
 )
 

@@ -32,12 +32,13 @@
 #include "onlineTrj_planner.h"
 #include "vpath_planner.h"
 #include "base_device.h"
+#include "fio_device.h"
 
 
-#define TRAJECTORY_CACHE_SIZE     8
-#define OFFLINE_TRAJECTORY_CACHE_SIZE  150// 512
-#define TRAJECTORY_LOG_CONTROL_SIZE 1024    // 1KB
-#define TRAJECTORY_LOG_DATA_SIZE 67108864   // 64MB
+#define TRAJECTORY_CACHE_SIZE            8
+#define OFFLINE_TRAJECTORY_CACHE_SIZE    150        // 512
+#define TRAJECTORY_LOG_CONTROL_SIZE      1024       // 1KB
+#define TRAJECTORY_LOG_DATA_SIZE         67108864   // 64MB
 
 namespace group_space
 {
@@ -103,7 +104,14 @@ class BaseGroup
     virtual basic_alg::Joint getStartJointOfOfflineTrajectory(void);
     virtual ErrorCode moveOfflineTrajectory(void);
     virtual ErrorCode planOfflineTrajectory(std::string traj_name, double traj_vel);
+
+    /**
+     * @brief plan pause trajectory and put points into pause_trajectory_
+     * @return [ErrorCode] if plan failed, return errorcode, else return SUCCESS(0)
+     */
     virtual ErrorCode planOfflinePause(void);
+
+
     virtual ErrorCode planOfflineResume(void);
 #ifdef OFFLINE_SEG
     bool getOfflineStandby() {return offline_to_standby_state_;}
@@ -195,8 +203,17 @@ class BaseGroup
     void sendTrajectoryFlow(void);
     void updateServoStateAndJoint(void);
 
-    // state machine
+    /**
+     * @brief old version state machine function, no longer use it anymore
+     * @details
+     *  1. BUT DO NOT DELETE IT
+     */
     void doStateMachine(void);
+
+    /**
+     * @brief 
+     * 
+     */
     void doStateMachine_(void);
 
     /**
@@ -210,6 +227,38 @@ class BaseGroup
      * @return void
      */
     void handleUnusedRequests();
+
+    /**
+     * @brief process fio board logic
+     * @details
+     *  1. mainly serve for OFFLINE function
+     *  2. fio_last_state will be take as input for logic process, but it will also be update at the function ending
+     * @param [in] mc_state 
+     * @param [in] fio_ptr 
+     * @param [in] fio_state 
+     * @param [in] fio_last_state
+     * @param [out] fio_last_state 
+     * @return void
+     */
+    void handleFioStatus(MotionControlState mc_state, hal_space::FioDevice* fio_ptr, hal_space::FioStatus_u &fio_state, hal_space::FioStatus_u &fio_last_state);
+
+    /**
+     * @brief process servo error or bare_core error
+     * @param stop_barecore_ 
+     * @param servo_state 
+     * @param mc_state 
+     */
+    void handleBareCoreAndServoStatus(bool &stop_barecore_, ServoState &servo_state, MotionControlState &mc_state);
+    
+    /**
+     * @brief handle clear request process
+     * @details
+     *  1. clean some flags when clear request received
+     * @param [in] mc_state
+     * @return void
+     */
+    void handleClearRequest(MotionControlState &mc_state);
+
 
     void doDisableToStandby(const ServoState &servo_state, uint32_t &fail_counter);
     void doStandbyToDisable(const ServoState &servo_state, uint32_t &fail_counter);
@@ -268,7 +317,12 @@ class BaseGroup
     bool isSameJoint(const basic_alg::Joint &joint1, const basic_alg::Joint &joint2, double thres = MINIMUM_E6);
     bool isSameJoint(const basic_alg::Joint &joint1, const basic_alg::Joint &joint2, const basic_alg::Joint &thres);
 
+    /**
+     * @brief fill points from origin_trajectory_ into offline_trajectory_cache_
+     * @return [boolean] return false if fill point failed, and true for success
+     */
     bool fillOfflineCache(void);
+
     bool fillOfflinePauseCache(void);
     uint32_t getOfflineCacheSize(void);
     ErrorCode sendOfflineTrajectoryFlow(void);
@@ -356,15 +410,36 @@ class BaseGroup
 
     uint32_t offline_trajectory_size_;
     basic_alg::Joint offline_start_joint_;
-    #ifdef OFFLINE_SEG
-    bool offline_to_standby_state_;
-    #endif
+    
     TrajectoryPoint offline_trajectory_cache_[OFFLINE_TRAJECTORY_CACHE_SIZE];
     uint32_t offline_trajectory_cache_head_, offline_trajectory_cache_tail_;
     uint32_t offline_traj_point_read_cnt_;
 
+    /* ----- offline workmode requests ----- */
+    #ifdef OFFLINE_SEG
+    bool offline_to_standby_state_;
+    #endif
+
+    bool standby_to_offline_request_;
+    
+    bool offline_to_standby_request_;
+
+    bool offline_to_pause_request_;
+
+    bool pause_to_offline_request_;
+    // use for transfering mc_state from PAUSING_OFFLINE to PAUSED_OFFLINE
+    bool pausing_offline_to_pause_request_;
     // a flag use for transfering mc_state from STANDBY to OFFLINE
     bool standby_to_offline_ready;
+    // a flag use for pause OFFLINE movement
+    bool offline_pausemove_ready;
+    // a flag use for restart OFFLINE movement
+    bool offline_restartmove_ready;
+    // a flag use for procee restart OFFLINE movement failure
+    bool offline_restartmove_failed;
+
+    /* ----- offline workmode requests ----- */
+    
 
     pthread_mutex_t     planner_list_mutex_;
     pthread_mutex_t     manual_traj_mutex_;
@@ -390,13 +465,10 @@ class BaseGroup
     bool standby_to_manual_request_;
     bool manual_to_standby_request_;
 
-    bool offline_to_pause_request_;
-    bool pause_to_offline_request_;
-    bool pause_offline_to_standby_request_;
-    bool pausing_offline_to_pause_request_;
-    bool offline_ready_to_pause_request_;
-    bool standby_to_offline_request_;
-    bool offline_to_standby_request_;
+    
+    
+
+    
 
     bool pause_return_to_pause_request_;
     bool pausing_to_pause_request_;
@@ -405,6 +477,9 @@ class BaseGroup
     bool online_to_pause_request_;
     bool online_barecore_send_cnt_err_request_;
     bool online_barecore_send_cnt_clear_request_;
+
+
+    
 
 
 

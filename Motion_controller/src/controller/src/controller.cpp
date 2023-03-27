@@ -247,17 +247,7 @@ ErrorCode Controller::init()
     if(!routine_thread_.run(&controllerRoutineThreadFunc, this, config_ptr_->routine_thread_priority_))
     {
         return CONTROLLER_CREATE_ROUTINE_THREAD_FAILED;
-    }  
-#if 0
-    if(!priority_thread_.run(&controllerPriorityThreadFunc, this, config_ptr_->priority_thread_priority_))
-    {
-        return CONTROLLER_CREATE_ROUTINE_THREAD_FAILED;
-    } 
-    if(!rt_thread_.run(&controllerRealTimeThreadFunc, this, config_ptr_->realtime_thread_priority_))
-    {
-        return CONTROLLER_CREATE_RT_THREAD_FAILED;
-    } 
-#endif   
+    }
     if(!rpc_thread_.run(&controllerRpcThreadFunc, this, config_ptr_->rpc_thread_priority_))
     {
         return CONTROLLER_CREATE_RPC_THREAD_FAILED;
@@ -272,6 +262,14 @@ ErrorCode Controller::init()
         return CONTROLLER_CREATE_WHILE_THREAD_FAILED;
     }
     
+    // if(!priority_thread_.run(&controllerPriorityThreadFunc, this, config_ptr_->priority_thread_priority_))
+    // {
+    //     return CONTROLLER_CREATE_ROUTINE_THREAD_FAILED;
+    // } 
+    // if(!rt_thread_.run(&controllerRealTimeThreadFunc, this, config_ptr_->realtime_thread_priority_))
+    // {
+    //     return CONTROLLER_CREATE_RT_THREAD_FAILED;
+    // } 
     // if(!dev_process_thread_.run(&controllerDeviceProcessThreadFunc, this, config_ptr_->dev_process_thread_priority_))
     // {
     //     return CONTROLLER_CREATE_DEV_PROC_FAILED;

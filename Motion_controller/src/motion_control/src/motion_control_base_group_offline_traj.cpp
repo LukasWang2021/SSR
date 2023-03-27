@@ -85,6 +85,7 @@ inline double string_to_float(string str){
 * 参数:offline_euler_trajectory_filePath---文件名称
 * 返回值:错误码
 *******************************************************/
+
 ErrorCode BaseGroup::readEulerTrajectoryFile(const std::string &offline_euler_trajectory_filePath, vector<vector<double> >&euler_trajArr)
 {
     if (mc_state_ == OFFLINE || mc_state_ == OFFLINE_TO_STANDBY || mc_state_ == STANDBY_TO_OFFLINE)
@@ -230,10 +231,13 @@ ErrorCode BaseGroup::planOfflineTrajectory(string traj_name, double traj_vel)
 ErrorCode BaseGroup::planOfflinePause(void)
 {
     pthread_mutex_lock(&offline_mutex_);
-    uint32_t left_points = getOfflineCacheSize(); // local cache left points
+    // local cache left points
+    uint32_t left_points = getOfflineCacheSize(); 
     pthread_mutex_unlock(&offline_mutex_);
+
     // offline plan
     LogProducer::warn("BaseGroup", "start offline pause plan on index %u, cache left points %u", offline_traj_point_read_cnt_, left_points);
+    
     if(!offline_planner_.trajPausePlan(offline_traj_point_read_cnt_, 0, 0, 0, 0))
     {
         LogProducer::error("BaseGroup", "offline pause plan failed");
@@ -577,7 +581,7 @@ ErrorCode BaseGroup::sendOfflineTrajectoryFlow(void)
             {
                 offline_to_standby_request_ = true;
             }
-            else if(mc_state_ == PAUSING_OFFLINE && !offline_ready_to_pause_request_)
+            else if(mc_state_ == PAUSING_OFFLINE)
             {
                 pausing_offline_to_pause_request_ = true;
             }

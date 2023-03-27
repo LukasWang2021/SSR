@@ -303,6 +303,9 @@ void Controller::runRoutineThreadFunc()
 {
     usleep(config_ptr_->routine_cycle_time_);
 
+    // merge realtime thread
+    group_ptr_[0]->ringRealTimeTask();
+
     axis_ptr_[9]->processFdbPdoCurrent(&fdb_current_time_stamp_);
     axis_ptr_[0]->processFdbPdoSync(fdb_current_time_stamp_);
     axis_ptr_[1]->processFdbPdoSync(fdb_current_time_stamp_);
@@ -335,6 +338,9 @@ void Controller::runRoutineThreadFunc()
 	publish_.processPublish();
     uploadErrorCode();
     group_ptr_[0]->ringCommonTask();
+
+    // merge priority thread
+    group_ptr_[0]->ringPriorityTask();
 }
 
 void Controller::runRpcThreadFunc()

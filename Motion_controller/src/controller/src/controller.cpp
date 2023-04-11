@@ -101,7 +101,7 @@ ErrorCode Controller::init()
 {   
     uint32_t isr = 0;
     log_manager_.init("controller", &isr);
-    ErrorCode error_code = bootUp();
+    ErrorCode error_code = bootUp(); //初始化模型model_manager_，轴axes_config_，轴组的配置，core_comm_system,伺服参数配置,
     if(SUCCESS != error_code)
         return error_code;
 
@@ -414,7 +414,7 @@ ErrorCode Controller::bootUp(void)
     }
     axes_config_ = axes_config_ptr->getRef();
 
-    GroupsConfig* group_config_ptr = model_manager_.getGroupsConfig();
+    GroupsConfig* group_config_ptr = .getGroupsConfig();
     if (!group_config_ptr->load())
     {
         LogProducer::error("main", "Controller group config load failed");

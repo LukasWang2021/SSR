@@ -29,12 +29,12 @@ bool AxesConfig::load()
     xmlXPathObjectPtr node_set = xml_help_.getNodeObject(doc_ptr, BAD_CAST("/AxesConfig/AxisConfig"));
     for(int i = 0; i < node_set->nodesetval->nodeNr; i++)
     {
-        AxisConfig_t axis_config;
-        if(!loadAxisConfig(doc_ptr, node_set->nodesetval->nodeTab[i], axis_config))
+        AxisConfig_t axis_config;//axis_config是一个数据结构体，里面有轴的ID，伺服类型等。
+        if(!loadAxisConfig(doc_ptr, node_set->nodesetval->nodeTab[i], axis_config)) //将读取的配置数据写入axis_config中
         {
             return false;
         }
-        axis_config_.push_back(axis_config);
+        axis_config_.push_back(axis_config);//axis_config_是一个存放axis_config类型数据结构体的容器
     }
     xmlFree(node_set);
     xmlFreeDoc(doc_ptr);

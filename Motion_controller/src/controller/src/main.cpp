@@ -41,7 +41,8 @@ int main(int argc, char **argv)
         else
         {
             g_controller_ptr_ = controller_ptr;
-            signal(SIGINT, onExit);
+            /*替换原本的linux的函数，这样在while中触发中断信号时会执行自己的onExit*/
+            signal(SIGINT, onExit); 
             signal(SIGTERM, onExit);  
             signal(SIGHUP, onExit); 
             signal(SIGQUIT, onExit); 

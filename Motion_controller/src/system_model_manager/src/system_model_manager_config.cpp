@@ -16,6 +16,7 @@ SystemModelManagerConfig::~SystemModelManagerConfig()
 
 }
 
+//读取配置文件
 bool SystemModelManagerConfig::load()
 { 
     if (!yaml_help_.loadParamFile(file_path_.c_str())

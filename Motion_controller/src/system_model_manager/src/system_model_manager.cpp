@@ -167,7 +167,7 @@ bool SystemModelManager::load()
             return false;
         }
 
-        axis_model_set_.insert(std::pair<int32_t, AxisModel_t>(axis_config_ref[i].axis_id, axis_model));
+        axis_model_set_.insert(std::pair<int32_t, AxisModel_t>(axis_config_ref[i].axis_id, axis_model));//insert是键值对的自带默认函数
     }
     // load group info
     std::vector<GroupConfig_t>& group_config_ref = groups_config_ptr_->getRef();
@@ -203,9 +203,9 @@ bool SystemModelManager::load()
                 LogProducer::error("SystemModel", "Get Axis model failed.");
                 return false;
             }
-            group_model.axis_set.push_back(axis_model_ptr);
+            group_model.axis_set.push_back(axis_model_ptr); //先给axis_set装入所有的axis指针
         }
-        
+        //再给group_model_set插入gourp_model的键值对
         group_model_set_.insert(std::pair<int32_t, GroupModel_t>(group_config_ref[i].group_id, group_model));
     }
 
@@ -271,10 +271,10 @@ ForcesConfig* SystemModelManager::getForcesConfig()
 
 AxisModel_t* SystemModelManager::getAxisModel(int32_t axis_id)
 {
-    std::map<int32_t, AxisModel_t>::iterator it = axis_model_set_.find(axis_id);
+    std::map<int32_t, AxisModel_t>::iterator it = axis_model_set_.find(axis_id); //寻找axis_id的键值对
     if(it != axis_model_set_.end())
     {
-        return &it->second;
+        return &it->second; //解引用，返回键值的地址
     }
     else
     {
